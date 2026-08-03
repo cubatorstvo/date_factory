@@ -24,6 +24,12 @@ static func build() -> Theme:
 	theme.set_font_size("font_size", "Button", UiStyle.SIZE_BODY)
 	theme.set_font_size("font_size", "LineEdit", UiStyle.SIZE_BODY)
 	theme.set_font_size("font_size", "CheckBox", UiStyle.SIZE_BODY)
+	theme.set_font_size("font_size", "Label", UiStyle.SIZE_BODY)
+	theme.set_font_size("font_size", "ItemList", UiStyle.SIZE_BODY)
+	theme.set_font_size("font_size", "OptionButton", UiStyle.SIZE_BODY)
+	theme.set_constant("h_separation", "HBoxContainer", 10)
+	theme.set_constant("v_separation", "VBoxContainer", 8)
+	theme.set_constant("separation", "BoxContainer", 8)
 	# Variation fonts (inherit Label base unless overridden)
 	for var_name in ["BrandTitle", "TitleLabel", "ModalTitle", "SectionLabel"]:
 		theme.set_font("font", var_name, display_font if var_name != "SectionLabel" else bold_font)

@@ -30,14 +30,14 @@ func has_effect(key: String) -> bool:
 func effect_value(key: String, default: float = 0.0) -> float:
 	if not effects.has(key):
 		return default
-	var v = effects[key]
+	var v: Variant = effects[key]
 	if typeof(v) == TYPE_BOOL:
 		return 1.0 if v else default
 	return float(v)
 
 
 func gift_price_mult() -> float:
-	var m := effect_value("gift_price_mult", 1.0)
+	var m: float = effect_value("gift_price_mult", 1.0)
 	if m == 0.0:
 		return 1.0
 	return m
@@ -57,7 +57,7 @@ func available() -> Array:
 func buy(id: StringName) -> bool:
 	if owned.has(id):
 		return false
-	var u := ContentDB.upgrade(id)
+	var u: Dictionary = ContentDB.upgrade(id)
 	if u.is_empty() or not _stage_ok(str(u.get("unlock_stage", "stage_1"))):
 		return false
 	var cost := float(u.get("cost", 0))
@@ -74,7 +74,7 @@ func buy(id: StringName) -> bool:
 func _apply(fx: Dictionary) -> void:
 	for k in fx.keys():
 		var key := str(k)
-		var v = fx[k]
+		var v: Variant = fx[k]
 		if key == "unlock_outfit":
 			var oid := StringName(str(v))
 			if not Game.inventory.own_outfit(oid):

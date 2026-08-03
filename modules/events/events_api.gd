@@ -29,7 +29,7 @@ func _process(delta: float) -> void:
 	if _blocked_by_gameplay():
 		return
 	cooldown = maxf(0.0, cooldown - delta)
-	if cooldown <= 0.0 and _stage_num() >= 2 and randf() < 0.015:
+	if cooldown <= 0.0 and _stage_num() >= 2 and randf() < 0.015 * Game.economy.event_pressure_mult():
 		trigger_random()
 
 
@@ -38,7 +38,7 @@ func maybe_trigger_after_date(_result: Dictionary) -> void:
 		return
 	if _blocked_by_gameplay():
 		return
-	if randf() < 0.22:
+	if randf() < 0.22 * Game.economy.event_pressure_mult():
 		trigger_random()
 
 
@@ -47,7 +47,7 @@ func trigger_random() -> void:
 		return
 	if _blocked_by_gameplay():
 		return
-	var ids := _eligible_ids()
+	var ids: Array = _eligible_ids()
 	if ids.is_empty():
 		cooldown = 12.0
 		return
@@ -59,12 +59,31 @@ func trigger_random() -> void:
 			pool.append(id)
 		else:
 			pool.append(id)
-	var pick := str(pool[randi() % pool.size()])
+	var pick: String = str(pool[randi() % pool.size()])
 	open_event(StringName(pick))
 
 
+func open_runtime_event(ev: Dictionary) -> bool:
+	## Ad-hoc consequence (e.g. skipped clone defect) — not from ContentDB catalog.
+	if not active.is_empty():
+		return false
+	if _blocked_by_gameplay():
+		return false
+	if ev.is_empty():
+		return false
+	active = ev.duplicate(true)
+	if not active.has("choices") or active.get("choices", []).is_empty():
+		active["choices"] = [{"id": "ok", "label": "Понял", "scandal": 1.0, "legend": -3.0}]
+	cooldown = 40.0
+	var eid: String = str(active.get("id", "runtime"))
+	seen[eid] = int(seen.get(eid, 0)) + 1
+	EventBus.event_raised.emit(StringName(eid))
+	event_opened.emit(active)
+	return true
+
+
 func open_event(id: StringName) -> void:
-	var ev := ContentDB.event(id)
+	var ev: Dictionary = ContentDB.event(id)
 	if ev.is_empty():
 		return
 	if not _meets_requires(ev):
@@ -92,9 +111,10 @@ func choose(choice_id: String) -> void:
 			break
 	if picked.is_empty() and not active.get("choices", []).is_empty():
 		picked = active["choices"][0]
-	var money := float(picked.get("money", 0))
-	var scandal := float(picked.get("scandal", 0))
-	var pop := float(picked.get("popularity", 0))
+	var money: float = float(picked.get("money", 0))
+	var scandal: float = float(picked.get("scandal", 0))
+	var pop: float = float(picked.get("popularity", 0))
+	var legend_delta: float = float(picked.get("legend", 0))
 	pop *= float(Game.girls.active_effects().get("event_pop_mult", 1.0))
 	if money < 0.0:
 		money *= Game.upgrades.effect_value("fine_mult", 1.0)
@@ -105,28 +125,29 @@ func choose(choice_id: String) -> void:
 		Game.economy.add(&"money", money, &"event")
 	Game.economy.add(&"scandal", scandal, &"event")
 	Game.economy.add(&"popularity", pop, &"event")
+	if legend_delta < 0.0:
+		Game.economy.damage_legend(absf(legend_delta), &"event")
+	elif legend_delta > 0.0:
+		Game.economy.repair_legend(legend_delta, &"event")
 	history.append({"id": active.get("id", ""), "choice": choice_id})
 	EventBus.toast("Событие: %s" % str(active.get("name", "")), &"event")
 	active.clear()
 	event_closed.emit()
+	if Game.dating.has_method("apply_parallel_choice"):
+		Game.dating.apply_parallel_choice(choice_id)
 
 
 func _blocked_by_gameplay() -> bool:
-	# Never stack over a live date / phone / pause.
+	# Never stack over a live date / phone / pause / reveal / other event UI.
 	if not Game.dating.active_manual.is_empty():
 		return true
-	var tree := get_tree()
+	var tree: SceneTree = get_tree()
 	if tree == null:
 		return true
-	var pause := tree.get_first_node_in_group("pause_ui")
-	if pause != null and bool(pause.visible):
-		return true
-	var phone := tree.get_first_node_in_group("phone_ui")
-	if phone != null and bool(phone.visible):
-		return true
-	var date_ui := tree.get_first_node_in_group("date_ui")
-	if date_ui != null and bool(date_ui.visible):
-		return true
+	for group in ["pause_ui", "phone_ui", "date_ui", "reveal_ui", "finale_ui", "settings_ui"]:
+		var n: Node = tree.get_first_node_in_group(group)
+		if n != null and bool(n.visible):
+			return true
 	return false
 
 
@@ -141,10 +162,10 @@ func _eligible_ids() -> Array:
 
 func _meets_requires(ev: Dictionary) -> bool:
 	var req: Dictionary = ev.get("requires", {})
-	var min_stage := int(req.get("min_stage", 2))
+	var min_stage: int = int(req.get("min_stage", 2))
 	if _stage_num() < min_stage:
 		return false
-	var clones_min := int(req.get("clones_min", 0))
+	var clones_min: int = int(req.get("clones_min", 0))
 	if clones_min > 0 and Game.clones.clones.size() < clones_min:
 		return false
 	if bool(req.get("needs_scientist", false)) and not Game.girls.is_met(&"scientist"):
@@ -157,18 +178,18 @@ func _meets_requires(ev: Dictionary) -> bool:
 
 
 func _personalize(text: String) -> String:
-	var double_name := Game.names.peek_name()
+	var double_name: String = Game.names.peek_name()
 	return text.replace("{double}", double_name).replace("{клон}", double_name)
 
 
 func _filter_choices(choices: Array) -> Array:
 	## Hide «send a double» options until doubles actually exist.
-	var has_doubles := Game.clones.clones.size() > 0
+	var has_doubles: bool = Game.clones.clones.size() > 0
 	var out: Array = []
 	for c in choices:
-		var cid := str(c.get("id", ""))
-		var label := str(c.get("label", "")).to_lower()
-		var needs_double := cid in ["clone", "wait"] or label.find("дубл") >= 0
+		var cid: String = str(c.get("id", ""))
+		var label: String = str(c.get("label", "")).to_lower()
+		var needs_double: bool = cid in ["clone", "wait"] or label.find("дубл") >= 0
 		if needs_double and not has_doubles:
 			continue
 		out.append(c)
@@ -176,7 +197,7 @@ func _filter_choices(choices: Array) -> Array:
 
 
 func _stage_num() -> int:
-	var order := {"stage_1": 1, "stage_2": 2, "stage_3": 3, "stage_4": 4, "stage_5": 5, "stage_6": 6}
+	var order: Dictionary = {"stage_1": 1, "stage_2": 2, "stage_3": 3, "stage_4": 4, "stage_5": 5, "stage_6": 6}
 	return int(order.get(str(Game.stage_id), 1))
 
 

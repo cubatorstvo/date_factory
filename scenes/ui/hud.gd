@@ -62,6 +62,10 @@ func _process(delta: float) -> void:
 		_toast_time -= delta
 		if _toast_time <= 0.0:
 			toast_label.text = ""
+	if Game.crises != null and Game.crises.is_active():
+		bottleneck_label.text = Game.crises.hud_text()
+	elif bottleneck_label.text.begins_with("КРИЗИС:"):
+		bottleneck_label.text = ""
 
 
 func _on_notify(message: String, kind: StringName) -> void:
@@ -82,13 +86,51 @@ func _on_notify(message: String, kind: StringName) -> void:
 func _refresh() -> void:
 	if not Game.run_started:
 		return
-	resources_label.text = "$%d   ⭐%.0f   Внимание %.1f/%.0f   Скандал %.0f   Свиданий %d   Авто %d" % [
+	resources_label.text = "$%d   ⭐%.0f   Внимание %.1f/%.0f   Скандал %.0f   Легенда %.0f (%s)   Свиданий %d   Авто %d" % [
 		int(Game.economy.get_value(&"money")),
 		Game.economy.get_value(&"popularity"),
 		Game.economy.get_value(&"attention"),
 		Game.economy.max_attention,
 		Game.economy.get_value(&"scandal"),
+		Game.economy.get_value(&"legend"),
+		_legend_band_short(),
 		Game.total_successful_dates,
 		Game.dating.automation_level,
 	]
-	goal_label.text = "Цель: %s | Этап: %s" % [Game.quests.primary_text(), Loc.stage_title(Game.stage_id)]
+	goal_label.text = "%s\nКвест: %s | Этап: %s%s" % [
+		Loc.stage_goal(Game.stage_id),
+		Game.quests.primary_text(),
+		Loc.stage_title(Game.stage_id),
+		_stage4_act_suffix(),
+	]
+
+
+func _legend_band_short() -> String:
+	match Game.economy.legend_band():
+		"high":
+			return "выс"
+		"mid":
+			return "сред"
+		"low":
+			return "низ"
+		_:
+			return "криз"
+
+
+func _stage4_act_suffix() -> String:
+	if str(Game.stage_id) != "stage_4":
+		return ""
+	var parts: PackedStringArray = []
+	if Game.facility.has_flag("stage_4a"):
+		parts.append("4A✓")
+	else:
+		parts.append("4A")
+	if Game.facility.has_flag("stage_4b"):
+		parts.append("4B✓")
+	else:
+		parts.append("4B")
+	if Game.facility.has_flag("stage_4c"):
+		parts.append("4C✓")
+	else:
+		parts.append("4C")
+	return " | " + "/".join(parts)

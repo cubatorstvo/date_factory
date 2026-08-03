@@ -28,7 +28,7 @@ var _blink_t: float = 2.0
 var _blink_amount: float = 0.0
 var _breath: float = 0.0
 var _sitting: bool = false
-var _eye_base_scale := Vector3.ONE
+var _eye_base_scale: Vector3 = Vector3.ONE
 
 
 static func instantiate_girl() -> GirlCharacter:
@@ -104,13 +104,13 @@ func apply_profile(p: Dictionary) -> void:
 
 
 func apply_from_content(girl_content_id: StringName, display_name: String = "") -> void:
-	var def := ContentDB.girl(girl_content_id)
+	var def: Dictionary = ContentDB.girl(girl_content_id)
 	var col_a: Array = def.get("color", [0.95, 0.75, 0.7])
 	var skin := Color(float(col_a[0]), float(col_a[1]), float(col_a[2]))
 	var styles := ["bob", "pony", "short", "long", "bun"]
 	var style := str(def.get("hair_style", styles[abs(hash(str(girl_content_id))) % styles.size()]))
-	var hair := _as_color(def.get("hair_color", skin.darkened(0.55)))
-	var eyes := _as_color(def.get("eye_color", Color(0.2, 0.35, 0.5)))
+	var hair: Color = _as_color(def.get("hair_color", skin.darkened(0.55)))
+	var eyes: Color = _as_color(def.get("eye_color", Color(0.2, 0.35, 0.5)))
 	apply_profile({
 		"id": str(girl_content_id),
 		"display_name": display_name if display_name != "" else str(def.get("archetype", girl_content_id)),

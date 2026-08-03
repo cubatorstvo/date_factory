@@ -108,6 +108,16 @@ func _build_roster() -> void:
 
 
 func _city_girl(id: String, name: String, archetype: String, skin: Color, worth: Dictionary, hair: String, hair_c: Color, likes: Array, dislikes: Array, home: String) -> Dictionary:
+	var pack: Dictionary = {}
+	if Game.trait_influence != null and not Game.trait_influence.get_search_targets().is_empty():
+		pack = Game.trait_influence.roll_search_profile(likes)
+	else:
+		pack = TraitsContent.pack_for_profile({"id": id, "likes": likes})
+	var derived_likes: Array = likes.duplicate()
+	for tid in pack.get("traits", []):
+		for tag in TraitsContent.TRAIT_PREP_TAGS.get(str(tid), []):
+			if not derived_likes.has(tag):
+				derived_likes.append(tag)
 	return {
 		"id": id,
 		"kind": "city",
@@ -118,15 +128,20 @@ func _city_girl(id: String, name: String, archetype: String, skin: Color, worth:
 		"hair_color": [hair_c.r, hair_c.g, hair_c.b],
 		"eye_color": [0.25, 0.4, 0.55],
 		"worthiness": worth,
-		"likes": likes,
+		"likes": derived_likes,
 		"dislikes": dislikes,
 		"home_spot": home,
 		"unique": false,
+		"tier": "simple",
+		"primary_traits": pack.get("primary_traits", []),
+		"traits": pack.get("traits", []),
+		"quirk": str(pack.get("quirk", "")),
+		"soft_signal": str(pack.get("soft_signal", "")),
 	}
 
 
 func _unique_anchor(id: String, home: String, worth: Dictionary) -> Dictionary:
-	var def := ContentDB.girl(StringName(id))
+	var def: Dictionary = ContentDB.girl(StringName(id))
 	var col: Array = def.get("color", [0.9, 0.7, 0.7])
 	return {
 		"id": id,
@@ -140,6 +155,10 @@ func _unique_anchor(id: String, home: String, worth: Dictionary) -> Dictionary:
 		"dislikes": def.get("dislikes", []),
 		"home_spot": home,
 		"unique": true,
+		"tier": str(def.get("tier", "simple")),
+		"primary_traits": def.get("primary_traits", []),
+		"traits": def.get("traits", []),
+		"quirk": str(def.get("quirk", "")),
 	}
 
 
@@ -155,7 +174,7 @@ func get_profile(id: String) -> Dictionary:
 func is_worthy(id: String) -> bool:
 	if id == "neighbor":
 		return true
-	var p := get_profile(id)
+	var p: Dictionary = get_profile(id)
 	if p.is_empty():
 		return false
 	var w: Dictionary = p.get("worthiness", {})
@@ -167,14 +186,14 @@ func is_worthy(id: String) -> bool:
 	if need_stage != "" and not _stage_reached(need_stage):
 		return false
 	if bool(p.get("unique", false)):
-		var def := ContentDB.girl(StringName(id))
+		var def: Dictionary = ContentDB.girl(StringName(id))
 		if not _stage_reached(str(def.get("unlock_stage", "stage_1"))):
 			return false
 	return true
 
 
 func _stage_reached(need: String) -> bool:
-	var order := {"stage_1": 1, "stage_2": 2, "stage_3": 3, "stage_4": 4, "stage_5": 5, "stage_6": 6}
+	var order: Dictionary = {"stage_1": 1, "stage_2": 2, "stage_3": 3, "stage_4": 4, "stage_5": 5, "stage_6": 6}
 	return int(order.get(str(Game.stage_id), 1)) >= int(order.get(need, 1))
 
 
@@ -192,7 +211,7 @@ func talk(id: String) -> Dictionary:
 	if not is_worthy(id):
 		snubs[id] = int(snubs.get(id, 0)) + 1
 		var line: String = REJECT_LINES[randi() % REJECT_LINES.size()]
-		var girl_node_hint := get_profile(id)
+		var girl_node_hint: Dictionary = get_profile(id)
 		if not girl_node_hint.is_empty():
 			# emotion hint via event
 			EventBus.notify.emit("CITY_REJECT:%s" % id, &"city")
@@ -201,9 +220,8 @@ func talk(id: String) -> Dictionary:
 	Game.girls.add_contact(StringName(id), get_profile(id))
 	var accept: String = ACCEPT_LINES[randi() % ACCEPT_LINES.size()]
 	contact_gained.emit(id)
-	if tutorial_target_id == id:
-		tutorial_target_id = ""
-		Game.quests.complete("s1_contact")
+	tutorial_target_id = ""
+	Game.quests.complete("s1_contact")
 	Sfx.play_ui(&"confirm")
 	EventBus.toast("Новый контакт: %s" % str(get_profile(id).get("name", id)), &"girl")
 	city_changed.emit()
@@ -211,8 +229,8 @@ func talk(id: String) -> Dictionary:
 
 
 func pick_tutorial_target() -> String:
-	# Prefer cashier — always near plaza and worthy after 1 date.
-	tutorial_target_id = "city_cashier"
+	## Legacy: step 6 accepts any girl — no forced marked target.
+	tutorial_target_id = ""
 	city_changed.emit()
 	return tutorial_target_id
 

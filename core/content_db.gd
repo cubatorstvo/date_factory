@@ -14,6 +14,8 @@ static var stages: Dictionary = {}
 static var rooms: Dictionary = {}
 static var balance: Dictionary = {}
 static var builtin_names: PackedStringArray = PackedStringArray()
+static var traits: Dictionary = {}
+static var trait_dialogues: Array = []
 
 
 static func ensure_loaded(force: bool = false) -> void:
@@ -30,6 +32,8 @@ static func ensure_loaded(force: bool = false) -> void:
 	stages = ContentPacksProgress.stages()
 	rooms = ContentPacks.rooms()
 	builtin_names = ContentPacks.builtin_names()
+	traits = TraitsContent.traits()
+	trait_dialogues = TraitsContent.dialogues()
 	_loaded = true
 
 
@@ -71,3 +75,8 @@ static func stage(id: StringName) -> Dictionary:
 static func room(id: StringName) -> Dictionary:
 	ensure_loaded()
 	return rooms.get(str(id), {}).duplicate(true)
+
+
+static func trait_def(id: StringName) -> Dictionary:
+	ensure_loaded()
+	return traits.get(str(id), {}).duplicate(true)

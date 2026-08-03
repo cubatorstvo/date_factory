@@ -20,16 +20,16 @@ static func stages() -> Dictionary:
 			"girls": ["neighbor", "fitness", "goth", "streamer"],
 		},
 		"stage_3": {
-			"id": "stage_3", "name": "Агентство свиданий", "order": 3,
-			"goal": "Открой учёную, развивай агентство и готовься к клонам.",
+			"id": "stage_3", "name": "Операционный штаб", "order": 3,
+			"goal": "Собери аппарат вокруг одного тела: персонал, залы, учёная.",
 			"unlock_next": "stage_4", "next_cost": 500,
 			"rooms": ["apartment", "neighbor_apt", "office_nook", "agency"],
 			"venues": ["kitchen_table", "cheap_cafe", "park", "cinema_room", "restaurant"],
 			"girls": ["neighbor", "fitness", "goth", "streamer", "business", "fashionista", "chef", "scientist"],
 		},
 		"stage_4": {
-			"id": "stage_4", "name": "Особняк и клоны", "order": 4,
-			"goal": "Создай клонов и запусти параллельные свидания.",
+			"id": "stage_4", "name": "Проект «Второй Я»", "order": 4,
+			"goal": "4A лаборатория → 4B приёмка дубля → 4C первая параллель.",
 			"unlock_next": "stage_5", "next_cost": 1200,
 			"rooms": ["apartment", "neighbor_apt", "office_nook", "agency", "mansion"],
 			"venues": ["kitchen_table", "cheap_cafe", "park", "cinema_room", "restaurant", "photo_studio", "luxury_hall", "lab_capsule"],
@@ -55,7 +55,7 @@ static func stages() -> Dictionary:
 
 
 static func upgrades() -> Dictionary:
-	var out := {}
+	var out: Dictionary = {}
 	var defs: Array = []
 	# Hero
 	defs.append_array([
@@ -267,7 +267,7 @@ static func events() -> Dictionary:
 				{"id": "low", "label": "Приглушить шум", "money": 0, "scandal": -2, "popularity": 2},
 			]},
 		{"id": "media_fail_news", "name": "Провал в новостях", "cat": "media",
-			"blurb": "Местный канал высмеял ваше агентство.",
+			"blurb": "Местный канал высмеял ваш операционный штаб.",
 			"choices": [
 				{"id": "pr", "label": "Заплатить PR", "money": -70, "scandal": -3, "popularity": 1},
 				{"id": "own", "label": "Признать и пошутить", "money": 0, "scandal": 1, "popularity": 3},
@@ -407,7 +407,7 @@ static func events() -> Dictionary:
 				{"id": "no", "label": "Отказать и держать строй", "money": 0, "scandal": 2, "popularity": 0},
 			]},
 	]
-	var out := {}
+	var out: Dictionary = {}
 	for t in templates:
 		var eid := str(t["id"])
 		out[eid] = {

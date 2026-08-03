@@ -17,9 +17,13 @@ func _ready() -> void:
 
 
 func open() -> void:
-	body.text = "Фабрика работает. Любовь — тоже."
+	var culture := ""
+	if Game.trait_influence != null:
+		culture = "\n\n" + Game.trait_influence.culture_summary()
+	body.text = "Алгоритм Любви синхронизирован.\nОн читает не шаблон, а культуру твоей орбиты.\nЛегенда держится. Фабрика работает. Любовь — тоже.\nПостгейм открыт." + culture
 	visible = true
 	get_tree().paused = true
+	Game.facility.set_flag("finale_complete", true)
 
 
 func close() -> void:
@@ -28,7 +32,8 @@ func close() -> void:
 
 
 func _show_credits() -> void:
-	body.text = "DATE FACTORY\nКорпорация любви\n\nСпасибо за игру."
+	body.text = "DATE FACTORY\nКорпорация одного мужчины\n\nНаблюдения · Дубли · Легенда · Орбита\n\nСпасибо, что масштабировал себя.\n\nТитры · Постгейм"
+	Game.facility.set_flag("credits_seen", true)
 
 
 func _main_menu() -> void:

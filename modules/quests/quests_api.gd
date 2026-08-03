@@ -28,22 +28,22 @@ func reset_for_stage(stage_id: StringName) -> void:
 			_add("s1_outfit", "3/7 Смени одежду в шкафу", "main")
 			_add("s1_prepare", "4/7 Возьми подарок в руки", "main")
 			_add("s1_date", "5/7 Подойди к столу: свидание с Соседкой", "main")
-			_add("s1_city", "6/7 Выйди на улицу (дверь −X) и найди новый контакт (жёлтый !)", "main")
-			_add("s1_contact", "6/7 Поговори с отмеченной девушкой и возьми номер", "main")
+			_add("s1_city", "6/7 Выйди на улицу (дверь −X)", "main")
+			_add("s1_contact", "6/7 Заполучи ещё один номер — поговори с любой девушкой", "main")
 			_add("s1_expand", "7/7 Набери 5⭐ и жёлтая дверь расширения (+X)", "main")
 		"stage_2":
 			_add("s2_girls", "Познакомься с новой уникальной девушкой через телефон", "main")
 			_add("s2_hire", "В рабочем уголке найми менеджера переписки", "main")
 			_add("s2_venues", "Открой кафе или парк по афишам", "side")
-			_add("s2_expand", "Когда хватит ⭐ и денег — расширь комплекс до агентства", "main")
+			_add("s2_expand", "Когда хватит ⭐ и денег — расширь комплекс до операционного штаба", "main")
 		"stage_3":
 			_add("s3_scientist", "Познакомься с Учёной (нужна популярность)", "main")
-			_add("s3_staff", "Найми ещё сотрудников в агентстве", "side")
+			_add("s3_staff", "Найми ещё сотрудников в штабе", "side")
 			_add("s3_lab", "Расширь комплекс к особняку / лаборатории", "main")
 		"stage_4":
-			_add("s4_clone", "В лаборатории создай первого клона", "main")
-			_add("s4_parallel", "Включи автолинии свиданий", "main")
-			_add("s4_harem", "Посети жилую часть гарема", "side")
+			_add("s4_clone", "4A: в лаборатории создай первого дубля", "main")
+			_add("s4_parallel", "4C: параллель ты + дубль без провала легенды", "main")
+			_add("s4_harem", "Посети жилую часть орбиты", "side")
 			_add("s4_factory", "Расширь комплекс до фабрики", "main")
 		"stage_5":
 			_add("s5_conveyor", "Открой конвейер свиданий", "main")
@@ -141,8 +141,7 @@ func on_date_finished(result: Dictionary) -> void:
 		complete("s1_date")
 		complete("s2_girls")
 		if tid == "neighbor":
-			Game.city.pick_tutorial_target()
-			EventBus.toast("Выйди в город — найди новую девушку с жёлтым !", &"story")
+			EventBus.toast("Выйди в город — заполучи ещё один номер у любой девушки", &"story")
 		if tid == "scientist":
 			complete("s3_scientist")
 		if tid == "alien":

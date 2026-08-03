@@ -50,6 +50,11 @@ func _run() -> void:
 	game.set("total_successful_dates", 50)
 	for sid in ["stage_2", "stage_3", "stage_4", "stage_5", "stage_6"]:
 		game.call("advance_stage", StringName(sid))
+		if sid in ["stage_2", "stage_4", "stage_6"]:
+			game.call("save_game")
+			_assert(errors, bool(save.call("has_save")), "save_%s" % sid)
+			game.call("load_game")
+			_assert(errors, str(game.get("stage_id")) == sid, "load_stage_%s" % sid)
 	girls.call("try_unlock_by_progress")
 	for gid in ContentDB.girls.keys():
 		if gid == "algorithm":
@@ -60,6 +65,8 @@ func _run() -> void:
 	clones.set("max_slots", 8)
 	for _j in range(3):
 		clones.call("create_clone")
+		if not clones.get("pending").is_empty():
+			clones.call("decide_acceptance", "approve")
 	_assert(errors, clones.get("clones").size() >= 1, "clone created")
 	upgrades.call("buy", &"final_megamachine_1")
 	upgrades.call("buy", &"final_megamachine_2")

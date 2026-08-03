@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "Restaurant_Base_FabricWarm"
+albedo_color = Color(0.65, 0.35, 0.32, 1)
+roughness = 0.92
+metallic = 0.0

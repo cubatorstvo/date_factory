@@ -16,6 +16,8 @@ var quests: QuestsAPI
 var names: NamesAPI
 var save: SaveService
 var city: Node
+var crises: CrisesAPI
+var trait_influence: TraitInfluenceAPI
 
 var stage_id: StringName = &"stage_1"
 var postgame: bool = false
@@ -46,11 +48,25 @@ func _bind_modules() -> void:
 	names = _modules_root.get_node("Names") as NamesAPI
 	save = _modules_root.get_node("Save") as SaveService
 	city = _modules_root.get_node("City")
+	if _modules_root.has_node("Crises"):
+		crises = _modules_root.get_node("Crises") as CrisesAPI
+	else:
+		var CrisisScript: Script = load("res://modules/crises/crises_api.gd") as Script
+		crises = CrisisScript.new() as CrisesAPI
+		crises.name = "Crises"
+		_modules_root.add_child(crises)
+	if _modules_root.has_node("TraitInfluence"):
+		trait_influence = _modules_root.get_node("TraitInfluence") as TraitInfluenceAPI
+	else:
+		var InflScript: Script = load("res://modules/girls/trait_influence_api.gd") as Script
+		trait_influence = InflScript.new() as TraitInfluenceAPI
+		trait_influence.name = "TraitInfluence"
+		_modules_root.add_child(trait_influence)
 
 
 func _wire_modules() -> void:
 	# Names before Girls: unlock entries need next_name() during reset.
-	for mod in [economy, inventory, names, girls, dating, facility, clones, staff, upgrades, events, quests, city]:
+	for mod in [economy, inventory, names, girls, dating, facility, clones, staff, upgrades, events, quests, city, crises, trait_influence]:
 		if mod != null and mod.has_method("setup"):
 			mod.setup(self)
 
@@ -70,6 +86,10 @@ func new_game() -> void:
 	staff.reset()
 	upgrades.reset()
 	events.reset()
+	if crises != null:
+		crises.reset()
+	if trait_influence != null:
+		trait_influence.reset()
 	quests.reset_for_stage(stage_id)
 	names.reset()
 	if city != null and city.has_method("reset"):
@@ -98,6 +118,9 @@ func advance_stage(next_id: StringName) -> void:
 
 func start_postgame() -> void:
 	postgame = true
+	if facility != null:
+		facility.set_flag("finale_complete", true)
+		facility.set_flag("postgame_open", true)
 	EventBus.postgame_started.emit()
 	EventBus.toast("Фабрика автоматизирована. Бесконечный режим открыт.", &"story")
 
@@ -117,6 +140,8 @@ func to_dict() -> Dictionary:
 		"staff": staff.to_dict(),
 		"upgrades": upgrades.to_dict(),
 		"events": events.to_dict(),
+		"crises": crises.to_dict() if crises != null else {},
+		"trait_influence": trait_influence.to_dict() if trait_influence != null else {},
 		"quests": quests.to_dict(),
 		"names": names.to_dict(),
 		"city": city.to_dict(),
@@ -138,6 +163,10 @@ func from_dict(data: Dictionary) -> void:
 	staff.from_dict(data.get("staff", {}))
 	upgrades.from_dict(data.get("upgrades", {}))
 	events.from_dict(data.get("events", {}))
+	if crises != null:
+		crises.from_dict(data.get("crises", {}))
+	if trait_influence != null:
+		trait_influence.from_dict(data.get("trait_influence", {}))
 	quests.from_dict(data.get("quests", {}))
 	names.from_dict(data.get("names", {}))
 	city.from_dict(data.get("city", {}))
@@ -151,7 +180,7 @@ func save_game() -> void:
 
 
 func load_game() -> void:
-	var data := save.read_save()
+	var data: Dictionary = save.read_save()
 	if data.is_empty():
 		new_game()
 		return

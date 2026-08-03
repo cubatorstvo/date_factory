@@ -1,0 +1,41 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/characters/hero_base/prefabs/Hero.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://assets/characters/hero_base/prefabs/Clone.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://assets/characters/women_modular/prefabs/Girl_Casual.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://assets/characters/women_modular/prefabs/Girl_Formal.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://assets/characters/women_modular/prefabs/Girl_Worker.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://assets/characters/women_modular/prefabs/Manager_Suit.tscn" id="6"]
+
+[node name="Character_Testbed" type="Node3D"]
+
+[node name="Light" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.8, -0.4, 0.4, 0, 0.7, 0.7, -0.6, -0.55, 0.55, 2, 6, 3)
+
+[node name="Floor" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+size = Vector3(14, 0.1, 8)
+
+[node name="AnimNotes" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, -2)
+text = "Clips: idle walk run sit stand gesture react\nSource: UAL1_Standard.glb"
+font_size = 18
+
+[node name="Hero" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
+
+[node name="Clone" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 0)
+
+[node name="GirlCasual" parent="." instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="GirlFormal" parent="." instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="GirlWorker" parent="." instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
+
+[node name="Manager" parent="." instance=ExtResource("6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 0)
+

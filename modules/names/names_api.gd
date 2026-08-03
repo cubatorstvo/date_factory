@@ -52,7 +52,7 @@ func next_name() -> String:
 	if source.is_empty():
 		return "Аноним"
 	for _i in range(source.size()):
-		var n := _sanitize(str(source[_cursor % source.size()]))
+		var n: String = _sanitize(str(source[_cursor % source.size()]))
 		_cursor += 1
 		if not used.has(n) or used.size() >= source.size():
 			used[n] = true
@@ -88,7 +88,7 @@ func to_dict() -> Dictionary:
 func from_dict(data: Dictionary) -> void:
 	twitch_channel = str(data.get("twitch_channel", ""))
 	twitch_connected = bool(data.get("twitch_connected", false))
-	used = data.get("used", {})
+	used = data.get("used", {}) as Dictionary
 	_cursor = int(data.get("_cursor", 0))
 	if twitch_connected and not twitch_channel.is_empty():
 		set_twitch_channel(twitch_channel)

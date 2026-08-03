@@ -38,20 +38,32 @@ func gift_count(id: StringName) -> int:
 	return int(gift_counts.get(str(id), 0))
 
 
-func can_buy_gift(id: StringName) -> bool:
-	var g := ContentDB.gift(id)
+func gift_buy_price(id: StringName, for_girl: StringName = &"") -> float:
+	var g: Dictionary = ContentDB.gift(id)
+	if g.is_empty():
+		return 0.0
+	var price: float = float(g.get("price", 0)) * Game.upgrades.gift_price_mult()
+	if Game.trait_influence != null:
+		price *= Game.trait_influence.global_gift_price_mult()
+		if for_girl != &"":
+			price *= Game.trait_influence.gift_price_mult_for_girl(for_girl)
+	return price
+
+
+func can_buy_gift(id: StringName, for_girl: StringName = &"") -> bool:
+	var g: Dictionary = ContentDB.gift(id)
 	if g.is_empty():
 		return false
 	if total_gifts() >= gift_cap:
 		return false
-	return Game.economy.get_value(&"money") >= float(g.get("price", 0)) * Game.upgrades.gift_price_mult()
+	return Game.economy.get_value(&"money") >= gift_buy_price(id, for_girl)
 
 
-func buy_gift(id: StringName) -> bool:
-	var g := ContentDB.gift(id)
+func buy_gift(id: StringName, for_girl: StringName = &"") -> bool:
+	var g: Dictionary = ContentDB.gift(id)
 	if g.is_empty():
 		return false
-	var price: float = float(g.get("price", 0)) * Game.upgrades.gift_price_mult()
+	var price: float = gift_buy_price(id, for_girl)
 	if not Game.economy.try_spend({"money": price}, &"buy_gift"):
 		EventBus.toast("Недостаточно денег", &"warn")
 		return false
@@ -60,7 +72,10 @@ func buy_gift(id: StringName) -> bool:
 		EventBus.toast("Склад полон", &"warn")
 		return false
 	_add_gift(id, 1)
-	EventBus.toast("Куплено: %s" % str(g.get("name", id)), &"item")
+	var tip := "Куплено: %s" % str(g.get("name", id))
+	if for_girl != &"" and Game.trait_influence != null and Game.trait_influence.gift_price_mult_for_girl(for_girl) < 1.0:
+		tip += " (−10% экономность)"
+	EventBus.toast(tip, &"item")
 	return true
 
 
@@ -105,7 +120,7 @@ func own_outfit(id: StringName) -> bool:
 
 
 func buy_outfit(id: StringName) -> bool:
-	var o := ContentDB.outfit(id)
+	var o: Dictionary = ContentDB.outfit(id)
 	if o.is_empty() or own_outfit(id):
 		return false
 	var price := float(o.get("price", 0))
@@ -132,7 +147,7 @@ func auto_pick_outfit_for(likes: Array) -> StringName:
 	var best := equipped_outfit
 	var best_score := -999.0
 	for oid in owned_outfits:
-		var o := ContentDB.outfit(oid)
+		var o: Dictionary = ContentDB.outfit(oid)
 		var score := float(o.get("quality", 1))
 		var style := str(o.get("style", ""))
 		if likes.has(style) or likes.has("fashion") and style == "fashion":

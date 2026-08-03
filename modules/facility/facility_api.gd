@@ -26,7 +26,7 @@ func reset() -> void:
 
 
 func unlock_stage(stage_id: StringName, announce: bool = true) -> void:
-	var st := ContentDB.stage(stage_id)
+	var st: Dictionary = ContentDB.stage(stage_id)
 	for r in st.get("rooms", []):
 		var rid := StringName(str(r))
 		if not unlocked_rooms.has(rid):
@@ -86,7 +86,7 @@ func add_mega_part() -> void:
 
 
 func buy_stage_expansion() -> bool:
-	var st := ContentDB.stage(Game.stage_id)
+	var st: Dictionary = ContentDB.stage(Game.stage_id)
 	var next := str(st.get("unlock_next", ""))
 	if next.is_empty():
 		return false
@@ -95,9 +95,21 @@ func buy_stage_expansion() -> bool:
 	if Game.economy.get_value(&"popularity") < need_pop:
 		EventBus.toast("Нужно больше популярности (%.0f)" % need_pop, &"warn")
 		return false
-	if not Game.economy.try_spend({"money": cost}, &"expand"):
+	var from_reserve := 0.0
+	if Game.trait_influence != null and Game.trait_influence.expansion_reserve > 0.0:
+		from_reserve = minf(cost, Game.trait_influence.expansion_reserve)
+	var cash_need := cost - from_reserve
+	if cash_need > 0.0 and not Game.economy.try_spend({"money": cash_need}, &"expand"):
 		EventBus.toast("Не хватает денег на расширение", &"warn")
 		return false
+	if from_reserve > 0.0 and not Game.trait_influence.spend_expansion_reserve(from_reserve):
+		# rollback cash if reserve failed (should be rare)
+		if cash_need > 0.0:
+			Game.economy.add(&"money", cash_need, &"expand_rollback")
+		EventBus.toast("Резерв расширения недоступен", &"warn")
+		return false
+	if from_reserve > 0.0:
+		EventBus.toast("Резерв расширения: −%.0f$" % from_reserve, &"info")
 	Game.advance_stage(StringName(next))
 	facility_changed.emit()
 	return true
@@ -106,7 +118,7 @@ func buy_stage_expansion() -> bool:
 func check_stage_gates() -> void:
 	Game.girls.try_unlock_by_progress()
 	# soft hint when ready to expand
-	var st := ContentDB.stage(Game.stage_id)
+	var st: Dictionary = ContentDB.stage(Game.stage_id)
 	var next := str(st.get("unlock_next", ""))
 	if next.is_empty():
 		return

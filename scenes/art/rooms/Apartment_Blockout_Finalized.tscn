@@ -1,0 +1,160 @@
+[gd_scene load_steps=25 format=3]
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+size = Vector3(16, 0.2, 16)
+
+[sub_resource type="StandardMaterial3D" id="FloorMat"]
+albedo_color = Color(0.88, 0.85, 0.8, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="Box_0"]
+size = Vector3(16, 3, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_0"]
+albedo_color = Color(0.35, 0.315, 0.33249999999999996, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_1"]
+size = Vector3(16, 3, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_1"]
+albedo_color = Color(0.44999999999999996, 0.40499999999999997, 0.42749999999999994, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_2"]
+size = Vector3(0.3, 3, 16)
+
+[sub_resource type="StandardMaterial3D" id="Mat_2"]
+albedo_color = Color(0.55, 0.49500000000000005, 0.5225, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_3"]
+size = Vector3(0.3, 3, 16)
+
+[sub_resource type="StandardMaterial3D" id="Mat_3"]
+albedo_color = Color(0.65, 0.5850000000000001, 0.6174999999999999, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_4"]
+size = Vector3(3, 0.9, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_4"]
+albedo_color = Color(0.75, 0.675, 0.7124999999999999, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_5"]
+size = Vector3(2.4, 0.8, 1.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_5"]
+albedo_color = Color(0.35, 0.315, 0.33249999999999996, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_6"]
+size = Vector3(2.0, 0.5, 1.6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_6"]
+albedo_color = Color(0.44999999999999996, 0.40499999999999997, 0.42749999999999994, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_7"]
+size = Vector3(1.2, 0.7, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_7"]
+albedo_color = Color(0.55, 0.49500000000000005, 0.5225, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_8"]
+size = Vector3(2.5, 2.2, 2.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_8"]
+albedo_color = Color(0.65, 0.5850000000000001, 0.6174999999999999, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_9"]
+size = Vector3(1.0, 2.1, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_9"]
+albedo_color = Color(0.75, 0.675, 0.7124999999999999, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_10"]
+size = Vector3(1.2, 2.0, 0.6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_10"]
+albedo_color = Color(0.35, 0.315, 0.33249999999999996, 1)
+roughness = 0.7
+
+[node name="Apartment_Blockout_Finalized" type="Node3D"]
+
+[node name="WorldEnvHint" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.86, -0.35, 0.37, 0, 0.73, 0.68, -0.51, -0.59, 0.63, 4, 8, 4)
+shadow_enabled = true
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("FloorMesh")
+surface_material_override/0 = SubResource("FloorMat")
+
+[node name="Title" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 0)
+text = "Apartment_Blockout_Finalized"
+font_size = 28
+
+[node name="Wall_N" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -7.5)
+mesh = SubResource("Box_0")
+surface_material_override/0 = SubResource("Mat_0")
+
+[node name="Wall_S" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 7.5)
+mesh = SubResource("Box_1")
+surface_material_override/0 = SubResource("Mat_1")
+
+[node name="Wall_W" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 1.5, 0)
+mesh = SubResource("Box_2")
+surface_material_override/0 = SubResource("Mat_2")
+
+[node name="Wall_E" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 1.5, 0)
+mesh = SubResource("Box_3")
+surface_material_override/0 = SubResource("Mat_3")
+
+[node name="Kitchen_Counter" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.45, -3)
+mesh = SubResource("Box_4")
+surface_material_override/0 = SubResource("Mat_4")
+
+[node name="Sofa" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.4, 1)
+mesh = SubResource("Box_5")
+surface_material_override/0 = SubResource("Mat_5")
+
+[node name="Bed" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.25, -4)
+mesh = SubResource("Box_6")
+surface_material_override/0 = SubResource("Mat_6")
+
+[node name="Table" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+mesh = SubResource("Box_7")
+surface_material_override/0 = SubResource("Mat_7")
+
+[node name="Bath_Zone" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.1, 4)
+mesh = SubResource("Box_8")
+surface_material_override/0 = SubResource("Mat_8")
+
+[node name="Door_Interact" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 7.2)
+mesh = SubResource("Box_9")
+surface_material_override/0 = SubResource("Mat_9")
+
+[node name="Wardrobe" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.0, -1)
+mesh = SubResource("Box_10")
+surface_material_override/0 = SubResource("Mat_10")
+
+[node name="KitAnchors" type="Node3D" parent="."]
+
+[node name="Spawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4)

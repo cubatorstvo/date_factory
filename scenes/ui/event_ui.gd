@@ -51,13 +51,17 @@ func _open(ev: Dictionary) -> void:
 func _on_choice(choice_id: String) -> void:
 	if not _is_open:
 		return
+	_is_open = false
 	for c in buttons.get_children():
 		if c is BaseButton:
 			(c as BaseButton).disabled = true
-	Game.events.choose(choice_id)
-	# Safety: if choose no-op'd (empty active), still dismiss UI.
-	if visible:
-		_close()
+	if Game.events != null and not Game.events.active.is_empty():
+		Game.events.choose(choice_id)
+	# Always dismiss — choose may no-op or emit closed; never leave modal stuck.
+	_close()
+	if Game.events != null and not Game.events.active.is_empty():
+		Game.events.active.clear()
+		Game.events.event_closed.emit()
 
 
 func force_close() -> void:

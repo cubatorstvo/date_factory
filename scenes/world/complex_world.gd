@@ -14,6 +14,7 @@ var _neighbor_girl: Node3D
 
 
 func _ready() -> void:
+	add_to_group("world_root")
 	Game.facility.facility_changed.connect(_rebuild)
 	Game.girls.girls_changed.connect(_refresh_harem_npcs)
 	Game.city.city_changed.connect(_refresh_tutorial_markers)
@@ -65,7 +66,7 @@ func _rebuild() -> void:
 
 
 func _build_city() -> void:
-	var builder := load("res://scenes/world/city_builder.gd")
+	var builder: Resource = load("res://scenes/world/city_builder.gd")
 	_city_data = builder.build(
 		props_root,
 		func(parent, pos, title, action, action_id, payload={}, prop_kind=&""):
@@ -214,17 +215,7 @@ func _spawn_talk_girl(profile: Dictionary, spots: Dictionary, waypoints: Array, 
 			"hair_color": Color(float(hair_a[0]), float(hair_a[1]), float(hair_a[2])) if hair_a.size() >= 3 else Color(0.2, 0.1, 0.08),
 		})
 
-	var marker := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.1
-	marker.mesh = sphere
-	marker.position = Vector3(0, 1.85, 0)
-	var mm := StandardMaterial3D.new()
-	mm.albedo_color = Color(1.0, 0.85, 0.2)
-	mm.emission_enabled = true
-	mm.emission = Color(1.0, 0.8, 0.1)
-	marker.material_override = mm
-	area.add_child(marker)
+
 
 	npcs_root.add_child(area)
 
@@ -250,7 +241,7 @@ func _refresh_tutorial_markers() -> void:
 
 
 func _build_room(room_id: StringName) -> void:
-	var def := ContentDB.room(room_id)
+	var def: Dictionary = ContentDB.room(room_id)
 	var pos_a: Array = def.get("pos", [0, 0, 0])
 	var origin := Vector3(float(pos_a[0]), float(pos_a[1]), float(pos_a[2]))
 	var root := Node3D.new()
@@ -296,7 +287,8 @@ func _build_room(room_id: StringName) -> void:
 			_add_interact(root, Vector3(0, 0, 0), "Зал свиданий", "Подготовить стол и начать свидание", &"prepare_and_start", {}, &"table_set")
 			_add_interact(root, Vector3(4, 1, -2), "Найм стилиста", "Нанять", &"hire", {"role_id": "stylist"}, &"desk")
 			_add_interact(root, Vector3(4, 1, 2), "Лаб. подготовка", "Улучшение науки", &"buy_upgrade", {"upgrade_id": "ward_style_science"}, &"machine")
-			_add_interact(root, Vector3(0, 1, 3), "К агентству+", "Расширить", &"expand", {}, &"door")
+			_add_interact(root, Vector3(0, 1, 3), "К штабу+", "Расширить", &"expand", {}, &"door")
+			_orbit_culture_props(root, Vector3(0, 1.6, -3.8))
 		"mansion":
 			_box(root, Vector3(14, 0.2, 12), Vector3(0, -0.1, 0), Color(0.55, 0.45, 0.4))
 			_wall_room(root, 14, 12, 3.2)
@@ -310,6 +302,7 @@ func _build_room(room_id: StringName) -> void:
 			_add_interact(root, Vector3(5, 1, 3), "Капсула", "Открыть", &"open_venue_upgrade", {"venue_id": "lab_capsule"}, &"machine")
 			_add_interact(root, Vector3(0, 1, 4.5), "К фабрике", "Расширить", &"expand", {}, &"door")
 			_spawn_harem_slots(root)
+			_orbit_culture_props(root, Vector3(-2, 1.8, -4.5))
 		"factory":
 			_box(root, Vector3(18, 0.2, 14), Vector3(0, -0.1, 0), Color(0.35, 0.35, 0.4))
 			_wall_room(root, 18, 14, 4.0)
@@ -360,32 +353,26 @@ func _spawn_neighbor_npc(root: Node3D) -> void:
 		_neighbor_girl.call("apply_from_content", &"neighbor", Game.girls.display_name(&"neighbor"))
 	if _neighbor_girl.has_method("face_toward"):
 		_neighbor_girl.call("face_toward", root.to_global(Vector3(0, 0, 3)))
-	var marker := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.1
-	marker.mesh = sphere
-	marker.position = Vector3(0, 1.85, 0)
-	var mm := StandardMaterial3D.new()
-	mm.albedo_color = Color(1.0, 0.85, 0.2)
-	mm.emission_enabled = true
-	mm.emission = Color(1.0, 0.8, 0.1)
-	marker.material_override = mm
-	area.add_child(marker)
 	root.add_child(area)
 
 
 func _spawn_harem_slots(root: Node3D) -> void:
 	var girls: Array = Game.girls.list_harem()
+	var door := Vector3(0.0, 0.0, 3.0)
 	for i in range(mini(6, girls.size())):
 		var g: Dictionary = girls[i]
 		var id := str(g.get("id", ""))
-		var p := Vector3(-5 + i * 2.0, 0, -4.5)
+		var slot := Vector3(-5 + i * 2.0, 0, -4.5)
 		var area := Interactable.new()
 		area.display_name = Game.girls.display_name(StringName(id))
 		area.action_label = "Поговорить"
+		if bool(g.get("claimed", false)):
+			area.display_name = "Орбита: " + area.display_name
+			area.action_label = "Навестить"
 		area.action_id = &"visit_harem"
 		area.payload = {"girl_id": id}
-		area.position = p
+		# Spawn at door, walk to slot — never teleport-already-there.
+		area.position = door
 		var cs := CollisionShape3D.new()
 		var shape := BoxShape3D.new()
 		shape.size = Vector3(1.0, 1.8, 1.0)
@@ -397,6 +384,8 @@ func _spawn_harem_slots(root: Node3D) -> void:
 		if girl.has_method("apply_from_content"):
 			girl.call("apply_from_content", StringName(id), Game.girls.display_name(StringName(id)))
 		root.add_child(area)
+		var tw := create_tween()
+		tw.tween_property(area, "position", slot, 1.4 + float(i) * 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _refresh_harem_npcs() -> void:
@@ -458,6 +447,22 @@ func _label(parent: Node3D, pos: Vector3, text: String) -> void:
 	parent.add_child(l)
 
 
+func _orbit_culture_props(parent: Node3D, pos: Vector3) -> void:
+	## Physical manifestation of trait culture (§24) — labels/props from facility flags.
+	if Game.facility == null or not Game.facility.has_flag("orbit_culture_active"):
+		return
+	var title := "Культура орбиты"
+	if Game.trait_influence != null and Game.trait_influence.active_doctrine != "":
+		var dd: Dictionary = Game.trait_influence.doctrine_def(Game.trait_influence.active_doctrine)
+		title = str(dd.get("name", title))
+	elif Game.facility.has_flag("orbit_institution_thrift"):
+		title = "Институт экономности"
+	elif Game.facility.has_flag("orbit_institution_punctual"):
+		title = "Институт ритма"
+	_box(parent, Vector3(1.2, 1.6, 0.2), pos, Color(0.75, 0.7, 0.55))
+	_label(parent, pos + Vector3(0, 1.1, 0.15), title)
+
+
 func _mannequin(parent: Node3D, pos: Vector3, color: Color, title: String) -> void:
 	var body := MeshInstance3D.new()
 	var cap := CapsuleMesh.new()
@@ -495,16 +500,5 @@ func _add_interact(parent: Node3D, pos: Vector3, title: String, action: String, 
 		PropFactory.attach(visuals, prop_kind)
 	else:
 		PropFactory.attach(visuals, &"desk")
-	var marker := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.12
-	marker.mesh = sphere
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(1.0, 0.85, 0.2)
-	mat.emission_enabled = true
-	mat.emission = Color(1.0, 0.8, 0.1)
-	marker.material_override = mat
-	marker.position = Vector3(0, 1.65, 0)
-	area.add_child(marker)
 	_label(area, Vector3(0, 2.05, 0), title)
 	parent.add_child(area)

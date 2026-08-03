@@ -1,0 +1,123 @@
+[gd_scene load_steps=31 format=3]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Bamboo.gltf" id="1"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Bell.gltf" id="2"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Carpet.gltf" id="3"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Fish.gltf" id="4"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Light.gltf" id="5"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Painting.gltf" id="6"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Painting_Small.gltf" id="7"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Plant1.gltf" id="8"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Plant2.gltf" id="9"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_SakuraFlower.gltf" id="10"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_SakuraTree.gltf" id="11"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf" id="12"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign_2.gltf" id="13"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign_3.gltf" id="14"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_WallLight.gltf" id="15"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Arch.gltf" id="16"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf" id="17"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bottle.gltf" id="18"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bottles.gltf" id="19"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bowl.gltf" id="20"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Cabinet_Corner.gltf" id="21"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Cabinet_Doors.gltf" id="22"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Cabinet_Shelves.gltf" id="23"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Cabinet_Shelves_2.gltf" id="24"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_CanFridge.gltf" id="25"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Chair1.gltf" id="26"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Chair2.gltf" id="27"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_ChukamanSteamer.gltf" id="28"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Corner.gltf" id="29"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Door.gltf" id="30"]
+
+[node name="Restaurant_Kit_Index" type="Node3D"]
+
+[node name="Decoration_Bamboo" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0, 0.0)
+
+[node name="Decoration_Bell" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, 0.0)
+
+[node name="Decoration_Carpet" parent="." instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0, 0, 0.0)
+
+[node name="Decoration_Fish" parent="." instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 0.0)
+
+[node name="Decoration_Light" parent="." instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.0, 0, 0.0)
+
+[node name="Decoration_Painting" parent="." instance=ExtResource("6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 0.0)
+
+[node name="Decoration_Painting_Small" parent="." instance=ExtResource("7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0, 2.5)
+
+[node name="Decoration_Plant1" parent="." instance=ExtResource("8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, 2.5)
+
+[node name="Decoration_Plant2" parent="." instance=ExtResource("9")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0, 0, 2.5)
+
+[node name="Decoration_SakuraFlower" parent="." instance=ExtResource("10")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 2.5)
+
+[node name="Decoration_SakuraTree" parent="." instance=ExtResource("11")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.0, 0, 2.5)
+
+[node name="Decoration_Sign" parent="." instance=ExtResource("12")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 2.5)
+
+[node name="Decoration_Sign_2" parent="." instance=ExtResource("13")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0, 5.0)
+
+[node name="Decoration_Sign_3" parent="." instance=ExtResource("14")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, 5.0)
+
+[node name="Decoration_WallLight" parent="." instance=ExtResource("15")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0, 0, 5.0)
+
+[node name="Environment_Arch" parent="." instance=ExtResource("16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 5.0)
+
+[node name="Environment_Bench" parent="." instance=ExtResource("17")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.0, 0, 5.0)
+
+[node name="Environment_Bottle" parent="." instance=ExtResource("18")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 5.0)
+
+[node name="Environment_Bottles" parent="." instance=ExtResource("19")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0, 7.5)
+
+[node name="Environment_Bowl" parent="." instance=ExtResource("20")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, 7.5)
+
+[node name="Environment_Cabinet_Corner" parent="." instance=ExtResource("21")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0, 0, 7.5)
+
+[node name="Environment_Cabinet_Doors" parent="." instance=ExtResource("22")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 7.5)
+
+[node name="Environment_Cabinet_Shelves" parent="." instance=ExtResource("23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.0, 0, 7.5)
+
+[node name="Environment_Cabinet_Shelves_2" parent="." instance=ExtResource("24")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 7.5)
+
+[node name="Environment_CanFridge" parent="." instance=ExtResource("25")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0, 10.0)
+
+[node name="Environment_Chair1" parent="." instance=ExtResource("26")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, 10.0)
+
+[node name="Environment_Chair2" parent="." instance=ExtResource("27")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0, 0, 10.0)
+
+[node name="Environment_ChukamanSteamer" parent="." instance=ExtResource("28")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 10.0)
+
+[node name="Environment_Counter_Corner" parent="." instance=ExtResource("29")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.0, 0, 10.0)
+
+[node name="Environment_Counter_Door" parent="." instance=ExtResource("30")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 10.0)

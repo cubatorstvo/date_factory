@@ -1,0 +1,46 @@
+{
+  "source": "res://assets/animation/universal_library/source/UAL1_Standard.glb",
+  "source_rm": "res://assets/animation/universal_library/source/UAL1_Standard_RM.glb",
+  "required_aliases": {
+    "idle": [
+      "Idle",
+      "idle",
+      "Idle_Loop"
+    ],
+    "walk": [
+      "Walk",
+      "walk",
+      "Walking"
+    ],
+    "run": [
+      "Run",
+      "run",
+      "Running"
+    ],
+    "sit": [
+      "Sit",
+      "sit",
+      "Sitting"
+    ],
+    "stand": [
+      "Stand",
+      "stand",
+      "StandUp",
+      "stand_up"
+    ],
+    "gesture": [
+      "Gesture",
+      "Talk",
+      "Wave",
+      "Point"
+    ],
+    "react": [
+      "React",
+      "HitReact",
+      "Surprised",
+      "Confused",
+      "Angry"
+    ]
+  },
+  "note": "After editor import, bind clips from UAL1_Standard*.glb into AnimationPlayer on character prefabs."
+}

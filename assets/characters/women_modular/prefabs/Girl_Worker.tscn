@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/characters/women_modular/meshes/individuals/Worker.gltf" id="1_mesh"]
+[ext_resource type="PackedScene" path="res://assets/animation/universal_library/source/UAL1_Standard.glb" id="2_anim"]
+
+[sub_resource type="CapsuleShape3D" id="Shape_1"]
+radius = 0.3
+height = 1.75
+
+[node name="Girl_Worker" type="CharacterBody3D"]
+collision_layer = 2
+metadata/_df_anim_aliases = PackedStringArray("idle", "walk", "run", "sit", "stand", "gesture", "react")
+metadata/_df_anim_source = "res://assets/animation/universal_library/source/UAL1_Standard.glb"
+
+[node name="Visual" parent="." instance=ExtResource("1_mesh")]
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+shape = SubResource("Shape_1")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="UAL_LibrarySource" parent="." instance=ExtResource("2_anim")]
+visible = false
+process_mode = 4

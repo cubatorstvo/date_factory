@@ -50,20 +50,28 @@ static func _play(kind: StringName, bus: StringName) -> void:
 
 static func _profile(kind: StringName) -> Dictionary:
 	match str(kind):
-		"click", "hover", "pop", "step", "info", "ok":
+		"click", "hover", "pop", "info", "ok":
 			return {"frequency": 920.0, "duration": 0.045, "volume": 0.22, "decay": 1.8, "harmonic": 0.15}
-		"confirm", "date_ok", "date", "unlock", "girl", "relation", "event_start", "story":
+		"step":
+			return {"frequency": 180.0 + randf() * 40.0, "duration": 0.05, "volume": 0.14, "decay": 2.2, "harmonic": 0.05}
+		"confirm", "date_ok", "date", "girl", "relation", "story":
 			return {"frequency": 620.0, "duration": 0.16, "volume": 0.32, "decay": 1.1, "harmonic": 0.35}
-		"cancel", "deny", "error", "date_bad", "warn":
+		"unlock", "reveal_big":
+			return {"frequency": 540.0, "duration": 0.32, "volume": 0.40, "decay": 0.85, "harmonic": 0.55}
+		"event_start", "decision":
+			return {"frequency": 480.0, "duration": 0.22, "volume": 0.34, "decay": 1.0, "harmonic": 0.40}
+		"cancel", "deny", "error", "date_bad", "warn", "crisis":
 			return {"frequency": 190.0, "duration": 0.14, "volume": 0.30, "decay": 0.8, "harmonic": 0.50}
 		"buy", "money", "gift":
 			return {"frequency": 760.0, "duration": 0.12, "volume": 0.34, "decay": 1.2, "harmonic": 0.30}
-		"buy_big", "finale", "clone":
+		"buy_big", "finale", "clone", "lab":
 			return {"frequency": 520.0, "duration": 0.28, "volume": 0.38, "decay": 0.7, "harmonic": 0.45}
-		"door", "elevator", "machine", "place":
+		"door", "elevator", "machine", "place", "alarm":
 			return {"frequency": 270.0, "duration": 0.18, "volume": 0.30, "decay": 0.65, "harmonic": 0.65}
-		"land", "event_end":
+		"land", "event_end", "fix":
 			return {"frequency": 360.0, "duration": 0.10, "volume": 0.32, "decay": 1.5, "harmonic": 0.20}
+		"legend_hit":
+			return {"frequency": 140.0, "duration": 0.25, "volume": 0.36, "decay": 0.6, "harmonic": 0.7}
 		_:
 			return {"frequency": 440.0, "duration": 0.08, "volume": 0.25, "decay": 1.0, "harmonic": 0.20}
 

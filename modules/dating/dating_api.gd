@@ -16,6 +16,9 @@ var active_autos: Array = []
 var stats: Dictionary = {"total": 0, "success": 0, "perfect": 0, "fail": 0}
 var last_result: Dictionary = {}
 var automation_level: int = 0 ## 0 manual launch, 1 manager prep, 2 clone, 3 full line
+var auto_risk_mode: String = "standard" ## careful | standard | risk
+var parallel_runs: int = 0 ## successful player+double overlaps resolved
+var last_collision: Dictionary = {}
 
 
 func setup(_game: Node) -> void:
@@ -30,6 +33,9 @@ func reset() -> void:
 	stats = {"total": 0, "success": 0, "perfect": 0, "fail": 0}
 	last_result.clear()
 	automation_level = 0
+	auto_risk_mode = "standard"
+	parallel_runs = 0
+	last_collision.clear()
 
 
 func set_prep(target_id: String, gift_id: StringName, venue_id: StringName, outfit_id: StringName, extra: StringName = &"") -> void:
@@ -48,14 +54,17 @@ func get_prep(target_id: String) -> Dictionary:
 func can_start_manual(target_id: String) -> bool:
 	if not active_manual.is_empty():
 		return false
+	if Game.girls.is_claimed(StringName(target_id)):
+		EventBus.toast("Она уже твоя — свидания не нужны", &"info")
+		return false
 	if Game.economy.get_value(&"attention") < 1.0:
 		EventBus.bottleneck.emit(&"attention", "Не хватает внимания")
 		return false
-	var prep := get_prep(target_id)
+	var prep: Dictionary = get_prep(target_id)
 	if prep.is_empty():
 		EventBus.toast("Сначала подготовь свидание (подарок/образ/место)", &"warn")
 		return false
-	var venue := ContentDB.venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
+	var venue: Dictionary = ContentDB.venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
 	if not Game.facility.is_venue_unlocked(StringName(str(venue.get("id", "kitchen_table")))):
 		EventBus.toast("Место ещё не открыто", &"warn")
 		return false
@@ -68,7 +77,7 @@ func can_start_manual(target_id: String) -> bool:
 func start_manual(target_id: String, is_unique: bool = true) -> bool:
 	if not can_start_manual(target_id):
 		return false
-	var prep := get_prep(target_id)
+	var prep: Dictionary = get_prep(target_id)
 	var venue_cost: float = float(ContentDB.venue(StringName(str(prep.get("venue_id", "kitchen_table")))).get("cost", 0))
 	venue_cost *= Game.upgrades.effect_value("venue_cost_mult", 1.0)
 	var effects: Dictionary = Game.girls.active_effects()
@@ -79,7 +88,7 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 		return false
 	Game.economy.add(&"attention", -1.0, &"manual_date")
 	# consume gift from stock or carried
-	var gift_id := StringName(str(prep.get("gift_id", "")))
+	var gift_id: StringName = StringName(str(prep.get("gift_id", "")))
 	if Game.inventory.carried_item == gift_id:
 		Game.inventory.consume_carried()
 	elif Game.inventory.gift_count(gift_id) > 0:
@@ -98,9 +107,15 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 		"phase": 0,
 		"score": 0.0,
 		"choices": [],
+		"bond_delta": 0.0,
+		"used_traits": [],
+		"used_dialogs": [],
+		"correct": 0,
+		"wrong": 0,
+		"neutral": 0,
 	}
-	if is_unique:
-		Game.girls.mark_met(StringName(target_id))
+	_sync_parallel_risk(str(prep.get("venue_id", "kitchen_table")), "player")
+	Game.girls.mark_met(StringName(target_id))
 	date_ui_open.emit(_manual_payload())
 	_emit_phase()
 	return true
@@ -118,12 +133,14 @@ func _manual_payload() -> Dictionary:
 		"title": _target_title(tid, unique),
 		"phase": int(active_manual.get("phase", 0)),
 		"hints": profile_hints(tid, unique),
+		"prompt": str(active_manual.get("prompt", "")),
 		"emotion": str(active_manual.get("emotion", "neutral")),
+		"bond": float(Game.girls.get_entry(StringName(tid)).get("bond", 0.0)),
 	}
 
 
 func _target_title(id: String, unique: bool) -> String:
-	if unique:
+	if unique or Game.girls.unlocked.has(id):
 		return Game.girls.display_name(StringName(id))
 	return id
 
@@ -137,112 +154,151 @@ func _emit_phase() -> void:
 	date_phase.emit(phase, options)
 
 
-func _build_phase_options(phase: int, target_id: String, unique: bool) -> Array:
-	var likes: Array = []
-	var dislikes: Array = []
-	var tags: Array = []
-	if ContentDB.girls.has(target_id):
-		var def := ContentDB.girl(StringName(target_id))
-		likes = def.get("likes", [])
-		dislikes = def.get("dislikes", [])
-		tags = def.get("tags", [])
+func _build_phase_options(_phase: int, target_id: String, _unique: bool) -> Array:
+	var traits: Array = Game.girls.girl_traits(StringName(target_id))
+	if traits.is_empty():
+		traits = ["attention", "peace", "humor"]
+	var used_traits: Array = active_manual.get("used_traits", []).duplicate()
+	var used_dialogs: Array = active_manual.get("used_dialogs", []).duplicate()
+	var revealed: Array = Game.girls.revealed_traits(StringName(target_id))
+	# Prefer unrevealed traits still available this date.
+	var pick_trait := ""
+	var pool_unseen: Array = []
+	var pool_any: Array = []
+	for t in traits:
+		var tid := str(t)
+		if used_traits.has(tid):
+			continue
+		pool_any.append(tid)
+		if not revealed.has(tid):
+			pool_unseen.append(tid)
+	if not pool_unseen.is_empty():
+		pick_trait = str(pool_unseen[randi() % pool_unseen.size()])
+	elif not pool_any.is_empty():
+		pick_trait = str(pool_any[randi() % pool_any.size()])
 	else:
-		var e: Dictionary = Game.girls.get_entry(StringName(target_id))
-		likes = e.get("likes", ["sincere", "cheap"])
-		dislikes = e.get("dislikes", [])
-	var pool: Array = []
-	match phase:
-		0:
-			pool = [
-				{"id": "sincere_hello", "label": "Искренне поприветствовать", "tags": ["sincere", "calm", "cheap"]},
-				{"id": "compliment", "label": "Сделать комплимент внешности", "tags": ["fashion", "romantic", "media"]},
-				{"id": "boast", "label": "Похвастаться популярностью", "tags": ["media", "luxury", "scandal"]},
-				{"id": "sport_energy", "label": "Предложить активный тон", "tags": ["sport", "useful", "active"]},
-				{"id": "dark_joke", "label": "Мрачная шутка", "tags": ["dark", "weird", "chaos", "scandal"]},
-				{"id": "tech_smalltalk", "label": "Заговорить о технологиях", "tags": ["tech", "science", "space"]},
-			]
-		1:
-			pool = [
-				{"id": "listen", "label": "Слушать внимательно", "tags": ["sincere", "calm", "order"]},
-				{"id": "upgrade_food", "label": "Заказать подороже", "tags": ["luxury", "tasty", "business"]},
-				{"id": "change_topic", "label": "Сменить тему на лёгкую", "tags": ["casual", "cheap", "media"]},
-				{"id": "share_plan", "label": "Рассказать план на вечер", "tags": ["order", "business", "science"]},
-				{"id": "weird_story", "label": "Рассказать странную историю", "tags": ["weird", "dark", "chaos", "space"]},
-				{"id": "train_talk", "label": "Поговорить о тренировках", "tags": ["sport", "useful"]},
-			]
+		pick_trait = str(traits[randi() % traits.size()])
+	used_traits.append(pick_trait)
+	active_manual["used_traits"] = used_traits
+
+	var cards: Array = TraitsContent.dialogues_for(pick_trait)
+	var card: Dictionary = {}
+	var fresh: Array = []
+	for c in cards:
+		if not used_dialogs.has(str(c.get("id", ""))):
+			fresh.append(c)
+	if fresh.is_empty():
+		fresh = cards
+	if fresh.is_empty():
+		card = {
+			"id": "fallback_%s" % pick_trait,
+			"trait": pick_trait,
+			"prompt": "Она смотрит на тебя и ждёт реакции.",
+			"correct": {"id": "fb_c", "label": "Ответить мягко и по делу", "polarity": "correct"},
+			"wrong": {"id": "fb_w", "label": "Отмахнуться", "polarity": "wrong"},
+			"neutral": {"id": "fb_n", "label": "Промолчать пару секунд", "polarity": "neutral"},
+		}
+	else:
+		card = fresh[randi() % fresh.size()].duplicate(true)
+	used_dialogs.append(str(card.get("id", "")))
+	active_manual["used_dialogs"] = used_dialogs
+	var observation: String = str(card.get("observation", card.get("prompt", "")))
+	active_manual["prompt"] = observation
+	active_manual["observation"] = observation
+	active_manual["phase_trait"] = pick_trait
+	active_manual["card_id"] = str(card.get("id", ""))
+	Game.girls.add_observation(StringName(target_id), str(card.get("id", "")), observation, pick_trait, "date")
+
+	var options: Array = []
+	if card.has("options") and card.get("options", []) is Array and not card.get("options", []).is_empty():
+		for raw in card.get("options", []):
+			options.append(_option_from_interpret(card, raw))
+	else:
+		options = [
+			_option_from_polarity(card, "correct"),
+			_option_from_polarity(card, "neutral"),
+			_option_from_polarity(card, "wrong"),
+		]
+	options.shuffle()
+	return options
+
+
+func _option_from_interpret(card: Dictionary, raw: Dictionary) -> Dictionary:
+	var quality: String = str(raw.get("quality", "ok"))
+	var bal: Dictionary = ContentDB.balance
+	var score: float = float(bal.get("date_score_neutral", 0.75))
+	var bond: float = float(bal.get("bond_neutral", 3.0))
+	match quality:
+		"good":
+			score = float(bal.get("date_score_correct", 1.6))
+			bond = float(bal.get("bond_correct", 14.0))
+		"bad":
+			score = float(bal.get("date_score_wrong", 0.15))
+			bond = float(bal.get("bond_wrong", -12.0))
+	return {
+		"id": str(raw.get("id", "%s_x" % card.get("id", "x"))),
+		"label": str(raw.get("label", "...")),
+		"interpret": str(raw.get("interpret", "")),
+		"quality": quality,
+		"trait": str(card.get("trait", "")),
+		"base_score": score,
+		"bond": bond,
+		"prompt": str(card.get("observation", card.get("prompt", ""))),
+	}
+
+
+func _option_from_polarity(card: Dictionary, polarity: String) -> Dictionary:
+	var src: Dictionary = card.get(polarity, {})
+	var quality: String = str(src.get("quality", "ok"))
+	if quality == "ok":
+		match polarity:
+			"correct":
+				quality = "good"
+			"wrong":
+				quality = "bad"
+			_:
+				quality = "ok"
+	var merged: Dictionary = src.duplicate(true)
+	merged["quality"] = quality
+	if not merged.has("interpret"):
+		if polarity == "correct":
+			merged["interpret"] = str(card.get("trait", ""))
+		elif polarity == "wrong":
+			merged["interpret"] = TraitsContent._alt_interpret(str(card.get("trait", "")))
+		else:
+			merged["interpret"] = ""
+	return _option_from_interpret(card, merged)
+
+
+func _knowledge_label(band: String) -> String:
+	match band:
+		"full":
+			return "полное"
+		"high":
+			return "высокое"
+		"medium":
+			return "среднее"
 		_:
-			pool = [
-				{"id": "gift", "label": "Вручить подарок с теплотой", "tags": ["sincere", "romantic", "cheap"]},
-				{"id": "gift_flex", "label": "Вручить подарок как трофей", "tags": ["luxury", "media", "business"]},
-				{"id": "fix", "label": "Исправить мелкую проблему", "tags": ["order", "useful", "tech"]},
-				{"id": "selfie", "label": "Предложить селфи/контент", "tags": ["media", "fashion", "scandal"]},
-				{"id": "quiet_end", "label": "Завершить спокойно", "tags": ["calm", "sincere"]},
-				{"id": "chaos_end", "label": "Завершить абсурдно", "tags": ["chaos", "weird", "absurd", "space"]},
-			]
-	# Score each option vs profile and pick 3 diverse ones
-	var scored: Array = []
-	for o in pool:
-		var s: float = _option_fit(o.get("tags", []), likes, dislikes, tags)
-		var copy: Dictionary = o.duplicate(true)
-		copy["base_score"] = s
-		copy["hint"] = _fit_hint(s)
-		scored.append(copy)
-	scored.sort_custom(func(a, b): return float(a.get("base_score", 0)) > float(b.get("base_score", 0)))
-	# Always include best, worst-ish, and a mid option so player can learn
-	var out: Array = []
-	if scored.size() >= 1:
-		out.append(scored[0])
-	if scored.size() >= 3:
-		out.append(scored[int(scored.size() / 2)])
-		out.append(scored[scored.size() - 1])
-	elif scored.size() == 2:
-		out.append(scored[1])
-	# Shuffle display order so best isn't always first
-	out.shuffle()
-	for o2 in out:
-		o2["label"] = "%s  (%s)" % [str(o2.get("label", "")), str(o2.get("hint", ""))]
-	return out
+			return "низкое"
 
 
-func _option_fit(opt_tags: Array, likes: Array, dislikes: Array, girl_tags: Array) -> float:
-	var score := 0.6
-	for t in opt_tags:
-		if likes.has(t):
-			score += 0.7
-		if dislikes.has(t):
-			score -= 0.8
-		if girl_tags.has(t):
-			score += 0.25
-	return score
-
-
-func _fit_hint(score: float) -> String:
-	if score >= 1.6:
-		return "похоже, зайдёт"
-	if score >= 0.9:
-		return "нейтрально"
-	return "рискованно"
-
-
-func profile_hints(target_id: String, unique: bool) -> PackedStringArray:
+func profile_hints(target_id: String, _unique: bool) -> PackedStringArray:
 	var hints: PackedStringArray = PackedStringArray()
-	var likes: Array = []
-	var dislikes: Array = []
+	var e: Dictionary = Game.girls.get_entry(StringName(target_id))
+	var tier: String = Game.girls.girl_tier(StringName(target_id))
+	hints.append("Тир: %s · связь %.0f%%" % [Loc.tier_name(tier), float(e.get("bond", 0.0))])
+	hints.append("Знание: %s (%.0f%%)" % [
+		_knowledge_label(Game.girls.knowledge_band(StringName(target_id))),
+		Game.girls.automation_confidence(StringName(target_id)) * 100.0,
+	])
+	hints.append("Черты: %s" % Game.girls.known_traits_summary(StringName(target_id)))
+	var quirk: String = Game.girls.girl_quirk(StringName(target_id))
+	if not quirk.is_empty():
+		hints.append("Особенность: %s" % TraitsContent.quirk_label(quirk))
 	if ContentDB.girls.has(target_id):
-		var def := ContentDB.girl(StringName(target_id))
-		hints.append("Тип: %s" % str(def.get("archetype", target_id)))
-		likes = def.get("likes", [])
-		dislikes = def.get("dislikes", [])
-		hints.append(str(def.get("bonus_desc", "")))
-	else:
-		var e: Dictionary = Game.girls.get_entry(StringName(target_id))
-		hints.append("Городской контакт: %s" % str(e.get("archetype", "Кандидатка")))
-		likes = e.get("likes", ["sincere"])
-		dislikes = e.get("dislikes", [])
-	if not likes.is_empty():
-		hints.append("Любит: %s" % Loc.tags_list(likes))
-	if not dislikes.is_empty():
-		hints.append("Не любит: %s" % Loc.tags_list(dislikes))
+		var author := str(ContentDB.girl(StringName(target_id)).get("bonus_desc", ""))
+		if not author.is_empty():
+			hints.append(author)
 	return hints
 
 
@@ -257,19 +313,52 @@ func choose_manual(option_id: String) -> void:
 			break
 	if picked.is_empty():
 		return
-	var add: float = float(picked.get("base_score", picked.get("score", 0.5)))
-	if Game.upgrades.has_effect("bad_choice_mult") and add < 0.7:
-		add *= Game.upgrades.effect_value("bad_choice_mult", 1.0)
+	var quality: String = str(picked.get("quality", "ok"))
+	var interpret: String = str(picked.get("interpret", ""))
+	var trait_id: String = str(picked.get("trait", active_manual.get("phase_trait", "")))
+	var observation_id: String = str(active_manual.get("card_id", picked.get("id", "")))
+	var add: float = float(picked.get("base_score", 0.75))
+	var bond_add: float = float(picked.get("bond", 0.0))
+	if Game.upgrades.has_effect("bad_choice_mult") and quality == "bad":
+		bond_add *= Game.upgrades.effect_value("bad_choice_mult", 1.0)
+	var interp: Dictionary = Game.girls.apply_interpretation(
+		StringName(str(active_manual.get("target_id", ""))),
+		observation_id,
+		interpret,
+		trait_id,
+		quality
+	)
 	active_manual["score"] = float(active_manual.get("score", 0)) + add
-	var emotion := &"neutral"
-	if add >= 1.5:
+	active_manual["bond_delta"] = float(active_manual.get("bond_delta", 0)) + bond_add
+	var bucket: String = "neutral"
+	match quality:
+		"good":
+			bucket = "correct"
+		"bad":
+			bucket = "wrong"
+	active_manual[bucket] = int(active_manual.get(bucket, 0)) + 1
+	var emotion: StringName = &"happy"
+	if quality == "good":
 		emotion = &"delighted"
-	elif add >= 1.0:
-		emotion = &"happy"
-	elif add < 0.5:
+	elif quality == "bad":
 		emotion = &"annoyed"
 	active_manual["emotion"] = str(emotion)
+	var choices: Array = active_manual.get("choices", [])
+	choices.append({
+		"choice_id": option_id,
+		"quality": quality,
+		"interpret": interpret,
+		"trait": trait_id,
+		"score": add,
+		"bond_delta": bond_add,
+		"hypothesis": bool(interp.get("hypothesis", false)),
+		"confirmed": bool(interp.get("confirmed", false)),
+		"rejected": bool(interp.get("rejected", false)),
+		"status": str(interp.get("status", "")),
+	})
+	active_manual["choices"] = choices
 	EventBus.notify.emit("DATE_EMOTION:%s" % str(emotion), &"date_fx")
+	EventBus.notify.emit("DATE_CHOICE_DONE", &"date_fx")
 	active_manual["phase"] = int(active_manual.get("phase", 0)) + 1
 	if int(active_manual["phase"]) >= 3 or Game.upgrades.has_effect("fast_manual"):
 		_finish_manual()
@@ -284,8 +373,9 @@ func _finish_manual() -> void:
 	var base := float(active_manual.get("score", 0))
 	base += _prep_score(target_id, unique, prep)
 	base += Game.upgrades.effect_value("manual_quality")
-	var grade := _grade_from_score(base)
-	var result := _apply_result(target_id, unique, prep, grade, true)
+	var grade: int = _grade_from_score(base)
+	var bond_delta: float = float(active_manual.get("bond_delta", 0.0))
+	var result: Dictionary = _apply_result(target_id, unique, prep, grade, true, bond_delta)
 	Game.facility.release_venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
 	active_manual.clear()
 	date_ui_close.emit()
@@ -295,18 +385,22 @@ func _finish_manual() -> void:
 
 func _prep_score(target_id: String, unique: bool, prep: Dictionary) -> float:
 	var score := 0.0
-	var gift := ContentDB.gift(StringName(str(prep.get("gift_id", ""))))
-	var outfit := ContentDB.outfit(StringName(str(prep.get("outfit_id", "casual"))))
-	var venue := ContentDB.venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
+	var gift: Dictionary = ContentDB.gift(StringName(str(prep.get("gift_id", ""))))
+	var outfit: Dictionary = ContentDB.outfit(StringName(str(prep.get("outfit_id", "casual"))))
+	var venue: Dictionary = ContentDB.venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
 	score += float(gift.get("quality", 1)) * 0.4
 	score += float(outfit.get("quality", 1)) * 0.3
 	score += float(venue.get("quality", 1)) * 0.3
 	score += Game.upgrades.effect_value("gift_quality") * 0.2
 	score += Game.upgrades.effect_value("venue_quality_all") * 0.2
+	if Game.trait_influence != null:
+		score += Game.trait_influence.prep_gift_score_mod(StringName(target_id), gift)
+		score += Game.trait_influence.punctual_prep_bonus(StringName(target_id), venue)
+		score += float(Game.trait_influence.branch_passive_effects().get("gift_quality_bonus", 0.0))
 	var likes: Array = []
 	var dislikes: Array = []
-	if unique:
-		var def := ContentDB.girl(StringName(target_id))
+	if ContentDB.girls.has(target_id):
+		var def: Dictionary = ContentDB.girl(StringName(target_id))
 		likes = def.get("likes", [])
 		dislikes = def.get("dislikes", [])
 		if str(def.get("special_rule", "")) == "hate_cheap_outfit" and str(outfit.get("style", "")) in ["casual", "cheap"]:
@@ -314,8 +408,13 @@ func _prep_score(target_id: String, unique: bool, prep: Dictionary) -> float:
 		if str(def.get("special_rule", "")) == "no_repeat_outfit" and str(prep.get("outfit_id", "")) == str(Game.inventory.last_outfit):
 			score -= 1.0 * Game.upgrades.effect_value("repeat_penalty_mult", 1.0)
 	else:
-		# procedural likes stored on candidate refresh via prepared meta optional
-		pass
+		var e: Dictionary = Game.girls.get_entry(StringName(target_id))
+		likes = e.get("likes", [])
+		dislikes = e.get("dislikes", [])
+		for tid in Game.girls.girl_traits(StringName(target_id)):
+			for tag in TraitsContent.TRAIT_PREP_TAGS.get(str(tid), []):
+				if not likes.has(tag):
+					likes.append(tag)
 	var gift_tags: Array = gift.get("tags", [])
 	var venue_tags: Array = venue.get("tags", [])
 	for t in likes:
@@ -340,36 +439,34 @@ func _grade_from_score(score: float) -> int:
 	return Grade.PERFECT
 
 
-func _apply_result(target_id: String, unique: bool, prep: Dictionary, grade: int, manual: bool) -> Dictionary:
+func _apply_result(target_id: String, unique: bool, prep: Dictionary, grade: int, manual: bool, bond_delta: float = 0.0) -> Dictionary:
 	stats["total"] = int(stats.get("total", 0)) + 1
 	var money := 0.0
 	var pop := 0.0
-	var rel := 0.0
+	var rel := bond_delta
 	var scandal := 0.0
 	match grade:
 		Grade.CATASTROPHE:
 			stats["fail"] = int(stats["fail"]) + 1
 			money = 2.0
 			pop = 0.0
-			rel = 0.0
 			scandal = 4.0
+			if manual:
+				rel -= 4.0
 		Grade.FAIL:
 			stats["fail"] = int(stats["fail"]) + 1
 			money = 5.0
 			pop = 0.5
-			rel = 1.0
 			scandal = 2.0
 		Grade.OK:
 			money = 12.0
 			pop = 1.5
-			rel = 3.0
 			scandal = 0.0
 		Grade.SUCCESS:
 			stats["success"] = int(stats["success"]) + 1
 			Game.total_successful_dates += 1
 			money = 22.0
 			pop = 3.0
-			rel = 6.0
 			scandal = 0.0
 		Grade.PERFECT:
 			stats["perfect"] = int(stats["perfect"]) + 1
@@ -377,8 +474,10 @@ func _apply_result(target_id: String, unique: bool, prep: Dictionary, grade: int
 			Game.total_successful_dates += 1
 			money = 35.0
 			pop = 5.0
-			rel = 10.0
 			scandal = 0.0
+	var tier_mult: float = Game.girls.reward_mult(StringName(target_id))
+	money *= tier_mult
+	pop *= tier_mult
 	var effects: Dictionary = Game.girls.active_effects()
 	money *= float(effects.get("money_mult", 1.0))
 	pop *= float(effects.get("event_pop_mult", 1.0))
@@ -399,13 +498,29 @@ func _apply_result(target_id: String, unique: bool, prep: Dictionary, grade: int
 	if str(ContentDB.venue(StringName(str(prep.get("venue_id", "")))).get("id", "")) == "photo_studio":
 		pop += 2.0
 		scandal += 1.0
+	if Game.trait_influence != null:
+		money = Game.trait_influence.on_date_money_earned(money)
 	Game.economy.add(&"money", money, &"date")
 	Game.economy.add(&"popularity", pop, &"date")
-	Game.economy.add(&"scandal", scandal * Game.upgrades.effect_value("scandal_penalty_mult", 1.0) * float(effects.get("scandal_penalty_mult", 1.0)), &"date")
-	if unique:
-		Game.girls.add_relation(StringName(target_id), rel)
+	var scandal_mult: float = Game.upgrades.effect_value("scandal_penalty_mult", 1.0) * float(effects.get("scandal_penalty_mult", 1.0))
+	if Game.trait_influence != null:
+		scandal_mult *= Game.trait_influence.scandal_mult_for_date(StringName(target_id))
+	Game.economy.add(&"scandal", scandal * scandal_mult, &"date")
+	# Thrift branch C: partial gift value refund on fail.
+	if grade <= Grade.FAIL and Game.trait_influence != null:
+		var refund_ratio: float = float(Game.trait_influence.branch_passive_effects().get("fail_resource_refund", 0.0))
+		if refund_ratio > 0.0:
+			var gift_price: float = float(ContentDB.gift(StringName(str(prep.get("gift_id", "")))).get("price", 0.0))
+			var back: float = gift_price * refund_ratio
+			if back > 0.0:
+				Game.economy.add(&"money", back, &"thrift_branch_c")
+				EventBus.toast("Экономность C: возврат %.0f$ за подарок" % back, &"ok")
+	if not Game.girls.is_claimed(StringName(target_id)):
+		if not manual and rel == 0.0:
+			rel = _auto_bond_from_knowledge(StringName(target_id))
+		Game.girls.add_bond(StringName(target_id), rel)
 	var grade_name: String = str(["катастрофа", "неудача", "нормально", "успешно", "идеально"][grade])
-	var result := {
+	var result: Dictionary = {
 		"target_id": target_id,
 		"unique": unique,
 		"grade": grade,
@@ -413,10 +528,12 @@ func _apply_result(target_id: String, unique: bool, prep: Dictionary, grade: int
 		"money": money,
 		"popularity": pop,
 		"relation": rel,
+		"bond": rel,
 		"scandal": scandal,
 		"manual": manual,
+		"tier_mult": tier_mult,
 	}
-	EventBus.toast("Свидание: %s (+%d$ / +%.1f pop)" % [grade_name, int(money), pop], &"date")
+	EventBus.toast("Свидание: %s (+%d$ / +%.1f pop / связь %+.0f)" % [grade_name, int(money), pop, rel], &"date")
 	Game.girls.refresh_candidates()
 	Game.quests.on_date_finished(result)
 	Game.events.maybe_trigger_after_date(result)
@@ -434,7 +551,7 @@ func _process(delta: float) -> void:
 	_process_autos(delta)
 	_staff_automation(delta)
 	# attention regen
-	var regen := 0.05 * delta + float(Game.girls.active_effects().get("attention_regen", 0.0)) * delta
+	var regen: float = 0.05 * delta + float(Game.girls.active_effects().get("attention_regen", 0.0)) * delta
 	if Game.economy.get_value(&"attention") < Game.economy.max_attention:
 		Game.economy.add(&"attention", regen, &"regen")
 	# scandal passive decay from PR
@@ -481,41 +598,82 @@ func _auto_schedule() -> void:
 			var e: Dictionary = Game.girls.get_entry(StringName(str(c.get("id", ""))))
 			if not bool(e.get("met", false)):
 				continue
-		var gift_id := _pick_gift_for(c)
+		var tid_c := StringName(str(c.get("id", "")))
+		if not Game.girls.allows_auto_date(tid_c):
+			continue
+		if auto_risk_mode == "careful" and Game.girls.automation_confidence(tid_c) < 0.35:
+			continue
+		var gift_id: StringName = _pick_gift_for(c)
 		if gift_id == &"":
 			EventBus.bottleneck.emit(&"gifts", "Нет подарков для автолинии")
 			return
-		var venue_id := _pick_venue()
+		var venue_id: StringName = _pick_venue()
 		var outfit_id: StringName = Game.inventory.equipped_outfit
 		if Game.staff.has_effect("auto_outfit") or Game.upgrades.has_effect("auto_outfit"):
 			outfit_id = Game.inventory.auto_pick_outfit_for(c.get("likes", []))
-		var prep := {"gift_id": str(gift_id), "venue_id": str(venue_id), "outfit_id": str(outfit_id), "extra": ""}
+		var prep: Dictionary = {"gift_id": str(gift_id), "venue_id": str(venue_id), "outfit_id": str(outfit_id), "extra": ""}
 		if Game.inventory.gift_count(gift_id) <= 0:
 			continue
 		Game.inventory.gift_counts[str(gift_id)] = Game.inventory.gift_count(gift_id) - 1
 		var wait: float = float(ContentDB.balance.get("auto_date_seconds", 12)) * Game.upgrades.effect_value("date_time_mult", 1.0)
+		if Game.trait_influence != null:
+			wait *= float(Game.trait_influence.branch_passive_effects().get("auto_date_time_mult", 1.0))
 		var actor := "manager"
 		if automation_level >= 2 and Game.clones.available_count() > 0:
 			actor = Game.clones.assign_to_date()
-		active_autos.append({"target": c, "prep": prep, "wait": wait, "actor": actor})
+		if not Game.facility.reserve_venue(venue_id):
+			# Slot taken mid-pick — try next candidate cycle.
+			if actor.begins_with("clone"):
+				Game.clones.finish_date(actor)
+			Game.inventory.gift_counts[str(gift_id)] = Game.inventory.gift_count(gift_id) + 1
+			continue
+		var entry := {"target": c, "prep": prep, "wait": wait, "actor": actor, "venue_id": str(venue_id)}
+		active_autos.append(entry)
+		if actor.begins_with("clone"):
+			_sync_parallel_risk(str(venue_id), actor)
 		break
 	auto_date_tick.emit(active_autos.size())
 
 
 func _pick_gift_for(c: Dictionary) -> StringName:
 	var likes: Array = c.get("likes", [])
+	var tid := StringName(str(c.get("id", "")))
 	if str(c.get("kind", "")) == "unique":
-		likes = ContentDB.girl(StringName(str(c.get("id", "")))).get("likes", [])
+		likes = ContentDB.girl(tid).get("likes", [])
+	if Game.trait_influence != null and Game.trait_influence.has_active_synergy("precise_gift"):
+		var precise: StringName = Game.trait_influence.pick_precise_gift(likes)
+		if precise != &"":
+			return precise
+	var avoid_luxury: bool = Game.trait_influence != null and Game.trait_influence.auto_avoid_empty_luxury()
+	var thrift_target: bool = Game.trait_influence != null and Game.trait_influence.girl_has_primary(tid, "thrift")
+	# 1) Exact like match (skip empty luxury when thrift@3).
 	for gid in Game.inventory.gift_counts.keys():
 		if int(Game.inventory.gift_counts[gid]) <= 0:
 			continue
-		var tags: Array = ContentDB.gift(StringName(str(gid))).get("tags", [])
+		var gdef: Dictionary = ContentDB.gift(StringName(str(gid)))
+		if avoid_luxury and thrift_target and Game.trait_influence.is_empty_luxury_gift(gdef, likes):
+			continue
+		var tags: Array = gdef.get("tags", [])
 		for t in likes:
 			if tags.has(t):
 				return StringName(str(gid))
-	for gid in Game.inventory.gift_counts.keys():
-		if int(Game.inventory.gift_counts[gid]) > 0:
-			return StringName(str(gid))
+	# 2) Value-oriented fallback for thrift orbit rule.
+	if avoid_luxury and thrift_target:
+		for gid2 in Game.inventory.gift_counts.keys():
+			if int(Game.inventory.gift_counts[gid2]) <= 0:
+				continue
+			var g2: Dictionary = ContentDB.gift(StringName(str(gid2)))
+			if Game.trait_influence.is_empty_luxury_gift(g2, likes):
+				continue
+			if Game.trait_influence.gift_matches_value(g2, likes):
+				return StringName(str(gid2))
+	for gid3 in Game.inventory.gift_counts.keys():
+		if int(Game.inventory.gift_counts[gid3]) <= 0:
+			continue
+		var g3: Dictionary = ContentDB.gift(StringName(str(gid3)))
+		if avoid_luxury and thrift_target and Game.trait_influence.is_empty_luxury_gift(g3, likes):
+			continue
+		return StringName(str(gid3))
 	return &""
 
 
@@ -525,8 +683,8 @@ func _pick_venue() -> StringName:
 	var best := &"kitchen_table"
 	var best_cap := 0
 	for v in unlocked:
-		var def := ContentDB.venue(v)
-		var cap := int(def.get("capacity", 1))
+		var def: Dictionary = ContentDB.venue(v)
+		var cap: int = int(def.get("capacity", 1))
 		if Game.facility.venue_used(v) < cap and cap >= best_cap:
 			best = v
 			best_cap = cap
@@ -552,7 +710,21 @@ func _finish_auto(a: Dictionary) -> void:
 	var prep: Dictionary = a.get("prep", {})
 	var unique := str(target.get("kind", "")) == "unique"
 	var target_id := str(target.get("id", ""))
-	var score := 2.5 + _prep_score(target_id if unique else "", unique, prep)
+	if Game.girls.is_claimed(StringName(target_id)):
+		return
+	var conf: float = Game.girls.automation_confidence(StringName(target_id))
+	if Game.trait_influence != null:
+		conf = clampf(conf + Game.trait_influence.auto_confidence_bonus(StringName(target_id)), 0.05, 1.0)
+	var score := 1.6 + _prep_score(target_id, unique, prep) + conf * 2.2
+	match auto_risk_mode:
+		"careful":
+			score += conf * 0.4
+			if conf < 0.35:
+				score -= 0.8
+		"risk":
+			score += lerpf(-0.6, 0.9, conf)
+		_:
+			pass
 	score += Game.upgrades.effect_value("clone_quality")
 	var actor := str(a.get("actor", "manager"))
 	if actor.begins_with("clone"):
@@ -560,14 +732,232 @@ func _finish_auto(a: Dictionary) -> void:
 		if err != &"":
 			score -= 1.5
 			Game.economy.add(&"scandal", 1.5 * Game.upgrades.effect_value("clone_error_mult", 1.0), &"clone_err")
-			EventBus.toast("Клон ошибся: %s" % str(err), &"warn")
+			# Clone slip hits legend integrity separately from scandal noise.
+			Game.economy.damage_legend(2.5 * Game.upgrades.effect_value("clone_error_mult", 1.0), &"clone_err")
+			EventBus.toast("Дубль ошибся: %s" % str(err), &"warn")
 		Game.clones.finish_date(actor)
-	var grade := _grade_from_score(score)
-	_apply_result(target_id, unique, prep, grade, false)
+	var grade: int = _grade_from_score(score)
+	_apply_result(target_id, unique, prep, grade, false, 0.0)
+	var vid := StringName(str(a.get("venue_id", prep.get("venue_id", "kitchen_table"))))
+	Game.facility.release_venue(vid)
 
 
 func raise_automation(level: int) -> void:
 	automation_level = maxi(automation_level, level)
+
+
+func _mark_parallel_done() -> void:
+	parallel_runs += 1
+	Game.quests.complete("s4_parallel")
+	Game.facility.set_flag("stage_4c", true)
+
+
+func venue_route(venue_id: String) -> String:
+	return str(ContentDB.venue(StringName(venue_id)).get("route", "home"))
+
+
+func _find_clone_overlap(venue_id: String) -> Dictionary:
+	## Returns first overlapping clone auto (same venue or same route), else {}.
+	var route: String = venue_route(venue_id)
+	for a in active_autos:
+		var actor := str(a.get("actor", ""))
+		if not actor.begins_with("clone"):
+			continue
+		var av := str(a.get("venue_id", a.get("prep", {}).get("venue_id", "")))
+		if av == venue_id:
+			return {"kind": "venue", "auto": a, "venue_id": av, "route": venue_route(av)}
+		if venue_route(av) == route and route != "":
+			return {"kind": "route", "auto": a, "venue_id": av, "route": route}
+	# Player manual vs this auto's venue (when spawning clone line).
+	if not active_manual.is_empty():
+		var mv := str(active_manual.get("prep", {}).get("venue_id", ""))
+		if mv == venue_id:
+			return {"kind": "venue", "auto": {}, "venue_id": mv, "route": venue_route(mv), "with_player": true}
+		if venue_route(mv) == route and route != "":
+			return {"kind": "route", "auto": {}, "venue_id": mv, "route": route, "with_player": true}
+	return {}
+
+
+func _sync_parallel_risk(venue_id: String, actor: String) -> void:
+	## Player+double or double+double on same hall/route → managed collision.
+	var hit: Dictionary = {}
+	if actor == "player":
+		hit = _find_clone_overlap(venue_id)
+	elif actor.begins_with("clone"):
+		# Check against other clone autos + player.
+		hit = _find_clone_overlap(venue_id)
+		# Exclude self: if we just appended, overlap may be ourselves — filter.
+		var self_count := 0
+		for a in active_autos:
+			if str(a.get("actor", "")) == actor:
+				self_count += 1
+		if self_count <= 1 and hit.get("auto", {}).get("actor", "") == actor and not bool(hit.get("with_player", false)):
+			# Only collided with self — check player only.
+			if active_manual.is_empty():
+				return
+			var mv := str(active_manual.get("prep", {}).get("venue_id", ""))
+			var route := venue_route(venue_id)
+			if mv != venue_id and venue_route(mv) != route:
+				return
+			hit = {"kind": "venue" if mv == venue_id else "route", "auto": {}, "venue_id": mv, "route": route, "with_player": true}
+	else:
+		return
+	if hit.is_empty():
+		return
+	_resolve_parallel_collision(hit)
+
+
+func _resolve_parallel_collision(hit: Dictionary) -> void:
+	last_collision = hit.duplicate(true)
+	var kind := str(hit.get("kind", "route"))
+	var route := str(hit.get("route", ""))
+	var blurb := "Два «ты» почти пересеклись на маршруте %s." % route
+	if kind == "venue":
+		blurb = "Два «ты» оказались у одного места (%s)." % str(hit.get("venue_id", ""))
+	match auto_risk_mode:
+		"careful":
+			_safe_reroute_overlap(hit)
+			_mark_parallel_done()
+			EventBus.toast("Параллель: маршрут дубля сдвинут, встреча предотвращена", &"ok")
+		"risk":
+			# Allow overlap — legend takes a hit, still counts as parallel run.
+			Game.economy.damage_legend(5.0, &"parallel_meet")
+			Game.economy.add(&"scandal", 1.5, &"parallel_meet")
+			_mark_parallel_done()
+			EventBus.toast("Риск встречи: легенда дрогнула", &"warn")
+		_:
+			# Standard: player chooses via runtime event (or auto-safe if UI blocked).
+			var opened: bool = Game.events.open_runtime_event({
+				"id": "parallel_collision",
+				"name": "Риск параллели",
+				"blurb": blurb + " Как поступишь?",
+				"choices": [
+					{"id": "reroute", "label": "Сдвинуть маршрут дубля", "scandal": 0.0, "legend": 0.0, "money": -10.0},
+					{"id": "delay", "label": "Задержать дубль", "scandal": 0.0, "legend": 0.5, "money": 0.0},
+					{"id": "risk_it", "label": "Идти на риск", "scandal": 2.0, "legend": -6.0, "money": 0.0},
+				],
+			})
+			if opened:
+				# Wire choice side-effects after choose via pending flag.
+				last_collision["awaiting_choice"] = true
+			else:
+				_safe_reroute_overlap(hit)
+				EventBus.toast("Параллель: автосдвиг маршрута (UI занят)", &"info")
+			_mark_parallel_done()
+
+
+func apply_parallel_choice(choice_id: String) -> void:
+	## Called from EventsAPI.choose when last_collision awaiting.
+	if not bool(last_collision.get("awaiting_choice", false)):
+		return
+	last_collision["awaiting_choice"] = false
+	match choice_id:
+		"reroute", "delay":
+			_safe_reroute_overlap(last_collision)
+			if choice_id == "delay":
+				for a in active_autos:
+					if str(a.get("actor", "")).begins_with("clone"):
+						a["wait"] = float(a.get("wait", 1.0)) + 8.0
+		_:
+			pass
+
+
+func _safe_reroute_overlap(hit: Dictionary) -> void:
+	var blocked_route := str(hit.get("route", ""))
+	var blocked_venue := str(hit.get("venue_id", ""))
+	for i in range(active_autos.size()):
+		var a: Dictionary = active_autos[i]
+		if not str(a.get("actor", "")).begins_with("clone"):
+			continue
+		var av := str(a.get("venue_id", a.get("prep", {}).get("venue_id", "")))
+		if av != blocked_venue and venue_route(av) != blocked_route:
+			continue
+		# Release old slot, pick another unlocked venue on a different route.
+		Game.facility.release_venue(StringName(av))
+		var alt := _pick_venue_avoiding(blocked_route, blocked_venue)
+		if Game.facility.reserve_venue(alt):
+			a["venue_id"] = str(alt)
+			var prep: Dictionary = a.get("prep", {})
+			prep["venue_id"] = str(alt)
+			a["prep"] = prep
+			a["wait"] = float(a.get("wait", 1.0)) + 3.0
+		else:
+			# Hold in place longer if no alt.
+			Game.facility.reserve_venue(StringName(av))
+			a["wait"] = float(a.get("wait", 1.0)) + 10.0
+		active_autos[i] = a
+
+
+func _pick_venue_avoiding(blocked_route: String, blocked_venue: String) -> StringName:
+	var unlocked: Array = Game.facility.unlocked_venues
+	var best := &"kitchen_table"
+	var best_cap := -1
+	for v in unlocked:
+		var sid := str(v)
+		if sid == blocked_venue:
+			continue
+		if venue_route(sid) == blocked_route:
+			continue
+		var def: Dictionary = ContentDB.venue(v)
+		var cap: int = int(def.get("capacity", 1))
+		if Game.facility.venue_used(v) < cap and cap >= best_cap:
+			best = v if v is StringName else StringName(sid)
+			best_cap = cap
+	return best
+
+
+func set_auto_risk_mode(mode: String) -> void:
+	if mode in ["careful", "standard", "risk"]:
+		auto_risk_mode = mode
+		EventBus.toast("Режим авто: %s" % _auto_mode_ru(), &"info")
+
+
+func cycle_auto_risk_mode() -> String:
+	match auto_risk_mode:
+		"careful":
+			auto_risk_mode = "standard"
+		"standard":
+			auto_risk_mode = "risk"
+		_:
+			auto_risk_mode = "careful"
+	EventBus.toast("Режим авто: %s" % _auto_mode_ru(), &"info")
+	return auto_risk_mode
+
+
+func _auto_mode_ru() -> String:
+	match auto_risk_mode:
+		"careful":
+			return "осторожный"
+		"risk":
+			return "рисковый"
+		_:
+			return "стандарт"
+
+
+func _auto_bond_from_knowledge(target_id: StringName) -> float:
+	var conf: float = Game.girls.automation_confidence(target_id)
+	var success_chance: float = conf
+	match auto_risk_mode:
+		"careful":
+			success_chance = conf * 0.75
+			if conf < 0.35:
+				# Careful refuses to improvise hard — weak safe bond.
+				return float(ContentDB.balance.get("bond_neutral", 3.0)) * 0.4
+		"risk":
+			success_chance = clampf(conf * 1.25 + 0.1, 0.05, 0.95)
+		_:
+			pass
+	if randf() < success_chance:
+		var mult: float = lerpf(0.2, 0.55, conf)
+		if auto_risk_mode == "risk":
+			mult *= 1.15
+		return float(ContentDB.balance.get("bond_correct", 14.0)) * mult
+	var fail_mult: float = lerpf(0.35, 0.1, conf)
+	if auto_risk_mode == "risk":
+		fail_mult *= 1.35
+	elif auto_risk_mode == "careful":
+		fail_mult *= 0.6
+	return float(ContentDB.balance.get("bond_wrong", -12.0)) * fail_mult
 
 
 func to_dict() -> Dictionary:
@@ -575,6 +965,8 @@ func to_dict() -> Dictionary:
 		"prepared": prepared.duplicate(true),
 		"stats": stats.duplicate(),
 		"automation_level": automation_level,
+		"auto_risk_mode": auto_risk_mode,
+		"parallel_runs": parallel_runs,
 	}
 
 
@@ -582,5 +974,7 @@ func from_dict(data: Dictionary) -> void:
 	prepared = data.get("prepared", {})
 	stats = data.get("stats", stats)
 	automation_level = int(data.get("automation_level", 0))
+	auto_risk_mode = str(data.get("auto_risk_mode", "standard"))
+	parallel_runs = int(data.get("parallel_runs", 0))
 	active_manual.clear()
 	active_autos.clear()

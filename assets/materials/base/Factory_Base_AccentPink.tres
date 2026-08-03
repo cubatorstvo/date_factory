@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "Factory_Base_AccentPink"
+albedo_color = Color(0.85, 0.35, 0.55, 1)
+roughness = 0.5
+metallic = 0.2

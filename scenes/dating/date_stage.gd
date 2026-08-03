@@ -1,5 +1,6 @@
 extends Node3D
 ## Staged 3D date vignette: both sit at the table chairs.
+## Arrival uses ArrivalPipeline (door → walk → seat); never spawn already sitting.
 
 const STAGE_ORIGIN := Vector3(0.0, 40.0, 0.0)
 const GIRL_DOOR_POSITION := Vector3(2.2, 0.0, -1.6)
@@ -18,6 +19,7 @@ var _date_cam: Camera3D
 var _date_ui: CanvasItem
 var _sequence: StringName = &""
 var _sequence_time: float = 0.0
+var _arrival: ArrivalPipeline = ArrivalPipeline.new()
 
 
 func _ready() -> void:
@@ -49,25 +51,24 @@ func _process(delta: float) -> void:
 	_sequence_time += delta
 	match _sequence:
 		&"intro":
-			var walk_t := clampf(_sequence_time / 2.0, 0.0, 1.0)
-			_girl.position = GIRL_DOOR_POSITION.lerp(GIRL_CHAIR_POSITION, walk_t)
+			var step: Dictionary = _arrival.tick(delta)
+			_girl.position = step.get("position", GIRL_DOOR_POSITION)
 			_face_toward_player()
-			if walk_t >= 1.0:
-				_girl.position = GIRL_CHAIR_POSITION
+			if bool(step.get("sitting", false)):
 				if _girl.has_method("set_sitting"):
 					_girl.call("set_sitting", true)
 				else:
-					_girl.scale.y = lerpf(1.0, 0.92, clampf((_sequence_time - 2.0) / 0.25, 0.0, 1.0))
-				if _sequence_time >= 2.3:
-					_finish_intro()
+					_girl.scale.y = lerpf(1.0, 0.92, float(step.get("sit_blend", 0.0)))
+			if bool(step.get("done", false)):
+				_finish_intro()
 		&"outro":
-			var leave_t := clampf(_sequence_time / 1.2, 0.0, 1.0)
+			var leave: Dictionary = _arrival.tick(delta)
+			_girl.position = leave.get("position", GIRL_DOOR_POSITION)
 			if _girl.has_method("set_sitting"):
-				_girl.call("set_sitting", leave_t < 0.2)
+				_girl.call("set_sitting", bool(leave.get("sitting", false)))
 			else:
-				_girl.scale.y = lerpf(0.92, 1.0, minf(leave_t * 4.0, 1.0))
-			_girl.position = GIRL_CHAIR_POSITION.lerp(GIRL_DOOR_POSITION, leave_t)
-			if leave_t >= 1.0:
+				_girl.scale.y = lerpf(0.92, 1.0, 1.0 - float(leave.get("sit_blend", 0.0)))
+			if bool(leave.get("done", false)):
 				_teardown()
 
 
@@ -108,6 +109,7 @@ func _on_open(payload: Dictionary) -> void:
 	_girl.name = "DateGirl"
 	_girl.position = GIRL_DOOR_POSITION
 	_root.add_child(_girl)
+	assert(ArrivalPipeline.assert_starts_at_door(_girl.position, GIRL_DOOR_POSITION, GIRL_CHAIR_POSITION))
 	var target_id := str(payload.get("target_id", "neighbor"))
 	var display := ""
 	if bool(payload.get("unique", true)) or ContentDB.girls.has(target_id):
@@ -134,6 +136,7 @@ func _on_open(payload: Dictionary) -> void:
 	_date_cam.global_position = STAGE_ORIGIN + Vector3(0.15, 1.45, 1.35)
 	_date_cam.look_at(STAGE_ORIGIN + Vector3(0.0, 1.35, -0.9), Vector3.UP)
 	_date_cam.current = true
+	_arrival.begin_intro(GIRL_DOOR_POSITION, GIRL_CHAIR_POSITION, 2.0)
 	_sequence = &"intro"
 	_sequence_time = 0.0
 
@@ -148,7 +151,7 @@ func _add_gift(payload: Dictionary) -> void:
 	var gift := Node3D.new()
 	gift.name = "DateGift_%s" % gift_id
 	gift.position = Vector3(0.15, 0.82, 0.0)
-	var gift_data := ContentDB.gift(gift_id)
+	var gift_data: Dictionary = ContentDB.gift(gift_id)
 	var color_values: Array = gift_data.get("color", [0.95, 0.35, 0.5])
 	PropFactory.attach(gift, &"gift_box", Color(color_values[0], color_values[1], color_values[2]))
 	_root.add_child(gift)
@@ -157,6 +160,7 @@ func _add_gift(payload: Dictionary) -> void:
 func _finish_intro() -> void:
 	if _sequence != &"intro":
 		return
+	_arrival.skip_intro_to_ready()
 	_sequence = &"ready"
 	_sequence_time = 0.0
 	if _girl and is_instance_valid(_girl):
@@ -174,6 +178,8 @@ func _finish_intro() -> void:
 
 func _face_toward_player() -> void:
 	if _girl == null or _root == null:
+		return
+	if not _girl.is_inside_tree() or not _root.is_inside_tree():
 		return
 	var target := _root.to_global(Vector3(0.0, 1.2, 0.9))
 	if _girl.has_method("face_toward"):
@@ -245,6 +251,7 @@ func _add_backdrop(parent: Node3D) -> void:
 func _on_close() -> void:
 	if _sequence == &"outro":
 		return
+	_arrival.begin_outro(GIRL_CHAIR_POSITION, GIRL_DOOR_POSITION, 1.2)
 	_sequence = &"outro"
 	_sequence_time = 0.0
 	if _date_ui and is_instance_valid(_date_ui):

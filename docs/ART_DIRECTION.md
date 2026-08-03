@@ -1,7 +1,9 @@
 # DATE FACTORY — Art Direction (Production Polish)
 
+Критерии готовности UI/SFX/постановок и матрица приёмки: [09_PRESENTATION_QA.md](09_PRESENTATION_QA.md). Этот файл — токены и язык оформления.
+
 ## Fantasy
-**"Romance Industry Luxury"** — сатира на романтическую индустрию как корпорацию: деньги, популярность, KPI любви, гиперроскошь и абсурдный масштаб.
+**"Romance Industry Luxury"** — сатира на романтическую индустрию как личную корпорацию героя: деньги, популярность, KPI любви, гиперроскошь и абсурдный масштаб (не «агентство для клиенток»).
 
 ## Palette
 | Token | Hex | Use |
@@ -50,4 +52,4 @@ Avoid flat purple-on-white. Dark plum panels + gold stroke + hot coral CTAs.
 - SFX: project-generated procedural WAV stubs (replaceable)
 
 ## Temporary 3D
-Capsule mannequins remain until final character art; presentation/polish must not wait for them.
+Capsule mannequins remain until final character art; presentation/polish must not wait for them. Defects for clone QA must stay readable on stubs (contrast hair, large clocks, clear gestures) — see [07_CLONES_AND_LEGEND.md](07_CLONES_AND_LEGEND.md).

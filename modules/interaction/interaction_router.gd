@@ -48,8 +48,7 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 				if str(role) == "pr":
 					Game.quests.complete("s5_pr")
 		"create_clone":
-			if Game.clones.create_clone():
-				Game.quests.complete("s4_clone")
+			Game.clones.begin_acceptance()
 		"buy_upgrade":
 			var uid := StringName(str(payload.get("upgrade_id", "")))
 			if uid != &"":
@@ -76,6 +75,9 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 		"fix_device":
 			Game.economy.add(&"scandal", -1.0, &"fix")
 			EventBus.toast("Устройство перезапущено", &"info")
+		"crisis_fix":
+			if Game.crises != null:
+				Game.crises.apply_fix(str(payload.get("solution_id", "")))
 		"finale_station":
 			_finale_station(str(payload.get("station", "")))
 		"start_finale":
@@ -177,7 +179,7 @@ static func _teleport_player(pos: Vector3) -> void:
 
 
 static func _city_buy_gift(gift_id: StringName, discount: float) -> void:
-	var def := ContentDB.gift(gift_id)
+	var def: Dictionary = ContentDB.gift(gift_id)
 	var cost := float(def.get("cost", 10)) * discount
 	if not Game.economy.try_spend({"money": cost}, &"city_gift"):
 		EventBus.toast("Не хватает денег", &"warn")
@@ -231,7 +233,7 @@ static func _start_prepared_or_neighbor() -> void:
 	if not Game.dating.prepared.has(target):
 		EventBus.toast("Сначала подготовь стол", &"warn")
 		return
-	var unique := ContentDB.girls.has(target)
+	var unique: bool = ContentDB.girls.has(target)
 	Game.dating.start_manual(target, unique)
 
 
@@ -266,8 +268,23 @@ static func _finale_station(station: String) -> void:
 
 static func _start_finale() -> void:
 	if not Game.girls.unlock_algorithm_if_ready():
-		EventBus.toast("Финал ещё не готов: нужны все девушки, популярность, свидания и мегамашина", &"warn")
+		EventBus.toast("Финал ещё не готов: нужны все девушки, популярность, легенда и мегамашина", &"warn")
 		return
+	if not Game.facility.has_flag("finale_core_ready"):
+		EventBus.toast("Сначала активируй ядро мегамашины", &"warn")
+		return
+	# Pre-finale spatial crisis wave (not text-only).
+	if not Game.facility.has_flag("finale_crisis_cleared"):
+		if Game.crises != null and not Game.crises.is_active():
+			Game.facility.set_flag("finale_crisis_pending", true)
+			if Game.crises.begin_crisis("memory_desync") or Game.crises.begin_crisis("lights_out"):
+				EventBus.toast("Перед Алгоритмом — последний пространственный сбой. Устрани ногами.", &"warn")
+				return
+			# If crisis couldn't start (blocked), allow proceed.
+			Game.facility.set_flag("finale_crisis_cleared", true)
+		elif Game.crises != null and Game.crises.is_active():
+			EventBus.toast("Сначала сними активный кризис", &"warn")
+			return
 	if not Game.inventory.own_outfit(&"final_absurd"):
 		Game.inventory.owned_outfits.append(&"final_absurd")
 	Game.inventory.equip_outfit(&"final_absurd")
@@ -276,3 +293,4 @@ static func _start_finale() -> void:
 	Game.dating.set_prep("algorithm", &"romance_cert", &"orbital_hall", &"final_absurd")
 	if Game.dating.start_manual("algorithm", true):
 		Game.quests.complete("s6_finale")
+		Game.facility.set_flag("finale_date_started", true)
