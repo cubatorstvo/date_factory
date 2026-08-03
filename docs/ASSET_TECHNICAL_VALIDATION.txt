@@ -1,0 +1,64 @@
+DATE FACTORY — ASSET TECHNICAL VALIDATION
+Generated: 2026-08-03T23:48:27
+
+
+## Animation libraries
+PASS: exists res://assets/animation/universal_library/source/UAL1_Standard.glb
+PASS: exists res://assets/animation/universal_library/libraries/DF_UAL_Aliases.res
+PASS: exists res://assets/animation/universal_library/libraries/DF_Women_Aliases.res
+PASS: exists res://assets/animation/universal_library/libraries/UAL_CLIP_MAP.json
+PASS: aliases complete res://assets/animation/universal_library/libraries/DF_UAL_Aliases.res
+PASS: aliases complete res://assets/animation/universal_library/libraries/DF_Women_Aliases.res
+
+## Character prefabs
+PASS: prefab mesh res://assets/characters/hero_base/prefabs/Hero.tscn
+PASS: prefab skeleton res://assets/characters/hero_base/prefabs/Hero.tscn
+PASS: prefab aliases 7/7 res://assets/characters/hero_base/prefabs/Hero.tscn
+PASS: prefab play idle res://assets/characters/hero_base/prefabs/Hero.tscn
+PASS: prefab mesh res://assets/characters/hero_base/prefabs/Clone.tscn
+PASS: prefab skeleton res://assets/characters/hero_base/prefabs/Clone.tscn
+PASS: prefab aliases 7/7 res://assets/characters/hero_base/prefabs/Clone.tscn
+PASS: prefab play idle res://assets/characters/hero_base/prefabs/Clone.tscn
+PASS: prefab mesh res://assets/characters/women_modular/prefabs/Girl_Casual.tscn
+PASS: prefab skeleton res://assets/characters/women_modular/prefabs/Girl_Casual.tscn
+PASS: prefab aliases 7/7 res://assets/characters/women_modular/prefabs/Girl_Casual.tscn
+PASS: prefab play idle res://assets/characters/women_modular/prefabs/Girl_Casual.tscn
+PASS: prefab mesh res://assets/characters/women_modular/prefabs/Girl_Formal.tscn
+PASS: prefab skeleton res://assets/characters/women_modular/prefabs/Girl_Formal.tscn
+PASS: prefab aliases 7/7 res://assets/characters/women_modular/prefabs/Girl_Formal.tscn
+PASS: prefab play idle res://assets/characters/women_modular/prefabs/Girl_Formal.tscn
+PASS: prefab mesh res://assets/characters/women_modular/prefabs/Girl_Worker.tscn
+PASS: prefab skeleton res://assets/characters/women_modular/prefabs/Girl_Worker.tscn
+PASS: prefab aliases 7/7 res://assets/characters/women_modular/prefabs/Girl_Worker.tscn
+PASS: prefab play idle res://assets/characters/women_modular/prefabs/Girl_Worker.tscn
+PASS: prefab mesh res://assets/characters/women_modular/prefabs/Manager_Suit.tscn
+PASS: prefab skeleton res://assets/characters/women_modular/prefabs/Manager_Suit.tscn
+PASS: prefab aliases 7/7 res://assets/characters/women_modular/prefabs/Manager_Suit.tscn
+PASS: prefab play idle res://assets/characters/women_modular/prefabs/Manager_Suit.tscn
+
+## Test scenes
+PASS: scene load res://scenes/art/rooms/Apartment_Blockout_Finalized.tscn
+PASS: scene load res://scenes/art/city/City_Street_Slice.tscn
+PASS: scene load res://scenes/art/restaurant/Sushi_Date_Restaurant.tscn
+PASS: scene load res://scenes/art/lab/Clone_Lab_Base.tscn
+PASS: scene load res://scenes/art/factory/Date_Factory_Base.tscn
+PASS: scene load res://scenes/art/testbeds/Character_Testbed.tscn
+
+## Core pack model samples
+PASS: model mesh res://assets/environment/city/downtown_megakit/meshes/Brick_90Angle_L.gltf
+PASS: model materials present res://assets/environment/city/downtown_megakit/meshes/Brick_90Angle_L.gltf
+PASS: model mesh res://assets/environment/factory/kenney_factory/meshes/box-large.glb
+PASS: model materials present res://assets/environment/factory/kenney_factory/meshes/box-large.glb
+PASS: directory models=23 res://assets/environment/lab/scifi_essentials/meshes
+PASS: directory models=100 res://assets/environment/restaurant/sushi_restaurant
+PASS: directory models=103 res://assets/props/food
+PASS: directory models=123 res://assets/environment/interior/house_interior
+PASS: model mesh res://assets/characters/women_modular/meshes/individuals/Casual.gltf
+PASS: model materials present res://assets/characters/women_modular/meshes/individuals/Casual.gltf
+PASS: model mesh res://assets/characters/hero_base/meshes/bodies/Superhero_Male_FullBody.gltf
+PASS: model materials present res://assets/characters/hero_base/meshes/bodies/Superhero_Male_FullBody.gltf
+
+## Summary
+PASS=48 WARNING=0 ERROR=0
+RESULT=PASS
+NOTE: WARNING is not counted as PASS.

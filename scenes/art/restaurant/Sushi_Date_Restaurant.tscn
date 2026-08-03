@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene format=3]
 
 [sub_resource type="BoxMesh" id="FloorMesh"]
 size = Vector3(16, 0.2, 16)
@@ -11,174 +11,192 @@ roughness = 0.85
 size = Vector3(14, 3.5, 0.3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_0"]
-albedo_color = Color(0.35, 0.315, 0.33249999999999996, 1)
+albedo_color = Color(0.35, 0.315, 0.3325, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_1"]
 size = Vector3(14, 3.5, 0.3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_1"]
-albedo_color = Color(0.44999999999999996, 0.40499999999999997, 0.42749999999999994, 1)
+albedo_color = Color(0.45, 0.405, 0.4275, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_2"]
 size = Vector3(0.3, 3.5, 14)
 
 [sub_resource type="StandardMaterial3D" id="Mat_2"]
-albedo_color = Color(0.55, 0.49500000000000005, 0.5225, 1)
+albedo_color = Color(0.55, 0.495, 0.5225, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_3"]
 size = Vector3(0.3, 3.5, 14)
 
 [sub_resource type="StandardMaterial3D" id="Mat_3"]
-albedo_color = Color(0.65, 0.5850000000000001, 0.6174999999999999, 1)
+albedo_color = Color(0.65, 0.585, 0.6175, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_4"]
 size = Vector3(5, 1.1, 1.2)
 
 [sub_resource type="StandardMaterial3D" id="Mat_4"]
-albedo_color = Color(0.75, 0.675, 0.7124999999999999, 1)
+albedo_color = Color(0.75, 0.675, 0.7125, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_5"]
 size = Vector3(1.2, 0.75, 1.2)
 
 [sub_resource type="StandardMaterial3D" id="Mat_5"]
-albedo_color = Color(0.35, 0.315, 0.33249999999999996, 1)
+albedo_color = Color(0.35, 0.315, 0.3325, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_6"]
 size = Vector3(1.2, 0.75, 1.2)
 
 [sub_resource type="StandardMaterial3D" id="Mat_6"]
-albedo_color = Color(0.44999999999999996, 0.40499999999999997, 0.42749999999999994, 1)
+albedo_color = Color(0.45, 0.405, 0.4275, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_7"]
 size = Vector3(1.2, 0.75, 1.2)
 
 [sub_resource type="StandardMaterial3D" id="Mat_7"]
-albedo_color = Color(0.55, 0.49500000000000005, 0.5225, 1)
+albedo_color = Color(0.55, 0.495, 0.5225, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_8"]
 size = Vector3(1.2, 0.75, 1.2)
 
 [sub_resource type="StandardMaterial3D" id="Mat_8"]
-albedo_color = Color(0.65, 0.5850000000000001, 0.6174999999999999, 1)
+albedo_color = Color(0.65, 0.585, 0.6175, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_9"]
 size = Vector3(1.2, 0.75, 1.2)
 
 [sub_resource type="StandardMaterial3D" id="Mat_9"]
-albedo_color = Color(0.75, 0.675, 0.7124999999999999, 1)
+albedo_color = Color(0.75, 0.675, 0.7125, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_10"]
 size = Vector3(3.5, 2.2, 3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_10"]
-albedo_color = Color(0.35, 0.315, 0.33249999999999996, 1)
+albedo_color = Color(0.35, 0.315, 0.3325, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_11"]
 size = Vector3(2, 2.4, 0.3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_11"]
-albedo_color = Color(0.44999999999999996, 0.40499999999999997, 0.42749999999999994, 1)
+albedo_color = Color(0.45, 0.405, 0.4275, 1)
 roughness = 0.7
 
 [sub_resource type="BoxMesh" id="Box_12"]
 size = Vector3(0.5, 0.9, 0.5)
 
 [sub_resource type="StandardMaterial3D" id="Mat_12"]
-albedo_color = Color(0.55, 0.49500000000000005, 0.5225, 1)
+albedo_color = Color(0.55, 0.495, 0.5225, 1)
 roughness = 0.7
 
-[node name="Sushi_Date_Restaurant" type="Node3D"]
+[sub_resource type="Environment" id="Environment_6ttqu"]
+background_mode = 1
+background_color = Color(0.2, 0.22, 0.26, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.65, 0.68, 0.75, 1)
+ambient_light_energy = 0.85
 
-[node name="WorldEnvHint" type="DirectionalLight3D" parent="."]
+[node name="Sushi_Date_Restaurant" type="Node3D" unique_id=86882235]
+
+[node name="WorldEnvHint" type="DirectionalLight3D" parent="." unique_id=277719552]
 transform = Transform3D(0.86, -0.35, 0.37, 0, 0.73, 0.68, -0.51, -0.59, 0.63, 4, 8, 4)
 shadow_enabled = true
 
-[node name="Floor" type="MeshInstance3D" parent="."]
+[node name="Floor" type="MeshInstance3D" parent="." unique_id=340216350]
 mesh = SubResource("FloorMesh")
 surface_material_override/0 = SubResource("FloorMat")
 
-[node name="Title" type="Label3D" parent="."]
+[node name="Title" type="Label3D" parent="." unique_id=98575603]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 0)
 text = "Sushi_Date_Restaurant"
 font_size = 28
 
-[node name="Wall_N" type="MeshInstance3D" parent="."]
+[node name="Wall_N" type="MeshInstance3D" parent="." unique_id=94936196]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -7)
 mesh = SubResource("Box_0")
 surface_material_override/0 = SubResource("Mat_0")
 
-[node name="Wall_S" type="MeshInstance3D" parent="."]
+[node name="Wall_S" type="MeshInstance3D" parent="." unique_id=1685919533]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 7)
 mesh = SubResource("Box_1")
 surface_material_override/0 = SubResource("Mat_1")
 
-[node name="Wall_W" type="MeshInstance3D" parent="."]
+[node name="Wall_W" type="MeshInstance3D" parent="." unique_id=1228493234]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1.75, 0)
 mesh = SubResource("Box_2")
 surface_material_override/0 = SubResource("Mat_2")
 
-[node name="Wall_E" type="MeshInstance3D" parent="."]
+[node name="Wall_E" type="MeshInstance3D" parent="." unique_id=815051356]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 1.75, 0)
 mesh = SubResource("Box_3")
 surface_material_override/0 = SubResource("Mat_3")
 
-[node name="Bar" type="MeshInstance3D" parent="."]
+[node name="Bar" type="MeshInstance3D" parent="." unique_id=966706236]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.55, -3)
 mesh = SubResource("Box_4")
 surface_material_override/0 = SubResource("Mat_4")
 
-[node name="Table_1" type="MeshInstance3D" parent="."]
+[node name="Table_1" type="MeshInstance3D" parent="." unique_id=2117105689]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.375, 1)
 mesh = SubResource("Box_5")
 surface_material_override/0 = SubResource("Mat_5")
 
-[node name="Table_2" type="MeshInstance3D" parent="."]
+[node name="Table_2" type="MeshInstance3D" parent="." unique_id=1690477644]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.375, 1)
 mesh = SubResource("Box_6")
 surface_material_override/0 = SubResource("Mat_6")
 
-[node name="Table_3" type="MeshInstance3D" parent="."]
+[node name="Table_3" type="MeshInstance3D" parent="." unique_id=1149928690]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.375, 4)
 mesh = SubResource("Box_7")
 surface_material_override/0 = SubResource("Mat_7")
 
-[node name="Table_4" type="MeshInstance3D" parent="."]
+[node name="Table_4" type="MeshInstance3D" parent="." unique_id=544748969]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.375, 4)
 mesh = SubResource("Box_8")
 surface_material_override/0 = SubResource("Mat_8")
 
-[node name="Table_5" type="MeshInstance3D" parent="."]
+[node name="Table_5" type="MeshInstance3D" parent="." unique_id=1588713511]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.375, 2.5)
 mesh = SubResource("Box_9")
 surface_material_override/0 = SubResource("Mat_9")
 
-[node name="Kitchen" type="MeshInstance3D" parent="."]
+[node name="Kitchen" type="MeshInstance3D" parent="." unique_id=1765151954]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.1, -4)
 mesh = SubResource("Box_10")
 surface_material_override/0 = SubResource("Mat_10")
 
-[node name="Entrance" type="MeshInstance3D" parent="."]
+[node name="Entrance" type="MeshInstance3D" parent="." unique_id=334519219]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 6.7)
 mesh = SubResource("Box_11")
 surface_material_override/0 = SubResource("Mat_11")
 
-[node name="DateSeat" type="MeshInstance3D" parent="."]
+[node name="DateSeat" type="MeshInstance3D" parent="." unique_id=1896446994]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.45, 1.8)
 mesh = SubResource("Box_12")
 surface_material_override/0 = SubResource("Mat_12")
 
-[node name="KitAnchors" type="Node3D" parent="."]
+[node name="KitAnchors" type="Node3D" parent="." unique_id=876531916]
 
-[node name="Spawn" type="Marker3D" parent="."]
+[node name="Spawn" type="Marker3D" parent="." unique_id=820633057]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4)
+
+[node name="TechCamera" type="Camera3D" parent="." unique_id=432708900]
+transform = Transform3D(0.7498379, -0.2251893, 0.6221197, 0, 0.9402953, 0.34035966, -0.66162163, -0.25521454, 0.70506907, 9.451201, 7.370721, 10.711362)
+current = true
+
+[node name="TechSun" type="DirectionalLight3D" parent="." unique_id=1451083842]
+transform = Transform3D(0.6, -0.47350597, 0.64481944, 0, 0.8060243, 0.59188247, -0.8, -0.35512948, 0.4836146, 8, 12, 6)
+light_energy = 1.15
+
+[node name="TechEnv" type="WorldEnvironment" parent="." unique_id=928474948]
+environment = SubResource("Environment_6ttqu")
