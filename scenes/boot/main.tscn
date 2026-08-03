@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://2hfnkenh2qmj"]
+
+[ext_resource type="PackedScene" path="res://scenes/world/complex.tscn" id="1"]
+[ext_resource type="Script" uid="uid://mki4dpfiupq2" path="res://scenes/boot/main.gd" id="1_6bmkq"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="3"]
+[ext_resource type="Script" uid="uid://b1acnxxo3svx6" path="res://scenes/world/complex_world.gd" id="3_d5gwk"]
+[ext_resource type="PackedScene" path="res://scenes/ui/phone_ui.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/ui/date_ui.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/ui/event_ui.tscn" id="6"]
+[ext_resource type="Script" uid="uid://bwq3ckydfgj70" path="res://scenes/player/player.gd" id="6_trxh6"]
+[ext_resource type="Script" uid="uid://cebycovu0brac" path="res://scenes/dating/date_stage.gd" id="7"]
+[ext_resource type="Script" uid="uid://dno2uqqv46gt1" path="res://scenes/ui/hud.gd" id="8_k6f43"]
+[ext_resource type="PackedScene" uid="uid://78uljtbkgh5a" path="res://scenes/ui/pause_menu.tscn" id="12_uak4p"]
+[ext_resource type="Script" uid="uid://bjos0yslajuk3" path="res://scenes/ui/pause_menu.gd" id="13_vv5ge"]
+[ext_resource type="PackedScene" uid="uid://1xuikf8f6mf4" path="res://scenes/ui/settings_menu.tscn" id="14_vyn3m"]
+[ext_resource type="Script" uid="uid://ckrm4fbjqwcen" path="res://scenes/ui/settings_menu.gd" id="15_ofc6y"]
+[ext_resource type="PackedScene" uid="uid://lss4p6whpkr7" path="res://scenes/ui/reveal_popup.tscn" id="16_23pyc"]
+[ext_resource type="Script" uid="uid://cp1ol34ryv6jj" path="res://scenes/ui/reveal_popup.gd" id="17_pds1k"]
+[ext_resource type="PackedScene" uid="uid://bm83bg5yyy4ve" path="res://scenes/ui/transition_overlay.tscn" id="18_aw1ft"]
+[ext_resource type="Script" uid="uid://c7x373rtakn5t" path="res://scenes/ui/transition_overlay.gd" id="19_dypwd"]
+[ext_resource type="PackedScene" uid="uid://dk4pkk73sqcch" path="res://scenes/ui/finale_ui.tscn" id="20_dcml6"]
+[ext_resource type="Script" uid="uid://j173r61vbqbk" path="res://scenes/ui/finale_ui.gd" id="21_noenc"]
+
+[node name="Main" type="Node3D" unique_id=2014566713]
+script = ExtResource("1_6bmkq")
+
+[node name="ComplexWorld" type="Node3D" parent="." unique_id=178432771 instance=ExtResource("1")]
+script = ExtResource("3_d5gwk")
+
+[node name="DateStage" type="Node3D" parent="." unique_id=878985841]
+script = ExtResource("7")
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=592844367 instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 2)
+script = ExtResource("6_trxh6")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1155930816 instance=ExtResource("3")]
+layer = 5
+script = ExtResource("8_k6f43")
+
+[node name="PhoneUI" type="CanvasLayer" parent="." unique_id=1160264329 instance=ExtResource("4")]
+layer = 15
+
+[node name="DateUI" type="CanvasLayer" parent="." unique_id=1987593225 instance=ExtResource("5")]
+layer = 20
+
+[node name="EventUI" type="CanvasLayer" parent="." unique_id=33757494 instance=ExtResource("6")]
+layer = 25
+
+[node name="PauseMenu" type="CanvasLayer" parent="." unique_id=2044833037 instance=ExtResource("12_uak4p")]
+layer = 70
+script = ExtResource("13_vv5ge")
+
+[node name="SettingsMenu" type="CanvasLayer" parent="." unique_id=300128033 instance=ExtResource("14_vyn3m")]
+layer = 90
+script = ExtResource("15_ofc6y")
+
+[node name="RevealPopup" type="CanvasLayer" parent="." unique_id=1819584174 instance=ExtResource("16_23pyc")]
+layer = 80
+script = ExtResource("17_pds1k")
+
+[node name="TransitionOverlay" type="CanvasLayer" parent="." unique_id=814902529 instance=ExtResource("18_aw1ft")]
+layer = 100
+script = ExtResource("19_dypwd")
+
+[node name="FinaleUI" type="CanvasLayer" parent="." unique_id=86982418 instance=ExtResource("20_dcml6")]
+layer = 85
+script = ExtResource("21_noenc")

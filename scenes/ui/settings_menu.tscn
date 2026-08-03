@@ -1,0 +1,143 @@
+[gd_scene format=3 uid="uid://1xuikf8f6mf4"]
+
+[ext_resource type="Script" uid="uid://ckrm4fbjqwcen" path="res://scenes/ui/settings_menu.gd" id="1_qwcqe"]
+[ext_resource type="Script" path="res://scenes/ui/chrome/ui_fill.gd" id="fill"]
+
+[node name="SettingsMenu" type="CanvasLayer" unique_id=300128033]
+layer = 90
+script = ExtResource("1_qwcqe")
+
+[node name="Dim" type="ColorRect" parent="." unique_id=1870081275]
+script = ExtResource("fill")
+fill_role = &"dim"
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.72)
+
+[node name="Center" type="CenterContainer" parent="." unique_id=81989641]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="PanelContainer" parent="Center" unique_id=1546787538]
+custom_minimum_size = Vector2(620, 0)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="Center/Panel" unique_id=1493215397]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Center/Panel/Content" unique_id=1665609215]
+theme_type_variation = &"ModalTitle"
+layout_mode = 2
+text = "Настройки"
+horizontal_alignment = 1
+
+[node name="Fullscreen" type="CheckBox" parent="Center/Panel/Content" unique_id=183532983]
+layout_mode = 2
+text = "Полный экран"
+
+[node name="InvertY" type="CheckBox" parent="Center/Panel/Content" unique_id=1042166599]
+layout_mode = 2
+button_pressed = true
+text = "Инвертировать ось Y"
+
+[node name="HeadBob" type="CheckBox" parent="Center/Panel/Content" unique_id=852349353]
+layout_mode = 2
+text = "Покачивание камеры"
+
+[node name="MasterLabel" type="Label" parent="Center/Panel/Content" unique_id=526358497]
+layout_mode = 2
+text = "Общая громкость"
+
+[node name="Master" type="HSlider" parent="Center/Panel/Content" unique_id=737411324]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="MusicLabel" type="Label" parent="Center/Panel/Content" unique_id=1340319280]
+layout_mode = 2
+text = "Музыка"
+
+[node name="Music" type="HSlider" parent="Center/Panel/Content" unique_id=502448280]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="SfxLabel" type="Label" parent="Center/Panel/Content" unique_id=710397935]
+layout_mode = 2
+text = "Звуковые эффекты"
+
+[node name="Sfx" type="HSlider" parent="Center/Panel/Content" unique_id=1441025691]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="UiLabel" type="Label" parent="Center/Panel/Content" unique_id=1293681039]
+layout_mode = 2
+text = "Интерфейс"
+
+[node name="Ui" type="HSlider" parent="Center/Panel/Content" unique_id=200361174]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="AmbientLabel" type="Label" parent="Center/Panel/Content" unique_id=1876938728]
+layout_mode = 2
+text = "Окружение"
+
+[node name="Ambient" type="HSlider" parent="Center/Panel/Content" unique_id=127653505]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="SensitivityLabel" type="Label" parent="Center/Panel/Content" unique_id=1363931732]
+layout_mode = 2
+text = "Чувствительность мыши"
+
+[node name="Sensitivity" type="HSlider" parent="Center/Panel/Content" unique_id=1474848101]
+layout_mode = 2
+min_value = 0.5
+max_value = 3.0
+step = 0.01
+value = 1.5
+
+[node name="FovLabel" type="Label" parent="Center/Panel/Content" unique_id=632025744]
+layout_mode = 2
+text = "Поле зрения"
+
+[node name="Fov" type="HSlider" parent="Center/Panel/Content" unique_id=2066923869]
+layout_mode = 2
+min_value = 60.0
+max_value = 110.0
+value = 75.0
+
+[node name="ShakeLabel" type="Label" parent="Center/Panel/Content" unique_id=721700087]
+layout_mode = 2
+text = "Сила тряски камеры"
+
+[node name="Shake" type="HSlider" parent="Center/Panel/Content" unique_id=15668703]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="Actions" type="HBoxContainer" parent="Center/Panel/Content" unique_id=1438628468]
+layout_mode = 2
+alignment = 1
+
+[node name="Apply" type="Button" parent="Center/Panel/Content/Actions" unique_id=707721570]
+custom_minimum_size = Vector2(160, 42)
+layout_mode = 2
+text = "Применить"
+
+[node name="Back" type="Button" parent="Center/Panel/Content/Actions" unique_id=611806423]
+custom_minimum_size = Vector2(160, 42)
+layout_mode = 2
+text = "Назад"

@@ -1,0 +1,55 @@
+[gd_scene format=3 uid="uid://lss4p6whpkr7"]
+
+[ext_resource type="Script" uid="uid://cp1ol34ryv6jj" path="res://scenes/ui/reveal_popup.gd" id="1_ht5hx"]
+[ext_resource type="Script" path="res://scenes/ui/chrome/ui_fill.gd" id="fill"]
+
+[node name="RevealPopup" type="CanvasLayer" unique_id=1819584174]
+layer = 80
+script = ExtResource("1_ht5hx")
+
+[node name="Dim" type="ColorRect" parent="." unique_id=1959431020]
+script = ExtResource("fill")
+fill_role = &"dim"
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="Center" type="CenterContainer" parent="." unique_id=37277361]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="PanelContainer" parent="Center" unique_id=1464307642]
+custom_minimum_size = Vector2(460, 0)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="Center/Panel" unique_id=2043117633]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Icon" type="ColorRect" parent="Center/Panel/Content" unique_id=618228620]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+color = Color(1, 0.3, 0.55, 1)
+
+[node name="Title" type="Label" parent="Center/Panel/Content"]
+theme_type_variation = &"ModalTitle"
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Открыто"
+horizontal_alignment = 1
+
+[node name="Body" type="Label" parent="Center/Panel/Content"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+
+[node name="Skip" type="Button" parent="Center/Panel/Content" unique_id=1286284126]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Продолжить"

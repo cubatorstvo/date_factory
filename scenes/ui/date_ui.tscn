@@ -1,0 +1,67 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/date_ui.gd" id="1"]
+[ext_resource type="Script" path="res://scenes/ui/chrome/ui_fill.gd" id="fill"]
+
+[node name="DateUI" type="CanvasLayer"]
+layer = 20
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Dim" type="ColorRect" parent="Root"]
+script = ExtResource("fill")
+fill_role = &"dim_soft"
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.02, 0.01, 0.04, 0.12)
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -280.0
+offset_right = -24.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="VBox" type="VBoxContainer" parent="Root/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Root/Panel/VBox"]
+theme_type_variation = &"DateTitle"
+layout_mode = 2
+text = "Свидание"
+
+[node name="Hints" type="Label" parent="Root/Panel/VBox"]
+theme_type_variation = &"DateHint"
+layout_mode = 2
+autowrap_mode = 3
+text = "подсказки"
+
+[node name="Emotion" type="Label" parent="Root/Panel/VBox"]
+theme_type_variation = &"DateEmotion"
+layout_mode = 2
+text = "Реакция: нейтрально"
+
+[node name="Phase" type="Label" parent="Root/Panel/VBox"]
+layout_mode = 2
+text = "Фаза"
+
+[node name="Buttons" type="VBoxContainer" parent="Root/Panel/VBox"]
+layout_mode = 2
