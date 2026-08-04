@@ -27,7 +27,7 @@ func reset_for_stage(stage_id: StringName) -> void:
 			_add("s1_money", "2/8 Поработай на кровати, затем зайди в городской магазин", "main")
 			_add("s1_outfit", "3/8 Смени одежду в шкафу", "main")
 			_add("s1_prepare", "4/8 В телефоне назначь свидание (дом или ресторан + время)", "main")
-			_add("s1_city", "5/8 Подготовь дом или выйди к ресторану Two Hearts", "main")
+			_add("s1_city", "5/8 Подготовь стол дома или выйди к ресторану Two Hearts", "main")
 			_add("s1_date", "6/8 Проведи свидание и нажми «Завершить»", "main")
 			_add("s1_contact", "7/8 Заполучи ещё один номер — поговори с любой девушкой", "main")
 			_add("s1_expand", "8/8 Набери 5⭐ и открой дверь расширения (+X)", "main")
@@ -82,7 +82,7 @@ func can_do(action: StringName) -> bool:
 			return is_done("s1_profile")
 		"wardrobe":
 			return is_done("s1_money")
-		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "place_on_table", "upgrade_homeware", "answer_doorbell":
+		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "place_on_table", "upgrade_homeware", "date_wait_skip", "date_wait_stand":
 			return is_done("s1_outfit") and Game.dating.has_scheduled_date()
 		"enter_restaurant", "sit_restaurant":
 			return is_done("s1_prepare") and Game.dating.has_scheduled_date() and Game.dating.schedule.is_restaurant()
@@ -104,7 +104,7 @@ func gate_hint(action: StringName) -> String:
 			return "Сначала открой телефон и посмотри профиль Соседки"
 		"wardrobe":
 			return "Сначала заработай и зайди в городской магазин"
-		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "answer_doorbell":
+		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "date_wait_skip", "date_wait_stand":
 			if not is_done("s1_outfit"):
 				return "Сначала смени одежду в шкафу"
 			return "Сначала назначь свидание в телефоне"

@@ -35,9 +35,6 @@ static func build(parent: Node3D, add_interact: Callable, box: Callable, label: 
 	_night_bar(city, add_interact, box, label, spots, waypoints)
 	_bus_stop(city, add_interact, box, label, spots, waypoints)
 
-	# Entrance home door near apartment
-	add_interact.call(city, Vector3(-6.5, 0, 0), "Подъезд / Домой", "Войти домой", &"go_home", {}, &"door")
-
 	# Cross-street waypoints
 	for x in [-10.0, -16.0, -22.0, -28.0, -34.0, -40.0, -46.0]:
 		waypoints.append(Vector3(x, 0.0, 1.5))

@@ -13,9 +13,15 @@ extends CanvasLayer
 
 var _toast_time: float = 0.0
 var _hint_tween: Tween
+var _wait_panel: Panel = null
+var _wait_label: Label = null
+var _wait_skip_btn: Button = null
+var _wait_stand_btn: Button = null
 
 
 func _ready() -> void:
+	add_to_group("hud")
+	_build_date_wait_panel()
 	resources_label.text = ""
 	goal_label.text = ""
 	status_panel.visible = false
@@ -36,7 +42,10 @@ func _ready() -> void:
 	EventBus.bottleneck.connect(func(k, d): bottleneck_label.text = "Узкое место: %s — %s" % [str(k), d])
 	EventBus.time_changed.connect(func(_d, _m): _refresh())
 	EventBus.date_scheduled.connect(func(_p): _refresh())
-	EventBus.date_cancelled.connect(func(_p): _refresh())
+	EventBus.date_cancelled.connect(func(_p):
+		hide_date_wait()
+		_refresh()
+	)
 	Game.dating.date_ui_open.connect(_on_date_open)
 	Game.dating.date_ui_close.connect(_on_date_close)
 	EventBus.date_finished.connect(func(r):
@@ -49,6 +58,7 @@ func _ready() -> void:
 
 
 func _on_date_open(_p: Dictionary) -> void:
+	hide_date_wait()
 	# One composition during date: hide gameplay HUD so DateUI is alone.
 	var root := get_node_or_null("Root") as Control
 	if root:
@@ -162,6 +172,64 @@ func _on_interaction_hint(text: String) -> void:
 	_hint_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_hint_tween.tween_property(hint_panel, "modulate:a", 1.0, 0.16)
 	_hint_tween.tween_property(hint_panel, "position:y", 638.0, 0.16)
+
+
+func _build_date_wait_panel() -> void:
+	_wait_panel = Panel.new()
+	_wait_panel.name = "DateWaitPanel"
+	_wait_panel.visible = false
+	_wait_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_wait_panel.anchor_left = 0.5
+	_wait_panel.anchor_top = 0.55
+	_wait_panel.anchor_right = 0.5
+	_wait_panel.anchor_bottom = 0.55
+	_wait_panel.offset_left = -180.0
+	_wait_panel.offset_top = -70.0
+	_wait_panel.offset_right = 180.0
+	_wait_panel.offset_bottom = 70.0
+	add_child(_wait_panel)
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.offset_left = 12.0
+	vbox.offset_top = 10.0
+	vbox.offset_right = -12.0
+	vbox.offset_bottom = -10.0
+	vbox.add_theme_constant_override("separation", 8)
+	_wait_panel.add_child(vbox)
+	_wait_label = Label.new()
+	_wait_label.text = "Ждёшь свидание…"
+	_wait_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_wait_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(_wait_label)
+	_wait_skip_btn = Button.new()
+	_wait_skip_btn.text = "Подождать до времени"
+	_wait_skip_btn.pressed.connect(func() -> void:
+		InteractionRouter.wait_for_scheduled_time()
+	)
+	vbox.add_child(_wait_skip_btn)
+	_wait_stand_btn = Button.new()
+	_wait_stand_btn.text = "Встать"
+	_wait_stand_btn.pressed.connect(func() -> void:
+		InteractionRouter.stand_up_from_table()
+	)
+	vbox.add_child(_wait_stand_btn)
+
+
+func show_date_wait(until: int = 0) -> void:
+	if _wait_panel == null:
+		_build_date_wait_panel()
+	if _wait_label:
+		if until > 0:
+			_wait_label.text = "До свидания ещё %d мин. Ждать за столом?" % until
+		else:
+			_wait_label.text = "Ждёшь свидание…"
+	_wait_panel.visible = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func hide_date_wait() -> void:
+	if _wait_panel != null:
+		_wait_panel.visible = false
 
 
 func _legend_band_short() -> String:

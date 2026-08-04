@@ -33,7 +33,7 @@ See `VISUAL_BIBLE.md` for the reusable rules and exact palettes.
 `res://scenes/world/vertical_slice/apartment.tscn`
 
 - Replaced the visible blockout with an authored PACK_018/PACK_017 interior.
-- Added bedroom, kitchen, date-preparation table, wardrobe, gift shelf, plants, table dressing, window treatment, and practical lighting.
+- Added bedroom, kitchen, date-preparation table, wardrobe, plants, table dressing, window treatment, and practical lighting. Gift shelf art may remain but is out of gameplay (shops/inventory); see [DATING_AND_WORLD.md](DATING_AND_WORLD.md).
 - Removed floating world labels and duplicate procedural interaction props while retaining collision and HUD interaction prompts.
 
 ### Street

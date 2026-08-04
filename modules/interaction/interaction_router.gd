@@ -29,8 +29,12 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 		"upgrade_homeware":
 			Game.dating.schedule.upgrade_homeware()
 		"answer_doorbell":
-			if Game.dating.schedule.answer_doorbell():
-				Game.quests.complete("s1_prepare")
+			# Doorbell removed — tip player toward the table.
+			Game.dating.schedule.answer_doorbell()
+		"date_wait_skip":
+			wait_for_scheduled_time()
+		"date_wait_stand":
+			stand_up_from_table()
 		"sit_restaurant", "enter_restaurant":
 			_try_start_restaurant_date()
 		"open_flower_shop":
@@ -96,13 +100,13 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 		"talk_girl":
 			_talk_girl(str(payload.get("girl_id", "")), source)
 		"go_outside":
-			_teleport_player(Vector3(-32.0, 0.05, 2.0), &"street")
+			_travel_to(&"city", &"HomeEntrance")
 			Game.quests.complete("s1_city")
 			if not Game.city.outside_tip_shown:
 				Game.city.outside_tip_shown = true
 				EventBus.toast("Город: найди ресторан Two Hearts по тёплой вывеске.", &"story")
 		"go_home", "go_home_from_neighbor":
-			_teleport_player(Vector3(0.0, 0.05, 2.5), &"apartment")
+			_travel_to(&"home", &"PlayerSpawn")
 		"go_neighbor":
 			_teleport_player(Vector3(0.0, 0.05, -10.0 + 2.5), &"apartment")
 			EventBus.toast("Квартира соседки. Можно заговорить.", &"info")
@@ -172,6 +176,21 @@ static func _talk_girl(girl_id: String, source: Node) -> void:
 		if c.has_method("set_emotion"):
 			c.call("set_emotion", &"happy" if bool(result.get("ok", false)) else &"reject")
 			break
+
+
+static func _travel_to(location_id: StringName, spawn_marker: StringName) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var world := tree.get_first_node_in_group("world_root")
+	if world != null and world.has_method("travel_to"):
+		world.call("travel_to", location_id, spawn_marker)
+		return
+	# Fallback if world travel API is unavailable.
+	if location_id == &"city":
+		_teleport_player(Vector3(-13.0, 0.05, 4.7), &"street")
+	else:
+		_teleport_player(Vector3(-3.6, 0.05, 3.6), &"apartment")
 
 
 static func _teleport_player(pos: Vector3, zone: StringName = &"") -> void:
@@ -280,6 +299,10 @@ static func _place_carried_on_table() -> void:
 		EventBus.toast("На стол нужна еда или напиток из холодильника", &"warn")
 
 
+static var _home_start_in_flight: bool = false
+static var _home_auto_attempted: bool = false
+
+
 static func _try_start_home_date() -> void:
 	if not Game.dating.has_scheduled_date() or not Game.dating.schedule.is_home():
 		EventBus.toast("Сначала назначь домашнее свидание в телефоне", &"warn")
@@ -287,16 +310,164 @@ static func _try_start_home_date() -> void:
 	if Game.inventory.carried_item != &"" and (str(Game.inventory.carried_item).begins_with("food:") or str(Game.inventory.carried_item).begins_with("drink:")):
 		_place_carried_on_table()
 		return
-	# Parity with restaurant: sit early and skip time to the booking.
+	if not Game.dating.schedule.is_table_ready():
+		EventBus.toast("Положи на стол еду и напиток", &"warn")
+		return
 	var until: int = Game.dating.schedule.minutes_until_date()
-	if until > DateSchedule.GRACE_EARLY_MIN and Game.time != null:
-		var sched: Dictionary = Game.dating.schedule.scheduled
-		EventBus.toast("Сел за стол и ждёшь — время бежит к свиданию", &"info")
-		Game.time.skip_to_minutes(int(sched.get("day", 1)), int(sched.get("minutes", 0)))
+	if until < -DateSchedule.WAIT_LEAVE_MIN:
+		Game.dating.schedule.fire_no_show()
+		_hide_date_wait_ui()
+		return
+	_seat_player_at_home_table()
+	Game.dating.schedule.player_seated = true
+	if Game.dating.schedule.is_table_ready():
+		Game.quests.complete("s1_prepare")
+		Game.quests.complete("s1_city")
+	if until > DateSchedule.ARRIVE_EARLY_MIN:
+		_show_date_wait_ui(until)
+		EventBus.toast("Ты сел за стол. Жди или промотай время.", &"info")
+		return
+	# Inside arrive window — start immediately (no doorbell).
+	Game.dating.schedule.girl_arrived = true
+	_home_auto_attempted = true
+	_hide_date_wait_ui()
+	_launch_home_date_now()
+
+
+static func try_auto_start_seated_home_date() -> void:
+	## Called from DatingAPI tick when seated + window + girl_arrived.
+	if _home_start_in_flight or _home_auto_attempted:
+		return
+	if not Game.dating.has_scheduled_date() or not Game.dating.schedule.is_home():
+		return
+	if not Game.dating.schedule.player_seated or not Game.dating.schedule.girl_arrived:
+		return
+	if not Game.dating.active_manual.is_empty():
+		return
+	var until: int = Game.dating.schedule.minutes_until_date()
+	if until > DateSchedule.ARRIVE_EARLY_MIN or until < -DateSchedule.WAIT_LEAVE_MIN:
+		return
+	_home_auto_attempted = true
+	_hide_date_wait_ui()
+	_launch_home_date_now()
+
+
+static func wait_for_scheduled_time() -> void:
+	if not Game.dating.has_scheduled_date() or Game.time == null:
+		return
+	if not Game.dating.schedule.player_seated:
+		EventBus.toast("Сначала сядь за стол", &"info")
+		return
+	var sched: Dictionary = Game.dating.schedule.scheduled
+	Game.time.skip_to_minutes(int(sched.get("day", 1)), int(sched.get("minutes", 0)))
+	Game.dating.schedule.update_arrival_flags()
+	if Game.dating.schedule.is_home():
+		if Game.dating.schedule.should_auto_arrive_home() or Game.dating.schedule.minutes_until_date() <= DateSchedule.ARRIVE_EARLY_MIN:
+			Game.dating.schedule.girl_arrived = true
+			_home_auto_attempted = true
+			_hide_date_wait_ui()
+			_launch_home_date_now()
+		else:
+			_show_date_wait_ui(Game.dating.schedule.minutes_until_date())
+	elif Game.dating.schedule.is_restaurant():
+		_hide_date_wait_ui()
+		var target: String = Game.dating.schedule.target_id()
+		var unique: bool = bool(Game.dating.schedule.scheduled.get("unique", ContentDB.girls.has(target)))
+		_start_date_with_transition(target, unique, &"restaurant")
+
+
+static func stand_up_from_table() -> void:
+	Game.dating.schedule.player_seated = false
+	Game.dating.schedule.girl_arrived = false
+	_home_auto_attempted = false
+	_home_start_in_flight = false
+	_hide_date_wait_ui()
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var player := tree.get_first_node_in_group("player") as Node3D
+	if player != null and is_instance_valid(player):
+		player.set("_date_lock", false)
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	EventBus.toast("Ты встал из-за стола", &"info")
+
+
+static func _launch_home_date_now() -> void:
+	if _home_start_in_flight:
+		return
+	if not Game.dating.has_scheduled_date() or not Game.dating.schedule.is_home():
+		return
+	if not Game.dating.active_manual.is_empty():
+		return
+	_home_start_in_flight = true
 	var target: String = Game.dating.schedule.target_id()
 	var unique: bool = bool(Game.dating.schedule.scheduled.get("unique", ContentDB.girls.has(target)))
-	Game.dating.schedule.player_seated = true
 	_start_date_with_transition(target, unique, &"apartment")
+	# Clear flight flag shortly after (transition may fail start).
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		tree.create_timer(0.6).timeout.connect(func() -> void:
+			_home_start_in_flight = false
+		)
+	else:
+		_home_start_in_flight = false
+
+
+static func _seat_player_at_home_table() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var player := tree.get_first_node_in_group("player") as Node3D
+	if player == null:
+		return
+	var seat_pos := _find_home_hero_seat_global()
+	if seat_pos != Vector3.INF:
+		player.global_position = seat_pos
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity = Vector3.ZERO
+	player.rotation = Vector3(0.0, PI, 0.0)
+	player.set("_date_lock", true)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+static func _find_home_hero_seat_global() -> Vector3:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return Vector3.INF
+	var world := tree.get_first_node_in_group("world_root") as Node
+	if world == null and tree.current_scene != null:
+		world = tree.current_scene.find_child("ComplexWorld", true, false)
+	if world == null:
+		return Vector3.INF
+	var marker := world.find_child("HeroSeat", true, false) as Node3D
+	if marker != null:
+		return marker.global_position + Vector3(0.0, 0.05, 0.0)
+	var chair := world.find_child("DiningChairSouth", true, false) as Node3D
+	if chair != null:
+		return chair.global_position + Vector3(0.0, 0.05, 0.0)
+	return Vector3.INF
+
+
+static func _show_date_wait_ui(until: int) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var hud := tree.get_first_node_in_group("hud") as Node
+	if hud == null and tree.current_scene != null:
+		hud = tree.current_scene.find_child("HUD", true, false)
+	if hud != null and hud.has_method("show_date_wait"):
+		hud.call("show_date_wait", until)
+
+
+static func _hide_date_wait_ui() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var hud := tree.get_first_node_in_group("hud") as Node
+	if hud == null and tree.current_scene != null:
+		hud = tree.current_scene.find_child("HUD", true, false)
+	if hud != null and hud.has_method("hide_date_wait"):
+		hud.call("hide_date_wait")
 
 
 static func _try_start_restaurant_date() -> void:
@@ -304,7 +475,7 @@ static func _try_start_restaurant_date() -> void:
 		EventBus.toast("Сначала назначь свидание в ресторане через телефон", &"warn")
 		return
 	var until: int = Game.dating.schedule.minutes_until_date()
-	if until > DateSchedule.GRACE_EARLY_MIN and Game.time != null:
+	if until > DateSchedule.ARRIVE_EARLY_MIN and Game.time != null:
 		var sched: Dictionary = Game.dating.schedule.scheduled
 		EventBus.toast("Ты сел и ждёшь — время бежит к свиданию", &"info")
 		Game.time.skip_to_minutes(int(sched.get("day", 1)), int(sched.get("minutes", 0)))

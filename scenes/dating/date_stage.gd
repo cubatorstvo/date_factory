@@ -43,6 +43,8 @@ var _girl_chair_position: Vector3 = GIRL_CHAIR_POSITION
 var _hero_chair_position: Vector3 = PLAYER_CHAIR_OFFSET
 var _hero_body: Node3D
 var _place_id: String = "restaurant"
+var _hero_sit_retries: int = 0
+var _hero_sit_armed: bool = false
 
 
 func _ready() -> void:
@@ -75,6 +77,13 @@ func _input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	if _hero_sit_armed and _hero_body != null and is_instance_valid(_hero_body):
+		var seated := _hero_is_seated_alias()
+		if not seated and _hero_sit_retries < 12:
+			_hero_sit_retries += 1
+			_hold_hero_seated(true)
+		elif seated:
+			_hero_sit_armed = false
 	if _girl == null or not is_instance_valid(_girl):
 		return
 	_sequence_time += delta
@@ -406,7 +415,36 @@ func _spawn_hero_body() -> void:
 		if cam:
 			cam.current = false
 			cam.visible = false
-	_hold_hero_seated(true)
+	# CharacterAnimController is not ready yet — deferred sit avoids T-pose.
+	_hero_sit_retries = 0
+	_hero_sit_armed = true
+	call_deferred("_begin_hero_sit")
+
+
+func _begin_hero_sit() -> void:
+	if _hero_body == null or not is_instance_valid(_hero_body):
+		return
+	# Match girl flow: sit_enter then chain/hold to sit_idle.
+	if _hero_body.has_method("play_alias"):
+		if _hero_body.has_method("has_alias") and bool(_hero_body.call("has_alias", "sit_enter")):
+			_hero_body.call("play_alias", &"sit_enter")
+			get_tree().create_timer(0.55).timeout.connect(func() -> void:
+				if is_instance_valid(self):
+					_hold_hero_seated(true)
+			)
+		else:
+			_hold_hero_seated(true)
+	else:
+		_hold_hero_seated(true)
+
+
+func _hero_is_seated_alias() -> bool:
+	if _hero_body == null or not is_instance_valid(_hero_body):
+		return false
+	if not _hero_body.has_method("get_current_alias"):
+		return true
+	var current := str(_hero_body.call("get_current_alias"))
+	return current in ["sit_idle", "seated_gesture", "sit_enter", "gesture", "sit"]
 
 
 func _hold_hero_seated(force_alias: bool = false) -> void:
@@ -418,11 +456,13 @@ func _hold_hero_seated(force_alias: bool = false) -> void:
 	var need_alias := force_alias
 	if _hero_body.has_method("get_current_alias"):
 		var current := str(_hero_body.call("get_current_alias"))
-		if current not in ["sit_idle", "seated_gesture", "sit_enter", "gesture"]:
+		if current not in ["sit_idle", "seated_gesture", "sit_enter", "gesture", "sit"]:
 			need_alias = true
 	if need_alias and _hero_body.has_method("play_alias"):
 		if _hero_body.has_method("has_alias") and bool(_hero_body.call("has_alias", "sit_idle")):
 			_hero_body.call("play_alias", &"sit_idle")
+		elif _hero_body.has_method("has_alias") and bool(_hero_body.call("has_alias", "sit_enter")):
+			_hero_body.call("play_alias", &"sit_enter")
 		elif _hero_body.has_method("has_alias") and bool(_hero_body.call("has_alias", "sit")):
 			_hero_body.call("play_alias", &"sit")
 		else:
@@ -511,6 +551,8 @@ func _clear() -> void:
 	if _hero_body and is_instance_valid(_hero_body):
 		_hero_body.queue_free()
 	_hero_body = null
+	_hero_sit_armed = false
+	_hero_sit_retries = 0
 	if _root and is_instance_valid(_root):
 		_root.queue_free()
 	_root = null

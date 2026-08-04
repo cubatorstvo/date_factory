@@ -1,8 +1,9 @@
 extends Node3D
-## Builds the expandable complex + city district (−X) + neighbor apt (−Z).
+## Builds mutually exclusive locations: home (apartment + unlocked indoor rooms) OR city.
+## City scene is flat for now; future districts can nest under City/Districts/MainStreet.
 
-const APARTMENT_VISUAL_SCENE := "res://scenes/world/vertical_slice/apartment.tscn"
-const STREET_VISUAL_SCENE := "res://scenes/world/vertical_slice/street.tscn"
+const APARTMENT_SCENE := "res://scenes/world/vertical_slice/apartment.tscn"
+const CITY_SCENE := "res://scenes/world/city/city.tscn"
 
 @onready var rooms_root: Node3D = $Rooms
 @onready var props_root: Node3D = $Props
@@ -14,6 +15,8 @@ var _city_girls: Array[Dictionary] = []
 var _city_data: Dictionary = {}
 var _ambient_time: float = 0.0
 var _neighbor_girl: Node3D
+var _current_location: StringName = &"home"
+var _traveling: bool = false
 
 
 func _ready() -> void:
@@ -23,7 +26,9 @@ func _ready() -> void:
 	Game.city.city_changed.connect(_refresh_tutorial_markers)
 	EventBus.stage_changed.connect(func(_s): _rebuild())
 	_add_world_ground()
+	_current_location = &"home"
 	_rebuild()
+	call_deferred("_place_player_at_spawn", &"PlayerSpawn")
 
 
 func _add_world_ground() -> void:
@@ -49,26 +54,102 @@ func _add_world_ground() -> void:
 
 
 func _rebuild() -> void:
-	for c in rooms_root.get_children():
-		c.queue_free()
-	for c in props_root.get_children():
-		c.queue_free()
-	for c in npcs_root.get_children():
-		c.queue_free()
+	_clear_children(rooms_root)
+	_clear_children(props_root)
+	_clear_children(npcs_root)
 	_wanderers.clear()
 	_city_girls.clear()
 	_city_data.clear()
 	_neighbor_girl = null
 	_built_rooms.clear()
 	_update_stage_lighting()
-	for rid in Game.facility.unlocked_rooms:
-		_build_room(rid)
-	_build_city()
-	_spawn_city_npcs()
-	_refresh_harem_npcs()
-	_refresh_tutorial_markers()
+	# Mutually exclusive: only home OR city is in the tree/physics at once.
+	if _current_location == &"city":
+		_build_city()
+		_spawn_city_npcs()
+		_refresh_tutorial_markers()
+	else:
+		for rid in Game.facility.unlocked_rooms:
+			_build_room(rid)
+		_refresh_harem_npcs()
 	# Keep talk-girl meshes visible; only hide true greybox placeholders.
 	_hide_placeholder_meshes(npcs_root)
+
+
+func _clear_children(parent: Node) -> void:
+	if parent == null:
+		return
+	for c in parent.get_children():
+		parent.remove_child(c)
+		c.free()
+
+
+func get_current_location() -> StringName:
+	return _current_location
+
+
+func travel_to(location_id: StringName, spawn_marker: StringName = &"") -> void:
+	if _traveling:
+		return
+	var target := StringName(str(location_id))
+	if target != &"home" and target != &"city":
+		push_warning("ComplexWorld.travel_to: unknown location '%s'" % location_id)
+		return
+	_traveling = true
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if player:
+		player.set("_date_lock", true)
+	var transition: TransitionOverlay = null
+	var scene := get_tree().current_scene
+	if scene:
+		transition = scene.find_child("TransitionOverlay", true, false) as TransitionOverlay
+	var mid := func() -> void:
+		_current_location = target
+		_rebuild()
+		_place_player_at_spawn(spawn_marker)
+		Sfx.set_zone(&"apartment" if target == &"home" else &"street")
+		Sfx.play(&"door")
+	var unlock := func() -> void:
+		_traveling = false
+		if is_instance_valid(player):
+			player.set("_date_lock", false)
+	if transition == null:
+		mid.call()
+		unlock.call()
+		return
+	transition.run_blackout(0.32, mid, 0.42, unlock)
+
+
+func _place_player_at_spawn(spawn_marker: StringName = &"") -> void:
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if player == null or not is_instance_valid(player):
+		return
+	var pos := _resolve_spawn_position(spawn_marker)
+	player.global_position = Vector3(pos.x, 0.05, pos.z)
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity = Vector3.ZERO
+
+
+func _resolve_spawn_position(spawn_marker: StringName = &"") -> Vector3:
+	var marker_name := str(spawn_marker)
+	if marker_name.is_empty():
+		marker_name = "PlayerSpawn" if _current_location == &"home" else "HomeEntrance"
+	if _current_location == &"home":
+		var apt := _built_rooms.get("apartment") as Node3D
+		if apt:
+			var visual := apt.get_node_or_null("ApartmentVisual") as Node3D
+			if visual:
+				var m := visual.get_node_or_null("Markers/%s" % marker_name) as Node3D
+				if m:
+					return m.global_position
+		return Vector3(-3.6, 0.0, 3.6)
+	var city_visual := props_root.find_child("CityVisual", true, false) as Node3D
+	if city_visual:
+		var m2 := city_visual.get_node_or_null("Markers/%s" % marker_name) as Node3D
+		if m2:
+			return m2.global_position
+	# HomeEntrance street-local (17,0,4.7) under CityVisual offset (-30,0,0).
+	return Vector3(-13.0, 0.0, 4.7)
 
 
 func _build_city() -> void:
@@ -85,10 +166,11 @@ func _build_city() -> void:
 	var city_root := _city_data.get("root") as Node3D
 	if city_root:
 		_hide_generated_visuals(city_root)
-		_mount_visual_scene(city_root, STREET_VISUAL_SCENE, "StreetVisual", Vector3(-30.0, 0.0, 0.0))
+		var city_visual := _mount_visual_scene(city_root, CITY_SCENE, "CityVisual", Vector3(-30.0, 0.0, 0.0))
 		_hide_placeholder_meshes(city_root)
 		_hide_placeholder_meshes(props_root)
-		_add_interact(city_root, Vector3(-48.0, 0.0, 4.7), "Подъезд DATE FACTORY", "Вернуться домой", &"go_home", {"art_backed": true}, &"door")
+		var home_p := _marker_local(city_root, city_visual, "Markers/HomeEntrance", Vector3(-13.0, 0.0, 4.7))
+		_add_interact(city_root, home_p, "Мой дом", "Войти домой", &"go_home", {"art_backed": true}, &"door")
 		_add_interact(city_root, Vector3(-19.5, 0.0, -4.35), "Ресторан Two Hearts", "Сесть и ждать свидание", &"sit_restaurant", {"art_backed": true}, &"door")
 		_add_interact(city_root, Vector3(-24.0, 0.0, 2.0), "Цветочный", "Открыть витрину", &"open_flower_shop", {"art_backed": true}, &"shelf")
 		_add_interact(city_root, Vector3(-26.5, 0.0, 1.5), "Ювелирный", "Открыть витрину", &"open_jewelry_shop", {"art_backed": true}, &"shelf")
@@ -102,6 +184,15 @@ func _marker_pos(visual: Node3D, rel_path: String, fallback: Vector3) -> Vector3
 	if marker == null:
 		return fallback
 	return marker.position
+
+
+func _marker_local(parent: Node3D, visual: Node3D, rel_path: String, fallback: Vector3) -> Vector3:
+	if parent == null or visual == null:
+		return fallback
+	var marker := visual.get_node_or_null(rel_path) as Node3D
+	if marker == null:
+		return fallback
+	return parent.to_local(marker.global_position)
 
 
 func _mount_visual_scene(parent: Node3D, scene_path: String, node_name: String, local_position: Vector3 = Vector3.ZERO) -> Node3D:
@@ -150,7 +241,7 @@ func _hide_generated_visuals(parent: Node3D) -> void:
 	var stack: Array[Node] = [parent]
 	while not stack.is_empty():
 		var node: Node = stack.pop_back()
-		if node.name == "StreetVisual" or node.name == "ApartmentVisual":
+		if node.name == "CityVisual" or node.name == "StreetVisual" or node.name == "ApartmentVisual":
 			continue
 		if node is MeshInstance3D or node is Label3D or node is CSGShape3D:
 			(node as Node3D).visible = false
@@ -160,8 +251,10 @@ func _hide_generated_visuals(parent: Node3D) -> void:
 
 func _hide_placeholder_meshes(parent: Node3D) -> void:
 	for node: Node in parent.find_children("*", "MeshInstance3D", true, false):
+		if not is_instance_valid(node) or not node.is_inside_tree():
+			continue
 		var path_s := String(node.get_path())
-		if path_s.contains("StreetVisual") or path_s.contains("ApartmentVisual"):
+		if path_s.contains("CityVisual") or path_s.contains("StreetVisual") or path_s.contains("ApartmentVisual"):
 			continue
 		# Procedural city/harem girls use Capsule/Sphere meshes — keep them visible.
 		if _is_girl_actor_mesh(node):
@@ -177,8 +270,10 @@ func _hide_placeholder_meshes(parent: Node3D) -> void:
 		if mat != null and mat.albedo_color.r > 0.85 and mat.albedo_color.b > 0.55 and mat.albedo_color.g < 0.55:
 			mi.visible = false
 	for label: Node in parent.find_children("*", "Label3D", true, false):
+		if not is_instance_valid(label) or not label.is_inside_tree():
+			continue
 		var lpath := String(label.get_path())
-		if lpath.contains("StreetVisual") or lpath.contains("ApartmentVisual"):
+		if lpath.contains("CityVisual") or lpath.contains("StreetVisual") or lpath.contains("ApartmentVisual"):
 			continue
 		if _is_girl_actor_mesh(label):
 			continue
@@ -372,7 +467,7 @@ func _build_room(room_id: StringName) -> void:
 	_built_rooms[str(room_id)] = root
 	match str(room_id):
 		"apartment":
-			var apt_visual := _mount_visual_scene(root, APARTMENT_VISUAL_SCENE, "ApartmentVisual")
+			var apt_visual := _mount_visual_scene(root, APARTMENT_SCENE, "ApartmentVisual")
 			# Leftover gift shelf mesh from old prep flow — hide without rewriting apartment.tscn.
 			if apt_visual:
 				var gift_shelf := apt_visual.get_node_or_null("Furniture/GiftShelf") as Node3D
@@ -386,7 +481,6 @@ func _build_room(room_id: StringName) -> void:
 			var exit_p := _marker_pos(apt_visual, "Markers/ApartmentExit", Vector3(-4.2, 0, 4.2))
 			var night_p := _marker_pos(apt_visual, "Furniture/NightStand", Vector3(5.15, 0, -2.7))
 			var window_p := _marker_pos(apt_visual, "Markers/WindowAnchor", Vector3(1.55, 0, -4.1))
-			var door_p := _marker_pos(apt_visual, "Markers/ApartmentExit", Vector3(-4.2, 0, 4.2))
 			_add_interact(root, bed_p, "Кровать / Работа", "Поработать", &"job", {}, &"bed")
 			_add_interact(root, wardrobe_p, "Шкаф", "Сменить одежду", &"wardrobe", {}, &"wardrobe")
 			_add_interact(root, fridge_p, "Холодильник", "Взять простое блюдо", &"take_food", {"food_id": "simple_meal"}, &"shelf")
@@ -396,8 +490,8 @@ func _build_room(room_id: StringName) -> void:
 			_add_interact(root, fridge_p + Vector3(0.95, 0, 0.1), "Сок", "Взять сок", &"take_drink", {"drink_id": "juice"}, &"shelf")
 			_add_interact(root, fridge_p + Vector3(1.2, 0, 0), "Вино", "Взять вино", &"take_drink", {"drink_id": "wine"}, &"shelf")
 			_add_interact(root, fridge_p + Vector3(-0.7, 0, 0), "Посуда", "Улучшить сервировку", &"upgrade_homeware", {}, &"shelf")
-			_add_interact(root, table_p, "Кухонный стол", "Положить / начать свидание", &"prepare_and_start", {}, &"table_set")
-			_add_interact(root, door_p + Vector3(0.8, 0, 0), "Входная дверь", "Открыть (звонок)", &"answer_doorbell", {}, &"door")
+			_add_interact(root, table_p, "Кухонный стол", "Положить / сесть / начать", &"prepare_and_start", {}, &"table_set")
+			# Doorbell removed: home dates start at the table after sit/wait.
 			_add_interact(root, night_p, "Телефон на тумбе", "Открыть", &"phone", {}, &"phone_stand")
 			_add_interact(root, wardrobe_p + Vector3(0.7, 0, -0.8), "Дверь расширения", "Расширить", &"expand", {}, &"door")
 			_add_interact(root, exit_p, "На улицу", "Выйти в город", &"go_outside", {}, &"door")

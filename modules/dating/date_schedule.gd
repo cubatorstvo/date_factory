@@ -2,11 +2,16 @@ class_name DateSchedule
 extends RefCounted
 ## Scheduled dates, home table prep, punctuality and reminders.
 
-const GRACE_EARLY_MIN: int = 5
-const GRACE_LATE_MIN: int = 5
+## Window: girl may arrive when until <= ARRIVE_EARLY_MIN (minutes_until: +future, -past).
+const ARRIVE_EARLY_MIN: int = 10
+## 0..NEUTRAL_LATE_MIN late counts as on-time (until in [-NEUTRAL_LATE_MIN, 0]).
+const NEUTRAL_LATE_MIN: int = 10
 const WAIT_LEAVE_MIN: int = 30
 const REMIND_30: int = 30
 const REMIND_5: int = 5
+## Legacy aliases (restaurant / older callers).
+const GRACE_EARLY_MIN: int = ARRIVE_EARLY_MIN
+const GRACE_LATE_MIN: int = NEUTRAL_LATE_MIN
 
 var scheduled: Dictionary = {} ## active booking or {}
 var homeware_level: int = 1
@@ -23,6 +28,7 @@ var player_seated: bool = false
 var date_started_abs: int = -1
 var punctuality_score: float = 0.0
 var punctuality_label: String = ""
+var late_soft_hit: bool = false ## true when started 10–30 min late (bond soft hit applied at start)
 var gift_given_id: String = ""
 var awaiting_finish: bool = false
 var _reminded_30: bool = false
@@ -40,6 +46,7 @@ func reset() -> void:
 	date_started_abs = -1
 	punctuality_score = 0.0
 	punctuality_label = ""
+	late_soft_hit = false
 	gift_given_id = ""
 	awaiting_finish = false
 	_reminded_30 = false
@@ -105,6 +112,7 @@ func book(target: String, place: String, day: int, minutes: int, unique: bool = 
 	date_started_abs = -1
 	punctuality_score = 0.0
 	punctuality_label = ""
+	late_soft_hit = false
 	gift_given_id = ""
 	awaiting_finish = false
 	if place == "home":
@@ -160,10 +168,7 @@ func tick_reminders() -> void:
 		EventBus.date_reminder.emit({"kind": "t5", "until": until, "scheduled": scheduled.duplicate(true)})
 		EventBus.toast("Свидание через 5 минут!", &"warn")
 	if until < -WAIT_LEAVE_MIN and not _no_show_fired:
-		_no_show_fired = true
-		EventBus.toast("Она ушла — ты опоздал больше чем на 30 минут", &"warn")
-		cancel("no_show")
-		Game.economy.add(&"scandal", 1.5, &"date_noshow")
+		fire_no_show()
 
 
 func table_state() -> Dictionary:
@@ -247,13 +252,14 @@ func can_start_home() -> bool:
 	if not is_table_ready():
 		EventBus.toast("Положи на стол еду и напиток", &"warn")
 		return false
-	if not girl_arrived:
-		if girl_at_door:
-			EventBus.toast("Сначала открой дверь — она ждёт", &"warn")
-		elif minutes_until_date() > GRACE_EARLY_MIN:
-			EventBus.toast("Ещё рано — она придёт ближе к времени", &"info")
-		else:
-			EventBus.toast("Подожди звонка в дверь", &"info")
+	var until: int = minutes_until_date()
+	if until < -WAIT_LEAVE_MIN:
+		return false
+	if until > ARRIVE_EARLY_MIN:
+		EventBus.toast("Ещё рано — сядь за стол и подожди ближе к времени", &"info")
+		return false
+	if not player_seated:
+		EventBus.toast("Сядь за стол — она придёт сама", &"info")
 		return false
 	return true
 
@@ -262,7 +268,7 @@ func can_start_restaurant() -> bool:
 	if not has_booking() or not is_restaurant():
 		return false
 	var until: int = minutes_until_date()
-	if until > GRACE_EARLY_MIN:
+	if until > ARRIVE_EARLY_MIN:
 		EventBus.toast("Ещё рано садиться — подожди ближе к времени", &"info")
 		return false
 	if until < -WAIT_LEAVE_MIN:
@@ -270,52 +276,98 @@ func can_start_restaurant() -> bool:
 	return true
 
 
+func should_auto_arrive_home() -> bool:
+	## Girl arrives only when seated + table ready + inside punctuality window.
+	if not has_booking() or not is_home():
+		return false
+	if girl_arrived:
+		return false
+	if not is_table_ready() or not player_seated:
+		return false
+	var until: int = minutes_until_date()
+	return until <= ARRIVE_EARLY_MIN and until >= -WAIT_LEAVE_MIN
+
+
 func update_arrival_flags() -> void:
 	if not has_booking() or Game.time == null:
 		return
 	var until: int = minutes_until_date()
+	if until < -WAIT_LEAVE_MIN and not _no_show_fired:
+		fire_no_show()
+		return
 	if is_home():
-		if until <= 0 and not girl_arrived and not girl_at_door:
-			girl_at_door = true
-			EventBus.toast("Звонок в дверь — она пришла!", &"ok")
-			EventBus.notify.emit("DOORBELL", &"date")
+		girl_at_door = false
+		if should_auto_arrive_home():
+			girl_arrived = true
 	elif is_restaurant():
-		if until <= 0 and not girl_arrived:
+		if until <= ARRIVE_EARLY_MIN and until >= -WAIT_LEAVE_MIN and player_seated:
 			girl_arrived = true
 
 
 func answer_doorbell() -> bool:
-	if not girl_at_door:
-		EventBus.toast("Никого у двери", &"info")
-		return false
+	## Doorbell removed for home dates — keep stub so old interacts do nothing harmful.
+	EventBus.toast("Дверь не нужна — сядь за стол, она придёт сама", &"info")
 	girl_at_door = false
-	girl_arrived = true
-	EventBus.toast("Ты открыл дверь — она вошла", &"ok")
-	return true
+	return false
+
+
+func fire_no_show() -> void:
+	if _no_show_fired or not has_booking():
+		return
+	_no_show_fired = true
+	var tid := StringName(target_id())
+	EventBus.toast("Она ушла — ты опоздал больше чем на 30 минут", &"warn")
+	var bond_wrong: float = float(ContentDB.balance.get("bond_wrong", -12.0))
+	if tid != &"" and Game.girls != null:
+		Game.girls.add_bond(tid, bond_wrong * 3.0)
+	Game.economy.add(&"scandal", 2.5, &"date_noshow")
+	cancel("no_show")
+
+
+func _target_likes_punctuality() -> bool:
+	var tid := StringName(target_id())
+	if tid == &"" or Game.girls == null:
+		return false
+	var primaries: Array = Game.girls.girl_primary_traits(tid)
+	if primaries.has("punctual"):
+		return true
+	var traits: Array = Game.girls.girl_traits(tid)
+	if traits.has("time") or traits.has("punctual"):
+		return true
+	var likes: Array = Game.girls.get_entry(tid).get("likes", [])
+	return likes.has("order")
 
 
 func compute_punctuality(player_ready_abs: int) -> void:
+	late_soft_hit = false
 	if Game.time == null or not has_booking():
-		punctuality_score = 0.0
+		punctuality_score = 1.0
 		punctuality_label = "вовремя"
 		return
 	var target_abs: int = (int(scheduled.get("day", 1)) - 1) * TimeAPI.MINUTES_PER_DAY + int(scheduled.get("minutes", 0))
 	var delta: int = player_ready_abs - target_abs
-	if delta < -GRACE_EARLY_MIN:
-		punctuality_score = 0.4
+	# delta = ready - scheduled (neg = early)
+	if delta < 0:
+		# Early (including beyond ARRIVE_EARLY_MIN if somehow started early).
+		var early_t: float = clampf(float(-delta) / float(ARRIVE_EARLY_MIN), 0.0, 1.0)
+		if _target_likes_punctuality():
+			punctuality_score = lerpf(1.0, 1.2, early_t)
+		else:
+			punctuality_score = lerpf(0.5, 0.7, early_t)
 		punctuality_label = "рано"
-	elif delta <= GRACE_LATE_MIN:
+	elif delta >= 0 and delta <= NEUTRAL_LATE_MIN:
 		punctuality_score = 1.0
 		punctuality_label = "вовремя"
-	elif delta <= 15:
-		punctuality_score = 0.2
-		punctuality_label = "небольшой опоздание"
-	elif delta <= WAIT_LEAVE_MIN:
-		punctuality_score = -0.5
+	elif delta > NEUTRAL_LATE_MIN and delta <= WAIT_LEAVE_MIN:
+		var t: float = clampf(float(delta - NEUTRAL_LATE_MIN) / float(WAIT_LEAVE_MIN - NEUTRAL_LATE_MIN), 0.0, 1.0)
+		punctuality_score = lerpf(-0.6, -1.0, t)
 		punctuality_label = "опоздание"
+		late_soft_hit = true
 	else:
+		# Beyond wait window (should usually cancel before start).
 		punctuality_score = -1.2
-		punctuality_label = "сильное опоздание"
+		punctuality_label = "опоздание"
+		late_soft_hit = true
 	date_started_abs = player_ready_abs
 
 
@@ -338,6 +390,7 @@ func build_prep_from_booking() -> Dictionary:
 		"drink_id": str(table.get("drink_id", "")),
 		"punctuality_score": punctuality_score,
 		"punctuality_label": punctuality_label,
+		"late_soft_hit": late_soft_hit,
 		"scheduled_day": int(scheduled.get("day", 1)),
 		"scheduled_minutes": int(scheduled.get("minutes", 0)),
 	}

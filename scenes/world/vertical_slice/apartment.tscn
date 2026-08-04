@@ -2337,15 +2337,15 @@ size = Vector3(0.2, 3.4, 10)
 material = SubResource("StandardMaterial3D_xqffd")
 
 [node name="WallSouthLeft" type="CSGBox3D" parent="Architecture" unique_id=329800393]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.45, 1.7, 5)
-use_collision = true
-size = Vector3(1.1, 3.4, 0.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.35, 1.7, 5)
+visible = false
+size = Vector3(1.3, 3.4, 0.2)
 material = SubResource("StandardMaterial3D_qnc1n")
 
 [node name="WallSouthRight" type="CSGBox3D" parent="Architecture" unique_id=520455841]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 1.7, 5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 5)
 use_collision = true
-size = Vector3(9.8, 3.4, 0.2)
+size = Vector3(12, 3.4, 0.2)
 material = SubResource("StandardMaterial3D_peumt")
 
 [node name="KitchenBacksplash" type="CSGBox3D" parent="Architecture" unique_id=1466284430]
@@ -2382,10 +2382,15 @@ size = Vector3(0.16, 1.3, 6.7)
 material = SubResource("StandardMaterial3D_unmc0")
 
 [node name="EntryDivider" type="CSGBox3D" parent="Architecture" unique_id=267333016]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.65, 0.7, 3.05)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.65, 1.7, 3.05)
 use_collision = true
-size = Vector3(0.16, 1.4, 3.7)
+size = Vector3(0.16, 3.4, 3.7)
 material = SubResource("StandardMaterial3D_4mq26")
+
+[node name="WallSouthLintel" type="CSGBox3D" parent="Architecture" unique_id=1003623962]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 2.8, 5)
+visible = false
+size = Vector3(1, 1.2, 0.2)
 
 [node name="Furniture" type="Node3D" parent="." unique_id=186986752]
 
@@ -2502,7 +2507,7 @@ transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1
 mesh = SubResource("ArrayMesh_nyl40")
 
 [node name="ExitDoor" parent="Furniture" unique_id=813475045 instance=ExtResource("16_euyv3")]
-transform = Transform3D(-5, 0, -4.371139e-07, 0, 5, 0, 4.371139e-07, 0, -5, -4.2, 0, 4.84)
+transform = Transform3D(-5, 0, -4.371139e-07, 0, 5, 0, 4.371139e-07, 0, -5, -4.2, 0, 4.9)
 
 [node name="Door_4" type="MeshInstance3D" parent="Furniture/ExitDoor" unique_id=325943210]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
@@ -2632,7 +2637,7 @@ omni_range = 3.8
 [node name="Markers" type="Node3D" parent="." unique_id=1088422260]
 
 [node name="PlayerSpawn" type="Marker3D" parent="Markers" unique_id=263029252]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 3.2)
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -3.6, 0, 3.6)
 
 [node name="ApartmentExit" type="Marker3D" parent="Markers" unique_id=132233783]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0, 4.2)
@@ -2655,13 +2660,13 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.55
 [node name="OverviewCamera" type="Marker3D" parent="Markers" unique_id=2090093648]
 transform = Transform3D(-1, 3.2749146e-08, -8.105699e-08, 0, 0.92718387, 0.37460658, 8.742278e-08, 0.37460658, -0.92718387, 0.3, 5.8, 8.5)
 
-[node name="GirlEntrance" type="Marker3D" parent="Markers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.0, 0, 3.8)
+[node name="GirlEntrance" type="Marker3D" parent="Markers" unique_id=451150957]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 3.8)
 
-[node name="GirlSeat" type="Marker3D" parent="Markers"]
+[node name="GirlSeat" type="Marker3D" parent="Markers" unique_id=321523854]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.65, 0, -0.8)
 
-[node name="HeroSeat" type="Marker3D" parent="Markers"]
+[node name="HeroSeat" type="Marker3D" parent="Markers" unique_id=1814633732]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.65, 0, 1.9)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2070083277]

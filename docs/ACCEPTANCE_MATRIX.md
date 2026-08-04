@@ -79,7 +79,22 @@
 - **Статус:** PASS — coach text + `date_hypothesis_taught` flag + feedback после выбора
 
 ### M-3.3 Физический приход (минимум date_stage)
-- UNTESTED — не spawn сидя; уход после
+- **Статус:** PASS (partial) — intro walk / outro leave в `date_stage`; doorbell path для home
+
+### M-3.4 Бронь места и времени в телефоне
+- **Действия:** Phone → место → слот времени → confirm
+- **Данные:** `DateSchedule` booking; HUD countdown
+- **Запрещено:** silent auto-book первого слота при открытом телефоне
+- **Статус:** PASS (2026-08-04 GodotIQ)
+
+### M-3.5 Home prep + optional gift + Finish + 5 факторов
+- **Действия:** еда/напиток на стол → doorbell/start → mid-date gift (опц.) → Finish → панель факторов
+- **Запрещено:** обязательный подарок; авто-закрытие UI после последней фазы
+- **Статус:** PASS (2026-08-04 must-fix)
+
+### M-3.6 Выход к фасаду дома / раздельные локации
+- **Действия:** `go_outside` → спавн у `HomeEntrance`; `go_home` → у двери квартиры; city и home не сосуществуют в tree
+- **Статус:** PASS (2026-08-04 GodotIQ) — `travel_to` exclusive loads; см. [DATING_AND_WORLD.md](DATING_AND_WORLD.md)
 
 ---
 

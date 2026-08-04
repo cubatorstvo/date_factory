@@ -119,6 +119,11 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 		schedule.compute_punctuality(abs_now)
 		prep = schedule.build_prep_from_booking()
 		is_unique = bool(schedule.scheduled.get("unique", is_unique))
+		# Soft bond hit for late arrival (cooler mood at date start).
+		if bool(prep.get("late_soft_hit", false)) or schedule.late_soft_hit:
+			var bond_wrong: float = float(ContentDB.balance.get("bond_wrong", -12.0))
+			Game.girls.add_bond(StringName(target_id), bond_wrong * 0.35)
+			EventBus.toast("Опоздание: она чуть холоднее", &"warn")
 		prepared[target_id] = prep.duplicate(true)
 	else:
 		prep = get_prep(target_id)
@@ -741,6 +746,15 @@ func _process(delta: float) -> void:
 	if schedule != null:
 		schedule.update_arrival_flags()
 		schedule.tick_reminders()
+		# Home: once seated in the arrive window, kick vignette (no doorbell).
+		if (
+			active_manual.is_empty()
+			and schedule.has_booking()
+			and schedule.is_home()
+			and schedule.girl_arrived
+			and schedule.player_seated
+		):
+			InteractionRouter.try_auto_start_seated_home_date()
 	_process_autos(delta)
 	_staff_automation(delta)
 	# attention regen

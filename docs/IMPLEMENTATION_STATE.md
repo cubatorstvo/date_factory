@@ -1,57 +1,83 @@
 # DATE FACTORY — Implementation State
 
-**Обновлено:** 2026-08-03  
-**Сессия:** T8 — баланс / MATRIX / smoke (трек влияния закрыт)
+**Обновлено:** 2026-08-04  
+**Сессия:** Dating overhaul + world facade (документация синхронизирована с кодом)
 
 ---
 
 ## Текущее состояние проекта
 
-Этапы **0–16 VERIFIED**. Блок влияния черт: **T0–T8 VERIFIED**.
+Этапы **0–16 VERIFIED**. Трек влияния черт **T0–T8 VERIFIED**.  
+Переработка свиданий Stage 1 (расписание / home-restaurant / часы / shops / finish + 5 факторов) — **в коде и прогнана по must-fix**.
 
-### Готово (эта сессия)
-- `TraitInfluenceAPI.clamp_effect_bag` — потолки boost / полы cut (§26)  
-- Caps в `branch_passive_effects()` и после merge в `GirlsAPI.active_effects()`  
-- `GirlsAPI.allows_auto_date` + soft confidence penalty для high/unique (§27)  
-- `DatingAPI._auto_schedule` уважает `allows_auto_date`  
-- Smoke: `tools/smoke_trait_influence.gd` (editor: `T8_SMOKE_OK`)  
-- MATRIX M-17 + PLAN/STATE закрыты  
+Подробности систем: [DATING_AND_WORLD.md](DATING_AND_WORLD.md).
 
-### Playtest M-17 (2026-08-03)
-- Headless: `M17_PLAYTEST_OK` (`tools/playtest_m17.gd`), `TRAIT_INFLUENCE_SMOKE_OK`, `SMOKE_OK`
-- Фикс compile: явные типы `revealed_ok: bool`, `quirk: String` (ломали `Game` / attach)
-- GodotIQ editor runtime attach: debugger не активен → UI play через MCP недоступен  
+### Готово (dating overhaul)
+
+- `TimeAPI` + HUD часы / countdown брони  
+- Phone: место → слоты времени (телефон закрывается перед Events-карточкой; без silent first-slot)  
+- Home prep: еда/напиток carry → стол, homeware, doorbell, start у стола  
+- Restaurant: sit/wait, charge, early time skip  
+- Shops → `ShopUI`; gift shelves сняты из flow  
+- Mid-date optional gift once; Finish button; 5-factor result panel  
+- Home vignette = apartment art; Hero mesh на `HeroSeat`  
+- Quests Stage 1 переписаны под book/prep/finish  
+- Коммит ветки: dating rewrite (см. git log `Rewrite dating around schedule…`)
+
+### В мире (city/apartment split)
+
+- `ComplexWorld.travel_to` — взаимоисключающие локации `home` / `city`  
+- `scenes/world/city/city.tscn` + фасад `PlayerHomeFacade` / `HomeEntrance`  
+- Спавны: выход → HomeEntrance; вход → apartment `PlayerSpawn` у двери  
+- Южная стена квартиры закрыта (дверный проём сохранён)  
+- Playtest GodotIQ: exclusive loads + round-trip clean  
 
 ### Следующий gap
-Контент/полировка или ручной UI-play в редакторе (телефон Орбита), если нужен визуальный QA.
+
+1. Ручной visual QA: фасад «Мой дом», поза Hero за столом, home prep → doorbell → date  
+2. Каркас кварталов города (`Districts/*`) наполнять по мере контента  
+3. Не начинать новый крупный трек без явного запроса  
 
 ---
 
 ## Завершённые этапы
+
 0–16 = VERIFIED  
 T0–T8 = VERIFIED  
+Dating overhaul must-fix = VERIFIED (GodotIQ playtest 2026-08-04)  
+City/apartment location split = VERIFIED (GodotIQ playtest 2026-08-04)
 
 ## Текущий этап
-**Трек влияния черт — закрыт**
+
+**Stage 1 world + dating loop — playable; visual QA / content polish**
 
 ## Следующий
-Runtime playtest / контент по желанию — см. [ACCEPTANCE_MATRIX.md](ACCEPTANCE_MATRIX.md) M-17
+
+Visual QA и polish по желанию; обновлять [DATING_AND_WORLD.md](DATING_AND_WORLD.md) при новых районах.
 
 ---
 
 ## Принятые решения
+
 - Одна доктрина за раз; снятие = реорганизация.  
 - Резерв расширения нельзя вернуть в карман.  
 - Уникалки усиливают знакомые деревья, не дают лишних единиц влияния.  
-- `from_dict` → `recount(false)`: live girls — source of truth для counts.  
 - Mult caps: money/event_pop ≤1.45; gift/staff ≥0.70; scandal/clone_error ≥0.55.  
+- Свидание: schedule-first; gift optional; гипотезы диалогов сохраняются.  
+- Live DateGirl = `DateGirl_UAL` (не Proxy POC).  
+- City/apartment: не `change_scene` всего Main — слот локации в `ComplexWorld`.  
+- Godot целевой: **4.7.1** (не 4.4.1).  
 
 ## Известные проблемы
-- 3D капсула stub  
-- GodotIQ runtime attach иногда не поднимается  
-- Полный in-game playtest M-17 всё ещё зависит от stable runtime  
+
+- 3D capsule player в free-roam (на свидании — Hero mesh)  
+- GodotIQ runtime attach иногда нестабилен  
+- Proxy POC и diag tools — untracked WIP, не часть live path  
+- После `save_scene` всегда проверять root (`City` / `Apartment`)  
 
 ## Инструкция новой сессии
-1. STATE: трек T0–T8 закрыт  
-2. Не открывать новый этап влияния без явного запроса  
-3. При регрессии: `tools/smoke_trait_influence.gd` или editor exec T8 smoke  
+
+1. Прочитать [DATING_AND_WORLD.md](DATING_AND_WORLD.md) и этот STATE  
+2. Не откатывать dating schedule-first / `travel_to` без запроса  
+3. Регрессия: `tools/smoke_trait_influence.gd`, `tools/verify_dating_overhaul.gd`; door flow home↔city  
+  
