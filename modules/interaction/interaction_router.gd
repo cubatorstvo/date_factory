@@ -30,8 +30,8 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			if not _prepare_default_date():
 				return
 			Game.quests.complete("s1_prepare")
-			_start_prepared_or_neighbor()
-			Game.quests.complete("s1_date")
+			EventBus.toast("Столик забронирован. Выйди на улицу и найди розовую вывеску Two Hearts.", &"story")
+			EventBus.notify.emit("DATE_ROUTE_READY", &"objective")
 		"phone":
 			EventBus.notify.emit("PHONE_TOGGLE", &"ui")
 		"expand":
@@ -88,16 +88,21 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			Game.quests.complete("s4_parallel")
 		"talk_girl":
 			_talk_girl(str(payload.get("girl_id", "")), source)
+		"enter_restaurant":
+			if Game.dating.prepared.is_empty():
+				EventBus.toast("Сначала подготовь свидание дома.", &"warn")
+				return
+			_start_prepared_or_neighbor()
 		"go_outside":
-			_teleport_player(Vector3(-8.0, 0.05, 0.0))
+			_teleport_player(Vector3(-47.0, 0.05, 4.7), &"street")
 			Game.quests.complete("s1_city")
 			if not Game.city.outside_tip_shown:
 				Game.city.outside_tip_shown = true
 				EventBus.toast("Город: ищи девушек. Q — телефон. Жёлтый ! — цель обучения.", &"story")
 		"go_home", "go_home_from_neighbor":
-			_teleport_player(Vector3(0.0, 0.05, 2.5))
+			_teleport_player(Vector3(0.0, 0.05, 2.5), &"apartment")
 		"go_neighbor":
-			_teleport_player(Vector3(0.0, 0.05, -10.0 + 2.5))
+			_teleport_player(Vector3(0.0, 0.05, -10.0 + 2.5), &"apartment")
 			EventBus.toast("Квартира соседки. Можно заговорить.", &"info")
 		"neighbor_look":
 			EventBus.toast("Уютно. Пахнет ламинатом и надеждами.", &"info")
@@ -167,15 +172,29 @@ static func _talk_girl(girl_id: String, source: Node) -> void:
 			break
 
 
-static func _teleport_player(pos: Vector3) -> void:
+static func _teleport_player(pos: Vector3, zone: StringName = &"") -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return
 	var player := tree.get_first_node_in_group("player") as Node3D
 	if player == null:
 		return
+	player.set("_date_lock", true)
+	var transition: TransitionOverlay = null
+	if tree.current_scene:
+		transition = tree.current_scene.find_child("TransitionOverlay", true, false) as TransitionOverlay
+	if transition:
+		await transition.fade_out(0.32)
 	player.global_position = pos
-	Sfx.play_ui(&"door")
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity = Vector3.ZERO
+	if zone != &"":
+		Sfx.set_zone(zone)
+	Sfx.play(&"door")
+	await tree.process_frame
+	if transition:
+		await transition.fade_in(0.42)
+	player.set("_date_lock", false)
 
 
 static func _city_buy_gift(gift_id: StringName, discount: float) -> void:
@@ -234,7 +253,32 @@ static func _start_prepared_or_neighbor() -> void:
 		EventBus.toast("Сначала подготовь стол", &"warn")
 		return
 	var unique: bool = ContentDB.girls.has(target)
-	Game.dating.start_manual(target, unique)
+	_start_date_with_transition(target, unique)
+
+
+static func _start_date_with_transition(target: String, unique: bool) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var player := tree.get_first_node_in_group("player") as Node3D
+	if player:
+		player.set("_date_lock", true)
+	var transition: TransitionOverlay = null
+	if tree.current_scene:
+		transition = tree.current_scene.find_child("TransitionOverlay", true, false) as TransitionOverlay
+	if transition:
+		await transition.fade_out(0.38)
+	Sfx.set_zone(&"restaurant")
+	if not Game.dating.start_manual(target, unique):
+		Sfx.set_zone(&"street")
+		if transition:
+			await transition.fade_in(0.3)
+		if player:
+			player.set("_date_lock", false)
+		return
+	await tree.process_frame
+	if transition:
+		await transition.fade_in(0.5)
 
 
 static func _finale_station(station: String) -> void:

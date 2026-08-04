@@ -2,7 +2,7 @@ extends SceneTree
 ## Capture technical validation screenshots with auto-framed camera + probe light.
 
 
-const OUT_DIR := "res://docs/asset_validation/screenshots/"
+const OUT_DIR := "res://docs/vertical_slice/screenshots/"
 
 
 func _initialize() -> void:
@@ -12,23 +12,27 @@ func _initialize() -> void:
 func _run() -> void:
 	await process_frame
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-	DisplayServer.window_set_size(Vector2i(1280, 720))
+	if DisplayServer.get_name().to_lower() != "headless":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		DisplayServer.window_set_size(Vector2i(1280, 720))
 
 	var shots: Array[Dictionary] = [
-		{"file": "01_apartment.png", "scene": "res://scenes/art/rooms/Apartment_Blockout_Finalized.tscn"},
-		{"file": "02_city_street.png", "scene": "res://scenes/art/city/City_Street_Slice.tscn"},
-		{"file": "03_sushi_restaurant.png", "scene": "res://scenes/art/restaurant/Sushi_Date_Restaurant.tscn"},
-		{"file": "04_clone_lab.png", "scene": "res://scenes/art/lab/Clone_Lab_Base.tscn"},
-		{"file": "05_date_factory.png", "scene": "res://scenes/art/factory/Date_Factory_Base.tscn"},
-		{"file": "06_character_testbed_idle.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "idle"},
-		{"file": "07_character_testbed_walk.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "walk"},
-		{"file": "08_character_testbed_sit.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "sit"},
-		{"file": "09_character_testbed_gesture.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "gesture"},
+		{"file": "01_vertical_apartment.png", "scene": "res://scenes/world/vertical_slice/apartment.tscn", "eye": Vector3(4.8, 2.4, 4.2), "look": Vector3(0.0, 1.0, -0.6), "fov": 58.0},
+		{"file": "02_vertical_street.png", "scene": "res://scenes/world/vertical_slice/street.tscn", "eye": Vector3(-17.0, 2.8, 5.5), "look": Vector3(8.0, 1.0, -3.5), "fov": 65.0},
+		{"file": "03_vertical_restaurant.png", "scene": "res://scenes/world/vertical_slice/restaurant.tscn", "eye": Vector3(5.2, 2.6, 4.4), "look": Vector3(0.0, 1.0, 0.0), "fov": 56.0},
+		{"file": "04_character_idle.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "idle"},
+		{"file": "05_character_approach.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "approach"},
+		{"file": "06_character_sit_enter.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "sit_enter"},
+		{"file": "07_character_sit_idle.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "sit_idle"},
+		{"file": "08_character_seated_gesture.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "seated_gesture"},
+		{"file": "09_character_sit_exit.png", "scene": "res://scenes/art/testbeds/Character_Testbed.tscn", "alias": "sit_exit"},
 	]
 	for spec in shots:
 		await _capture(spec)
 	print("SHOTS_DONE ", shots.size())
+	for _cleanup_frame: int in range(4):
+		await process_frame
+	RenderingServer.force_sync()
 	quit(0)
 
 
@@ -38,14 +42,23 @@ func _capture(spec: Dictionary) -> void:
 	if ps == null:
 		push_error("scene missing " + path)
 		return
-	var scene := ps.instantiate()
+	var scene := ps.instantiate() as Node
+	if scene == null:
+		push_error("scene instantiate failed " + path)
+		return
 	get_root().add_child(scene)
+	await process_frame
+	await process_frame
 
 	var ui := scene.get_node_or_null("TechUI")
 	if ui != null:
 		ui.visible = false
-	# Hide floating name labels that dominate empty-looking shots
+	# Hide floating name labels and authoring-only preview actors.
 	_hide_labels(scene)
+	var preview_girl := scene.get_node_or_null("Characters/DateGirl") as Node3D
+	if preview_girl:
+		preview_girl.visible = false
+		preview_girl.process_mode = Node.PROCESS_MODE_DISABLED
 
 	if not _has_light(scene):
 		var sun := DirectionalLight3D.new()
@@ -78,9 +91,13 @@ func _capture(spec: Dictionary) -> void:
 		cam.name = "_CaptureCamera"
 		scene.add_child(cam)
 	cam.current = true
+	cam.fov = float(spec.get("fov", 50.0 if spec.has("alias") else 55.0))
 	var eye: Vector3
 	var look: Vector3
-	if spec.has("alias"):
+	if spec.has("eye") and spec.has("look"):
+		eye = spec["eye"]
+		look = spec["look"]
+	elif spec.has("alias"):
 		# Character lineup: eye-level framing
 		eye = Vector3(0.0, 1.55, 8.2)
 		look = Vector3(0.0, 1.0, 0.0)
@@ -93,7 +110,7 @@ func _capture(spec: Dictionary) -> void:
 	if spec.has("alias"):
 		_force_alias(scene, str(spec["alias"]))
 
-	for i in 18:
+	for _frame: int in range(18):
 		await process_frame
 
 	var img: Image = get_root().get_texture().get_image()
@@ -103,9 +120,9 @@ func _capture(spec: Dictionary) -> void:
 		print("SHOT ", out_path, " err=", err, " aabb=", aabb, " eye=", eye)
 	else:
 		push_error("null image " + out_path)
-	scene.queue_free()
-	await process_frame
-	await process_frame
+	scene.free()
+	for _cleanup_frame: int in range(3):
+		await process_frame
 
 
 func _force_alias(scene: Node, alias: String) -> void:
@@ -115,7 +132,7 @@ func _force_alias(scene: Node, alias: String) -> void:
 	var chars := scene.get_node_or_null("Characters")
 	if chars == null:
 		return
-	if "_auto_demo" in scene:
+	if _has_property(scene, &"_auto_demo"):
 		scene.set("_auto_demo", false)
 	for c in chars.get_children():
 		if c.has_method("play_alias"):
@@ -123,12 +140,19 @@ func _force_alias(scene: Node, alias: String) -> void:
 
 
 func _hide_labels(n: Node) -> void:
-	if n is Label3D or n is Label:
-		(n as CanvasItem).visible = false if n is CanvasItem else false
-		if n is Label3D:
-			(n as Label3D).visible = false
-	for c in n.get_children():
+	if n is Label3D:
+		(n as Label3D).visible = false
+	elif n is Label:
+		(n as Label).visible = false
+	for c: Node in n.get_children():
 		_hide_labels(c)
+
+
+func _has_property(object: Object, property_name: StringName) -> bool:
+	for property: Dictionary in object.get_property_list():
+		if StringName(property.get("name", "")) == property_name:
+			return true
+	return false
 
 
 func _has_light(n: Node) -> bool:

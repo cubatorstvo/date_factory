@@ -6,6 +6,9 @@ extends Control
 
 
 func _ready() -> void:
+	var theme_service := load("res://scenes/ui/chrome/date_factory_theme.gd")
+	if theme_service:
+		theme_service.apply(self)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	continue_button.disabled = not Game.save.has_save()
 	$Center/Panel/Content/NewGame.pressed.connect(_new)

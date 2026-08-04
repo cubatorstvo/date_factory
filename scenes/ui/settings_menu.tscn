@@ -1,19 +1,18 @@
 [gd_scene format=3 uid="uid://1xuikf8f6mf4"]
 
 [ext_resource type="Script" uid="uid://ckrm4fbjqwcen" path="res://scenes/ui/settings_menu.gd" id="1_qwcqe"]
-[ext_resource type="Script" path="res://scenes/ui/chrome/ui_fill.gd" id="fill"]
+[ext_resource type="Script" uid="uid://hshwibx3g87h" path="res://scenes/ui/chrome/ui_fill.gd" id="fill"]
 
 [node name="SettingsMenu" type="CanvasLayer" unique_id=300128033]
 layer = 90
 script = ExtResource("1_qwcqe")
 
 [node name="Dim" type="ColorRect" parent="." unique_id=1870081275]
-script = ExtResource("fill")
-fill_role = &"dim"
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.72)
+script = ExtResource("fill")
 
 [node name="Center" type="CenterContainer" parent="." unique_id=81989641]
 anchors_preset = 15
@@ -29,8 +28,8 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Center/Panel/Content" unique_id=1665609215]
-theme_type_variation = &"ModalTitle"
 layout_mode = 2
+theme_type_variation = &"ModalTitle"
 text = "Настройки"
 horizontal_alignment = 1
 
@@ -46,6 +45,12 @@ text = "Инвертировать ось Y"
 [node name="HeadBob" type="CheckBox" parent="Center/Panel/Content" unique_id=852349353]
 layout_mode = 2
 text = "Покачивание камеры"
+
+[node name="MotionEffects" type="CheckBox" parent="Center/Panel/Content" unique_id=787346201]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+button_pressed = true
+text = "Эффекты движения (FOV и приземление)"
 
 [node name="MasterLabel" type="Label" parent="Center/Panel/Content" unique_id=526358497]
 layout_mode = 2

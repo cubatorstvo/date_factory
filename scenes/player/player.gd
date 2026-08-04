@@ -194,10 +194,13 @@ func _read_settings() -> void:
 		return
 	var sensitivity: Variant = settings.get("mouse_sens")
 	var fov_value: Variant = settings.get("fov")
+	var bob_enabled: Variant = settings.get("head_bob")
 	if sensitivity != null:
 		mouse_sens = 0.0025 * float(sensitivity)
 	if fov_value != null:
 		_base_fov = float(fov_value)
+	if bob_enabled != null:
+		head_bob = bool(bob_enabled)
 
 
 func _invert_y_enabled() -> bool:
@@ -216,8 +219,16 @@ func _camera_shake_strength() -> float:
 	return clampf(float(value), 0.0, 1.0) if value != null else 1.0
 
 
+func _motion_effects_enabled() -> bool:
+	var settings := get_node_or_null("/root/SettingsService")
+	if settings == null:
+		return true
+	var value: Variant = settings.get("motion_effects")
+	return bool(value) if value != null else true
+
+
 func _camera_shake_enabled() -> bool:
-	return _camera_shake_strength() > 0.01
+	return _motion_effects_enabled() and _camera_shake_strength() > 0.01
 
 
 func add_shake(amount: float) -> void:
@@ -228,6 +239,7 @@ func add_shake(amount: float) -> void:
 func _update_camera_feel(delta: float, moving: bool, sprinting: bool = false) -> void:
 	if camera == null or not is_instance_valid(camera):
 		return
+	var motion_enabled := _motion_effects_enabled()
 	var bob := Vector3.ZERO
 	var bob_strength := head_bob_intensity
 	var settings := get_node_or_null("/root/SettingsService")
@@ -235,19 +247,21 @@ func _update_camera_feel(delta: float, moving: bool, sprinting: bool = false) ->
 		var configured_bob: Variant = settings.get("head_bob_intensity")
 		if configured_bob != null:
 			bob_strength = float(configured_bob)
-	if head_bob and moving:
+	if head_bob and moving and motion_enabled:
 		_bob_time += delta * head_bob_frequency * (1.2 if sprinting else 1.0)
 		bob = Vector3(sin(_bob_time * 0.5) * bob_strength * 0.45, absf(sin(_bob_time)) * bob_strength, 0.0)
-	_land_bob = move_toward(_land_bob, 0.0, delta * 0.3)
-	var landing := Vector3(0.0, -_land_bob, 0.0)
-	_shake = move_toward(_shake, 0.0, delta * 1.8)
+	_land_bob = move_toward(_land_bob, 0.0, delta * (0.3 if motion_enabled else 2.0))
+	var landing := Vector3(0.0, -_land_bob, 0.0) if motion_enabled else Vector3.ZERO
+	_shake = move_toward(_shake, 0.0, delta * (1.8 if motion_enabled else 8.0))
 	var shake_offset := Vector3.ZERO
 	if _shake > 0.0 and _camera_shake_enabled() and not _date_lock:
 		shake_offset = Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), 0.0) * _shake
 	camera.position = _camera_base_position + bob + landing + shake_offset
-	camera.fov = lerpf(camera.fov, _base_fov + (sprint_fov_punch if sprinting else 0.0), 1.0 - exp(-delta * 9.0))
+	var sprint_punch := sprint_fov_punch if sprinting and motion_enabled else 0.0
+	camera.fov = lerpf(camera.fov, _base_fov + sprint_punch, 1.0 - exp(-delta * 9.0))
 	if carry_anchor and is_instance_valid(carry_anchor):
-		carry_anchor.position = _carry_base_position + Vector3(-bob.x * 1.7, -bob.y * 0.45, 0.0) + Vector3(_pitch * 0.018, 0.0, 0.0)
+		var carry_bob := Vector3(-bob.x * 1.7, -bob.y * 0.45, 0.0) if motion_enabled else Vector3.ZERO
+		carry_anchor.position = _carry_base_position + carry_bob + Vector3(_pitch * 0.018, 0.0, 0.0)
 		carry_anchor.rotation.x = lerpf(carry_anchor.rotation.x, -_pitch * 0.08, 1.0 - exp(-delta * 10.0))
 
 

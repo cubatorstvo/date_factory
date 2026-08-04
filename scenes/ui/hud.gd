@@ -7,14 +7,24 @@ extends CanvasLayer
 @onready var toast_label: Label = $Root/Toast
 @onready var bottleneck_label: Label = $Root/Bottleneck
 @onready var crosshair: Control = $Root/Crosshair
+@onready var status_panel: Panel = $Root/StatusPanel
+@onready var hint_panel: Panel = $Root/HintPanel
+@onready var toast_panel: Panel = $Root/ToastPanel
 
 var _toast_time: float = 0.0
+var _hint_tween: Tween
 
 
 func _ready() -> void:
+	resources_label.add_theme_font_size_override("font_size", 16)
+	resources_label.add_theme_color_override("font_color", Color("#F2BD69"))
+	goal_label.add_theme_font_size_override("font_size", 15)
+	hint_label.add_theme_font_size_override("font_size", 17)
+	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	EventBus.resource_changed.connect(func(_i, _v): _refresh())
 	EventBus.quest_updated.connect(func(_q): _refresh())
-	EventBus.interaction_hint.connect(func(t): hint_label.text = t)
+	EventBus.interaction_hint.connect(_on_interaction_hint)
 	EventBus.notify.connect(_on_notify)
 	EventBus.bottleneck.connect(func(k, d): bottleneck_label.text = "Узкое место: %s — %s" % [str(k), d])
 	Game.dating.date_ui_open.connect(_on_date_open)
@@ -39,6 +49,8 @@ func _on_date_close() -> void:
 	var root := get_node_or_null("Root") as Control
 	if root:
 		root.visible = true
+		root.modulate.a = 0.0
+		create_tween().tween_property(root, "modulate:a", 1.0, 0.25)
 	if crosshair:
 		crosshair.visible = true
 
@@ -62,6 +74,7 @@ func _process(delta: float) -> void:
 		_toast_time -= delta
 		if _toast_time <= 0.0:
 			toast_label.text = ""
+			toast_panel.visible = false
 	if Game.crises != null and Game.crises.is_active():
 		bottleneck_label.text = Game.crises.hud_text()
 	elif bottleneck_label.text.begins_with("КРИЗИС:"):
@@ -72,6 +85,13 @@ func _on_notify(message: String, kind: StringName) -> void:
 	if kind == &"ui" or kind == &"date_fx":
 		return
 	toast_label.text = message
+	toast_panel.visible = true
+	toast_panel.modulate.a = 0.0
+	toast_panel.scale = Vector2(0.98, 0.98)
+	var panel_tween := create_tween().set_parallel(true)
+	panel_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	panel_tween.tween_property(toast_panel, "modulate:a", 1.0, 0.2)
+	panel_tween.tween_property(toast_panel, "scale", Vector2.ONE, 0.2)
 	if kind == &"money" or kind == &"ok":
 		var hud_root := get_node_or_null("Root") as Control
 		var floating_text: Script = load("res://scenes/ui/floating_text.gd")
@@ -86,7 +106,7 @@ func _on_notify(message: String, kind: StringName) -> void:
 func _refresh() -> void:
 	if not Game.run_started:
 		return
-	resources_label.text = "$%d   ⭐%.0f   Внимание %.1f/%.0f   Скандал %.0f   Легенда %.0f (%s)   Свиданий %d   Авто %d" % [
+	resources_label.text = "$%d   ·   ★ %.0f   ·   ВНИМАНИЕ %.1f/%.0f   ·   СКАНДАЛ %.0f   ·   ЛЕГЕНДА %.0f (%s)   ·   СВИДАНИЯ %d   ·   АВТО %d" % [
 		int(Game.economy.get_value(&"money")),
 		Game.economy.get_value(&"popularity"),
 		Game.economy.get_value(&"attention"),
@@ -97,12 +117,28 @@ func _refresh() -> void:
 		Game.total_successful_dates,
 		Game.dating.automation_level,
 	]
-	goal_label.text = "%s\nКвест: %s | Этап: %s%s" % [
-		Loc.stage_goal(Game.stage_id),
-		Game.quests.primary_text(),
+	goal_label.text = "%s   •   %s%s\n%s" % [
 		Loc.stage_title(Game.stage_id),
+		Loc.stage_goal(Game.stage_id),
 		_stage4_act_suffix(),
+		Game.quests.primary_text(),
 	]
+
+
+func _on_interaction_hint(text: String) -> void:
+	hint_label.text = text
+	if _hint_tween != null:
+		_hint_tween.kill()
+	if text.is_empty():
+		hint_panel.visible = false
+		return
+	hint_panel.visible = true
+	hint_panel.modulate.a = 0.0
+	hint_panel.position.y = 648.0
+	_hint_tween = create_tween().set_parallel(true)
+	_hint_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_hint_tween.tween_property(hint_panel, "modulate:a", 1.0, 0.16)
+	_hint_tween.tween_property(hint_panel, "position:y", 638.0, 0.16)
 
 
 func _legend_band_short() -> String:

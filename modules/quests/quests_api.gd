@@ -26,11 +26,11 @@ func reset_for_stage(stage_id: StringName) -> void:
 			_add("s1_profile", "1/7 Открой телефон (Q или тумба) и посмотри профиль Соседки", "main")
 			_add("s1_money", "2/7 Поработай на кровати, затем купи цветок на полке", "main")
 			_add("s1_outfit", "3/7 Смени одежду в шкафу", "main")
-			_add("s1_prepare", "4/7 Возьми подарок в руки", "main")
-			_add("s1_date", "5/7 Подойди к столу: свидание с Соседкой", "main")
-			_add("s1_city", "6/7 Выйди на улицу (дверь −X)", "main")
-			_add("s1_contact", "6/7 Заполучи ещё один номер — поговори с любой девушкой", "main")
-			_add("s1_expand", "7/7 Набери 5⭐ и жёлтая дверь расширения (+X)", "main")
+			_add("s1_prepare", "4/8 Возьми подарок и забронируй свидание у стола", "main")
+			_add("s1_city", "5/8 Выйди из квартиры на вечернюю улицу", "main")
+			_add("s1_date", "6/8 Дойди до розовой вывески Two Hearts и проведи свидание", "main")
+			_add("s1_contact", "7/8 Заполучи ещё один номер — поговори с любой девушкой", "main")
+			_add("s1_expand", "8/8 Набери 5⭐ и открой дверь расширения (+X)", "main")
 		"stage_2":
 			_add("s2_girls", "Познакомься с новой уникальной девушкой через телефон", "main")
 			_add("s2_hire", "В рабочем уголке найми менеджера переписки", "main")
@@ -84,6 +84,8 @@ func can_do(action: StringName) -> bool:
 			return is_done("s1_money")
 		"prepare_table", "prepare_and_start", "start_date":
 			return is_done("s1_outfit") and (Game.inventory.total_gifts() > 0 or Game.inventory.carried_item != &"")
+		"enter_restaurant":
+			return is_done("s1_prepare") and not Game.dating.prepared.is_empty()
 		"expand":
 			return is_done("s1_date") and is_done("s1_contact")
 		"go_outside", "talk_girl", "go_neighbor", "go_home", "go_home_from_neighbor":
@@ -106,6 +108,8 @@ func gate_hint(action: StringName) -> String:
 			if not is_done("s1_outfit"):
 				return "Сначала смени одежду в шкафу"
 			return "Сначала возьми подарок с полки"
+		"enter_restaurant":
+			return "Сначала подготовь свидание у домашнего стола"
 		"expand":
 			return "Сначала свидание с соседкой и новый контакт в городе"
 		_:

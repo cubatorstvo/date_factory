@@ -2,34 +2,51 @@
 	"loop_aliases": [
 		"idle",
 		"walk",
-		"run"
+		"run",
+		"approach",
+		"sit_idle",
+		"seated_gesture"
 	],
 	"notes": [
-		"UAL used (non root-motion) UAL1_Standard.glb",
-		"Women sit/stand are technical fallbacks (no Sitting_* clips in PACK_019)"
+		"All skeletons normalized through SkeletonProfileHumanoid BoneMaps",
+		"Women sitting clips are UAL Sitting_* retargets, not idle fallbacks",
+		"Only Root translation is stripped; Hips vertical motion is retained for chair sitting"
 	],
 	"ual_aliases": {
 		"gesture": "Interact",
 		"idle": "Idle",
 		"react": "Hit_Chest",
 		"run": "Sprint",
+		"seated_gesture": "Sitting_Talking",
 		"sit": "Sitting_Enter",
+		"sit_enter": "Sitting_Enter",
+		"sit_exit": "Sitting_Exit",
+		"sit_idle": "Sitting_Idle",
 		"stand": "Sitting_Exit",
 		"walk": "Walk"
 	},
 	"ual_library": "res://assets/animation/universal_library/libraries/DF_UAL_Aliases.res",
 	"ual_ok": true,
 	"ual_path": "res://assets/animation/universal_library/source/UAL1_Standard.glb",
-	"women_aliases": {
+	"women_library": "res://assets/animation/universal_library/libraries/DF_Women_Aliases.res",
+	"women_native_aliases": {
+		"approach": "Walk",
 		"gesture": "Wave",
 		"idle": "Idle",
 		"react": "HitRecieve",
 		"run": "Run",
-		"sit": "Idle_Neutral",
-		"stand": "Idle",
+		"turn": "Idle",
 		"walk": "Walk"
 	},
-	"women_library": "res://assets/animation/universal_library/libraries/DF_Women_Aliases.res",
 	"women_ok": true,
-	"women_path": "res://assets/characters/women_modular/meshes/individuals/Casual.gltf"
+	"women_path": "res://assets/characters/women_modular/meshes/individuals/Casual.gltf",
+	"women_retargeted_aliases": {
+		"seated_gesture": "Sitting_Talking",
+		"sit": "Sitting_Enter",
+		"sit_enter": "Sitting_Enter",
+		"sit_exit": "Sitting_Exit",
+		"sit_idle": "Sitting_Idle",
+		"stand": "Sitting_Exit"
+	},
+	"women_seated_library": "res://assets/animation/universal_library/retargeted/DF_Women_Seated.res"
 }

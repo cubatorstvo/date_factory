@@ -1,0 +1,35 @@
+DATE FACTORY — VERTICAL SLICE RUNTIME VALIDATION
+Date: 2026-08-04
+Validation executable: Godot 4.4.1 stable, GL Compatibility
+
+PROJECT
+- Scripts compiled: 68
+- Parser/compile errors: 0
+- Missing signals: 0
+- Main scene startup: PASS
+
+RUNTIME
+- Runtime errors: 0
+- Script errors: 0
+- Player real-input displacement: 3.42 m
+- Motion effects: enabled and persisted
+- Settings UI: all controls and Apply/Back visible at 1280x720
+- Date UI: 819.2 x 432 px; all three answer buttons inside viewport
+
+AUDIO
+- Menu/apartment stream: res://assets/audio/music/apartment_chill.ogg
+- Street stream: res://assets/audio/music/street_night.ogg
+- Restaurant stream: res://assets/audio/music/restaurant_warm.ogg
+- UI click stream: res://assets/audio/sfx/ui/click.ogg (UI bus)
+- Street footstep sample: res://assets/audio/sfx/steps/street_2.ogg (SFX bus)
+- Restaurant footstep sample: res://assets/audio/sfx/steps/restaurant_3.ogg (SFX bus)
+- Audio runtime errors: 0
+
+CAPTURE TOOL
+- Output: res://docs/vertical_slice/screenshots/
+- Screenshots saved: 9/9
+- PNG save errors: 0
+- Script/parser errors: 0
+- Note: the standalone Godot 4.4.1 GL Compatibility capture process reports
+  renderer resource-leak diagnostics during process shutdown after successful
+  image saves. Normal editor/game runtime validation is clean.

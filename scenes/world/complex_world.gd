@@ -1,6 +1,9 @@
 extends Node3D
 ## Builds the expandable complex + city district (−X) + neighbor apt (−Z).
 
+const APARTMENT_VISUAL_SCENE := "res://scenes/world/vertical_slice/apartment.tscn"
+const STREET_VISUAL_SCENE := "res://scenes/world/vertical_slice/street.tscn"
+
 @onready var rooms_root: Node3D = $Rooms
 @onready var props_root: Node3D = $Props
 @onready var npcs_root: Node3D = $Npcs
@@ -76,6 +79,41 @@ func _build_city() -> void:
 		func(parent, pos, text):
 			_label(parent, pos, text),
 	)
+	var city_root := _city_data.get("root") as Node3D
+	if city_root:
+		_hide_generated_visuals(city_root)
+		_mount_visual_scene(city_root, STREET_VISUAL_SCENE, "StreetVisual", Vector3(-30.0, 0.0, 0.0))
+		_add_interact(city_root, Vector3(-48.0, 0.0, 4.7), "Подъезд DATE FACTORY", "Вернуться домой", &"go_home", {"art_backed": true}, &"door")
+		_add_interact(city_root, Vector3(-19.5, 0.0, -4.35), "Ресторан Two Hearts", "Войти на свидание", &"enter_restaurant", {"art_backed": true}, &"door")
+
+
+func _mount_visual_scene(parent: Node3D, scene_path: String, node_name: String, local_position: Vector3 = Vector3.ZERO) -> Node3D:
+	var packed := load(scene_path) as PackedScene
+	if packed == null:
+		push_warning("Visual scene missing: %s" % scene_path)
+		return null
+	var instance := packed.instantiate() as Node3D
+	if instance == null:
+		push_warning("Visual scene root must be Node3D: %s" % scene_path)
+		return null
+	instance.name = node_name
+	instance.position = local_position
+	parent.add_child(instance)
+	for node: Node in instance.find_children("*", "WorldEnvironment", true, false):
+		var world := node as WorldEnvironment
+		if world:
+			world.environment = null
+	for node: Node in instance.find_children("*", "DirectionalLight3D", true, false):
+		var light := node as DirectionalLight3D
+		if light:
+			light.visible = false
+	return instance
+
+
+func _hide_generated_visuals(parent: Node3D) -> void:
+	for child: Node in parent.get_children():
+		if child is MeshInstance3D or child is Label3D:
+			(child as Node3D).visible = false
 
 
 func _update_stage_lighting() -> void:
@@ -85,10 +123,10 @@ func _update_stage_lighting() -> void:
 	var stage_number := int(str(Game.stage_id).trim_prefix("stage_"))
 	if stage_number >= 5:
 		sun.light_color = Color(0.62, 0.74, 1.0)
-		sun.light_energy = 1.25
+		sun.light_energy = 0.55
 	else:
-		sun.light_color = Color(1.0, 0.84, 0.68)
-		sun.light_energy = 1.1
+		sun.light_color = Color(1.0, 0.72, 0.62)
+		sun.light_energy = 0.38
 
 
 func _process(delta: float) -> void:
@@ -157,9 +195,10 @@ func _spawn_city_npcs() -> void:
 		var path: Array = []
 		for j in range(3):
 			path.append(waypoints[(i * 3 + j) % waypoints.size()])
+		# Attach before assigning global transforms to avoid invalid scene-tree access.
+		npcs_root.add_child(w)
 		w.global_position = path[0] + Vector3(0, 0.65, 0)
 		# Raise visual: store floor waypoints but offset mesh
-		npcs_root.add_child(w)
 		var raised: Array = []
 		for p in path:
 			raised.append(Vector3(p.x, 0.65, p.z))
@@ -200,6 +239,7 @@ func _spawn_talk_girl(profile: Dictionary, spots: Dictionary, waypoints: Array, 
 
 	var girl := _make_girl()
 	area.add_child(girl)
+	npcs_root.add_child(area)
 	var skin_a: Array = profile.get("color", [0.95, 0.75, 0.7])
 	var hair_a: Array = profile.get("hair_color", [0.2, 0.1, 0.08])
 	if bool(profile.get("unique", false)):
@@ -216,8 +256,6 @@ func _spawn_talk_girl(profile: Dictionary, spots: Dictionary, waypoints: Array, 
 		})
 
 
-
-	npcs_root.add_child(area)
 
 	var path: Array = [Vector3(spawn.x, 0, spawn.z)]
 	if spots.has(home):
@@ -251,9 +289,7 @@ func _build_room(room_id: StringName) -> void:
 	_built_rooms[str(room_id)] = root
 	match str(room_id):
 		"apartment":
-			_box(root, Vector3(8, 0.2, 8), Vector3(0, -0.1, 0), Color(0.55, 0.5, 0.45))
-			_wall_room(root, 8, 8, 2.6)
-			_label(root, Vector3(0, 2.4, -3.5), "Квартира")
+			_mount_visual_scene(root, APARTMENT_VISUAL_SCENE, "ApartmentVisual")
 			_add_interact(root, Vector3(-2.5, 0, -2.5), "Кровать / Работа", "Поработать", &"job", {}, &"bed")
 			_add_interact(root, Vector3(2.5, 0, -2.5), "Шкаф", "Сменить одежду", &"wardrobe", {}, &"wardrobe")
 			_add_interact(root, Vector3(-2.5, 0, 2.2), "Полка подарков", "Купить цветок", &"buy_gift", {"gift_id": "flower"}, &"shelf")
@@ -349,11 +385,11 @@ func _spawn_neighbor_npc(root: Node3D) -> void:
 	area.add_child(cs)
 	_neighbor_girl = _make_girl()
 	area.add_child(_neighbor_girl)
+	root.add_child(area)
 	if _neighbor_girl.has_method("apply_from_content"):
 		_neighbor_girl.call("apply_from_content", &"neighbor", Game.girls.display_name(&"neighbor"))
 	if _neighbor_girl.has_method("face_toward"):
 		_neighbor_girl.call("face_toward", root.to_global(Vector3(0, 0, 3)))
-	root.add_child(area)
 
 
 func _spawn_harem_slots(root: Node3D) -> void:
@@ -381,9 +417,9 @@ func _spawn_harem_slots(root: Node3D) -> void:
 		area.add_child(cs)
 		var girl := _make_girl()
 		area.add_child(girl)
+		root.add_child(area)
 		if girl.has_method("apply_from_content"):
 			girl.call("apply_from_content", StringName(id), Game.girls.display_name(StringName(id)))
-		root.add_child(area)
 		var tw := create_tween()
 		tw.tween_property(area, "position", slot, 1.4 + float(i) * 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
@@ -496,9 +532,10 @@ func _add_interact(parent: Node3D, pos: Vector3, title: String, action: String, 
 	var visuals := Node3D.new()
 	visuals.name = "Visuals"
 	area.add_child(visuals)
-	if prop_kind != &"":
-		PropFactory.attach(visuals, prop_kind)
-	else:
-		PropFactory.attach(visuals, &"desk")
-	_label(area, Vector3(0, 2.05, 0), title)
+	var art_backed := bool(payload.get("art_backed", false)) or parent.has_node("ApartmentVisual")
+	if not art_backed:
+		if prop_kind != &"":
+			PropFactory.attach(visuals, prop_kind)
+		else:
+			PropFactory.attach(visuals, &"desk")
 	parent.add_child(area)

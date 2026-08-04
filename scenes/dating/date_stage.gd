@@ -3,9 +3,13 @@ extends Node3D
 ## Arrival uses ArrivalPipeline (door → walk → seat); never spawn already sitting.
 
 const STAGE_ORIGIN := Vector3(0.0, 40.0, 0.0)
-const GIRL_DOOR_POSITION := Vector3(2.2, 0.0, -1.6)
-const GIRL_CHAIR_POSITION := Vector3(0.0, 0.0, -0.9)
-const PLAYER_CHAIR_OFFSET := Vector3(0.0, 0.05, 0.9)
+const RESTAURANT_VISUAL_SCENE := "res://scenes/world/vertical_slice/restaurant.tscn"
+const DATE_GIRL_SCENE := "res://assets/characters/women_modular/prefabs/Girl_Casual.tscn"
+const DATE_PRESENTATION_CONTROLLER := "res://scenes/dating/date_presentation_controller.gd"
+const RESTAURANT_ART_OFFSET := Vector3(-2.0, 0.0, 1.6)
+const GIRL_DOOR_POSITION := Vector3(-2.0, 0.0, 6.4)
+const GIRL_CHAIR_POSITION := Vector3(0.0, 0.0, -1.15)
+const PLAYER_CHAIR_OFFSET := Vector3(0.0, 0.05, 1.15)
 
 
 var _root: Node3D
@@ -19,6 +23,9 @@ var _date_cam: Camera3D
 var _date_ui: CanvasItem
 var _sequence: StringName = &""
 var _sequence_time: float = 0.0
+var _sit_started: bool = false
+var _camera_cue: int = 0
+var _presentation: Node
 var _arrival: ArrivalPipeline = ArrivalPipeline.new()
 
 
@@ -31,10 +38,15 @@ func _ready() -> void:
 func _on_notify(message: String, kind: StringName) -> void:
 	if kind == &"date_fx" and message.begins_with("DATE_EMOTION:"):
 		var emotion := StringName(message.trim_prefix("DATE_EMOTION:"))
-		if _girl != null and _girl.has_method("set_emotion"):
+		if _girl != null and _girl.has_method("play_alias"):
+			var alias := &"seated_gesture" if emotion in [&"positive", &"happy", &"love", &"amused"] else &"react"
+			_girl.call("play_alias", alias)
+		elif _girl != null and _girl.has_method("set_emotion"):
 			_girl.call("set_emotion", emotion)
 		else:
 			PropFactory.apply_emotion(_girl_parts, emotion)
+		if _presentation and is_instance_valid(_presentation):
+			_presentation.call("react", emotion)
 
 
 func _input(event: InputEvent) -> void:
@@ -51,11 +63,22 @@ func _process(delta: float) -> void:
 	_sequence_time += delta
 	match _sequence:
 		&"intro":
+			if _presentation and is_instance_valid(_presentation):
+				if _camera_cue == 0 and _sequence_time >= 1.6:
+					_presentation.call("move_to", &"wide", 0.9)
+					_camera_cue = 1
+				elif _camera_cue == 1 and _sequence_time >= 4.6:
+					_presentation.call("move_to", &"two_shot", 0.85)
+					_camera_cue = 2
 			var step: Dictionary = _arrival.tick(delta)
 			_girl.position = step.get("position", GIRL_DOOR_POSITION)
 			_face_toward_player()
 			if bool(step.get("sitting", false)):
-				if _girl.has_method("set_sitting"):
+				if _girl.has_method("play_alias"):
+					if not _sit_started:
+						_girl.call("play_alias", &"sit_enter")
+						_sit_started = true
+				elif _girl.has_method("set_sitting"):
 					_girl.call("set_sitting", true)
 				else:
 					_girl.scale.y = lerpf(1.0, 0.92, float(step.get("sit_blend", 0.0)))
@@ -101,14 +124,15 @@ func _on_open(payload: Dictionary) -> void:
 	_root.position = STAGE_ORIGIN
 	add_child(_root)
 	_add_backdrop(_root)
-	PropFactory.build_table_set(_root)
 	_add_gift(payload)
 
-	var packed := load("res://scenes/characters/girl.tscn") as PackedScene
+	var packed := load(DATE_GIRL_SCENE) as PackedScene
 	_girl = packed.instantiate() as Node3D if packed else Node3D.new()
 	_girl.name = "DateGirl"
 	_girl.position = GIRL_DOOR_POSITION
 	_root.add_child(_girl)
+	if _girl.has_method("play_alias"):
+		_girl.call("play_alias", &"approach")
 	assert(ArrivalPipeline.assert_starts_at_door(_girl.position, GIRL_DOOR_POSITION, GIRL_CHAIR_POSITION))
 	var target_id := str(payload.get("target_id", "neighbor"))
 	var display := ""
@@ -136,9 +160,17 @@ func _on_open(payload: Dictionary) -> void:
 	_date_cam.global_position = STAGE_ORIGIN + Vector3(0.15, 1.45, 1.35)
 	_date_cam.look_at(STAGE_ORIGIN + Vector3(0.0, 1.35, -0.9), Vector3.UP)
 	_date_cam.current = true
-	_arrival.begin_intro(GIRL_DOOR_POSITION, GIRL_CHAIR_POSITION, 2.0)
+	var controller_script := load(DATE_PRESENTATION_CONTROLLER)
+	if controller_script:
+		_presentation = controller_script.new() as Node
+		add_child(_presentation)
+		_presentation.call("setup", _date_cam, STAGE_ORIGIN)
+		_presentation.call("move_to", &"arrival", 0.0)
+	_arrival.begin_intro(GIRL_DOOR_POSITION, GIRL_CHAIR_POSITION, 6.5)
 	_sequence = &"intro"
 	_sequence_time = 0.0
+	_sit_started = false
+	_camera_cue = 0
 
 
 func _add_gift(payload: Dictionary) -> void:
@@ -165,9 +197,13 @@ func _finish_intro() -> void:
 	_sequence_time = 0.0
 	if _girl and is_instance_valid(_girl):
 		_girl.position = GIRL_CHAIR_POSITION
-		if _girl.has_method("set_sitting"):
+		if _girl.has_method("play_alias"):
+			_girl.call("play_alias", &"sit_idle")
+		elif _girl.has_method("set_sitting"):
 			_girl.call("set_sitting", true)
 		_face_toward_player()
+	if _presentation and is_instance_valid(_presentation):
+		_presentation.call("move_to", &"girl_close", 0.85)
 	if _date_ui and is_instance_valid(_date_ui):
 		if _date_ui.has_method("show_after_intro"):
 			_date_ui.show_after_intro()
@@ -188,6 +224,8 @@ func _face_toward_player() -> void:
 		target.y = _girl.global_position.y
 		if _girl.global_position.distance_to(target) > 0.05:
 			_girl.look_at(target, Vector3.UP)
+			if _girl.has_method("play_alias"):
+				_girl.rotate_y(PI)
 
 
 func _face_toward(local_target: Vector3) -> void:
@@ -200,58 +238,38 @@ func _face_toward(local_target: Vector3) -> void:
 	target.y = _girl.global_position.y
 	if _girl.global_position.distance_to(target) > 0.05:
 		_girl.look_at(target, Vector3.UP)
+		if _girl.has_method("play_alias"):
+			_girl.rotate_y(PI)
 
 
 func _add_backdrop(parent: Node3D) -> void:
-	var floor_mi := MeshInstance3D.new()
-	var floor_mesh := BoxMesh.new()
-	floor_mesh.size = Vector3(5.0, 0.08, 5.0)
-	floor_mi.mesh = floor_mesh
-	floor_mi.position = Vector3(0, -0.04, 0)
-	var floor_mat := StandardMaterial3D.new()
-	floor_mat.albedo_color = Color(0.42, 0.36, 0.3)
-	floor_mi.material_override = floor_mat
-	parent.add_child(floor_mi)
-
-	var wall := MeshInstance3D.new()
-	var wall_mesh := BoxMesh.new()
-	wall_mesh.size = Vector3(4.5, 3.0, 0.12)
-	wall.mesh = wall_mesh
-	wall.position = Vector3(0, 1.4, -1.85)
-	var wall_mat := StandardMaterial3D.new()
-	wall_mat.albedo_color = Color(0.62, 0.56, 0.52)
-	wall.material_override = wall_mat
-	parent.add_child(wall)
-
-	var side_l := MeshInstance3D.new()
-	var side_mesh := BoxMesh.new()
-	side_mesh.size = Vector3(0.12, 3.0, 4.0)
-	side_l.mesh = side_mesh
-	side_l.position = Vector3(-2.2, 1.4, -0.2)
-	side_l.material_override = wall_mat
-	parent.add_child(side_l)
-
-	var side_r := side_l.duplicate() as MeshInstance3D
-	side_r.position = Vector3(2.2, 1.4, -0.2)
-	parent.add_child(side_r)
-
-	var lamp := OmniLight3D.new()
-	lamp.light_energy = 2.0
-	lamp.omni_range = 8.0
-	lamp.position = Vector3(0, 2.6, 0.2)
-	parent.add_child(lamp)
-
-	var fill := OmniLight3D.new()
-	fill.light_energy = 0.7
-	fill.omni_range = 6.0
-	fill.position = Vector3(0.8, 1.8, 1.0)
-	parent.add_child(fill)
+	var packed := load(RESTAURANT_VISUAL_SCENE) as PackedScene
+	if packed == null:
+		push_warning("Restaurant visual scene missing")
+		return
+	var restaurant := packed.instantiate() as Node3D
+	if restaurant == null:
+		push_warning("Restaurant visual scene root must be Node3D")
+		return
+	restaurant.name = "RestaurantVisual"
+	restaurant.position = RESTAURANT_ART_OFFSET
+	parent.add_child(restaurant)
+	var preview_girl := restaurant.get_node_or_null("Characters/DateGirl") as Node3D
+	if preview_girl:
+		preview_girl.visible = false
+		preview_girl.process_mode = Node.PROCESS_MODE_DISABLED
 
 
 func _on_close() -> void:
 	if _sequence == &"outro":
 		return
-	_arrival.begin_outro(GIRL_CHAIR_POSITION, GIRL_DOOR_POSITION, 1.2)
+	var grade := int(Game.dating.last_result.get("grade", 0))
+	Sfx.play(&"result_success" if grade >= 2 else &"result_fail")
+	if _presentation and is_instance_valid(_presentation):
+		_presentation.call("move_to", &"result", 0.75)
+	if _girl and is_instance_valid(_girl) and _girl.has_method("play_alias"):
+		_girl.call("play_alias", &"sit_exit")
+	_arrival.begin_outro(GIRL_CHAIR_POSITION, GIRL_DOOR_POSITION, 2.4)
 	_sequence = &"outro"
 	_sequence_time = 0.0
 	if _date_ui and is_instance_valid(_date_ui):
@@ -276,11 +294,17 @@ func _teardown() -> void:
 		if carry:
 			carry.visible = true
 	_player = null
+	Sfx.set_zone(&"street")
 	_clear()
 
 
 func _clear() -> void:
 	_sequence = &""
+	_sit_started = false
+	_camera_cue = 0
+	if _presentation and is_instance_valid(_presentation):
+		_presentation.queue_free()
+	_presentation = null
 	if _date_cam and is_instance_valid(_date_cam):
 		_date_cam.current = false
 		_date_cam.queue_free()

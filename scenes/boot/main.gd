@@ -3,6 +3,10 @@ extends Node3D
 
 
 func _ready() -> void:
+	var theme_service := load("res://scenes/ui/chrome/date_factory_theme.gd")
+	if theme_service:
+		theme_service.apply(self)
+	Sfx.set_zone(&"apartment")
 	EventBus.stage_changed.connect(_on_stage)
 	EventBus.girl_unlocked.connect(_on_girl_unlocked)
 	EventBus.finale_completed.connect(_on_finale_completed)

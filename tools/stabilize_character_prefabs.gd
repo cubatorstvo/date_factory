@@ -90,7 +90,10 @@ func _write_prefab(spec: Dictionary, ctrl_script: Script, lib: AnimationLibrary)
 	root.set("library_name", &"df_aliases")
 	root.set("autoplay_alias", &"idle")
 	root.set("label_text", str(spec["name"]))
-	root.set_meta("_df_anim_aliases", PackedStringArray(["idle", "walk", "run", "sit", "stand", "gesture", "react"]))
+	root.set_meta("_df_anim_aliases", PackedStringArray([
+		"idle", "walk", "run", "approach", "turn", "sit", "sit_enter",
+		"sit_idle", "seated_gesture", "stand", "sit_exit", "gesture", "react",
+	]))
 	root.set_meta("_df_alias_library", spec["lib"])
 
 	var visual: Node3D = mesh_ps.instantiate() as Node3D
@@ -105,6 +108,9 @@ func _write_prefab(spec: Dictionary, ctrl_script: Script, lib: AnimationLibrary)
 		ap = AnimationPlayer.new()
 		ap.name = "AnimationPlayer"
 		visual.add_child(ap)
+	if ap.has_animation_library(&"df_aliases"):
+		ap.remove_animation_library(&"df_aliases")
+	ap.add_animation_library(&"df_aliases", lib)
 	ap.owner = root
 
 	var shape := CapsuleShape3D.new()

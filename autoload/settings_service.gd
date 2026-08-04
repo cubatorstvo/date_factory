@@ -12,7 +12,9 @@ var mouse_sens: float = 1.0
 var invert_y: bool = true
 var fov: float = 80.0
 var head_bob: bool = true
+var head_bob_intensity: float = 0.045
 var camera_shake: float = 0.75
+var motion_effects: bool = true
 var fullscreen: bool = false
 var window_width: int = 1280
 var window_height: int = 720
@@ -59,7 +61,7 @@ func set_setting(property_name: StringName, value: Variant, apply: bool = false)
 			apply_all()
 
 func _settings_keys() -> Array[StringName]:
-	return [&"master_vol", &"music_vol", &"sfx_vol", &"ui_vol", &"ambient_vol", &"mouse_sens", &"invert_y", &"fov", &"head_bob", &"camera_shake", &"fullscreen", &"window_width", &"window_height"]
+	return [&"master_vol", &"music_vol", &"sfx_vol", &"ui_vol", &"ambient_vol", &"mouse_sens", &"invert_y", &"fov", &"head_bob", &"head_bob_intensity", &"camera_shake", &"motion_effects", &"fullscreen", &"window_width", &"window_height"]
 
 func _clamp_values() -> void:
 	master_vol = clampf(master_vol, 0.0, 1.0)
@@ -69,6 +71,7 @@ func _clamp_values() -> void:
 	ambient_vol = clampf(ambient_vol, 0.0, 1.0)
 	mouse_sens = clampf(mouse_sens, 0.5, 3.0)
 	fov = clampf(fov, 60.0, 110.0)
+	head_bob_intensity = clampf(head_bob_intensity, 0.0, 0.08)
 	camera_shake = clampf(camera_shake, 0.0, 1.0)
 	window_width = clampi(window_width, 800, 3840)
 	window_height = clampi(window_height, 600, 2160)
