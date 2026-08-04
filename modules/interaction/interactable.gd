@@ -1,12 +1,13 @@
 class_name Interactable
 extends Area3D
-## World interactable: outline shader on meshes, thicker/brighter on focus.
+## World interactable: shared screen-space 2D silhouette outline on focus.
 
 const OUTLINE_SHADER: Shader = preload("res://shaders/interact_outline.gdshader")
-const IDLE_WIDTH: float = 0.016
-const FOCUS_WIDTH: float = 0.042
-const IDLE_COLOR := Color(0.43, 0.91, 1.0, 0.72)
-const FOCUS_COLOR := Color(1.0, 0.30, 0.55, 1.0)
+## outline_width is in screen pixels (see interact_outline.gdshader).
+const IDLE_WIDTH: float = 0.0
+const FOCUS_WIDTH: float = 3.0
+const IDLE_COLOR := Color(1.0, 0.35, 0.58, 0.0)
+const FOCUS_COLOR := Color(1.0, 0.35, 0.58, 1.0)
 const DETAIL_MESH_NAMES: Array[String] = [
 	"EyeL", "EyeR", "PupilL", "PupilR", "BrowL", "BrowR", "Nose", "Mouth",
 ]
@@ -22,11 +23,24 @@ var _focused: bool = false
 var _punch_time: float = 0.0
 var _base_scale := Vector3.ONE
 var _outline_mats: Array[ShaderMaterial] = []
+var _external_outline_roots: Array[Node] = []
+var _outlines_ready: bool = false
 
 
 func _ready() -> void:
 	_base_scale = scale
 	call_deferred("_setup_outlines")
+
+
+func bind_outline_root(root: Node) -> void:
+	## Attach outline passes to meshes under an external art node (apartment furniture, etc.).
+	if root == null or not is_instance_valid(root):
+		return
+	if _external_outline_roots.has(root):
+		return
+	_external_outline_roots.append(root)
+	if _outlines_ready:
+		_setup_outlines()
 
 
 func _process(delta: float) -> void:
@@ -63,10 +77,19 @@ func _setup_outlines() -> void:
 	_strip_legacy_markers(self)
 	var meshes: Array[MeshInstance3D] = []
 	_collect_meshes(self, meshes)
+	for root in _external_outline_roots:
+		if root == null or not is_instance_valid(root):
+			continue
+		if root is MeshInstance3D:
+			var root_mi := root as MeshInstance3D
+			if not _is_detail_mesh(root_mi) and not meshes.has(root_mi):
+				meshes.append(root_mi)
+		_collect_meshes(root, meshes)
 	for mi in meshes:
 		var outline := _attach_outline(mi)
 		if outline:
 			_outline_mats.append(outline)
+	_outlines_ready = true
 	_apply_outline_state()
 
 
@@ -86,6 +109,14 @@ func _attach_outline(mi: MeshInstance3D) -> ShaderMaterial:
 		base = mi.get_active_material(0)
 	if base == null:
 		base = StandardMaterial3D.new()
+	# Reuse prior outline pass if we rebuild after bind_outline_root.
+	var existing_next: Material = null
+	if base is BaseMaterial3D:
+		existing_next = (base as BaseMaterial3D).next_pass
+	elif base is ShaderMaterial:
+		existing_next = (base as ShaderMaterial).next_pass
+	if existing_next is ShaderMaterial and (existing_next as ShaderMaterial).shader == OUTLINE_SHADER:
+		return existing_next as ShaderMaterial
 	# Duplicate so shared girl/prop materials don't fight each other.
 	var owned: Material = base.duplicate()
 	mi.material_override = owned

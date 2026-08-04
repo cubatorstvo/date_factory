@@ -729,6 +729,8 @@ func _refresh_candidates() -> void:
 		})
 	# Extra procedural mass candidates if stage >= 2 (factory filler).
 	var slots: int = 2 + int(Game.upgrades.effect_value("candidate_slots"))
+	if Game.city != null:
+		slots += int(floor(float(Game.city.get("soft_candidate_bias"))))
 	if _stage_reached("stage_2"):
 		for i in range(slots):
 			candidates.append(_make_procedural())

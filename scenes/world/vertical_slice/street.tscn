@@ -2819,22 +2819,22 @@ mesh = SubResource("ArrayMesh_6m584")
 [node name="Building_Small_3" type="MeshInstance3D" parent="Buildings/PlayerHomeFacade" unique_id=53680402]
 mesh = SubResource("ArrayMesh_kuwpm")
 
-[node name="EastEndSouthFill" type="Node3D" parent="Buildings" unique_id=1637633054 instance=ExtResource("21_rrdsq")]
+[node name="EastEndSouthFill" parent="Buildings" unique_id=1637633054 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(-3.1209932e-08, 0, -0.714, 0, 0.714, 0, 0.714, 0, -3.1209932e-08, 21.6, 0, 8.85)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/EastEndSouthFill" unique_id=1595626832]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/EastEndSouthFill" unique_id=1595626832]
 mesh = SubResource("ArrayMesh_cv2i8")
 
-[node name="EastEndNorthFill" type="Node3D" parent="Buildings" unique_id=547665438 instance=ExtResource("21_rrdsq")]
+[node name="EastEndNorthFill" parent="Buildings" unique_id=547665438 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(-3.1209932e-08, 0, -0.714, 0, 0.714, 0, 0.714, 0, -3.1209932e-08, 21.6, 0, -8.5)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/EastEndNorthFill" unique_id=869699381]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/EastEndNorthFill" unique_id=869699381]
 mesh = SubResource("ArrayMesh_cv2i8")
 
-[node name="SouthBlockFarEast" type="Node3D" parent="Buildings" unique_id=965857524 instance=ExtResource("21_rrdsq")]
+[node name="SouthBlockFarEast" parent="Buildings" unique_id=965857524 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(-0.714, 0, -6.2419865e-08, 0, 0.714, 0, 6.2419865e-08, 0, -0.714, 17, 0, 7.08)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/SouthBlockFarEast" unique_id=270547240]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/SouthBlockFarEast" unique_id=270547240]
 mesh = SubResource("ArrayMesh_cv2i8")
 
 [node name="StreetProps" type="Node3D" parent="." unique_id=758449721]

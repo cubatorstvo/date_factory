@@ -89,6 +89,8 @@ func _ensure_date_actions() -> void:
 		_gift_btn.name = "GiftBtn"
 		_gift_btn.text = "Подарить подарок"
 		_gift_btn.visible = false
+		_gift_btn.focus_mode = Control.FOCUS_NONE
+		_gift_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 		_gift_btn.pressed.connect(_on_gift_pressed)
 		vbox.add_child(_gift_btn)
 	if _gift_list == null or not is_instance_valid(_gift_list):
@@ -96,13 +98,16 @@ func _ensure_date_actions() -> void:
 		_gift_list.name = "GiftList"
 		_gift_list.visible = false
 		_gift_list.custom_minimum_size = Vector2(0, 90)
-		_gift_list.item_selected.connect(_on_gift_picked)
+		_gift_list.focus_mode = Control.FOCUS_NONE
+		_gift_list.gui_input.connect(_on_gift_list_gui_input)
 		vbox.add_child(_gift_list)
 	if _finish_btn == null or not is_instance_valid(_finish_btn):
 		_finish_btn = Button.new()
 		_finish_btn.name = "FinishBtn"
 		_finish_btn.text = "Завершить свидание"
 		_finish_btn.visible = false
+		_finish_btn.focus_mode = Control.FOCUS_NONE
+		_finish_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 		_finish_btn.pressed.connect(func(): Game.dating.finish_manual())
 		vbox.add_child(_finish_btn)
 
@@ -128,6 +133,21 @@ func _on_gift_pressed() -> void:
 	_gift_list.visible = any
 	if not any:
 		EventBus.toast("В инвентаре нет подарков", &"info")
+
+
+func _on_gift_list_gui_input(event: InputEvent) -> void:
+	## ItemList selects on press; commit the gift only on mouse button_up.
+	if _gift_list == null:
+		return
+	if not (event is InputEventMouseButton):
+		return
+	var mb := event as InputEventMouseButton
+	if mb.button_index != MOUSE_BUTTON_LEFT or mb.pressed:
+		return
+	var index: int = _gift_list.get_item_at_position(mb.position, true)
+	if index < 0:
+		return
+	_on_gift_picked(index)
 
 
 func _on_gift_picked(index: int) -> void:
@@ -238,6 +258,8 @@ func _ensure_result_panel() -> void:
 	_result_close_btn = Button.new()
 	_result_close_btn.name = "ResultClose"
 	_result_close_btn.text = "Продолжить"
+	_result_close_btn.focus_mode = Control.FOCUS_NONE
+	_result_close_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 	_result_close_btn.pressed.connect(_dismiss_result_panel)
 	vbox.add_child(_result_close_btn)
 	add_child(_result_panel)
@@ -446,6 +468,9 @@ func _on_phase(phase_index: int, options: Array) -> void:
 		b.text = str(o.get("label", o.get("id", "?")))
 		b.custom_minimum_size = Vector2(0, 44)
 		b.mouse_filter = Control.MOUSE_FILTER_STOP
+		# Mouse-only replies: no keyboard/gamepad focus highlight or arrow cycling.
+		b.focus_mode = Control.FOCUS_NONE
+		b.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 		var oid := str(o.get("id", ""))
 		b.pressed.connect(func(): _choose_option(b, oid))
 		buttons.add_child(b)
@@ -458,8 +483,6 @@ func _on_phase(phase_index: int, options: Array) -> void:
 		reveal.tween_property(b, "modulate:a", 1.0, 0.2).set_delay(option_index * 0.05)
 		reveal.tween_property(b, "position:x", 0.0, 0.2).set_delay(option_index * 0.05)
 		option_index += 1
-	if buttons.get_child_count() > 0:
-		(buttons.get_child(0) as Button).grab_focus()
 	_refresh_action_buttons()
 
 

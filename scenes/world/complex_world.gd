@@ -4,6 +4,10 @@ extends Node3D
 
 const APARTMENT_SCENE := "res://scenes/world/vertical_slice/apartment.tscn"
 const CITY_SCENE := "res://scenes/world/city/city.tscn"
+const LAB_SCENE := "res://scenes/art/lab/Clone_Lab_Base.tscn"
+## Uniform outdoor scale so ~1.8m characters stop looking giant on street art.
+## Applied to the city root only — apartment/home interiors stay unscaled.
+const CITY_WORLD_SCALE := 1.5
 
 @onready var rooms_root: Node3D = $Rooms
 @onready var props_root: Node3D = $Props
@@ -16,6 +20,7 @@ var _city_data: Dictionary = {}
 var _ambient_time: float = 0.0
 var _neighbor_girl: Node3D
 var _current_location: StringName = &"home"
+var _home_zone: StringName = &"apartment" ## apartment | lab | apt_*
 var _traveling: bool = false
 
 
@@ -24,9 +29,12 @@ func _ready() -> void:
 	Game.facility.facility_changed.connect(_rebuild)
 	Game.girls.girls_changed.connect(_refresh_harem_npcs)
 	Game.city.city_changed.connect(_refresh_tutorial_markers)
+	Game.city.city_changed.connect(_on_city_districts_changed)
 	EventBus.stage_changed.connect(func(_s): _rebuild())
 	_add_world_ground()
+	# Boot always into the apartment FPS cluster — never lab/city overview.
 	_current_location = &"home"
+	_home_zone = &"apartment"
 	_rebuild()
 	call_deferred("_place_player_at_spawn", &"PlayerSpawn")
 
@@ -69,7 +77,8 @@ func _rebuild() -> void:
 		_spawn_city_npcs()
 		_refresh_tutorial_markers()
 	else:
-		for rid in Game.facility.unlocked_rooms:
+		# Home zones: apartment cluster stays walkable; lab / themed apts load exclusively via travel_to.
+		for rid in _home_rooms_for_active_zone():
 			_build_room(rid)
 		_refresh_harem_npcs()
 	# Keep talk-girl meshes visible; only hide true greybox placeholders.
@@ -88,13 +97,45 @@ func get_current_location() -> StringName:
 	return _current_location
 
 
+func get_home_zone() -> StringName:
+	return _home_zone
+
+
+func _home_rooms_for_active_zone() -> Array[StringName]:
+	## Which unlocked rooms to instantiate for the current home zone.
+	var zone := _home_zone
+	if zone == &"" or zone == &"home":
+		zone = &"apartment"
+	var exclusive_zones: Array[StringName] = [&"lab", &"apt_cozy", &"apt_modern", &"apt_creative"]
+	var out: Array[StringName] = []
+	if exclusive_zones.has(zone):
+		if Game.facility.room_unlocked(zone) or zone == &"lab":
+			out.append(zone)
+		return out
+	# Apartment FPS cluster: player apartment + neighbor teleport target + walkable expansions.
+	# Lab / themed apartments stay out of the starting overview and load via elevator/travel_to.
+	for rid in Game.facility.unlocked_rooms:
+		if exclusive_zones.has(rid):
+			continue
+		out.append(rid)
+	if out.is_empty():
+		out.append(&"apartment")
+	return out
+
+
 func travel_to(location_id: StringName, spawn_marker: StringName = &"") -> void:
 	if _traveling:
 		return
 	var target := StringName(str(location_id))
-	if target != &"home" and target != &"city":
+	var home_zones: Array[StringName] = [&"home", &"apartment", &"lab", &"apt_cozy", &"apt_modern", &"apt_creative"]
+	var is_home_zone := home_zones.has(target)
+	if not is_home_zone and target != &"city":
 		push_warning("ComplexWorld.travel_to: unknown location '%s'" % location_id)
 		return
+	if target.begins_with("apt_") and Game.city != null and Game.city.has_method("is_apartment_unlocked"):
+		if not bool(Game.city.call("is_apartment_unlocked", target)):
+			EventBus.toast("Квартира ещё закрыта", &"warn")
+			return
 	_traveling = true
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player:
@@ -104,11 +145,27 @@ func travel_to(location_id: StringName, spawn_marker: StringName = &"") -> void:
 	if scene:
 		transition = scene.find_child("TransitionOverlay", true, false) as TransitionOverlay
 	var mid := func() -> void:
-		_current_location = target
-		_rebuild()
-		_place_player_at_spawn(spawn_marker)
-		Sfx.set_zone(&"apartment" if target == &"home" else &"street")
-		Sfx.play(&"door")
+		if target == &"city":
+			_current_location = &"city"
+			_rebuild()
+			_place_player_at_spawn(spawn_marker)
+			Sfx.set_zone(&"street")
+			Sfx.play(&"door")
+		else:
+			var zone := target
+			if zone == &"home":
+				zone = &"apartment"
+			var need_rebuild := _current_location != &"home" or not _built_rooms.has(str(zone))
+			_current_location = &"home"
+			_home_zone = zone
+			if need_rebuild:
+				_rebuild()
+			var marker := spawn_marker
+			if str(marker).is_empty():
+				marker = &"PlayerSpawn"
+			_place_player_at_spawn(marker)
+			Sfx.set_zone(&"apartment")
+			Sfx.play(&"elevator" if zone != &"apartment" else &"door")
 	var unlock := func() -> void:
 		_traveling = false
 		if is_instance_valid(player):
@@ -128,6 +185,7 @@ func _place_player_at_spawn(spawn_marker: StringName = &"") -> void:
 	player.global_position = Vector3(pos.x, 0.05, pos.z)
 	if player is CharacterBody3D:
 		(player as CharacterBody3D).velocity = Vector3.ZERO
+	_ensure_player_camera(player)
 
 
 func _resolve_spawn_position(spawn_marker: StringName = &"") -> Vector3:
@@ -135,21 +193,37 @@ func _resolve_spawn_position(spawn_marker: StringName = &"") -> Vector3:
 	if marker_name.is_empty():
 		marker_name = "PlayerSpawn" if _current_location == &"home" else "HomeEntrance"
 	if _current_location == &"home":
-		var apt := _built_rooms.get("apartment") as Node3D
-		if apt:
-			var visual := apt.get_node_or_null("ApartmentVisual") as Node3D
+		var zone_key := str(_home_zone)
+		if zone_key == "" or zone_key == "home":
+			zone_key = "apartment"
+		var zone_root := _built_rooms.get(zone_key) as Node3D
+		if zone_root:
+			var visual := zone_root.get_node_or_null("ApartmentVisual") as Node3D
+			if visual == null:
+				visual = zone_root.get_node_or_null("LabVisual") as Node3D
 			if visual:
 				var m := visual.get_node_or_null("Markers/%s" % marker_name) as Node3D
 				if m:
 					return m.global_position
+			var spawn_n := zone_root.get_node_or_null("PlayerSpawn") as Node3D
+			if spawn_n:
+				return spawn_n.global_position
+			return zone_root.global_position + Vector3(0.0, 0.0, 2.0)
+		var apt := _built_rooms.get("apartment") as Node3D
+		if apt:
+			var av := apt.get_node_or_null("ApartmentVisual") as Node3D
+			if av:
+				var m2 := av.get_node_or_null("Markers/%s" % marker_name) as Node3D
+				if m2:
+					return m2.global_position
 		return Vector3(-3.6, 0.0, 3.6)
 	var city_visual := props_root.find_child("CityVisual", true, false) as Node3D
 	if city_visual:
 		var m2 := city_visual.get_node_or_null("Markers/%s" % marker_name) as Node3D
 		if m2:
 			return m2.global_position
-	# HomeEntrance street-local (17,0,4.7) under CityVisual offset (-30,0,0).
-	return Vector3(-13.0, 0.0, 4.7)
+	# HomeEntrance street-local (17,0,4.7) under CityVisual offset (-30,0,0), then CITY_WORLD_SCALE.
+	return Vector3(-13.0, 0.0, 4.7) * CITY_WORLD_SCALE
 
 
 func _build_city() -> void:
@@ -171,10 +245,143 @@ func _build_city() -> void:
 		_hide_placeholder_meshes(props_root)
 		var home_p := _marker_local(city_root, city_visual, "Markers/HomeEntrance", Vector3(-13.0, 0.0, 4.7))
 		_add_interact(city_root, home_p, "Мой дом", "Войти домой", &"go_home", {"art_backed": true}, &"door")
-		_add_interact(city_root, Vector3(-19.5, 0.0, -4.35), "Ресторан Two Hearts", "Сесть и ждать свидание", &"sit_restaurant", {"art_backed": true}, &"door")
+		_add_interact(city_root, Vector3(-19.5, 0.0, -4.35), "Кафе Two Hearts", "Сесть и ждать свидание", &"sit_cafe", {"art_backed": true}, &"door")
 		_add_interact(city_root, Vector3(-24.0, 0.0, 2.0), "Цветочный", "Открыть витрину", &"open_flower_shop", {"art_backed": true}, &"shelf")
 		_add_interact(city_root, Vector3(-26.5, 0.0, 1.5), "Ювелирный", "Открыть витрину", &"open_jewelry_shop", {"art_backed": true}, &"shelf")
 		_add_interact(city_root, Vector3(-22.0, 0.0, 3.0), "Магазин подарков", "Открыть", &"open_gift_shop", {"art_backed": true}, &"shelf")
+		_add_interact(city_root, Vector3(-23.2, 0.0, 3.6), "Одежда", "Открыть магазин", &"open_clothing_shop", {"art_backed": true}, &"wardrobe")
+		_add_interact(city_root, Vector3(-21.2, 0.0, 3.6), "Дом и посуда", "Открыть магазин", &"open_homeware_shop", {"art_backed": true}, &"shelf")
+		var picnic_p := _marker_local(city_root, city_visual, "Markers/ParkPicnicSpot", Vector3(-38.0, 0.0, 7.2))
+		var rest_p := _marker_local(city_root, city_visual, "Markers/ParkRestaurantEntrance", Vector3(-45.5, 0.0, -1.0))
+		_add_interact(city_root, picnic_p, "Пикник в парке", "Сесть и ждать свидание", &"sit_park", {"art_backed": true}, &"desk")
+		_add_interact(city_root, rest_p, "Ресторан у парка", "Сесть и ждать свидание", &"sit_restaurant", {"art_backed": true}, &"door")
+		var gym_p := _marker_local(city_root, city_visual, "Markers/GymEntrance", Vector3(-36.0, 0.0, -4.0))
+		var book_p := _marker_local(city_root, city_visual, "Markers/BookstoreEntrance", Vector3(-34.0, 0.0, 1.0))
+		var cine_p := _marker_local(city_root, city_visual, "Markers/CinemaEntrance", Vector3(-42.0, 0.0, -5.0))
+		var arcade_p := _marker_local(city_root, city_visual, "Markers/ArcadeEntrance", Vector3(-44.0, 0.0, 1.0))
+		_add_interact(city_root, gym_p, "Фитнес Leisure", "Тренировка (UI)", &"city_workout", {"art_backed": true}, &"machine")
+		_add_interact(city_root, gym_p + Vector3(-1.6, 0.0, 0.4), "Абонемент Leisure", "Купить (+макс. внимание)", &"city_gym_pass", {"art_backed": true}, &"poster")
+		_add_interact(city_root, book_p, "Книжный Leisure", "Открыть витрину", &"open_bookstore", {"art_backed": true}, &"shelf")
+		_add_interact(city_root, cine_p, "Кинотеатр Leisure", "Сесть и ждать сеанс", &"sit_cinema", {"art_backed": true}, &"door")
+		_add_interact(city_root, arcade_p, "Аркада Перегруз", "Сыграть / свидание", &"open_arcade", {"art_backed": true}, &"console")
+		# If arcade date booked, sit_arcade is also available at same spot via dedicated marker use.
+		_add_interact(city_root, arcade_p + Vector3(1.2, 0.0, 0.0), "Аркада (свидание)", "Сесть к автомату", &"sit_arcade", {"art_backed": true}, &"console")
+		var photo_p := _marker_local(city_root, city_visual, "Markers/PhotoStudioEntrance", Vector3(-48.0, 0.0, -3.0))
+		var barber_p := _marker_local(city_root, city_visual, "Markers/BarberEntrance", Vector3(-54.0, 0.0, -1.5))
+		var agency_p := _marker_local(city_root, city_visual, "Markers/AgencyOfficeEntrance", Vector3(-60.0, 0.0, -4.0))
+		_add_interact(city_root, photo_p, "Фотостудия Agency", "Сессия / публикация", &"open_photo_studio", {"art_backed": true, "venue_id": "photo_studio"}, &"poster")
+		_add_interact(city_root, barber_p, "Барбер Agency", "Стрижка / стиль", &"open_barber", {"art_backed": true}, &"desk")
+		_add_interact(city_root, agency_p, "Офис агентства", "Доска расписания", &"open_agency_board", {"art_backed": true}, &"console")
+		_wire_district_gate_interact(city_root, city_visual, "Decor/ParkGate", CityDistricts.PARK_LEISURE, "Парковые ворота")
+		_wire_district_gate_interact(city_root, city_visual, "Decor/AgencyGate", CityDistricts.AGENCY_ROW, "Барьер агентства")
+		_sync_park_gate(city_visual)
+		_sync_agency_gate(city_visual)
+		if Game.city != null and Game.city.has_method("try_unlock_park_from_progress"):
+			Game.city.try_unlock_park_from_progress()
+		if Game.city != null and Game.city.has_method("try_unlock_agency_row_from_progress"):
+			Game.city.try_unlock_agency_row_from_progress()
+		# One coherent outdoor factor: art + interacts + gates under city_root.
+		city_root.scale = Vector3.ONE * CITY_WORLD_SCALE
+		_scale_city_nav_data(CITY_WORLD_SCALE)
+
+
+func _sync_park_gate(city_visual: Node3D) -> void:
+	if city_visual == null:
+		return
+	var gate := city_visual.get_node_or_null("Decor/ParkGate") as Node3D
+	if gate == null:
+		gate = city_visual.find_child("ParkGate", true, false) as Node3D
+	if gate == null:
+		return
+	var open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.PARK_LEISURE)
+	_apply_district_gate(gate, open)
+
+
+func _sync_agency_gate(city_visual: Node3D) -> void:
+	if city_visual == null:
+		return
+	var gate := city_visual.get_node_or_null("Decor/AgencyGate") as Node3D
+	if gate == null:
+		gate = city_visual.find_child("AgencyGate", true, false) as Node3D
+	if gate == null:
+		return
+	var open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.AGENCY_ROW)
+	_apply_district_gate(gate, open)
+
+
+func _apply_district_gate(gate: Node3D, open: bool) -> void:
+	gate.visible = not open
+	_style_district_barrier(gate)
+	for child in gate.get_children():
+		if child is CollisionShape3D:
+			(child as CollisionShape3D).disabled = open
+		elif child is CollisionObject3D:
+			(child as CollisionObject3D).set_collision_layer_value(1, not open)
+	if gate is CollisionObject3D:
+		(gate as CollisionObject3D).set_collision_layer_value(1, not open)
+		for cs in gate.get_children():
+			if cs is CollisionShape3D:
+				(cs as CollisionShape3D).disabled = open
+	var probe: Node = gate.get_meta("gate_interact", null) as Node
+	if probe != null and is_instance_valid(probe):
+		probe.visible = not open
+		var probe_cs := probe.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if probe_cs == null:
+			for c in probe.get_children():
+				if c is CollisionShape3D:
+					probe_cs = c as CollisionShape3D
+					break
+		if probe_cs != null:
+			probe_cs.disabled = open
+		if probe is CollisionObject3D:
+			(probe as CollisionObject3D).monitoring = not open
+			(probe as CollisionObject3D).monitorable = not open
+
+
+func _style_district_barrier(gate: Node3D) -> void:
+	## Semi-transparent GTA/NFS-style wall on CSG barrier meshes.
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.35, 0.62, 0.95, 0.38)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	for child in gate.get_children():
+		if child is CSGShape3D:
+			(child as CSGShape3D).material = mat
+		elif child is MeshInstance3D:
+			(child as MeshInstance3D).material_override = mat
+	var label := gate.get_node_or_null("SoonLabel") as Label3D
+	if label != null:
+		label.text = "Взаимодействуй"
+
+
+func _wire_district_gate_interact(city_root: Node3D, city_visual: Node3D, gate_path: String, district_id: StringName, title: String) -> void:
+	if city_root == null or city_visual == null:
+		return
+	var gate := city_visual.get_node_or_null(gate_path) as Node3D
+	if gate == null:
+		gate = city_visual.find_child(gate_path.get_file(), true, false) as Node3D
+	if gate == null:
+		return
+	if gate.has_meta("gate_interact") and is_instance_valid(gate.get_meta("gate_interact")):
+		return
+	## Place probe on the street (+X) side of the barrier so the player can reach it while closed.
+	var local_pos: Vector3 = city_root.to_local(gate.global_position) + Vector3(1.6, 0.0, 0.0)
+	var area: Interactable = Interactable.new()
+	area.name = "GateProbe_%s" % str(district_id)
+	area.display_name = title
+	area.action_label = "Осмотреть район"
+	area.action_id = &"inspect_district_gate"
+	area.payload = {"district_id": str(district_id), "art_backed": true}
+	area.position = Vector3(local_pos.x, 0.0, local_pos.z)
+	var cs := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(1.4, 2.2, 2.4)
+	cs.shape = shape
+	cs.position = Vector3(0, 1.1, 0)
+	area.add_child(cs)
+	city_root.add_child(area)
+	gate.set_meta("gate_interact", area)
 
 
 func _marker_pos(visual: Node3D, rel_path: String, fallback: Vector3) -> Vector3:
@@ -193,6 +400,25 @@ func _marker_local(parent: Node3D, visual: Node3D, rel_path: String, fallback: V
 	if marker == null:
 		return fallback
 	return parent.to_local(marker.global_position)
+
+
+func _scale_city_nav_data(factor: float) -> void:
+	## NPCs live under npcs_root (not city_root), so waypoints/spots must match city scale.
+	if is_equal_approx(factor, 1.0):
+		return
+	var waypoints: Array = _city_data.get("waypoints", [])
+	for i in range(waypoints.size()):
+		var wp: Vector3 = waypoints[i]
+		waypoints[i] = wp * factor
+	_city_data["waypoints"] = waypoints
+	var spots: Dictionary = _city_data.get("spots", {})
+	for key in spots.keys():
+		var arr: Array = spots[key]
+		for i in range(arr.size()):
+			var p: Vector3 = arr[i]
+			arr[i] = p * factor
+		spots[key] = arr
+	_city_data["spots"] = spots
 
 
 func _mount_visual_scene(parent: Node3D, scene_path: String, node_name: String, local_position: Vector3 = Vector3.ZERO) -> Node3D:
@@ -215,8 +441,26 @@ func _mount_visual_scene(parent: Node3D, scene_path: String, node_name: String, 
 		var light := node as DirectionalLight3D
 		if light:
 			light.visible = false
+	# Art TechCameras ship current=true (elevated overview). Never steal the player FPS camera.
+	for node: Node in instance.find_children("*", "Camera3D", true, false):
+		var cam := node as Camera3D
+		if cam:
+			cam.current = false
+			cam.set_process(false)
+			cam.set_physics_process(false)
 	_tone_down_slice_lights(instance)
 	return instance
+
+
+func _ensure_player_camera(player: Node3D) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	var cam := player.get_node_or_null("Head/Camera3D") as Camera3D
+	if cam == null:
+		cam = player.find_child("Camera3D", true, false) as Camera3D
+	if cam:
+		cam.make_current()
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _tone_down_slice_lights(root: Node = null) -> void:
@@ -392,9 +636,9 @@ func _spawn_city_npcs() -> void:
 func _spawn_talk_girl(profile: Dictionary, spots: Dictionary, waypoints: Array, prefer_plaza: bool) -> void:
 	var id := str(profile.get("id", ""))
 	var home := str(profile.get("home_spot", "street_plaza"))
-	var spawn := Vector3(-12, 0, 0)
+	var spawn := Vector3(-12, 0, 0) * CITY_WORLD_SCALE
 	if prefer_plaza and id == "city_cashier":
-		spawn = Vector3(-12.5, 0, 1.2)
+		spawn = Vector3(-12.5, 0, 1.2) * CITY_WORLD_SCALE
 	elif spots.has(home) and not (spots[home] as Array).is_empty():
 		var arr: Array = spots[home]
 		spawn = arr[randi() % arr.size()]
@@ -410,7 +654,7 @@ func _spawn_talk_girl(profile: Dictionary, spots: Dictionary, waypoints: Array, 
 	area.position = Vector3(spawn.x, 0.0, spawn.z)
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(0.9, 1.8, 0.9)
+	shape.size = Vector3(0.55, 1.8, 0.55)
 	cs.shape = shape
 	cs.position = Vector3(0, 0.9, 0)
 	area.add_child(cs)
@@ -446,6 +690,14 @@ func _spawn_talk_girl(profile: Dictionary, spots: Dictionary, waypoints: Array, 
 	_city_girls.append({"node": area, "girl": girl, "waypoints": path, "index": 1, "pause": randf() * 1.5, "id": id})
 
 
+func _on_city_districts_changed() -> void:
+	if _current_location != &"city":
+		return
+	var city_visual := props_root.find_child("CityVisual", true, false) as Node3D
+	_sync_park_gate(city_visual)
+	_sync_agency_gate(city_visual)
+
+
 func _refresh_tutorial_markers() -> void:
 	var tid := str(Game.city.tutorial_target_id)
 	for entry in _city_girls:
@@ -474,28 +726,39 @@ func _build_room(room_id: StringName) -> void:
 				if gift_shelf:
 					gift_shelf.visible = false
 			# Snap interact volumes to real furniture nodes (markers can lag behind art moves).
-			var bed_p := _marker_pos(apt_visual, "Furniture/Bed", Vector3(4.15, 0, -3.65))
-			var wardrobe_p := _marker_pos(apt_visual, "Furniture/Wardrobe", Vector3(5.05, 0, 0.95))
-			var fridge_p := _marker_pos(apt_visual, "Furniture/Fridge", Vector3(-3.8, 0, 1.2))
-			var table_p := _marker_pos(apt_visual, "Furniture/DiningTable", Vector3(0.65, 0, 0.55))
-			var exit_p := _marker_pos(apt_visual, "Markers/ApartmentExit", Vector3(-4.2, 0, 4.2))
-			var night_p := _marker_pos(apt_visual, "Furniture/NightStand", Vector3(5.15, 0, -2.7))
-			var window_p := _marker_pos(apt_visual, "Markers/WindowAnchor", Vector3(1.55, 0, -4.1))
-			_add_interact(root, bed_p, "Кровать / Работа", "Поработать", &"job", {}, &"bed")
-			_add_interact(root, wardrobe_p, "Шкаф", "Сменить одежду", &"wardrobe", {}, &"wardrobe")
-			_add_interact(root, fridge_p, "Холодильник", "Взять простое блюдо", &"take_food", {"food_id": "simple_meal"}, &"shelf")
+			var bed_p: Vector3 = _marker_pos(apt_visual, "Furniture/Bed", Vector3(4.15, 0, -3.65))
+			var wardrobe_p: Vector3 = _marker_pos(apt_visual, "Furniture/Wardrobe", Vector3(5.05, 0, 0.95))
+			var fridge_p: Vector3 = _marker_pos(apt_visual, "Furniture/Fridge", Vector3(-3.8, 0, 1.2))
+			var table_p: Vector3 = _marker_pos(apt_visual, "Furniture/DiningTable", Vector3(0.65, 0, 0.55))
+			var exit_p: Vector3 = _marker_pos(apt_visual, "Markers/ApartmentExit", Vector3(-1.9, 0, 0.25))
+			var night_p: Vector3 = _marker_pos(apt_visual, "Furniture/NightStand", Vector3(5.15, 0, -2.7))
+			var neighbor_p: Vector3 = _marker_pos(apt_visual, "Markers/NeighborDoorAnchor", Vector3(-1.5, 0, 1.95))
+			var bed_i: Interactable = _add_interact(root, bed_p, "Кровать / Работа", "Поработать", &"job", {}, &"bed")
+			var wardrobe_i: Interactable = _add_interact(root, wardrobe_p, "Шкаф", "Сменить одежду", &"wardrobe", {}, &"wardrobe")
+			var fridge_i: Interactable = _add_interact(root, fridge_p, "Холодильник", "Взять простое блюдо", &"take_food", {"food_id": "simple_meal"}, &"shelf")
 			_add_interact(root, fridge_p + Vector3(0.35, 0, 0.15), "Закуски", "Взять закуску", &"take_food", {"food_id": "snack_plate"}, &"shelf")
 			_add_interact(root, fridge_p + Vector3(-0.35, 0, 0.15), "Десерт", "Взять десерт", &"take_food", {"food_id": "dessert"}, &"shelf")
 			_add_interact(root, fridge_p + Vector3(0.7, 0, 0), "Вода", "Взять воду", &"take_drink", {"drink_id": "water"}, &"shelf")
 			_add_interact(root, fridge_p + Vector3(0.95, 0, 0.1), "Сок", "Взять сок", &"take_drink", {"drink_id": "juice"}, &"shelf")
 			_add_interact(root, fridge_p + Vector3(1.2, 0, 0), "Вино", "Взять вино", &"take_drink", {"drink_id": "wine"}, &"shelf")
 			_add_interact(root, fridge_p + Vector3(-0.7, 0, 0), "Посуда", "Улучшить сервировку", &"upgrade_homeware", {}, &"shelf")
-			_add_interact(root, table_p, "Кухонный стол", "Положить / сесть / начать", &"prepare_and_start", {}, &"table_set")
+			var table_i: Interactable = _add_interact(root, table_p, "Кухонный стол", "Положить / сесть / начать", &"prepare_and_start", {}, &"table_set")
 			# Doorbell removed: home dates start at the table after sit/wait.
-			_add_interact(root, night_p, "Телефон на тумбе", "Открыть", &"phone", {}, &"phone_stand")
+			var phone_i: Interactable = _add_interact(root, night_p, "Телефон на тумбе", "Открыть", &"phone", {}, &"phone_stand")
 			_add_interact(root, wardrobe_p + Vector3(0.7, 0, -0.8), "Дверь расширения", "Расширить", &"expand", {}, &"door")
-			_add_interact(root, exit_p, "На улицу", "Выйти в город", &"go_outside", {}, &"door")
-			_add_interact(root, window_p, "К соседке", "Постучать", &"go_neighbor", {}, &"door")
+			var exit_i: Interactable = _add_interact(root, exit_p, "На улицу", "Выйти в город", &"go_outside", {}, &"door")
+			var neighbor_i: Interactable = _add_interact(root, neighbor_p, "К соседке", "Постучать", &"go_neighbor", {}, &"door")
+			var elev_p: Vector3 = exit_p + Vector3(0.15, 0, 1.15)
+			_add_interact(root, elev_p, "Лифт", "Выбрать этаж", &"open_elevator", {}, &"door")
+			var basement_p: Vector3 = fridge_p + Vector3(-1.2, 0, 1.0)
+			_add_interact(root, basement_p, "Подвал / лаборатория", "Спуститься в лаб", &"go_lab", {}, &"door")
+			_bind_interact_outline(bed_i, apt_visual, "Furniture/Bed")
+			_bind_interact_outline(wardrobe_i, apt_visual, "Furniture/Wardrobe")
+			_bind_interact_outline(fridge_i, apt_visual, "Furniture/Fridge")
+			_bind_interact_outline(table_i, apt_visual, "Furniture/DiningTable")
+			_bind_interact_outline(phone_i, apt_visual, "Furniture/NightStand")
+			_bind_interact_outline(exit_i, apt_visual, "Furniture/ExitDoor")
+			_bind_interact_outline(neighbor_i, apt_visual, "Furniture/NeighborDoor")
 		"neighbor_apt":
 			_box(root, Vector3(7, 0.2, 7), Vector3(0, -0.1, 0), Color(0.6, 0.52, 0.55))
 			_wall_room(root, 7, 7, 2.6)
@@ -522,6 +785,14 @@ func _build_room(room_id: StringName) -> void:
 			_add_interact(root, Vector3(4, 1, 2), "Лаб. подготовка", "Улучшение науки", &"buy_upgrade", {"upgrade_id": "ward_style_science"}, &"machine")
 			_add_interact(root, Vector3(0, 1, 3), "К штабу+", "Расширить", &"expand", {}, &"door")
 			_orbit_culture_props(root, Vector3(0, 1.6, -3.8))
+		"lab":
+			_build_lab_room(root)
+		"apt_cozy":
+			_build_themed_apartment(root, "Уют", Color(0.72, 0.55, 0.42), Color(0.85, 0.7, 0.55))
+		"apt_modern":
+			_build_themed_apartment(root, "Модерн", Color(0.35, 0.38, 0.42), Color(0.55, 0.6, 0.65))
+		"apt_creative":
+			_build_themed_apartment(root, "Креатив", Color(0.55, 0.35, 0.65), Color(0.9, 0.45, 0.55))
 		"mansion":
 			_box(root, Vector3(14, 0.2, 12), Vector3(0, -0.1, 0), Color(0.55, 0.45, 0.4))
 			_wall_room(root, 14, 12, 3.2)
@@ -566,6 +837,62 @@ func _build_room(room_id: StringName) -> void:
 			_mannequin(root, Vector3(0, 1.2, 6), Color(1, 0.2, 0.9), "Алгоритм")
 
 
+func _build_lab_room(root: Node3D) -> void:
+	## Cold metal contrast vs warm apartment. Prefer Clone_Lab_Base art.
+	var lab_visual := _mount_visual_scene(root, LAB_SCENE, "LabVisual")
+	if lab_visual == null:
+		_box(root, Vector3(10, 0.2, 10), Vector3(0, -0.1, 0), Color(0.28, 0.34, 0.4))
+		_wall_room(root, 10, 10, 3.0)
+		_label(root, Vector3(0, 2.6, -4.2), "Лаборатория")
+	else:
+		_label(root, Vector3(0, 2.8, -4.5), "Лаборатория клонов")
+	var light := OmniLight3D.new()
+	light.name = "ColdLight"
+	light.light_color = Color(0.55, 0.75, 0.95)
+	light.light_energy = 1.4
+	light.omni_range = 12.0
+	light.position = Vector3(0, 2.8, 0)
+	root.add_child(light)
+	var spawn := Marker3D.new()
+	spawn.name = "PlayerSpawn"
+	spawn.position = Vector3(0, 0, 3.2)
+	root.add_child(spawn)
+	_add_interact(root, Vector3(-2.5, 0, -1.5), "Капсула клона", "Создать клона", &"create_clone", {}, &"machine")
+	_add_interact(root, Vector3(2.5, 0, -1.0), "Терминал приёмки", "Создать клона", &"create_clone", {}, &"console")
+	_add_interact(root, Vector3(0, 0, 3.5), "Лифт", "Выбрать этаж", &"open_elevator", {}, &"door")
+	_add_interact(root, Vector3(2.0, 0, 3.5), "В квартиру", "Подняться", &"elevator_travel", {"dest": "apartment"}, &"door")
+
+
+func _build_themed_apartment(root: Node3D, theme_name: String, floor_c: Color, wall_c: Color) -> void:
+	_box(root, Vector3(9, 0.2, 9), Vector3(0, -0.1, 0), floor_c)
+	_wall_room_colored(root, 9, 9, 2.8, wall_c)
+	_label(root, Vector3(0, 2.5, -3.8), "Квартира «%s»" % theme_name)
+	var spawn := Marker3D.new()
+	spawn.name = "PlayerSpawn"
+	spawn.position = Vector3(0, 0, 3.0)
+	root.add_child(spawn)
+	_add_interact(root, Vector3(-2.2, 0, -1.5), "Диван", "Осмотреть", &"neighbor_look", {}, &"bed")
+	_add_interact(root, Vector3(1.8, 0, -0.5), "Стол", "Положить / сесть / начать", &"prepare_and_start", {}, &"table_set")
+	_add_interact(root, Vector3(2.5, 0, 1.5), "Шкаф", "Сменить одежду", &"wardrobe", {}, &"wardrobe")
+	_add_interact(root, Vector3(0, 0, 3.4), "Лифт", "Выбрать этаж", &"open_elevator", {}, &"door")
+	match theme_name:
+		"Уют":
+			_box(root, Vector3(1.2, 0.6, 0.8), Vector3(-1.5, 0.4, 1.2), Color(0.65, 0.4, 0.25))
+		"Модерн":
+			_box(root, Vector3(2.0, 0.15, 0.6), Vector3(0, 1.2, -2.5), Color(0.75, 0.78, 0.82))
+		"Креатив":
+			_box(root, Vector3(1.4, 1.2, 0.1), Vector3(-2.5, 1.2, -1.0), Color(0.95, 0.35, 0.55))
+			_box(root, Vector3(1.0, 1.0, 0.1), Vector3(2.2, 1.1, -2.0), Color(0.35, 0.75, 0.95))
+
+
+func _wall_room_colored(parent: Node3D, w: float, d: float, h: float, color: Color) -> void:
+	var t := 0.2
+	_box(parent, Vector3(w, h, t), Vector3(0, h * 0.5, -d * 0.5), color)
+	_box(parent, Vector3(w, h, t), Vector3(0, h * 0.5, d * 0.5), color)
+	_box(parent, Vector3(t, h, d), Vector3(-w * 0.5, h * 0.5, 0), color.darkened(0.08))
+	_box(parent, Vector3(t, h, d), Vector3(w * 0.5, h * 0.5, 0), color.darkened(0.08))
+
+
 func _spawn_neighbor_npc(root: Node3D) -> void:
 	var area := Interactable.new()
 	area.name = "NeighborNPC"
@@ -576,7 +903,7 @@ func _spawn_neighbor_npc(root: Node3D) -> void:
 	area.position = Vector3(0.8, 0, -0.5)
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(0.9, 1.8, 0.9)
+	shape.size = Vector3(0.55, 1.8, 0.55)
 	cs.shape = shape
 	cs.position = Vector3(0, 0.9, 0)
 	area.add_child(cs)
@@ -608,7 +935,7 @@ func _spawn_harem_slots(root: Node3D) -> void:
 		area.position = door
 		var cs := CollisionShape3D.new()
 		var shape := BoxShape3D.new()
-		shape.size = Vector3(1.0, 1.8, 1.0)
+		shape.size = Vector3(0.55, 1.8, 0.55)
 		cs.shape = shape
 		cs.position = Vector3(0, 0.9, 0)
 		area.add_child(cs)
@@ -710,7 +1037,7 @@ func _mannequin(parent: Node3D, pos: Vector3, color: Color, title: String) -> vo
 	_label(parent, pos + Vector3(0, 1.1, 0), title)
 
 
-func _add_interact(parent: Node3D, pos: Vector3, title: String, action: String, action_id: StringName, payload: Dictionary = {}, prop_kind: StringName = &"") -> void:
+func _add_interact(parent: Node3D, pos: Vector3, title: String, action: String, action_id: StringName, payload: Dictionary = {}, prop_kind: StringName = &"") -> Interactable:
 	var area := Interactable.new()
 	area.display_name = title
 	area.action_label = action
@@ -729,10 +1056,42 @@ func _add_interact(parent: Node3D, pos: Vector3, title: String, action: String, 
 	var visuals := Node3D.new()
 	visuals.name = "Visuals"
 	area.add_child(visuals)
-	var art_backed := bool(payload.get("art_backed", false)) or parent.has_node("ApartmentVisual")
-	if not art_backed:
-		if prop_kind != &"":
-			PropFactory.attach(visuals, prop_kind)
-		else:
-			PropFactory.attach(visuals, &"desk")
+	var art_backed: bool = bool(payload.get("art_backed", false)) or parent.has_node("ApartmentVisual")
+	if art_backed:
+		_attach_focus_proxy(visuals)
+	elif prop_kind != &"":
+		PropFactory.attach(visuals, prop_kind)
+	else:
+		PropFactory.attach(visuals, &"desk")
 	parent.add_child(area)
+	return area
+
+
+func _bind_interact_outline(area: Interactable, visual: Node, path: String) -> void:
+	if area == null or visual == null or path.is_empty():
+		return
+	var n: Node = visual.get_node_or_null(path)
+	if n == null:
+		return
+	area.bind_outline_root(n)
+	# Prefer furniture/door mesh outlines over the invisible FocusProxy box.
+	var proxy: Node = area.get_node_or_null("Visuals/FocusProxy")
+	if proxy:
+		proxy.free()
+
+
+func _attach_focus_proxy(parent: Node3D) -> void:
+	## Invisible mesh so art-backed Interactables still get a focus outline pass.
+	var proxy := MeshInstance3D.new()
+	proxy.name = "FocusProxy"
+	var box := BoxMesh.new()
+	box.size = Vector3(0.9, 1.7, 0.9)
+	proxy.mesh = box
+	proxy.position = Vector3(0, 0.9, 0)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1, 1, 1, 0.0)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	proxy.material_override = mat
+	parent.add_child(proxy)

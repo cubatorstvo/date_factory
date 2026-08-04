@@ -20,6 +20,9 @@ func _ready() -> void:
 
 func _open(ev: Dictionary) -> void:
 	_is_open = true
+	var event_layer := get_parent() as CanvasLayer
+	if event_layer != null:
+		UiLayers.raise_popup(event_layer, UiLayers.EVENT)
 	visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if panel:
@@ -43,6 +46,8 @@ func _open(ev: Dictionary) -> void:
 	for ch in ev.get("choices", []):
 		var b := Button.new()
 		b.text = str(ch.get("label", ch.get("id", "?")))
+		b.focus_mode = Control.FOCUS_NONE
+		b.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 		var cid := str(ch.get("id", ""))
 		b.pressed.connect(_on_choice.bind(cid))
 		buttons.add_child(b)

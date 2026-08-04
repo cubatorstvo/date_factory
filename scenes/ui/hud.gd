@@ -1,5 +1,7 @@
 extends CanvasLayer
-## Persistent HUD + crosshair (layer 5). Modals use higher layers.
+## Persistent HUD chrome (UiLayers.HUD = 5). Toasts live on ToastHost (UiLayers.TOAST).
+
+const UiEscapeScript := preload("res://core/ui_escape.gd")
 
 @onready var resources_label: Label = $Root/Resources
 @onready var goal_label: Label = $Root/Goal
@@ -21,6 +23,8 @@ var _wait_stand_btn: Button = null
 
 func _ready() -> void:
 	add_to_group("hud")
+	layer = UiLayers.HUD
+	_ensure_toast_host()
 	_build_date_wait_panel()
 	resources_label.text = ""
 	goal_label.text = ""
@@ -75,6 +79,27 @@ func _on_date_close() -> void:
 		crosshair.visible = true
 
 
+func _ensure_toast_host() -> void:
+	## Host toasts on a dedicated high CanvasLayer so they paint above phone/modals.
+	## See UiLayers stacking policy (newer/transient overlays win over older UI).
+	if toast_panel == null or toast_label == null:
+		return
+	if get_node_or_null("ToastHost") != null:
+		return
+	var host := CanvasLayer.new()
+	host.name = "ToastHost"
+	host.layer = UiLayers.TOAST
+	add_child(host)
+	var toast_root := Control.new()
+	toast_root.name = "Root"
+	toast_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	toast_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.add_child(toast_root)
+	toast_panel.reparent(toast_root)
+	toast_label.reparent(toast_root)
+	_ignore_mouse_recursive(toast_root)
+
+
 func _make_hud_mouse_transparent() -> void:
 	# Fullscreen HUD must never steal FPS mouse look.
 	var root := get_node_or_null("Root") as Control
@@ -104,6 +129,9 @@ func _process(delta: float) -> void:
 func _on_notify(message: String, kind: StringName) -> void:
 	if kind == &"ui" or kind == &"date_fx":
 		return
+	var toast_host := get_node_or_null("ToastHost") as CanvasLayer
+	if toast_host != null:
+		toast_host.layer = UiLayers.TOAST
 	toast_label.text = message
 	toast_panel.visible = true
 	toast_panel.modulate.a = 0.0
@@ -178,6 +206,7 @@ func _build_date_wait_panel() -> void:
 	_wait_panel = Panel.new()
 	_wait_panel.name = "DateWaitPanel"
 	_wait_panel.visible = false
+	_wait_panel.add_to_group("date_wait_ui")
 	_wait_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_wait_panel.anchor_left = 0.5
 	_wait_panel.anchor_top = 0.55
@@ -203,12 +232,16 @@ func _build_date_wait_panel() -> void:
 	vbox.add_child(_wait_label)
 	_wait_skip_btn = Button.new()
 	_wait_skip_btn.text = "Подождать до времени"
+	_wait_skip_btn.focus_mode = Control.FOCUS_NONE
+	_wait_skip_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 	_wait_skip_btn.pressed.connect(func() -> void:
 		InteractionRouter.wait_for_scheduled_time()
 	)
 	vbox.add_child(_wait_skip_btn)
 	_wait_stand_btn = Button.new()
 	_wait_stand_btn.text = "Встать"
+	_wait_stand_btn.focus_mode = Control.FOCUS_NONE
+	_wait_stand_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 	_wait_stand_btn.pressed.connect(func() -> void:
 		InteractionRouter.stand_up_from_table()
 	)
@@ -230,6 +263,8 @@ func show_date_wait(until: int = 0) -> void:
 func hide_date_wait() -> void:
 	if _wait_panel != null:
 		_wait_panel.visible = false
+	if not UiEscapeScript.any_overlay_open(get_tree()):
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _legend_band_short() -> String:

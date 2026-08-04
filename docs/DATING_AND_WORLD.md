@@ -1,7 +1,7 @@
 # Dating & World — текущее состояние кода
 
 **Обновлено:** 2026-08-04  
-Отражает реализацию после плейтест-переработки свиданий. Цель дизайна по-прежнему в [04_SYSTEMS.md](04_SYSTEMS.md) / [08_FPS_AND_CRISES.md](08_FPS_AND_CRISES.md); здесь — **что уже в коде**.
+Отражает реализацию после плейтест-переработки свиданий + **City Hub Expansion Pass 1–5**. Цель дизайна по-прежнему в [04_SYSTEMS.md](04_SYSTEMS.md) / [08_FPS_AND_CRISES.md](08_FPS_AND_CRISES.md); здесь — **что уже в коде**.
 
 ---
 
@@ -13,6 +13,7 @@
 | Тик | ~0.5 игровой минуты / реал-сек при `Game.run_started`, пауза во время активного свидания |
 | HUD | `scenes/ui/hud.gd` — день/часы + строка расписания + wait-UI за столом |
 | Слоты брони | `TimeAPI.next_slots()` (шаг 30 мин, lead ≥45 мин) |
+| Gym / photo skip | `TimeAPI.advance_minutes()` из gym / photo studio |
 
 ---
 
@@ -20,77 +21,88 @@
 
 | Элемент | Путь / API |
 |---------|------------|
-| Каталог мест | `modules/dating/date_places.gd` — `home` (бесплатно, prep), `restaurant` (плата), homeware / еда / напитки / shop catalogs |
-| Бронь | `modules/dating/date_schedule.gd` — place + day/minutes, cancel, reminders 30/5 мин; окно `ARRIVE_EARLY_MIN=10`, `NEUTRAL_LATE_MIN=10`, `WAIT_LEAVE_MIN=30` |
-| API свиданий | `modules/dating/dating_api.gd` — `book_date`, `start_manual`, `give_date_gift`, `finish_manual`, 5 факторов результата |
-| Телефон | `scenes/ui/phone_ui.gd` — выбор места → закрытие телефона → карточка слотов времени (EventsAPI); вкладка расписания + отмена |
-
-Пунктуальность и prep (еда/напиток/посуда/outfit/подарок) входят в scoring; диалоги остаются основной осью (гипотезы не сняты).
-
----
-
-## Home vs restaurant
-
-**Home**
-
-1. Бронь в телефоне → подготовка стола: fridge/drinks carry → table (`take_food` / `take_drink` / `prepare_and_start`).
-2. **Без doorbell** — девушка не ждёт у двери. Стол + `player_seated` + окно `until ≤ 10` → auto-arrive / старт vignette.
-3. Если рано (`until > 10`): sit → wait UI («Подождать до времени» / «Встать»); skip через `Game.time.skip_to_minutes`.
-4. No-show при `until < -30`: toast, clear booking, bond ≈ `3 * bond_wrong`, scandal bump.
-5. Vignette backdrop = apartment art (`date_stage.gd`); Hero sit deferred (`sit_enter` → `sit_idle`).
-
-**Restaurant**
-
-1. Бронь → к Two Hearts → `sit_restaurant` (без prep стола).
-2. Оплата при старте; early wait → `skip_to_minutes` (как раньше).
-3. Venue может быть locked на New Game до прогрессии facility.
+| Каталог мест | `date_places.gd` — home / cafe / park / restaurant / cinema / arcade + `apt_cozy` / `apt_modern` / `apt_creative` |
+| Бронь | `date_schedule.gd` — `is_no_prep()` = cafe\|park\|restaurant\|cinema\|arcade; home-like = home + `apt_*` |
+| Occupancy | `DateSchedule.place_occupancy` — shared places home/cafe/park/restaurant/`apt_*`; toast при конфликте слота |
+| Unlock leisure | `DatePlaces.is_leisure_unlocked()` / cinema / arcade — **behind `ParkGate`**, not on main_street |
+| Unlock agency | `DatePlaces.is_agency_row_unlocked()` — stage_3 **или** room `agency` — behind `AgencyGate` |
+| District gates UX | `CityDistricts.info()` + `DistrictGateUI` (`inspect_district_gate`) — semi-transparent barrier, unlock copy + contents list |
+| Gym / Pass 3 POIs | Leisure strip west of ParkGate (`Markers/GymEntrance` etc.); **removed** street-side gym from `city_builder` |
+| Unlock themed apt | `CityAPI.buy_themed_apartment` — после первого клона **или** stage_4 + cost |
+| API свиданий | `dating_api.gd` — park / cinema / arcade beats; auto occupancy mark |
+| Телефон | `phone_ui.gd` — дом / кафе / парк / ресторан / кино / аркада / тематическая квартира |
+| Agency board | `agency_board_ui.gd` — upcoming + clone slots + occupancy conflicts + apt assignment/buy |
 
 ---
 
-## Подарки и магазины
+## Home vs cafe vs park vs restaurant vs cinema vs arcade
 
-- Полки подарков в квартире **не** часть flow; mesh `GiftShelf` скрывается runtime.
-- Инвентарь подарков + shop UI: `scenes/ui/shop_ui.gd`, каталоги flower / jewelry / gift в `DatePlaces.shop_catalog`.
-- Городские interacts: `open_flower_shop` / `open_jewelry_shop` / `open_gift_shop`.
-- На свидании подарок **опционален**, один раз mid-date (`give_date_gift`); без подарка нет штрафа.
-- После последней фазы UI остаётся открытым → **Завершить свидание** → панель пяти факторов.
+**Home** — prep стола, sit/wait, без doorbell.
+
+**Cafe (Pass 1)** — бронь → `sit_cafe`; ~30$; no prep.
+
+**Park (Pass 2)** — `park_leisure`; 4 beats + optional rain→restaurant handoff.
+
+**Restaurant** — ~90$; park unlock / venue.
+
+**Cinema (Pass 3)** — ~45$; leisure / stage_3; `sit_cinema`.
+
+**Arcade (Pass 3)** — ~25$; Pair Overload minigame.
+
+**Themed apartments (Pass 5)** — home-like prep dates; unlock via agency board / elevator buy; travel via elevator.
 
 ---
 
-## Пять факторов результата
+## City Hub Pass 5 — Clone / date-house infrastructure
 
-После `finish_manual` панель в `date_ui.gd` показывает:
+| Фича | Детали |
+|------|--------|
+| Lab | Home-cluster room `lab` (все стадии); basement interact + elevator; mounts `Clone_Lab_Base.tscn` + cold OmniLight; `create_clone` → ClonesAPI |
+| Capacity | `DateSchedule.place_occupancy`; board conflict flags; toast on book if slot taken; autos mark live bucket `minutes=-1` |
+| Themed apts | `apt_cozy` / `apt_modern` / `apt_creative` — greybox furniture colors; buy 200/350/280$; bookable as date places |
+| Elevator | `ElevatorUI`: destinations main apt / lab / themed; direct spawn (no corridor); wrong-girl incident when clone date active |
+| Agency | Board lists occupancy leads + apartment assignment (player/clone) + buy buttons |
 
-1. Пунктуальность  
-2. Место / подготовка  
-3. Одежда  
-4. Подарок (или «без подарка (ок)»)  
-5. Диалоги  
+### Playable routes
 
-Toast с разбивкой остаётся вторичным.
+1. Apartment → «Подвал / лаборатория» or Elevator → Lab → create_clone.  
+2. Elevator → buy themed apt (stage_4 or after clone) → travel into themed unit.  
+3. Phone book themed apt (when unlocked) / Agency board assign lead.  
+4. Book place while clone auto occupies same place → toast + board conflict.
+
+---
+
+## City Hub Pass 4 — Popularity / agency row
+
+| Фича | Детали |
+|------|--------|
+| District | `CityDistricts.AGENCY_ROW` |
+| Photo / Barber / Agency office | overlays as Pass 4 |
+
+---
+
+## City Hub Pass 3 — Leisure
+
+Gym / Bookstore / Cinema / Arcade + LeisureStrip.
+
+---
+
+## City Hub Pass 1–2
+
+Cafe, shops, park, restaurant.
 
 ---
 
 ## Мир Stage 1 (факт)
 
-```
-Main
-└── ComplexWorld  (взаимоисключающий слот)
-    ├── home → Rooms/ (apartment + neighbor + later indoor rooms), без города
-    └── city → Props/CityDistrict + CityVisual (city.tscn @ -30), + Npcs
-```
-
 | Факт | Детали |
 |------|--------|
-| Сцены арта | `scenes/world/city/city.tscn` (корень `City`; mirror в `vertical_slice/street.tscn`), `vertical_slice/apartment.tscn` |
-| Переходы | `ComplexWorld.travel_to(location_id, spawn_marker)` + TransitionOverlay; не `change_scene` Main |
-| Старт | Локация `home`, спавн `Markers/PlayerSpawn` у двери |
-| Фасад дома | Торец улицы: `PlayerHomeFacade` @ ~(21.6,0,0) rot Y=-90° (лицом на запад); `HomeEntrance` ~(18.5,0,-0.5); N/S fill `EastEndNorthFill` / `EastEndSouthFill`; interact «Мой дом» |
-| Выход / вход | `go_outside` → city + HomeEntrance; `go_home` → home + PlayerSpawn |
-| Сосед | Телепорт внутри home-кластера (`go_neighbor`) |
-| DateStage | Отдельный vignette-pocket Y≈40; свой mount apartment/restaurant art |
-
-Западные legacy markers `ApartmentReturn` / street `PlayerSpawn` не используются для входа домой.
+| Boot | `boot.tscn` → New Game → `main.tscn`; `ComplexWorld` starts `home` / `_home_zone=apartment` with player FPS camera |
+| Start load | Apartment + neighbor only (lab / themed apts load exclusively via basement / elevator `travel_to`) |
+| Cafe / Park / Leisure / Agency markers | city visual (enter via «На улицу») |
+| Lab / Elevator | exclusive home zones via `travel_to` (not co-spawned at boot) |
+| Themed apts | unlockable home zones via elevator |
+| Art cameras | Mounted slice TechCameras are forced off so they never steal FPS |}
 
 ---
 
@@ -98,18 +110,17 @@ Main
 
 | Область | Файлы |
 |---------|--------|
-| Время | `modules/time/time_api.gd` |
-| Dating | `modules/dating/dating_api.gd`, `date_schedule.gd`, `date_places.gd` |
-| Interact | `modules/interaction/interaction_router.gd` |
-| Мир | `scenes/world/complex_world.gd` (`travel_to`), `city_builder.gd`, `scenes/world/city/city.tscn` |
-| UI | `phone_ui.gd`, `date_ui.gd`, `shop_ui.gd`, `hud.gd` (wait panel) |
-| Vignette | `scenes/dating/date_stage.gd` |
-| Verify | `tools/verify_dating_overhaul.gd` |
+| Dating | `dating_api.gd`, `date_schedule.gd`, `date_places.gd` |
+| City / home hub | `city_api.gd`, `complex_world.gd` |
+| Interact | `interaction_router.gd` |
+| UI | `phone_ui.gd`, `agency_board_ui.gd`, `elevator_ui.gd`, photo/barber/gym |
+| Lab art | `scenes/art/lab/Clone_Lab_Base.tscn` |
 
 ---
 
-## Что не трогаем без запроса
+## Remaining gaps
 
-- Dialog / hypothesis pipeline (`GirlsAPI` observations)  
-- Proxy girl POC (`docs/characters/*`, `assets/characters/girls/proxy_poc/`) как замена live DateGirl  
-- Live date girl остаётся на `DateGirl_UAL`
+1. Barber visual on Hero mesh (tags only)  
+2. Full multi-booking calendar (still one player booking + autos)  
+3. Themed apt art beyond greybox props  
+4. Manual visual QA with runtime attach for elevator/lab

@@ -88,7 +88,7 @@ func can_start_manual(target_id: String) -> bool:
 	if schedule.has_booking():
 		if schedule.is_home() and not schedule.can_start_home():
 			return false
-		if schedule.is_restaurant() and not schedule.can_start_restaurant():
+		if schedule.is_no_prep() and not schedule.can_start_restaurant():
 			return false
 	else:
 		var prep: Dictionary = get_prep(target_id)
@@ -150,6 +150,7 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 		else:
 			prep["gift_id"] = ""
 
+	var place_id_start := str(prep.get("place_id", ""))
 	active_manual = {
 		"target_id": target_id,
 		"unique": is_unique,
@@ -165,6 +166,12 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 		"neutral": 0,
 		"gift_given": str(prep.get("gift_id", "")) != "",
 		"phases_done": false,
+		"park_flow": place_id_start == "park",
+		"cinema_flow": place_id_start == "cinema",
+		"arcade_flow": place_id_start == "arcade",
+		"cinema_genre": "",
+		"arcade_done": false,
+		"weather": DatePlaces.current_weather() if place_id_start == "park" else "",
 	}
 	schedule.awaiting_finish = false
 	if schedule.has_booking():
@@ -209,7 +216,16 @@ func _emit_phase() -> void:
 	var phase := int(active_manual.get("phase", 0))
 	var target_id := str(active_manual.get("target_id", ""))
 	var unique := bool(active_manual.get("unique", true))
-	var options: Array = _build_phase_options(phase, target_id, unique)
+	var options: Array = []
+	var prep_now: Dictionary = active_manual.get("prep", {})
+	if bool(active_manual.get("park_flow", false)) and str(prep_now.get("place_id", "")) == "park":
+		options = _build_park_beat_options(phase)
+	elif bool(active_manual.get("cinema_flow", false)) and str(prep_now.get("place_id", "")) == "cinema":
+		options = _build_cinema_beat_options(phase)
+	elif bool(active_manual.get("arcade_flow", false)) and str(prep_now.get("place_id", "")) == "arcade":
+		options = _build_arcade_beat_options(phase)
+	else:
+		options = _build_phase_options(phase, target_id, unique)
 	active_manual["options"] = options
 	date_phase.emit(phase, options)
 
@@ -419,8 +435,21 @@ func choose_manual(option_id: String) -> void:
 	active_manual["choices"] = choices
 	EventBus.notify.emit("DATE_EMOTION:%s" % str(emotion), &"date_fx")
 	EventBus.notify.emit("DATE_CHOICE_DONE", &"date_fx")
+	# Park beat side-effects (pay / rain handoff) before advancing phase.
+	if bool(picked.get("park_beat", false)):
+		_apply_park_beat_side_effects(picked)
+		if bool(picked.get("handoff_restaurant", false)):
+			handoff_active_place("restaurant")
+			return
+	if bool(picked.get("cinema_beat", false)):
+		var genre := str(picked.get("genre", ""))
+		if genre != "":
+			active_manual["cinema_genre"] = genre
+	if bool(picked.get("launch_arcade", false)):
+		EventBus.notify.emit("ARCADE_OPEN_DATE:%s" % str(active_manual.get("target_id", "")), &"ui")
+		return
 	active_manual["phase"] = int(active_manual.get("phase", 0)) + 1
-	var max_phases: int = 2 if Game.upgrades.has_effect("fast_manual") else 3
+	var max_phases: int = _manual_max_phases()
 	if int(active_manual["phase"]) >= max_phases:
 		active_manual["phases_done"] = true
 		schedule.awaiting_finish = true
@@ -428,6 +457,228 @@ func choose_manual(option_id: String) -> void:
 		EventBus.toast("Диалоги закончены — можно завершить свидание", &"info")
 	else:
 		_emit_phase()
+
+
+func _manual_max_phases() -> int:
+	var prep_m: Dictionary = active_manual.get("prep", {})
+	if bool(active_manual.get("park_flow", false)) and str(prep_m.get("place_id", "")) == "park":
+		return 4
+	if bool(active_manual.get("cinema_flow", false)) and str(prep_m.get("place_id", "")) == "cinema":
+		return 3
+	if bool(active_manual.get("arcade_flow", false)) and str(prep_m.get("place_id", "")) == "arcade":
+		return 2
+	return 2 if Game.upgrades.has_effect("fast_manual") else 3
+
+
+func handoff_active_place(new_place_id: String) -> void:
+	## Switch venue mid-date without resetting phases / score / choices.
+	if active_manual.is_empty():
+		return
+	var place_def: Dictionary = DatePlaces.place(new_place_id)
+	if place_def.is_empty():
+		return
+	var prep: Dictionary = active_manual.get("prep", {}).duplicate(true)
+	prep["place_id"] = new_place_id
+	prep["venue_id"] = str(place_def.get("venue_id", new_place_id))
+	prep["place_quality"] = float(place_def.get("base_quality", prep.get("place_quality", 1.0)))
+	var extra_cost: float = float(place_def.get("cost", 0))
+	if extra_cost > 0.0:
+		if not Game.economy.try_spend({"money": extra_cost}, &"venue_handoff"):
+			EventBus.toast("Не хватает денег на ресторан — остаёмся в парке", &"warn")
+			active_manual["phase"] = int(active_manual.get("phase", 0)) + 1
+			if int(active_manual["phase"]) >= _manual_max_phases():
+				active_manual["phases_done"] = true
+				schedule.awaiting_finish = true
+				date_ui_open.emit(_manual_payload())
+			else:
+				_emit_phase()
+			return
+	active_manual["prep"] = prep
+	active_manual["park_flow"] = false
+	active_manual["phase"] = int(active_manual.get("phase", 0)) + 1
+	# Backdrop swap only — do not emit date_ui_open (would rebuild DateStage).
+	EventBus.notify.emit("DATE_PLACE_HANDOFF:%s" % new_place_id, &"date_fx")
+	EventBus.toast("Дождь! Уходим в ресторан — свидание продолжается", &"story")
+	if int(active_manual["phase"]) >= _manual_max_phases():
+		active_manual["phases_done"] = true
+		schedule.awaiting_finish = true
+		EventBus.toast("Диалоги закончены — можно завершить свидание", &"info")
+	else:
+		_emit_phase()
+
+
+func _apply_park_beat_side_effects(picked: Dictionary) -> void:
+	var cost: float = float(picked.get("money_cost", 0))
+	if cost > 0.0:
+		if not Game.economy.try_spend({"money": cost}, &"park_date"):
+			EventBus.toast("Не хватило мелочи — жест скромнее", &"warn")
+			active_manual["score"] = float(active_manual.get("score", 0)) - 0.2
+		else:
+			EventBus.toast(str(picked.get("pay_toast", "Оплачено")), &"money")
+	var comfort: float = float(picked.get("comfort", 0))
+	if comfort != 0.0:
+		active_manual["score"] = float(active_manual.get("score", 0)) + comfort
+
+
+func _build_park_beat_options(phase: int) -> Array:
+	var weather := str(active_manual.get("weather", DatePlaces.current_weather()))
+	var bal: Dictionary = ContentDB.balance
+	var good_s: float = float(bal.get("date_score_correct", 1.6))
+	var ok_s: float = float(bal.get("date_score_neutral", 0.75))
+	var bad_s: float = float(bal.get("date_score_wrong", 0.15))
+	var good_b: float = float(bal.get("bond_correct", 14.0))
+	var ok_b: float = float(bal.get("bond_neutral", 3.0))
+	var bad_b: float = float(bal.get("bond_wrong", -12.0))
+	match phase:
+		0:
+			active_manual["prompt"] = "У пруда крякают утки. Она ждёт, бросишь ли ты крошки."
+			active_manual["observation"] = str(active_manual["prompt"])
+			active_manual["card_id"] = "park_ducks"
+			return [
+				{"id": "park_duck_feed", "label": "Покормить уток рядом с ней", "quality": "good", "base_score": good_s, "bond": good_b, "park_beat": true, "interpret": "attention", "trait": "attention"},
+				{"id": "park_duck_watch", "label": "Просто посмотреть вместе", "quality": "ok", "base_score": ok_s, "bond": ok_b, "park_beat": true, "interpret": "", "trait": "peace"},
+				{"id": "park_duck_ignore", "label": "Увлечься телефоном", "quality": "bad", "base_score": bad_s, "bond": bad_b, "park_beat": true, "interpret": "", "trait": "attention"},
+			]
+		1:
+			var treat := "кофе" if weather != "warm" else "мороженое"
+			var cost := 8.0 if weather != "warm" else 10.0
+			active_manual["prompt"] = "Киоск пахнет %s. Можно угостить — или пройти мимо." % treat
+			active_manual["observation"] = str(active_manual["prompt"])
+			active_manual["card_id"] = "park_kiosk"
+			return [
+				{"id": "park_kiosk_buy", "label": "Купить ей %s (−%.0f$)" % [treat, cost], "quality": "good", "base_score": good_s, "bond": good_b, "park_beat": true, "money_cost": cost, "pay_toast": "Киоск: %s" % treat, "interpret": "gift", "trait": "attention"},
+				{"id": "park_kiosk_share", "label": "Взять одно на двоих (−%.0f$)" % (cost * 0.5), "quality": "ok", "base_score": ok_s, "bond": ok_b, "park_beat": true, "money_cost": cost * 0.5, "pay_toast": "Поделились угощением", "interpret": "", "trait": "peace"},
+				{"id": "park_kiosk_skip", "label": "Пройти мимо киоска", "quality": "ok", "base_score": ok_s * 0.7, "bond": ok_b * 0.5, "park_beat": true, "interpret": "", "trait": "thrift"},
+			]
+		2:
+			active_manual["prompt"] = "У киоска сдают пледы. На траве будет уютнее — если не жадничать."
+			active_manual["observation"] = str(active_manual["prompt"])
+			active_manual["card_id"] = "park_blanket"
+			return [
+				{"id": "park_blanket_rent", "label": "Арендовать плед (−12$)", "quality": "good", "base_score": good_s, "bond": good_b, "park_beat": true, "money_cost": 12.0, "comfort": 0.35, "pay_toast": "Плед в аренде", "interpret": "care", "trait": "care"},
+				{"id": "park_blanket_jacket", "label": "Предложить свою куртку", "quality": "ok", "base_score": ok_s, "bond": ok_b + 2.0, "park_beat": true, "comfort": 0.15, "interpret": "", "trait": "sincere"},
+				{"id": "park_blanket_skip", "label": "Сесть на траву как есть", "quality": "ok", "base_score": ok_s * 0.8, "bond": ok_b * 0.6, "park_beat": true, "interpret": "", "trait": "cheap"},
+			]
+		_:
+			var raining := weather == "rain" or (int(Game.time.day) + int(active_manual.get("score", 0))) % 3 == 0
+			if raining:
+				active_manual["prompt"] = "Небо темнеет. Капли уже на ладони — можно уйти в ресторан у парка."
+				active_manual["observation"] = str(active_manual["prompt"])
+				active_manual["card_id"] = "park_rain"
+				return [
+					{"id": "park_rain_restaurant", "label": "Укрыться в ресторане (−90$)", "quality": "good", "base_score": good_s, "bond": good_b, "park_beat": true, "handoff_restaurant": true, "interpret": "care", "trait": "care"},
+					{"id": "park_rain_tree", "label": "Переждать под деревом", "quality": "ok", "base_score": ok_s, "bond": ok_b, "park_beat": true, "interpret": "", "trait": "adventure"},
+					{"id": "park_rain_run", "label": "Бежать домой под дождём", "quality": "bad", "base_score": bad_s, "bond": bad_b, "park_beat": true, "interpret": "", "trait": "chaos"},
+				]
+			active_manual["prompt"] = "Вечер в парке тихий. Можно закончить на тёплой ноте."
+			active_manual["observation"] = str(active_manual["prompt"])
+			active_manual["card_id"] = "park_wrap"
+			return [
+				{"id": "park_wrap_sunset", "label": "Посмотреть на закат вместе", "quality": "good", "base_score": good_s, "bond": good_b, "park_beat": true, "interpret": "romance", "trait": "romance"},
+				{"id": "park_wrap_chat", "label": "Поболтать ещё немного", "quality": "ok", "base_score": ok_s, "bond": ok_b, "park_beat": true, "interpret": "", "trait": "humor"},
+				{"id": "park_wrap_end", "label": "Предложить закончить прогулку", "quality": "ok", "base_score": ok_s * 0.9, "bond": ok_b * 0.8, "park_beat": true, "interpret": "", "trait": "peace"},
+			]
+
+
+func resume_after_arcade() -> void:
+	## Called when Pair Overload finishes during an arcade date.
+	if active_manual.is_empty():
+		return
+	if not bool(active_manual.get("arcade_flow", false)):
+		return
+	active_manual["arcade_done"] = true
+	active_manual["phase"] = int(active_manual.get("phase", 0)) + 1
+	if int(active_manual["phase"]) >= _manual_max_phases():
+		active_manual["phases_done"] = true
+		schedule.awaiting_finish = true
+		date_ui_open.emit(_manual_payload())
+		EventBus.toast("Диалоги закончены — можно завершить свидание", &"info")
+	else:
+		_emit_phase()
+
+
+func note_bookstore_browse(girl_id: String = "") -> void:
+	## Observation hook when browsing bookstore during / near a date.
+	var gid := girl_id
+	if gid.is_empty() and not active_manual.is_empty():
+		gid = str(active_manual.get("target_id", ""))
+	if gid.is_empty() or Game.girls == null:
+		return
+	var sections := ["фантастика", "поэзия", "биографии", "комиксы"]
+	var section := str(sections[randi() % sections.size()])
+	var text := "В книжном она застряла у полки «%s» и листала медленно." % section
+	Game.girls.add_observation(StringName(gid), "bookstore_%s" % section, text, "calm", "city")
+	if not active_manual.is_empty():
+		active_manual["score"] = float(active_manual.get("score", 0.0)) + 0.25
+		active_manual["bond_delta"] = float(active_manual.get("bond_delta", 0.0)) + 2.0
+	EventBus.toast("Заметка: любит раздел «%s»" % section, &"girl")
+
+
+func _build_cinema_beat_options(phase: int) -> Array:
+	var bal: Dictionary = ContentDB.balance
+	var good_s: float = float(bal.get("date_score_correct", 1.6))
+	var ok_s: float = float(bal.get("date_score_neutral", 0.75))
+	var bad_s: float = float(bal.get("date_score_wrong", 0.15))
+	var good_b: float = float(bal.get("bond_correct", 14.0))
+	var ok_b: float = float(bal.get("bond_neutral", 3.0))
+	var bad_b: float = float(bal.get("bond_wrong", -12.0))
+	var genre := str(active_manual.get("cinema_genre", "romance"))
+	match phase:
+		0:
+			active_manual["prompt"] = "Касса кино. Какой жанр возьмёте на сеанс?"
+			active_manual["observation"] = str(active_manual["prompt"])
+			active_manual["card_id"] = "cinema_genre"
+			return [
+				{"id": "cine_romance", "label": "Романтика", "quality": "good", "base_score": good_s, "bond": good_b, "cinema_beat": true, "genre": "romance", "interpret": "romance", "trait": "romance"},
+				{"id": "cine_comedy", "label": "Комедия", "quality": "ok", "base_score": ok_s, "bond": ok_b, "cinema_beat": true, "genre": "comedy", "interpret": "humor", "trait": "humor"},
+				{"id": "cine_action", "label": "Экшен", "quality": "ok", "base_score": ok_s, "bond": ok_b * 0.9, "cinema_beat": true, "genre": "action", "interpret": "", "trait": "daring"},
+				{"id": "cine_horror", "label": "Ужасы", "quality": "ok", "base_score": ok_s * 0.85, "bond": ok_b, "cinema_beat": true, "genre": "horror", "interpret": "", "trait": "chaos"},
+			]
+		1:
+			active_manual["prompt"] = "Сеанс (%s). Она реагирует на экран — что делаешь?" % genre
+			active_manual["observation"] = str(active_manual["prompt"])
+			active_manual["card_id"] = "cinema_watch_%s" % genre
+			return [
+				{"id": "cine_react_sync", "label": "Шепнуть реакцию в такт сцене", "quality": "good", "base_score": good_s, "bond": good_b, "cinema_beat": true, "interpret": "attention", "trait": "attention"},
+				{"id": "cine_react_hold", "label": "Тихо держать руку", "quality": "ok", "base_score": ok_s, "bond": ok_b, "cinema_beat": true, "interpret": "romance", "trait": "romance"},
+				{"id": "cine_react_phone", "label": "Проверить телефон", "quality": "bad", "base_score": bad_s, "bond": bad_b, "cinema_beat": true, "interpret": "", "trait": "attention"},
+			]
+		_:
+			active_manual["prompt"] = "После титров — короткий разговор у выхода."
+			active_manual["observation"] = str(active_manual["prompt"])
+			active_manual["card_id"] = "cinema_talk"
+			return [
+				{"id": "cine_talk_scene", "label": "Обсудить любимую сцену", "quality": "good", "base_score": good_s, "bond": good_b, "cinema_beat": true, "interpret": "media", "trait": "media"},
+				{"id": "cine_talk_joke", "label": "Пошутить про трейлер", "quality": "ok", "base_score": ok_s, "bond": ok_b, "cinema_beat": true, "interpret": "humor", "trait": "humor"},
+				{"id": "cine_talk_rush", "label": "Торопить домой", "quality": "bad", "base_score": bad_s, "bond": bad_b, "cinema_beat": true, "interpret": "", "trait": "peace"},
+			]
+
+
+func _build_arcade_beat_options(phase: int) -> Array:
+	var bal: Dictionary = ContentDB.balance
+	var good_s: float = float(bal.get("date_score_correct", 1.6))
+	var ok_s: float = float(bal.get("date_score_neutral", 0.75))
+	var bad_s: float = float(bal.get("date_score_wrong", 0.15))
+	var good_b: float = float(bal.get("bond_correct", 14.0))
+	var ok_b: float = float(bal.get("bond_neutral", 3.0))
+	var bad_b: float = float(bal.get("bond_wrong", -12.0))
+	if phase <= 0 and not bool(active_manual.get("arcade_done", false)):
+		active_manual["prompt"] = "Автомат «Парный перегруз» мигает. Сыграете вместе?"
+		active_manual["observation"] = str(active_manual["prompt"])
+		active_manual["card_id"] = "arcade_launch"
+		return [
+			{"id": "arcade_play", "label": "Запустить Парный перегруз", "quality": "good", "base_score": good_s * 0.5, "bond": good_b * 0.4, "launch_arcade": true, "interpret": "attention", "trait": "attention"},
+			{"id": "arcade_watch", "label": "Пусть она играет, а ты болеешь", "quality": "ok", "base_score": ok_s, "bond": ok_b, "interpret": "", "trait": "peace"},
+			{"id": "arcade_skip", "label": "Пройти мимо автомата", "quality": "bad", "base_score": bad_s, "bond": bad_b, "interpret": "", "trait": "media"},
+		]
+	active_manual["prompt"] = "После автомата — короткий разговор у выхода из аркады."
+	active_manual["observation"] = str(active_manual["prompt"])
+	active_manual["card_id"] = "arcade_talk"
+	return [
+		{"id": "arcade_talk_high", "label": "Похвалить её реакцию", "quality": "good", "base_score": good_s, "bond": good_b, "interpret": "attention", "trait": "attention"},
+		{"id": "arcade_talk_rematch", "label": "Предложить реванш как-нибудь", "quality": "ok", "base_score": ok_s, "bond": ok_b, "interpret": "", "trait": "daring"},
+		{"id": "arcade_talk_brag", "label": "Хвастаться своим счётом", "quality": "bad", "base_score": bad_s, "bond": bad_b, "interpret": "", "trait": "humor"},
+	]
 
 
 func can_give_date_gift() -> bool:
@@ -836,6 +1087,7 @@ func _auto_schedule() -> void:
 			continue
 		var entry := {"target": c, "prep": prep, "wait": wait, "actor": actor, "venue_id": str(venue_id)}
 		active_autos.append(entry)
+		_mark_auto_occupancy(entry, true)
 		if actor.begins_with("clone"):
 			_sync_parallel_risk(str(venue_id), actor)
 		break
@@ -946,7 +1198,36 @@ func _finish_auto(a: Dictionary) -> void:
 	var grade: int = _grade_from_score(score)
 	_apply_result(target_id, unique, prep, grade, false, 0.0)
 	var vid := StringName(str(a.get("venue_id", prep.get("venue_id", "kitchen_table"))))
+	_mark_auto_occupancy(a, false)
 	Game.facility.release_venue(vid)
+
+
+func _mark_auto_occupancy(entry: Dictionary, occupy: bool) -> void:
+	if schedule == null:
+		return
+	var venue := str(entry.get("venue_id", entry.get("prep", {}).get("venue_id", "")))
+	var place := DateSchedule.venue_to_place(venue)
+	if place == "":
+		return
+	var day := 1
+	if Game.time != null:
+		day = int(Game.time.day)
+	var lead := "clone" if str(entry.get("actor", "")).begins_with("clone") else "manager"
+	var girl_id := str(entry.get("target", {}).get("id", ""))
+	if occupy:
+		var conflict: Dictionary = schedule.slot_conflict(place, day, -1, lead)
+		if not conflict.is_empty() and str(conflict.get("lead", "")) == "player":
+			EventBus.toast("Автолиния: конфликт с бронью игрока @ %s" % place, &"warn")
+		schedule.overwrite_occupancy(place, day, -1, lead, girl_id)
+	else:
+		schedule.release_occupancy(place, day, -1, lead)
+
+
+func has_active_clone_date() -> bool:
+	for a in active_autos:
+		if str(a.get("actor", "")).begins_with("clone"):
+			return true
+	return false
 
 
 func raise_automation(level: int) -> void:

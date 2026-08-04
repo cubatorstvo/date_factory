@@ -1,7 +1,7 @@
 extends Node3D
 ## Staged 3D date vignette: both sit at the table chairs.
 ## Arrival uses ArrivalPipeline (door → walk → seat); never spawn already sitting.
-## Home dates use apartment art; restaurant dates keep restaurant art.
+## Home dates use apartment art; park builds outdoor vignette; cafe/restaurant reuse restaurant art.
 
 const STAGE_ORIGIN := Vector3(0.0, 40.0, 0.0)
 const RESTAURANT_VISUAL_SCENE := "res://scenes/world/vertical_slice/restaurant.tscn"
@@ -17,6 +17,8 @@ const GIRL_CHAIR_POSITION := Vector3(0.0, 0.0, -1.15)
 const PLAYER_CHAIR_OFFSET := Vector3(0.0, 0.05, 1.15)
 const GIRL_SEAT_Y_OFFSET := 0.0
 const INTRO_SKIP_MIN_TIME := 2.4
+## Uniform ~1.8m vignette characters (Hero prefab still bakes 0.55 root scale).
+const DATE_CHARACTER_SCALE := 1.0
 
 
 var _root: Node3D
@@ -54,6 +56,10 @@ func _ready() -> void:
 
 
 func _on_notify(message: String, kind: StringName) -> void:
+	if kind == &"date_fx" and message.begins_with("DATE_PLACE_HANDOFF:"):
+		var new_place := message.trim_prefix("DATE_PLACE_HANDOFF:")
+		_swap_backdrop_keep_cast(new_place)
+		return
 	if kind == &"date_fx" and message.begins_with("DATE_EMOTION:"):
 		var emotion := StringName(message.trim_prefix("DATE_EMOTION:"))
 		if _girl != null and _girl.has_method("play_alias"):
@@ -71,7 +77,9 @@ func _input(event: InputEvent) -> void:
 		return
 	if _sequence_time < INTRO_SKIP_MIN_TIME:
 		return
-	if event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+	# Mouse skip on button_up so the press that opened/finished UI is not eaten.
+	var mouse_up: bool = event is InputEventMouseButton and (not event.pressed) and event.button_index == MOUSE_BUTTON_LEFT
+	if event.is_action_pressed("ui_accept") or mouse_up:
 		_finish_intro()
 		get_viewport().set_input_as_handled()
 
@@ -188,6 +196,7 @@ func _on_open(payload: Dictionary) -> void:
 	_girl.name = "DateGirl"
 	_girl.position = _girl_door_position
 	_root.add_child(_girl)
+	_apply_date_character_scale(_girl)
 	_lock_girl_physics()
 	_play_girl_alias(&"approach", &"walk")
 	assert(ArrivalPipeline.assert_starts_at_door(_girl.position, _girl_door_position, _girl_chair_position))
@@ -310,6 +319,12 @@ func _face_toward(local_target: Vector3) -> void:
 
 
 func _add_backdrop(parent: Node3D, place_id: String) -> void:
+	if place_id == "park":
+		_add_park_backdrop(parent)
+		return
+	if place_id == "cinema" or place_id == "arcade":
+		_add_leisure_backdrop(parent, place_id)
+		return
 	var is_home := place_id == "home"
 	var scene_path := APARTMENT_VISUAL_SCENE if is_home else RESTAURANT_VISUAL_SCENE
 	var art_offset := APARTMENT_ART_OFFSET if is_home else RESTAURANT_ART_OFFSET
@@ -325,6 +340,17 @@ func _add_backdrop(parent: Node3D, place_id: String) -> void:
 	visual.position = art_offset
 	parent.add_child(visual)
 	_resolve_date_markers(visual, is_home)
+	_tone_backdrop_lights(visual)
+	var preview_girl := visual.get_node_or_null("Characters/DateGirl") as Node3D
+	if preview_girl:
+		preview_girl.visible = false
+		preview_girl.process_mode = Node.PROCESS_MODE_DISABLED
+	var gift_shelf := visual.get_node_or_null("Furniture/GiftShelf") as Node3D
+	if gift_shelf:
+		gift_shelf.visible = false
+
+
+func _tone_backdrop_lights(visual: Node3D) -> void:
 	for node: Node in visual.find_children("*", "WorldEnvironment", true, false):
 		var world := node as WorldEnvironment
 		if world:
@@ -343,13 +369,125 @@ func _add_backdrop(parent: Node3D, place_id: String) -> void:
 			omni.light_energy = minf(omni.light_energy, 0.9)
 		else:
 			omni.light_energy = minf(omni.light_energy, 1.15)
-	var preview_girl := visual.get_node_or_null("Characters/DateGirl") as Node3D
-	if preview_girl:
-		preview_girl.visible = false
-		preview_girl.process_mode = Node.PROCESS_MODE_DISABLED
-	var gift_shelf := visual.get_node_or_null("Furniture/GiftShelf") as Node3D
-	if gift_shelf:
-		gift_shelf.visible = false
+
+
+func _add_park_backdrop(parent: Node3D) -> void:
+	var visual := Node3D.new()
+	visual.name = "ParkVisual"
+	parent.add_child(visual)
+	_girl_door_position = Vector3(-2.4, 0.0, 3.2)
+	_girl_chair_position = Vector3(0.0, 0.0, -0.6)
+	_hero_chair_position = Vector3(0.0, 0.05, 1.0)
+	if _player and is_instance_valid(_player) and _root != null:
+		_player.global_position = _root.to_global(_hero_chair_position)
+		_player.rotation = Vector3(0.0, PI, 0.0)
+	var ground := MeshInstance3D.new()
+	var gmesh := BoxMesh.new()
+	gmesh.size = Vector3(10, 0.08, 8)
+	ground.mesh = gmesh
+	ground.position = Vector3(0, -0.04, 0)
+	var gmat := StandardMaterial3D.new()
+	gmat.albedo_color = Color(0.3, 0.52, 0.32)
+	ground.material_override = gmat
+	visual.add_child(ground)
+	var pond := MeshInstance3D.new()
+	var pmesh := CylinderMesh.new()
+	pmesh.top_radius = 1.6
+	pmesh.bottom_radius = 1.6
+	pmesh.height = 0.1
+	pond.mesh = pmesh
+	pond.position = Vector3(-2.2, 0.0, -2.0)
+	var pmat := StandardMaterial3D.new()
+	pmat.albedo_color = Color(0.28, 0.48, 0.7)
+	pond.material_override = pmat
+	visual.add_child(pond)
+	var bench := MeshInstance3D.new()
+	var bmesh := BoxMesh.new()
+	bmesh.size = Vector3(1.8, 0.35, 0.5)
+	bench.mesh = bmesh
+	bench.position = Vector3(0.2, 0.2, 0.15)
+	var bmat := StandardMaterial3D.new()
+	bmat.albedo_color = Color(0.42, 0.3, 0.2)
+	bench.material_override = bmat
+	visual.add_child(bench)
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.9, 0.75)
+	light.light_energy = 0.7
+	light.omni_range = 10.0
+	light.position = Vector3(0.0, 3.0, 0.5)
+	visual.add_child(light)
+
+
+func _add_leisure_backdrop(parent: Node3D, place_id: String) -> void:
+	var visual := Node3D.new()
+	visual.name = "CinemaVisual" if place_id == "cinema" else "ArcadeVisual"
+	parent.add_child(visual)
+	_girl_door_position = Vector3(-2.0, 0.0, 2.8)
+	_girl_chair_position = Vector3(0.55, 0.0, -0.4)
+	_hero_chair_position = Vector3(-0.55, 0.05, -0.4)
+	if _player and is_instance_valid(_player) and _root != null:
+		_player.global_position = _root.to_global(_hero_chair_position)
+		_player.rotation = Vector3(0.0, 0.0, 0.0)
+	var floor_m := MeshInstance3D.new()
+	var fmesh := BoxMesh.new()
+	fmesh.size = Vector3(9, 0.08, 8)
+	floor_m.mesh = fmesh
+	floor_m.position = Vector3(0, -0.04, 0)
+	var fmat := StandardMaterial3D.new()
+	fmat.albedo_color = Color(0.12, 0.1, 0.16) if place_id == "cinema" else Color(0.15, 0.12, 0.22)
+	floor_m.material_override = fmat
+	visual.add_child(floor_m)
+	var screen := MeshInstance3D.new()
+	var smesh := BoxMesh.new()
+	smesh.size = Vector3(4.2, 2.2, 0.12) if place_id == "cinema" else Vector3(1.6, 1.4, 0.2)
+	screen.mesh = smesh
+	screen.position = Vector3(0.0, 1.4, -3.2) if place_id == "cinema" else Vector3(0.0, 1.1, -2.4)
+	var smat := StandardMaterial3D.new()
+	smat.albedo_color = Color(0.2, 0.35, 0.55) if place_id == "cinema" else Color(0.7, 0.25, 0.85)
+	smat.emission_enabled = true
+	smat.emission = smat.albedo_color * 0.5
+	screen.material_override = smat
+	visual.add_child(screen)
+	var seat_a := MeshInstance3D.new()
+	var seat_mesh := BoxMesh.new()
+	seat_mesh.size = Vector3(0.7, 0.45, 0.7)
+	seat_a.mesh = seat_mesh
+	seat_a.position = Vector3(-0.55, 0.25, -0.35)
+	var seat_mat := StandardMaterial3D.new()
+	seat_mat.albedo_color = Color(0.35, 0.12, 0.14)
+	seat_a.material_override = seat_mat
+	visual.add_child(seat_a)
+	var seat_b := seat_a.duplicate() as MeshInstance3D
+	seat_b.position = Vector3(0.55, 0.25, -0.35)
+	visual.add_child(seat_b)
+	var light := OmniLight3D.new()
+	light.light_color = Color(0.75, 0.85, 1.0) if place_id == "cinema" else Color(0.95, 0.55, 1.0)
+	light.light_energy = 0.85
+	light.omni_range = 9.0
+	light.position = Vector3(0.0, 3.0, -1.0)
+	visual.add_child(light)
+
+
+func _swap_backdrop_keep_cast(new_place_id: String) -> void:
+	## Rain handoff: swap vignette art without tearing down girl / phases.
+	if _root == null or not is_instance_valid(_root):
+		return
+	_place_id = new_place_id
+	for child in _root.get_children():
+		var n := str(child.name)
+		if n in ["ParkVisual", "RestaurantVisual", "ApartmentVisual"]:
+			child.queue_free()
+	_add_backdrop(_root, new_place_id)
+	if _girl and is_instance_valid(_girl):
+		_girl.position = _girl_chair_position
+		_hold_girl_seated(true)
+	if _hero_body and is_instance_valid(_hero_body):
+		_hero_body.position = _hero_chair_position
+		_hold_hero_seated(true)
+	if _sequence == &"intro":
+		_finish_intro()
+	else:
+		_sequence = &"ready"
 
 
 func _resolve_date_markers(visual: Node3D, is_home: bool) -> void:
@@ -388,6 +526,12 @@ func _lock_girl_physics() -> void:
 		body.motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
 
 
+func _apply_date_character_scale(body: Node3D) -> void:
+	if body == null or not is_instance_valid(body):
+		return
+	body.scale = Vector3.ONE * DATE_CHARACTER_SCALE
+
+
 func _spawn_hero_body() -> void:
 	if _root == null:
 		return
@@ -404,6 +548,7 @@ func _spawn_hero_body() -> void:
 	_hero_body.name = "DateHeroBody"
 	_hero_body.position = _hero_chair_position
 	_root.add_child(_hero_body)
+	_apply_date_character_scale(_hero_body)
 	if _hero_body is CharacterBody3D:
 		var body := _hero_body as CharacterBody3D
 		body.collision_layer = 0
@@ -529,6 +674,8 @@ func _teardown() -> void:
 			carry.visible = true
 	_player = null
 	var zone := &"apartment" if _place_id == "home" else &"street"
+	if _place_id == "park":
+		zone = &"street"
 	Sfx.set_zone(zone)
 	_clear()
 

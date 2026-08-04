@@ -30,7 +30,7 @@ static func build(parent: Node3D, add_interact: Callable, box: Callable, label: 
 	_plaza(city, add_interact, box, label, spots, waypoints)
 	_corner_shop(city, add_interact, box, label, spots, waypoints)
 	_internet_cafe(city, add_interact, box, label, spots, waypoints)
-	_gym(city, add_interact, box, label, spots, waypoints)
+	_leisure_spots(spots, waypoints)
 	_park(city, add_interact, box, label, spots, waypoints)
 	_night_bar(city, add_interact, box, label, spots, waypoints)
 	_bus_stop(city, add_interact, box, label, spots, waypoints)
@@ -93,16 +93,19 @@ static func _internet_cafe(city: Node3D, add_interact: Callable, box: Callable, 
 	waypoints.append(o + Vector3(0, 0, -2.5))
 
 
-static func _gym(city: Node3D, add_interact: Callable, box: Callable, label: Callable, spots: Dictionary, waypoints: Array) -> void:
-	var o := Vector3(-30, 0, -7)
-	box.call(city, Vector3(6, 0.15, 5), o + Vector3(0, -0.05, 0), Color(0.35, 0.4, 0.35))
-	box.call(city, Vector3(6, 3.0, 0.2), o + Vector3(0, 1.5, -2.4), Color(0.2, 0.75, 0.4))
-	label.call(city, o + Vector3(0, 2.9, 0), "Фитнес-зал")
-	add_interact.call(city, o + Vector3(0, 0, 0.5), "Тренажёр", "Потренироваться", &"city_workout", {}, &"machine")
-	add_interact.call(city, o + Vector3(-1.8, 0, -0.5), "Абонемент", "Купить (+макс. внимание)", &"city_gym_pass", {}, &"poster")
-	_push_spot(spots, "gym_front", o + Vector3(1.5, 0, 1.2))
-	_push_spot(spots, "gym_front", o + Vector3(-1.2, 0, 1.5))
-	waypoints.append(o + Vector3(0, 0, 2.2))
+static func _leisure_spots(spots: Dictionary, waypoints: Array) -> void:
+	## Spawn anchors for park_leisure (west of ParkGate). No street-side interacts.
+	var gym := Vector3(-36, 0, -4)
+	_push_spot(spots, "gym_front", gym + Vector3(1.5, 0, 1.2))
+	_push_spot(spots, "gym_front", gym + Vector3(-1.2, 0, 1.5))
+	waypoints.append(gym + Vector3(0, 0, 2.2))
+	var book := Vector3(-34, 0, 1)
+	_push_spot(spots, "bookstore", book)
+	waypoints.append(book + Vector3(0, 0, 1.5))
+	var cine := Vector3(-42, 0, -5)
+	_push_spot(spots, "cinema", cine)
+	var arcade := Vector3(-44, 0, 1)
+	_push_spot(spots, "arcade", arcade)
 
 
 static func _park(city: Node3D, add_interact: Callable, box: Callable, label: Callable, spots: Dictionary, waypoints: Array) -> void:

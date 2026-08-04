@@ -56,6 +56,31 @@ static func dismiss_overlays(tree: SceneTree) -> bool:
 			shop_ui.visible = false
 		closed = true
 
+	var gym_ui := tree.get_first_node_in_group("gym_ui")
+	if gym_ui != null and _is_overlay_open(gym_ui):
+		if gym_ui.has_method("close"):
+			gym_ui.call("close")
+		else:
+			gym_ui.visible = false
+		closed = true
+
+	var arcade_ui := tree.get_first_node_in_group("arcade_minigame")
+	if arcade_ui != null and _is_overlay_open(arcade_ui):
+		if arcade_ui.has_method("close"):
+			arcade_ui.call("close")
+		else:
+			arcade_ui.visible = false
+		closed = true
+
+	for agency_group in ["photo_studio_ui", "barber_ui", "agency_board_ui", "elevator_ui", "district_gate_ui"]:
+		var agency_ui := tree.get_first_node_in_group(agency_group)
+		if agency_ui != null and _is_overlay_open(agency_ui):
+			if agency_ui.has_method("close"):
+				agency_ui.call("close")
+			else:
+				agency_ui.visible = false
+			closed = true
+
 	var date_ui := tree.get_first_node_in_group("date_ui")
 	if date_ui != null and _is_overlay_open(date_ui):
 		date_ui.visible = false
@@ -88,9 +113,10 @@ static func dismiss_overlays(tree: SceneTree) -> bool:
 
 
 static func any_overlay_open(tree: SceneTree) -> bool:
+	## True when a modal/menu owns the cursor (FPS look must not re-capture).
 	if tree == null:
 		return false
-	for group in ["settings_ui", "reveal_ui", "finale_ui", "event_ui", "shop_ui", "date_ui", "phone_ui"]:
+	for group in ["settings_ui", "reveal_ui", "finale_ui", "event_ui", "shop_ui", "gym_ui", "arcade_minigame", "photo_studio_ui", "barber_ui", "agency_board_ui", "elevator_ui", "district_gate_ui", "date_ui", "phone_ui", "pause_ui", "clone_accept_ui", "date_wait_ui"]:
 		var n := tree.get_first_node_in_group(group)
 		if n != null and _is_overlay_open(n):
 			return true

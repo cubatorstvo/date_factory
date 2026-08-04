@@ -14,6 +14,8 @@ const GRACE_EARLY_MIN: int = ARRIVE_EARLY_MIN
 const GRACE_LATE_MIN: int = NEUTRAL_LATE_MIN
 
 var scheduled: Dictionary = {} ## active booking or {}
+## Shared place/time occupancy (player + clone leads). Key: place|day|minutes
+var place_occupancy: Dictionary = {}
 var homeware_level: int = 1
 var table: Dictionary = {
 	"food_id": "",
@@ -38,6 +40,7 @@ var _no_show_fired: bool = false
 
 func reset() -> void:
 	scheduled.clear()
+	place_occupancy.clear()
 	homeware_level = 1
 	table = {"food_id": "", "food_tier": 0, "drink_id": "", "drink_tier": 0, "ready": false}
 	girl_at_door = false
@@ -67,11 +70,33 @@ func target_id() -> String:
 
 
 func is_home() -> bool:
-	return place_id() == "home"
+	var p := place_id()
+	return p == "home" or p.begins_with("apt_")
+
+
+func is_cafe() -> bool:
+	return place_id() == "cafe"
 
 
 func is_restaurant() -> bool:
 	return place_id() == "restaurant"
+
+
+func is_park() -> bool:
+	return place_id() == "park"
+
+
+func is_cinema() -> bool:
+	return place_id() == "cinema"
+
+
+func is_arcade() -> bool:
+	return place_id() == "arcade"
+
+
+func is_no_prep() -> bool:
+	## Cafe / park / restaurant / cinema / arcade: sit-start, no home table prep.
+	return is_cafe() or is_park() or is_restaurant() or is_cinema() or is_arcade()
 
 
 func book(target: String, place: String, day: int, minutes: int, unique: bool = true) -> bool:
@@ -85,11 +110,34 @@ func book(target: String, place: String, day: int, minutes: int, unique: bool = 
 	if place_def.is_empty():
 		EventBus.toast("Неизвестное место", &"warn")
 		return false
+	if place.begins_with("apt_") and Game.city != null and Game.city.has_method("is_apartment_unlocked"):
+		if not bool(Game.city.call("is_apartment_unlocked", StringName(place))):
+			EventBus.toast("Эта квартира ещё не открыта", &"warn")
+			return false
+	var conflict: Dictionary = slot_conflict(place, day, minutes, "player")
+	if not conflict.is_empty():
+		EventBus.toast("Слот занят (%s · lead=%s) — конфликт вместимости" % [
+			str(conflict.get("place", place)),
+			str(conflict.get("lead", "?")),
+		], &"warn")
+		return false
 	var cost: float = float(place_def.get("cost", 0))
-	if place == "restaurant" and cost > 0.0:
+	if place == "restaurant" and not DatePlaces.is_restaurant_bookable():
+		EventBus.toast("Ресторан ещё закрыт — откроется с парком", &"warn")
+		return false
+	if place == "park" and not DatePlaces.is_park_bookable():
+		EventBus.toast("Парк ещё закрыт", &"warn")
+		return false
+	if place == "cinema" and not DatePlaces.is_cinema_bookable():
+		EventBus.toast("Кино ещё закрыто", &"warn")
+		return false
+	if place == "arcade" and not DatePlaces.is_arcade_bookable():
+		EventBus.toast("Аркада ещё закрыта", &"warn")
+		return false
+	if (place == "restaurant" or place == "cafe" or place == "cinema" or place == "arcade") and cost > 0.0:
 		# Charge on start, not booking — just check affordability soft-warn.
 		if Game.economy.get_value(&"money") < cost:
-			EventBus.toast("На ресторан может не хватить денег (нужно ~%.0f$)" % cost, &"info")
+			EventBus.toast("На это место может не хватить денег (нужно ~%.0f$)" % cost, &"info")
 	var outfit: String = str(Game.inventory.equipped_outfit)
 	scheduled = {
 		"target_id": target,
@@ -115,8 +163,9 @@ func book(target: String, place: String, day: int, minutes: int, unique: bool = 
 	late_soft_hit = false
 	gift_given_id = ""
 	awaiting_finish = false
-	if place == "home":
+	if place == "home" or place.begins_with("apt_"):
 		_reset_table_keep_ware()
+	overwrite_occupancy(place, day, minutes, "player", target)
 	EventBus.date_scheduled.emit(scheduled.duplicate(true))
 	EventBus.toast("Свидание назначено: %s · %s" % [
 		str(place_def.get("name", place)),
@@ -130,6 +179,7 @@ func cancel(reason: String = "cancelled") -> void:
 		return
 	var payload: Dictionary = scheduled.duplicate(true)
 	payload["reason"] = reason
+	release_occupancy(str(scheduled.get("place_id", "")), int(scheduled.get("day", 1)), int(scheduled.get("minutes", 0)), "player")
 	scheduled.clear()
 	girl_at_door = false
 	girl_arrived = false
@@ -141,6 +191,8 @@ func cancel(reason: String = "cancelled") -> void:
 
 func clear_after_start() -> void:
 	## Booking consumed when date UI opens; keep punctuality fields.
+	if has_booking():
+		release_occupancy(place_id(), int(scheduled.get("day", 1)), int(scheduled.get("minutes", 0)), "player")
 	scheduled.clear()
 	girl_at_door = false
 
@@ -265,7 +317,8 @@ func can_start_home() -> bool:
 
 
 func can_start_restaurant() -> bool:
-	if not has_booking() or not is_restaurant():
+	## Legacy name: any no-prep sit venue (cafe / restaurant).
+	if not has_booking() or not is_no_prep():
 		return false
 	var until: int = minutes_until_date()
 	if until > ARRIVE_EARLY_MIN:
@@ -299,7 +352,7 @@ func update_arrival_flags() -> void:
 		girl_at_door = false
 		if should_auto_arrive_home():
 			girl_arrived = true
-	elif is_restaurant():
+	elif is_no_prep():
 		if until <= ARRIVE_EARLY_MIN and until >= -WAIT_LEAVE_MIN and player_seated:
 			girl_arrived = true
 
@@ -409,9 +462,82 @@ func hud_line() -> String:
 	return ""
 
 
+static func is_shared_capacity_place(place: String) -> bool:
+	return place in ["home", "cafe", "park", "restaurant"] or place.begins_with("apt_")
+
+
+static func venue_to_place(venue_id: String) -> String:
+	match venue_id:
+		"kitchen_table":
+			return "home"
+		"cheap_cafe":
+			return "cafe"
+		"park":
+			return "park"
+		"restaurant", "luxury_hall":
+			return "restaurant"
+		_:
+			if venue_id.begins_with("apt_"):
+				return venue_id
+			return ""
+
+
+static func occupancy_key(place: String, day: int, minutes: int) -> String:
+	return "%s|%d|%d" % [place, day, minutes]
+
+
+func slot_conflict(place: String, day: int, minutes: int, exclude_lead: String = "") -> Dictionary:
+	## Returns first conflicting occupancy entry, or {}.
+	if not is_shared_capacity_place(place):
+		return {}
+	var key := occupancy_key(place, day, minutes)
+	if place_occupancy.has(key):
+		var e: Dictionary = place_occupancy[key]
+		if exclude_lead == "" or str(e.get("lead", "")) != exclude_lead:
+			return e.duplicate(true)
+	# Active clone autos at this place (coarse "now" bucket minutes=-1) conflict with any booking same day.
+	var live_key := occupancy_key(place, day, -1)
+	if place_occupancy.has(live_key):
+		var live: Dictionary = place_occupancy[live_key]
+		if exclude_lead == "" or str(live.get("lead", "")) != exclude_lead:
+			return live.duplicate(true)
+	return {}
+
+
+func overwrite_occupancy(place: String, day: int, minutes: int, lead: String, girl_id: String) -> void:
+	if not is_shared_capacity_place(place):
+		return
+	var key := occupancy_key(place, day, minutes)
+	place_occupancy[key] = {
+		"place": place,
+		"day": day,
+		"minutes": minutes,
+		"lead": lead,
+		"girl_id": girl_id,
+	}
+
+
+func release_occupancy(place: String, day: int, minutes: int, lead: String = "") -> void:
+	var key := occupancy_key(place, day, minutes)
+	if not place_occupancy.has(key):
+		return
+	if lead != "" and str(place_occupancy[key].get("lead", "")) != lead:
+		return
+	place_occupancy.erase(key)
+
+
+func occupancy_entries() -> Array:
+	var out: Array = []
+	for k in place_occupancy.keys():
+		var e: Dictionary = place_occupancy[k]
+		out.append(e.duplicate(true))
+	return out
+
+
 func to_dict() -> Dictionary:
 	return {
 		"scheduled": scheduled.duplicate(true),
+		"place_occupancy": place_occupancy.duplicate(true),
 		"homeware_level": homeware_level,
 		"table": table.duplicate(true),
 		"gift_given_id": gift_given_id,
@@ -420,6 +546,9 @@ func to_dict() -> Dictionary:
 
 func from_dict(data: Dictionary) -> void:
 	scheduled = data.get("scheduled", {})
+	place_occupancy = data.get("place_occupancy", {})
+	if place_occupancy == null:
+		place_occupancy = {}
 	homeware_level = int(data.get("homeware_level", 1))
 	table = data.get("table", table)
 	gift_given_id = str(data.get("gift_given_id", ""))

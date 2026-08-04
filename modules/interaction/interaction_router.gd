@@ -36,13 +36,46 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 		"date_wait_stand":
 			stand_up_from_table()
 		"sit_restaurant", "enter_restaurant":
-			_try_start_restaurant_date()
+			_try_start_no_prep_date("restaurant")
+		"sit_cafe":
+			_try_start_no_prep_date("cafe")
+		"sit_park":
+			_try_start_no_prep_date("park")
+		"sit_cinema":
+			_try_start_no_prep_date("cinema")
+		"sit_arcade":
+			_try_start_no_prep_date("arcade")
+		"open_bookstore":
+			_open_bookstore()
+		"open_arcade":
+			_open_arcade_minigame(false, "")
+		"open_photo_studio":
+			_open_photo_studio_ui()
+		"open_barber":
+			_open_barber_ui()
+		"open_agency_board":
+			_open_agency_board_ui()
+		"open_elevator":
+			_open_elevator_ui()
+		"inspect_district_gate":
+			_open_district_gate_ui(str(payload.get("district_id", "")))
+		"go_lab":
+			_travel_to(&"lab", &"PlayerSpawn")
+		"elevator_travel":
+			var dest := str(payload.get("dest", "apartment"))
+			if dest == "":
+				dest = "apartment"
+			_travel_to(StringName(dest), &"PlayerSpawn")
 		"open_flower_shop":
 			_open_shop_menu("flower_shop")
 		"open_jewelry_shop":
 			_open_shop_menu("jewelry_shop")
 		"open_gift_shop":
 			_open_shop_menu("gift_shop")
+		"open_clothing_shop":
+			_open_shop_menu("clothing_shop")
+		"open_homeware_shop":
+			_open_shop_menu("homeware_shop")
 		"phone":
 			EventBus.notify.emit("PHONE_TOGGLE", &"ui")
 		"expand":
@@ -104,7 +137,12 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			Game.quests.complete("s1_city")
 			if not Game.city.outside_tip_shown:
 				Game.city.outside_tip_shown = true
-				EventBus.toast("Город: найди ресторан Two Hearts по тёплой вывеске.", &"story")
+				var park_open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.PARK_LEISURE)
+				var tip := "Город: кафе Two Hearts по тёплой вывеске."
+				tip += " Парк и leisure (зал/книжный/кино/аркада) на западе." if park_open else " Парк — скоро."
+				var agency_open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.AGENCY_ROW)
+				tip += " Agency Row (фото/барбер/офис) дальше на западе." if agency_open else ""
+				EventBus.toast(tip, &"story")
 		"go_home", "go_home_from_neighbor":
 			_travel_to(&"home", &"PlayerSpawn")
 		"go_neighbor":
@@ -114,8 +152,14 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			EventBus.toast("Уютно. Пахнет ламинатом и надеждами.", &"info")
 		"city_rest":
 			var bonus := float(payload.get("bonus", 1.0))
-			Game.economy.add(&"attention", 0.8 * bonus, &"rest")
-			EventBus.toast("Ты перевёл дух. Внимание восстанавливается.", &"ok")
+			var mult: float = Game.city.amenity_multiplier(&"city_rest") if Game.city != null else 1.0
+			Game.economy.add(&"attention", 0.8 * bonus * mult, &"rest")
+			if Game.city != null:
+				Game.city.mark_amenity_used(&"city_rest")
+			if mult < 1.0:
+				EventBus.toast("Скамейка уже не так бодрит. (+%.0f%%)" % (mult * 100.0), &"info")
+			else:
+				EventBus.toast("Ты перевёл дух. Внимание восстанавливается.", &"ok")
 		"city_buy_gift":
 			_city_buy_gift(StringName(str(payload.get("gift_id", "flower"))), float(payload.get("discount", 1.0)))
 		"city_cafe_job":
@@ -133,9 +177,7 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			else:
 				EventBus.toast("Даже на кофе нет.", &"warn")
 		"city_workout":
-			Game.economy.add(&"attention", 0.5, &"workout")
-			Game.economy.add(&"popularity", 0.2, &"workout")
-			EventBus.toast("Пот и микропопулярность.", &"ok")
+			_open_gym_ui()
 		"city_gym_pass":
 			if Game.economy.try_spend({"money": 40.0}, &"gym"):
 				Game.economy.max_attention += 0.5
@@ -143,8 +185,17 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			else:
 				EventBus.toast("Зал не для бедных... пока.", &"warn")
 		"city_park_fun":
-			Game.economy.add(&"popularity", 0.3, &"ducks")
-			EventBus.toast("Утки одобряют. +⭐", &"ok")
+			if Game.city != null and not Game.city.is_district_unlocked(CityDistricts.PARK_LEISURE):
+				EventBus.toast("Парк ещё закрыт", &"warn")
+				return
+			var dmult: float = Game.city.amenity_multiplier(&"city_park_fun") if Game.city != null else 1.0
+			Game.economy.add(&"popularity", 0.3 * dmult, &"ducks")
+			if Game.city != null:
+				Game.city.mark_amenity_used(&"city_park_fun")
+			if dmult < 1.0:
+				EventBus.toast("Утки сыты. Эффект слабее (+%.0f%%)" % (dmult * 100.0), &"info")
+			else:
+				EventBus.toast("Утки одобряют. +⭐", &"ok")
 		"city_bar_drink":
 			if Game.economy.try_spend({"money": 15.0}, &"bar"):
 				Game.economy.add(&"scandal", 0.8, &"bar")
@@ -238,9 +289,139 @@ static func _city_buy_gift(gift_id: StringName, discount: float) -> void:
 	Game.quests.complete("s1_money")
 
 
+static func _open_gym_ui() -> void:
+	if not DatePlaces.is_leisure_unlocked():
+		EventBus.toast("Зал откроется с парковым районом", &"warn")
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var gym := tree.get_first_node_in_group("gym_ui")
+	if gym != null and gym.has_method("open"):
+		gym.call("open")
+		return
+	EventBus.toast("Фитнес-зал недоступен", &"warn")
+
+
+static func _open_photo_studio_ui() -> void:
+	if not DatePlaces.is_agency_row_unlocked():
+		EventBus.toast("Фотостудия откроется с районом агентства", &"warn")
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var ui := tree.get_first_node_in_group("photo_studio_ui")
+	if ui != null and ui.has_method("open"):
+		ui.call("open")
+		return
+	EventBus.toast("Фотостудия недоступна", &"warn")
+
+
+static func _open_barber_ui() -> void:
+	if not DatePlaces.is_agency_row_unlocked():
+		EventBus.toast("Барбер откроется с районом агентства", &"warn")
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var ui := tree.get_first_node_in_group("barber_ui")
+	if ui != null and ui.has_method("open"):
+		ui.call("open")
+		return
+	EventBus.toast("Барбер недоступен", &"warn")
+
+
+static func _open_elevator_ui() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var ui := tree.get_first_node_in_group("elevator_ui")
+	if ui == null:
+		var script: Script = load("res://scenes/ui/elevator_ui.gd") as Script
+		if script:
+			ui = script.new()
+			ui.name = "ElevatorUI"
+			if tree.current_scene:
+				tree.current_scene.add_child(ui)
+	if ui != null and ui.has_method("open"):
+		ui.call("open")
+
+
+static func _open_district_gate_ui(district_id: String) -> void:
+	if district_id == "":
+		EventBus.toast("Район неизвестен", &"warn")
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var ui: Node = tree.get_first_node_in_group("district_gate_ui")
+	if ui == null:
+		var script: Script = load("res://scenes/ui/district_gate_ui.gd") as Script
+		if script:
+			ui = script.new()
+			ui.name = "DistrictGateUI"
+			if tree.current_scene:
+				tree.current_scene.add_child(ui)
+	if ui != null and ui.has_method("open"):
+		ui.call("open", StringName(district_id))
+		return
+	EventBus.toast("Информация о районе недоступна", &"warn")
+
+
+static func _open_agency_board_ui() -> void:
+	if not DatePlaces.is_agency_row_unlocked():
+		EventBus.toast("Офис агентства ещё закрыт", &"warn")
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var ui := tree.get_first_node_in_group("agency_board_ui")
+	if ui != null and ui.has_method("open"):
+		ui.call("open")
+		return
+	EventBus.toast("Доска расписания недоступна", &"warn")
+
+
+static func _open_bookstore() -> void:
+	if not DatePlaces.is_leisure_unlocked():
+		EventBus.toast("Книжный откроется с парком", &"warn")
+		return
+	_open_shop_menu("bookstore")
+	if Game.dating != null and not Game.dating.active_manual.is_empty() and Game.dating.has_method("note_bookstore_browse"):
+		Game.dating.note_bookstore_browse()
+	elif Game.dating != null and Game.dating.has_scheduled_date() and Game.dating.has_method("note_bookstore_browse"):
+		# Soft hook near date booking — note for scheduled girl.
+		var tid: String = Game.dating.schedule.target_id()
+		if tid != "":
+			Game.dating.note_bookstore_browse(tid)
+
+
+static func _open_arcade_minigame(from_date: bool, girl_id: String) -> void:
+	if not DatePlaces.is_arcade_bookable() and not from_date:
+		EventBus.toast("Аркада ещё закрыта", &"warn")
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var arcade := tree.get_first_node_in_group("arcade_minigame")
+	if arcade == null:
+		EventBus.toast("Автомат недоступен", &"warn")
+		return
+	var gid := girl_id
+	if gid.is_empty() and Game.dating != null and not Game.dating.active_manual.is_empty():
+		gid = str(Game.dating.active_manual.get("target_id", ""))
+	if arcade.has_method("open"):
+		arcade.call("open", {"girl_id": gid, "from_date": from_date})
+
+
 static func _open_shop_menu(shop_id: String) -> void:
 	var catalog: Dictionary = DatePlaces.shop_catalog().get(shop_id, {})
+	var kind := str(catalog.get("kind", "gift"))
 	var items: Array = catalog.get("items", [])
+	if kind == "outfit":
+		items = DatePlaces.clothing_shop_items()
+	elif kind == "homeware":
+		items = ["homeware_next"]
 	if items.is_empty():
 		EventBus.toast("Магазин пуст", &"warn")
 		return
@@ -369,7 +550,7 @@ static func wait_for_scheduled_time() -> void:
 			_launch_home_date_now()
 		else:
 			_show_date_wait_ui(Game.dating.schedule.minutes_until_date())
-	elif Game.dating.schedule.is_restaurant():
+	elif Game.dating.schedule.is_no_prep():
 		_hide_date_wait_ui()
 		var target: String = Game.dating.schedule.target_id()
 		var unique: bool = bool(Game.dating.schedule.scheduled.get("unique", ContentDB.girls.has(target)))
@@ -471,8 +652,44 @@ static func _hide_date_wait_ui() -> void:
 
 
 static func _try_start_restaurant_date() -> void:
-	if not Game.dating.has_scheduled_date() or not Game.dating.schedule.is_restaurant():
-		EventBus.toast("Сначала назначь свидание в ресторане через телефон", &"warn")
+	_try_start_no_prep_date("")
+
+
+static func _try_start_no_prep_date(expected_place: String = "") -> void:
+	if not Game.dating.has_scheduled_date() or not Game.dating.schedule.is_no_prep():
+		EventBus.toast("Сначала назначь свидание в телефоне (кафе / парк / ресторан / кино / аркада)", &"warn")
+		return
+	var booked: String = Game.dating.schedule.place_id()
+	if expected_place == "cafe" and booked != "cafe":
+		EventBus.toast("У двери кафе нужна бронь на кафе", &"warn")
+		return
+	if expected_place == "park":
+		if not DatePlaces.is_park_bookable():
+			EventBus.toast("Парк ещё закрыт", &"warn")
+			return
+		if booked != "park":
+			EventBus.toast("Здесь нужна бронь на парк", &"warn")
+			return
+	if expected_place == "restaurant" and booked == "restaurant" and not DatePlaces.is_restaurant_bookable():
+		EventBus.toast("Ресторан ещё закрыт", &"warn")
+		return
+	if expected_place == "cinema":
+		if not DatePlaces.is_cinema_bookable():
+			EventBus.toast("Кино ещё закрыто", &"warn")
+			return
+		if booked != "cinema":
+			EventBus.toast("Здесь нужна бронь на кино", &"warn")
+			return
+	if expected_place == "arcade":
+		if not DatePlaces.is_arcade_bookable():
+			EventBus.toast("Аркада ещё закрыта", &"warn")
+			return
+		if booked != "arcade":
+			EventBus.toast("Здесь нужна бронь на аркаду", &"warn")
+			return
+	# Luxury park restaurant accepts only restaurant bookings (cafe keeps cafe door).
+	if expected_place == "restaurant" and booked != "restaurant":
+		EventBus.toast("Бронь на другое место: %s" % booked, &"warn")
 		return
 	var until: int = Game.dating.schedule.minutes_until_date()
 	if until > DateSchedule.ARRIVE_EARLY_MIN and Game.time != null:
@@ -523,7 +740,9 @@ static func _start_date_with_transition(target: String, unique: bool, zone: Stri
 			if is_instance_valid(player):
 				player.set("_date_lock", false)
 		else:
+			## Keep stage-1 order: prepare → city → date (HUD/tip stay in sync).
 			Game.quests.complete("s1_prepare")
+			Game.quests.complete("s1_city")
 			Game.quests.complete("s1_date")
 	# Date stage keeps lock via date_ui_open when start succeeds.
 	if transition == null:

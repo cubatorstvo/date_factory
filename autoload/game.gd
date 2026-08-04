@@ -106,7 +106,7 @@ func new_game() -> void:
 		time.reset()
 	facility.unlock_stage(stage_id)
 	EventBus.stage_changed.emit(stage_id)
-	EventBus.toast("Новая жизнь. Квартира. Одно свидание. Что может пойти не так?", &"story")
+	## reset_for_stage → tip_current(): toast matches HUD primary_text.
 
 
 func continue_or_new() -> void:

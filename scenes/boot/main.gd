@@ -16,6 +16,58 @@ func _ready() -> void:
 			var shop := shop_script.new() as CanvasLayer
 			shop.name = "ShopUI"
 			add_child(shop)
+	if get_tree().get_first_node_in_group("gym_ui") == null:
+		var gym_script: Script = load("res://scenes/ui/gym_ui.gd") as Script
+		if gym_script:
+			var gym := gym_script.new() as CanvasLayer
+			gym.name = "GymUI"
+			add_child(gym)
+	if get_tree().get_first_node_in_group("arcade_minigame") == null:
+		var arcade_script: Script = load("res://scenes/minigames/pair_overload_minigame.gd") as Script
+		if arcade_script:
+			var arcade := arcade_script.new() as CanvasLayer
+			arcade.name = "PairOverloadMinigame"
+			add_child(arcade)
+	if get_tree().get_first_node_in_group("photo_studio_ui") == null:
+		var photo_script: Script = load("res://scenes/ui/photo_studio_ui.gd") as Script
+		if photo_script:
+			var photo := photo_script.new() as CanvasLayer
+			photo.name = "PhotoStudioUI"
+			add_child(photo)
+	if get_tree().get_first_node_in_group("barber_ui") == null:
+		var barber_script: Script = load("res://scenes/ui/barber_ui.gd") as Script
+		if barber_script:
+			var barber := barber_script.new() as CanvasLayer
+			barber.name = "BarberUI"
+			add_child(barber)
+	if get_tree().get_first_node_in_group("agency_board_ui") == null:
+		var board_script: Script = load("res://scenes/ui/agency_board_ui.gd") as Script
+		if board_script:
+			var board := board_script.new() as CanvasLayer
+			board.name = "AgencyBoardUI"
+			add_child(board)
+	if get_tree().get_first_node_in_group("elevator_ui") == null:
+		var elev_script: Script = load("res://scenes/ui/elevator_ui.gd") as Script
+		if elev_script:
+			var elev := elev_script.new() as CanvasLayer
+			elev.name = "ElevatorUI"
+			add_child(elev)
+	if get_tree().get_first_node_in_group("district_gate_ui") == null:
+		var gate_script: Script = load("res://scenes/ui/district_gate_ui.gd") as Script
+		if gate_script:
+			var gate_ui := gate_script.new() as CanvasLayer
+			gate_ui.name = "DistrictGateUI"
+			add_child(gate_ui)
+	if not EventBus.notify.is_connected(_on_leisure_notify):
+		EventBus.notify.connect(_on_leisure_notify)
+
+
+func _on_leisure_notify(message: String, kind: StringName) -> void:
+	if kind != &"ui":
+		return
+	if message.begins_with("ARCADE_OPEN_DATE:"):
+		var gid := message.trim_prefix("ARCADE_OPEN_DATE:")
+		InteractionRouter._open_arcade_minigame(true, gid)
 
 
 func _on_stage(stage_id: StringName) -> void:

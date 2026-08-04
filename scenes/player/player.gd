@@ -14,14 +14,23 @@ const UiEscapeScript := preload("res://core/ui_escape.gd")
 @export var head_bob_intensity: float = 0.045
 @export var head_bob_frequency: float = 10.0
 ## Max vertical ledge the player can step onto while walking (meters).
-@export var max_step_height: float = 0.35
-@export var min_step_height: float = 0.02
-@export var step_forward: float = 0.22
+const STEP_MAX_HEIGHT := 0.5
+const STEP_MIN_HEIGHT := 0.05
+## Soft vertical resolve rate (m/s). Clears 0.5 m in ~60 ms without a Y snap.
+const STEP_LIFT_SPEED := 8.0
+## Minimum validation-only forward probe (meters). Never applied as a teleport.
+const STEP_PROBE_MIN := 0.12
+const STEP_PROBE_PADDING := 0.08
+const STEP_HEIGHT_SEARCH_ITERS := 8
+@export var max_step_height: float = STEP_MAX_HEIGHT
+@export var min_step_height: float = STEP_MIN_HEIGHT
+@export var step_lift_speed: float = STEP_LIFT_SPEED
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var ray: RayCast3D = $Head/Camera3D/RayCast3D
 @onready var carry_anchor: Node3D = $Head/CarryAnchor
+@onready var _collision_shape: CollisionShape3D = $CollisionShape3D
 
 var _pitch: float = 0.0
 var _focus: Interactable = null
@@ -35,6 +44,8 @@ var _land_bob: float = 0.0
 var _shake: float = 0.0
 var _footstep_time: float = 0.0
 var _was_on_floor: bool = false
+## Remaining vertical step to apply (meters). Y-only; no forward impulse.
+var _step_up_remain: float = 0.0
 
 
 func _ready() -> void:
@@ -109,10 +120,18 @@ func _input(event: InputEvent) -> void:
 		_apply_look(event)
 		get_viewport().set_input_as_handled()
 		return
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	# Re-capture only on button_up. Doing this on press eats GUI clicks while
+	# shop/barber/elevator/etc. have the cursor visible but _phone_open/_date_lock false.
+	if event is InputEventMouseButton and (not event.pressed) and event.button_index == MOUSE_BUTTON_LEFT:
+		if _ui_owns_mouse():
+			return
 		if (not _phone_open) and (not _date_lock) and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			get_viewport().set_input_as_handled()
+
+
+func _ui_owns_mouse() -> bool:
+	return UiEscapeScript.any_overlay_open(get_tree())
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -139,7 +158,10 @@ func _physics_process(delta: float) -> void:
 	_sync_overlay_state()
 	_read_settings()
 
-	if not is_on_floor():
+	if _step_up_remain > 0.0:
+		# Kinematic step lift owns vertical motion; do not fight it with gravity.
+		velocity.y = 0.0
+	elif not is_on_floor():
 		velocity.y -= gravity * delta
 	else:
 		velocity.y = 0.0
@@ -147,6 +169,7 @@ func _physics_process(delta: float) -> void:
 	if _date_lock:
 		velocity.x = 0.0
 		velocity.z = 0.0
+		_step_up_remain = 0.0
 		move_and_slide()
 		_update_camera_feel(delta, false)
 		return
@@ -166,10 +189,31 @@ func _physics_process(delta: float) -> void:
 	velocity.x = lerpf(velocity.x, direction.x * speed, blend)
 	velocity.z = lerpf(velocity.z, direction.z * speed, blend)
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
-	var grounded_before := is_on_floor()
+	if horizontal.length_squared() < 0.01 and direction.length_squared() > 0.0:
+		horizontal = direction
+
+	# Pre-lift so this frame's horizontal slide can clear the lip (Y only).
+	var grounded_like := is_on_floor() or _step_up_remain > 0.0
+	if grounded_like and _step_up_remain <= 0.0:
+		var needed: float = _query_step_up_height(horizontal)
+		if needed >= min_step_height:
+			_step_up_remain = needed
+	if _step_up_remain > 0.0:
+		_apply_step_lift(delta)
+
+	var saved_snap: float = floor_snap_length
+	if _step_up_remain > 0.0:
+		# Snap would pull back onto the lower floor while rising.
+		floor_snap_length = 0.0
 	move_and_slide()
-	if grounded_before:
-		_try_step_up(horizontal)
+	floor_snap_length = saved_snap
+
+	if is_on_floor() or _step_up_remain > 0.0:
+		var needed_after: float = _query_step_up_height(horizontal)
+		if needed_after >= min_step_height:
+			_step_up_remain = maxf(_step_up_remain, needed_after)
+	if _step_up_remain <= 0.0 and is_on_floor():
+		apply_floor_snap()
 
 	if is_on_floor() and not _was_on_floor:
 		_land_bob = 0.075
@@ -199,60 +243,117 @@ func _move_vector() -> Vector2:
 	return Vector2(x, y)
 
 
-func _try_step_up(horizontal: Vector3) -> void:
-	## Climb short ledges/curbs that CharacterBody3D would otherwise treat as walls.
-	if max_step_height <= 0.0:
-		return
-	var flat := Vector3(horizontal.x, 0.0, horizontal.z)
-	if flat.length_squared() < 0.01:
-		return
-	flat = flat.normalized()
+func _capsule_radius() -> float:
+	if _collision_shape == null or _collision_shape.shape == null:
+		return 0.35
+	var shape: Shape3D = _collision_shape.shape
+	if shape is CapsuleShape3D:
+		return (shape as CapsuleShape3D).radius
+	if shape is SphereShape3D:
+		return (shape as SphereShape3D).radius
+	if shape is CylinderShape3D:
+		return (shape as CylinderShape3D).radius
+	return 0.35
 
-	var blocked_by_wall := false
+
+func _apply_step_lift(delta: float) -> void:
+	## Continuous vertical-only resolve. Never adds forward motion.
+	if _step_up_remain <= 0.0:
+		return
+	var speed: float = step_lift_speed if step_lift_speed > 0.0 else STEP_LIFT_SPEED
+	var lift: float = minf(_step_up_remain, speed * delta)
+	# Absorb micro-remainders so the camera does not crawl the last millimeters.
+	if _step_up_remain - lift < 0.012:
+		lift = _step_up_remain
+	var hit: KinematicCollision3D = move_and_collide(Vector3(0.0, lift, 0.0))
+	if hit != null:
+		_step_up_remain = 0.0
+		return
+	_step_up_remain = maxf(_step_up_remain - lift, 0.0)
+	velocity.y = 0.0
+
+
+func _step_probe_vector(flat_dir: Vector3) -> Vector3:
+	## Probe must clear the capsule lip in the *test* pose so the down-cast
+	## samples the ledge top — but this distance is never written to position.
+	var dist: float = maxf(STEP_PROBE_MIN, _capsule_radius() + STEP_PROBE_PADDING)
+	return flat_dir * dist
+
+
+func _is_horizontal_step_blocked(flat: Vector3) -> bool:
+	## True when wish horizontal hits a non-walkable face (curb lip / wall).
+	var probe: Vector3 = _step_probe_vector(flat)
 	for i in get_slide_collision_count():
-		var col := get_slide_collision(i)
+		var col: KinematicCollision3D = get_slide_collision(i)
 		if col == null:
 			continue
-		var n := col.get_normal()
-		# Nearly vertical surface facing into our movement.
-		if absf(n.y) > 0.45:
+		var n: Vector3 = col.get_normal()
+		# Skip walkable floors/slopes; keep steep ledges / walls / curb lips.
+		if n.y >= 0.7:
 			continue
-		if flat.dot(-n) < 0.15:
+		if flat.dot(-n) < 0.1:
 			continue
-		blocked_by_wall = true
-		break
-	if not blocked_by_wall:
-		return
+		return true
+	if is_on_wall():
+		return true
+	return test_move(global_transform, probe)
 
-	var start := global_transform
-	var up := Vector3.UP * max_step_height
+
+func _step_height_is_valid(height: float, probe: Vector3) -> bool:
+	## Validation only: raise → short forward probe → down-cast for walkable ledge.
+	var start: Transform3D = global_transform
+	var up := Vector3(0.0, height, 0.0)
 	if test_move(start, up):
-		return
-
-	var raised := start.translated(up)
-	var forward := flat * step_forward
-	if test_move(raised, forward):
-		return
-
-	var ahead := raised.translated(forward)
-	var down := Vector3.DOWN * (max_step_height + 0.2)
+		return false
+	var raised: Transform3D = start.translated(up)
+	if test_move(raised, probe):
+		return false
+	var ahead: Transform3D = raised.translated(probe)
+	var down := Vector3(0.0, -(height + 0.2), 0.0)
 	var params := PhysicsTestMotionParameters3D.new()
 	params.from = ahead
 	params.motion = down
 	params.margin = maxf(safe_margin, 0.02)
 	var result := PhysicsTestMotionResult3D.new()
 	if not PhysicsServer3D.body_test_motion(get_rid(), params, result):
-		return
+		return false
 	if result.get_collision_normal().y < 0.55:
-		return
-
-	var climbed := max_step_height + result.get_travel().y
+		return false
+	var climbed: float = height + result.get_travel().y
 	if climbed < min_step_height or climbed > max_step_height + 0.05:
-		return
+		return false
+	return true
 
-	global_position = ahead.origin + result.get_travel()
-	velocity.y = 0.0
-	apply_floor_snap()
+
+func _query_step_up_height(horizontal: Vector3) -> float:
+	## Binary-search the smallest clearance height that lets existing horizontal motion continue.
+	if max_step_height <= 0.0:
+		return 0.0
+	var flat := Vector3(horizontal.x, 0.0, horizontal.z)
+	if flat.length_squared() < 0.01:
+		return 0.0
+	flat = flat.normalized()
+	if not _is_horizontal_step_blocked(flat):
+		return 0.0
+	var probe: Vector3 = _step_probe_vector(flat)
+	if test_move(global_transform, Vector3(0.0, max_step_height, 0.0)):
+		return 0.0
+
+	var lo: float = min_step_height
+	var hi: float = max_step_height
+	var best: float = 0.0
+	for _i in STEP_HEIGHT_SEARCH_ITERS:
+		var mid: float = (lo + hi) * 0.5
+		if _step_height_is_valid(mid, probe):
+			best = mid
+			hi = mid
+		else:
+			lo = mid
+	if best >= min_step_height and _step_height_is_valid(best, probe):
+		return best
+	if _step_height_is_valid(max_step_height, probe):
+		return max_step_height
+	return 0.0
 
 
 func _read_settings() -> void:

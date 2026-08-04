@@ -178,10 +178,22 @@ func _ensure_animation_player() -> AnimationPlayer:
 
 
 func _find_skeleton(node: Node) -> Skeleton3D:
-	if node is Skeleton3D:
-		return node as Skeleton3D
-	for child in node.get_children():
-		var found := _find_skeleton(child)
-		if found != null:
-			return found
-	return null
+	# Prefer skeletons that actually drive meshes; skip leftover empty *2 copies.
+	var fallback: Skeleton3D = null
+	var queue: Array[Node] = [node]
+	while not queue.is_empty():
+		var cur: Node = queue.pop_front()
+		if cur is Skeleton3D:
+			var sk := cur as Skeleton3D
+			var has_mesh := false
+			for child in sk.get_children():
+				if child is MeshInstance3D:
+					has_mesh = true
+					break
+			if has_mesh:
+				return sk
+			if fallback == null:
+				fallback = sk
+		for child2 in cur.get_children():
+			queue.append(child2)
+	return fallback

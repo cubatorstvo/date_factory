@@ -54,7 +54,7 @@ func _ready() -> void:
 	_ensure_orbit_tab()
 	var start_btn := get_node_or_null("Panel/Margin/Body/Tabs/Candidates/Start") as Button
 	if start_btn:
-		start_btn.text = "Выбрать место: ресторан"
+		start_btn.text = "Выбрать место: кафе"
 	var prepare_btn := get_node_or_null("Panel/Margin/Body/Tabs/Candidates/Prepare") as Button
 	if prepare_btn:
 		prepare_btn.text = "Выбрать место: дом"
@@ -64,7 +64,12 @@ func _ready() -> void:
 	$Panel/Margin/Body/Tabs/Upgrades/Buy.pressed.connect(_buy_selected_upgrade)
 	$Panel/Margin/Body/Tabs/Staff/Hire.pressed.connect(_hire_selected)
 	$Panel/Margin/Body/Tabs/Candidates/Prepare.pressed.connect(_book_home_selected)
-	$Panel/Margin/Body/Tabs/Candidates/Start.pressed.connect(_book_restaurant_selected)
+	$Panel/Margin/Body/Tabs/Candidates/Start.pressed.connect(_book_cafe_selected)
+	_ensure_park_book_button()
+	_ensure_restaurant_book_button()
+	_ensure_cinema_book_button()
+	_ensure_arcade_book_button()
+	_ensure_themed_apt_book_button()
 	EventBus.date_scheduled.connect(func(_p): _refresh())
 	EventBus.date_cancelled.connect(func(_p): _refresh())
 	$Panel/Margin/Body/Tabs/Twitch/Connect.pressed.connect(_connect_twitch)
@@ -713,6 +718,9 @@ func force_close() -> void:
 func set_open(open: bool) -> void:
 	_open = open
 	if open:
+		var phone_layer := get_parent() as CanvasLayer
+		if phone_layer != null:
+			UiLayers.raise_popup(phone_layer, UiLayers.PHONE)
 		visible = true
 		if panel:
 			panel.visible = true
@@ -800,7 +808,7 @@ func _refresh() -> void:
 			var prim: PackedStringArray = PackedStringArray()
 			for p in Game.girls.girl_primary_traits(StringName(id2)):
 				prim.append(Loc.trait_name(str(p)))
-			var quirk := Game.girls.girl_quirk(StringName(id2))
+			var quirk: String = Game.girls.girl_quirk(StringName(id2))
 			var quirk_txt := TraitsContent.quirk_label(quirk) if not quirk.is_empty() else "—"
 			_claimed_list.add_item("%s | %s | %s | %s" % [
 				Game.girls.display_name(StringName(id2)),
@@ -848,7 +856,7 @@ func _refresh() -> void:
 	var venue_names: PackedStringArray = PackedStringArray()
 	for v in Game.facility.unlocked_venues:
 		venue_names.append(Loc.venue_name(v))
-	var booking_txt := "Свидание не назначено.\nВыбери кандидатку → «дом» или «ресторан»."
+	var booking_txt := "Свидание не назначено.\nВыбери кандидатку → «дом» или «кафе»."
 	if Game.dating.has_scheduled_date():
 		var s: Dictionary = Game.dating.scheduled_summary()
 		var place_def: Dictionary = DatePlaces.place(str(s.get("place_id", "")))
@@ -866,6 +874,11 @@ func _refresh() -> void:
 	]
 	_ensure_auto_mode_button()
 	_ensure_cancel_booking_button()
+	_ensure_park_book_button()
+	_ensure_restaurant_book_button()
+	_ensure_cinema_book_button()
+	_ensure_arcade_book_button()
+	_ensure_themed_apt_book_button()
 	twitch_status.text = "Статус Twitch: %s" % Loc.online(Game.names.twitch_connected)
 
 
@@ -894,15 +907,149 @@ func _prepare_selected() -> void:
 
 
 func _start_selected() -> void:
-	_book_place_for_selected("restaurant")
+	_book_place_for_selected("cafe")
 
 
 func _book_home_selected() -> void:
 	_book_place_for_selected("home")
 
 
+func _book_cafe_selected() -> void:
+	_book_place_for_selected("cafe")
+
+
 func _book_restaurant_selected() -> void:
+	if not DatePlaces.is_restaurant_bookable():
+		EventBus.toast("Ресторан откроется с парковым районом", &"warn")
+		Sfx.play_ui(&"deny")
+		return
 	_book_place_for_selected("restaurant")
+
+
+func _book_park_selected() -> void:
+	if not DatePlaces.is_park_bookable():
+		EventBus.toast("Парк ещё закрыт", &"warn")
+		Sfx.play_ui(&"deny")
+		return
+	_book_place_for_selected("park")
+
+
+func _book_cinema_selected() -> void:
+	if not DatePlaces.is_cinema_bookable():
+		EventBus.toast("Кино откроется с парком или stage_3", &"warn")
+		Sfx.play_ui(&"deny")
+		return
+	_book_place_for_selected("cinema")
+
+
+func _book_arcade_selected() -> void:
+	if not DatePlaces.is_arcade_bookable():
+		EventBus.toast("Аркада ещё закрыта", &"warn")
+		Sfx.play_ui(&"deny")
+		return
+	_book_place_for_selected("arcade")
+
+
+func _book_themed_apt_selected() -> void:
+	var place := ""
+	for cand in ["apt_cozy", "apt_modern", "apt_creative"]:
+		if DatePlaces.is_themed_apartment_bookable(cand):
+			place = cand
+			break
+	if place == "":
+		EventBus.toast("Тематические квартиры ещё закрыты", &"warn")
+		Sfx.play_ui(&"deny")
+		return
+	_book_place_for_selected(place)
+
+
+func _ensure_park_book_button() -> void:
+	var cand := get_node_or_null("Panel/Margin/Body/Tabs/Candidates") as Control
+	if cand == null:
+		return
+	var btn := cand.get_node_or_null("BookPark") as Button
+	if btn == null:
+		btn = Button.new()
+		btn.name = "BookPark"
+		btn.pressed.connect(_book_park_selected)
+		cand.add_child(btn)
+	var unlocked := DatePlaces.is_park_bookable()
+	btn.text = "Выбрать место: парк" if unlocked else "Парк (закрыт)"
+	btn.disabled = not unlocked
+	btn.visible = true
+
+
+func _ensure_restaurant_book_button() -> void:
+	var cand := get_node_or_null("Panel/Margin/Body/Tabs/Candidates") as Control
+	if cand == null:
+		return
+	var btn := cand.get_node_or_null("BookRestaurant") as Button
+	if btn == null:
+		btn = Button.new()
+		btn.name = "BookRestaurant"
+		btn.pressed.connect(_book_restaurant_selected)
+		cand.add_child(btn)
+	var unlocked := DatePlaces.is_restaurant_bookable()
+	btn.text = "Выбрать место: ресторан" if unlocked else "Ресторан (закрыт)"
+	btn.disabled = not unlocked
+	btn.visible = true
+
+
+func _ensure_cinema_book_button() -> void:
+	var cand := get_node_or_null("Panel/Margin/Body/Tabs/Candidates") as Control
+	if cand == null:
+		return
+	var btn := cand.get_node_or_null("BookCinema") as Button
+	if btn == null:
+		btn = Button.new()
+		btn.name = "BookCinema"
+		btn.pressed.connect(_book_cinema_selected)
+		cand.add_child(btn)
+	var unlocked := DatePlaces.is_cinema_bookable()
+	btn.text = "Выбрать место: кино" if unlocked else "Кино (закрыто)"
+	btn.disabled = not unlocked
+	btn.visible = true
+
+
+func _ensure_arcade_book_button() -> void:
+	var cand := get_node_or_null("Panel/Margin/Body/Tabs/Candidates") as Control
+	if cand == null:
+		return
+	var btn := cand.get_node_or_null("BookArcade") as Button
+	if btn == null:
+		btn = Button.new()
+		btn.name = "BookArcade"
+		btn.pressed.connect(_book_arcade_selected)
+		cand.add_child(btn)
+	var unlocked := DatePlaces.is_arcade_bookable()
+	btn.text = "Выбрать место: аркада" if unlocked else "Аркада (закрыта)"
+	btn.disabled = not unlocked
+	btn.visible = true
+
+
+func _ensure_themed_apt_book_button() -> void:
+	var cand := get_node_or_null("Panel/Margin/Body/Tabs/Candidates") as Control
+	if cand == null:
+		return
+	var btn := cand.get_node_or_null("BookThemedApt") as Button
+	if btn == null:
+		btn = Button.new()
+		btn.name = "BookThemedApt"
+		btn.pressed.connect(_book_themed_apt_selected)
+		cand.add_child(btn)
+	var place := ""
+	for c in ["apt_cozy", "apt_modern", "apt_creative"]:
+		if DatePlaces.is_themed_apartment_bookable(c):
+			place = c
+			break
+	var unlocked := place != ""
+	var label := "тематическая квартира"
+	if unlocked:
+		var def: Dictionary = DatePlaces.place(place)
+		label = str(def.get("name", place))
+	btn.text = "Выбрать место: %s" % label if unlocked else "Тематические квартиры (закрыты)"
+	btn.disabled = not unlocked
+	btn.visible = true
 
 
 func _book_place_for_selected(place_id: String) -> void:

@@ -2611,6 +2611,12 @@ shadow_mesh = SubResource("ArrayMesh_p337g")
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hcd2j"]
 albedo_color = Color(0.35, 0.4, 0.28, 1)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_i7o0i"]
+size = Vector3(0.45, 2.8, 9.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7u8rp"]
+size = Vector3(0.45, 2.8, 8)
+
 [sub_resource type="Environment" id="Environment_50p4k"]
 background_mode = 1
 background_color = Color(0.0627451, 0.078431375, 0.14509805, 1)
@@ -2632,6 +2638,54 @@ volumetric_fog_length = 32.0
 adjustment_enabled = true
 adjustment_contrast = 1.08
 adjustment_saturation = 1.12
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5ma4y"]
+albedo_color = Color(0.28, 0.52, 0.32, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hpf5j"]
+albedo_color = Color(0.55, 0.48, 0.38, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gaqey"]
+albedo_color = Color(0.25, 0.45, 0.65, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gtqxx"]
+albedo_color = Color(0.42, 0.3, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_juh3b"]
+albedo_color = Color(0.42, 0.3, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1l280"]
+albedo_color = Color(0.75, 0.55, 0.35, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nky8o"]
+albedo_color = Color(0.7, 0.35, 0.35, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j33ck"]
+albedo_color = Color(0.35, 0.45, 0.7, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_33kpw"]
+albedo_color = Color(0.95, 0.85, 0.25, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_64fs5"]
+albedo_color = Color(0.9, 0.8, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dmywy"]
+albedo_color = Color(0.45, 0.28, 0.25, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3k20l"]
+albedo_color = Color(0.7, 0.2, 0.22, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7uv6l"]
+albedo_color = Color(0.2, 0.75, 0.4, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7mcwn"]
+albedo_color = Color(0.55, 0.4, 0.28, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rh7lx"]
+albedo_color = Color(0.25, 0.2, 0.45, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4hhy3"]
+albedo_color = Color(0.75, 0.2, 0.7, 1)
 
 [node name="City" type="Node3D" unique_id=1801085640]
 
@@ -2819,22 +2873,22 @@ mesh = SubResource("ArrayMesh_6m584")
 [node name="Building_Small_3" type="MeshInstance3D" parent="Buildings/PlayerHomeFacade" unique_id=53680402]
 mesh = SubResource("ArrayMesh_kuwpm")
 
-[node name="EastEndSouthFill" type="Node3D" parent="Buildings" unique_id=1000320382 instance=ExtResource("21_rrdsq")]
+[node name="EastEndSouthFill" parent="Buildings" unique_id=1000320382 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(-3.1209932e-08, 0, -0.714, 0, 0.714, 0, 0.714, 0, -3.1209932e-08, 21.6, 0, 8.85)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/EastEndSouthFill" unique_id=2028569525]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/EastEndSouthFill" unique_id=2028569525]
 mesh = SubResource("ArrayMesh_hpf5j")
 
-[node name="EastEndNorthFill" type="Node3D" parent="Buildings" unique_id=973931548 instance=ExtResource("21_rrdsq")]
+[node name="EastEndNorthFill" parent="Buildings" unique_id=973931548 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(-3.1209932e-08, 0, -0.714, 0, 0.714, 0, 0.714, 0, -3.1209932e-08, 21.6, 0, -8.5)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/EastEndNorthFill" unique_id=1610382725]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/EastEndNorthFill" unique_id=1610382725]
 mesh = SubResource("ArrayMesh_hpf5j")
 
-[node name="SouthBlockFarEast" type="Node3D" parent="Buildings" unique_id=1615413767 instance=ExtResource("21_rrdsq")]
+[node name="SouthBlockFarEast" parent="Buildings" unique_id=1615413767 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(-0.714, 0, -6.2419865e-08, 0, 0.714, 0, 6.2419865e-08, 0, -0.714, 17, 0, 7.08)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/SouthBlockFarEast" unique_id=2111821029]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/SouthBlockFarEast" unique_id=2111821029]
 mesh = SubResource("ArrayMesh_hpf5j")
 
 [node name="StreetProps" type="Node3D" parent="." unique_id=758449721]
@@ -2985,6 +3039,40 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 3, 3.9)
 light_color = Color(1, 0.8, 0.58, 1)
 light_energy = 0.85
 
+[node name="LampPostHomeN" type="CSGCylinder3D" parent="StreetProps" unique_id=1171318848]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 1.6, -3.5)
+radius = 0.08
+height = 3.2
+
+[node name="LampBulbHomeN" type="CSGSphere3D" parent="StreetProps" unique_id=705325244]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 3.15, -3.5)
+radius = 0.2
+radial_segments = 16
+rings = 8
+
+[node name="LampLightHomeN" type="OmniLight3D" parent="StreetProps" unique_id=1467885007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 3, -3.5)
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 0.95
+omni_range = 5.5
+
+[node name="LampPostHomeS" type="CSGCylinder3D" parent="StreetProps" unique_id=1000540328]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 1.6, 3.5)
+radius = 0.08
+height = 3.2
+
+[node name="LampBulbHomeS" type="CSGSphere3D" parent="StreetProps" unique_id=1109661921]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 3.15, 3.5)
+radius = 0.2
+radial_segments = 16
+rings = 8
+
+[node name="LampLightHomeS" type="OmniLight3D" parent="StreetProps" unique_id=85026080]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 3, 3.5)
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 0.95
+omni_range = 5.5
+
 [node name="Decor" type="Node3D" parent="." unique_id=1481009350]
 
 [node name="BenchNorthSeat" type="CSGBox3D" parent="Decor" unique_id=391629006]
@@ -3007,7 +3095,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 5.08)
 size = Vector3(2, 0.9, 0.12)
 material = SubResource("StandardMaterial3D_brfwn")
 
-[node name="RestaurantSign" type="CSGBox3D" parent="Decor" unique_id=1408463267]
+[node name="CafeSign" type="CSGBox3D" parent="Decor" unique_id=1408463267]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 3, -5.18)
 size = Vector3(4.2, 0.9, 0.18)
 material = SubResource("StandardMaterial3D_55bsj")
@@ -3069,6 +3157,46 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0.5, -4.8)
 size = Vector3(1.2, 1, 1.2)
 material = SubResource("StandardMaterial3D_hcd2j")
 
+[node name="CafeSignLabel" type="Label3D" parent="Decor" unique_id=1654748992]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 3.55, -5)
+billboard = 1
+text = "Кафе Two Hearts"
+font_size = 48
+
+[node name="ParkGate" type="StaticBody3D" parent="Decor" unique_id=1328107128]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, 0)
+
+[node name="Barrier" type="CSGBox3D" parent="Decor/ParkGate" unique_id=2005498375]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+size = Vector3(0.45, 2.8, 9.5)
+
+[node name="Collision" type="CollisionShape3D" parent="Decor/ParkGate" unique_id=599226446]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+shape = SubResource("BoxShape3D_i7o0i")
+
+[node name="SoonLabel" type="Label3D" parent="Decor/ParkGate" unique_id=1337593206]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1, 0)
+billboard = 1
+text = "Скоро: парк"
+font_size = 42
+
+[node name="AgencyGate" type="StaticBody3D" parent="Decor" unique_id=1078318938]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5, 0, -3)
+
+[node name="Barrier" type="CSGBox3D" parent="Decor/AgencyGate" unique_id=461682489]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+size = Vector3(0.45, 2.8, 8)
+
+[node name="Collision" type="CollisionShape3D" parent="Decor/AgencyGate" unique_id=284187413]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+shape = SubResource("BoxShape3D_7u8rp")
+
+[node name="SoonLabel" type="Label3D" parent="Decor/AgencyGate" unique_id=1385237212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 2.2, 0)
+billboard = 1
+text = "Агентство — скоро"
+font_size = 36
+
 [node name="Lights" type="Node3D" parent="." unique_id=731320311]
 
 [node name="NightKey" type="DirectionalLight3D" parent="Lights" unique_id=1762148093]
@@ -3077,10 +3205,10 @@ light_color = Color(0.5686275, 0.65882355, 0.8509804, 1)
 light_energy = 0.58
 shadow_enabled = true
 
-[node name="RestaurantHalo" type="OmniLight3D" parent="Lights" unique_id=517640290]
+[node name="CafeHalo" type="OmniLight3D" parent="Lights" unique_id=517640290]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 2.5, -4.4)
-light_color = Color(1, 0.8, 0.58, 1)
-light_energy = 0.9
+light_color = Color(1, 0.86, 0.7, 1)
+light_energy = 0.55
 shadow_enabled = true
 omni_range = 7.0
 
@@ -3088,6 +3216,19 @@ omni_range = 7.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2, 0)
 light_color = Color(0.9372549, 0.69411767, 0.41568628, 1)
 light_energy = 0.85
+
+[node name="HomeHalo" type="OmniLight3D" parent="Lights" unique_id=1004117494]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.2, 2.6, 0)
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 1.05
+shadow_enabled = true
+omni_range = 8.0
+
+[node name="HomeDoorGlow" type="OmniLight3D" parent="Lights" unique_id=464623011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.8, 1.8, -0.3)
+light_color = Color(1, 0.82, 0.6, 1)
+light_energy = 0.75
+omni_range = 4.5
 
 [node name="Markers" type="Node3D" parent="." unique_id=1015031399]
 
@@ -3103,7 +3244,7 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0
 [node name="CrosswalkEntry" type="Marker3D" parent="Markers" unique_id=1491576350]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 9, 0, 3.2)
 
-[node name="RestaurantEntrance" type="Marker3D" parent="Markers" unique_id=751575059]
+[node name="CafeEntrance" type="Marker3D" parent="Markers" unique_id=751575059]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 10.5, 0, -4.35)
 
 [node name="OverviewCamera" type="Marker3D" parent="Markers" unique_id=1671602818]
@@ -3118,5 +3259,238 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 0, 0)
 [node name="HomeEntrance" type="Marker3D" parent="Markers" unique_id=1990654930]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 0, -0.5)
 
+[node name="ParkPicnicSpot" type="Marker3D" parent="Markers" unique_id=1357816212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 4.2)
+
+[node name="ParkRestaurantEntrance" type="Marker3D" parent="Markers" unique_id=536877093]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5, 0, -1)
+
+[node name="ParkGateWest" type="Marker3D" parent="Markers" unique_id=2130666399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 0)
+
+[node name="GymEntrance" type="Marker3D" parent="Markers" unique_id=2074602350]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -4)
+
+[node name="BookstoreEntrance" type="Marker3D" parent="Markers" unique_id=1566312250]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -1)
+
+[node name="CinemaEntrance" type="Marker3D" parent="Markers" unique_id=1188463252]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -5)
+
+[node name="ArcadeEntrance" type="Marker3D" parent="Markers" unique_id=505499082]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -1)
+
+[node name="PhotoStudioEntrance" type="Marker3D" parent="Markers" unique_id=511758134]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -3)
+
+[node name="BarberEntrance" type="Marker3D" parent="Markers" unique_id=700723000]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0, -1.5)
+
+[node name="AgencyOfficeEntrance" type="Marker3D" parent="Markers" unique_id=1706404682]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, -4)
+
+[node name="PhotoMark" type="Marker3D" parent="Markers" unique_id=1284718735]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -2.4)
+
+[node name="AgencyGateWest" type="Marker3D" parent="Markers" unique_id=443387314]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5, 0, -3)
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2077937956]
 environment = SubResource("Environment_50p4k")
+
+[node name="Districts" type="Node3D" parent="." unique_id=1160245482]
+
+[node name="ParkLeisure" type="Node3D" parent="Districts" unique_id=884205376]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 0, 3)
+
+[node name="ParkGround" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=1590976471]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, 0)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_5ma4y")
+
+[node name="ParkPath" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=2078404356]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_hpf5j")
+
+[node name="Pond" type="CSGCylinder3D" parent="Districts/ParkLeisure" unique_id=2052957706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, -0.05, 2.5)
+radius = 2.4
+height = 0.12
+material = SubResource("StandardMaterial3D_gaqey")
+
+[node name="BenchWest" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=1566247585]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3000002, 0.28, -1.8)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_gtqxx")
+
+[node name="BenchEast" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=1131379855]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.28, 2)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_juh3b")
+
+[node name="Kiosk" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=154234164]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, -1.5)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_1l280")
+
+[node name="PicnicMarkerA" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=2065373743]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.02, 1.1999998)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_nky8o")
+
+[node name="PicnicMarkerB" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=128044564]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3000002, 0.02, -2)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_j33ck")
+
+[node name="DuckPropA" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=450751875]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8999996, 0.2, 2)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_33kpw")
+
+[node name="DuckPropB" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=1818769000]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3000002, 0.2, 3.1999998)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_64fs5")
+
+[node name="ParkSoftLight" type="OmniLight3D" parent="Districts/ParkLeisure" unique_id=803188400]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 0)
+light_color = Color(0, 0, 0, 1)
+light_energy = 0.55
+omni_range = 14.0
+
+[node name="PondGlow" type="OmniLight3D" parent="Districts/ParkLeisure" unique_id=1210209819]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.2, 2.5)
+light_color = Color(0, 0, 0, 1)
+light_energy = 0.35
+omni_range = 6.0
+
+[node name="ParkLabel" type="Label3D" parent="Districts/ParkLeisure" unique_id=2099858870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, -4.5)
+billboard = 1
+text = "Парк Leisure"
+font_size = 42
+
+[node name="ParkRestaurant" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=1431842319]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.4, -6.5)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_dmywy")
+
+[node name="ParkRestaurantAwning" type="CSGBox3D" parent="Districts/ParkLeisure" unique_id=1448750357]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2.6, -4.2)
+size = Vector3(0, 0, 0)
+material = SubResource("StandardMaterial3D_3k20l")
+
+[node name="RestaurantSoftLight" type="OmniLight3D" parent="Districts/ParkLeisure" unique_id=1674903869]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2.8, -5.5)
+light_color = Color(0, 0, 0, 1)
+light_energy = 0.7
+omni_range = 8.0
+
+[node name="RestaurantLabel" type="Label3D" parent="Districts/ParkLeisure" unique_id=328591866]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 3.2, -4)
+billboard = 1
+text = "Ресторан Two Hearts"
+font_size = 36
+
+[node name="LeisureStrip" type="Node3D" parent="Districts" unique_id=412484343]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -5)
+
+[node name="GymFacade" type="CSGBox3D" parent="Districts/LeisureStrip" unique_id=1474612874]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+size = Vector3(5.5, 2.8, 0.25)
+material = SubResource("StandardMaterial3D_7uv6l")
+
+[node name="BookstoreFacade" type="CSGBox3D" parent="Districts/LeisureStrip" unique_id=1515393367]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 1.3, 2.5)
+size = Vector3(4.5, 2.6, 0.25)
+material = SubResource("StandardMaterial3D_7mcwn")
+
+[node name="CinemaFacade" type="CSGBox3D" parent="Districts/LeisureStrip" unique_id=1434130889]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 1.5, -1.5)
+size = Vector3(6, 3, 0.3)
+material = SubResource("StandardMaterial3D_rh7lx")
+
+[node name="ArcadeFacade" type="CSGBox3D" parent="Districts/LeisureStrip" unique_id=796887273]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 1.3, 3)
+size = Vector3(4.8, 2.6, 0.25)
+material = SubResource("StandardMaterial3D_4hhy3")
+
+[node name="GymLabel" type="Label3D" parent="Districts/LeisureStrip" unique_id=1322226916]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0.2)
+billboard = 1
+text = "Фитнес"
+font_size = 36
+
+[node name="BookLabel" type="Label3D" parent="Districts/LeisureStrip" unique_id=1782017528]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 2.9, 2.7)
+billboard = 1
+text = "Книжный"
+font_size = 36
+
+[node name="CinemaLabel" type="Label3D" parent="Districts/LeisureStrip" unique_id=786193043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 3.2, -1.2)
+billboard = 1
+text = "Кино"
+font_size = 36
+
+[node name="ArcadeLabel" type="Label3D" parent="Districts/LeisureStrip" unique_id=1183710372]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 2.9, 3.2)
+billboard = 1
+text = "Аркада"
+font_size = 36
+
+[node name="AgencyRow" type="Node3D" parent="Districts" unique_id=1978136331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -4)
+
+[node name="PhotoFacade" type="CSGBox3D" parent="Districts/AgencyRow" unique_id=1456086048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+size = Vector3(0, 0, 0)
+
+[node name="BarberFacade" type="CSGBox3D" parent="Districts/AgencyRow" unique_id=1932163165]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.3, 2)
+size = Vector3(0, 0, 0)
+
+[node name="AgencyFacade" type="CSGBox3D" parent="Districts/AgencyRow" unique_id=1743240072]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.45, -1)
+size = Vector3(0, 0, 0)
+
+[node name="PhotoMarkPad" type="CSGBox3D" parent="Districts/AgencyRow" unique_id=915905532]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 1.6)
+size = Vector3(0, 0, 0)
+
+[node name="PhotoLabel" type="Label3D" parent="Districts/AgencyRow" unique_id=1952408430]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.05, 0.25)
+billboard = 1
+text = "Фотостудия"
+font_size = 48
+
+[node name="BarberLabel" type="Label3D" parent="Districts/AgencyRow" unique_id=146744785]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2.9, 2.25)
+billboard = 1
+text = "Барбер"
+font_size = 48
+
+[node name="AgencyLabel" type="Label3D" parent="Districts/AgencyRow" unique_id=362526249]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 3.15, -0.7)
+billboard = 1
+text = "Агентство"
+font_size = 48
+
+[node name="PhotoSoftLight" type="OmniLight3D" parent="Districts/AgencyRow" unique_id=1643831197]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 1.2)
+light_color = Color(0, 0, 0, 1)
+light_energy = 0.9
+omni_range = 6.0
+
+[node name="BarberNeon" type="OmniLight3D" parent="Districts/AgencyRow" unique_id=1557806320]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2.2, 3)
+light_color = Color(0, 0, 0, 1)
+light_energy = 0.75
+
+[node name="AgencyOfficeLight" type="OmniLight3D" parent="Districts/AgencyRow" unique_id=1233666465]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, 0.4)
+light_color = Color(0, 0, 0, 1)
+light_energy = 0.85
+omni_range = 6.5

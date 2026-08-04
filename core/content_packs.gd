@@ -77,6 +77,9 @@ static func gifts() -> Dictionary:
 		_g("moon_chunk", "Кусок Луны", "absurd", 400, 6, ["absurd", "space", "tech"], Color(0.8, 0.8, 0.9)),
 		_g("personal_planet", "Персональная планета", "absurd", 800, 8, ["absurd", "space", "luxury"], Color(0.3, 0.5, 1)),
 		_g("romance_cert", "Сертификат «романтика»", "absurd", 500, 7, ["absurd", "media", "scandal"], Color(1, 0.3, 0.6)),
+		_g("paperback", "Мягкая обложка", "cheap", 14, 2, ["sincere", "calm", "cheap"], Color(0.55, 0.45, 0.3)),
+		_g("poetry_book", "Сборник стихов", "romantic", 28, 3, ["romantic", "sincere", "calm"], Color(0.45, 0.35, 0.55)),
+		_g("rare_novel", "Редкий роман", "luxury", 55, 4, ["luxury", "media", "calm"], Color(0.35, 0.25, 0.15)),
 	]
 	var out: Dictionary = {}
 	for g in list:
@@ -122,7 +125,7 @@ static func venues() -> Dictionary:
 		_v("park", "Парк", 5, 2, 1, ["calm", "sport"], "stage_2", "city_east"),
 		_v("cinema_room", "Кино-комната", 20, 3, 2, ["media", "casual"], "stage_3", "complex"),
 		_v("restaurant", "Ресторан", 40, 4, 2, ["luxury", "tasty"], "stage_3", "city_west"),
-		_v("photo_studio", "Фотостудия", 35, 3, 2, ["media", "fashion", "scandal"], "stage_4", "city_west"),
+		_v("photo_studio", "Фотостудия", 35, 3, 2, ["media", "fashion", "scandal"], "stage_3", "city_west"),
 		_v("luxury_hall", "Роскошный зал", 80, 6, 3, ["luxury", "media"], "stage_4", "complex"),
 		_v("lab_capsule", "Лабораторная капсула", 50, 4, 3, ["tech", "science"], "stage_4", "lab"),
 		_v("conveyor", "Конвейер свиданий", 15, 2, 6, ["mass", "tech"], "stage_5", "factory"),
@@ -244,6 +247,10 @@ static func rooms() -> Dictionary:
 	return {
 		"apartment": {"id": "apartment", "name": "Квартира", "stage": "stage_1", "pos": [0, 0, 0]},
 		"neighbor_apt": {"id": "neighbor_apt", "name": "Квартира соседки", "stage": "stage_1", "pos": [0, 0, -10]},
+		"lab": {"id": "lab", "name": "Лаборатория клонов", "stage": "stage_1", "pos": [0, 0, 18]},
+		"apt_cozy": {"id": "apt_cozy", "name": "Квартира «Уют»", "stage": "stage_4", "pos": [-18, 0, 0]},
+		"apt_modern": {"id": "apt_modern", "name": "Квартира «Модерн»", "stage": "stage_4", "pos": [-18, 0, 16]},
+		"apt_creative": {"id": "apt_creative", "name": "Квартира «Креатив»", "stage": "stage_4", "pos": [-18, 0, -16]},
 		"office_nook": {"id": "office_nook", "name": "Рабочий уголок", "stage": "stage_2", "pos": [8, 0, 0]},
 		"agency": {"id": "agency", "name": "Операционный штаб", "stage": "stage_3", "pos": [18, 0, 0]},
 		"mansion": {"id": "mansion", "name": "Особняк / гарем", "stage": "stage_4", "pos": [32, 0, 0]},

@@ -26,6 +26,8 @@ static func bind_button(button: BaseButton) -> void:
 	if button == null or button.has_meta(&"df_audio_bound"):
 		return
 	button.set_meta(&"df_audio_bound", true)
+	# Menus/popups: activate on release so press-during-mouse-mode-swap cannot fire.
+	button.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 	button.mouse_entered.connect(func() -> void:
 		if not button.disabled:
 			Sfx.play_ui(&"hover")

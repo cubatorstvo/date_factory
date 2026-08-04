@@ -31,8 +31,12 @@ func unlock_stage(stage_id: StringName, announce: bool = true) -> void:
 		var rid := StringName(str(r))
 		if not unlocked_rooms.has(rid):
 			unlocked_rooms.append(rid)
+		if rid == &"agency" and Game.city != null and Game.city.has_method("try_unlock_agency_row_from_progress"):
+			Game.city.try_unlock_agency_row_from_progress()
 	for v in st.get("venues", []):
 		unlock_venue(StringName(str(v)), announce)
+	if str(stage_id) == "stage_3" and Game.city != null and Game.city.has_method("try_unlock_agency_row_from_progress"):
+		Game.city.try_unlock_agency_row_from_progress()
 	facility_changed.emit()
 
 
@@ -41,6 +45,10 @@ func unlock_venue(id: StringName, announce: bool = true) -> void:
 		return
 	unlocked_venues.append(id)
 	venue_load[str(id)] = 0
+	if id == &"park" and Game.city != null and Game.city.has_method("unlock_district"):
+		Game.city.unlock_district(CityDistricts.PARK_LEISURE, false)
+	if id == &"photo_studio" and Game.city != null and Game.city.has_method("unlock_district"):
+		Game.city.unlock_district(CityDistricts.AGENCY_ROW, false)
 	facility_changed.emit()
 	if announce:
 		EventBus.toast("Место открыто: %s" % str(ContentDB.venue(id).get("name", id)), &"facility")
@@ -111,6 +119,14 @@ func buy_stage_expansion() -> bool:
 	if from_reserve > 0.0:
 		EventBus.toast("Резерв расширения: −%.0f$" % from_reserve, &"info")
 	Game.advance_stage(StringName(next))
+	if str(next) == "stage_2" and Game.city != null and Game.city.has_method("unlock_district"):
+		Game.city.unlock_district(CityDistricts.PARK_LEISURE, true)
+	elif Game.city != null and Game.city.has_method("try_unlock_park_from_progress"):
+		Game.city.try_unlock_park_from_progress()
+	if str(next) == "stage_3" and Game.city != null and Game.city.has_method("unlock_district"):
+		Game.city.unlock_district(CityDistricts.AGENCY_ROW, true)
+	elif Game.city != null and Game.city.has_method("try_unlock_agency_row_from_progress"):
+		Game.city.try_unlock_agency_row_from_progress()
 	facility_changed.emit()
 	return true
 

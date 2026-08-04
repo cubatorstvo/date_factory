@@ -1,8 +1,14 @@
 class_name QuestsAPI
 extends Node
 ## Sequential tutorial + stage goals. Main steps cannot be skipped.
+## HUD goal + tip/toast both read current_step_id() / primary_text().
 
 signal quests_changed
+
+const STAGE1_MAIN_ORDER: Array[String] = [
+	"s1_profile", "s1_money", "s1_outfit", "s1_prepare",
+	"s1_city", "s1_date", "s1_contact", "s1_expand",
+]
 
 var active: Array = []
 var completed: Array = []
@@ -58,6 +64,8 @@ func reset_for_stage(stage_id: StringName) -> void:
 			_add("pg_continue", "Постгейм: улучшай фабрику, клонов и рекорды", "main")
 	quests_changed.emit()
 	EventBus.quest_updated.emit(&"refresh")
+	if Game != null and Game.run_started:
+		tip_current()
 
 
 func _add(id: String, label: String, kind: String) -> void:
@@ -72,65 +80,99 @@ func is_done(id: String) -> bool:
 
 
 func can_do(action: StringName) -> bool:
-	## Hard gates for stage 1 tutorial sequence.
+	## Hard gates for stage 1 tutorial sequence (must match current HUD step).
 	if str(Game.stage_id) != "stage_1":
 		return true
 	match str(action):
-		"phone", "job":
+		"phone":
 			return true
-		"buy_gift", "take_gift", "open_flower_shop", "open_jewelry_shop", "open_gift_shop", "city_buy_gift":
+		"job":
+			## Step 2 — blocked until step 1 (phone/profile) is done.
+			return is_done("s1_profile")
+		"buy_gift", "take_gift", "open_flower_shop", "open_jewelry_shop", "open_gift_shop", "open_bookstore", "open_clothing_shop", "open_homeware_shop", "city_buy_gift":
 			return is_done("s1_profile")
 		"wardrobe":
 			return is_done("s1_money")
 		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "place_on_table", "upgrade_homeware", "date_wait_skip", "date_wait_stand":
 			return is_done("s1_outfit") and Game.dating.has_scheduled_date()
-		"enter_restaurant", "sit_restaurant":
-			return is_done("s1_prepare") and Game.dating.has_scheduled_date() and Game.dating.schedule.is_restaurant()
+		"enter_restaurant", "sit_restaurant", "sit_cafe", "sit_park", "sit_cinema", "sit_arcade":
+			return Game.dating.has_scheduled_date() and Game.dating.schedule.is_no_prep()
 		"expand":
 			return is_done("s1_date") and is_done("s1_contact")
 		"go_outside", "talk_girl", "go_neighbor", "go_home", "go_home_from_neighbor":
 			return true
-		"city_rest", "city_cafe_job", "city_cafe_scroll", "city_coffee", "city_workout", "city_gym_pass", "city_park_fun", "city_bar_drink", "city_karaoke", "city_bus_info", "neighbor_look":
+		"city_rest", "city_cafe_job", "city_cafe_scroll", "city_coffee", "city_workout", "city_gym_pass", "city_park_fun", "city_bar_drink", "city_karaoke", "city_bus_info", "neighbor_look", "open_arcade":
 			return true
 		_:
 			return true
 
 
-func gate_hint(action: StringName) -> String:
-	if can_do(action):
+func gate_hint(_action: StringName) -> String:
+	## Always point at the same active step the HUD shows.
+	if can_do(_action):
 		return ""
-	match str(action):
-		"buy_gift", "take_gift", "open_flower_shop", "open_jewelry_shop", "open_gift_shop", "city_buy_gift":
-			return "Сначала открой телефон и посмотри профиль Соседки"
-		"wardrobe":
-			return "Сначала заработай и зайди в городской магазин"
-		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "date_wait_skip", "date_wait_stand":
-			if not is_done("s1_outfit"):
-				return "Сначала смени одежду в шкафу"
-			return "Сначала назначь свидание в телефоне"
-		"enter_restaurant", "sit_restaurant":
-			return "Сначала назначь ресторанное свидание в телефоне"
-		"expand":
-			return "Сначала свидание с соседкой и новый контакт в городе"
-		_:
-			return "Сначала выполни текущую цель"
+	var current: String = primary_text()
+	if current != "":
+		return "Сначала: %s" % current
+	return "Сначала выполни текущую цель"
+
+
+func current_step_id() -> String:
+	## Single source of truth for HUD goal + tip/toast.
+	for q in active:
+		if not bool(q.get("done", false)) and str(q.get("kind", "")) == "main":
+			return str(q.get("id", ""))
+	for q in active:
+		if not bool(q.get("done", false)):
+			return str(q.get("id", ""))
+	return ""
+
+
+func _mains_before_done(id: String) -> bool:
+	## Stage-1 mains stay in HUD order — no silent jump ahead via free travel.
+	var idx: int = STAGE1_MAIN_ORDER.find(id)
+	if idx < 0:
+		return true
+	for i in range(idx):
+		if not is_done(STAGE1_MAIN_ORDER[i]):
+			return false
+	return true
+
+
+func tip_current() -> void:
+	## Toast describes what to do NOW (matches goal_label / primary_text).
+	if Game == null or not Game.run_started:
+		return
+	var step_id: String = current_step_id()
+	if step_id == "":
+		return
+	var text: String = primary_text()
+	if text == "":
+		return
+	EventBus.toast(text, &"quest")
 
 
 func complete(id: String) -> void:
 	if completed.has(id):
 		return
+	if not _mains_before_done(id):
+		return
+	var was_current: bool = current_step_id() == id
 	for i in range(active.size()):
 		if str(active[i].get("id", "")) == id and not bool(active[i].get("done", false)):
 			active[i]["done"] = true
 			completed.append(id)
-			EventBus.toast("Цель выполнена: %s" % str(active[i].get("label", id)), &"quest")
 			quests_changed.emit()
 			EventBus.quest_updated.emit(StringName(id))
+			## Tip the NEW active step — never re-toast the completed previous one.
+			if was_current:
+				tip_current()
 			return
 
 
 func on_phone_opened() -> void:
 	flags["phone_opened"] = true
+	## Opening phone is enough for step 1 (label also mentions profile).
 	complete("s1_profile")
 
 
@@ -156,12 +198,11 @@ func on_date_finished(result: Dictionary) -> void:
 
 
 func primary_text() -> String:
-	for q in active:
-		if not bool(q.get("done", false)) and str(q.get("kind", "")) == "main":
-			return _enrich(str(q.get("label", "")))
-	for q in active:
-		if not bool(q.get("done", false)):
-			return _enrich(str(q.get("label", "")))
+	var step_id: String = current_step_id()
+	if step_id != "":
+		for q in active:
+			if str(q.get("id", "")) == step_id:
+				return _enrich(str(q.get("label", "")))
 	if Game.postgame:
 		return "Постгейм: развивай фабрику дальше"
 	return "Все текущие цели выполнены — ищи жёлтые точки взаимодействия"
