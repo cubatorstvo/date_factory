@@ -94,7 +94,7 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 				return
 			_start_prepared_or_neighbor()
 		"go_outside":
-			_teleport_player(Vector3(-47.0, 0.05, 4.7), &"street")
+			_teleport_player(Vector3(-32.0, 0.05, 2.0), &"street")
 			Game.quests.complete("s1_city")
 			if not Game.city.outside_tip_shown:
 				Game.city.outside_tip_shown = true
@@ -183,18 +183,27 @@ static func _teleport_player(pos: Vector3, zone: StringName = &"") -> void:
 	var transition: TransitionOverlay = null
 	if tree.current_scene:
 		transition = tree.current_scene.find_child("TransitionOverlay", true, false) as TransitionOverlay
-	if transition:
-		await transition.fade_out(0.32)
+	var mid := func() -> void:
+		_finish_teleport(player, pos, zone)
+	var unlock := func() -> void:
+		if is_instance_valid(player):
+			player.set("_date_lock", false)
+	if transition == null:
+		mid.call()
+		unlock.call()
+		return
+	transition.run_blackout(0.32, mid, 0.42, unlock)
+
+
+static func _finish_teleport(player: Node3D, pos: Vector3, zone: StringName) -> void:
+	if not is_instance_valid(player):
+		return
 	player.global_position = pos
 	if player is CharacterBody3D:
 		(player as CharacterBody3D).velocity = Vector3.ZERO
 	if zone != &"":
 		Sfx.set_zone(zone)
 	Sfx.play(&"door")
-	await tree.process_frame
-	if transition:
-		await transition.fade_in(0.42)
-	player.set("_date_lock", false)
 
 
 static func _city_buy_gift(gift_id: StringName, discount: float) -> void:
@@ -266,19 +275,17 @@ static func _start_date_with_transition(target: String, unique: bool) -> void:
 	var transition: TransitionOverlay = null
 	if tree.current_scene:
 		transition = tree.current_scene.find_child("TransitionOverlay", true, false) as TransitionOverlay
-	if transition:
-		await transition.fade_out(0.38)
-	Sfx.set_zone(&"restaurant")
-	if not Game.dating.start_manual(target, unique):
-		Sfx.set_zone(&"street")
-		if transition:
-			await transition.fade_in(0.3)
-		if player:
-			player.set("_date_lock", false)
+	var begin_date := func() -> void:
+		Sfx.set_zone(&"restaurant")
+		if not Game.dating.start_manual(target, unique):
+			Sfx.set_zone(&"street")
+			if is_instance_valid(player):
+				player.set("_date_lock", false)
+		# Date stage keeps lock via date_ui_open when start succeeds.
+	if transition == null:
+		begin_date.call()
 		return
-	await tree.process_frame
-	if transition:
-		await transition.fade_in(0.5)
+	transition.run_blackout(0.38, begin_date, 0.5)
 
 
 static func _finale_station(station: String) -> void:

@@ -10,6 +10,8 @@ const RESTAURANT_ART_OFFSET := Vector3(-2.0, 0.0, 1.6)
 const GIRL_DOOR_POSITION := Vector3(-2.0, 0.0, 6.4)
 const GIRL_CHAIR_POSITION := Vector3(0.0, 0.0, -1.15)
 const PLAYER_CHAIR_OFFSET := Vector3(0.0, 0.05, 1.15)
+const GIRL_SEAT_Y_OFFSET := 0.02
+const INTRO_SKIP_MIN_TIME := 2.4
 
 
 var _root: Node3D
@@ -27,6 +29,8 @@ var _sit_started: bool = false
 var _camera_cue: int = 0
 var _presentation: Node
 var _arrival: ArrivalPipeline = ArrivalPipeline.new()
+var _girl_door_position: Vector3 = GIRL_DOOR_POSITION
+var _girl_chair_position: Vector3 = GIRL_CHAIR_POSITION
 
 
 func _ready() -> void:
@@ -52,7 +56,9 @@ func _on_notify(message: String, kind: StringName) -> void:
 func _input(event: InputEvent) -> void:
 	if _sequence != &"intro":
 		return
-	if event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.pressed):
+	if _sequence_time < INTRO_SKIP_MIN_TIME:
+		return
+	if event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		_finish_intro()
 		get_viewport().set_input_as_handled()
 
@@ -71,7 +77,13 @@ func _process(delta: float) -> void:
 					_presentation.call("move_to", &"two_shot", 0.85)
 					_camera_cue = 2
 			var step: Dictionary = _arrival.tick(delta)
-			_girl.position = step.get("position", GIRL_DOOR_POSITION)
+			_girl.position = step.get("position", _girl_door_position)
+			_lock_girl_physics()
+			var near_seat := float((_girl.position as Vector3).distance_to(_girl_chair_position)) < 0.35
+			if near_seat and not _sit_started and _girl.has_method("play_alias"):
+				_girl.call("play_alias", &"turn")
+				_girl.call("play_alias", &"sit_enter")
+				_sit_started = true
 			_face_toward_player()
 			if bool(step.get("sitting", false)):
 				if _girl.has_method("play_alias"):
@@ -84,9 +96,11 @@ func _process(delta: float) -> void:
 					_girl.scale.y = lerpf(1.0, 0.92, float(step.get("sit_blend", 0.0)))
 			if bool(step.get("done", false)):
 				_finish_intro()
+		&"ready":
+			_hold_girl_seated()
 		&"outro":
 			var leave: Dictionary = _arrival.tick(delta)
-			_girl.position = leave.get("position", GIRL_DOOR_POSITION)
+			_girl.position = leave.get("position", _girl_door_position)
 			if _girl.has_method("set_sitting"):
 				_girl.call("set_sitting", bool(leave.get("sitting", false)))
 			else:
@@ -129,11 +143,12 @@ func _on_open(payload: Dictionary) -> void:
 	var packed := load(DATE_GIRL_SCENE) as PackedScene
 	_girl = packed.instantiate() as Node3D if packed else Node3D.new()
 	_girl.name = "DateGirl"
-	_girl.position = GIRL_DOOR_POSITION
+	_girl.position = _girl_door_position
 	_root.add_child(_girl)
+	_lock_girl_physics()
 	if _girl.has_method("play_alias"):
 		_girl.call("play_alias", &"approach")
-	assert(ArrivalPipeline.assert_starts_at_door(_girl.position, GIRL_DOOR_POSITION, GIRL_CHAIR_POSITION))
+	assert(ArrivalPipeline.assert_starts_at_door(_girl.position, _girl_door_position, _girl_chair_position))
 	var target_id := str(payload.get("target_id", "neighbor"))
 	var display := ""
 	if bool(payload.get("unique", true)) or ContentDB.girls.has(target_id):
@@ -166,7 +181,7 @@ func _on_open(payload: Dictionary) -> void:
 		add_child(_presentation)
 		_presentation.call("setup", _date_cam, STAGE_ORIGIN)
 		_presentation.call("move_to", &"arrival", 0.0)
-	_arrival.begin_intro(GIRL_DOOR_POSITION, GIRL_CHAIR_POSITION, 6.5)
+	_arrival.begin_intro(_girl_door_position, _girl_chair_position, 6.5)
 	_sequence = &"intro"
 	_sequence_time = 0.0
 	_sit_started = false
@@ -196,12 +211,7 @@ func _finish_intro() -> void:
 	_sequence = &"ready"
 	_sequence_time = 0.0
 	if _girl and is_instance_valid(_girl):
-		_girl.position = GIRL_CHAIR_POSITION
-		if _girl.has_method("play_alias"):
-			_girl.call("play_alias", &"sit_idle")
-		elif _girl.has_method("set_sitting"):
-			_girl.call("set_sitting", true)
-		_face_toward_player()
+		_hold_girl_seated(true)
 	if _presentation and is_instance_valid(_presentation):
 		_presentation.call("move_to", &"girl_close", 0.85)
 	if _date_ui and is_instance_valid(_date_ui):
@@ -254,10 +264,67 @@ func _add_backdrop(parent: Node3D) -> void:
 	restaurant.name = "RestaurantVisual"
 	restaurant.position = RESTAURANT_ART_OFFSET
 	parent.add_child(restaurant)
+	_resolve_restaurant_markers(restaurant)
+	for node: Node in restaurant.find_children("*", "DirectionalLight3D", true, false):
+		var light := node as DirectionalLight3D
+		if light:
+			light.visible = false
+	for node2: Node in restaurant.find_children("*", "OmniLight3D", true, false):
+		var omni := node2 as OmniLight3D
+		if omni == null:
+			continue
+		var c := omni.light_color
+		if c.r > 0.75 and c.b > 0.45 and c.g < 0.55:
+			omni.light_color = Color(1.0, 0.78, 0.62)
+			omni.light_energy = minf(omni.light_energy, 1.15)
+		else:
+			omni.light_energy = minf(omni.light_energy, 2.2)
 	var preview_girl := restaurant.get_node_or_null("Characters/DateGirl") as Node3D
 	if preview_girl:
 		preview_girl.visible = false
 		preview_girl.process_mode = Node.PROCESS_MODE_DISABLED
+
+
+func _resolve_restaurant_markers(restaurant: Node3D) -> void:
+	var markers := restaurant.get_node_or_null("Markers") as Node3D
+	if markers == null:
+		return
+	var entrance := markers.get_node_or_null("GirlEntrance") as Node3D
+	var seat := markers.get_node_or_null("GirlSeat") as Node3D
+	var hero := markers.get_node_or_null("HeroSeat") as Node3D
+	if entrance:
+		_girl_door_position = restaurant.position + entrance.position
+	if seat:
+		_girl_chair_position = restaurant.position + seat.position + Vector3(0.0, GIRL_SEAT_Y_OFFSET, 0.0)
+	if hero and _player and is_instance_valid(_player):
+		_player.global_position = _root.to_global(restaurant.position + hero.position + Vector3(0.0, 0.05, 0.0))
+
+
+func _lock_girl_physics() -> void:
+	if _girl == null or not is_instance_valid(_girl):
+		return
+	if _girl is CharacterBody3D:
+		var body := _girl as CharacterBody3D
+		body.velocity = Vector3.ZERO
+		body.motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
+
+
+func _hold_girl_seated(force_alias: bool = false) -> void:
+	if _girl == null or not is_instance_valid(_girl):
+		return
+	_girl.position = _girl_chair_position
+	_lock_girl_physics()
+	var need_alias := force_alias
+	if _girl.has_method("get_current_alias"):
+		var current := str(_girl.call("get_current_alias"))
+		if current not in ["sit_idle", "seated_gesture", "sit_enter", "gesture", "react"]:
+			need_alias = true
+	if need_alias and _girl.has_method("play_alias"):
+		_girl.call("play_alias", &"sit_idle")
+		_sit_started = true
+	elif _girl.has_method("set_sitting"):
+		_girl.call("set_sitting", true)
+	_face_toward_player()
 
 
 func _on_close() -> void:
@@ -269,7 +336,7 @@ func _on_close() -> void:
 		_presentation.call("move_to", &"result", 0.75)
 	if _girl and is_instance_valid(_girl) and _girl.has_method("play_alias"):
 		_girl.call("play_alias", &"sit_exit")
-	_arrival.begin_outro(GIRL_CHAIR_POSITION, GIRL_DOOR_POSITION, 2.4)
+	_arrival.begin_outro(_girl_chair_position, _girl_door_position, 2.4)
 	_sequence = &"outro"
 	_sequence_time = 0.0
 	if _date_ui and is_instance_valid(_date_ui):

@@ -90,6 +90,10 @@ func play_alias(alias: String) -> bool:
 	_current_alias = alias
 	_current_animation = animation
 	_animation_time = 0.0
+	if alias in ["sit", "sit_enter", "sit_idle", "seated_gesture"]:
+		_is_seated = true
+	elif alias in ["stand", "sit_exit", "idle", "walk", "run", "approach"]:
+		_is_seated = false
 	_apply_pose(_current_animation, 0.0)
 	return true
 

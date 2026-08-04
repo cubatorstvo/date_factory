@@ -107,7 +107,26 @@ func _mount_visual_scene(parent: Node3D, scene_path: String, node_name: String, 
 		var light := node as DirectionalLight3D
 		if light:
 			light.visible = false
+	_tone_down_slice_lights(instance)
 	return instance
+
+
+func _tone_down_slice_lights(root: Node = null) -> void:
+	var scope: Node = root if root != null else self
+	for node: Node in scope.find_children("*", "OmniLight3D", true, false):
+		var omni := node as OmniLight3D
+		if omni == null:
+			continue
+		var c := omni.light_color
+		if c.r > 0.75 and c.b > 0.45 and c.g < 0.55:
+			omni.light_color = Color(1.0, 0.78, 0.62)
+			omni.light_energy = minf(omni.light_energy, 1.1)
+		else:
+			omni.light_energy = minf(omni.light_energy, 2.2)
+	for node2: Node in scope.find_children("*", "SpotLight3D", true, false):
+		var spot := node2 as SpotLight3D
+		if spot:
+			spot.light_energy = minf(spot.light_energy, 2.4)
 
 
 func _hide_generated_visuals(parent: Node3D) -> void:
@@ -123,10 +142,12 @@ func _update_stage_lighting() -> void:
 	var stage_number := int(str(Game.stage_id).trim_prefix("stage_"))
 	if stage_number >= 5:
 		sun.light_color = Color(0.62, 0.74, 1.0)
-		sun.light_energy = 0.55
+		sun.light_energy = 0.42
 	else:
-		sun.light_color = Color(1.0, 0.72, 0.62)
-		sun.light_energy = 0.38
+		# Warm evening without magenta wash.
+		sun.light_color = Color(1.0, 0.82, 0.68)
+		sun.light_energy = 0.28
+	_tone_down_slice_lights()
 
 
 func _process(delta: float) -> void:
