@@ -16,6 +16,13 @@ var _hint_tween: Tween
 
 
 func _ready() -> void:
+	resources_label.text = ""
+	goal_label.text = ""
+	status_panel.visible = false
+	status_panel.size = Vector2(820.0, 78.0)
+	resources_label.size.x = 780.0
+	goal_label.size.x = 780.0
+	goal_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	resources_label.add_theme_font_size_override("font_size", 16)
 	resources_label.add_theme_color_override("font_color", Color("#F2BD69"))
 	goal_label.add_theme_font_size_override("font_size", 15)
@@ -105,24 +112,24 @@ func _on_notify(message: String, kind: StringName) -> void:
 
 func _refresh() -> void:
 	if not Game.run_started:
+		resources_label.text = ""
+		goal_label.text = ""
+		status_panel.visible = false
 		return
-	resources_label.text = "$%d   ·   ★ %.0f   ·   ВНИМАНИЕ %.1f/%.0f   ·   СКАНДАЛ %.0f   ·   ЛЕГЕНДА %.0f (%s)   ·   СВИДАНИЯ %d   ·   АВТО %d" % [
+	status_panel.visible = true
+	resources_label.text = "$%d   ·   ★ %.0f   ·   ВНИМАНИЕ %.0f/%.0f   ·   СВИДАНИЯ %d" % [
 		int(Game.economy.get_value(&"money")),
 		Game.economy.get_value(&"popularity"),
 		Game.economy.get_value(&"attention"),
 		Game.economy.max_attention,
-		Game.economy.get_value(&"scandal"),
-		Game.economy.get_value(&"legend"),
-		_legend_band_short(),
 		Game.total_successful_dates,
-		Game.dating.automation_level,
 	]
-	goal_label.text = "%s   •   %s%s\n%s" % [
+	goal_label.text = "%s   •   %s" % [
 		Loc.stage_title(Game.stage_id),
-		Loc.stage_goal(Game.stage_id),
-		_stage4_act_suffix(),
 		Game.quests.primary_text(),
 	]
+	if goal_label.text.length() > 84:
+		goal_label.text = goal_label.text.substr(0, 81) + "..."
 
 
 func _on_interaction_hint(text: String) -> void:

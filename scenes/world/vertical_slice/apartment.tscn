@@ -28,37 +28,37 @@
 [ext_resource type="PackedScene" uid="uid://hn6p05ki7bm1" path="res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx" id="26_kc7ps"]
 [ext_resource type="PackedScene" uid="uid://bl7xgtsut762s" path="res://assets/environment/interior/house_interior/meshes/Light_Floor2.fbx" id="27_8fvko"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dumyr"]
-albedo_color = Color(0.37254903, 0.2509804, 0.23137255, 1)
-roughness = 0.72
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soanb"]
+albedo_color = Color(0.24, 0.16, 0.11, 1)
+roughness = 0.88
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cr0f7"]
-albedo_color = Color(0.8509804, 0.78039217, 0.7294118, 1)
-roughness = 0.9
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r1gkd"]
+albedo_color = Color(0.72, 0.63, 0.5, 1)
+roughness = 0.88
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w0a4h"]
-albedo_color = Color(0.8039216, 0.72156864, 0.6901961, 1)
-roughness = 0.9
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b8mu0"]
+albedo_color = Color(0.72, 0.63, 0.5, 1)
+roughness = 0.88
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_myq3p"]
-albedo_color = Color(0.8039216, 0.72156864, 0.6901961, 1)
-roughness = 0.9
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xqffd"]
+albedo_color = Color(0.72, 0.63, 0.5, 1)
+roughness = 0.88
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ggbg6"]
-albedo_color = Color(0.8509804, 0.78039217, 0.7294118, 1)
-roughness = 0.9
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qnc1n"]
+albedo_color = Color(0.72, 0.63, 0.5, 1)
+roughness = 0.88
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e6fke"]
-albedo_color = Color(0.8509804, 0.78039217, 0.7294118, 1)
-roughness = 0.9
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_peumt"]
+albedo_color = Color(0.72, 0.63, 0.5, 1)
+roughness = 0.88
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n16yh"]
-albedo_color = Color(0.47843137, 0.23921569, 0.33333334, 1)
-roughness = 0.62
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nbnpt"]
+albedo_color = Color(0.32, 0.2, 0.14, 1)
+roughness = 0.88
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5s3mf"]
-albedo_color = Color(0.2901961, 0.1254902, 0.22352941, 1)
-roughness = 0.58
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a7vfm"]
+albedo_color = Color(0.42, 0.06, 0.12, 1)
+roughness = 0.88
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_054tp"]
 albedo_color = Color(0.7176471, 0.45490196, 0.35686275, 1)
@@ -67,6 +67,18 @@ roughness = 0.55
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j3vjw"]
 albedo_color = Color(0.7176471, 0.45490196, 0.35686275, 1)
 roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1xvmk"]
+albedo_color = Color(0.58, 0.5, 0.42, 1)
+roughness = 0.88
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_unmc0"]
+albedo_color = Color(0.63, 0.55, 0.45, 1)
+roughness = 0.88
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4mq26"]
+albedo_color = Color(0.63, 0.55, 0.45, 1)
+roughness = 0.88
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_01kvs"]
 resource_name = "White"
@@ -2304,262 +2316,281 @@ adjustment_saturation = 1.08
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 use_collision = true
 size = Vector3(12, 0.2, 10)
-material = SubResource("StandardMaterial3D_dumyr")
+material = SubResource("StandardMaterial3D_soanb")
 
 [node name="WallNorth" type="CSGBox3D" parent="Architecture" unique_id=700837941]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -5)
 use_collision = true
 size = Vector3(12, 3.4, 0.2)
-material = SubResource("StandardMaterial3D_cr0f7")
+material = SubResource("StandardMaterial3D_r1gkd")
 
 [node name="WallWest" type="CSGBox3D" parent="Architecture" unique_id=1841261718]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.7, 0)
 use_collision = true
 size = Vector3(0.2, 3.4, 10)
-material = SubResource("StandardMaterial3D_w0a4h")
+material = SubResource("StandardMaterial3D_b8mu0")
 
 [node name="WallEast" type="CSGBox3D" parent="Architecture" unique_id=1676459447]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.7, 0)
 use_collision = true
 size = Vector3(0.2, 3.4, 10)
-material = SubResource("StandardMaterial3D_myq3p")
+material = SubResource("StandardMaterial3D_xqffd")
 
 [node name="WallSouthLeft" type="CSGBox3D" parent="Architecture" unique_id=329800393]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.45, 1.7, 5)
 use_collision = true
 size = Vector3(1.1, 3.4, 0.2)
-material = SubResource("StandardMaterial3D_ggbg6")
+material = SubResource("StandardMaterial3D_qnc1n")
 
 [node name="WallSouthRight" type="CSGBox3D" parent="Architecture" unique_id=520455841]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 1.7, 5)
 use_collision = true
 size = Vector3(9.8, 3.4, 0.2)
-material = SubResource("StandardMaterial3D_e6fke")
+material = SubResource("StandardMaterial3D_peumt")
 
 [node name="KitchenBacksplash" type="CSGBox3D" parent="Architecture" unique_id=1466284430]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.9, 1.15, -4.86)
 size = Vector3(3.8, 1.6, 0.06)
-material = SubResource("StandardMaterial3D_n16yh")
+material = SubResource("StandardMaterial3D_nbnpt")
 
 [node name="RomanceAccent" type="CSGBox3D" parent="Architecture" unique_id=385242680]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 1.45, -4.86)
-size = Vector3(4.2, 2.4, 0.06)
-material = SubResource("StandardMaterial3D_5s3mf")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.1, 1.5, -4.86)
+size = Vector3(1.45, 0.85, 0.06)
+material = SubResource("StandardMaterial3D_a7vfm")
 
 [node name="CeilingBeamA" type="CSGBox3D" parent="Architecture" unique_id=752361165]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3.25, 0)
+visible = false
 size = Vector3(0.16, 0.16, 9.6)
 material = SubResource("StandardMaterial3D_054tp")
 
 [node name="CeilingBeamB" type="CSGBox3D" parent="Architecture" unique_id=401151531]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3.25, 0)
+visible = false
 size = Vector3(0.16, 0.16, 9.6)
 material = SubResource("StandardMaterial3D_j3vjw")
 
+[node name="Ceiling" type="CSGBox3D" parent="Architecture" unique_id=340093988]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+size = Vector3(12, 0.2, 10)
+material = SubResource("StandardMaterial3D_1xvmk")
+
+[node name="BedroomDivider" type="CSGBox3D" parent="Architecture" unique_id=1638475558]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, 0.65, -1.55)
+use_collision = true
+size = Vector3(0.16, 1.3, 6.7)
+material = SubResource("StandardMaterial3D_unmc0")
+
+[node name="EntryDivider" type="CSGBox3D" parent="Architecture" unique_id=267333016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.65, 0.7, 3.05)
+use_collision = true
+size = Vector3(0.16, 1.4, 3.7)
+material = SubResource("StandardMaterial3D_4mq26")
+
 [node name="Furniture" type="Node3D" parent="." unique_id=186986752]
 
-[node name="Bed" type="Node3D" parent="Furniture" unique_id=1613490385 instance=ExtResource("1_soanb")]
+[node name="Bed" parent="Furniture" unique_id=1613490385 instance=ExtResource("1_soanb")]
 transform = Transform3D(-2.1855695e-07, 0, -5, 0, 5, 0, 5, 0, -2.1855695e-07, 4.15, 0, -3.65)
 
-[node name="Bed_Single" type="MeshInstance3D" parent="Furniture/Bed" unique_id=212297228]
+[node name="Bed_Single2" type="MeshInstance3D" parent="Furniture/Bed" unique_id=212297228]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_7ts2l")
 
-[node name="NightStand" type="Node3D" parent="Furniture" unique_id=866988902 instance=ExtResource("2_r1gkd")]
+[node name="NightStand" parent="Furniture" unique_id=866988902 instance=ExtResource("2_r1gkd")]
 transform = Transform3D(-3.059797e-07, 0, -7, 0, 7, 0, 7, 0, -3.059797e-07, 5.15, 0, -2.7)
 
-[node name="NightStand_2" type="MeshInstance3D" parent="Furniture/NightStand" unique_id=1606348687]
+[node name="NightStand_3" type="MeshInstance3D" parent="Furniture/NightStand" unique_id=1606348687]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_odehj")
 
-[node name="BedLamp" type="Node3D" parent="Furniture" unique_id=566621716 instance=ExtResource("3_b8mu0")]
+[node name="BedLamp" parent="Furniture" unique_id=566621716 instance=ExtResource("3_b8mu0")]
 transform = Transform3D(-3.496911e-07, 0, -8, 0, 8, 0, 8, 0, -3.496911e-07, 5.15, 0.62, -2.7)
 
-[node name="Light_Desk" type="MeshInstance3D" parent="Furniture/BedLamp" unique_id=1467727356]
+[node name="Light_Desk2" type="MeshInstance3D" parent="Furniture/BedLamp" unique_id=1467727356]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_vrcrd")
 
-[node name="Couch" type="Node3D" parent="Furniture" unique_id=627872334 instance=ExtResource("4_xqffd")]
+[node name="Couch" parent="Furniture" unique_id=627872334 instance=ExtResource("4_xqffd")]
 transform = Transform3D(-5.3, 0, -4.6334074e-07, 0, 5.3, 0, 4.6334074e-07, 0, -5.3, 3.05, 0, 2.55)
 
-[node name="Couch_Medium2" type="MeshInstance3D" parent="Furniture/Couch" unique_id=331199818]
+[node name="Couch_Medium3" type="MeshInstance3D" parent="Furniture/Couch" unique_id=331199818]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_b3mjy")
 
-[node name="DiningTable" type="Node3D" parent="Furniture" unique_id=1503664339 instance=ExtResource("5_qnc1n")]
+[node name="DiningTable" parent="Furniture" unique_id=1503664339 instance=ExtResource("5_qnc1n")]
 transform = Transform3D(5.7, 0, 0, 0, 5.7, 0, 0, 0, 5.7, 0.65, 0, 0.55)
 
-[node name="Table_RoundSmall2" type="MeshInstance3D" parent="Furniture/DiningTable" unique_id=350730461]
+[node name="Table_RoundSmall3" type="MeshInstance3D" parent="Furniture/DiningTable" unique_id=350730461]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_kp52d")
 
-[node name="DiningChairNorth" type="Node3D" parent="Furniture" unique_id=26427678 instance=ExtResource("6_peumt")]
+[node name="DiningChairNorth" parent="Furniture" unique_id=26427678 instance=ExtResource("6_peumt")]
 transform = Transform3D(5.6, 0, 0, 0, 5.6, 0, 0, 0, 5.6, 0.65, 0, -0.8)
 
-[node name="Chair_2" type="MeshInstance3D" parent="Furniture/DiningChairNorth" unique_id=94164372]
+[node name="Chair_3" type="MeshInstance3D" parent="Furniture/DiningChairNorth" unique_id=94164372]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_fqmgg")
 
-[node name="DiningChairSouth" type="Node3D" parent="Furniture" unique_id=49951987 instance=ExtResource("6_peumt")]
+[node name="DiningChairSouth" parent="Furniture" unique_id=49951987 instance=ExtResource("6_peumt")]
 transform = Transform3D(-5.6, 0, -4.895675e-07, 0, 5.6, 0, 4.895675e-07, 0, -5.6, 0.65, 0, 1.9)
 
-[node name="Chair_2" type="MeshInstance3D" parent="Furniture/DiningChairSouth" unique_id=1706137966]
+[node name="Chair_3" type="MeshInstance3D" parent="Furniture/DiningChairSouth" unique_id=1706137966]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_fqmgg")
 
-[node name="LivingRug" type="Node3D" parent="Furniture" unique_id=2074699147 instance=ExtResource("7_nbnpt")]
+[node name="LivingRug" parent="Furniture" unique_id=2074699147 instance=ExtResource("7_nbnpt")]
 transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 3.05, 0.02, 2.45)
 
-[node name="Carpet_2" type="MeshInstance3D" parent="Furniture/LivingRug" unique_id=2105145672]
+[node name="Carpet_3" type="MeshInstance3D" parent="Furniture/LivingRug" unique_id=2105145672]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_fvqgf")
 
-[node name="Fridge" type="Node3D" parent="Furniture" unique_id=218485137 instance=ExtResource("8_a7vfm")]
+[node name="Fridge" parent="Furniture" unique_id=218485137 instance=ExtResource("8_a7vfm")]
 transform = Transform3D(5.8, 0, 0, 0, 5.8, 0, 0, 0, 5.8, -5.15, 0, -4.25)
 
-[node name="Kitchen_Fridge" type="MeshInstance3D" parent="Furniture/Fridge" unique_id=1483654593]
+[node name="Kitchen_Fridge2" type="MeshInstance3D" parent="Furniture/Fridge" unique_id=1483654593]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_rlvu1")
 
-[node name="Oven" type="Node3D" parent="Furniture" unique_id=2076744371 instance=ExtResource("9_1xvmk")]
+[node name="Oven" parent="Furniture" unique_id=2076744371 instance=ExtResource("9_1xvmk")]
 transform = Transform3D(5.6, 0, 0, 0, 5.6, 0, 0, 0, 5.6, -4.25, 0, -4.25)
 
-[node name="Kitchen_Oven" type="MeshInstance3D" parent="Furniture/Oven" unique_id=1869250268]
+[node name="Kitchen_Oven2" type="MeshInstance3D" parent="Furniture/Oven" unique_id=1869250268]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_8lg6h")
 
-[node name="KitchenSink" type="Node3D" parent="Furniture" unique_id=1679824993 instance=ExtResource("10_unmc0")]
+[node name="KitchenSink" parent="Furniture" unique_id=1679824993 instance=ExtResource("10_unmc0")]
 transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, -3.35, 0, -4.25)
 
-[node name="Kitchen_Sink" type="MeshInstance3D" parent="Furniture/KitchenSink" unique_id=320125099]
+[node name="Kitchen_Sink2" type="MeshInstance3D" parent="Furniture/KitchenSink" unique_id=320125099]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_hrotw")
 
-[node name="KitchenDrawers" type="Node3D" parent="Furniture" unique_id=191100551 instance=ExtResource("11_4mq26")]
+[node name="KitchenDrawers" parent="Furniture" unique_id=191100551 instance=ExtResource("11_4mq26")]
 transform = Transform3D(5.6, 0, 0, 0, 5.6, 0, 0, 0, 5.6, -2.45, 0, -4.25)
 
-[node name="Kitchen_2Drawers" type="MeshInstance3D" parent="Furniture/KitchenDrawers" unique_id=329846089]
+[node name="Kitchen_2Drawers2" type="MeshInstance3D" parent="Furniture/KitchenDrawers" unique_id=329846089]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_600sp")
 
-[node name="Bookshelf" type="Node3D" parent="Furniture" unique_id=556293929 instance=ExtResource("12_25oxk")]
+[node name="Bookshelf" parent="Furniture" unique_id=556293929 instance=ExtResource("12_25oxk")]
 transform = Transform3D(-1.9670125e-07, 0, -4.5, 0, 4.5, 0, 4.5, 0, -1.9670125e-07, 5.15, 0, -0.55)
 
-[node name="Bookshelf" type="MeshInstance3D" parent="Furniture/Bookshelf" unique_id=220582897]
+[node name="Bookshelf2" type="MeshInstance3D" parent="Furniture/Bookshelf" unique_id=220582897]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_ln6xp")
 
-[node name="Wardrobe" type="Node3D" parent="Furniture" unique_id=995397538 instance=ExtResource("13_0bp1g")]
+[node name="Wardrobe" parent="Furniture" unique_id=995397538 instance=ExtResource("13_0bp1g")]
 transform = Transform3D(-2.2729921e-07, 0, -5.2, 0, 5.2, 0, 5.2, 0, -2.2729921e-07, 5.05, 0, 0.95)
 
-[node name="Drawer_4" type="MeshInstance3D" parent="Furniture/Wardrobe" unique_id=1570363507]
+[node name="Drawer_5" type="MeshInstance3D" parent="Furniture/Wardrobe" unique_id=1570363507]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_0j768")
 
-[node name="Houseplant" type="Node3D" parent="Furniture" unique_id=341288505 instance=ExtResource("14_j4f6s")]
+[node name="Houseplant" parent="Furniture" unique_id=341288505 instance=ExtResource("14_j4f6s")]
 transform = Transform3D(11.468129, 0, 8.03007, 0, 14, 0, -8.03007, 0, 11.468129, -5.15, 0, 3.8)
 
-[node name="Houseplant_4" type="MeshInstance3D" parent="Furniture/Houseplant" unique_id=1029068016]
+[node name="Houseplant_5" type="MeshInstance3D" parent="Furniture/Houseplant" unique_id=1029068016]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_qmlwy")
 
-[node name="GiftShelf" type="Node3D" parent="Furniture" unique_id=66625934 instance=ExtResource("15_6ospf")]
+[node name="GiftShelf" parent="Furniture" unique_id=66625934 instance=ExtResource("15_6ospf")]
 transform = Transform3D(-1.8358783e-07, 0, 4.2, 0, 4.2, 0, -4.2, 0, -1.8358783e-07, -5.25, 0, 1.65)
 
-[node name="Shelf_Large" type="MeshInstance3D" parent="Furniture/GiftShelf" unique_id=746392594]
+[node name="Shelf_Large2" type="MeshInstance3D" parent="Furniture/GiftShelf" unique_id=746392594]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_nyl40")
 
-[node name="ExitDoor" type="Node3D" parent="Furniture" unique_id=813475045 instance=ExtResource("16_euyv3")]
+[node name="ExitDoor" parent="Furniture" unique_id=813475045 instance=ExtResource("16_euyv3")]
 transform = Transform3D(-5, 0, -4.371139e-07, 0, 5, 0, 4.371139e-07, 0, -5, -4.2, 0, 4.84)
 
-[node name="Door_3" type="MeshInstance3D" parent="Furniture/ExitDoor" unique_id=325943210]
+[node name="Door_4" type="MeshInstance3D" parent="Furniture/ExitDoor" unique_id=325943210]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_ecvoq")
 
-[node name="Window" type="Node3D" parent="Furniture" unique_id=1194670925 instance=ExtResource("17_upk33")]
+[node name="Window" parent="Furniture" unique_id=1194670925 instance=ExtResource("17_upk33")]
 transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 1.55, 1.05, -4.84)
 
-[node name="Window_Large1" type="MeshInstance3D" parent="Furniture/Window" unique_id=149294973]
+[node name="Window_Large2" type="MeshInstance3D" parent="Furniture/Window" unique_id=149294973]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_0orks")
 
-[node name="Curtains" type="Node3D" parent="Furniture" unique_id=954976095 instance=ExtResource("18_08su2")]
+[node name="Curtains" parent="Furniture" unique_id=954976095 instance=ExtResource("18_08su2")]
 transform = Transform3D(4.5, 0, 0, 0, 4.5, 0, 0, 0, 4.5, 1.55, 0, -4.78)
 
-[node name="Curtains_Double" type="MeshInstance3D" parent="Furniture/Curtains" unique_id=694502090]
+[node name="Curtains_Double2" type="MeshInstance3D" parent="Furniture/Curtains" unique_id=694502090]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_ta0ht")
 
-[node name="Trashcan" type="Node3D" parent="Furniture" unique_id=1321992873 instance=ExtResource("19_ulflq")]
+[node name="Trashcan" parent="Furniture" unique_id=1321992873 instance=ExtResource("19_ulflq")]
 transform = Transform3D(6.5778484, 0, 2.394141, 0, 7, 0, -2.394141, 0, 6.5778484, -2, 0, -4.2)
 
-[node name="Trashcan_Small1" type="MeshInstance3D" parent="Furniture/Trashcan" unique_id=901724462]
+[node name="Trashcan_Small2" type="MeshInstance3D" parent="Furniture/Trashcan" unique_id=901724462]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_2reuw")
 
 [node name="Decor" type="Node3D" parent="." unique_id=1057704250]
 
-[node name="DatePlateA" type="Node3D" parent="Decor" unique_id=1114612715 instance=ExtResource("20_360pb")]
+[node name="DatePlateA" parent="Decor" unique_id=1114612715 instance=ExtResource("20_360pb")]
 transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 0.3, 0.78, 0.55)
 
-[node name="Plate_2" type="MeshInstance3D" parent="Decor/DatePlateA" unique_id=2069906457]
+[node name="Plate_3" type="MeshInstance3D" parent="Decor/DatePlateA" unique_id=2069906457]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_difgg")
 
-[node name="DatePlateB" type="Node3D" parent="Decor" unique_id=70385909 instance=ExtResource("20_360pb")]
+[node name="DatePlateB" parent="Decor" unique_id=70385909 instance=ExtResource("20_360pb")]
 transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 1, 0.78, 0.55)
 
-[node name="Plate_2" type="MeshInstance3D" parent="Decor/DatePlateB" unique_id=725925987]
+[node name="Plate_3" type="MeshInstance3D" parent="Decor/DatePlateB" unique_id=725925987]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_difgg")
 
-[node name="DateFork" type="Node3D" parent="Decor" unique_id=947612755 instance=ExtResource("21_d4xo1")]
+[node name="DateFork" parent="Decor" unique_id=947612755 instance=ExtResource("21_d4xo1")]
 transform = Transform3D(-2.1855695e-07, -5, 0, 5, -2.1855695e-07, 0, 0, 0, 5, 0.12, 0.8, 0.55)
 
-[node name="Fork" type="MeshInstance3D" parent="Decor/DateFork" unique_id=1237314102]
+[node name="Fork2" type="MeshInstance3D" parent="Decor/DateFork" unique_id=1237314102]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_uwysn")
 
-[node name="DateSpoon" type="Node3D" parent="Decor" unique_id=1545009017 instance=ExtResource("22_7xvut")]
+[node name="DateSpoon" parent="Decor" unique_id=1545009017 instance=ExtResource("22_7xvut")]
 transform = Transform3D(-2.1855695e-07, 5, 0, -5, -2.1855695e-07, 0, 0, 0, 5, 1.18, 0.8, 0.55)
 
-[node name="Spoon" type="MeshInstance3D" parent="Decor/DateSpoon" unique_id=605409022]
+[node name="Spoon2" type="MeshInstance3D" parent="Decor/DateSpoon" unique_id=605409022]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_ytkx2")
 
-[node name="DateDrink" type="Node3D" parent="Decor" unique_id=624111997 instance=ExtResource("23_f177j")]
+[node name="DateDrink" parent="Decor" unique_id=624111997 instance=ExtResource("23_f177j")]
 transform = Transform3D(0.95105654, 0, 0.309017, 0, 1, 0, -0.309017, 0, 0.95105654, 0.65, 0.8, 0.25)
 
-[node name="Bottle2" type="MeshInstance3D" parent="Decor/DateDrink" unique_id=503546258]
+[node name="Bottle3" type="MeshInstance3D" parent="Decor/DateDrink" unique_id=503546258]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_g6pgy")
 
-[node name="GiftChocolate" type="Node3D" parent="Decor" unique_id=479095695 instance=ExtResource("24_5dqrn")]
+[node name="GiftChocolate" parent="Decor" unique_id=479095695 instance=ExtResource("24_5dqrn")]
 transform = Transform3D(0.90630776, 0, 0.42261827, 0, 1, 0, -0.42261827, 0, 0.90630776, -5.05, 1.2, 1.65)
 
-[node name="ChocolateBar" type="MeshInstance3D" parent="Decor/GiftChocolate" unique_id=471337403]
+[node name="ChocolateBar2" type="MeshInstance3D" parent="Decor/GiftChocolate" unique_id=471337403]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_q8aas")
 
-[node name="KitchenApple" type="Node3D" parent="Decor" unique_id=693595928 instance=ExtResource("25_si6qv")]
+[node name="KitchenApple" parent="Decor" unique_id=693595928 instance=ExtResource("25_si6qv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.35, 1, -4.15)
 
-[node name="Apple" type="MeshInstance3D" parent="Decor/KitchenApple" unique_id=1631063955]
+[node name="Apple2" type="MeshInstance3D" parent="Decor/KitchenApple" unique_id=1631063955]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_u5mfy")
 
-[node name="ShelfPlant" type="Node3D" parent="Decor" unique_id=1491733927 instance=ExtResource("26_kc7ps")]
+[node name="ShelfPlant" parent="Decor" unique_id=1491733927 instance=ExtResource("26_kc7ps")]
 transform = Transform3D(4.924039, 0, 0.8682409, 0, 5, 0, -0.8682409, 0, 4.924039, 5.05, 1.1, -0.55)
 
-[node name="Houseplant_1" type="MeshInstance3D" parent="Decor/ShelfPlant" unique_id=1493370898]
+[node name="Houseplant_2" type="MeshInstance3D" parent="Decor/ShelfPlant" unique_id=1493370898]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_no7ap")
 
-[node name="ReadingLamp" type="Node3D" parent="Decor" unique_id=1913655820 instance=ExtResource("27_8fvko")]
+[node name="ReadingLamp" parent="Decor" unique_id=1913655820 instance=ExtResource("27_8fvko")]
 transform = Transform3D(-16.383041, 0, 11.471529, 0, 20, 0, -11.471529, 0, -16.383041, 2, 0, 3.8)
 
-[node name="Light_Floor2" type="MeshInstance3D" parent="Decor/ReadingLamp" unique_id=1959359675]
+[node name="Light_Floor3" type="MeshInstance3D" parent="Decor/ReadingLamp" unique_id=1959359675]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_nqpok")
 
@@ -2567,34 +2598,34 @@ mesh = SubResource("ArrayMesh_nqpok")
 
 [node name="SoftMoon" type="DirectionalLight3D" parent="Lights" unique_id=804480447]
 transform = Transform3D(0.9135454, 0.32051283, -0.2504121, 0, 0.6156615, 0.7880107, 0.40673664, -0.71988356, 0.56243473, 0, 0, 0)
-light_color = Color(0.7254902, 0.78431374, 1, 1)
-light_energy = 0.32
+light_color = Color(0.72, 0.76, 0.82, 1)
+light_energy = 0.22
 shadow_enabled = true
 
 [node name="CeilingWarm" type="OmniLight3D" parent="Lights" unique_id=369563838]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, 0.3)
-light_color = Color(1, 0.76862746, 0.63529414, 1)
-light_energy = 1.55
+light_color = Color(1, 0.86, 0.72, 1)
+light_energy = 1.15
 shadow_enabled = true
 omni_range = 8.0
 
 [node name="BedsideGlow" type="OmniLight3D" parent="Lights" unique_id=1940218952]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, 1.8, -3.1)
-light_color = Color(1, 0.62352943, 0.7058824, 1)
-light_energy = 1.15
+light_color = Color(1, 0.76, 0.62, 1)
+light_energy = 0.62
 shadow_enabled = true
 omni_range = 4.5
 
 [node name="KitchenGlow" type="OmniLight3D" parent="Lights" unique_id=1062725223]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7, 2.45, -3.6)
-light_color = Color(1, 0.827451, 0.6392157, 1)
-light_energy = 1.05
+light_color = Color(1, 0.86, 0.68, 1)
+light_energy = 0.72
 shadow_enabled = true
 
 [node name="DoorGlow" type="OmniLight3D" parent="Lights" unique_id=1914077020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 2, 3.9)
-light_color = Color(0.9372549, 0.69411767, 0.41568628, 1)
-light_energy = 0.8
+light_color = Color(1, 0.78, 0.55, 1)
+light_energy = 0.52
 shadow_enabled = true
 omni_range = 3.8
 

@@ -98,7 +98,7 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			Game.quests.complete("s1_city")
 			if not Game.city.outside_tip_shown:
 				Game.city.outside_tip_shown = true
-				EventBus.toast("Город: ищи девушек. Q — телефон. Жёлтый ! — цель обучения.", &"story")
+				EventBus.toast("Город: найди ресторан Two Hearts по тёплой вывеске.", &"story")
 		"go_home", "go_home_from_neighbor":
 			_teleport_player(Vector3(0.0, 0.05, 2.5), &"apartment")
 		"go_neighbor":

@@ -1,0 +1,17 @@
+FOCUSED POLISH CAPTURE START
+SHOT apartment_final.png err=0 note=apartment
+INTERACT job
+INTERACT buy_gift
+INTERACT take_gift
+INTERACT wardrobe
+INTERACT prepare_and_start
+PREP dating={ "neighbor": { "gift_id": "flower", "venue_id": "kitchen_table", "outfit_id": "cheap_formal", "extra": "" } }
+INTERACT go_outside
+SHOT street_final.png err=0 note=street
+SHOT restaurant_final.png err=0 note=restaurant landmark
+INTERACT enter_restaurant
+SHOT girl_sitting_full_body_side.png err=0 note=sit side
+SHOT date_ui_final.png err=0 note=date ui
+SHOT date_result_final.png err=0 note=date result
+CAPTURE DONE shots=6 errors=0
+GIRL alias=sit_idle seated=true pos=(0.0, 40.0, -1.15)

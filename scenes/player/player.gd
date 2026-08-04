@@ -336,13 +336,16 @@ func _update_carry_visual() -> void:
 		c.queue_free()
 	if Game.inventory.carried_item == &"":
 		return
+	# Vertical-slice presentation: keep carried gift off-camera (no pink debug cube).
+	return
 	var mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()
-	box.size = Vector3(0.2, 0.2, 0.2)
+	box.size = Vector3(0.08, 0.14, 0.08)
 	mesh.mesh = box
 	var mat := StandardMaterial3D.new()
 	var g: Dictionary = ContentDB.gift(Game.inventory.carried_item)
-	var col: Array = g.get("color", [1, 1, 1])
-	mat.albedo_color = Color(col[0], col[1], col[2])
+	var col: Array = g.get("color", [0.75, 0.55, 0.35])
+	mat.albedo_color = Color(float(col[0]) * 0.7, float(col[1]) * 0.75, float(col[2]) * 0.55)
 	mesh.material_override = mat
+	mesh.position = Vector3(0.12, -0.05, -0.25)
 	carry_anchor.add_child(mesh)

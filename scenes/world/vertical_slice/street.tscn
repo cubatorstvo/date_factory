@@ -1378,6 +1378,14 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_hrksp")
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kahii"]
+albedo_color = Color(0.22, 0.24, 0.28, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vc1if"]
+albedo_color = Color(0.28, 0.3, 0.34, 1)
+roughness = 0.88
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r778h"]
 albedo_color = Color(0.14509805, 0.101960786, 0.16862746, 1)
 metallic = 0.65
@@ -1393,11 +1401,11 @@ emission_energy_multiplier = 2.2
 albedo_color = Color(0.43529412, 0.2627451, 0.34117648, 1)
 roughness = 0.58
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dtq5r"]
-albedo_color = Color(0.41568628, 0.12156863, 0.29803923, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_55bsj"]
+albedo_color = Color(0.55, 0.18, 0.22, 1)
 emission_enabled = true
-emission = Color(0.8156863, 0.30588236, 0.57254905, 1)
-emission_energy_multiplier = 1.4
+emission = Color(0.85, 0.35, 0.2, 1)
+emission_energy_multiplier = 0.55
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_51l2m"]
 albedo_color = Color(0.8509804, 0.6431373, 0.25490198, 1)
@@ -1678,6 +1686,9 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_p337g")
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hcd2j"]
+albedo_color = Color(0.35, 0.4, 0.28, 1)
+
 [sub_resource type="Environment" id="Environment_50p4k"]
 background_mode = 1
 background_color = Color(0.0627451, 0.078431375, 0.14509805, 1)
@@ -1772,53 +1783,114 @@ material = SubResource("StandardMaterial3D_ojo5y")
 
 [node name="Buildings" type="Node3D" parent="." unique_id=1368805828]
 
-[node name="NorthBlockWest" type="Node3D" parent="Buildings" unique_id=780925803 instance=ExtResource("1_vc1if")]
+[node name="NorthBlockWest" parent="Buildings" unique_id=780925803 instance=ExtResource("1_vc1if")]
 transform = Transform3D(0.34, 0, 0, 0, 0.34, 0, 0, 0, 0.34, -15, 0, -6.4)
 
-[node name="Building_Large_2" type="MeshInstance3D" parent="Buildings/NorthBlockWest" unique_id=749839530]
+[node name="Building_Large_3" type="MeshInstance3D" parent="Buildings/NorthBlockWest" unique_id=749839530]
 mesh = SubResource("ArrayMesh_rabtf")
 
-[node name="NorthBlockMid" type="Node3D" parent="Buildings" unique_id=199150597 instance=ExtResource("20_4w1vu")]
+[node name="NorthBlockMid" parent="Buildings" unique_id=199150597 instance=ExtResource("20_4w1vu")]
 transform = Transform3D(0.34, 0, 0, 0, 0.34, 0, 0, 0, 0.34, -7.5, 0, -6.4)
 
-[node name="Building_Medium_2_001" type="MeshInstance3D" parent="Buildings/NorthBlockMid" unique_id=1738537658]
+[node name="Building_Medium_2_002" type="MeshInstance3D" parent="Buildings/NorthBlockMid" unique_id=1738537658]
 mesh = SubResource("ArrayMesh_bu1uw")
 
-[node name="NorthBlockCafe" type="Node3D" parent="Buildings" unique_id=969699209 instance=ExtResource("21_rrdsq")]
+[node name="NorthBlockCafe" parent="Buildings" unique_id=969699209 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(0.42, 0, 0, 0, 0.42, 0, 0, 0, 0.42, -1, 0, -6.4)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/NorthBlockCafe" unique_id=855363501]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/NorthBlockCafe" unique_id=855363501]
 mesh = SubResource("ArrayMesh_kuwpm")
 
-[node name="RestaurantFacade" type="Node3D" parent="Buildings" unique_id=955098755 instance=ExtResource("20_4w1vu")]
+[node name="RestaurantFacade" parent="Buildings" unique_id=955098755 instance=ExtResource("20_4w1vu")]
 transform = Transform3D(0.34, 0, 0, 0, 0.34, 0, 0, 0, 0.34, 10.5, 0, -6.4)
 
-[node name="Building_Medium_2_001" type="MeshInstance3D" parent="Buildings/RestaurantFacade" unique_id=92797325]
+[node name="Building_Medium_2_002" type="MeshInstance3D" parent="Buildings/RestaurantFacade" unique_id=92797325]
 mesh = SubResource("ArrayMesh_bu1uw")
 
-[node name="SouthBlockWest" type="Node3D" parent="Buildings" unique_id=2083583040 instance=ExtResource("1_vc1if")]
+[node name="SouthBlockWest" parent="Buildings" unique_id=2083583040 instance=ExtResource("1_vc1if")]
 transform = Transform3D(-0.34, 0, -2.9723743e-08, 0, 0.34, 0, 2.9723743e-08, 0, -0.34, -15, 0, 6.4)
 
-[node name="Building_Large_2" type="MeshInstance3D" parent="Buildings/SouthBlockWest" unique_id=779799011]
+[node name="Building_Large_3" type="MeshInstance3D" parent="Buildings/SouthBlockWest" unique_id=779799011]
 mesh = SubResource("ArrayMesh_rabtf")
 
-[node name="SouthBlockMid" type="Node3D" parent="Buildings" unique_id=1114340469 instance=ExtResource("21_rrdsq")]
+[node name="SouthBlockMid" parent="Buildings" unique_id=1114340469 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(-0.42, 0, -3.6717566e-08, 0, 0.42, 0, 3.6717566e-08, 0, -0.42, -7.5, 0, 6.4)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/SouthBlockMid" unique_id=356214588]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/SouthBlockMid" unique_id=356214588]
 mesh = SubResource("ArrayMesh_kuwpm")
 
-[node name="SouthBlockEast" type="Node3D" parent="Buildings" unique_id=189726923 instance=ExtResource("20_4w1vu")]
+[node name="SouthBlockEast" parent="Buildings" unique_id=189726923 instance=ExtResource("20_4w1vu")]
 transform = Transform3D(-0.34, 0, -2.9723743e-08, 0, 0.34, 0, 2.9723743e-08, 0, -0.34, 0, 0, 6.4)
 
-[node name="Building_Medium_2_001" type="MeshInstance3D" parent="Buildings/SouthBlockEast" unique_id=900082030]
+[node name="Building_Medium_2_002" type="MeshInstance3D" parent="Buildings/SouthBlockEast" unique_id=900082030]
 mesh = SubResource("ArrayMesh_bu1uw")
 
-[node name="SouthBoundary" type="Node3D" parent="Buildings" unique_id=1091533080 instance=ExtResource("21_rrdsq")]
+[node name="SouthBoundary" parent="Buildings" unique_id=1091533080 instance=ExtResource("21_rrdsq")]
 transform = Transform3D(-0.42, 0, -3.6717566e-08, 0, 0.42, 0, 3.6717566e-08, 0, -0.42, 14, 0, 6.4)
 
-[node name="Building_Small_1" type="MeshInstance3D" parent="Buildings/SouthBoundary" unique_id=474792188]
+[node name="Building_Small_2" type="MeshInstance3D" parent="Buildings/SouthBoundary" unique_id=474792188]
 mesh = SubResource("ArrayMesh_kuwpm")
+
+[node name="WestEndBlock" type="Node3D" parent="Buildings" unique_id=595923117]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0, 0)
+
+[node name="WestFacade" type="CSGBox3D" parent="Buildings/WestEndBlock" unique_id=1193143265]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
+size = Vector3(6, 12, 18)
+material = SubResource("StandardMaterial3D_kahii")
+
+[node name="EastEndBlock" type="Node3D" parent="Buildings" unique_id=370653834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 0)
+
+[node name="EastFacade" type="CSGBox3D" parent="Buildings/EastEndBlock" unique_id=1553293590]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
+size = Vector3(6, 12, 18)
+material = SubResource("StandardMaterial3D_kahii")
+
+[node name="AlleyTurnNorth" type="Node3D" parent="Buildings" unique_id=1951378860]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, -8.5)
+
+[node name="AlleyWall" type="CSGBox3D" parent="Buildings/AlleyTurnNorth" unique_id=863711564]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+size = Vector3(8, 7, 3)
+material = SubResource("StandardMaterial3D_vc1if")
+
+[node name="FarRowNorth" type="Node3D" parent="Buildings" unique_id=745249862]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -11)
+
+[node name="FarA" type="CSGBox3D" parent="Buildings/FarRowNorth" unique_id=69268219]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 3.5, 0)
+size = Vector3(10, 7, 3)
+material = SubResource("StandardMaterial3D_vc1if")
+
+[node name="FarB" type="CSGBox3D" parent="Buildings/FarRowNorth" unique_id=1656228226]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4, 0)
+size = Vector3(10, 8, 3)
+material = SubResource("StandardMaterial3D_vc1if")
+
+[node name="NorthVoidBlock" type="Node3D" parent="Buildings" unique_id=677382512]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -12)
+
+[node name="Block" type="CSGBox3D" parent="Buildings/NorthVoidBlock" unique_id=1075223535]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 0)
+size = Vector3(28, 14, 8)
+material = SubResource("StandardMaterial3D_kahii")
+
+[node name="WestVoidFill" type="Node3D" parent="Buildings" unique_id=964121660]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -2)
+
+[node name="Block" type="CSGBox3D" parent="Buildings/WestVoidFill" unique_id=252516109]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 0)
+size = Vector3(8, 14, 22)
+material = SubResource("StandardMaterial3D_kahii")
+
+[node name="EastBehindRestaurant" type="Node3D" parent="Buildings" unique_id=605646060]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 0, -9)
+
+[node name="Block" type="CSGBox3D" parent="Buildings/EastBehindRestaurant" unique_id=177165020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 0)
+size = Vector3(12, 14, 16)
+material = SubResource("StandardMaterial3D_kahii")
 
 [node name="StreetProps" type="Node3D" parent="." unique_id=758449721]
 
@@ -1873,8 +1945,8 @@ material = SubResource("StandardMaterial3D_vumba")
 
 [node name="LampLightN3" type="OmniLight3D" parent="StreetProps" unique_id=686863332]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 3, -3.9)
-light_color = Color(1, 0.62352943, 0.7058824, 1)
-light_energy = 1.35
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 0.9
 omni_range = 5.5
 
 [node name="LampPostN4" type="CSGCylinder3D" parent="StreetProps" unique_id=1082576809]
@@ -1892,8 +1964,8 @@ material = SubResource("StandardMaterial3D_vumba")
 
 [node name="LampLightN4" type="OmniLight3D" parent="StreetProps" unique_id=1551316796]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 3, -3.9)
-light_color = Color(1, 0.62352943, 0.7058824, 1)
-light_energy = 1.35
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 0.9
 omni_range = 5.5
 
 [node name="LampPostS1" type="CSGCylinder3D" parent="StreetProps" unique_id=1447982255]
@@ -1947,8 +2019,8 @@ material = SubResource("StandardMaterial3D_vumba")
 
 [node name="LampLightS3" type="OmniLight3D" parent="StreetProps" unique_id=395405823]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 3, 3.9)
-light_color = Color(0.89411765, 0.6313726, 1, 1)
-light_energy = 1.1
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 0.85
 
 [node name="LampPostS4" type="CSGCylinder3D" parent="StreetProps" unique_id=1318762724]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1.6, 3.9)
@@ -1965,8 +2037,8 @@ material = SubResource("StandardMaterial3D_vumba")
 
 [node name="LampLightS4" type="OmniLight3D" parent="StreetProps" unique_id=1305159474]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 3, 3.9)
-light_color = Color(0.89411765, 0.6313726, 1, 1)
-light_energy = 1.1
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 0.85
 
 [node name="Decor" type="Node3D" parent="." unique_id=1481009350]
 
@@ -1992,8 +2064,8 @@ material = SubResource("StandardMaterial3D_brfwn")
 
 [node name="RestaurantSign" type="CSGBox3D" parent="Decor" unique_id=1408463267]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 3, -5.18)
-size = Vector3(3.4, 0.75, 0.14)
-material = SubResource("StandardMaterial3D_dtq5r")
+size = Vector3(4.2, 0.9, 0.18)
+material = SubResource("StandardMaterial3D_55bsj")
 
 [node name="RestaurantArchLeft" type="CSGBox3D" parent="Decor" unique_id=446384833]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 1.5, -4.95)
@@ -2005,47 +2077,52 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1.5, -4.95)
 size = Vector3(0.16, 3, 0.16)
 material = SubResource("StandardMaterial3D_51l2m")
 
-[node name="PlanterWestNorth" type="Node3D" parent="Decor" unique_id=341288505 instance=ExtResource("23_7h75c")]
+[node name="PlanterWestNorth" parent="Decor" unique_id=341288505 instance=ExtResource("23_7h75c")]
 transform = Transform3D(13.155697, 0, 4.788282, 0, 14, 0, -4.788282, 0, 13.155697, -10, 0, -4.8)
 
-[node name="Houseplant_4" type="MeshInstance3D" parent="Decor/PlanterWestNorth" unique_id=1029068016]
+[node name="Houseplant_5" type="MeshInstance3D" parent="Decor/PlanterWestNorth" unique_id=1029068016]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_qmlwy")
 
-[node name="PlanterMidNorth" type="Node3D" parent="Decor" unique_id=947461289 instance=ExtResource("23_7h75c")]
+[node name="PlanterMidNorth" parent="Decor" unique_id=947461289 instance=ExtResource("23_7h75c")]
 transform = Transform3D(13.522962, 0, -3.6234665, 0, 14, 0, 3.6234665, 0, 13.522962, 2.8, 0, -4.8)
 
-[node name="Houseplant_4" type="MeshInstance3D" parent="Decor/PlanterMidNorth" unique_id=220802515]
+[node name="Houseplant_5" type="MeshInstance3D" parent="Decor/PlanterMidNorth" unique_id=220802515]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_qmlwy")
 
-[node name="PlanterEastSouth" type="Node3D" parent="Decor" unique_id=218647547 instance=ExtResource("23_7h75c")]
+[node name="PlanterEastSouth" parent="Decor" unique_id=218647547 instance=ExtResource("23_7h75c")]
 transform = Transform3D(11.468129, 0, 8.03007, 0, 14, 0, -8.03007, 0, 11.468129, 10, 0, 4.8)
 
-[node name="Houseplant_4" type="MeshInstance3D" parent="Decor/PlanterEastSouth" unique_id=1292709810]
+[node name="Houseplant_5" type="MeshInstance3D" parent="Decor/PlanterEastSouth" unique_id=1292709810]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_qmlwy")
 
-[node name="PlanterWestSouth" type="Node3D" parent="Decor" unique_id=1491733927 instance=ExtResource("24_uyb61")]
+[node name="PlanterWestSouth" parent="Decor" unique_id=1491733927 instance=ExtResource("24_uyb61")]
 transform = Transform3D(12, 0, 0, 0, 12, 0, 0, 0, 12, -10, 0, 4.8)
 
-[node name="Houseplant_1" type="MeshInstance3D" parent="Decor/PlanterWestSouth" unique_id=1493370898]
+[node name="Houseplant_2" type="MeshInstance3D" parent="Decor/PlanterWestSouth" unique_id=1493370898]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_no7ap")
 
-[node name="TrashNorth" type="Node3D" parent="Decor" unique_id=1321992873 instance=ExtResource("25_6kd77")]
+[node name="TrashNorth" parent="Decor" unique_id=1321992873 instance=ExtResource("25_6kd77")]
 transform = Transform3D(7, 0, 0, 0, 7, 0, 0, 0, 7, -4.4, 0, -4.8)
 
-[node name="Trashcan_Small1" type="MeshInstance3D" parent="Decor/TrashNorth" unique_id=901724462]
+[node name="Trashcan_Small2" type="MeshInstance3D" parent="Decor/TrashNorth" unique_id=901724462]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_2reuw")
 
-[node name="TrashSouth" type="Node3D" parent="Decor" unique_id=147178183 instance=ExtResource("25_6kd77")]
+[node name="TrashSouth" parent="Decor" unique_id=147178183 instance=ExtResource("25_6kd77")]
 transform = Transform3D(7, 0, 0, 0, 7, 0, 0, 0, 7, 3.5, 0, 4.8)
 
-[node name="Trashcan_Small1" type="MeshInstance3D" parent="Decor/TrashSouth" unique_id=1347956323]
+[node name="Trashcan_Small2" type="MeshInstance3D" parent="Decor/TrashSouth" unique_id=1347956323]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_2reuw")
+
+[node name="WestEndPlanter" type="CSGBox3D" parent="Decor" unique_id=1395683996]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0.5, -4.8)
+size = Vector3(1.2, 1, 1.2)
+material = SubResource("StandardMaterial3D_hcd2j")
 
 [node name="Lights" type="Node3D" parent="." unique_id=731320311]
 
@@ -2057,8 +2134,8 @@ shadow_enabled = true
 
 [node name="RestaurantHalo" type="OmniLight3D" parent="Lights" unique_id=517640290]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 2.5, -4.4)
-light_color = Color(1, 0.44313726, 0.65882355, 1)
-light_energy = 2.1
+light_color = Color(1, 0.8, 0.58, 1)
+light_energy = 0.9
 shadow_enabled = true
 omni_range = 7.0
 

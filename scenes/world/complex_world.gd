@@ -44,6 +44,7 @@ func _add_world_ground() -> void:
 	mat.albedo_color = Color(0.25, 0.35, 0.28)
 	mesh.material_override = mat
 	ground.add_child(mesh)
+	mesh.visible = false
 	add_child(ground)
 
 
@@ -66,6 +67,13 @@ func _rebuild() -> void:
 	_spawn_city_npcs()
 	_refresh_harem_npcs()
 	_refresh_tutorial_markers()
+	_hide_placeholder_meshes(npcs_root)
+	for child in npcs_root.get_children():
+		if child is Node3D:
+			for visual in child.find_children("*", "MeshInstance3D", true, false):
+				(visual as MeshInstance3D).visible = false
+			for label in child.find_children("*", "Label3D", true, false):
+				(label as Label3D).visible = false
 
 
 func _build_city() -> void:
@@ -83,6 +91,8 @@ func _build_city() -> void:
 	if city_root:
 		_hide_generated_visuals(city_root)
 		_mount_visual_scene(city_root, STREET_VISUAL_SCENE, "StreetVisual", Vector3(-30.0, 0.0, 0.0))
+		_hide_placeholder_meshes(city_root)
+		_hide_placeholder_meshes(props_root)
 		_add_interact(city_root, Vector3(-48.0, 0.0, 4.7), "Подъезд DATE FACTORY", "Вернуться домой", &"go_home", {"art_backed": true}, &"door")
 		_add_interact(city_root, Vector3(-19.5, 0.0, -4.35), "Ресторан Two Hearts", "Войти на свидание", &"enter_restaurant", {"art_backed": true}, &"door")
 
@@ -119,10 +129,10 @@ func _tone_down_slice_lights(root: Node = null) -> void:
 			continue
 		var c := omni.light_color
 		if c.r > 0.75 and c.b > 0.45 and c.g < 0.55:
-			omni.light_color = Color(1.0, 0.78, 0.62)
-			omni.light_energy = minf(omni.light_energy, 1.1)
+			omni.light_color = Color(1.0, 0.82, 0.64)
+			omni.light_energy = minf(omni.light_energy, 0.85)
 		else:
-			omni.light_energy = minf(omni.light_energy, 2.2)
+			omni.light_energy = minf(omni.light_energy, 1.15)
 	for node2: Node in scope.find_children("*", "SpotLight3D", true, false):
 		var spot := node2 as SpotLight3D
 		if spot:
@@ -130,9 +140,37 @@ func _tone_down_slice_lights(root: Node = null) -> void:
 
 
 func _hide_generated_visuals(parent: Node3D) -> void:
-	for child: Node in parent.get_children():
-		if child is MeshInstance3D or child is Label3D:
-			(child as Node3D).visible = false
+	var stack: Array[Node] = [parent]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		if node.name == "StreetVisual" or node.name == "ApartmentVisual":
+			continue
+		if node is MeshInstance3D or node is Label3D or node is CSGShape3D:
+			(node as Node3D).visible = false
+		for child in node.get_children():
+			stack.append(child)
+
+
+func _hide_placeholder_meshes(parent: Node3D) -> void:
+	for node: Node in parent.find_children("*", "MeshInstance3D", true, false):
+		var path_s := String(node.get_path())
+		if path_s.contains("StreetVisual") or path_s.contains("ApartmentVisual"):
+			continue
+		var mi := node as MeshInstance3D
+		if mi == null:
+			continue
+		var mesh := mi.mesh
+		if mesh is CapsuleMesh or mesh is BoxMesh or mesh is SphereMesh:
+			mi.visible = false
+			continue
+		var mat := mi.material_override as StandardMaterial3D
+		if mat != null and mat.albedo_color.r > 0.85 and mat.albedo_color.b > 0.55 and mat.albedo_color.g < 0.55:
+			mi.visible = false
+	for label: Node in parent.find_children("*", "Label3D", true, false):
+		var lpath := String(label.get_path())
+		if lpath.contains("StreetVisual") or lpath.contains("ApartmentVisual"):
+			continue
+		(label as Label3D).visible = false
 
 
 func _update_stage_lighting() -> void:
@@ -202,8 +240,8 @@ func _spawn_city_npcs() -> void:
 	var waypoints: Array = _city_data.get("waypoints", [])
 	if waypoints.is_empty():
 		return
-	# Decorative male wanderers
-	for i in range(5):
+	# Decorative male wanderers are hidden for the vertical slice presentation.
+	for i in range(0):
 		var w := MeshInstance3D.new()
 		w.name = "Citizen_%d" % (i + 1)
 		var cap := CapsuleMesh.new()
@@ -260,6 +298,7 @@ func _spawn_talk_girl(profile: Dictionary, spots: Dictionary, waypoints: Array, 
 
 	var girl := _make_girl()
 	area.add_child(girl)
+	girl.visible = false
 	npcs_root.add_child(area)
 	var skin_a: Array = profile.get("color", [0.95, 0.75, 0.7])
 	var hair_a: Array = profile.get("hair_color", [0.2, 0.1, 0.08])

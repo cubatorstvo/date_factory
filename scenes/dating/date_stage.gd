@@ -4,13 +4,13 @@ extends Node3D
 
 const STAGE_ORIGIN := Vector3(0.0, 40.0, 0.0)
 const RESTAURANT_VISUAL_SCENE := "res://scenes/world/vertical_slice/restaurant.tscn"
-const DATE_GIRL_SCENE := "res://assets/characters/women_modular/prefabs/Girl_Casual.tscn"
+const DATE_GIRL_SCENE := "res://assets/characters/hero_base/prefabs/DateGirl_UAL.tscn"
 const DATE_PRESENTATION_CONTROLLER := "res://scenes/dating/date_presentation_controller.gd"
 const RESTAURANT_ART_OFFSET := Vector3(-2.0, 0.0, 1.6)
 const GIRL_DOOR_POSITION := Vector3(-2.0, 0.0, 6.4)
 const GIRL_CHAIR_POSITION := Vector3(0.0, 0.0, -1.15)
 const PLAYER_CHAIR_OFFSET := Vector3(0.0, 0.05, 1.15)
-const GIRL_SEAT_Y_OFFSET := 0.02
+const GIRL_SEAT_Y_OFFSET := 0.0
 const INTRO_SKIP_MIN_TIME := 2.4
 
 
@@ -25,7 +25,11 @@ var _date_cam: Camera3D
 var _date_ui: CanvasItem
 var _sequence: StringName = &""
 var _sequence_time: float = 0.0
+var _turn_started: bool = false
+var _turn_started_at: float = 0.0
 var _sit_started: bool = false
+var _sit_started_at: float = 0.0
+var _outro_started: bool = false
 var _camera_cue: int = 0
 var _presentation: Node
 var _arrival: ArrivalPipeline = ArrivalPipeline.new()
@@ -43,8 +47,7 @@ func _on_notify(message: String, kind: StringName) -> void:
 	if kind == &"date_fx" and message.begins_with("DATE_EMOTION:"):
 		var emotion := StringName(message.trim_prefix("DATE_EMOTION:"))
 		if _girl != null and _girl.has_method("play_alias"):
-			var alias := &"seated_gesture" if emotion in [&"positive", &"happy", &"love", &"amused"] else &"react"
-			_girl.call("play_alias", alias)
+			_girl.call("play_alias", &"seated_gesture")
 		elif _girl != null and _girl.has_method("set_emotion"):
 			_girl.call("set_emotion", emotion)
 		else:
@@ -80,31 +83,42 @@ func _process(delta: float) -> void:
 			_girl.position = step.get("position", _girl_door_position)
 			_lock_girl_physics()
 			var near_seat := float((_girl.position as Vector3).distance_to(_girl_chair_position)) < 0.35
-			if near_seat and not _sit_started and _girl.has_method("play_alias"):
-				_girl.call("play_alias", &"turn")
-				_girl.call("play_alias", &"sit_enter")
+			if near_seat and not _turn_started:
+				_play_girl_alias(&"turn", &"idle")
+				_turn_started = true
+				_turn_started_at = _sequence_time
+			if near_seat and _turn_started and not _sit_started and _sequence_time - _turn_started_at >= 0.35:
+				_play_girl_alias(&"sit_enter", &"sit")
 				_sit_started = true
-			_face_toward_player()
+				_sit_started_at = _sequence_time
 			if bool(step.get("sitting", false)):
-				if _girl.has_method("play_alias"):
-					if not _sit_started:
-						_girl.call("play_alias", &"sit_enter")
-						_sit_started = true
-				elif _girl.has_method("set_sitting"):
-					_girl.call("set_sitting", true)
-				else:
-					_girl.scale.y = lerpf(1.0, 0.92, float(step.get("sit_blend", 0.0)))
-			if bool(step.get("done", false)):
-				_finish_intro()
+				_girl.position = _girl_chair_position
+				_lock_girl_physics()
+			_face_toward_player()
+			if bool(step.get("done", false)) and _sit_started:
+				var sit_length := float(_girl.call("get_alias_length", &"sit_enter")) if _girl.has_method("get_alias_length") else 1.0
+				if _sequence_time - _sit_started_at >= maxf(0.85, minf(sit_length, 1.3)):
+					_finish_intro()
 		&"ready":
 			_hold_girl_seated()
 		&"outro":
+			if _sequence_time < 1.05:
+				_hold_girl_seated()
+				return
+			if not _outro_started:
+				var current := str(_girl.call("get_current_alias")) if _girl.has_method("get_current_alias") else ""
+				if current != "sit_exit":
+					_play_girl_alias(&"sit_exit", &"stand")
+				var exit_length := float(_girl.call("get_alias_length", &"sit_exit")) if _girl.has_method("get_alias_length") else 1.0
+				if _sequence_time >= 1.05 + maxf(0.75, minf(exit_length, 1.15)):
+					_arrival.begin_outro(_girl_chair_position, _girl_door_position, 2.4)
+					_play_girl_alias(&"walk", &"approach")
+					_outro_started = true
+				return
 			var leave: Dictionary = _arrival.tick(delta)
 			_girl.position = leave.get("position", _girl_door_position)
-			if _girl.has_method("set_sitting"):
-				_girl.call("set_sitting", bool(leave.get("sitting", false)))
-			else:
-				_girl.scale.y = lerpf(0.92, 1.0, 1.0 - float(leave.get("sit_blend", 0.0)))
+			_lock_girl_physics()
+			_face_toward(_girl_door_position)
 			if bool(leave.get("done", false)):
 				_teardown()
 
@@ -146,8 +160,7 @@ func _on_open(payload: Dictionary) -> void:
 	_girl.position = _girl_door_position
 	_root.add_child(_girl)
 	_lock_girl_physics()
-	if _girl.has_method("play_alias"):
-		_girl.call("play_alias", &"approach")
+	_play_girl_alias(&"approach", &"walk")
 	assert(ArrivalPipeline.assert_starts_at_door(_girl.position, _girl_door_position, _girl_chair_position))
 	var target_id := str(payload.get("target_id", "neighbor"))
 	var display := ""
@@ -184,7 +197,11 @@ func _on_open(payload: Dictionary) -> void:
 	_arrival.begin_intro(_girl_door_position, _girl_chair_position, 6.5)
 	_sequence = &"intro"
 	_sequence_time = 0.0
+	_turn_started = false
+	_turn_started_at = 0.0
 	_sit_started = false
+	_sit_started_at = 0.0
+	_outro_started = false
 	_camera_cue = 0
 
 
@@ -200,7 +217,7 @@ func _add_gift(payload: Dictionary) -> void:
 	gift.position = Vector3(0.15, 0.82, 0.0)
 	var gift_data: Dictionary = ContentDB.gift(gift_id)
 	var color_values: Array = gift_data.get("color", [0.95, 0.35, 0.5])
-	PropFactory.attach(gift, &"gift_box", Color(color_values[0], color_values[1], color_values[2]))
+	PropFactory.attach(gift, &"gift_box", Color(0.62, 0.42, 0.28))
 	_root.add_child(gift)
 
 
@@ -220,6 +237,16 @@ func _finish_intro() -> void:
 		else:
 			_date_ui.visible = true
 	EventBus.notify.emit("DATE_INTRO_FINISHED", &"date_fx")
+
+
+func _play_girl_alias(preferred: StringName, fallback: StringName = &"") -> bool:
+	if _girl == null or not is_instance_valid(_girl) or not _girl.has_method("play_alias"):
+		return false
+	if _girl.has_method("has_alias") and bool(_girl.call("has_alias", String(preferred))):
+		return bool(_girl.call("play_alias", preferred))
+	if fallback != &"" and (not _girl.has_method("has_alias") or bool(_girl.call("has_alias", String(fallback)))):
+		return bool(_girl.call("play_alias", fallback))
+	return false
 
 
 func _face_toward_player() -> void:
@@ -275,10 +302,10 @@ func _add_backdrop(parent: Node3D) -> void:
 			continue
 		var c := omni.light_color
 		if c.r > 0.75 and c.b > 0.45 and c.g < 0.55:
-			omni.light_color = Color(1.0, 0.78, 0.62)
-			omni.light_energy = minf(omni.light_energy, 1.15)
+			omni.light_color = Color(1.0, 0.82, 0.64)
+			omni.light_energy = minf(omni.light_energy, 0.9)
 		else:
-			omni.light_energy = minf(omni.light_energy, 2.2)
+			omni.light_energy = minf(omni.light_energy, 1.15)
 	var preview_girl := restaurant.get_node_or_null("Characters/DateGirl") as Node3D
 	if preview_girl:
 		preview_girl.visible = false
@@ -317,7 +344,7 @@ func _hold_girl_seated(force_alias: bool = false) -> void:
 	var need_alias := force_alias
 	if _girl.has_method("get_current_alias"):
 		var current := str(_girl.call("get_current_alias"))
-		if current not in ["sit_idle", "seated_gesture", "sit_enter", "gesture", "react"]:
+		if current not in ["sit_idle", "seated_gesture", "sit_enter", "gesture"]:
 			need_alias = true
 	if need_alias and _girl.has_method("play_alias"):
 		_girl.call("play_alias", &"sit_idle")
@@ -334,11 +361,12 @@ func _on_close() -> void:
 	Sfx.play(&"result_success" if grade >= 2 else &"result_fail")
 	if _presentation and is_instance_valid(_presentation):
 		_presentation.call("move_to", &"result", 0.75)
-	if _girl and is_instance_valid(_girl) and _girl.has_method("play_alias"):
-		_girl.call("play_alias", &"sit_exit")
-	_arrival.begin_outro(_girl_chair_position, _girl_door_position, 2.4)
+	# Keep seated briefly so the result toast is readable over a valid sit pose.
+	if _girl and is_instance_valid(_girl):
+		_hold_girl_seated(true)
 	_sequence = &"outro"
 	_sequence_time = 0.0
+	_outro_started = false
 	if _date_ui and is_instance_valid(_date_ui):
 		_date_ui.visible = false
 
@@ -367,7 +395,11 @@ func _teardown() -> void:
 
 func _clear() -> void:
 	_sequence = &""
+	_turn_started = false
+	_turn_started_at = 0.0
 	_sit_started = false
+	_sit_started_at = 0.0
+	_outro_started = false
 	_camera_cue = 0
 	if _presentation and is_instance_valid(_presentation):
 		_presentation.queue_free()
