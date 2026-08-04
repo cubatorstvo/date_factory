@@ -10,13 +10,24 @@ extends Control
 var _prompt_label: Label
 var _coach_label: Label
 var _feedback_label: Label
+const GIFT_ICON_DIR := "res://assets/ui/gifts/placeholders/"
+
 var _gift_btn: Button
 var _finish_btn: Button
 var _gift_list: ItemList
 var _result_panel: PanelContainer
 var _result_label: RichTextLabel
 var _result_close_btn: Button
+var _result_gift_btn: Button
+var _gift_popup: PanelContainer
+var _gift_grid: GridContainer
+var _gift_select_btn: Button
+var _gift_close_btn: Button
+var _gift_tooltip: Label
+var _selected_gift_id: StringName = &""
+var _gift_for_result: bool = false
 var _showing_result: bool = false
+var _last_result: Dictionary = {}
 
 
 func _ready() -> void:
@@ -113,30 +124,12 @@ func _ensure_date_actions() -> void:
 
 
 func _on_gift_pressed() -> void:
-	if _gift_list == null:
-		return
-	_gift_list.clear()
-	var any := false
-	for gid in Game.inventory.gift_counts.keys():
-		if int(Game.inventory.gift_counts[gid]) <= 0:
-			continue
-		var def: Dictionary = ContentDB.gift(StringName(str(gid)))
-		_gift_list.add_item("%s ×%d" % [str(def.get("name", gid)), int(Game.inventory.gift_counts[gid])])
-		_gift_list.set_item_metadata(_gift_list.item_count - 1, str(gid))
-		any = true
-	if Game.inventory.carried_item != &"" and not str(Game.inventory.carried_item).begins_with("food:") and not str(Game.inventory.carried_item).begins_with("drink:"):
-		var cid := str(Game.inventory.carried_item)
-		var cdef: Dictionary = ContentDB.gift(StringName(cid))
-		_gift_list.add_item("%s (в руках)" % str(cdef.get("name", cid)))
-		_gift_list.set_item_metadata(_gift_list.item_count - 1, cid)
-		any = true
-	_gift_list.visible = any
-	if not any:
-		EventBus.toast("В инвентаре нет подарков", &"info")
+	_gift_for_result = false
+	_open_gift_inventory()
 
 
 func _on_gift_list_gui_input(event: InputEvent) -> void:
-	## ItemList selects on press; commit the gift only on mouse button_up.
+	## Legacy ItemList path kept as fallback.
 	if _gift_list == null:
 		return
 	if not (event is InputEventMouseButton):
@@ -146,12 +139,6 @@ func _on_gift_list_gui_input(event: InputEvent) -> void:
 		return
 	var index: int = _gift_list.get_item_at_position(mb.position, true)
 	if index < 0:
-		return
-	_on_gift_picked(index)
-
-
-func _on_gift_picked(index: int) -> void:
-	if _gift_list == null:
 		return
 	var gid := StringName(str(_gift_list.get_item_metadata(index)))
 	if Game.dating.give_date_gift(gid):
@@ -165,10 +152,11 @@ func _refresh_action_buttons() -> void:
 	if _finish_btn:
 		_finish_btn.visible = done and not _showing_result
 	if _gift_btn:
-		# Optional mid-date gift, once — not gated on phases_done.
 		_gift_btn.visible = active and (not _showing_result) and Game.dating.can_give_date_gift()
 	if _gift_list and (not active or not Game.dating.can_give_date_gift() or _showing_result):
 		_gift_list.visible = false
+	if _result_gift_btn:
+		_result_gift_btn.visible = _showing_result
 
 
 func _close() -> void:
@@ -225,10 +213,10 @@ func _ensure_result_panel() -> void:
 	_result_panel.name = "ResultPanel"
 	_result_panel.visible = false
 	_result_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	_result_panel.anchor_left = 0.28
-	_result_panel.anchor_top = 0.22
-	_result_panel.anchor_right = 0.72
-	_result_panel.anchor_bottom = 0.72
+	_result_panel.anchor_left = 0.24
+	_result_panel.anchor_top = 0.16
+	_result_panel.anchor_right = 0.76
+	_result_panel.anchor_bottom = 0.84
 	_result_panel.offset_left = 0.0
 	_result_panel.offset_top = 0.0
 	_result_panel.offset_right = 0.0
@@ -253,32 +241,223 @@ func _ensure_result_panel() -> void:
 	_result_label.fit_content = true
 	_result_label.scroll_active = true
 	_result_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_result_label.custom_minimum_size = Vector2(0, 220)
+	_result_label.custom_minimum_size = Vector2(0, 240)
 	vbox.add_child(_result_label)
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 12)
+	vbox.add_child(actions)
+	_result_gift_btn = Button.new()
+	_result_gift_btn.name = "ResultGift"
+	_result_gift_btn.text = "Подарок"
+	_result_gift_btn.focus_mode = Control.FOCUS_NONE
+	_result_gift_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
+	_result_gift_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_result_gift_btn.pressed.connect(_on_result_gift_pressed)
+	actions.add_child(_result_gift_btn)
 	_result_close_btn = Button.new()
 	_result_close_btn.name = "ResultClose"
 	_result_close_btn.text = "Продолжить"
 	_result_close_btn.focus_mode = Control.FOCUS_NONE
 	_result_close_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
+	_result_close_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_result_close_btn.pressed.connect(_dismiss_result_panel)
-	vbox.add_child(_result_close_btn)
+	actions.add_child(_result_close_btn)
 	add_child(_result_panel)
+	_ensure_gift_popup()
 
 
-func _show_result_panel(result: Dictionary) -> void:
-	_ensure_result_panel()
-	_showing_result = true
-	visible = true
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	var dialog_panel := get_node_or_null("Panel") as Control
-	if dialog_panel:
-		dialog_panel.visible = false
-	if _gift_btn:
-		_gift_btn.visible = false
-	if _gift_list:
-		_gift_list.visible = false
-	if _finish_btn:
-		_finish_btn.visible = false
+func _ensure_gift_popup() -> void:
+	if _gift_popup != null and is_instance_valid(_gift_popup):
+		return
+	_gift_popup = PanelContainer.new()
+	_gift_popup.name = "GiftInventoryPopup"
+	_gift_popup.visible = false
+	_gift_popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	_gift_popup.anchor_left = 0.3
+	_gift_popup.anchor_top = 0.2
+	_gift_popup.anchor_right = 0.7
+	_gift_popup.anchor_bottom = 0.78
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	_gift_popup.add_child(margin)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+	var title_lbl := Label.new()
+	title_lbl.text = "Инвентарь подарков"
+	title_lbl.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(title_lbl)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(0, 220)
+	vbox.add_child(scroll)
+	_gift_grid = GridContainer.new()
+	_gift_grid.columns = 4
+	_gift_grid.add_theme_constant_override("h_separation", 8)
+	_gift_grid.add_theme_constant_override("v_separation", 8)
+	scroll.add_child(_gift_grid)
+	_gift_tooltip = Label.new()
+	_gift_tooltip.name = "GiftTooltip"
+	_gift_tooltip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_gift_tooltip.add_theme_font_size_override("font_size", 13)
+	_gift_tooltip.add_theme_color_override("font_color", Color(0.92, 0.88, 0.7))
+	_gift_tooltip.text = "Наведи на подарок"
+	_gift_tooltip.custom_minimum_size = Vector2(0, 36)
+	vbox.add_child(_gift_tooltip)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	vbox.add_child(row)
+	_gift_select_btn = Button.new()
+	_gift_select_btn.text = "Выбрать"
+	_gift_select_btn.disabled = true
+	_gift_select_btn.focus_mode = Control.FOCUS_NONE
+	_gift_select_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
+	_gift_select_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_gift_select_btn.pressed.connect(_on_gift_select_pressed)
+	row.add_child(_gift_select_btn)
+	_gift_close_btn = Button.new()
+	_gift_close_btn.text = "Закрыть"
+	_gift_close_btn.focus_mode = Control.FOCUS_NONE
+	_gift_close_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
+	_gift_close_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_gift_close_btn.pressed.connect(func() -> void:
+		if _gift_popup:
+			_gift_popup.visible = false
+	)
+	row.add_child(_gift_close_btn)
+	add_child(_gift_popup)
+
+
+func _gift_icon_texture(gift_id: String) -> Texture2D:
+	var path: String = GIFT_ICON_DIR + gift_id + ".png"
+	var tex: Texture2D = _load_gift_texture(path)
+	if tex != null:
+		return tex
+	return _load_gift_texture(GIFT_ICON_DIR + "_default.png")
+
+
+func _load_gift_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	if FileAccess.file_exists(path):
+		var img: Image = Image.load_from_file(path)
+		if img != null and not img.is_empty():
+			return ImageTexture.create_from_image(img)
+	return null
+
+
+func _owned_gift_entries() -> Array:
+	var entries: Array = []
+	for gid in Game.inventory.gift_counts.keys():
+		var count: int = int(Game.inventory.gift_counts[gid])
+		if count <= 0:
+			continue
+		entries.append({"id": str(gid), "count": count, "carried": false})
+	var carried: String = str(Game.inventory.carried_item)
+	if carried != "" and not carried.begins_with("food:") and not carried.begins_with("drink:"):
+		entries.append({"id": carried, "count": 1, "carried": true})
+	return entries
+
+
+func _open_gift_inventory() -> void:
+	_ensure_gift_popup()
+	_selected_gift_id = &""
+	if _gift_select_btn:
+		_gift_select_btn.disabled = true
+	if _gift_tooltip:
+		_gift_tooltip.text = "Наведи на подарок"
+	if _gift_grid:
+		for c in _gift_grid.get_children():
+			c.queue_free()
+	var entries: Array = _owned_gift_entries()
+	if entries.is_empty():
+		EventBus.toast("В инвентаре нет подарков", &"info")
+		if _gift_popup:
+			_gift_popup.visible = false
+		return
+	for entry_v in entries:
+		var entry: Dictionary = entry_v
+		var gid: String = str(entry.get("id", ""))
+		var def: Dictionary = ContentDB.gift(StringName(gid))
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(72, 72)
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.toggle_mode = true
+		btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
+		var icon: Texture2D = _gift_icon_texture(gid)
+		if icon:
+			btn.icon = icon
+			btn.expand_icon = true
+		btn.text = "×%d" % int(entry.get("count", 1))
+		if bool(entry.get("carried", false)):
+			btn.tooltip_text = "%s (в руках)" % str(def.get("name", gid))
+		else:
+			btn.tooltip_text = str(def.get("name", gid))
+		var desc: String = _gift_description(def, gid)
+		btn.mouse_entered.connect(func() -> void:
+			if _gift_tooltip:
+				_gift_tooltip.text = desc
+		)
+		var pick_id: StringName = StringName(gid)
+		btn.pressed.connect(func() -> void:
+			_select_gift_in_popup(pick_id, btn)
+		)
+		_gift_grid.add_child(btn)
+	if _gift_popup:
+		_gift_popup.visible = true
+		_gift_popup.move_to_front()
+
+
+func _gift_description(def: Dictionary, gid: String) -> String:
+	var name: String = str(def.get("name", gid))
+	var tags: Array = def.get("tags", [])
+	var parts: PackedStringArray = PackedStringArray()
+	for t in tags:
+		parts.append(str(t))
+	var tag_s: String = ", ".join(parts) if not parts.is_empty() else "обычный"
+	var cat: String = str(def.get("category", ""))
+	return "%s — %s (кат.: %s, кач.: %.0f)" % [name, tag_s, cat, float(def.get("quality", 0.0))]
+
+
+func _select_gift_in_popup(gift_id: StringName, chosen: Button) -> void:
+	_selected_gift_id = gift_id
+	if _gift_select_btn:
+		_gift_select_btn.disabled = gift_id == &""
+	if _gift_grid:
+		for c in _gift_grid.get_children():
+			if c is Button:
+				(c as Button).button_pressed = c == chosen
+	var def: Dictionary = ContentDB.gift(gift_id)
+	if _gift_tooltip:
+		_gift_tooltip.text = _gift_description(def, str(gift_id))
+
+
+func _on_gift_select_pressed() -> void:
+	if _selected_gift_id == &"":
+		return
+	var ok: bool = false
+	if _gift_for_result:
+		ok = Game.dating.give_result_gift(_selected_gift_id)
+	else:
+		ok = Game.dating.give_date_gift(_selected_gift_id)
+	if not ok:
+		return
+	if _gift_popup:
+		_gift_popup.visible = false
+	_refresh_action_buttons()
+	if _gift_for_result:
+		_show_result_panel(Game.dating.last_result)
+
+
+func _on_result_gift_pressed() -> void:
+	_gift_for_result = true
+	_open_gift_inventory()
+
+
+func _fill_result_body(result: Dictionary) -> void:
 	var factors: Dictionary = result.get("factors", {})
 	var punct: Dictionary = factors.get("punctuality", {})
 	var place: Dictionary = factors.get("place", {})
@@ -292,13 +471,24 @@ func _show_result_panel(result: Dictionary) -> void:
 		outfit_score = " (%.1f)" % float((outfit_v as Dictionary).get("score", 0.0))
 	else:
 		outfit_label = str(outfit_v) if str(outfit_v) != "" else "casual"
+	var correct: int = int(result.get("correct", dlg.get("correct", 0)))
+	var wrong: int = int(result.get("wrong", dlg.get("wrong", 0)))
+	var neutral: int = int(result.get("neutral", dlg.get("neutral", 0)))
+	var total_dlg: int = correct + wrong + neutral
+	var mood: String = str(result.get("mood", result.get("emotion", "neutral")))
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("[b]%s[/b]" % str(result.get("grade_name", "итог")))
-	lines.append("Связь %+.0f · +%d$ · +%.1f pop" % [
+	lines.append("Связь за свидание %+.0f · всего %.0f" % [
 		float(result.get("bond", result.get("relation", 0.0))),
+		float(result.get("bond_total", result.get("bond", 0.0))),
+	])
+	lines.append("+%d$ · +%.1f pop · скандал %.1f" % [
 		int(result.get("money", 0)),
 		float(result.get("popularity", 0.0)),
+		float(result.get("scandal", 0.0)),
 	])
+	lines.append("Настроение: [b]%s[/b]" % _emo_ru(mood))
+	lines.append("Удачные диалоги: [b]%d[/b] / %d" % [correct, total_dlg])
 	lines.append("")
 	lines.append("[b]Пять факторов[/b]")
 	lines.append("• Пунктуальность: %s (%.1f)" % [str(punct.get("label", "—")), float(punct.get("score", 0.0))])
@@ -308,12 +498,34 @@ func _show_result_panel(result: Dictionary) -> void:
 	])
 	lines.append("• Образ: %s%s" % [outfit_label, outfit_score])
 	lines.append("• Подарок: %s" % str(gift.get("label", "без подарка (ок)")))
-	lines.append("• Диалоги: %s" % str(dlg.get("label", "%d/%d" % [
-		int(dlg.get("correct", 0)),
-		int(dlg.get("correct", 0)) + int(dlg.get("wrong", 0)) + int(dlg.get("neutral", 0)),
-	])))
+	lines.append("• Диалоги: %s" % str(dlg.get("label", "%d/%d удачных" % [correct, total_dlg])))
 	if _result_label:
 		_result_label.text = "\n".join(lines)
+
+
+func _show_result_panel(result: Dictionary) -> void:
+	_ensure_result_panel()
+	_last_result = result.duplicate(true)
+	_showing_result = true
+	visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	var dialog_panel := get_node_or_null("Panel") as Control
+	if dialog_panel:
+		dialog_panel.visible = false
+	if _gift_btn:
+		_gift_btn.visible = false
+	if _gift_list:
+		_gift_list.visible = false
+	if _finish_btn:
+		_finish_btn.visible = false
+	if _result_gift_btn:
+		_result_gift_btn.visible = true
+		_result_gift_btn.disabled = false
+		if bool(result.get("gift_given", false)):
+			_result_gift_btn.text = "Подарок вручён"
+		else:
+			_result_gift_btn.text = "Подарок"
+	_fill_result_body(result)
 	if _result_panel:
 		_result_panel.visible = true
 		_result_panel.modulate.a = 0.0
@@ -330,6 +542,8 @@ func _dismiss_result_panel() -> void:
 	_showing_result = false
 	if _result_panel:
 		_result_panel.visible = false
+	if _gift_popup:
+		_gift_popup.visible = false
 	var dialog_panel := get_node_or_null("Panel") as Control
 	if dialog_panel:
 		dialog_panel.visible = true
@@ -353,9 +567,12 @@ func _dismiss_result_panel() -> void:
 
 
 func _open(payload: Dictionary) -> void:
+	var was_visible: bool = visible
 	_showing_result = false
 	if _result_panel:
 		_result_panel.visible = false
+	if _gift_popup:
+		_gift_popup.visible = false
 	var dialog_panel := get_node_or_null("Panel") as Control
 	if dialog_panel:
 		dialog_panel.visible = true
@@ -371,9 +588,10 @@ func _open(payload: Dictionary) -> void:
 	hints.text = "   •   ".join(hs)
 	if _prompt_label:
 		_prompt_label.text = str(payload.get("prompt", ""))
-	emotion_label.text = "Реакция: нейтрально"
-	if _feedback_label:
-		_feedback_label.text = ""
+	if not was_visible:
+		emotion_label.text = "Реакция: нейтрально"
+		if _feedback_label:
+			_feedback_label.text = ""
 	_refresh_coach()
 	if bool(payload.get("phases_done", false)):
 		phase_label.text = "МОЖНО ЗАВЕРШИТЬ"
@@ -381,8 +599,11 @@ func _open(payload: Dictionary) -> void:
 			c.queue_free()
 	_refresh_action_buttons()
 	var panel := get_node_or_null("Panel") as Control
-	if panel:
+	if panel and not was_visible:
+		# Only dim on first open; mid-date refresh must keep dialogue readable.
 		panel.modulate.a = 0.0
+	elif panel and was_visible:
+		panel.modulate.a = 1.0
 
 
 func show_after_intro() -> void:

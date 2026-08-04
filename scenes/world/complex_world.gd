@@ -728,20 +728,18 @@ func _build_room(room_id: StringName) -> void:
 			# Snap interact volumes to real furniture nodes (markers can lag behind art moves).
 			var bed_p: Vector3 = _marker_pos(apt_visual, "Furniture/Bed", Vector3(4.15, 0, -3.65))
 			var wardrobe_p: Vector3 = _marker_pos(apt_visual, "Furniture/Wardrobe", Vector3(5.05, 0, 0.95))
-			var fridge_p: Vector3 = _marker_pos(apt_visual, "Furniture/Fridge", Vector3(-3.8, 0, 1.2))
+			var fridge_p: Vector3 = _marker_pos(apt_visual, "Furniture/Fridge", Vector3(-2.05, 0, -2.15))
+			var drawers_p: Vector3 = _marker_pos(apt_visual, "Furniture/KitchenDrawers", Vector3(-1.35, 0, -2.15))
 			var table_p: Vector3 = _marker_pos(apt_visual, "Furniture/DiningTable", Vector3(0.65, 0, 0.55))
 			var exit_p: Vector3 = _marker_pos(apt_visual, "Markers/ApartmentExit", Vector3(-1.9, 0, 0.25))
 			var night_p: Vector3 = _marker_pos(apt_visual, "Furniture/NightStand", Vector3(5.15, 0, -2.7))
 			var neighbor_p: Vector3 = _marker_pos(apt_visual, "Markers/NeighborDoorAnchor", Vector3(-1.5, 0, 1.95))
 			var bed_i: Interactable = _add_interact(root, bed_p, "Кровать / Работа", "Поработать", &"job", {}, &"bed")
 			var wardrobe_i: Interactable = _add_interact(root, wardrobe_p, "Шкаф", "Сменить одежду", &"wardrobe", {}, &"wardrobe")
-			var fridge_i: Interactable = _add_interact(root, fridge_p, "Холодильник", "Взять простое блюдо", &"take_food", {"food_id": "simple_meal"}, &"shelf")
-			_add_interact(root, fridge_p + Vector3(0.35, 0, 0.15), "Закуски", "Взять закуску", &"take_food", {"food_id": "snack_plate"}, &"shelf")
-			_add_interact(root, fridge_p + Vector3(-0.35, 0, 0.15), "Десерт", "Взять десерт", &"take_food", {"food_id": "dessert"}, &"shelf")
-			_add_interact(root, fridge_p + Vector3(0.7, 0, 0), "Вода", "Взять воду", &"take_drink", {"drink_id": "water"}, &"shelf")
-			_add_interact(root, fridge_p + Vector3(0.95, 0, 0.1), "Сок", "Взять сок", &"take_drink", {"drink_id": "juice"}, &"shelf")
-			_add_interact(root, fridge_p + Vector3(1.2, 0, 0), "Вино", "Взять вино", &"take_drink", {"drink_id": "wine"}, &"shelf")
-			_add_interact(root, fridge_p + Vector3(-0.7, 0, 0), "Посуда", "Улучшить сервировку", &"upgrade_homeware", {}, &"shelf")
+			# Fridge = food menu only; KitchenDrawers = drink menu only (no separate water/wine/snack points).
+			# Homeware upgrades: city shop «Дом и посуда» (open_homeware_shop) — not an apartment interact.
+			var fridge_i: Interactable = _add_interact(root, fridge_p, "Холодильник", "Выбрать еду", &"take_food", {}, &"shelf")
+			var drawers_i: Interactable = _add_interact(root, drawers_p, "Кухонные ящики", "Выбрать напиток", &"take_drink", {}, &"shelf")
 			var table_i: Interactable = _add_interact(root, table_p, "Кухонный стол", "Положить / сесть / начать", &"prepare_and_start", {}, &"table_set")
 			# Doorbell removed: home dates start at the table after sit/wait.
 			var phone_i: Interactable = _add_interact(root, night_p, "Телефон на тумбе", "Открыть", &"phone", {}, &"phone_stand")
@@ -755,6 +753,7 @@ func _build_room(room_id: StringName) -> void:
 			_bind_interact_outline(bed_i, apt_visual, "Furniture/Bed")
 			_bind_interact_outline(wardrobe_i, apt_visual, "Furniture/Wardrobe")
 			_bind_interact_outline(fridge_i, apt_visual, "Furniture/Fridge")
+			_bind_interact_outline(drawers_i, apt_visual, "Furniture/KitchenDrawers")
 			_bind_interact_outline(table_i, apt_visual, "Furniture/DiningTable")
 			_bind_interact_outline(phone_i, apt_visual, "Furniture/NightStand")
 			_bind_interact_outline(exit_i, apt_visual, "Furniture/ExitDoor")
@@ -1056,8 +1055,13 @@ func _add_interact(parent: Node3D, pos: Vector3, title: String, action: String, 
 	var visuals := Node3D.new()
 	visuals.name = "Visuals"
 	area.add_child(visuals)
-	var art_backed: bool = bool(payload.get("art_backed", false)) or parent.has_node("ApartmentVisual")
-	if art_backed:
+	# Apartment furniture outlines bind real meshes via bind_outline_root — no FocusProxy boxes.
+	var apartment_art: bool = parent.has_node("ApartmentVisual")
+	var art_backed: bool = bool(payload.get("art_backed", false))
+	if apartment_art:
+		pass
+	elif art_backed:
+		# City venues without bound meshes still need a sole fallback outline target.
 		_attach_focus_proxy(visuals)
 	elif prop_kind != &"":
 		PropFactory.attach(visuals, prop_kind)
@@ -1074,14 +1078,17 @@ func _bind_interact_outline(area: Interactable, visual: Node, path: String) -> v
 	if n == null:
 		return
 	area.bind_outline_root(n)
-	# Prefer furniture/door mesh outlines over the invisible FocusProxy box.
-	var proxy: Node = area.get_node_or_null("Visuals/FocusProxy")
-	if proxy:
-		proxy.free()
+	# Drop any leftover proxy/plane so only screen-space next_pass remains.
+	var visuals_node: Node = area.get_node_or_null("Visuals")
+	if visuals_node:
+		for child in visuals_node.get_children():
+			var cn := str(child.name)
+			if cn == "FocusProxy" or cn.begins_with("FocusMarker") or cn.begins_with("OutlinePlane") or cn.begins_with("OutlineExtrude"):
+				child.free()
 
 
 func _attach_focus_proxy(parent: Node3D) -> void:
-	## Invisible mesh so art-backed Interactables still get a focus outline pass.
+	## Sole fallback outline target for city art-backed spots without bound meshes.
 	var proxy := MeshInstance3D.new()
 	proxy.name = "FocusProxy"
 	var box := BoxMesh.new()

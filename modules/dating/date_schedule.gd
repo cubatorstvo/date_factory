@@ -185,6 +185,7 @@ func cancel(reason: String = "cancelled") -> void:
 	girl_arrived = false
 	player_seated = false
 	awaiting_finish = false
+	_reset_table_keep_ware()
 	EventBus.date_cancelled.emit(payload)
 	EventBus.toast("Свидание отменено", &"info")
 

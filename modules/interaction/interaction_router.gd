@@ -21,9 +21,17 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 		"prepare_table", "prepare_and_start", "start_date":
 			_try_start_home_date()
 		"take_food":
-			_take_food(str(payload.get("food_id", "simple_meal")))
+			var food_id: String = str(payload.get("food_id", ""))
+			if food_id.is_empty():
+				_open_home_prep_menu("food")
+			else:
+				_take_food(food_id)
 		"take_drink":
-			_take_drink(str(payload.get("drink_id", "water")))
+			var drink_id: String = str(payload.get("drink_id", ""))
+			if drink_id.is_empty():
+				_open_home_prep_menu("drink")
+			else:
+				_take_drink(drink_id)
 		"place_on_table":
 			_place_carried_on_table()
 		"upgrade_homeware":
@@ -414,6 +422,28 @@ static func _open_arcade_minigame(from_date: bool, girl_id: String) -> void:
 		arcade.call("open", {"girl_id": gid, "from_date": from_date})
 
 
+static func _open_home_prep_menu(kind: String) -> void:
+	## Fridge (food) / KitchenDrawers (drink) selection via shared ShopUI list panel.
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var shop: Node = tree.get_first_node_in_group("shop_ui")
+	if shop != null and shop.has_method("open_home_prep"):
+		shop.call("open_home_prep", kind)
+		return
+	# Fallback if ShopUI missing: take first catalog option.
+	var options: Array = DatePlaces.food_options() if kind == "food" else DatePlaces.drink_options()
+	if options.is_empty():
+		EventBus.toast("Пусто", &"warn")
+		return
+	var first: Dictionary = options[0] as Dictionary
+	var first_id: String = str(first.get("id", ""))
+	if kind == "food":
+		_take_food(first_id)
+	else:
+		_take_drink(first_id)
+
+
 static func _open_shop_menu(shop_id: String) -> void:
 	var catalog: Dictionary = DatePlaces.shop_catalog().get(shop_id, {})
 	var kind := str(catalog.get("kind", "gift"))
@@ -459,9 +489,9 @@ static func _take_drink(drink_id: String) -> void:
 
 
 static func _place_carried_on_table() -> void:
-	var carried := str(Game.inventory.carried_item)
+	var carried: String = str(Game.inventory.carried_item)
 	if carried.begins_with("food:"):
-		var fid := carried.trim_prefix("food:")
+		var fid: String = carried.trim_prefix("food:")
 		if Game.dating.schedule.place_food(fid):
 			Game.inventory.carried_item = &""
 			EventBus.carry_changed.emit(&"")
@@ -469,7 +499,7 @@ static func _place_carried_on_table() -> void:
 			if Game.dating.schedule.is_table_ready():
 				Game.quests.complete("s1_city")
 	elif carried.begins_with("drink:"):
-		var did := carried.trim_prefix("drink:")
+		var did: String = carried.trim_prefix("drink:")
 		if Game.dating.schedule.place_drink(did):
 			Game.inventory.carried_item = &""
 			EventBus.carry_changed.emit(&"")
@@ -477,7 +507,7 @@ static func _place_carried_on_table() -> void:
 			if Game.dating.schedule.is_table_ready():
 				Game.quests.complete("s1_city")
 	else:
-		EventBus.toast("На стол нужна еда или напиток из холодильника", &"warn")
+		EventBus.toast("На стол нужна еда из холодильника или напиток из ящиков", &"warn")
 
 
 static var _home_start_in_flight: bool = false

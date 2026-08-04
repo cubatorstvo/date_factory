@@ -20,12 +20,15 @@
 [ext_resource type="PackedScene" uid="uid://b18c26qc0lwp1" path="res://assets/environment/interior/house_interior/meshes/Curtains_Double.fbx" id="18_08su2"]
 [ext_resource type="PackedScene" uid="uid://cipt6oqfivpgq" path="res://assets/environment/interior/house_interior/meshes/Trashcan_Small1.fbx" id="19_ulflq"]
 [ext_resource type="PackedScene" uid="uid://brgls1jlnxla6" path="res://assets/environment/interior/house_interior/meshes/Plate_2.fbx" id="20_360pb"]
+[ext_resource type="Script" uid="uid://bjq1f2iabv61h" path="res://scenes/world/vertical_slice/apartment_place_setting.gd" id="20_b8mu0"]
 [ext_resource type="PackedScene" uid="uid://271jxl6wrhdg" path="res://assets/environment/interior/house_interior/meshes/Fork.fbx" id="21_d4xo1"]
 [ext_resource type="PackedScene" uid="uid://cnf8siygbp4wk" path="res://assets/environment/interior/house_interior/meshes/Spoon.fbx" id="22_7xvut"]
 [ext_resource type="PackedScene" uid="uid://b2tlibjemhiy6" path="res://assets/props/food/meshes/Bottle2.fbx" id="23_f177j"]
 [ext_resource type="PackedScene" uid="uid://xvg50boxd6eg" path="res://assets/props/food/meshes/Apple.fbx" id="25_si6qv"]
 [ext_resource type="PackedScene" uid="uid://hn6p05ki7bm1" path="res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx" id="26_kc7ps"]
 [ext_resource type="PackedScene" uid="uid://bl7xgtsut762s" path="res://assets/environment/interior/house_interior/meshes/Light_Floor2.fbx" id="27_8fvko"]
+[ext_resource type="PackedScene" uid="uid://bi21k301iv0qr" path="res://assets/environment/interior/drinkware/Drinkware_CheapGlass.tscn" id="28_xqffd"]
+[ext_resource type="PackedScene" uid="uid://dbffws2sfe2cn" path="res://assets/environment/interior/drinkware/meshes/Jar_Large.fbx" id="29_qnc1n"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soanb"]
 albedo_color = Color(0.24, 0.16, 0.11, 1)
@@ -2447,7 +2450,7 @@ transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1
 mesh = SubResource("ArrayMesh_rlvu1")
 
 [node name="Oven" parent="Furniture" unique_id=2076744371 instance=ExtResource("9_1xvmk")]
-transform = Transform3D(5.6, 0, 0, 0, 5.6, 0, 0, 0, 5.6, -1.35, 0, -2.15)
+transform = Transform3D(5.6, 0, 0, 0, 5.6, 0, 0, 0, 5.6, 0.05, 0, -2.15)
 
 [node name="Kitchen_Oven2" type="MeshInstance3D" parent="Furniture/Oven" unique_id=1869250268]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
@@ -2461,7 +2464,7 @@ transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1
 mesh = SubResource("ArrayMesh_hrotw")
 
 [node name="KitchenDrawers" parent="Furniture" unique_id=191100551 instance=ExtResource("11_4mq26")]
-transform = Transform3D(5.6, 0, 0, 0, 5.6, 0, 0, 0, 5.6, 0.05, 0, -2.15)
+transform = Transform3D(5.6, 0, 0, 0, 5.6, 0, 0, 0, 5.6, -1.35, 0, -2.15)
 
 [node name="Kitchen_2Drawers2" type="MeshInstance3D" parent="Furniture/KitchenDrawers" unique_id=329846089]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
@@ -2534,6 +2537,7 @@ transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1
 mesh = SubResource("ArrayMesh_ecvoq")
 
 [node name="Decor" type="Node3D" parent="." unique_id=1057704250]
+script = ExtResource("20_b8mu0")
 
 [node name="DatePlateA" parent="Decor" unique_id=1114612715 instance=ExtResource("20_360pb")]
 transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 0.099, 0.652, 0.608)
@@ -2550,14 +2554,14 @@ transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1
 mesh = SubResource("ArrayMesh_difgg")
 
 [node name="DateFork" parent="Decor" unique_id=947612755 instance=ExtResource("21_d4xo1")]
-transform = Transform3D(9.553427e-15, 2.1855695e-07, 5, 5, -2.1855695e-07, 0, 2.1855695e-07, 5, -2.1855695e-07, 0.099, 0.663, 0.748)
+transform = Transform3D(9.553427e-15, 2.1855695e-07, 5, 5, -2.1855695e-07, 0, 2.1855695e-07, 5, -2.1855695e-07, 0.099, 0.663, 0.776163)
 
 [node name="Fork2" type="MeshInstance3D" parent="Decor/DateFork" unique_id=1237314102]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_uwysn")
 
 [node name="DateSpoon" parent="Decor" unique_id=1545009017 instance=ExtResource("22_7xvut")]
-transform = Transform3D(9.553427e-15, -2.1855695e-07, 5, -5, -2.1855695e-07, 0, 2.1855695e-07, -5, -2.1855695e-07, 0.099, 0.673, 0.468)
+transform = Transform3D(9.553427e-15, -2.1855695e-07, 5, -5, -2.1855695e-07, 0, 2.1855695e-07, -5, -2.1855695e-07, 0.099, 0.673, 0.439837)
 
 [node name="Spoon2" type="MeshInstance3D" parent="Decor/DateSpoon" unique_id=605409022]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
@@ -2594,27 +2598,33 @@ visible = false
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_nqpok")
 
-[node name="DateForkB" type="Node3D" parent="Decor" unique_id=310531084 instance=ExtResource("21_d4xo1")]
-transform = Transform3D(9.553427e-15, 2.1855695e-07, -5, 5, -2.1855695e-07, 0, -2.1855695e-07, -5, -2.1855695e-07, 0.699, 0.663, 0.468)
+[node name="DateForkB" parent="Decor" unique_id=310531084 instance=ExtResource("21_d4xo1")]
+transform = Transform3D(9.553427e-15, 2.1855695e-07, -5, 5, -2.1855695e-07, 0, -2.1855695e-07, -5, -2.1855695e-07, 0.699, 0.663, 0.439837)
 
-[node name="Fork" type="MeshInstance3D" parent="Decor/DateForkB" unique_id=1403932768]
+[node name="Fork2" type="MeshInstance3D" parent="Decor/DateForkB" unique_id=1403932768]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_r1gkd")
 
-[node name="Fork2" type="MeshInstance3D" parent="Decor/DateForkB" unique_id=1170090045]
-transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
-mesh = SubResource("ArrayMesh_uwysn")
+[node name="DateSpoonB" parent="Decor" unique_id=892091136 instance=ExtResource("22_7xvut")]
+transform = Transform3D(9.553427e-15, -2.1855695e-07, -5, -5, -2.1855695e-07, 0, -2.1855695e-07, 5, -2.1855695e-07, 0.699, 0.673, 0.776163)
 
-[node name="DateSpoonB" type="Node3D" parent="Decor" unique_id=892091136 instance=ExtResource("22_7xvut")]
-transform = Transform3D(9.553427e-15, -2.1855695e-07, -5, -5, -2.1855695e-07, 0, -2.1855695e-07, 5, -2.1855695e-07, 0.699, 0.673, 0.748)
-
-[node name="Spoon" type="MeshInstance3D" parent="Decor/DateSpoonB" unique_id=1550754305]
+[node name="Spoon2" type="MeshInstance3D" parent="Decor/DateSpoonB" unique_id=1550754305]
 transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
 mesh = SubResource("ArrayMesh_nbnpt")
 
-[node name="Spoon2" type="MeshInstance3D" parent="Decor/DateSpoonB" unique_id=365805009]
-transform = Transform3D(100, 0, 0, 0, -1.1920929e-05, 99.99999, 0, -99.99999, -1.1920929e-05, 0, 0, 0)
-mesh = SubResource("ArrayMesh_ytkx2")
+[node name="DateGlassA" parent="Decor" unique_id=1537564486 instance=ExtResource("28_xqffd")]
+transform = Transform3D(0.9659258, 0, 0.25881904, 0, 1, 0, -0.25881904, 0, 0.9659258, 0.22, 0.652, 0.72)
+visible = false
+
+[node name="Mesh2" parent="Decor/DateGlassA" unique_id=1858545687 instance=ExtResource("29_qnc1n")]
+transform = Transform3D(1.9, 0, 0, 0, 1.9, 0, 0, 0, 1.9, 0, 0, 0)
+
+[node name="DateGlassB" parent="Decor" unique_id=1851489420 instance=ExtResource("28_xqffd")]
+transform = Transform3D(0.9396926, 0, -0.34202012, 0, 1, 0, 0.34202012, 0, 0.9396926, 0.58, 0.652, 0.5)
+visible = false
+
+[node name="Mesh2" parent="Decor/DateGlassB" unique_id=469735265 instance=ExtResource("29_qnc1n")]
+transform = Transform3D(1.9, 0, 0, 0, 1.9, 0, 0, 0, 1.9, 0, 0, 0)
 
 [node name="Lights" type="Node3D" parent="." unique_id=898367005]
 
@@ -2680,10 +2690,10 @@ transform = Transform3D(-1, 3.2749146e-08, -8.105699e-08, 0, 0.92718387, 0.37460
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -1.7, 0, 0.45)
 
 [node name="GirlSeat" type="Marker3D" parent="Markers" unique_id=321523854]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.85)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.619, 0, 0.608)
 
 [node name="HeroSeat" type="Marker3D" parent="Markers" unique_id=1814633732]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.5, 0, 1.25)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.416, 0, 0.608)
 
 [node name="NeighborDoorAnchor" type="Marker3D" parent="Markers" unique_id=1780692331]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 1.95)

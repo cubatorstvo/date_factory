@@ -74,15 +74,17 @@ func on_interact(by: Node) -> void:
 
 func _setup_outlines() -> void:
 	_outline_mats.clear()
-	_strip_legacy_markers(self)
+	_strip_legacy_outline_nodes(self)
 	var meshes: Array[MeshInstance3D] = []
-	_collect_meshes(self, meshes)
+	# When furniture/art roots are bound, skip Area-local proxy meshes entirely.
+	if _external_outline_roots.is_empty():
+		_collect_meshes(self, meshes)
 	for root in _external_outline_roots:
 		if root == null or not is_instance_valid(root):
 			continue
 		if root is MeshInstance3D:
 			var root_mi := root as MeshInstance3D
-			if not _is_detail_mesh(root_mi) and not meshes.has(root_mi):
+			if not _is_detail_mesh(root_mi) and not _is_legacy_outline_mesh(root_mi) and not meshes.has(root_mi):
 				meshes.append(root_mi)
 		_collect_meshes(root, meshes)
 	for mi in meshes:
@@ -139,7 +141,7 @@ func _collect_meshes(node: Node, out: Array[MeshInstance3D]) -> void:
 			continue
 		if child is MeshInstance3D:
 			var mi := child as MeshInstance3D
-			if not _is_detail_mesh(mi):
+			if not _is_detail_mesh(mi) and not _is_legacy_outline_mesh(mi):
 				out.append(mi)
 		_collect_meshes(child, out)
 
@@ -148,9 +150,15 @@ func _is_detail_mesh(mi: MeshInstance3D) -> bool:
 	return DETAIL_MESH_NAMES.has(str(mi.name))
 
 
-func _strip_legacy_markers(node: Node) -> void:
+func _is_legacy_outline_mesh(mi: MeshInstance3D) -> bool:
+	var n := str(mi.name)
+	return n == "FocusProxy" or n.begins_with("FocusMarker") or n.begins_with("OutlinePlane") or n.begins_with("OutlineExtrude")
+
+
+func _strip_legacy_outline_nodes(node: Node) -> void:
 	for child in node.get_children():
-		if str(child.name).begins_with("FocusMarker"):
+		var n := str(child.name)
+		if n == "FocusProxy" or n.begins_with("FocusMarker") or n.begins_with("OutlinePlane") or n.begins_with("OutlineExtrude"):
 			child.queue_free()
 			continue
-		_strip_legacy_markers(child)
+		_strip_legacy_outline_nodes(child)

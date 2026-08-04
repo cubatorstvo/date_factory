@@ -1,0 +1,113 @@
+---
+description: Делегирование, file ownership, multitasking и модельная политика DATE FACTORY.
+globs:
+alwaysApply: true
+---
+
+# Модельная политика
+
+Все custom subagents DATE FACTORY должны использовать:
+
+`Cursor Grok 4.5`
+
+Не использовать `inherit`, потому что Orchestrator работает на более дорогой модели.
+
+Не использовать `fast`.
+
+Если отображаемое имя не является допустимым внутренним идентификатором:
+
+1. открыть custom subagent в Cursor agent editor;
+2. выбрать отображаемую модель `Cursor Grok 4.5`;
+3. сохранить значение, которое записал Cursor;
+4. выполнить smoke-test;
+5. не угадывать slug;
+6. если UI-действие нельзя выполнить автоматически, сообщить одну точную ручную инструкцию.
+
+# Allowlist
+
+Разрешены:
+
+- `df-researcher`;
+- `df-gameplay-worker`;
+- `df-scene-worker`;
+- `df-asset-worker`;
+- `df-content-worker`;
+- `df-qa-worker`.
+
+Не использовать встроенных implementation agents, когда задачу может выполнить allowlist-agent.
+
+# Одноуровневая иерархия
+
+Допустимо:
+
+`Orchestrator → Grok worker → отчёт Orchestrator`
+
+Запрещено:
+
+`Orchestrator → worker → subworker`
+
+Workers не запускают других агентов.
+
+# Параллелизм
+
+Обычный максимум — 3 workers.
+
+Не параллелить изменения:
+
+- одного `.tscn`;
+- одного `.gd`;
+- `project.godot`;
+- autoload;
+- save schema;
+- игрового времени;
+- главного dating state machine;
+- city root;
+- общего data catalog;
+- одного GLB;
+- одного Blender working file.
+
+Read-only исследования можно параллелить шире только при независимых областях.
+
+# File ownership
+
+До параллельной работы обновлять `docs/agent/OWNERSHIP.md`.
+
+Один изменяемый файл имеет только одного writer.
+
+Для task указать:
+
+- task id;
+- agent;
+- writable paths;
+- read-only dependencies;
+- forbidden paths;
+- status.
+
+# Worktrees
+
+Использовать worktrees для крупных независимых задач, когда текущий Cursor workflow это поддерживает.
+
+Не использовать worktree для маленькой правки.
+
+Перед merge:
+
+- просмотреть diff;
+- разрешить конфликты вручную;
+- не принимать автоматический конфликт `.tscn` без просмотра;
+- запустить интеграционный тест после merge.
+
+# Контракт результата worker
+
+Каждый worker возвращает:
+
+1. summary;
+2. changed files;
+3. фактически проверенный player flow;
+4. commands executed;
+5. engine logs;
+6. screenshots;
+7. limitations;
+8. unmet criteria;
+9. рекомендацию PASS/FAIL.
+
+Финальное решение принимает только Orchestrator.

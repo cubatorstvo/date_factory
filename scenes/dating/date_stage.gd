@@ -10,12 +10,14 @@ const DATE_GIRL_SCENE := "res://assets/characters/hero_base/prefabs/DateGirl_UAL
 const HERO_BODY_SCENE := "res://assets/characters/hero_base/prefabs/Hero.tscn"
 const DATE_PRESENTATION_CONTROLLER := "res://scenes/dating/date_presentation_controller.gd"
 const RESTAURANT_ART_OFFSET := Vector3(-2.0, 0.0, 1.6)
-## Centers dining table near vignette origin (table at 0.65,0,0.55 in apartment art).
-const APARTMENT_ART_OFFSET := Vector3(-0.65, 0.0, -0.55)
+## Centers dining table near vignette origin (table ~0.40,0,0.61 in apartment art).
+const APARTMENT_ART_OFFSET := Vector3(-0.4, 0.0, -0.61)
 const GIRL_DOOR_POSITION := Vector3(-2.0, 0.0, 6.4)
 const GIRL_CHAIR_POSITION := Vector3(0.0, 0.0, -1.15)
 const PLAYER_CHAIR_OFFSET := Vector3(0.0, 0.05, 1.15)
 const GIRL_SEAT_Y_OFFSET := 0.0
+## Sit clips keep root near floor; hips drop to seat (~0.45m on apartment chairs).
+const HOME_SEAT_ROOT_BELOW_SURFACE := 0.45
 const INTRO_SKIP_MIN_TIME := 2.4
 ## Uniform ~1.8m vignette characters (Hero prefab still bakes 0.55 root scale).
 const DATE_CHARACTER_SCALE := 1.0
@@ -75,6 +77,9 @@ func _on_notify(message: String, kind: StringName) -> void:
 func _input(event: InputEvent) -> void:
 	if _sequence != &"intro":
 		return
+	# Home dates auto-finish intro → dialogue; skip is optional elsewhere only.
+	if _place_id == "home":
+		return
 	if _sequence_time < INTRO_SKIP_MIN_TIME:
 		return
 	# Mouse skip on button_up so the press that opened/finished UI is not eaten.
@@ -98,11 +103,13 @@ func _process(delta: float) -> void:
 	match _sequence:
 		&"intro":
 			if _presentation and is_instance_valid(_presentation):
-				if _camera_cue == 0 and _sequence_time >= 1.6:
-					_presentation.call("move_to", &"wide", 0.9)
+				var wide_at: float = 0.9 if _place_id == "home" else 1.6
+				var two_at: float = 1.8 if _place_id == "home" else 4.6
+				if _camera_cue == 0 and _sequence_time >= wide_at:
+					_presentation.call("move_to", &"wide", 0.7 if _place_id == "home" else 0.9)
 					_camera_cue = 1
-				elif _camera_cue == 1 and _sequence_time >= 4.6:
-					_presentation.call("move_to", &"two_shot", 0.85)
+				elif _camera_cue == 1 and _sequence_time >= two_at:
+					_presentation.call("move_to", &"two_shot", 0.65 if _place_id == "home" else 0.85)
 					_camera_cue = 2
 			var step: Dictionary = _arrival.tick(delta)
 			_girl.position = step.get("position", _girl_door_position)
@@ -151,6 +158,10 @@ func _process(delta: float) -> void:
 
 
 func _on_open(payload: Dictionary) -> void:
+	# date_ui_open is also used for mid-date UI refresh (phases_done / gift).
+	# Rebuilding here re-plays the girl-arrival cutscene — skip if vignette is live.
+	if _sequence in [&"intro", &"ready", &"outro"] and _root != null and is_instance_valid(_root):
+		return
 	_clear()
 	_date_ui = get_tree().get_first_node_in_group("date_ui") as CanvasItem
 	if _date_ui:
@@ -222,18 +233,24 @@ func _on_open(payload: Dictionary) -> void:
 	_date_cam.name = "DateCam"
 	_date_cam.fov = 50.0
 	add_child(_date_cam)
-	# Over the player's shoulder, looking across the table at the girl.
-	_date_cam.global_position = STAGE_ORIGIN + Vector3(0.15, 1.45, 1.35)
-	_date_cam.look_at(STAGE_ORIGIN + Vector3(0.0, 1.35, -0.9), Vector3.UP)
+	if _place_id == "home":
+		# Stay inside the 5×5 apartment; look toward entrance / table.
+		_date_cam.global_position = STAGE_ORIGIN + Vector3(0.35, 1.55, 1.05)
+		_date_cam.look_at(STAGE_ORIGIN + Vector3(-2.1, 1.15, -0.1), Vector3.UP)
+	else:
+		# Over the player's shoulder, looking across the table at the girl.
+		_date_cam.global_position = STAGE_ORIGIN + Vector3(0.15, 1.45, 1.35)
+		_date_cam.look_at(STAGE_ORIGIN + Vector3(0.0, 1.35, -0.9), Vector3.UP)
 	_date_cam.current = true
 	var controller_script := load(DATE_PRESENTATION_CONTROLLER)
 	if controller_script:
 		_presentation = controller_script.new() as Node
 		add_child(_presentation)
-		_presentation.call("setup", _date_cam, STAGE_ORIGIN)
+		_presentation.call("setup", _date_cam, STAGE_ORIGIN, _place_id)
 		_presentation.call("move_to", &"arrival", 0.0)
 	_spawn_hero_body()
-	_arrival.begin_intro(_girl_door_position, _girl_chair_position, 6.5)
+	var intro_walk: float = 2.2 if _place_id == "home" else 6.5
+	_arrival.begin_intro(_girl_door_position, _girl_chair_position, intro_walk)
 	_sequence = &"intro"
 	_sequence_time = 0.0
 	_turn_started = false
@@ -269,7 +286,9 @@ func _finish_intro() -> void:
 	if _girl and is_instance_valid(_girl):
 		_hold_girl_seated(true)
 	if _presentation and is_instance_valid(_presentation):
-		_presentation.call("move_to", &"girl_close", 0.85)
+		# Home: snappy push-in onto the girl, then dialogue opens immediately.
+		var push_dur: float = 0.55 if _place_id == "home" else 0.85
+		_presentation.call("move_to", &"girl_close", push_dur)
 	if _date_ui and is_instance_valid(_date_ui):
 		if _date_ui.has_method("show_after_intro"):
 			_date_ui.show_after_intro()
@@ -293,7 +312,7 @@ func _face_toward_player() -> void:
 		return
 	if not _girl.is_inside_tree() or not _root.is_inside_tree():
 		return
-	var target := _root.to_global(Vector3(0.0, 1.2, 0.9))
+	var target := _root.to_global(_hero_chair_position + Vector3(0.0, 1.2, 0.0))
 	if _girl.has_method("face_toward"):
 		_girl.call("face_toward", target)
 	else:
@@ -478,6 +497,8 @@ func _swap_backdrop_keep_cast(new_place_id: String) -> void:
 		if n in ["ParkVisual", "RestaurantVisual", "ApartmentVisual"]:
 			child.queue_free()
 	_add_backdrop(_root, new_place_id)
+	if _presentation and is_instance_valid(_presentation) and _date_cam and is_instance_valid(_date_cam):
+		_presentation.call("setup", _date_cam, STAGE_ORIGIN, _place_id)
 	if _girl and is_instance_valid(_girl):
 		_girl.position = _girl_chair_position
 		_hold_girl_seated(true)
@@ -501,13 +522,11 @@ func _resolve_date_markers(visual: Node3D, is_home: bool) -> void:
 		hero = markers.get_node_or_null("HeroSeat") as Node3D
 		if is_home and entrance == null:
 			entrance = markers.get_node_or_null("ApartmentExit") as Node3D
-	if is_home:
-		if seat == null:
-			seat = visual.get_node_or_null("Furniture/DiningChairNorth") as Node3D
-		if hero == null:
-			hero = visual.get_node_or_null("Furniture/DiningChairSouth") as Node3D
 	if entrance:
 		_girl_door_position = visual.position + entrance.position
+	if is_home:
+		_resolve_home_chairs(visual, markers)
+		return
 	if seat:
 		_girl_chair_position = visual.position + seat.position + Vector3(0.0, GIRL_SEAT_Y_OFFSET, 0.0)
 	if hero:
@@ -515,6 +534,85 @@ func _resolve_date_markers(visual: Node3D, is_home: bool) -> void:
 		if _player and is_instance_valid(_player) and _root != null:
 			_player.global_position = _root.to_global(_hero_chair_position)
 			_player.rotation = Vector3(0.0, PI, 0.0)
+
+
+func _resolve_home_chairs(visual: Node3D, markers: Node3D) -> void:
+	## Girl → chair closer to west entrance; hero → farther chair. Snap root to seat AABB.
+	var chair_a := visual.get_node_or_null("Furniture/DiningChairNorth") as Node3D
+	var chair_b := visual.get_node_or_null("Furniture/DiningChairSouth") as Node3D
+	var exit_door := visual.get_node_or_null("Furniture/ExitDoor") as Node3D
+	var table := visual.get_node_or_null("Furniture/DiningTable") as Node3D
+	var girl_chair: Node3D = chair_a
+	var hero_chair: Node3D = chair_b
+	if chair_a != null and chair_b != null and exit_door != null:
+		var door_xz := Vector2(exit_door.position.x, exit_door.position.z)
+		var dist_a := Vector2(chair_a.position.x, chair_a.position.z).distance_to(door_xz)
+		var dist_b := Vector2(chair_b.position.x, chair_b.position.z).distance_to(door_xz)
+		if dist_a <= dist_b:
+			girl_chair = chair_a
+			hero_chair = chair_b
+		else:
+			girl_chair = chair_b
+			hero_chair = chair_a
+	var girl_local: Vector3 = _seat_root_from_chair(girl_chair, table)
+	var hero_local: Vector3 = _seat_root_from_chair(hero_chair, table)
+	# Prefer authored markers when they already sit on the chosen chair XZ.
+	if markers != null:
+		var girl_marker := markers.get_node_or_null("GirlSeat") as Node3D
+		var hero_marker := markers.get_node_or_null("HeroSeat") as Node3D
+		if girl_marker != null and girl_chair != null:
+			var gm_xz := Vector2(girl_marker.position.x, girl_marker.position.z)
+			var gc_xz := Vector2(girl_local.x, girl_local.z)
+			if gm_xz.distance_to(gc_xz) < 0.35:
+				girl_local = Vector3(girl_marker.position.x, girl_local.y, girl_marker.position.z)
+		if hero_marker != null and hero_chair != null:
+			var hm_xz := Vector2(hero_marker.position.x, hero_marker.position.z)
+			var hc_xz := Vector2(hero_local.x, hero_local.z)
+			if hm_xz.distance_to(hc_xz) < 0.35:
+				hero_local = Vector3(hero_marker.position.x, hero_local.y, hero_marker.position.z)
+	_girl_chair_position = visual.position + girl_local + Vector3(0.0, GIRL_SEAT_Y_OFFSET, 0.0)
+	_hero_chair_position = visual.position + hero_local
+	if _player and is_instance_valid(_player) and _root != null:
+		_player.global_position = _root.to_global(_hero_chair_position)
+		var face := _girl_chair_position - _hero_chair_position
+		face.y = 0.0
+		if face.length_squared() > 0.0001:
+			_player.rotation = Vector3(0.0, atan2(-face.x, -face.z), 0.0)
+		else:
+			_player.rotation = Vector3(0.0, PI * 0.5, 0.0)
+
+
+func _seat_root_from_chair(chair: Node3D, table: Node3D) -> Vector3:
+	if chair == null:
+		return Vector3.ZERO
+	var aabb := _chair_mesh_aabb_local(chair)
+	if aabb.size == Vector3.ZERO:
+		return Vector3(chair.position.x, 0.0, chair.position.z)
+	var seat_top_y: float = aabb.position.y + aabb.size.y * 0.48
+	var seat := Vector3(aabb.get_center().x, seat_top_y - HOME_SEAT_ROOT_BELOW_SURFACE, aabb.get_center().z)
+	if table != null:
+		var toward := table.position - Vector3(seat.x, table.position.y, seat.z)
+		toward.y = 0.0
+		if toward.length_squared() > 0.0001:
+			seat += toward.normalized() * 0.05
+	return seat
+
+
+func _chair_mesh_aabb_local(chair: Node3D) -> AABB:
+	var aabb := AABB()
+	var first := true
+	for node in chair.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var local_xf: Transform3D = chair.transform * mi.transform
+		var ga: AABB = local_xf * mi.get_aabb()
+		if first:
+			aabb = ga
+			first = false
+		else:
+			aabb = aabb.merge(ga)
+	return aabb if not first else AABB()
 
 
 func _lock_girl_physics() -> void:

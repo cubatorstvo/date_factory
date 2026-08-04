@@ -100,6 +100,37 @@ func open(shop_id: String) -> void:
 		EventBus.toast("Магазин пуст", &"warn")
 		return
 	_title.text = str(catalog.get("name", "Магазин"))
+	_buy_btn.text = "Купить"
+	_money.visible = true
+	_refresh_list()
+	UiLayers.raise_popup(self, UiLayers.SHOP)
+	visible = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if _list.item_count > 0:
+		_list.select(0)
+
+
+func open_home_prep(kind: String) -> void:
+	## Apartment fridge (food) / KitchenDrawers (drink) selection — reuses this list UI.
+	var prep_kind: String = kind.strip_edges().to_lower()
+	if prep_kind != "food" and prep_kind != "drink":
+		EventBus.toast("Неизвестный тип выбора", &"warn")
+		return
+	var options: Array = DatePlaces.food_options() if prep_kind == "food" else DatePlaces.drink_options()
+	_items.clear()
+	for raw in options:
+		var opt: Dictionary = raw as Dictionary
+		var oid: String = str(opt.get("id", ""))
+		if not oid.is_empty():
+			_items.append(oid)
+	if _items.is_empty():
+		EventBus.toast("Пусто — нечего выбрать", &"warn")
+		return
+	_shop_id = "home_%s" % prep_kind
+	_kind = "home_food" if prep_kind == "food" else "home_drink"
+	_title.text = "Холодильник" if prep_kind == "food" else "Кухонные ящики"
+	_buy_btn.text = "Взять"
+	_money.visible = true
 	_refresh_list()
 	UiLayers.raise_popup(self, UiLayers.SHOP)
 	visible = true
@@ -132,7 +163,7 @@ func _refresh_list() -> void:
 				var def: Dictionary = ContentDB.outfit(StringName(oid))
 				var price: float = float(def.get("price", def.get("cost", 20)))
 				var owned: bool = Game.inventory.own_outfit(StringName(oid))
-				var mark := "✓" if owned else "%.0f$" % price
+				var mark: String = "✓" if owned else "%.0f$" % price
 				_list.add_item("%s — %s" % [str(def.get("name", oid)), mark])
 				_list.set_item_metadata(_list.item_count - 1, oid)
 		"homeware":
@@ -141,11 +172,39 @@ func _refresh_list() -> void:
 				_list.add_item("Посуда уже максимальная")
 				_list.set_item_metadata(0, "homeware_max")
 			else:
-				var costs := [0, 25, 60, 120]
-				var next := lvl + 1
+				var costs: Array = [0, 25, 60, 120]
+				var next: int = lvl + 1
 				var price: float = float(costs[mini(next - 1, costs.size() - 1)])
 				_list.add_item("Улучшить до «%s» — %.0f$" % [DatePlaces.homeware_label(next), price])
 				_list.set_item_metadata(0, "homeware_next")
+		"home_food":
+			for fid in _items:
+				var fopt: Dictionary = {}
+				for raw_f in DatePlaces.food_options():
+					var cand_f: Dictionary = raw_f as Dictionary
+					if str(cand_f.get("id", "")) == str(fid):
+						fopt = cand_f
+						break
+				var fblurb: String = str(fopt.get("blurb", ""))
+				var flabel: String = str(fopt.get("name", fid))
+				if fblurb != "":
+					flabel = "%s — %s" % [flabel, fblurb]
+				_list.add_item(flabel)
+				_list.set_item_metadata(_list.item_count - 1, fid)
+		"home_drink":
+			for did in _items:
+				var dopt: Dictionary = {}
+				for raw_d in DatePlaces.drink_options():
+					var cand_d: Dictionary = raw_d as Dictionary
+					if str(cand_d.get("id", "")) == str(did):
+						dopt = cand_d
+						break
+				var dblurb: String = str(dopt.get("blurb", ""))
+				var dlabel: String = str(dopt.get("name", did))
+				if dblurb != "":
+					dlabel = "%s — %s" % [dlabel, dblurb]
+				_list.add_item(dlabel)
+				_list.set_item_metadata(_list.item_count - 1, did)
 		_:
 			for gid in _items:
 				var gdef: Dictionary = ContentDB.gift(StringName(gid))
@@ -153,7 +212,10 @@ func _refresh_list() -> void:
 				var owned_n: int = Game.inventory.gift_count(StringName(gid))
 				_list.add_item("%s — %.0f$  (у тебя: %d)" % [str(gdef.get("name", gid)), gprice, owned_n])
 				_list.set_item_metadata(_list.item_count - 1, gid)
-	_money.text = "Баланс: $%d" % int(Game.economy.get_value(&"money"))
+	if _kind == "home_food" or _kind == "home_drink":
+		_money.text = "Выбери и возьми в руки"
+	else:
+		_money.text = "Баланс: $%d" % int(Game.economy.get_value(&"money"))
 	if _list.item_count > 0:
 		_list.select(clampi(keep, 0, _list.item_count - 1))
 
@@ -193,6 +255,12 @@ func _buy_selected() -> void:
 				_refresh_list()
 			else:
 				_refresh_list()
+		"home_food":
+			InteractionRouter.route(&"take_food", self, self, {"food_id": str(item_id)})
+			close()
+		"home_drink":
+			InteractionRouter.route(&"take_drink", self, self, {"drink_id": str(item_id)})
+			close()
 		_:
 			if Game.inventory.buy_gift(item_id):
 				Game.quests.complete("s1_money")

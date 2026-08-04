@@ -705,13 +705,7 @@ func give_date_gift(gift_id: StringName) -> bool:
 		return false
 	if gift_id == &"":
 		return false
-	if Game.inventory.carried_item == gift_id:
-		Game.inventory.consume_carried()
-	elif Game.inventory.gift_count(gift_id) > 0:
-		Game.inventory.gift_counts[str(gift_id)] = Game.inventory.gift_count(gift_id) - 1
-		Game.inventory.inventory_changed.emit()
-	else:
-		EventBus.toast("Нет такого подарка в инвентаре", &"warn")
+	if not _consume_owned_gift(gift_id):
 		return false
 	var prep: Dictionary = active_manual.get("prep", {})
 	prep["gift_id"] = str(gift_id)
@@ -721,6 +715,55 @@ func give_date_gift(gift_id: StringName) -> bool:
 	EventBus.toast("Ты подарил: %s" % str(ContentDB.gift(gift_id).get("name", gift_id)), &"ok")
 	date_ui_open.emit(_manual_payload())
 	return true
+
+
+func can_give_result_gift() -> bool:
+	if last_result.is_empty():
+		return false
+	if bool(last_result.get("gift_given", false)):
+		return false
+	return _has_giftable_inventory()
+
+
+func give_result_gift(gift_id: StringName) -> bool:
+	## Post-date gift from the result panel (session already cleared).
+	if not can_give_result_gift():
+		EventBus.toast("Подарок уже вручён или недоступен", &"info")
+		return false
+	if gift_id == &"":
+		return false
+	if not _consume_owned_gift(gift_id):
+		return false
+	var target_id: String = str(last_result.get("target_id", ""))
+	var gift_def: Dictionary = ContentDB.gift(gift_id)
+	var bond_bonus: float = float(gift_def.get("quality", 1.0)) * 2.0
+	if target_id != "" and not Game.girls.is_claimed(StringName(target_id)):
+		Game.girls.add_bond(StringName(target_id), bond_bonus)
+	last_result["gift_given"] = true
+	last_result["gift_id"] = str(gift_id)
+	var factors: Dictionary = last_result.get("factors", {})
+	var gift_factor: Dictionary = factors.get("gift", {})
+	gift_factor["id"] = str(gift_id)
+	gift_factor["given"] = true
+	gift_factor["label"] = str(gift_def.get("name", gift_id))
+	gift_factor["score"] = float(gift_def.get("quality", 0.0))
+	factors["gift"] = gift_factor
+	last_result["factors"] = factors
+	last_result["bond"] = float(last_result.get("bond", 0.0)) + bond_bonus
+	EventBus.toast("Ты подарил: %s" % str(gift_def.get("name", gift_id)), &"ok")
+	return true
+
+
+func _consume_owned_gift(gift_id: StringName) -> bool:
+	if Game.inventory.carried_item == gift_id:
+		Game.inventory.consume_carried()
+		return true
+	if Game.inventory.gift_count(gift_id) > 0:
+		Game.inventory.gift_counts[str(gift_id)] = Game.inventory.gift_count(gift_id) - 1
+		Game.inventory.inventory_changed.emit()
+		return true
+	EventBus.toast("Нет такого подарка в инвентаре", &"warn")
+	return false
 
 
 func finish_manual() -> void:
@@ -738,14 +781,26 @@ func _finish_manual() -> void:
 	base += Game.upgrades.effect_value("manual_quality")
 	var grade: int = _grade_from_score(base)
 	var bond_delta: float = float(active_manual.get("bond_delta", 0.0))
+	var emotion: String = str(active_manual.get("emotion", "neutral"))
+	var gift_already: bool = bool(active_manual.get("gift_given", false)) or str(prep.get("gift_id", "")) != ""
 	var result: Dictionary = _apply_result(target_id, unique, prep, grade, true, bond_delta)
 	result["factors"] = _result_factors(target_id, unique, prep, active_manual)
 	result["punctuality"] = str(prep.get("punctuality_label", ""))
 	result["place_id"] = str(prep.get("place_id", ""))
+	result["emotion"] = emotion
+	result["mood"] = emotion
+	result["gift_given"] = gift_already
+	result["gift_id"] = str(prep.get("gift_id", ""))
+	result["correct"] = int(active_manual.get("correct", 0))
+	result["wrong"] = int(active_manual.get("wrong", 0))
+	result["neutral"] = int(active_manual.get("neutral", 0))
+	var entry: Dictionary = Game.girls.get_entry(StringName(target_id))
+	result["bond_total"] = float(entry.get("bond", 0.0))
 	Game.facility.release_venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
 	active_manual.clear()
 	schedule.awaiting_finish = false
 	schedule.gift_given_id = ""
+	schedule._reset_table_keep_ware()
 	date_ui_close.emit()
 	last_result = result
 	EventBus.date_finished.emit(result)

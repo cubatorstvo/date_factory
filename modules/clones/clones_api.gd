@@ -370,7 +370,11 @@ func _schedule_latent_hits(entry: Dictionary) -> void:
 func _tick_deferred_hits(delta: float) -> void:
 	if deferred_hits.is_empty():
 		return
+	# Pause wall-clock due while an event is open OR shared auto-interval is closed.
+	# Do not burn due → 0 spam / retry loops while waiting on the 10 game-minute gate.
 	if not Game.events.active.is_empty():
+		return
+	if not Game.events.can_open_auto_event():
 		return
 	var remain: Array = []
 	var fired: bool = false
@@ -384,6 +388,7 @@ func _tick_deferred_hits(delta: float) -> void:
 		if float(hit["due"]) > 0.0:
 			remain.append(hit)
 			continue
+		# Interval ready + no active event: fire at most one hit this tick.
 		if not _fire_latent_hit(hit):
 			hit["due"] = 2.0
 			remain.append(hit)

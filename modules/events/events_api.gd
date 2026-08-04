@@ -5,10 +5,19 @@ extends Node
 signal event_opened(event: Dictionary)
 signal event_closed
 
+## Minimum spacing between automatic event UI opens (game minutes).
+## Shared by catalog randoms and auto runtime popups (clone deferred, girls orbit, etc.).
+const MIN_RANDOM_EVENT_INTERVAL_MIN: int = 10
+
 var history: Array = []
 var active: Dictionary = {}
+## Wall-clock seconds for short UI pacing after runtime opens (legacy stack guard).
+## Shared 10 game-minute spacing uses last_random_event_abs_min, not this field.
 var cooldown: float = 0.0
 var seen: Dictionary = {}
+## Absolute game minutes of last successful event UI open (catalog OR runtime).
+## Save key kept for compatibility. -1 = never shown (eligible).
+var last_random_event_abs_min: int = -1
 
 
 func setup(_game: Node) -> void:
@@ -19,8 +28,9 @@ func setup(_game: Node) -> void:
 func reset() -> void:
 	history.clear()
 	active.clear()
-	cooldown = 25.0
+	cooldown = 0.0
 	seen.clear()
+	last_random_event_abs_min = -1
 
 
 func _process(delta: float) -> void:
@@ -28,8 +38,13 @@ func _process(delta: float) -> void:
 		return
 	if _blocked_by_gameplay():
 		return
+	# Runtime/ad-hoc UI pacing only — not part of the 10 game-minute catalog rule.
 	cooldown = maxf(0.0, cooldown - delta)
-	if cooldown <= 0.0 and _stage_num() >= 2 and randf() < 0.015 * Game.economy.event_pressure_mult():
+	if cooldown > 0.0:
+		return
+	if not can_open_auto_event():
+		return
+	if _stage_num() >= 2 and randf() < 0.015 * Game.economy.event_pressure_mult():
 		trigger_random()
 
 
@@ -37,6 +52,8 @@ func maybe_trigger_after_date(_result: Dictionary) -> void:
 	if _stage_num() < 2:
 		return
 	if _blocked_by_gameplay():
+		return
+	if not can_open_auto_event():
 		return
 	if randf() < 0.22 * Game.economy.event_pressure_mult():
 		trigger_random()
@@ -47,9 +64,10 @@ func trigger_random() -> void:
 		return
 	if _blocked_by_gameplay():
 		return
+	if not can_open_auto_event():
+		return
 	var ids: Array = _eligible_ids()
 	if ids.is_empty():
-		cooldown = 12.0
 		return
 	# Prefer unseen events a bit.
 	var pool: Array = []
@@ -63,17 +81,25 @@ func trigger_random() -> void:
 	open_event(StringName(pick))
 
 
-func open_runtime_event(ev: Dictionary) -> bool:
-	## Ad-hoc consequence (e.g. skipped clone defect) — not from ContentDB catalog.
+func open_runtime_event(ev: Dictionary, player_initiated: bool = false) -> bool:
+	## Ad-hoc consequence UI — not from ContentDB catalog.
+	## Auto callers (clone deferred, girls orbit, parallel risk): blocked by shared
+	## 10 game-minute interval unless player_initiated.
+	## Player-initiated (phone booking etc.): always allowed when UI free, but still
+	## stamps the shared interval so auto spam cannot follow immediately.
 	if not active.is_empty():
 		return false
 	if _blocked_by_gameplay():
 		return false
 	if ev.is_empty():
 		return false
+	if not player_initiated and not can_open_auto_event():
+		return false
 	active = ev.duplicate(true)
 	if not active.has("choices") or active.get("choices", []).is_empty():
 		active["choices"] = [{"id": "ok", "label": "Понял", "scandal": 1.0, "legend": -3.0}]
+	_stamp_event_interval_opened()
+	# Short wall-clock stack guard (does not replace the 10 game-minute rule).
 	cooldown = 40.0
 	var eid: String = str(active.get("id", "runtime"))
 	seen[eid] = int(seen.get(eid, 0)) + 1
@@ -95,7 +121,7 @@ func open_event(id: StringName) -> void:
 	if active["choices"].is_empty():
 		active.clear()
 		return
-	cooldown = 50.0
+	_stamp_event_interval_opened()
 	seen[str(id)] = int(seen.get(str(id), 0)) + 1
 	EventBus.event_raised.emit(id)
 	event_opened.emit(active)
@@ -150,6 +176,37 @@ func choose(choice_id: String) -> void:
 			Game.quests.complete("s1_prepare")
 	if Game.dating.has_method("apply_parallel_choice"):
 		Game.dating.apply_parallel_choice(choice_id)
+
+
+func can_open_auto_event() -> bool:
+	## Public shared gate: catalog randoms + auto runtime (clone deferred, orbit, etc.).
+	## True when no prior stamp or >= MIN_RANDOM_EVENT_INTERVAL_MIN game minutes elapsed.
+	return _event_interval_ready()
+
+
+func is_event_interval_ready() -> bool:
+	## Alias for callers that prefer interval wording.
+	return _event_interval_ready()
+
+
+func _event_interval_ready() -> bool:
+	if last_random_event_abs_min < 0:
+		return true
+	if Game == null or Game.time == null:
+		return true
+	var now: int = Game.time.absolute_minutes()
+	var ago: int = now - last_random_event_abs_min
+	if ago < 0:
+		# Clock reset/backward — do not permanently block (city amenity convention).
+		return true
+	return ago >= MIN_RANDOM_EVENT_INTERVAL_MIN
+
+
+func _stamp_event_interval_opened() -> void:
+	if Game == null or Game.time == null:
+		last_random_event_abs_min = 0
+		return
+	last_random_event_abs_min = Game.time.absolute_minutes()
 
 
 func _blocked_by_gameplay() -> bool:
@@ -217,11 +274,19 @@ func _stage_num() -> int:
 
 
 func to_dict() -> Dictionary:
-	return {"history": history.duplicate(), "seen": seen.duplicate(), "cooldown": cooldown}
+	return {
+		"history": history.duplicate(),
+		"seen": seen.duplicate(),
+		"cooldown": cooldown,
+		"last_random_event_abs_min": last_random_event_abs_min,
+	}
 
 
 func from_dict(data: Dictionary) -> void:
 	history = data.get("history", [])
 	seen = data.get("seen", {})
-	cooldown = float(data.get("cooldown", 25))
+	cooldown = float(data.get("cooldown", 0.0))
+	# Missing stamp → immediately eligible (no surprise lock on old saves).
+	# Save key reused: now covers catalog + runtime successful opens.
+	last_random_event_abs_min = int(data.get("last_random_event_abs_min", -1))
 	active.clear()

@@ -1084,6 +1084,7 @@ func _book_place_for_selected(place_id: String) -> void:
 		})
 	var place_def: Dictionary = DatePlaces.place(place_id)
 	# Close phone before EventsAPI — open phone blocks open_runtime_event.
+	# player_initiated=true: booking must open immediately; still stamps shared interval.
 	_close_phone_for_event()
 	var opened: bool = Game.events.open_runtime_event({
 		"id": "book_date_%s" % place_id,
@@ -1093,7 +1094,7 @@ func _book_place_for_selected(place_id: String) -> void:
 			Game.girls.display_name(StringName(id)),
 		],
 		"choices": choices,
-	})
+	}, true)
 	if opened:
 		_pending_booking = {"place_id": place_id, "target_id": id, "unique": kind == "unique", "slots": slots}
 		Sfx.play_ui(&"confirm")
