@@ -54,17 +54,19 @@ func _ready() -> void:
 	_ensure_orbit_tab()
 	var start_btn := get_node_or_null("Panel/Margin/Body/Tabs/Candidates/Start") as Button
 	if start_btn:
-		start_btn.text = "Подготовить и начать"
+		start_btn.text = "Выбрать место: ресторан"
 	var prepare_btn := get_node_or_null("Panel/Margin/Body/Tabs/Candidates/Prepare") as Button
 	if prepare_btn:
-		prepare_btn.text = "Только подготовить"
+		prepare_btn.text = "Выбрать место: дом"
 	var rel_tab := get_node_or_null("Panel/Margin/Body/Tabs/Relations") as Control
 	if rel_tab:
 		rel_tab.name = "Dating"
 	$Panel/Margin/Body/Tabs/Upgrades/Buy.pressed.connect(_buy_selected_upgrade)
 	$Panel/Margin/Body/Tabs/Staff/Hire.pressed.connect(_hire_selected)
-	$Panel/Margin/Body/Tabs/Candidates/Prepare.pressed.connect(_prepare_selected)
-	$Panel/Margin/Body/Tabs/Candidates/Start.pressed.connect(_start_selected)
+	$Panel/Margin/Body/Tabs/Candidates/Prepare.pressed.connect(_book_home_selected)
+	$Panel/Margin/Body/Tabs/Candidates/Start.pressed.connect(_book_restaurant_selected)
+	EventBus.date_scheduled.connect(func(_p): _refresh())
+	EventBus.date_cancelled.connect(func(_p): _refresh())
 	$Panel/Margin/Body/Tabs/Twitch/Connect.pressed.connect(_connect_twitch)
 	var create_btn := get_node_or_null("Panel/Margin/Body/Tabs/Clones/Create") as Button
 	if create_btn:
@@ -846,13 +848,24 @@ func _refresh() -> void:
 	var venue_names: PackedStringArray = PackedStringArray()
 	for v in Game.facility.unlocked_venues:
 		venue_names.append(Loc.venue_name(v))
-	schedule_label.text = "Автосвиданий сейчас: %d\nУровень автоматизации: %d\nРежим авто: %s\nДоступные места: %s\n(кнопка ниже меняет режим: осторожный / стандарт / риск)" % [
+	var booking_txt := "Свидание не назначено.\nВыбери кандидатку → «дом» или «ресторан»."
+	if Game.dating.has_scheduled_date():
+		var s: Dictionary = Game.dating.scheduled_summary()
+		var place_def: Dictionary = DatePlaces.place(str(s.get("place_id", "")))
+		booking_txt = "Назначено: %s\n%s\n%s\n(Отмена — кнопка ниже)" % [
+			Game.girls.display_name(StringName(str(s.get("target_id", "")))),
+			str(place_def.get("name", s.get("place_id", ""))),
+			Game.time.slot_label(int(s.get("day", 1)), int(s.get("minutes", 0))) if Game.time != null else "",
+		]
+	schedule_label.text = "%s\n\nАвтосвиданий: %d · авто ур.%d · режим %s\nМеста: %s" % [
+		booking_txt,
 		Game.dating.active_autos.size(),
 		Game.dating.automation_level,
 		_auto_mode_label(),
 		", ".join(venue_names),
 	]
 	_ensure_auto_mode_button()
+	_ensure_cancel_booking_button()
 	twitch_status.text = "Статус Twitch: %s" % Loc.online(Game.names.twitch_connected)
 
 
@@ -877,50 +890,98 @@ func _hire_selected() -> void:
 
 
 func _prepare_selected() -> void:
+	_book_place_for_selected("home")
+
+
+func _start_selected() -> void:
+	_book_place_for_selected("restaurant")
+
+
+func _book_home_selected() -> void:
+	_book_place_for_selected("home")
+
+
+func _book_restaurant_selected() -> void:
+	_book_place_for_selected("restaurant")
+
+
+func _book_place_for_selected(place_id: String) -> void:
 	var idx := candidates_list.get_selected_items()
 	if idx.is_empty():
 		EventBus.toast("Выбери кандидатку в списке", &"warn")
 		return
 	var c: Dictionary = _candidate_ids[idx[0]]
-	var girl_id := StringName(str(c.get("id", "")))
-	Game.quests.on_profile_seen()
-	var gift_id := &"flower"
-	if Game.inventory.total_gifts() > 0:
-		gift_id = StringName(str(Game.inventory.gift_counts.keys()[0]))
-	elif Game.inventory.carried_item != &"":
-		gift_id = Game.inventory.carried_item
-	elif Game.inventory.can_buy_gift(&"flower", girl_id):
-		Game.inventory.buy_gift(&"flower", girl_id)
-	var venue := &"kitchen_table"
-	if Game.facility.unlocked_venues.size() > 0:
-		venue = Game.facility.unlocked_venues[Game.facility.unlocked_venues.size() - 1]
-	Game.dating.set_prep(str(c.get("id", "")), gift_id, venue, Game.inventory.equipped_outfit)
-	EventBus.toast("Подготовлено в телефоне. Подойди к столу или нажми «Подготовить и начать».", &"info")
-	Sfx.play_ui(&"confirm")
-
-
-func _start_selected() -> void:
-	if not Game.quests.can_do(&"start_date"):
-		EventBus.toast(Game.quests.gate_hint(&"start_date"), &"warn")
-		return
-	var idx := candidates_list.get_selected_items()
-	if idx.is_empty():
-		return
-	var c: Dictionary = _candidate_ids[idx[0]]
 	var id := str(c.get("id", ""))
 	var kind := str(c.get("kind", ""))
+	Game.quests.on_profile_seen()
 	if kind == "proc" and not Game.girls.unlocked.has(id):
 		Game.girls.add_contact(StringName(id), c)
-	if not Game.dating.prepared.has(id):
-		_prepare_selected()
-	if not Game.dating.prepared.has(id):
+	if Game.time == null:
+		EventBus.toast("Часы ещё не готовы", &"warn")
 		return
-	if Game.dating.start_manual(id, kind == "unique"):
+	var slots: Array = Game.time.next_slots(6, 30, 45)
+	if slots.is_empty():
+		EventBus.toast("Нет свободных слотов", &"warn")
+		return
+	# Pick first slot for vertical slice; confirm via toast. Full picker = runtime event.
+	var choices: Array = []
+	for slot in slots:
+		choices.append({
+			"id": "slot_%d_%d" % [int(slot.get("day", 1)), int(slot.get("minutes", 0))],
+			"label": str(slot.get("label", "?")),
+			"day": int(slot.get("day", 1)),
+			"minutes": int(slot.get("minutes", 0)),
+			"place_id": place_id,
+			"target_id": id,
+			"unique": kind == "unique",
+		})
+	var place_def: Dictionary = DatePlaces.place(place_id)
+	# Close phone before EventsAPI — open phone blocks open_runtime_event.
+	_close_phone_for_event()
+	var opened: bool = Game.events.open_runtime_event({
+		"id": "book_date_%s" % place_id,
+		"name": "Назначить: %s" % str(place_def.get("name", place_id)),
+		"blurb": "%s\nС кем: %s\nВыбери время:" % [
+			str(place_def.get("blurb", "")),
+			Game.girls.display_name(StringName(id)),
+		],
+		"choices": choices,
+	})
+	if opened:
+		_pending_booking = {"place_id": place_id, "target_id": id, "unique": kind == "unique", "slots": slots}
 		Sfx.play_ui(&"confirm")
-		set_open(false)
 	else:
+		EventBus.toast("Не удалось открыть выбор времени — закрой другие окна и попробуй снова", &"warn")
 		Sfx.play_ui(&"deny")
 
+
+var _pending_booking: Dictionary = {}
+
+
+func _close_phone_for_event() -> void:
+	## Hide phone and sync player phone flag so EventsAPI/_blocked_by_gameplay clears.
+	force_close()
+	var player := get_tree().get_first_node_in_group("player") as Node
+	if player != null:
+		player.set("_phone_open", false)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _ensure_cancel_booking_button() -> void:
+	var schedule := get_node_or_null("Panel/Margin/Body/Tabs/Schedule") as Control
+	if schedule == null:
+		return
+	var btn := schedule.get_node_or_null("CancelBooking") as Button
+	if btn == null:
+		btn = Button.new()
+		btn.name = "CancelBooking"
+		btn.text = "Отменить свидание"
+		btn.pressed.connect(func():
+			Game.dating.cancel_date("player")
+			_refresh()
+		)
+		schedule.add_child(btn)
+	btn.visible = Game.dating.has_scheduled_date()
 
 func _start_clone_acceptance() -> void:
 	if Game.clones.begin_acceptance():

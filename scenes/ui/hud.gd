@@ -34,6 +34,9 @@ func _ready() -> void:
 	EventBus.interaction_hint.connect(_on_interaction_hint)
 	EventBus.notify.connect(_on_notify)
 	EventBus.bottleneck.connect(func(k, d): bottleneck_label.text = "Узкое место: %s — %s" % [str(k), d])
+	EventBus.time_changed.connect(func(_d, _m): _refresh())
+	EventBus.date_scheduled.connect(func(_p): _refresh())
+	EventBus.date_cancelled.connect(func(_p): _refresh())
 	Game.dating.date_ui_open.connect(_on_date_open)
 	Game.dating.date_ui_close.connect(_on_date_close)
 	EventBus.date_finished.connect(func(r):
@@ -117,6 +120,7 @@ func _refresh() -> void:
 		status_panel.visible = false
 		return
 	status_panel.visible = true
+	status_panel.size = Vector2(820.0, 96.0)
 	resources_label.text = "$%d   ·   ★ %.0f   ·   ВНИМАНИЕ %.0f/%.0f   ·   СВИДАНИЯ %d" % [
 		int(Game.economy.get_value(&"money")),
 		Game.economy.get_value(&"popularity"),
@@ -124,12 +128,24 @@ func _refresh() -> void:
 		Game.economy.max_attention,
 		Game.total_successful_dates,
 	]
-	goal_label.text = "%s   •   %s" % [
+	var clock_line := ""
+	if Game.time != null:
+		clock_line = Game.time.format_day_clock()
+	var date_line := ""
+	if Game.dating != null and Game.dating.schedule != null:
+		date_line = Game.dating.schedule.hud_line()
+	var goal_core := "%s   •   %s" % [
 		Loc.stage_title(Game.stage_id),
 		Game.quests.primary_text(),
 	]
-	if goal_label.text.length() > 84:
-		goal_label.text = goal_label.text.substr(0, 81) + "..."
+	if not clock_line.is_empty():
+		goal_label.text = "%s   ·   %s" % [clock_line, goal_core]
+	else:
+		goal_label.text = goal_core
+	if not date_line.is_empty():
+		goal_label.text = "%s\n%s" % [goal_label.text, date_line]
+	if goal_label.text.length() > 120:
+		goal_label.text = goal_label.text.substr(0, 117) + "..."
 
 
 func _on_interaction_hint(text: String) -> void:

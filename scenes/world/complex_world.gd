@@ -67,13 +67,8 @@ func _rebuild() -> void:
 	_spawn_city_npcs()
 	_refresh_harem_npcs()
 	_refresh_tutorial_markers()
+	# Keep talk-girl meshes visible; only hide true greybox placeholders.
 	_hide_placeholder_meshes(npcs_root)
-	for child in npcs_root.get_children():
-		if child is Node3D:
-			for visual in child.find_children("*", "MeshInstance3D", true, false):
-				(visual as MeshInstance3D).visible = false
-			for label in child.find_children("*", "Label3D", true, false):
-				(label as Label3D).visible = false
 
 
 func _build_city() -> void:
@@ -94,7 +89,19 @@ func _build_city() -> void:
 		_hide_placeholder_meshes(city_root)
 		_hide_placeholder_meshes(props_root)
 		_add_interact(city_root, Vector3(-48.0, 0.0, 4.7), "Подъезд DATE FACTORY", "Вернуться домой", &"go_home", {"art_backed": true}, &"door")
-		_add_interact(city_root, Vector3(-19.5, 0.0, -4.35), "Ресторан Two Hearts", "Войти на свидание", &"enter_restaurant", {"art_backed": true}, &"door")
+		_add_interact(city_root, Vector3(-19.5, 0.0, -4.35), "Ресторан Two Hearts", "Сесть и ждать свидание", &"sit_restaurant", {"art_backed": true}, &"door")
+		_add_interact(city_root, Vector3(-24.0, 0.0, 2.0), "Цветочный", "Открыть витрину", &"open_flower_shop", {"art_backed": true}, &"shelf")
+		_add_interact(city_root, Vector3(-26.5, 0.0, 1.5), "Ювелирный", "Открыть витрину", &"open_jewelry_shop", {"art_backed": true}, &"shelf")
+		_add_interact(city_root, Vector3(-22.0, 0.0, 3.0), "Магазин подарков", "Открыть", &"open_gift_shop", {"art_backed": true}, &"shelf")
+
+
+func _marker_pos(visual: Node3D, rel_path: String, fallback: Vector3) -> Vector3:
+	if visual == null:
+		return fallback
+	var marker := visual.get_node_or_null(rel_path) as Node3D
+	if marker == null:
+		return fallback
+	return marker.position
 
 
 func _mount_visual_scene(parent: Node3D, scene_path: String, node_name: String, local_position: Vector3 = Vector3.ZERO) -> Node3D:
@@ -156,6 +163,9 @@ func _hide_placeholder_meshes(parent: Node3D) -> void:
 		var path_s := String(node.get_path())
 		if path_s.contains("StreetVisual") or path_s.contains("ApartmentVisual"):
 			continue
+		# Procedural city/harem girls use Capsule/Sphere meshes — keep them visible.
+		if _is_girl_actor_mesh(node):
+			continue
 		var mi := node as MeshInstance3D
 		if mi == null:
 			continue
@@ -170,7 +180,21 @@ func _hide_placeholder_meshes(parent: Node3D) -> void:
 		var lpath := String(label.get_path())
 		if lpath.contains("StreetVisual") or lpath.contains("ApartmentVisual"):
 			continue
+		if _is_girl_actor_mesh(label):
+			continue
 		(label as Label3D).visible = false
+
+
+func _is_girl_actor_mesh(node: Node) -> bool:
+	var cur: Node = node
+	while cur != null:
+		if cur is GirlCharacter:
+			return true
+		var n := String(cur.name)
+		if n.begins_with("Girl_") or n == "NeighborNPC":
+			return true
+		cur = cur.get_parent()
+	return false
 
 
 func _update_stage_lighting() -> void:
@@ -298,7 +322,6 @@ func _spawn_talk_girl(profile: Dictionary, spots: Dictionary, waypoints: Array, 
 
 	var girl := _make_girl()
 	area.add_child(girl)
-	girl.visible = false
 	npcs_root.add_child(area)
 	var skin_a: Array = profile.get("color", [0.95, 0.75, 0.7])
 	var hair_a: Array = profile.get("hair_color", [0.2, 0.1, 0.08])
@@ -349,16 +372,36 @@ func _build_room(room_id: StringName) -> void:
 	_built_rooms[str(room_id)] = root
 	match str(room_id):
 		"apartment":
-			_mount_visual_scene(root, APARTMENT_VISUAL_SCENE, "ApartmentVisual")
-			_add_interact(root, Vector3(-2.5, 0, -2.5), "Кровать / Работа", "Поработать", &"job", {}, &"bed")
-			_add_interact(root, Vector3(2.5, 0, -2.5), "Шкаф", "Сменить одежду", &"wardrobe", {}, &"wardrobe")
-			_add_interact(root, Vector3(-2.5, 0, 2.2), "Полка подарков", "Купить цветок", &"buy_gift", {"gift_id": "flower"}, &"shelf")
-			_add_interact(root, Vector3(-1.2, 0, 2.2), "Взять подарок", "Взять", &"take_gift", {"gift_id": "flower"}, &"gift_box")
-			_add_interact(root, Vector3(1.5, 0, 1.5), "Кухонный стол", "Подготовить стол и начать свидание", &"prepare_and_start", {}, &"table_set")
-			_add_interact(root, Vector3(0, 0, -1), "Телефон на тумбе", "Открыть", &"phone", {}, &"phone_stand")
-			_add_interact(root, Vector3(3.2, 0, 0), "Дверь расширения", "Расширить", &"expand", {}, &"door")
-			_add_interact(root, Vector3(-3.5, 0, 0), "На улицу", "Выйти в город", &"go_outside", {}, &"door")
-			_add_interact(root, Vector3(0, 0, -3.6), "К соседке", "Постучать", &"go_neighbor", {}, &"door")
+			var apt_visual := _mount_visual_scene(root, APARTMENT_VISUAL_SCENE, "ApartmentVisual")
+			# Leftover gift shelf mesh from old prep flow — hide without rewriting apartment.tscn.
+			if apt_visual:
+				var gift_shelf := apt_visual.get_node_or_null("Furniture/GiftShelf") as Node3D
+				if gift_shelf:
+					gift_shelf.visible = false
+			# Snap interact volumes to real furniture nodes (markers can lag behind art moves).
+			var bed_p := _marker_pos(apt_visual, "Furniture/Bed", Vector3(4.15, 0, -3.65))
+			var wardrobe_p := _marker_pos(apt_visual, "Furniture/Wardrobe", Vector3(5.05, 0, 0.95))
+			var fridge_p := _marker_pos(apt_visual, "Furniture/Fridge", Vector3(-3.8, 0, 1.2))
+			var table_p := _marker_pos(apt_visual, "Furniture/DiningTable", Vector3(0.65, 0, 0.55))
+			var exit_p := _marker_pos(apt_visual, "Markers/ApartmentExit", Vector3(-4.2, 0, 4.2))
+			var night_p := _marker_pos(apt_visual, "Furniture/NightStand", Vector3(5.15, 0, -2.7))
+			var window_p := _marker_pos(apt_visual, "Markers/WindowAnchor", Vector3(1.55, 0, -4.1))
+			var door_p := _marker_pos(apt_visual, "Markers/ApartmentExit", Vector3(-4.2, 0, 4.2))
+			_add_interact(root, bed_p, "Кровать / Работа", "Поработать", &"job", {}, &"bed")
+			_add_interact(root, wardrobe_p, "Шкаф", "Сменить одежду", &"wardrobe", {}, &"wardrobe")
+			_add_interact(root, fridge_p, "Холодильник", "Взять простое блюдо", &"take_food", {"food_id": "simple_meal"}, &"shelf")
+			_add_interact(root, fridge_p + Vector3(0.35, 0, 0.15), "Закуски", "Взять закуску", &"take_food", {"food_id": "snack_plate"}, &"shelf")
+			_add_interact(root, fridge_p + Vector3(-0.35, 0, 0.15), "Десерт", "Взять десерт", &"take_food", {"food_id": "dessert"}, &"shelf")
+			_add_interact(root, fridge_p + Vector3(0.7, 0, 0), "Вода", "Взять воду", &"take_drink", {"drink_id": "water"}, &"shelf")
+			_add_interact(root, fridge_p + Vector3(0.95, 0, 0.1), "Сок", "Взять сок", &"take_drink", {"drink_id": "juice"}, &"shelf")
+			_add_interact(root, fridge_p + Vector3(1.2, 0, 0), "Вино", "Взять вино", &"take_drink", {"drink_id": "wine"}, &"shelf")
+			_add_interact(root, fridge_p + Vector3(-0.7, 0, 0), "Посуда", "Улучшить сервировку", &"upgrade_homeware", {}, &"shelf")
+			_add_interact(root, table_p, "Кухонный стол", "Положить / начать свидание", &"prepare_and_start", {}, &"table_set")
+			_add_interact(root, door_p + Vector3(0.8, 0, 0), "Входная дверь", "Открыть (звонок)", &"answer_doorbell", {}, &"door")
+			_add_interact(root, night_p, "Телефон на тумбе", "Открыть", &"phone", {}, &"phone_stand")
+			_add_interact(root, wardrobe_p + Vector3(0.7, 0, -0.8), "Дверь расширения", "Расширить", &"expand", {}, &"door")
+			_add_interact(root, exit_p, "На улицу", "Выйти в город", &"go_outside", {}, &"door")
+			_add_interact(root, window_p, "К соседке", "Постучать", &"go_neighbor", {}, &"door")
 		"neighbor_apt":
 			_box(root, Vector3(7, 0.2, 7), Vector3(0, -0.1, 0), Color(0.6, 0.52, 0.55))
 			_wall_room(root, 7, 7, 2.6)

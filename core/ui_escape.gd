@@ -48,6 +48,14 @@ static func dismiss_overlays(tree: SceneTree) -> bool:
 			Game.events.event_closed.emit()
 		closed = true
 
+	var shop_ui := tree.get_first_node_in_group("shop_ui")
+	if shop_ui != null and _is_overlay_open(shop_ui):
+		if shop_ui.has_method("close"):
+			shop_ui.call("close")
+		else:
+			shop_ui.visible = false
+		closed = true
+
 	var date_ui := tree.get_first_node_in_group("date_ui")
 	if date_ui != null and _is_overlay_open(date_ui):
 		date_ui.visible = false
@@ -82,7 +90,7 @@ static func dismiss_overlays(tree: SceneTree) -> bool:
 static func any_overlay_open(tree: SceneTree) -> bool:
 	if tree == null:
 		return false
-	for group in ["settings_ui", "reveal_ui", "finale_ui", "event_ui", "date_ui", "phone_ui"]:
+	for group in ["settings_ui", "reveal_ui", "finale_ui", "event_ui", "shop_ui", "date_ui", "phone_ui"]:
 		var n := tree.get_first_node_in_group(group)
 		if n != null and _is_overlay_open(n):
 			return true

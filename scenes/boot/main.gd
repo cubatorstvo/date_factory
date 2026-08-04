@@ -10,6 +10,12 @@ func _ready() -> void:
 	EventBus.stage_changed.connect(_on_stage)
 	EventBus.girl_unlocked.connect(_on_girl_unlocked)
 	EventBus.finale_completed.connect(_on_finale_completed)
+	if get_tree().get_first_node_in_group("shop_ui") == null:
+		var shop_script: Script = load("res://scenes/ui/shop_ui.gd") as Script
+		if shop_script:
+			var shop := shop_script.new() as CanvasLayer
+			shop.name = "ShopUI"
+			add_child(shop)
 
 
 func _on_stage(stage_id: StringName) -> void:

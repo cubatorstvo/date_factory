@@ -10,6 +10,13 @@ extends Control
 var _prompt_label: Label
 var _coach_label: Label
 var _feedback_label: Label
+var _gift_btn: Button
+var _finish_btn: Button
+var _gift_list: ItemList
+var _result_panel: PanelContainer
+var _result_label: RichTextLabel
+var _result_close_btn: Button
+var _showing_result: bool = false
 
 
 func _ready() -> void:
@@ -29,10 +36,12 @@ func _ready() -> void:
 		_configure_panel_layout(panel)
 	_ensure_prompt_label()
 	_ensure_coach_labels()
+	_ensure_date_actions()
 	Game.dating.date_ui_open.connect(_open)
 	Game.dating.date_ui_close.connect(_close)
 	Game.dating.date_phase.connect(_on_phase)
 	EventBus.notify.connect(_on_notify)
+	EventBus.date_finished.connect(_on_date_finished)
 
 
 func _ensure_prompt_label() -> void:
@@ -71,7 +80,80 @@ func _ensure_coach_labels() -> void:
 		vbox.move_child(_feedback_label, emotion_label.get_index() + 1)
 
 
+func _ensure_date_actions() -> void:
+	var vbox := get_node_or_null("Panel/VBox") as VBoxContainer
+	if vbox == null:
+		return
+	if _gift_btn == null or not is_instance_valid(_gift_btn):
+		_gift_btn = Button.new()
+		_gift_btn.name = "GiftBtn"
+		_gift_btn.text = "Подарить подарок"
+		_gift_btn.visible = false
+		_gift_btn.pressed.connect(_on_gift_pressed)
+		vbox.add_child(_gift_btn)
+	if _gift_list == null or not is_instance_valid(_gift_list):
+		_gift_list = ItemList.new()
+		_gift_list.name = "GiftList"
+		_gift_list.visible = false
+		_gift_list.custom_minimum_size = Vector2(0, 90)
+		_gift_list.item_selected.connect(_on_gift_picked)
+		vbox.add_child(_gift_list)
+	if _finish_btn == null or not is_instance_valid(_finish_btn):
+		_finish_btn = Button.new()
+		_finish_btn.name = "FinishBtn"
+		_finish_btn.text = "Завершить свидание"
+		_finish_btn.visible = false
+		_finish_btn.pressed.connect(func(): Game.dating.finish_manual())
+		vbox.add_child(_finish_btn)
+
+
+func _on_gift_pressed() -> void:
+	if _gift_list == null:
+		return
+	_gift_list.clear()
+	var any := false
+	for gid in Game.inventory.gift_counts.keys():
+		if int(Game.inventory.gift_counts[gid]) <= 0:
+			continue
+		var def: Dictionary = ContentDB.gift(StringName(str(gid)))
+		_gift_list.add_item("%s ×%d" % [str(def.get("name", gid)), int(Game.inventory.gift_counts[gid])])
+		_gift_list.set_item_metadata(_gift_list.item_count - 1, str(gid))
+		any = true
+	if Game.inventory.carried_item != &"" and not str(Game.inventory.carried_item).begins_with("food:") and not str(Game.inventory.carried_item).begins_with("drink:"):
+		var cid := str(Game.inventory.carried_item)
+		var cdef: Dictionary = ContentDB.gift(StringName(cid))
+		_gift_list.add_item("%s (в руках)" % str(cdef.get("name", cid)))
+		_gift_list.set_item_metadata(_gift_list.item_count - 1, cid)
+		any = true
+	_gift_list.visible = any
+	if not any:
+		EventBus.toast("В инвентаре нет подарков", &"info")
+
+
+func _on_gift_picked(index: int) -> void:
+	if _gift_list == null:
+		return
+	var gid := StringName(str(_gift_list.get_item_metadata(index)))
+	if Game.dating.give_date_gift(gid):
+		_gift_list.visible = false
+		_refresh_action_buttons()
+
+
+func _refresh_action_buttons() -> void:
+	var active := not Game.dating.active_manual.is_empty()
+	var done := bool(Game.dating.active_manual.get("phases_done", false))
+	if _finish_btn:
+		_finish_btn.visible = done and not _showing_result
+	if _gift_btn:
+		# Optional mid-date gift, once — not gated on phases_done.
+		_gift_btn.visible = active and (not _showing_result) and Game.dating.can_give_date_gift()
+	if _gift_list and (not active or not Game.dating.can_give_date_gift() or _showing_result):
+		_gift_list.visible = false
+
+
 func _close() -> void:
+	if _showing_result:
+		return
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var panel := get_node_or_null("Panel") as Control
 	if panel and visible:
@@ -80,6 +162,8 @@ func _close() -> void:
 		tween.tween_property(panel, "modulate:a", 0.0, 0.18)
 		tween.tween_property(panel, "scale", Vector2(0.98, 0.98), 0.18)
 		await tween.finished
+	if _showing_result:
+		return
 	visible = false
 	if buttons:
 		for c in buttons.get_children():
@@ -110,9 +194,152 @@ func _emo_ru(emo: String) -> String:
 			return "нейтрально"
 
 
+func _on_date_finished(result: Dictionary) -> void:
+	_show_result_panel(result)
+
+
+func _ensure_result_panel() -> void:
+	if _result_panel != null and is_instance_valid(_result_panel):
+		return
+	_result_panel = PanelContainer.new()
+	_result_panel.name = "ResultPanel"
+	_result_panel.visible = false
+	_result_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_result_panel.anchor_left = 0.28
+	_result_panel.anchor_top = 0.22
+	_result_panel.anchor_right = 0.72
+	_result_panel.anchor_bottom = 0.72
+	_result_panel.offset_left = 0.0
+	_result_panel.offset_top = 0.0
+	_result_panel.offset_right = 0.0
+	_result_panel.offset_bottom = 0.0
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	_result_panel.add_child(margin)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+	var title_lbl := Label.new()
+	title_lbl.name = "ResultTitle"
+	title_lbl.text = "Итог свидания"
+	title_lbl.add_theme_font_size_override("font_size", 22)
+	vbox.add_child(title_lbl)
+	_result_label = RichTextLabel.new()
+	_result_label.name = "ResultBody"
+	_result_label.bbcode_enabled = true
+	_result_label.fit_content = true
+	_result_label.scroll_active = true
+	_result_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_result_label.custom_minimum_size = Vector2(0, 220)
+	vbox.add_child(_result_label)
+	_result_close_btn = Button.new()
+	_result_close_btn.name = "ResultClose"
+	_result_close_btn.text = "Продолжить"
+	_result_close_btn.pressed.connect(_dismiss_result_panel)
+	vbox.add_child(_result_close_btn)
+	add_child(_result_panel)
+
+
+func _show_result_panel(result: Dictionary) -> void:
+	_ensure_result_panel()
+	_showing_result = true
+	visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	var dialog_panel := get_node_or_null("Panel") as Control
+	if dialog_panel:
+		dialog_panel.visible = false
+	if _gift_btn:
+		_gift_btn.visible = false
+	if _gift_list:
+		_gift_list.visible = false
+	if _finish_btn:
+		_finish_btn.visible = false
+	var factors: Dictionary = result.get("factors", {})
+	var punct: Dictionary = factors.get("punctuality", {})
+	var place: Dictionary = factors.get("place", {})
+	var outfit_v: Variant = factors.get("outfit", {})
+	var gift: Dictionary = factors.get("gift", {})
+	var dlg: Dictionary = factors.get("dialogues", {})
+	var outfit_label := "casual"
+	var outfit_score := ""
+	if outfit_v is Dictionary:
+		outfit_label = str((outfit_v as Dictionary).get("label", (outfit_v as Dictionary).get("id", "casual")))
+		outfit_score = " (%.1f)" % float((outfit_v as Dictionary).get("score", 0.0))
+	else:
+		outfit_label = str(outfit_v) if str(outfit_v) != "" else "casual"
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("[b]%s[/b]" % str(result.get("grade_name", "итог")))
+	lines.append("Связь %+.0f · +%d$ · +%.1f pop" % [
+		float(result.get("bond", result.get("relation", 0.0))),
+		int(result.get("money", 0)),
+		float(result.get("popularity", 0.0)),
+	])
+	lines.append("")
+	lines.append("[b]Пять факторов[/b]")
+	lines.append("• Пунктуальность: %s (%.1f)" % [str(punct.get("label", "—")), float(punct.get("score", 0.0))])
+	lines.append("• Место / подготовка: %s (%.1f)" % [
+		str(place.get("label", place.get("id", "?"))),
+		float(place.get("quality", 0.0)),
+	])
+	lines.append("• Образ: %s%s" % [outfit_label, outfit_score])
+	lines.append("• Подарок: %s" % str(gift.get("label", "без подарка (ок)")))
+	lines.append("• Диалоги: %s" % str(dlg.get("label", "%d/%d" % [
+		int(dlg.get("correct", 0)),
+		int(dlg.get("correct", 0)) + int(dlg.get("wrong", 0)) + int(dlg.get("neutral", 0)),
+	])))
+	if _result_label:
+		_result_label.text = "\n".join(lines)
+	if _result_panel:
+		_result_panel.visible = true
+		_result_panel.modulate.a = 0.0
+		_result_panel.scale = Vector2(0.96, 0.96)
+		_result_panel.pivot_offset = _result_panel.size * 0.5
+		var tween := create_tween().set_parallel(true)
+		tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(_result_panel, "modulate:a", 1.0, 0.28)
+		tween.tween_property(_result_panel, "scale", Vector2.ONE, 0.28)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _dismiss_result_panel() -> void:
+	_showing_result = false
+	if _result_panel:
+		_result_panel.visible = false
+	var dialog_panel := get_node_or_null("Panel") as Control
+	if dialog_panel:
+		dialog_panel.visible = true
+		dialog_panel.modulate.a = 1.0
+	visible = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if buttons:
+		for c in buttons.get_children():
+			c.queue_free()
+	# Restore FPS mouse unless another overlay is up.
+	var tree := get_tree()
+	if tree != null:
+		var blocked := false
+		for group in ["pause_ui", "phone_ui", "event_ui", "shop_ui", "settings_ui"]:
+			var n: Node = tree.get_first_node_in_group(group)
+			if n != null and n is CanvasItem and (n as CanvasItem).visible:
+				blocked = true
+				break
+		if not blocked:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
 func _open(payload: Dictionary) -> void:
+	_showing_result = false
+	if _result_panel:
+		_result_panel.visible = false
+	var dialog_panel := get_node_or_null("Panel") as Control
+	if dialog_panel:
+		dialog_panel.visible = true
 	_ensure_prompt_label()
 	_ensure_coach_labels()
+	_ensure_date_actions()
 	title.text = "Свидание: %s" % str(payload.get("title", ""))
 	var hs: PackedStringArray = PackedStringArray()
 	for h in payload.get("hints", []):
@@ -126,6 +353,11 @@ func _open(payload: Dictionary) -> void:
 	if _feedback_label:
 		_feedback_label.text = ""
 	_refresh_coach()
+	if bool(payload.get("phases_done", false)):
+		phase_label.text = "МОЖНО ЗАВЕРШИТЬ"
+		for c in buttons.get_children():
+			c.queue_free()
+	_refresh_action_buttons()
 	var panel := get_node_or_null("Panel") as Control
 	if panel:
 		panel.modulate.a = 0.0
@@ -228,6 +460,7 @@ func _on_phase(phase_index: int, options: Array) -> void:
 		option_index += 1
 	if buttons.get_child_count() > 0:
 		(buttons.get_child(0) as Button).grab_focus()
+	_refresh_action_buttons()
 
 
 func _configure_panel_layout(panel: Control) -> void:

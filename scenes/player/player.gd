@@ -13,6 +13,10 @@ const UiEscapeScript := preload("res://core/ui_escape.gd")
 @export var head_bob: bool = true
 @export var head_bob_intensity: float = 0.045
 @export var head_bob_frequency: float = 10.0
+## Max vertical ledge the player can step onto while walking (meters).
+@export var max_step_height: float = 0.35
+@export var min_step_height: float = 0.02
+@export var step_forward: float = 0.22
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -43,6 +47,9 @@ func _ready() -> void:
 	_carry_base_position = carry_anchor.position
 	_base_fov = camera.fov
 	_read_settings()
+	# Help clear tiny geometry seams and stay glued after a step-up.
+	floor_snap_length = maxf(floor_snap_length, 0.22)
+	floor_max_angle = deg_to_rad(50.0)
 	# Origin at feet (capsule center is +0.9); slight lift avoids floor embed.
 	global_position = Vector3(0, 0.05, 2.5)
 
@@ -158,7 +165,11 @@ func _physics_process(delta: float) -> void:
 	var blend := 1.0 - exp(-delta * (acceleration if direction.length_squared() > 0.0 else deceleration))
 	velocity.x = lerpf(velocity.x, direction.x * speed, blend)
 	velocity.z = lerpf(velocity.z, direction.z * speed, blend)
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+	var grounded_before := is_on_floor()
 	move_and_slide()
+	if grounded_before:
+		_try_step_up(horizontal)
 
 	if is_on_floor() and not _was_on_floor:
 		_land_bob = 0.075
@@ -186,6 +197,62 @@ func _move_vector() -> Vector2:
 	if Input.is_physical_key_pressed(KEY_S):
 		y += 1.0
 	return Vector2(x, y)
+
+
+func _try_step_up(horizontal: Vector3) -> void:
+	## Climb short ledges/curbs that CharacterBody3D would otherwise treat as walls.
+	if max_step_height <= 0.0:
+		return
+	var flat := Vector3(horizontal.x, 0.0, horizontal.z)
+	if flat.length_squared() < 0.01:
+		return
+	flat = flat.normalized()
+
+	var blocked_by_wall := false
+	for i in get_slide_collision_count():
+		var col := get_slide_collision(i)
+		if col == null:
+			continue
+		var n := col.get_normal()
+		# Nearly vertical surface facing into our movement.
+		if absf(n.y) > 0.45:
+			continue
+		if flat.dot(-n) < 0.15:
+			continue
+		blocked_by_wall = true
+		break
+	if not blocked_by_wall:
+		return
+
+	var start := global_transform
+	var up := Vector3.UP * max_step_height
+	if test_move(start, up):
+		return
+
+	var raised := start.translated(up)
+	var forward := flat * step_forward
+	if test_move(raised, forward):
+		return
+
+	var ahead := raised.translated(forward)
+	var down := Vector3.DOWN * (max_step_height + 0.2)
+	var params := PhysicsTestMotionParameters3D.new()
+	params.from = ahead
+	params.motion = down
+	params.margin = maxf(safe_margin, 0.02)
+	var result := PhysicsTestMotionResult3D.new()
+	if not PhysicsServer3D.body_test_motion(get_rid(), params, result):
+		return
+	if result.get_collision_normal().y < 0.55:
+		return
+
+	var climbed := max_step_height + result.get_travel().y
+	if climbed < min_step_height or climbed > max_step_height + 0.05:
+		return
+
+	global_position = ahead.origin + result.get_travel()
+	velocity.y = 0.0
+	apply_floor_snap()
 
 
 func _read_settings() -> void:

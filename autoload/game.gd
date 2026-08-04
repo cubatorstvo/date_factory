@@ -18,6 +18,7 @@ var save: SaveService
 var city: Node
 var crises: CrisesAPI
 var trait_influence: TraitInfluenceAPI
+var time: TimeAPI
 
 var stage_id: StringName = &"stage_1"
 var postgame: bool = false
@@ -48,6 +49,13 @@ func _bind_modules() -> void:
 	names = _modules_root.get_node("Names") as NamesAPI
 	save = _modules_root.get_node("Save") as SaveService
 	city = _modules_root.get_node("City")
+	if _modules_root.has_node("Time"):
+		time = _modules_root.get_node("Time") as TimeAPI
+	else:
+		var TimeScript: Script = load("res://modules/time/time_api.gd") as Script
+		time = TimeScript.new() as TimeAPI
+		time.name = "Time"
+		_modules_root.add_child(time)
 	if _modules_root.has_node("Crises"):
 		crises = _modules_root.get_node("Crises") as CrisesAPI
 	else:
@@ -66,7 +74,7 @@ func _bind_modules() -> void:
 
 func _wire_modules() -> void:
 	# Names before Girls: unlock entries need next_name() during reset.
-	for mod in [economy, inventory, names, girls, dating, facility, clones, staff, upgrades, events, quests, city, crises, trait_influence]:
+	for mod in [economy, inventory, names, girls, dating, facility, clones, staff, upgrades, events, quests, city, crises, trait_influence, time]:
 		if mod != null and mod.has_method("setup"):
 			mod.setup(self)
 
@@ -94,6 +102,8 @@ func new_game() -> void:
 	names.reset()
 	if city != null and city.has_method("reset"):
 		city.reset()
+	if time != null:
+		time.reset()
 	facility.unlock_stage(stage_id)
 	EventBus.stage_changed.emit(stage_id)
 	EventBus.toast("Новая жизнь. Квартира. Одно свидание. Что может пойти не так?", &"story")
@@ -145,6 +155,7 @@ func to_dict() -> Dictionary:
 		"quests": quests.to_dict(),
 		"names": names.to_dict(),
 		"city": city.to_dict(),
+		"time": time.to_dict() if time != null else {},
 	}
 
 
@@ -170,6 +181,8 @@ func from_dict(data: Dictionary) -> void:
 	quests.from_dict(data.get("quests", {}))
 	names.from_dict(data.get("names", {}))
 	city.from_dict(data.get("city", {}))
+	if time != null:
+		time.from_dict(data.get("time", {}))
 	facility.unlock_stage(stage_id)
 	EventBus.stage_changed.emit(stage_id)
 

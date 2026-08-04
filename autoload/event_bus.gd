@@ -12,6 +12,11 @@ signal bottleneck(kind: StringName, detail: String)
 signal event_raised(event_id: StringName)
 signal interaction_hint(text: String)
 signal carry_changed(item_id: StringName)
+signal time_changed(day: int, minutes: int)
+signal date_reminder(payload: Dictionary)
+signal date_scheduled(payload: Dictionary)
+signal date_cancelled(payload: Dictionary)
+signal table_prep_changed(state: Dictionary)
 signal finale_completed
 signal postgame_started
 

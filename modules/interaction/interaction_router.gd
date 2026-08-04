@@ -12,26 +12,33 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			Game.economy.do_job()
 			Game.quests.complete("s1_money")
 		"buy_gift":
-			var gid := StringName(str(payload.get("gift_id", "flower")))
-			if Game.inventory.buy_gift(gid):
-				Game.quests.complete("s1_money")
+			_open_shop_menu("gift_shop")
 		"take_gift":
-			var gid2 := StringName(str(payload.get("gift_id", "flower")))
-			if Game.inventory.gift_count(gid2) <= 0:
-				EventBus.toast("Сначала купи подарок на полке", &"warn")
-				return
-			if Game.inventory.take_gift(gid2):
-				Game.quests.complete("s1_prepare")
-				EventBus.toast("Подарок в руках — подойди к столу", &"info")
+			EventBus.toast("Полки с подарками убраны — покупай в городе и носи в инвентаре", &"info")
 		"wardrobe":
 			_cycle_outfit()
 			Game.quests.complete("s1_outfit")
 		"prepare_table", "prepare_and_start", "start_date":
-			if not _prepare_default_date():
-				return
-			Game.quests.complete("s1_prepare")
-			EventBus.toast("Столик забронирован. Выйди на улицу и найди розовую вывеску Two Hearts.", &"story")
-			EventBus.notify.emit("DATE_ROUTE_READY", &"objective")
+			_try_start_home_date()
+		"take_food":
+			_take_food(str(payload.get("food_id", "simple_meal")))
+		"take_drink":
+			_take_drink(str(payload.get("drink_id", "water")))
+		"place_on_table":
+			_place_carried_on_table()
+		"upgrade_homeware":
+			Game.dating.schedule.upgrade_homeware()
+		"answer_doorbell":
+			if Game.dating.schedule.answer_doorbell():
+				Game.quests.complete("s1_prepare")
+		"sit_restaurant", "enter_restaurant":
+			_try_start_restaurant_date()
+		"open_flower_shop":
+			_open_shop_menu("flower_shop")
+		"open_jewelry_shop":
+			_open_shop_menu("jewelry_shop")
+		"open_gift_shop":
+			_open_shop_menu("gift_shop")
 		"phone":
 			EventBus.notify.emit("PHONE_TOGGLE", &"ui")
 		"expand":
@@ -88,11 +95,6 @@ static func route(action_id: StringName, source: Node, _by: Node, payload: Dicti
 			Game.quests.complete("s4_parallel")
 		"talk_girl":
 			_talk_girl(str(payload.get("girl_id", "")), source)
-		"enter_restaurant":
-			if Game.dating.prepared.is_empty():
-				EventBus.toast("Сначала подготовь свидание дома.", &"warn")
-				return
-			_start_prepared_or_neighbor()
 		"go_outside":
 			_teleport_player(Vector3(-32.0, 0.05, 2.0), &"street")
 			Game.quests.complete("s1_city")
@@ -208,13 +210,108 @@ static func _finish_teleport(player: Node3D, pos: Vector3, zone: StringName) -> 
 
 static func _city_buy_gift(gift_id: StringName, discount: float) -> void:
 	var def: Dictionary = ContentDB.gift(gift_id)
-	var cost := float(def.get("cost", 10)) * discount
+	var cost := float(def.get("cost", def.get("price", 10))) * discount
 	if not Game.economy.try_spend({"money": cost}, &"city_gift"):
 		EventBus.toast("Не хватает денег", &"warn")
 		return
 	Game.inventory._add_gift(gift_id, 1)
 	EventBus.toast("Куплено: %s" % str(def.get("name", gift_id)), &"ok")
 	Game.quests.complete("s1_money")
+
+
+static func _open_shop_menu(shop_id: String) -> void:
+	var catalog: Dictionary = DatePlaces.shop_catalog().get(shop_id, {})
+	var items: Array = catalog.get("items", [])
+	if items.is_empty():
+		EventBus.toast("Магазин пуст", &"warn")
+		return
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		var shop := tree.get_first_node_in_group("shop_ui")
+		if shop != null and shop.has_method("open"):
+			shop.call("open", shop_id)
+			return
+	# Fallback without ShopUI: buy first affordable (legacy).
+	for raw2 in items:
+		if Game.inventory.can_buy_gift(StringName(str(raw2))):
+			Game.inventory.buy_gift(StringName(str(raw2)))
+			Game.quests.complete("s1_money")
+			return
+	EventBus.toast("Не хватает денег на товары", &"warn")
+
+
+static func _take_food(food_id: String) -> void:
+	if Game.inventory.carried_item != &"":
+		EventBus.toast("Сначала положи то, что в руках, на стол", &"warn")
+		return
+	Game.inventory.carried_item = StringName("food:%s" % food_id)
+	EventBus.carry_changed.emit(Game.inventory.carried_item)
+	EventBus.toast("Взял еду — отнеси на стол", &"ok")
+
+
+static func _take_drink(drink_id: String) -> void:
+	if Game.inventory.carried_item != &"":
+		EventBus.toast("Сначала положи то, что в руках, на стол", &"warn")
+		return
+	Game.inventory.carried_item = StringName("drink:%s" % drink_id)
+	EventBus.carry_changed.emit(Game.inventory.carried_item)
+	EventBus.toast("Взял напиток — отнеси на стол", &"ok")
+
+
+static func _place_carried_on_table() -> void:
+	var carried := str(Game.inventory.carried_item)
+	if carried.begins_with("food:"):
+		var fid := carried.trim_prefix("food:")
+		if Game.dating.schedule.place_food(fid):
+			Game.inventory.carried_item = &""
+			EventBus.carry_changed.emit(&"")
+			Game.quests.complete("s1_prepare")
+			if Game.dating.schedule.is_table_ready():
+				Game.quests.complete("s1_city")
+	elif carried.begins_with("drink:"):
+		var did := carried.trim_prefix("drink:")
+		if Game.dating.schedule.place_drink(did):
+			Game.inventory.carried_item = &""
+			EventBus.carry_changed.emit(&"")
+			Game.quests.complete("s1_prepare")
+			if Game.dating.schedule.is_table_ready():
+				Game.quests.complete("s1_city")
+	else:
+		EventBus.toast("На стол нужна еда или напиток из холодильника", &"warn")
+
+
+static func _try_start_home_date() -> void:
+	if not Game.dating.has_scheduled_date() or not Game.dating.schedule.is_home():
+		EventBus.toast("Сначала назначь домашнее свидание в телефоне", &"warn")
+		return
+	if Game.inventory.carried_item != &"" and (str(Game.inventory.carried_item).begins_with("food:") or str(Game.inventory.carried_item).begins_with("drink:")):
+		_place_carried_on_table()
+		return
+	# Parity with restaurant: sit early and skip time to the booking.
+	var until: int = Game.dating.schedule.minutes_until_date()
+	if until > DateSchedule.GRACE_EARLY_MIN and Game.time != null:
+		var sched: Dictionary = Game.dating.schedule.scheduled
+		EventBus.toast("Сел за стол и ждёшь — время бежит к свиданию", &"info")
+		Game.time.skip_to_minutes(int(sched.get("day", 1)), int(sched.get("minutes", 0)))
+	var target: String = Game.dating.schedule.target_id()
+	var unique: bool = bool(Game.dating.schedule.scheduled.get("unique", ContentDB.girls.has(target)))
+	Game.dating.schedule.player_seated = true
+	_start_date_with_transition(target, unique, &"apartment")
+
+
+static func _try_start_restaurant_date() -> void:
+	if not Game.dating.has_scheduled_date() or not Game.dating.schedule.is_restaurant():
+		EventBus.toast("Сначала назначь свидание в ресторане через телефон", &"warn")
+		return
+	var until: int = Game.dating.schedule.minutes_until_date()
+	if until > DateSchedule.GRACE_EARLY_MIN and Game.time != null:
+		var sched: Dictionary = Game.dating.schedule.scheduled
+		EventBus.toast("Ты сел и ждёшь — время бежит к свиданию", &"info")
+		Game.time.skip_to_minutes(int(sched.get("day", 1)), int(sched.get("minutes", 0)))
+	var target: String = Game.dating.schedule.target_id()
+	var unique: bool = bool(Game.dating.schedule.scheduled.get("unique", ContentDB.girls.has(target)))
+	Game.dating.schedule.player_seated = true
+	_start_date_with_transition(target, unique, &"restaurant")
 
 
 static func _cycle_outfit() -> void:
@@ -230,42 +327,15 @@ static func _cycle_outfit() -> void:
 
 
 static func _prepare_default_date() -> bool:
-	Game.girls.refresh_candidates(false)
-	var target := "neighbor"
-	for c in Game.girls.candidates:
-		if str(c.get("kind", "")) == "unique":
-			target = str(c.get("id", "neighbor"))
-			break
-	var gift_id := &"flower"
-	if Game.inventory.carried_item != &"":
-		gift_id = Game.inventory.carried_item
-	elif Game.inventory.gift_count(&"flower") > 0:
-		gift_id = &"flower"
-	elif Game.inventory.total_gifts() > 0:
-		gift_id = StringName(str(Game.inventory.gift_counts.keys()[0]))
-	else:
-		EventBus.toast("Нужен подарок: купи и возьми с полки", &"warn")
-		return false
-	var venue := &"kitchen_table"
-	Game.dating.set_prep(target, gift_id, venue, Game.inventory.equipped_outfit)
-	EventBus.toast("Стол готов — свидание: %s" % Game.girls.display_name(StringName(target)), &"info")
-	return true
+	EventBus.toast("Назначай свидание в телефоне: место и время", &"info")
+	return false
 
 
 static func _start_prepared_or_neighbor() -> void:
-	var target := "neighbor"
-	if not Game.dating.prepared.has("neighbor"):
-		for k in Game.dating.prepared.keys():
-			target = str(k)
-			break
-	if not Game.dating.prepared.has(target):
-		EventBus.toast("Сначала подготовь стол", &"warn")
-		return
-	var unique: bool = ContentDB.girls.has(target)
-	_start_date_with_transition(target, unique)
+	_try_start_restaurant_date()
 
 
-static func _start_date_with_transition(target: String, unique: bool) -> void:
+static func _start_date_with_transition(target: String, unique: bool, zone: StringName = &"restaurant") -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return
@@ -276,12 +346,15 @@ static func _start_date_with_transition(target: String, unique: bool) -> void:
 	if tree.current_scene:
 		transition = tree.current_scene.find_child("TransitionOverlay", true, false) as TransitionOverlay
 	var begin_date := func() -> void:
-		Sfx.set_zone(&"restaurant")
+		Sfx.set_zone(zone)
 		if not Game.dating.start_manual(target, unique):
-			Sfx.set_zone(&"street")
+			Sfx.set_zone(&"street" if zone == &"restaurant" else &"apartment")
 			if is_instance_valid(player):
 				player.set("_date_lock", false)
-		# Date stage keeps lock via date_ui_open when start succeeds.
+		else:
+			Game.quests.complete("s1_prepare")
+			Game.quests.complete("s1_date")
+	# Date stage keeps lock via date_ui_open when start succeeds.
 	if transition == null:
 		begin_date.call()
 		return

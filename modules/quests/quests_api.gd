@@ -23,12 +23,12 @@ func reset_for_stage(stage_id: StringName) -> void:
 	active.clear()
 	match str(stage_id):
 		"stage_1":
-			_add("s1_profile", "1/7 Открой телефон (Q или тумба) и посмотри профиль Соседки", "main")
-			_add("s1_money", "2/7 Поработай на кровати, затем купи цветок на полке", "main")
-			_add("s1_outfit", "3/7 Смени одежду в шкафу", "main")
-			_add("s1_prepare", "4/8 Возьми подарок и забронируй свидание у стола", "main")
-			_add("s1_city", "5/8 Выйди из квартиры на вечернюю улицу", "main")
-			_add("s1_date", "6/8 Дойди до розовой вывески Two Hearts и проведи свидание", "main")
+			_add("s1_profile", "1/8 Открой телефон (Q или тумба) и посмотри профиль Соседки", "main")
+			_add("s1_money", "2/8 Поработай на кровати, затем зайди в городской магазин", "main")
+			_add("s1_outfit", "3/8 Смени одежду в шкафу", "main")
+			_add("s1_prepare", "4/8 В телефоне назначь свидание (дом или ресторан + время)", "main")
+			_add("s1_city", "5/8 Подготовь дом или выйди к ресторану Two Hearts", "main")
+			_add("s1_date", "6/8 Проведи свидание и нажми «Завершить»", "main")
 			_add("s1_contact", "7/8 Заполучи ещё один номер — поговори с любой девушкой", "main")
 			_add("s1_expand", "8/8 Набери 5⭐ и открой дверь расширения (+X)", "main")
 		"stage_2":
@@ -78,19 +78,19 @@ func can_do(action: StringName) -> bool:
 	match str(action):
 		"phone", "job":
 			return true
-		"buy_gift", "take_gift":
+		"buy_gift", "take_gift", "open_flower_shop", "open_jewelry_shop", "open_gift_shop", "city_buy_gift":
 			return is_done("s1_profile")
 		"wardrobe":
 			return is_done("s1_money")
-		"prepare_table", "prepare_and_start", "start_date":
-			return is_done("s1_outfit") and (Game.inventory.total_gifts() > 0 or Game.inventory.carried_item != &"")
-		"enter_restaurant":
-			return is_done("s1_prepare") and not Game.dating.prepared.is_empty()
+		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "place_on_table", "upgrade_homeware", "answer_doorbell":
+			return is_done("s1_outfit") and Game.dating.has_scheduled_date()
+		"enter_restaurant", "sit_restaurant":
+			return is_done("s1_prepare") and Game.dating.has_scheduled_date() and Game.dating.schedule.is_restaurant()
 		"expand":
 			return is_done("s1_date") and is_done("s1_contact")
 		"go_outside", "talk_girl", "go_neighbor", "go_home", "go_home_from_neighbor":
 			return true
-		"city_rest", "city_buy_gift", "city_cafe_job", "city_cafe_scroll", "city_coffee", "city_workout", "city_gym_pass", "city_park_fun", "city_bar_drink", "city_karaoke", "city_bus_info", "neighbor_look":
+		"city_rest", "city_cafe_job", "city_cafe_scroll", "city_coffee", "city_workout", "city_gym_pass", "city_park_fun", "city_bar_drink", "city_karaoke", "city_bus_info", "neighbor_look":
 			return true
 		_:
 			return true
@@ -100,16 +100,16 @@ func gate_hint(action: StringName) -> String:
 	if can_do(action):
 		return ""
 	match str(action):
-		"buy_gift", "take_gift":
+		"buy_gift", "take_gift", "open_flower_shop", "open_jewelry_shop", "open_gift_shop", "city_buy_gift":
 			return "Сначала открой телефон и посмотри профиль Соседки"
 		"wardrobe":
-			return "Сначала заработай и купи подарок"
-		"prepare_table", "prepare_and_start", "start_date":
+			return "Сначала заработай и зайди в городской магазин"
+		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "answer_doorbell":
 			if not is_done("s1_outfit"):
 				return "Сначала смени одежду в шкафу"
-			return "Сначала возьми подарок с полки"
-		"enter_restaurant":
-			return "Сначала подготовь свидание у домашнего стола"
+			return "Сначала назначь свидание в телефоне"
+		"enter_restaurant", "sit_restaurant":
+			return "Сначала назначь ресторанное свидание в телефоне"
 		"expand":
 			return "Сначала свидание с соседкой и новый контакт в городе"
 		_:

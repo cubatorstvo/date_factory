@@ -123,6 +123,12 @@ func choose(choice_id: String) -> void:
 			scandal += 1.0
 	elif money > 0.0:
 		Game.economy.add(&"money", money, &"event")
+	var gift_buy := StringName(str(picked.get("gift_id", "")))
+	if gift_buy != &"":
+		if Game.inventory.buy_gift(gift_buy):
+			Game.quests.complete("s1_money")
+		else:
+			EventBus.toast("Не удалось купить подарок", &"warn")
 	Game.economy.add(&"scandal", scandal, &"event")
 	Game.economy.add(&"popularity", pop, &"event")
 	if legend_delta < 0.0:
@@ -131,8 +137,17 @@ func choose(choice_id: String) -> void:
 		Game.economy.repair_legend(legend_delta, &"event")
 	history.append({"id": active.get("id", ""), "choice": choice_id})
 	EventBus.toast("Событие: %s" % str(active.get("name", "")), &"event")
+	var eid := str(active.get("id", ""))
 	active.clear()
 	event_closed.emit()
+	if eid.begins_with("book_date_"):
+		var day: int = int(picked.get("day", 1))
+		var mins: int = int(picked.get("minutes", 0))
+		var place_id: String = str(picked.get("place_id", eid.trim_prefix("book_date_")))
+		var target_id: String = str(picked.get("target_id", ""))
+		var unique: bool = bool(picked.get("unique", true))
+		if target_id != "" and Game.dating.book_date(target_id, place_id, day, mins, unique):
+			Game.quests.complete("s1_prepare")
 	if Game.dating.has_method("apply_parallel_choice"):
 		Game.dating.apply_parallel_choice(choice_id)
 
@@ -144,7 +159,7 @@ func _blocked_by_gameplay() -> bool:
 	var tree: SceneTree = get_tree()
 	if tree == null:
 		return true
-	for group in ["pause_ui", "phone_ui", "date_ui", "reveal_ui", "finale_ui", "settings_ui"]:
+	for group in ["pause_ui", "phone_ui", "date_ui", "reveal_ui", "finale_ui", "settings_ui", "shop_ui"]:
 		var n: Node = tree.get_first_node_in_group(group)
 		if n != null and bool(n.visible):
 			return true

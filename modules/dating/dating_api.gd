@@ -19,6 +19,7 @@ var automation_level: int = 0 ## 0 manual launch, 1 manager prep, 2 clone, 3 ful
 var auto_risk_mode: String = "standard" ## careful | standard | risk
 var parallel_runs: int = 0 ## successful player+double overlaps resolved
 var last_collision: Dictionary = {}
+var schedule: DateSchedule = DateSchedule.new()
 
 
 func setup(_game: Node) -> void:
@@ -36,6 +37,9 @@ func reset() -> void:
 	auto_risk_mode = "standard"
 	parallel_runs = 0
 	last_collision.clear()
+	if schedule == null:
+		schedule = DateSchedule.new()
+	schedule.reset()
 
 
 func set_prep(target_id: String, gift_id: StringName, venue_id: StringName, outfit_id: StringName, extra: StringName = &"") -> void:
@@ -51,6 +55,24 @@ func get_prep(target_id: String) -> Dictionary:
 	return prepared.get(target_id, {}).duplicate(true)
 
 
+func book_date(target_id: String, place_id: String, day: int, minutes: int, is_unique: bool = true) -> bool:
+	return schedule.book(target_id, place_id, day, minutes, is_unique)
+
+
+func cancel_date(reason: String = "cancelled") -> void:
+	schedule.cancel(reason)
+
+
+func has_scheduled_date() -> bool:
+	return schedule.has_booking()
+
+
+func scheduled_summary() -> Dictionary:
+	if not schedule.has_booking():
+		return {}
+	return schedule.scheduled.duplicate(true)
+
+
 func can_start_manual(target_id: String) -> bool:
 	if not active_manual.is_empty():
 		return false
@@ -60,15 +82,29 @@ func can_start_manual(target_id: String) -> bool:
 	if Game.economy.get_value(&"attention") < 1.0:
 		EventBus.bottleneck.emit(&"attention", "Не хватает внимания")
 		return false
-	var prep: Dictionary = get_prep(target_id)
-	if prep.is_empty():
-		EventBus.toast("Сначала подготовь свидание (подарок/образ/место)", &"warn")
+	if schedule.has_booking() and schedule.target_id() != target_id:
+		EventBus.toast("Назначено свидание с другой девушкой", &"warn")
 		return false
-	var venue: Dictionary = ContentDB.venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
-	if not Game.facility.is_venue_unlocked(StringName(str(venue.get("id", "kitchen_table")))):
+	if schedule.has_booking():
+		if schedule.is_home() and not schedule.can_start_home():
+			return false
+		if schedule.is_restaurant() and not schedule.can_start_restaurant():
+			return false
+	else:
+		var prep: Dictionary = get_prep(target_id)
+		if prep.is_empty():
+			EventBus.toast("Сначала назначь свидание в телефоне", &"warn")
+			return false
+	var venue_key: String = "kitchen_table"
+	if schedule.has_booking():
+		venue_key = str(schedule.scheduled.get("venue_id", "kitchen_table"))
+	else:
+		venue_key = str(get_prep(target_id).get("venue_id", "kitchen_table"))
+	var venue_id: StringName = StringName(venue_key)
+	if not Game.facility.is_venue_unlocked(venue_id):
 		EventBus.toast("Место ещё не открыто", &"warn")
 		return false
-	if not Game.facility.reserve_venue(StringName(str(venue.get("id", "kitchen_table")))):
+	if not Game.facility.reserve_venue(venue_id):
 		EventBus.bottleneck.emit(&"venue", "Место занято")
 		return false
 	return true
@@ -77,28 +113,37 @@ func can_start_manual(target_id: String) -> bool:
 func start_manual(target_id: String, is_unique: bool = true) -> bool:
 	if not can_start_manual(target_id):
 		return false
-	var prep: Dictionary = get_prep(target_id)
-	var venue_cost: float = float(ContentDB.venue(StringName(str(prep.get("venue_id", "kitchen_table")))).get("cost", 0))
+	var prep: Dictionary = {}
+	if schedule.has_booking():
+		var abs_now: int = Game.time.absolute_minutes() if Game.time != null else 0
+		schedule.compute_punctuality(abs_now)
+		prep = schedule.build_prep_from_booking()
+		is_unique = bool(schedule.scheduled.get("unique", is_unique))
+		prepared[target_id] = prep.duplicate(true)
+	else:
+		prep = get_prep(target_id)
+	var venue_id: StringName = StringName(str(prep.get("venue_id", "kitchen_table")))
+	var venue_cost: float = float(prep.get("cost", ContentDB.venue(venue_id).get("cost", 0)))
+	if schedule.has_booking():
+		venue_cost = float(schedule.scheduled.get("cost", venue_cost))
 	venue_cost *= Game.upgrades.effect_value("venue_cost_mult", 1.0)
 	var effects: Dictionary = Game.girls.active_effects()
 	venue_cost *= float(effects.get("date_cost_mult", 1.0))
 	if venue_cost > 0.0 and not Game.economy.try_spend({"money": venue_cost}, &"venue"):
-		Game.facility.release_venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
+		Game.facility.release_venue(venue_id)
 		EventBus.toast("Не хватает денег на место", &"warn")
 		return false
 	Game.economy.add(&"attention", -1.0, &"manual_date")
-	# consume gift from stock or carried
+	# Gift is optional — only consumed if already set on prep (mid-date give uses give_date_gift).
 	var gift_id: StringName = StringName(str(prep.get("gift_id", "")))
-	if Game.inventory.carried_item == gift_id:
-		Game.inventory.consume_carried()
-	elif Game.inventory.gift_count(gift_id) > 0:
-		Game.inventory.gift_counts[str(gift_id)] = Game.inventory.gift_count(gift_id) - 1
-		Game.inventory.inventory_changed.emit()
-	else:
-		EventBus.toast("Нет подарка", &"warn")
-		Game.facility.release_venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
-		Game.economy.add(&"attention", 1.0, &"refund")
-		return false
+	if gift_id != &"" and schedule.gift_given_id.is_empty():
+		if Game.inventory.carried_item == gift_id:
+			Game.inventory.consume_carried()
+		elif Game.inventory.gift_count(gift_id) > 0:
+			Game.inventory.gift_counts[str(gift_id)] = Game.inventory.gift_count(gift_id) - 1
+			Game.inventory.inventory_changed.emit()
+		else:
+			prep["gift_id"] = ""
 
 	active_manual = {
 		"target_id": target_id,
@@ -113,7 +158,12 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 		"correct": 0,
 		"wrong": 0,
 		"neutral": 0,
+		"gift_given": str(prep.get("gift_id", "")) != "",
+		"phases_done": false,
 	}
+	schedule.awaiting_finish = false
+	if schedule.has_booking():
+		schedule.clear_after_start()
 	_sync_parallel_risk(str(prep.get("venue_id", "kitchen_table")), "player")
 	Game.girls.mark_met(StringName(target_id))
 	date_ui_open.emit(_manual_payload())
@@ -136,6 +186,11 @@ func _manual_payload() -> Dictionary:
 		"prompt": str(active_manual.get("prompt", "")),
 		"emotion": str(active_manual.get("emotion", "neutral")),
 		"bond": float(Game.girls.get_entry(StringName(tid)).get("bond", 0.0)),
+		"phases_done": bool(active_manual.get("phases_done", false)),
+		"gift_given": bool(active_manual.get("gift_given", false)),
+		"can_gift": can_give_date_gift(),
+		"awaiting_finish": bool(active_manual.get("phases_done", false)),
+		"place_id": str(prep.get("place_id", "")),
 	}
 
 
@@ -360,10 +415,62 @@ func choose_manual(option_id: String) -> void:
 	EventBus.notify.emit("DATE_EMOTION:%s" % str(emotion), &"date_fx")
 	EventBus.notify.emit("DATE_CHOICE_DONE", &"date_fx")
 	active_manual["phase"] = int(active_manual.get("phase", 0)) + 1
-	if int(active_manual["phase"]) >= 3 or Game.upgrades.has_effect("fast_manual"):
-		_finish_manual()
+	var max_phases: int = 2 if Game.upgrades.has_effect("fast_manual") else 3
+	if int(active_manual["phase"]) >= max_phases:
+		active_manual["phases_done"] = true
+		schedule.awaiting_finish = true
+		date_ui_open.emit(_manual_payload())
+		EventBus.toast("Диалоги закончены — можно завершить свидание", &"info")
 	else:
 		_emit_phase()
+
+
+func can_give_date_gift() -> bool:
+	if active_manual.is_empty():
+		return false
+	if bool(active_manual.get("gift_given", false)):
+		return false
+	return _has_giftable_inventory()
+
+
+func _has_giftable_inventory() -> bool:
+	for gid in Game.inventory.gift_counts.keys():
+		if int(Game.inventory.gift_counts[gid]) > 0:
+			return true
+	var carried := str(Game.inventory.carried_item)
+	if carried != "" and not carried.begins_with("food:") and not carried.begins_with("drink:"):
+		return true
+	return false
+
+
+func give_date_gift(gift_id: StringName) -> bool:
+	if not can_give_date_gift():
+		EventBus.toast("Подарок уже вручён", &"info")
+		return false
+	if gift_id == &"":
+		return false
+	if Game.inventory.carried_item == gift_id:
+		Game.inventory.consume_carried()
+	elif Game.inventory.gift_count(gift_id) > 0:
+		Game.inventory.gift_counts[str(gift_id)] = Game.inventory.gift_count(gift_id) - 1
+		Game.inventory.inventory_changed.emit()
+	else:
+		EventBus.toast("Нет такого подарка в инвентаре", &"warn")
+		return false
+	var prep: Dictionary = active_manual.get("prep", {})
+	prep["gift_id"] = str(gift_id)
+	active_manual["prep"] = prep
+	active_manual["gift_given"] = true
+	schedule.gift_given_id = str(gift_id)
+	EventBus.toast("Ты подарил: %s" % str(ContentDB.gift(gift_id).get("name", gift_id)), &"ok")
+	date_ui_open.emit(_manual_payload())
+	return true
+
+
+func finish_manual() -> void:
+	if active_manual.is_empty():
+		return
+	_finish_manual()
 
 
 func _finish_manual() -> void:
@@ -376,25 +483,108 @@ func _finish_manual() -> void:
 	var grade: int = _grade_from_score(base)
 	var bond_delta: float = float(active_manual.get("bond_delta", 0.0))
 	var result: Dictionary = _apply_result(target_id, unique, prep, grade, true, bond_delta)
+	result["factors"] = _result_factors(target_id, unique, prep, active_manual)
+	result["punctuality"] = str(prep.get("punctuality_label", ""))
+	result["place_id"] = str(prep.get("place_id", ""))
 	Game.facility.release_venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
 	active_manual.clear()
+	schedule.awaiting_finish = false
+	schedule.gift_given_id = ""
 	date_ui_close.emit()
 	last_result = result
 	EventBus.date_finished.emit(result)
+	_toast_factor_breakdown(result)
+
+
+func _result_factors(target_id: String, unique: bool, prep: Dictionary, session: Dictionary) -> Dictionary:
+	var total_choices: int = int(session.get("correct", 0)) + int(session.get("wrong", 0)) + int(session.get("neutral", 0))
+	var dialog_ratio: float = 0.0
+	if total_choices > 0:
+		dialog_ratio = float(session.get("correct", 0)) / float(total_choices)
+	var outfit_id := str(prep.get("outfit_id", "casual"))
+	var outfit_def: Dictionary = ContentDB.outfit(StringName(outfit_id))
+	var gift_id := str(prep.get("gift_id", ""))
+	var gift_def: Dictionary = ContentDB.gift(StringName(gift_id)) if gift_id != "" else {}
+	return {
+		"dialogues": {
+			"weight": 0.6,
+			"correct": int(session.get("correct", 0)),
+			"wrong": int(session.get("wrong", 0)),
+			"neutral": int(session.get("neutral", 0)),
+			"ratio": dialog_ratio,
+			"label": "%d/%d удачных" % [
+				int(session.get("correct", 0)),
+				int(session.get("correct", 0)) + int(session.get("wrong", 0)) + int(session.get("neutral", 0)),
+			],
+		},
+		"place": {
+			"id": str(prep.get("place_id", "")),
+			"quality": float(prep.get("place_quality", 0.0)),
+			"homeware": int(prep.get("homeware_level", 0)),
+			"label": str(DatePlaces.place(str(prep.get("place_id", ""))).get("name", prep.get("place_id", "?"))),
+		},
+		"punctuality": {
+			"label": str(prep.get("punctuality_label", "—")),
+			"score": float(prep.get("punctuality_score", 0.0)),
+		},
+		"outfit": {
+			"id": outfit_id if outfit_id != "" else "casual",
+			"label": str(outfit_def.get("name", outfit_id if outfit_id != "" else "casual")),
+			"score": float(outfit_def.get("quality", 1.0)),
+		},
+		"gift": {
+			"id": gift_id,
+			"optional": true,
+			"given": gift_id != "",
+			"label": str(gift_def.get("name", "без подарка")) if gift_id != "" else "без подарка (ок)",
+			"score": float(gift_def.get("quality", 0.0)) if gift_id != "" else 0.0,
+		},
+	}
+
+
+func _toast_factor_breakdown(result: Dictionary) -> void:
+	var factors: Dictionary = result.get("factors", {})
+	if factors.is_empty():
+		return
+	var dlg: Dictionary = factors.get("dialogues", {})
+	var place: Dictionary = factors.get("place", {})
+	var punct: Dictionary = factors.get("punctuality", {})
+	var gift: Dictionary = factors.get("gift", {})
+	var outfit_v: Variant = factors.get("outfit", {})
+	var outfit_label := "casual"
+	if outfit_v is Dictionary:
+		outfit_label = str((outfit_v as Dictionary).get("label", (outfit_v as Dictionary).get("id", "casual")))
+	else:
+		outfit_label = str(outfit_v) if str(outfit_v) != "" else "casual"
+	var gift_line := str(gift.get("label", "без подарка (ок)"))
+	var place_name := str(place.get("label", DatePlaces.place(str(place.get("id", ""))).get("name", place.get("id", "?"))))
+	EventBus.toast("Факторы: диалоги %s · место %s · %s · образ %s · подарок: %s" % [
+		str(dlg.get("label", "%d/%d" % [int(dlg.get("correct", 0)), int(dlg.get("correct", 0)) + int(dlg.get("wrong", 0)) + int(dlg.get("neutral", 0))])),
+		place_name,
+		str(punct.get("label", "?")),
+		outfit_label,
+		gift_line,
+	], &"date")
 
 
 func _prep_score(target_id: String, unique: bool, prep: Dictionary) -> float:
 	var score := 0.0
-	var gift: Dictionary = ContentDB.gift(StringName(str(prep.get("gift_id", ""))))
+	var gift_id: String = str(prep.get("gift_id", ""))
+	var gift: Dictionary = ContentDB.gift(StringName(gift_id)) if gift_id != "" else {}
 	var outfit: Dictionary = ContentDB.outfit(StringName(str(prep.get("outfit_id", "casual"))))
 	var venue: Dictionary = ContentDB.venue(StringName(str(prep.get("venue_id", "kitchen_table"))))
-	score += float(gift.get("quality", 1)) * 0.4
+	# Dialogues already in base score; factors: place, punctuality, outfit, optional gift.
+	var place_q: float = float(prep.get("place_quality", venue.get("quality", 1.0)))
+	score += place_q * 0.35
+	score += float(prep.get("punctuality_score", 0.5))
 	score += float(outfit.get("quality", 1)) * 0.3
-	score += float(venue.get("quality", 1)) * 0.3
-	score += Game.upgrades.effect_value("gift_quality") * 0.2
+	if gift_id != "":
+		score += float(gift.get("quality", 1)) * 0.4
+		score += Game.upgrades.effect_value("gift_quality") * 0.2
 	score += Game.upgrades.effect_value("venue_quality_all") * 0.2
 	if Game.trait_influence != null:
-		score += Game.trait_influence.prep_gift_score_mod(StringName(target_id), gift)
+		if gift_id != "":
+			score += Game.trait_influence.prep_gift_score_mod(StringName(target_id), gift)
 		score += Game.trait_influence.punctual_prep_bonus(StringName(target_id), venue)
 		score += float(Game.trait_influence.branch_passive_effects().get("gift_quality_bonus", 0.0))
 	var likes: Array = []
@@ -415,7 +605,7 @@ func _prep_score(target_id: String, unique: bool, prep: Dictionary) -> float:
 			for tag in TraitsContent.TRAIT_PREP_TAGS.get(str(tid), []):
 				if not likes.has(tag):
 					likes.append(tag)
-	var gift_tags: Array = gift.get("tags", [])
+	var gift_tags: Array = gift.get("tags", []) if not gift.is_empty() else []
 	var venue_tags: Array = venue.get("tags", [])
 	for t in likes:
 		if gift_tags.has(t) or venue_tags.has(t) or str(outfit.get("style", "")) == str(t):
@@ -548,6 +738,9 @@ func enqueue_auto(target: Dictionary, prep: Dictionary) -> void:
 func _process(delta: float) -> void:
 	if not Game.run_started:
 		return
+	if schedule != null:
+		schedule.update_arrival_flags()
+		schedule.tick_reminders()
 	_process_autos(delta)
 	_staff_automation(delta)
 	# attention regen
@@ -967,6 +1160,7 @@ func to_dict() -> Dictionary:
 		"automation_level": automation_level,
 		"auto_risk_mode": auto_risk_mode,
 		"parallel_runs": parallel_runs,
+		"schedule": schedule.to_dict() if schedule != null else {},
 	}
 
 
@@ -976,5 +1170,8 @@ func from_dict(data: Dictionary) -> void:
 	automation_level = int(data.get("automation_level", 0))
 	auto_risk_mode = str(data.get("auto_risk_mode", "standard"))
 	parallel_runs = int(data.get("parallel_runs", 0))
+	if schedule == null:
+		schedule = DateSchedule.new()
+	schedule.from_dict(data.get("schedule", {}))
 	active_manual.clear()
 	active_autos.clear()

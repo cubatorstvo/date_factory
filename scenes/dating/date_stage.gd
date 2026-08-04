@@ -1,12 +1,17 @@
 extends Node3D
 ## Staged 3D date vignette: both sit at the table chairs.
 ## Arrival uses ArrivalPipeline (door → walk → seat); never spawn already sitting.
+## Home dates use apartment art; restaurant dates keep restaurant art.
 
 const STAGE_ORIGIN := Vector3(0.0, 40.0, 0.0)
 const RESTAURANT_VISUAL_SCENE := "res://scenes/world/vertical_slice/restaurant.tscn"
+const APARTMENT_VISUAL_SCENE := "res://scenes/world/vertical_slice/apartment.tscn"
 const DATE_GIRL_SCENE := "res://assets/characters/hero_base/prefabs/DateGirl_UAL.tscn"
+const HERO_BODY_SCENE := "res://assets/characters/hero_base/prefabs/Hero.tscn"
 const DATE_PRESENTATION_CONTROLLER := "res://scenes/dating/date_presentation_controller.gd"
 const RESTAURANT_ART_OFFSET := Vector3(-2.0, 0.0, 1.6)
+## Centers dining table near vignette origin (table at 0.65,0,0.55 in apartment art).
+const APARTMENT_ART_OFFSET := Vector3(-0.65, 0.0, -0.55)
 const GIRL_DOOR_POSITION := Vector3(-2.0, 0.0, 6.4)
 const GIRL_CHAIR_POSITION := Vector3(0.0, 0.0, -1.15)
 const PLAYER_CHAIR_OFFSET := Vector3(0.0, 0.05, 1.15)
@@ -35,6 +40,9 @@ var _presentation: Node
 var _arrival: ArrivalPipeline = ArrivalPipeline.new()
 var _girl_door_position: Vector3 = GIRL_DOOR_POSITION
 var _girl_chair_position: Vector3 = GIRL_CHAIR_POSITION
+var _hero_chair_position: Vector3 = PLAYER_CHAIR_OFFSET
+var _hero_body: Node3D
+var _place_id: String = "restaurant"
 
 
 func _ready() -> void:
@@ -101,9 +109,11 @@ func _process(delta: float) -> void:
 					_finish_intro()
 		&"ready":
 			_hold_girl_seated()
+			_hold_hero_seated()
 		&"outro":
 			if _sequence_time < 1.05:
 				_hold_girl_seated()
+				_hold_hero_seated()
 				return
 			if not _outro_started:
 				var current := str(_girl.call("get_current_alias")) if _girl.has_method("get_current_alias") else ""
@@ -147,11 +157,21 @@ func _on_open(payload: Dictionary) -> void:
 		if carry:
 			carry.visible = false
 
+	_place_id = str(payload.get("place_id", ""))
+	if _place_id.is_empty():
+		var prep: Dictionary = payload.get("prep", {})
+		_place_id = str(prep.get("place_id", "restaurant"))
+	if _place_id.is_empty():
+		_place_id = "restaurant"
+	_girl_door_position = GIRL_DOOR_POSITION
+	_girl_chair_position = GIRL_CHAIR_POSITION
+	_hero_chair_position = PLAYER_CHAIR_OFFSET
+
 	_root = Node3D.new()
 	_root.name = "DateVignette"
 	_root.position = STAGE_ORIGIN
 	add_child(_root)
-	_add_backdrop(_root)
+	_add_backdrop(_root, _place_id)
 	_add_gift(payload)
 
 	var packed := load(DATE_GIRL_SCENE) as PackedScene
@@ -194,6 +214,7 @@ func _on_open(payload: Dictionary) -> void:
 		add_child(_presentation)
 		_presentation.call("setup", _date_cam, STAGE_ORIGIN)
 		_presentation.call("move_to", &"arrival", 0.0)
+	_spawn_hero_body()
 	_arrival.begin_intro(_girl_door_position, _girl_chair_position, 6.5)
 	_sequence = &"intro"
 	_sequence_time = 0.0
@@ -279,24 +300,31 @@ func _face_toward(local_target: Vector3) -> void:
 			_girl.rotate_y(PI)
 
 
-func _add_backdrop(parent: Node3D) -> void:
-	var packed := load(RESTAURANT_VISUAL_SCENE) as PackedScene
+func _add_backdrop(parent: Node3D, place_id: String) -> void:
+	var is_home := place_id == "home"
+	var scene_path := APARTMENT_VISUAL_SCENE if is_home else RESTAURANT_VISUAL_SCENE
+	var art_offset := APARTMENT_ART_OFFSET if is_home else RESTAURANT_ART_OFFSET
+	var packed := load(scene_path) as PackedScene
 	if packed == null:
-		push_warning("Restaurant visual scene missing")
+		push_warning("Date visual scene missing: %s" % scene_path)
 		return
-	var restaurant := packed.instantiate() as Node3D
-	if restaurant == null:
-		push_warning("Restaurant visual scene root must be Node3D")
+	var visual := packed.instantiate() as Node3D
+	if visual == null:
+		push_warning("Date visual scene root must be Node3D: %s" % scene_path)
 		return
-	restaurant.name = "RestaurantVisual"
-	restaurant.position = RESTAURANT_ART_OFFSET
-	parent.add_child(restaurant)
-	_resolve_restaurant_markers(restaurant)
-	for node: Node in restaurant.find_children("*", "DirectionalLight3D", true, false):
+	visual.name = "ApartmentVisual" if is_home else "RestaurantVisual"
+	visual.position = art_offset
+	parent.add_child(visual)
+	_resolve_date_markers(visual, is_home)
+	for node: Node in visual.find_children("*", "WorldEnvironment", true, false):
+		var world := node as WorldEnvironment
+		if world:
+			world.environment = null
+	for node: Node in visual.find_children("*", "DirectionalLight3D", true, false):
 		var light := node as DirectionalLight3D
 		if light:
 			light.visible = false
-	for node2: Node in restaurant.find_children("*", "OmniLight3D", true, false):
+	for node2: Node in visual.find_children("*", "OmniLight3D", true, false):
 		var omni := node2 as OmniLight3D
 		if omni == null:
 			continue
@@ -306,25 +334,40 @@ func _add_backdrop(parent: Node3D) -> void:
 			omni.light_energy = minf(omni.light_energy, 0.9)
 		else:
 			omni.light_energy = minf(omni.light_energy, 1.15)
-	var preview_girl := restaurant.get_node_or_null("Characters/DateGirl") as Node3D
+	var preview_girl := visual.get_node_or_null("Characters/DateGirl") as Node3D
 	if preview_girl:
 		preview_girl.visible = false
 		preview_girl.process_mode = Node.PROCESS_MODE_DISABLED
+	var gift_shelf := visual.get_node_or_null("Furniture/GiftShelf") as Node3D
+	if gift_shelf:
+		gift_shelf.visible = false
 
 
-func _resolve_restaurant_markers(restaurant: Node3D) -> void:
-	var markers := restaurant.get_node_or_null("Markers") as Node3D
-	if markers == null:
-		return
-	var entrance := markers.get_node_or_null("GirlEntrance") as Node3D
-	var seat := markers.get_node_or_null("GirlSeat") as Node3D
-	var hero := markers.get_node_or_null("HeroSeat") as Node3D
+func _resolve_date_markers(visual: Node3D, is_home: bool) -> void:
+	var markers := visual.get_node_or_null("Markers") as Node3D
+	var entrance: Node3D = null
+	var seat: Node3D = null
+	var hero: Node3D = null
+	if markers != null:
+		entrance = markers.get_node_or_null("GirlEntrance") as Node3D
+		seat = markers.get_node_or_null("GirlSeat") as Node3D
+		hero = markers.get_node_or_null("HeroSeat") as Node3D
+		if is_home and entrance == null:
+			entrance = markers.get_node_or_null("ApartmentExit") as Node3D
+	if is_home:
+		if seat == null:
+			seat = visual.get_node_or_null("Furniture/DiningChairNorth") as Node3D
+		if hero == null:
+			hero = visual.get_node_or_null("Furniture/DiningChairSouth") as Node3D
 	if entrance:
-		_girl_door_position = restaurant.position + entrance.position
+		_girl_door_position = visual.position + entrance.position
 	if seat:
-		_girl_chair_position = restaurant.position + seat.position + Vector3(0.0, GIRL_SEAT_Y_OFFSET, 0.0)
-	if hero and _player and is_instance_valid(_player):
-		_player.global_position = _root.to_global(restaurant.position + hero.position + Vector3(0.0, 0.05, 0.0))
+		_girl_chair_position = visual.position + seat.position + Vector3(0.0, GIRL_SEAT_Y_OFFSET, 0.0)
+	if hero:
+		_hero_chair_position = visual.position + hero.position + Vector3(0.0, 0.05, 0.0)
+		if _player and is_instance_valid(_player) and _root != null:
+			_player.global_position = _root.to_global(_hero_chair_position)
+			_player.rotation = Vector3(0.0, PI, 0.0)
 
 
 func _lock_girl_physics() -> void:
@@ -334,6 +377,63 @@ func _lock_girl_physics() -> void:
 		var body := _girl as CharacterBody3D
 		body.velocity = Vector3.ZERO
 		body.motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
+
+
+func _spawn_hero_body() -> void:
+	if _root == null:
+		return
+	if _hero_body != null and is_instance_valid(_hero_body):
+		_hero_body.queue_free()
+		_hero_body = null
+	var packed := load(HERO_BODY_SCENE) as PackedScene
+	if packed == null:
+		push_warning("Hero body scene missing: %s" % HERO_BODY_SCENE)
+		return
+	_hero_body = packed.instantiate() as Node3D
+	if _hero_body == null:
+		return
+	_hero_body.name = "DateHeroBody"
+	_hero_body.position = _hero_chair_position
+	_root.add_child(_hero_body)
+	if _hero_body is CharacterBody3D:
+		var body := _hero_body as CharacterBody3D
+		body.collision_layer = 0
+		body.collision_mask = 0
+		body.velocity = Vector3.ZERO
+		body.motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
+	for node: Node in _hero_body.find_children("*", "Camera3D", true, false):
+		var cam := node as Camera3D
+		if cam:
+			cam.current = false
+			cam.visible = false
+	_hold_hero_seated(true)
+
+
+func _hold_hero_seated(force_alias: bool = false) -> void:
+	if _hero_body == null or not is_instance_valid(_hero_body):
+		return
+	_hero_body.position = _hero_chair_position
+	if _hero_body is CharacterBody3D:
+		(_hero_body as CharacterBody3D).velocity = Vector3.ZERO
+	var need_alias := force_alias
+	if _hero_body.has_method("get_current_alias"):
+		var current := str(_hero_body.call("get_current_alias"))
+		if current not in ["sit_idle", "seated_gesture", "sit_enter", "gesture"]:
+			need_alias = true
+	if need_alias and _hero_body.has_method("play_alias"):
+		if _hero_body.has_method("has_alias") and bool(_hero_body.call("has_alias", "sit_idle")):
+			_hero_body.call("play_alias", &"sit_idle")
+		elif _hero_body.has_method("has_alias") and bool(_hero_body.call("has_alias", "sit")):
+			_hero_body.call("play_alias", &"sit")
+		else:
+			_hero_body.call("play_alias", &"idle")
+	# Face the girl across the table.
+	if _root != null and _root.is_inside_tree() and _hero_body.is_inside_tree():
+		var look_at_pos := _root.to_global(_girl_chair_position + Vector3(0.0, 1.2, 0.0))
+		if _hero_body.has_method("face_toward"):
+			_hero_body.call("face_toward", look_at_pos)
+		else:
+			_hero_body.rotation = Vector3(0.0, PI, 0.0)
 
 
 func _hold_girl_seated(force_alias: bool = false) -> void:
@@ -367,8 +467,7 @@ func _on_close() -> void:
 	_sequence = &"outro"
 	_sequence_time = 0.0
 	_outro_started = false
-	if _date_ui and is_instance_valid(_date_ui):
-		_date_ui.visible = false
+	# DateUI manages its own hide / result panel; do not force-hide here.
 
 
 func _teardown() -> void:
@@ -389,7 +488,8 @@ func _teardown() -> void:
 		if carry:
 			carry.visible = true
 	_player = null
-	Sfx.set_zone(&"street")
+	var zone := &"apartment" if _place_id == "home" else &"street"
+	Sfx.set_zone(zone)
 	_clear()
 
 
@@ -408,6 +508,9 @@ func _clear() -> void:
 		_date_cam.current = false
 		_date_cam.queue_free()
 	_date_cam = null
+	if _hero_body and is_instance_valid(_hero_body):
+		_hero_body.queue_free()
+	_hero_body = null
 	if _root and is_instance_valid(_root):
 		_root.queue_free()
 	_root = null
