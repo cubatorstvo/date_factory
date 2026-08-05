@@ -141,12 +141,15 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 	Game.economy.add(&"attention", -1.0, &"manual_date")
 	# Gift is optional — only consumed if already set on prep (mid-date give uses give_date_gift).
 	var gift_id: StringName = StringName(str(prep.get("gift_id", "")))
+	var prep_gift_applied: bool = false
 	if gift_id != &"" and schedule.gift_given_id.is_empty():
 		if Game.inventory.carried_item == gift_id:
 			Game.inventory.consume_carried()
+			prep_gift_applied = true
 		elif Game.inventory.gift_count(gift_id) > 0:
 			Game.inventory.gift_counts[str(gift_id)] = Game.inventory.gift_count(gift_id) - 1
 			Game.inventory.inventory_changed.emit()
+			prep_gift_applied = true
 		else:
 			prep["gift_id"] = ""
 
@@ -155,6 +158,7 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 		"target_id": target_id,
 		"unique": is_unique,
 		"prep": prep,
+		"gift_given": prep_gift_applied,
 		"phase": 0,
 		"score": 0.0,
 		"choices": [],
@@ -164,7 +168,6 @@ func start_manual(target_id: String, is_unique: bool = true) -> bool:
 		"correct": 0,
 		"wrong": 0,
 		"neutral": 0,
-		"gift_given": str(prep.get("gift_id", "")) != "",
 		"phases_done": false,
 		"park_flow": place_id_start == "park",
 		"cinema_flow": place_id_start == "cinema",

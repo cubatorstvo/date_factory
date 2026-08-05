@@ -1,0 +1,6 @@
+Godot Engine v4.7.1.stable.official.a13da4feb - https://godotengine.org
+
+[GodotIQ] Runtime _ready() — debugger active: false
+[GodotIQ] Debugger not active, freeing runtime
+RC_UNIQUE_PROGRESSION_SMOKE_FAIL count=1
+FAIL: arcade book blocked without cinema_room

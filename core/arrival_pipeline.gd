@@ -63,7 +63,8 @@ func tick(delta: float) -> Dictionary:
 			var still_sit := leave_t < 0.2
 			return {"position": pos2, "sitting": still_sit, "sit_blend": 1.0 if still_sit else 0.0, "done": leave_t >= 1.0, "phase": "outro"}
 		Phase.READY:
-			return {"position": to, "sitting": true, "sit_blend": 1.0, "done": false, "phase": "ready"}
+			## Stay "done" after intro so callers can wait on sit_enter after the walk pulse.
+			return {"position": to, "sitting": true, "sit_blend": 1.0, "done": true, "phase": "ready"}
 		_:
 			return {"position": from, "sitting": false, "sit_blend": 0.0, "done": false, "phase": "idle"}
 

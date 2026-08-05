@@ -38,6 +38,8 @@ var _turn_started: bool = false
 var _turn_started_at: float = 0.0
 var _sit_started: bool = false
 var _sit_started_at: float = 0.0
+var _arrival_at_seat: bool = false
+var _arrival_at_seat_at: float = -1.0
 var _outro_started: bool = false
 var _camera_cue: int = 0
 var _presentation: Node
@@ -123,13 +125,24 @@ func _process(delta: float) -> void:
 				_play_girl_alias(&"sit_enter", &"sit")
 				_sit_started = true
 				_sit_started_at = _sequence_time
-			if bool(step.get("sitting", false)):
+			if bool(step.get("sitting", false)) or bool(step.get("done", false)):
 				_girl.position = _girl_chair_position
 				_lock_girl_physics()
+			if bool(step.get("done", false)) and not _arrival_at_seat:
+				_arrival_at_seat = true
+				_arrival_at_seat_at = _sequence_time
 			_face_toward_player()
-			if bool(step.get("done", false)) and _sit_started:
-				var sit_length := float(_girl.call("get_alias_length", &"sit_enter")) if _girl.has_method("get_alias_length") else 1.0
-				if _sequence_time - _sit_started_at >= maxf(0.85, minf(sit_length, 1.3)):
+			# After walk completes, wait for sit_enter (or a short fallback) then open dialogue.
+			if _arrival_at_seat:
+				if _sit_started:
+					var sit_length: float = 1.0
+					if _girl.has_method("get_alias_length"):
+						sit_length = float(_girl.call("get_alias_length", &"sit_enter"))
+					if _sequence_time - _sit_started_at >= maxf(0.55, minf(sit_length, 1.15)):
+						_finish_intro()
+				elif _sequence_time - _arrival_at_seat_at >= 0.75:
+					# Missing sit alias / failed sit start — still open dialogue promptly.
+					_hold_girl_seated(true)
 					_finish_intro()
 		&"ready":
 			_hold_girl_seated()
@@ -257,6 +270,8 @@ func _on_open(payload: Dictionary) -> void:
 	_turn_started_at = 0.0
 	_sit_started = false
 	_sit_started_at = 0.0
+	_arrival_at_seat = false
+	_arrival_at_seat_at = -1.0
 	_outro_started = false
 	_camera_cue = 0
 

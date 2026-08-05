@@ -10,7 +10,8 @@ func _ready() -> void:
 	if theme_service:
 		theme_service.apply(self)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	continue_button.disabled = not Game.save.has_save()
+	# Shipping Continue: only normal save_slot_1. QA full-access is never menu-wired.
+	_refresh_continue_availability()
 	$Center/Panel/Content/NewGame.pressed.connect(_new)
 	continue_button.pressed.connect(_continue)
 	$Center/Panel/Content/Settings.pressed.connect(_open_settings)
@@ -30,12 +31,22 @@ func _open_settings() -> void:
 		settings.open()
 
 
+func _refresh_continue_availability() -> void:
+	var has_normal_save: bool = Game.save != null and Game.save.has_save()
+	continue_button.disabled = not has_normal_save
+
+
 func _new() -> void:
+	# Always stage_1 production start — never QA unlock matrix.
 	Game.new_game()
 	await _enter_game()
 
 
 func _continue() -> void:
+	# Guard even if button state races; never touch QA profile path.
+	if Game.save == null or not Game.save.has_save():
+		_refresh_continue_availability()
+		return
 	Game.load_game()
 	await _enter_game()
 

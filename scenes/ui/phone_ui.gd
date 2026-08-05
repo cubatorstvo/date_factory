@@ -61,6 +61,8 @@ func _ready() -> void:
 	var rel_tab := get_node_or_null("Panel/Margin/Body/Tabs/Relations") as Control
 	if rel_tab:
 		rel_tab.name = "Dating"
+	if relations_list != null and not relations_list.item_selected.is_connected(_on_relations_selected):
+		relations_list.item_selected.connect(_on_relations_selected)
 	$Panel/Margin/Body/Tabs/Upgrades/Buy.pressed.connect(_buy_selected_upgrade)
 	$Panel/Margin/Body/Tabs/Staff/Hire.pressed.connect(_hire_selected)
 	$Panel/Margin/Body/Tabs/Candidates/Prepare.pressed.connect(_book_home_selected)
@@ -129,6 +131,8 @@ func _ensure_journal_tab() -> void:
 
 func _on_journal_girl_selected(index: int) -> void:
 	_fill_journal_body(index)
+	if index >= 0 and index < _journal_ids.size():
+		Game.quests.on_profile_seen()
 
 
 func _fill_journal_body(index: int) -> void:
@@ -138,6 +142,7 @@ func _fill_journal_body(index: int) -> void:
 		_journal_body.text = "Выбери контакт слева."
 		return
 	var id := StringName(str(_journal_ids[index]))
+	Game.quests.on_profile_seen()
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("[b]%s[/b]" % Game.girls.display_name(id))
 	lines.append("Связь: %.0f%% · знание: %s (авто %.0f%%)" % [
@@ -145,6 +150,22 @@ func _fill_journal_body(index: int) -> void:
 		_knowledge_ru(Game.girls.knowledge_band(id)),
 		Game.girls.automation_confidence(id) * 100.0,
 	])
+	var last: Dictionary = Game.dating.last_result if Game.dating != null else {}
+	if not last.is_empty() and str(last.get("target_id", "")) == str(id):
+		lines.append("")
+		lines.append("[b]Последнее свидание[/b]")
+		lines.append("Оценка: %s · связь сейчас %.0f%%" % [
+			str(last.get("grade_label", last.get("grade", "?"))),
+			float(Game.girls.get_entry(id).get("bond", 0.0)),
+		])
+		var factors: Dictionary = last.get("factors", {})
+		if not factors.is_empty():
+			var gift_f: Dictionary = factors.get("gift", {})
+			var place_f: Dictionary = factors.get("place", {})
+			lines.append("Место: %s · подарок: %s" % [
+				str(place_f.get("label", place_f.get("id", "—"))),
+				str(gift_f.get("label", "без подарка")),
+			])
 	lines.append("")
 	lines.append("[b]Подтверждённые черты[/b]")
 	var revealed: Array = Game.girls.revealed_traits(id)
@@ -879,6 +900,7 @@ func _refresh() -> void:
 	_ensure_cinema_book_button()
 	_ensure_arcade_book_button()
 	_ensure_themed_apt_book_button()
+	_refresh_booking_gate()
 	twitch_status.text = "Статус Twitch: %s" % Loc.online(Game.names.twitch_connected)
 
 
@@ -963,6 +985,52 @@ func _book_themed_apt_selected() -> void:
 	_book_place_for_selected(place)
 
 
+func _can_book_dates() -> bool:
+	return Game.quests == null or Game.quests.can_do(&"book_date")
+
+
+func _refresh_booking_gate() -> void:
+	var can_book: bool = _can_book_dates()
+	var prepare_btn := get_node_or_null("Panel/Margin/Body/Tabs/Candidates/Prepare") as Button
+	var cafe_btn := get_node_or_null("Panel/Margin/Body/Tabs/Candidates/Start") as Button
+	if prepare_btn:
+		prepare_btn.disabled = not can_book
+		prepare_btn.text = "Выбрать место: дом" if can_book else "Дом (сначала работа и шкаф)"
+	if cafe_btn:
+		cafe_btn.disabled = not can_book
+		cafe_btn.text = "Выбрать место: кафе" if can_book else "Кафе (сначала работа и шкаф)"
+	var cand := get_node_or_null("Panel/Margin/Body/Tabs/Candidates") as Control
+	if cand == null:
+		return
+	for child in cand.get_children():
+		if child is Button and str(child.name).begins_with("Book"):
+			var btn := child as Button
+			if not can_book:
+				btn.disabled = true
+
+
+func _on_relations_selected(index: int) -> void:
+	## Dating/Связи list → open journal profile for that contact (post-date tutorial step).
+	var dating: Array = Game.girls.list_dating()
+	if index < 0 or index >= dating.size():
+		return
+	var id := str(dating[index].get("id", ""))
+	if id.is_empty():
+		return
+	Game.quests.on_profile_seen()
+	if tabs != null and _journal_girls != null:
+		var j_idx: int = _journal_ids.find(id)
+		if j_idx < 0:
+			_refresh()
+			j_idx = _journal_ids.find(id)
+		if j_idx >= 0:
+			var journal_tab: Control = tabs.get_node_or_null("Journal") as Control
+			if journal_tab != null:
+				tabs.current_tab = journal_tab.get_index()
+			_journal_girls.select(j_idx)
+			_fill_journal_body(j_idx)
+
+
 func _ensure_park_book_button() -> void:
 	var cand := get_node_or_null("Panel/Margin/Body/Tabs/Candidates") as Control
 	if cand == null:
@@ -973,8 +1041,10 @@ func _ensure_park_book_button() -> void:
 		btn.name = "BookPark"
 		btn.pressed.connect(_book_park_selected)
 		cand.add_child(btn)
-	var unlocked := DatePlaces.is_park_bookable()
-	btn.text = "Выбрать место: парк" if unlocked else "Парк (закрыт)"
+	var unlocked := DatePlaces.is_park_bookable() and _can_book_dates()
+	btn.text = "Выбрать место: парк" if DatePlaces.is_park_bookable() else "Парк (закрыт)"
+	if DatePlaces.is_park_bookable() and not _can_book_dates():
+		btn.text = "Парк (сначала работа и шкаф)"
 	btn.disabled = not unlocked
 	btn.visible = true
 
@@ -989,8 +1059,11 @@ func _ensure_restaurant_book_button() -> void:
 		btn.name = "BookRestaurant"
 		btn.pressed.connect(_book_restaurant_selected)
 		cand.add_child(btn)
-	var unlocked := DatePlaces.is_restaurant_bookable()
-	btn.text = "Выбрать место: ресторан" if unlocked else "Ресторан (закрыт)"
+	var place_ok := DatePlaces.is_restaurant_bookable()
+	var unlocked := place_ok and _can_book_dates()
+	btn.text = "Выбрать место: ресторан" if place_ok else "Ресторан (закрыт)"
+	if place_ok and not _can_book_dates():
+		btn.text = "Ресторан (сначала работа и шкаф)"
 	btn.disabled = not unlocked
 	btn.visible = true
 
@@ -1005,8 +1078,11 @@ func _ensure_cinema_book_button() -> void:
 		btn.name = "BookCinema"
 		btn.pressed.connect(_book_cinema_selected)
 		cand.add_child(btn)
-	var unlocked := DatePlaces.is_cinema_bookable()
-	btn.text = "Выбрать место: кино" if unlocked else "Кино (закрыто)"
+	var place_ok := DatePlaces.is_cinema_bookable()
+	var unlocked := place_ok and _can_book_dates()
+	btn.text = "Выбрать место: кино" if place_ok else "Кино (закрыто)"
+	if place_ok and not _can_book_dates():
+		btn.text = "Кино (сначала работа и шкаф)"
 	btn.disabled = not unlocked
 	btn.visible = true
 
@@ -1021,8 +1097,11 @@ func _ensure_arcade_book_button() -> void:
 		btn.name = "BookArcade"
 		btn.pressed.connect(_book_arcade_selected)
 		cand.add_child(btn)
-	var unlocked := DatePlaces.is_arcade_bookable()
-	btn.text = "Выбрать место: аркада" if unlocked else "Аркада (закрыта)"
+	var place_ok := DatePlaces.is_arcade_bookable()
+	var unlocked := place_ok and _can_book_dates()
+	btn.text = "Выбрать место: аркада" if place_ok else "Аркада (закрыта)"
+	if place_ok and not _can_book_dates():
+		btn.text = "Аркада (сначала работа и шкаф)"
 	btn.disabled = not unlocked
 	btn.visible = true
 
@@ -1042,17 +1121,25 @@ func _ensure_themed_apt_book_button() -> void:
 		if DatePlaces.is_themed_apartment_bookable(c):
 			place = c
 			break
-	var unlocked := place != ""
+	var place_ok := place != ""
+	var unlocked := place_ok and _can_book_dates()
 	var label := "тематическая квартира"
-	if unlocked:
+	if place_ok:
 		var def: Dictionary = DatePlaces.place(place)
 		label = str(def.get("name", place))
-	btn.text = "Выбрать место: %s" % label if unlocked else "Тематические квартиры (закрыты)"
+	btn.text = "Выбрать место: %s" % label if place_ok else "Тематические квартиры (закрыты)"
+	if place_ok and not _can_book_dates():
+		btn.text = "Квартиры (сначала работа и шкаф)"
 	btn.disabled = not unlocked
 	btn.visible = true
 
 
 func _book_place_for_selected(place_id: String) -> void:
+	if not Game.quests.can_do(&"book_date"):
+		var hint: String = Game.quests.gate_hint(&"book_date")
+		EventBus.toast(hint if not hint.is_empty() else "Сначала работа и шкаф — потом запись", &"warn")
+		Sfx.play_ui(&"deny")
+		return
 	var idx := candidates_list.get_selected_items()
 	if idx.is_empty():
 		EventBus.toast("Выбери кандидатку в списке", &"warn")
@@ -1060,7 +1147,6 @@ func _book_place_for_selected(place_id: String) -> void:
 	var c: Dictionary = _candidate_ids[idx[0]]
 	var id := str(c.get("id", ""))
 	var kind := str(c.get("kind", ""))
-	Game.quests.on_profile_seen()
 	if kind == "proc" and not Game.girls.unlocked.has(id):
 		Game.girls.add_contact(StringName(id), c)
 	if Game.time == null:

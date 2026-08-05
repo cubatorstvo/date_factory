@@ -1,0 +1,53 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/testbeds/proxy_girl_poc_testbed.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/characters/girls/proxy_poc/GirlProxyPOC_TRest.tscn" id="2_girl"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
+albedo_color = Color(0.22, 0.23, 0.25, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+size = Vector2(12, 12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_chair"]
+albedo_color = Color(0.75, 0.75, 0.78, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_seat"]
+size = Vector3(0.5, 0.08, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_back"]
+size = Vector3(0.5, 0.55, 0.08)
+
+[node name="ProxyGirlPOC_TRest_Testbed" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_floor")
+mesh = SubResource("PlaneMesh_floor")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.81915206, -0.4055798, 0.4055798, 0, 0.70710677, 0.70710677, -0.57357645, -0.579228, 0.579228, 0, 0, 0)
+light_energy = 1.2
+
+[node name="Fill" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 2.5, 2)
+light_energy = 0.6
+
+[node name="GirlProxyPOC" parent="." instance=ExtResource("2_girl")]
+
+[node name="ChairSeat" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0.28)
+material_override = SubResource("StandardMaterial3D_chair")
+mesh = SubResource("BoxMesh_seat")
+
+[node name="ChairBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0.5)
+material_override = SubResource("StandardMaterial3D_chair")
+mesh = SubResource("BoxMesh_back")
+
+[node name="CamFront" type="Camera3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.05, -2.4)
+current = true
+
+[node name="CamSide" type="Camera3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.2, 1.05, 0)

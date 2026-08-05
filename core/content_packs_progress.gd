@@ -16,7 +16,7 @@ static func stages() -> Dictionary:
 			"id": "stage_2", "name": "Популярный парень", "order": 2,
 			"goal": "Найми менеджера переписки в телефоне и знакомься с новыми девушками.",
 			"unlock_next": "stage_3", "next_cost": 200,
-			"rooms": ["apartment", "neighbor_apt", "lab", "office_nook"], "venues": ["kitchen_table", "cheap_cafe", "park"],
+			"rooms": ["apartment", "neighbor_apt", "lab", "office_nook"], "venues": ["kitchen_table", "cheap_cafe", "park", "arcade"],
 			"girls": ["neighbor", "fitness", "goth", "streamer"],
 		},
 		"stage_3": {
@@ -24,7 +24,7 @@ static func stages() -> Dictionary:
 			"goal": "Собери аппарат вокруг одного тела: персонал, залы, учёная.",
 			"unlock_next": "stage_4", "next_cost": 500,
 			"rooms": ["apartment", "neighbor_apt", "lab", "office_nook", "agency"],
-			"venues": ["kitchen_table", "cheap_cafe", "park", "cinema_room", "restaurant", "photo_studio"],
+			"venues": ["kitchen_table", "cheap_cafe", "park", "arcade", "cinema_room", "restaurant", "photo_studio"],
 			"girls": ["neighbor", "fitness", "goth", "streamer", "business", "fashionista", "chef", "scientist"],
 		},
 		"stage_4": {
@@ -32,7 +32,7 @@ static func stages() -> Dictionary:
 			"goal": "4A лаборатория → 4B приёмка дубля → 4C первая параллель.",
 			"unlock_next": "stage_5", "next_cost": 1200,
 			"rooms": ["apartment", "neighbor_apt", "lab", "office_nook", "agency", "mansion"],
-			"venues": ["kitchen_table", "cheap_cafe", "park", "cinema_room", "restaurant", "photo_studio", "luxury_hall", "lab_capsule"],
+			"venues": ["kitchen_table", "cheap_cafe", "park", "arcade", "cinema_room", "restaurant", "photo_studio", "luxury_hall", "lab_capsule"],
 			"girls": ["neighbor", "fitness", "goth", "streamer", "business", "fashionista", "chef", "scientist", "lawyer"],
 		},
 		"stage_5": {
@@ -40,7 +40,7 @@ static func stages() -> Dictionary:
 			"goal": "Запусти конвейер и открой Инопланетянку.",
 			"unlock_next": "stage_6", "next_cost": 3000,
 			"rooms": ["apartment", "neighbor_apt", "lab", "office_nook", "agency", "mansion", "factory"],
-			"venues": ["kitchen_table", "cheap_cafe", "park", "cinema_room", "restaurant", "photo_studio", "luxury_hall", "lab_capsule", "conveyor"],
+			"venues": ["kitchen_table", "cheap_cafe", "park", "arcade", "cinema_room", "restaurant", "photo_studio", "luxury_hall", "lab_capsule", "conveyor"],
 			"girls": ["neighbor", "fitness", "goth", "streamer", "business", "fashionista", "chef", "scientist", "lawyer", "star", "alien"],
 		},
 		"stage_6": {
@@ -48,7 +48,7 @@ static func stages() -> Dictionary:
 			"goal": "Собери мегамашину и проведи финальное свидание.",
 			"unlock_next": "", "next_cost": 0,
 			"rooms": ["apartment", "neighbor_apt", "lab", "office_nook", "agency", "mansion", "factory", "orbital"],
-			"venues": ["kitchen_table", "cheap_cafe", "park", "cinema_room", "restaurant", "photo_studio", "luxury_hall", "lab_capsule", "conveyor", "orbital_hall"],
+			"venues": ["kitchen_table", "cheap_cafe", "park", "arcade", "cinema_room", "restaurant", "photo_studio", "luxury_hall", "lab_capsule", "conveyor", "orbital_hall"],
 			"girls": ["neighbor", "fitness", "goth", "streamer", "business", "fashionista", "chef", "scientist", "lawyer", "star", "alien", "algorithm"],
 		},
 	}

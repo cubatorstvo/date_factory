@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://b85dj1wd4jmsv"]
+
+[ext_resource type="Script" uid="uid://dv47nd1380jex" path="res://scenes/art/characters/character_anim_controller.gd" id="1_oyaja"]
+[ext_resource type="AnimationLibrary" path="res://assets/animation/universal_library/libraries/DF_UAL_Aliases.res" id="2_g5ee5"]
+[ext_resource type="PackedScene" uid="uid://ccxydm5cnpwbf" path="res://assets/characters/girls/proxy_poc/GirlProxyPOC.glb" id="3_sw344"]
+
+[node name="GirlProxyPOC" type="CharacterBody3D"]
+script = ExtResource("1_oyaja")
+alias_library = ExtResource("2_g5ee5")
+label_text = "GirlProxyPOC"
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Model" parent="Visual" instance=ExtResource("3_sw344")]

@@ -167,13 +167,17 @@ func choose(choice_id: String) -> void:
 	active.clear()
 	event_closed.emit()
 	if eid.begins_with("book_date_"):
-		var day: int = int(picked.get("day", 1))
-		var mins: int = int(picked.get("minutes", 0))
-		var place_id: String = str(picked.get("place_id", eid.trim_prefix("book_date_")))
-		var target_id: String = str(picked.get("target_id", ""))
-		var unique: bool = bool(picked.get("unique", true))
-		if target_id != "" and Game.dating.book_date(target_id, place_id, day, mins, unique):
-			Game.quests.complete("s1_prepare")
+		if not Game.quests.can_do(&"book_date"):
+			var hint: String = Game.quests.gate_hint(&"book_date")
+			EventBus.toast(hint if not hint.is_empty() else "Сначала работа и шкаф — потом запись", &"warn")
+		else:
+			var day: int = int(picked.get("day", 1))
+			var mins: int = int(picked.get("minutes", 0))
+			var place_id: String = str(picked.get("place_id", eid.trim_prefix("book_date_")))
+			var target_id: String = str(picked.get("target_id", ""))
+			var unique: bool = bool(picked.get("unique", true))
+			if target_id != "" and Game.dating.book_date(target_id, place_id, day, mins, unique):
+				Game.quests.complete("s1_prepare")
 	if Game.dating.has_method("apply_parallel_choice"):
 		Game.dating.apply_parallel_choice(choice_id)
 

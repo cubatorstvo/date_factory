@@ -122,6 +122,8 @@ func advance_stage(next_id: StringName) -> void:
 	stage_id = next_id
 	facility.unlock_stage(next_id)
 	quests.reset_for_stage(next_id)
+	if girls != null:
+		girls.try_unlock_by_progress()
 	EventBus.stage_changed.emit(next_id)
 	EventBus.toast("Новая стадия: %s" % str(next_id), &"story")
 
@@ -199,6 +201,12 @@ func load_game() -> void:
 		return
 	from_dict(data)
 	EventBus.toast("Игра загружена", &"info")
+
+
+## Test-only helper. Shipping Continue / New Game / quick save-load never call this.
+## Writes only user://save_slot_qa_full_access.json via FullAccessQaProfile.
+func load_full_access_qa_profile() -> void:
+	FullAccessQaProfile.regenerate_and_apply()
 
 
 func _unhandled_input(event: InputEvent) -> void:

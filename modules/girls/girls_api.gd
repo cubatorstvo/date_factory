@@ -25,12 +25,37 @@ func reset() -> void:
 	unlocked["neighbor"]["contact"] = true
 	if not contacts.has("neighbor"):
 		contacts.append("neighbor")
+	_ensure_available_uniques()
 	_refresh_candidates()
 	girls_changed.emit()
 
 
+func is_discovered(id: StringName) -> bool:
+	return discovered_unique.has(id)
+
+
 func _ensure_available_uniques() -> void:
-	pass
+	## Stage-based discoverability only. Never mark met / never auto-contact.
+	## Algorithm stays finale-only (`unlock_algorithm_if_ready`).
+	if not discovered_unique.has(&"neighbor"):
+		discovered_unique.append(&"neighbor")
+	for gid_variant in ContentDB.girls.keys():
+		var gid: String = str(gid_variant)
+		if gid == "algorithm":
+			continue
+		var def: Dictionary = ContentDB.girl(StringName(gid))
+		var need_stage: String = str(def.get("unlock_stage", "stage_1"))
+		if not _stage_reached(need_stage):
+			continue
+		_mark_discovered(StringName(gid))
+
+
+func _mark_discovered(id: StringName) -> void:
+	if id == &"algorithm":
+		return
+	if discovered_unique.has(id):
+		return
+	discovered_unique.append(id)
 
 
 func _stage_reached(need: String) -> bool:
@@ -128,7 +153,8 @@ func _unlock_entry(id: StringName, announce: bool, emit_change: bool = true) -> 
 
 
 func try_unlock_by_progress() -> void:
-	pass
+	## Idempotent: only appends missing discoveries for the current stage.
+	_ensure_available_uniques()
 
 
 func has_contact(id: StringName) -> bool:
@@ -140,8 +166,12 @@ func is_claimed(id: StringName) -> bool:
 
 
 func add_contact(id: StringName, profile: Dictionary = {}) -> void:
-	var sid := str(id)
+	var sid: String = str(id)
+	if sid == "algorithm":
+		## Finale path uses unlock_algorithm_if_ready — never city/add_contact.
+		return
 	if ContentDB.girls.has(sid):
+		_mark_discovered(id)
 		if not unlocked.has(sid):
 			_unlock_entry(id, true, false)
 		unlocked[sid]["contact"] = true
@@ -224,12 +254,19 @@ func _ensure_trait_fields(sid: String) -> void:
 
 
 func unlock_algorithm_if_ready() -> bool:
+	## Finale-only entry. Never discovered via try_unlock_by_progress / city spawn.
 	if unlocked.has("algorithm") and bool(unlocked["algorithm"].get("met", false)):
 		return true
 	if not _finale_gates_ok():
 		return false
-	if not unlocked.has("algorithm"):
-		_unlock_entry(&"algorithm", true)
+	var first_unlock: bool = not unlocked.has("algorithm")
+	if first_unlock:
+		_unlock_entry(&"algorithm", true, false)
+	unlocked["algorithm"]["contact"] = true
+	if not contacts.has("algorithm"):
+		contacts.append("algorithm")
+	if first_unlock:
+		girls_changed.emit()
 	return true
 
 
@@ -550,6 +587,7 @@ func known_traits_summary(id: StringName) -> String:
 
 
 func mark_met(id: StringName) -> void:
+	## Called by DatingAPI after a real date start — not a free progression cheat.
 	if not unlocked.has(str(id)):
 		if ContentDB.girls.has(str(id)):
 			_unlock_entry(id, true)
@@ -557,8 +595,8 @@ func mark_met(id: StringName) -> void:
 			return
 	unlocked[str(id)]["met"] = true
 	_ensure_trait_fields(str(id))
-	if ContentDB.girls.has(str(id)) and not discovered_unique.has(id):
-		discovered_unique.append(id)
+	if ContentDB.girls.has(str(id)) and str(id) != "algorithm":
+		_mark_discovered(id)
 	girls_changed.emit()
 
 

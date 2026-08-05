@@ -45,8 +45,11 @@ func unlock_venue(id: StringName, announce: bool = true) -> void:
 		return
 	unlocked_venues.append(id)
 	venue_load[str(id)] = 0
-	if id == &"park" and Game.city != null and Game.city.has_method("unlock_district"):
-		Game.city.unlock_district(CityDistricts.PARK_LEISURE, false)
+	if id == &"park":
+		if Game.city != null and Game.city.has_method("unlock_district"):
+			Game.city.unlock_district(CityDistricts.PARK_LEISURE, false)
+		## Arcade POI lives in park leisure — separate capacity from cheap_cafe.
+		unlock_venue(&"arcade", false)
 	if id == &"photo_studio" and Game.city != null and Game.city.has_method("unlock_district"):
 		Game.city.unlock_district(CityDistricts.AGENCY_ROW, false)
 	facility_changed.emit()

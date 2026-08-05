@@ -1,0 +1,71 @@
+DATE FACTORY release test report
+mode=smoke
+result=PASS
+started_unix=1785965291
+finished_unix=1785965295
+duration_sec=3.254
+duration_ms=3254
+steps=57
+---
+[PASS] autoload_game — /root/Game
+[PASS] autoload_eventbus — /root/EventBus
+[PASS] api_modules_present — count=16
+[PASS] content_gifts — count=27
+[PASS] content_outfits — count=11
+[PASS] content_venues — count=11
+[PASS] content_venue_arcade
+[PASS] date_places_arcade_venue_id
+[PASS] date_places_cafe_venue_id
+[PASS] arcade_migrate_from_cheap_cafe
+[PASS] arcade_migrate_from_cinema_room
+[PASS] content_girls — count=12
+[PASS] content_upgrades — count=91
+[PASS] content_events — count=31
+[PASS] content_stages — count=6
+[PASS] content_rooms — count=11
+[PASS] critical_resources_loadable — count=12
+[PASS] save_path_constants_distinct — user://save_slot_1.json vs user://save_slot_qa_full_access.json
+[PASS] qa_slot_seeded
+[PASS] no_save_slot_cleared
+[PASS] boot_continue_disabled_without_save — disabled=true expected=true
+[PASS] qa_unchanged_after_nosave_boot
+[PASS] new_game_run_started
+[PASS] new_game_stage_1 — stage_1
+[PASS] new_game_not_postgame
+[PASS] new_game_no_qa_profile_marker
+[PASS] new_game_dict_stage_1
+[PASS] new_game_neighbor_contact
+[PASS] new_game_not_qa_economy — money=40.0
+[PASS] buy_gift_flower
+[PASS] smoke_neighbor_date_complete — neighbor
+[PASS] normal_save_written
+[PASS] normal_save_not_qa_profile
+[PASS] boot_continue_enabled_with_save — disabled=false expected=false
+[PASS] continue_restores_money — got=1234.50
+[PASS] continue_restores_popularity — got=42.00
+[PASS] continue_restores_dates — got=7
+[PASS] continue_restores_tutorial
+[PASS] continue_restores_stage_1 — stage_1
+[PASS] qa_slot_unchanged_after_continue
+[PASS] qa_slot_still_exists
+[PASS] prior_normal_save_noted — smoke overwrote slot_1 for Continue contract
+[PASS] core_transition_stage_2 — stage_2
+[PASS] unique_s2_discovers_fitness
+[PASS] unique_algorithm_not_discovered_early
+[PASS] unique_discover_no_auto_contact
+[PASS] unique_unlock_idempotent
+[PASS] unique_fitness_talk — contact_via_city.talk
+[PASS] unique_talk_does_not_mark_met
+[PASS] unique_spawn_includes_fitness
+[PASS] unique_spawn_excludes_algorithm
+[PASS] unique_discovery_save_load
+[PASS] unique_contact_save_load
+[PASS] arcade_cap_reserve_cafe
+[PASS] arcade_cap_reserve_arcade_while_cafe_busy
+[PASS] arcade_cap_second_arcade_blocked
+[PASS] arcade_legacy_booking_migrates — { "target_id": "neighbor", "unique": true, "place_id": "arcade", "venue_id": "arcade", "day": 2, "minutes": 1080 }
+---
+notes:
+- Smoke verifies logical contracts only; no visual/render coverage.
+---
+visual_coverage=NONE (headless logical contracts only)

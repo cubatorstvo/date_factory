@@ -1,0 +1,154 @@
+[gd_scene format=3]
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+size = Vector3(16, 0.2, 16)
+
+[sub_resource type="StandardMaterial3D" id="FloorMat"]
+albedo_color = Color(0.18, 0.18, 0.2, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="Box_0"]
+size = Vector3(16, 0.15, 6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_0"]
+albedo_color = Color(0.35, 0.315, 0.3325, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_1"]
+size = Vector3(16, 0.25, 2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_1"]
+albedo_color = Color(0.45, 0.405, 0.4275, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_2"]
+size = Vector3(16, 0.25, 2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_2"]
+albedo_color = Color(0.55, 0.495, 0.5225, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_3"]
+size = Vector3(5, 6, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_3"]
+albedo_color = Color(0.65, 0.585, 0.6175, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_4"]
+size = Vector3(5, 5, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_4"]
+albedo_color = Color(0.75, 0.675, 0.7125, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_5"]
+size = Vector3(3.5, 4.5, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_5"]
+albedo_color = Color(0.35, 0.315, 0.3325, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_6"]
+size = Vector3(3, 4, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_6"]
+albedo_color = Color(0.45, 0.405, 0.4275, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_7"]
+size = Vector3(0.3, 3.5, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_7"]
+albedo_color = Color(0.55, 0.495, 0.5225, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Box_8"]
+size = Vector3(1.5, 0.5, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_8"]
+albedo_color = Color(0.65, 0.585, 0.6175, 1)
+roughness = 0.7
+
+[sub_resource type="Environment" id="Environment_ywfji"]
+background_mode = 1
+background_color = Color(0.2, 0.22, 0.26, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.65, 0.68, 0.75, 1)
+ambient_light_energy = 0.85
+
+[node name="City_Street_Slice" type="Node3D" unique_id=2121996200]
+
+[node name="WorldEnvHint" type="DirectionalLight3D" parent="." unique_id=939562269]
+transform = Transform3D(0.86, -0.35, 0.37, 0, 0.73, 0.68, -0.51, -0.59, 0.63, 4, 8, 4)
+shadow_enabled = true
+
+[node name="Floor" type="MeshInstance3D" parent="." unique_id=97253166]
+mesh = SubResource("FloorMesh")
+surface_material_override/0 = SubResource("FloorMat")
+
+[node name="Title" type="Label3D" parent="." unique_id=1871328485]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 0)
+text = "City_Street_Slice"
+font_size = 28
+
+[node name="Road" type="MeshInstance3D" parent="." unique_id=1337396431]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 0)
+mesh = SubResource("Box_0")
+surface_material_override/0 = SubResource("Mat_0")
+
+[node name="Sidewalk_N" type="MeshInstance3D" parent="." unique_id=1538671042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, -4.5)
+mesh = SubResource("Box_1")
+surface_material_override/0 = SubResource("Mat_1")
+
+[node name="Sidewalk_S" type="MeshInstance3D" parent="." unique_id=712202398]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 4.5)
+mesh = SubResource("Box_2")
+surface_material_override/0 = SubResource("Mat_2")
+
+[node name="Facade_Home" type="MeshInstance3D" parent="." unique_id=2075476250]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, -6.5)
+mesh = SubResource("Box_3")
+surface_material_override/0 = SubResource("Mat_3")
+
+[node name="Facade_Restaurant" type="MeshInstance3D" parent="." unique_id=520019384]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2.5, -6.5)
+mesh = SubResource("Box_4")
+surface_material_override/0 = SubResource("Mat_4")
+
+[node name="Facade_ShopA" type="MeshInstance3D" parent="." unique_id=1027280041]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 2.25, -6.5)
+mesh = SubResource("Box_5")
+surface_material_override/0 = SubResource("Mat_5")
+
+[node name="Facade_ShopB" type="MeshInstance3D" parent="." unique_id=1518057489]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 2, -6.5)
+mesh = SubResource("Box_6")
+surface_material_override/0 = SubResource("Mat_6")
+
+[node name="Prop_Lamp" type="MeshInstance3D" parent="." unique_id=851169654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.75, -3.5)
+mesh = SubResource("Box_7")
+surface_material_override/0 = SubResource("Mat_7")
+
+[node name="Prop_Bench" type="MeshInstance3D" parent="." unique_id=135354091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.25, 3.5)
+mesh = SubResource("Box_8")
+surface_material_override/0 = SubResource("Mat_8")
+
+[node name="KitAnchors" type="Node3D" parent="." unique_id=1451414946]
+
+[node name="Spawn" type="Marker3D" parent="." unique_id=2112509000]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4)
+
+[node name="TechCamera" type="Camera3D" parent="." unique_id=1857493646]
+transform = Transform3D(0.7498379, -0.2273164, 0.62134564, 0, 0.9391253, 0.34357464, -0.66162163, -0.25762525, 0.70419174, 9.752561, 9.326536, 12.044568)
+current = true
+
+[node name="TechSun" type="DirectionalLight3D" parent="." unique_id=722116013]
+transform = Transform3D(0.5600739, -0.46838918, 0.6833219, 0, 0.824827, 0.56538516, -0.82844263, -0.31665748, 0.4619641, 8, 12, 6)
+light_energy = 1.15
+
+[node name="TechEnv" type="WorldEnvironment" parent="." unique_id=2042307361]
+environment = SubResource("Environment_ywfji")
