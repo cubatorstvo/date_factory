@@ -621,8 +621,13 @@ func _vec3(a: Array) -> Vector3:
 
 
 func _set_owner_recursive(n: Node, owner: Node) -> void:
+	## Own direct authored nodes, but never recurse into PackedScene instances.
+	## Recursing marks nested GLTF/prefab internals as editable overrides and causes
+	## "incoming node's name clashes" load errors (Building_Small_12/Building_Small_1, Visuals2, ...).
 	for c in n.get_children():
 		c.owner = owner
+		if not c.scene_file_path.is_empty():
+			continue
 		_set_owner_recursive(c, owner)
 
 
@@ -686,6 +691,8 @@ func _instance_at(parent: Node, path: String, pos: Vector3, rot_y: float = 0.0, 
 	var n: Node = packed.instantiate()
 	if n is Node3D:
 		var n3: Node3D = n as Node3D
+		## Unique sibling name under Visuals; keep nested GLTF root untouched inside the instance.
+		n3.name = "%s_Inst" % path.get_file().get_basename()
 		n3.position = pos
 		n3.rotation_degrees.y = rot_y
 		n3.scale = scale

@@ -81,6 +81,12 @@ Folder: `docs/city_stage4_review/`
 
 Capture note: real GPU capture via minimized window (`-s` without `--headless`). Dummy headless renderer returns null images.
 
+## Fix: Godot Load Errors (name clashes)
+
+Cause: `_set_owner_recursive` owned internals of nested GLTF/prefab instances, so `PackedScene.pack()` saved editable overrides (`Building_Small_12/Building_Small_1`, `Visuals2`, …).
+
+Fix: owner recursion skips nodes with `scene_file_path`; mesh instances renamed `*_Inst`. Same fix applied to `build_city_poi_prefabs.gd`; **all** POI prefabs + Stage-4 `city.tscn` rebuilt. `VALIDATE_CITY_STAGE4_PASS` after rebuild.
+
 ## Manifest deviations / technical contradictions
 
 1. **GodotIQ MCP unavailable** (tool calls timed out). Build/validation used existing headless SceneTree tool pattern instead of bridge ops.

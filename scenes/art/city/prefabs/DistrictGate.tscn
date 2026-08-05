@@ -11,35 +11,35 @@ size = Vector3(6, 3.2, 0.45)
 [sub_resource type="BoxShape3D" id="BoxShape3D_hfm4c"]
 size = Vector3(1.6, 2.2, 1.4)
 
-[node name="DistrictGate" type="Node3D" unique_id=155675952]
+[node name="DistrictGate" type="Node3D" unique_id=863557385]
 script = ExtResource("1_q7tuq")
 metadata/district_id = "park_leisure"
 
-[node name="BarrierMesh" type="MeshInstance3D" parent="." unique_id=318170755]
+[node name="BarrierMesh" type="MeshInstance3D" parent="." unique_id=2015795414]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 mesh = SubResource("BoxMesh_xdtmc")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1612158942]
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=853122962]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=723214424]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1780698424]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 shape = SubResource("BoxShape3D_1po7w")
 
-[node name="InteractionArea" type="Area3D" parent="." unique_id=699059345]
+[node name="InteractionArea" type="Area3D" parent="." unique_id=181840001]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea" unique_id=2072123553]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea" unique_id=1664905266]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, -1.2)
 shape = SubResource("BoxShape3D_hfm4c")
 
-[node name="ConditionLabel" type="Label3D" parent="." unique_id=43530566]
+[node name="ConditionLabel" type="Label3D" parent="." unique_id=366022120]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -0.4)
 billboard = 1
 modulate = Color(0.85, 0.92, 1, 0.95)
 text = "Барьер района"
 font_size = 28
 
-[node name="InteractAnchor" type="Marker3D" parent="." unique_id=13067114]
+[node name="InteractAnchor" type="Marker3D" parent="." unique_id=1998727680]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, -1.2)
 
-[node name="PromptAnchor" type="Marker3D" parent="." unique_id=1857532508]
+[node name="PromptAnchor" type="Marker3D" parent="." unique_id=2017872580]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -1.2)
