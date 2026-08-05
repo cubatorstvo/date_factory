@@ -28,32 +28,32 @@ roughness = 0.55
 [sub_resource type="BoxShape3D" id="BoxShape3D_ap3qg"]
 size = Vector3(2.4, 2.4, 1.6)
 
-[node name="BarberShop" type="Node3D" unique_id=1390843930]
+[node name="BarberShop" type="Node3D" unique_id=1672486258]
 metadata/source_pack = "Downtown + House chair/mirror/shelf"
 metadata/temp_parts = "barber pole CSG accent"
 
-[node name="Visuals" type="Node3D" parent="." unique_id=811871837]
+[node name="Visuals" type="Node3D" parent="." unique_id=420585602]
 
 [node name="Building_Small_1_Inst" type="Node3D" parent="Visuals" unique_id=969699209 instance=ExtResource("1_b5g18")]
 transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0, -0.4)
 
-[node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=1288896557]
+[node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=67166262]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.35, 0.95)
 size = Vector3(2.6, 0.08, 0.9)
 material = SubResource("StandardMaterial3D_8l1bl")
 
-[node name="AwningStripe" type="CSGBox3D" parent="Visuals" unique_id=1103973677]
+[node name="AwningStripe" type="CSGBox3D" parent="Visuals" unique_id=689080811]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.29, 0.95)
 size = Vector3(2.6, 0.04, 0.9)
 material = SubResource("StandardMaterial3D_ostdr")
 
-[node name="PoleStripe" type="CSGCylinder3D" parent="Visuals" unique_id=1534247047]
+[node name="PoleStripe" type="CSGCylinder3D" parent="Visuals" unique_id=1904594155]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.05, 1.2, 0.9)
 radius = 0.07
 height = 1.6
 material = SubResource("StandardMaterial3D_as28m")
 
-[node name="PoleStripeWhite" type="CSGCylinder3D" parent="Visuals" unique_id=527887538]
+[node name="PoleStripeWhite" type="CSGCylinder3D" parent="Visuals" unique_id=1794513784]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.05, 1.2, 0.9)
 radius = 0.075
 height = 0.4
@@ -68,19 +68,19 @@ transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0.15, 1.2, 0.15)
 [node name="Shelf_1_Inst" type="Node3D" parent="Visuals" unique_id=1422317027 instance=ExtResource("4_kghn8")]
 transform = Transform3D(-0.6, 0, -5.2453668e-08, 0, 0.6, 0, 5.2453668e-08, 0, -0.6, -0.55, 0.2, 0.1)
 
-[node name="Collision" type="StaticBody3D" parent="." unique_id=753333452]
+[node name="Collision" type="StaticBody3D" parent="." unique_id=177421594]
 
-[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=2106124660]
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=439680318]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
 shape = SubResource("BoxShape3D_ap3qg")
 
-[node name="Anchors" type="Node3D" parent="." unique_id=246349142]
+[node name="Anchors" type="Node3D" parent="." unique_id=1323781325]
 
-[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=1287622117]
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=821604475]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
 
-[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1762919780]
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=2059205209]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
 
-[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=219976597]
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=107444317]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

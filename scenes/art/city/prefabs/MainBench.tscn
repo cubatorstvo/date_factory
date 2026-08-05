@@ -7,10 +7,10 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_cj7bd"]
 size = Vector3(1.8, 0.9, 0.8)
 
-[node name="MainBench" type="Node3D" unique_id=502147666]
+[node name="MainBench" type="Node3D" unique_id=1140075695]
 metadata/source_pack = "Sushi Environment_Bench + Downtown planters"
 
-[node name="Visuals" type="Node3D" parent="." unique_id=1207785102]
+[node name="Visuals" type="Node3D" parent="." unique_id=1649054820]
 
 [node name="Environment_Bench_Inst" type="Node3D" parent="Visuals" unique_id=1906984469 instance=ExtResource("1_8jo0b")]
 transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 0, 0, 0)
@@ -21,25 +21,25 @@ transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, -1.2, 0, 0.2)
 [node name="Prop_Bollard_Inst" type="Node3D" parent="Visuals" unique_id=1768949879 instance=ExtResource("3_hwi0q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 0, 0.35)
 
-[node name="Collision" type="StaticBody3D" parent="." unique_id=93418878]
+[node name="Collision" type="StaticBody3D" parent="." unique_id=1802389227]
 
-[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=1840246661]
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=606377963]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
 shape = SubResource("BoxShape3D_cj7bd")
 
-[node name="Anchors" type="Node3D" parent="." unique_id=1818396080]
+[node name="Anchors" type="Node3D" parent="." unique_id=382764429]
 
-[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=1427672901]
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=1453563906]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
 
-[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=414135836]
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=600469780]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
 
-[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=569051340]
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=320087879]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
-[node name="SitAnchor" type="Marker3D" parent="Anchors" unique_id=1132618735]
+[node name="SitAnchor" type="Marker3D" parent="Anchors" unique_id=502484542]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.15)
 
-[node name="StandAnchor" type="Marker3D" parent="Anchors" unique_id=1519732257]
+[node name="StandAnchor" type="Marker3D" parent="Anchors" unique_id=1356072277]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.85)

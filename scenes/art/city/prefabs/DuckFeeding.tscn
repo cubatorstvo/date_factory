@@ -75,20 +75,20 @@ roughness = 0.55
 [sub_resource type="BoxShape3D" id="BoxShape3D_5m3uc"]
 size = Vector3(2.2, 1.2, 2.2)
 
-[node name="DuckFeeding" type="Node3D" unique_id=658548049]
+[node name="DuckFeeding" type="Node3D" unique_id=309694824]
 metadata/temp_parts = "authored stylized ducks + pond rim/water/feeder"
 metadata/future_replacement = "compact low-poly duck 0.35-0.5m + real pond prop"
 metadata/packs_checked = "Downtown/House/Food/Sushi/Factory/Sci-Fi + Downloads zips — no duck mesh"
 
-[node name="Visuals" type="Node3D" parent="." unique_id=497873824]
+[node name="Visuals" type="Node3D" parent="." unique_id=417817327]
 
-[node name="PondRim" type="CSGCylinder3D" parent="Visuals" unique_id=1020450338]
+[node name="PondRim" type="CSGCylinder3D" parent="Visuals" unique_id=1467784259]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 radius = 1.1
 height = 0.12
 material = SubResource("StandardMaterial3D_hv03f")
 
-[node name="Water" type="CSGCylinder3D" parent="Visuals" unique_id=1622707678]
+[node name="Water" type="CSGCylinder3D" parent="Visuals" unique_id=1206515097]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
 radius = 0.95
 height = 0.06
@@ -97,91 +97,91 @@ material = SubResource("StandardMaterial3D_js5xw")
 [node name="Prop_Planter_Single_Inst" type="Node3D" parent="Visuals" unique_id=262268339 instance=ExtResource("1_igb8r")]
 transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -1.2, 0, 0.9)
 
-[node name="DuckA" type="Node3D" parent="Visuals" unique_id=1471453479]
+[node name="DuckA" type="Node3D" parent="Visuals" unique_id=996324387]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0.35, 0.18, 0.15)
 
-[node name="Body" type="CSGSphere3D" parent="Visuals/DuckA" unique_id=1901481591]
+[node name="Body" type="CSGSphere3D" parent="Visuals/DuckA" unique_id=1145681571]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
 radius = 0.12
 material = SubResource("StandardMaterial3D_m1lx4")
 
-[node name="Head" type="CSGSphere3D" parent="Visuals/DuckA" unique_id=449595485]
+[node name="Head" type="CSGSphere3D" parent="Visuals/DuckA" unique_id=870830509]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.16, 0.02)
 radius = 0.07
 material = SubResource("StandardMaterial3D_ioj4d")
 
-[node name="Beak" type="CSGBox3D" parent="Visuals/DuckA" unique_id=647881869]
+[node name="Beak" type="CSGBox3D" parent="Visuals/DuckA" unique_id=641286687]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17, 0.15, 0.02)
 size = Vector3(0.08, 0.03, 0.04)
 material = SubResource("StandardMaterial3D_ogpdm")
 
-[node name="WingL" type="CSGBox3D" parent="Visuals/DuckA" unique_id=1414844869]
+[node name="WingL" type="CSGBox3D" parent="Visuals/DuckA" unique_id=1453065615]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0.1)
 size = Vector3(0.12, 0.03, 0.08)
 material = SubResource("StandardMaterial3D_vqfma")
 
-[node name="WingR" type="CSGBox3D" parent="Visuals/DuckA" unique_id=460456013]
+[node name="WingR" type="CSGBox3D" parent="Visuals/DuckA" unique_id=1996151614]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.1)
 size = Vector3(0.12, 0.03, 0.08)
 material = SubResource("StandardMaterial3D_wkhpk")
 
-[node name="DuckB" type="Node3D" parent="Visuals" unique_id=153624844]
+[node name="DuckB" type="Node3D" parent="Visuals" unique_id=1785703159]
 transform = Transform3D(0.76604444, 0, -0.6427876, 0, 1, 0, 0.6427876, 0, 0.76604444, -0.25, 0.18, -0.2)
 
-[node name="Body" type="CSGSphere3D" parent="Visuals/DuckB" unique_id=335949377]
+[node name="Body" type="CSGSphere3D" parent="Visuals/DuckB" unique_id=51687373]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
 radius = 0.12
 material = SubResource("StandardMaterial3D_2o7bl")
 
-[node name="Head" type="CSGSphere3D" parent="Visuals/DuckB" unique_id=1224308889]
+[node name="Head" type="CSGSphere3D" parent="Visuals/DuckB" unique_id=949050880]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.16, 0.02)
 radius = 0.07
 material = SubResource("StandardMaterial3D_lrvy2")
 
-[node name="Beak" type="CSGBox3D" parent="Visuals/DuckB" unique_id=905221700]
+[node name="Beak" type="CSGBox3D" parent="Visuals/DuckB" unique_id=420420385]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17, 0.15, 0.02)
 size = Vector3(0.08, 0.03, 0.04)
 material = SubResource("StandardMaterial3D_frphp")
 
-[node name="WingL" type="CSGBox3D" parent="Visuals/DuckB" unique_id=34362899]
+[node name="WingL" type="CSGBox3D" parent="Visuals/DuckB" unique_id=1394509212]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0.1)
 size = Vector3(0.12, 0.03, 0.08)
 material = SubResource("StandardMaterial3D_t327c")
 
-[node name="WingR" type="CSGBox3D" parent="Visuals/DuckB" unique_id=509773527]
+[node name="WingR" type="CSGBox3D" parent="Visuals/DuckB" unique_id=949339178]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.1)
 size = Vector3(0.12, 0.03, 0.08)
 material = SubResource("StandardMaterial3D_2rxuh")
 
-[node name="FeederBag" type="CSGBox3D" parent="Visuals" unique_id=252013226]
+[node name="FeederBag" type="CSGBox3D" parent="Visuals" unique_id=472498677]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.35, 0.85)
 size = Vector3(0.25, 0.7, 0.25)
 material = SubResource("StandardMaterial3D_k81mb")
 
-[node name="FeederTray" type="CSGBox3D" parent="Visuals" unique_id=2111930241]
+[node name="FeederTray" type="CSGBox3D" parent="Visuals" unique_id=1709660371]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.7, 0.85)
 size = Vector3(0.45, 0.08, 0.35)
 material = SubResource("StandardMaterial3D_tt4ha")
 
-[node name="Collision" type="StaticBody3D" parent="." unique_id=2066122323]
+[node name="Collision" type="StaticBody3D" parent="." unique_id=1815699114]
 
-[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=401214518]
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=1320571912]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 shape = SubResource("BoxShape3D_5m3uc")
 
-[node name="Anchors" type="Node3D" parent="." unique_id=149271888]
+[node name="Anchors" type="Node3D" parent="." unique_id=423375173]
 
-[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=961116007]
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=51495924]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
 
-[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1999138873]
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1917567271]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
 
-[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=719776302]
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=1553144817]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
-[node name="FoodAnchor" type="Marker3D" parent="Anchors" unique_id=1586615884]
+[node name="FoodAnchor" type="Marker3D" parent="Anchors" unique_id=153044186]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.75, 0.85)
 
-[node name="DuckReactionArea" type="Marker3D" parent="Anchors" unique_id=1082211176]
+[node name="DuckReactionArea" type="Marker3D" parent="Anchors" unique_id=1579158654]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)

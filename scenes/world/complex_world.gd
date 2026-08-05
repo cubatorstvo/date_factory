@@ -389,12 +389,15 @@ func _apply_district_gate(gate: Node3D, open: bool) -> void:
 
 
 func _style_district_barrier(gate: Node3D) -> void:
-	## Semi-transparent emissive wall on barrier meshes.
+	## Prefer DistrictGate script styling (Stage 5 low-opacity + focus label).
+	if gate.has_method("_style_locked"):
+		gate.call("_style_locked")
+		return
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.35, 0.62, 0.95, 0.38)
+	mat.albedo_color = Color(0.40, 0.62, 0.98, 0.18)
 	mat.emission_enabled = true
-	mat.emission = Color(0.25, 0.45, 0.9)
-	mat.emission_energy_multiplier = 0.55
+	mat.emission = Color(0.30, 0.55, 1.0)
+	mat.emission_energy_multiplier = 0.2
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var barrier := gate.get_node_or_null("BarrierMesh") as MeshInstance3D
@@ -409,7 +412,7 @@ func _style_district_barrier(gate: Node3D) -> void:
 	if label == null:
 		label = gate.get_node_or_null("SoonLabel") as Label3D
 	if label != null:
-		label.text = "Взаимодействуй"
+		label.visible = false
 
 
 func _wire_all_district_gates(city_root: Node3D, city_visual: Node3D) -> void:

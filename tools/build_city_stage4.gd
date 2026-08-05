@@ -739,19 +739,31 @@ func _prefab_cafe() -> Node3D:
 	_instance_at(v, P_BUILDING_M, Vector3(0, 0, -0.55), 0.0, Vector3(0.45, 0.45, 0.45))
 	_instance_at(v, P_DOOR, Vector3(0.0, 0, 0.7), 0.0, Vector3(1, 1, 1))
 	_awning(v, Color(0.95, 0.45, 0.55), 2.5)
-	_instance_at(v, P_COUNTER, Vector3(-0.85, 0, 0.95), 90.0, Vector3(0.8, 0.8, 0.8))
-	_instance_at(v, P_TABLE, Vector3(1.05, 0, 1.25), 15.0, Vector3(0.9, 0.9, 0.9))
-	_instance_at(v, P_STOOL, Vector3(1.45, 0, 1.05), 0.0, Vector3.ONE)
-	_instance_at(v, P_SIGN, Vector3(0, 2.7, 0.75), 0.0, Vector3.ONE)
-	_facade_sign(v, "TWO HEARTS", Color(1.0, 0.55, 0.35), 2.85)
+	## Sushi-kit props are authored oversized vs ~1.8m player:
+	## Table native H≈1.55 → scale 0.48 ≈ 0.74m top; stool H≈0.88 → 0.55 ≈ 0.48m seat.
+	_instance_at(v, P_COUNTER, Vector3(-0.95, 0, 0.35), 90.0, Vector3(0.52, 0.52, 0.52))
+	_instance_at(v, P_TABLE, Vector3(1.45, 0, 0.45), 10.0, Vector3(0.48, 0.48, 0.48))
+	_instance_at(v, P_STOOL, Vector3(1.75, 0, 0.25), 0.0, Vector3(0.55, 0.55, 0.55))
+	## Compact facade sign only — no giant sushi billboard.
+	_csg_box(v, "SignBoard", Vector3(0.0, 2.55, 0.78), Vector3(1.7, 0.42, 0.08), Color(0.18, 0.1, 0.12))
+	_csg_box(v, "SignAccent", Vector3(0.0, 2.55, 0.84), Vector3(1.45, 0.14, 0.04), Color(1.0, 0.55, 0.35))
+	var label := Label3D.new()
+	label.name = "SignText"
+	label.text = "TWO HEARTS"
+	label.position = Vector3(0.0, 2.55, 0.9)
+	label.font_size = 26
+	label.modulate = Color(1.0, 0.95, 0.88, 1.0)
+	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	label.shaded = true
+	v.add_child(label)
 	var warm := OmniLight3D.new()
 	warm.name = "CafeWarmLight"
-	warm.position = Vector3(0.0, 2.4, 1.2)
+	warm.position = Vector3(0.0, 2.35, 1.0)
 	warm.light_color = Color(1.0, 0.72, 0.45)
-	warm.light_energy = 1.8
-	warm.omni_range = 7.5
+	warm.light_energy = 1.25
+	warm.omni_range = 6.0
 	v.add_child(warm)
-	_marker(root.get_node("Anchors"), "DateSeatAnchor", Vector3(1.05, 0.55, 1.25))
+	_marker(root.get_node("Anchors"), "DateSeatAnchor", Vector3(1.45, 0.45, 0.45))
 	return root
 
 
@@ -778,9 +790,9 @@ func _prefab_district_gate() -> Node3D:
 	var mesh := MeshInstance3D.new()
 	mesh.name = "BarrierMesh"
 	var box := BoxMesh.new()
-	box.size = Vector3(6.0, 3.2, 0.45)
+	box.size = Vector3(7.0, 2.6, 0.22)
 	mesh.mesh = box
-	mesh.position = Vector3(0.0, 1.6, 0.0)
+	mesh.position = Vector3(0.0, 1.3, 0.0)
 	root.add_child(mesh)
 
 	var body := StaticBody3D.new()
@@ -789,9 +801,9 @@ func _prefab_district_gate() -> Node3D:
 	var cs := CollisionShape3D.new()
 	cs.name = "CollisionShape3D"
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(6.0, 3.2, 0.45)
+	shape.size = Vector3(7.0, 2.6, 0.22)
 	cs.shape = shape
-	cs.position = Vector3(0.0, 1.6, 0.0)
+	cs.position = Vector3(0.0, 1.3, 0.0)
 	body.add_child(cs)
 
 	var area := Area3D.new()
@@ -808,8 +820,9 @@ func _prefab_district_gate() -> Node3D:
 	var label := Label3D.new()
 	label.name = "ConditionLabel"
 	label.text = "Барьер района"
-	label.position = Vector3(0.0, 2.5, -0.4)
-	label.font_size = 28
+	label.visible = false
+	label.position = Vector3(0.0, 2.35, -0.35)
+	label.font_size = 22
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.modulate = Color(0.85, 0.92, 1.0, 0.95)
 	root.add_child(label)

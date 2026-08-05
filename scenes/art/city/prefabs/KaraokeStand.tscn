@@ -41,40 +41,40 @@ roughness = 0.55
 [sub_resource type="BoxShape3D" id="BoxShape3D_athet"]
 size = Vector3(2.4, 2.4, 1.6)
 
-[node name="KaraokeStand" type="Node3D" unique_id=532253253]
+[node name="KaraokeStand" type="Node3D" unique_id=1089057549]
 metadata/temp_parts = "mic/stand/speakers/stage deck CSG; screen+light from packs"
 metadata/source_pack = "Kenney Factory screens + House Light_Stand"
 metadata/future_replacement = "low-poly wired mic + adjustable stand"
 
-[node name="Visuals" type="Node3D" parent="." unique_id=1598890390]
+[node name="Visuals" type="Node3D" parent="." unique_id=2093142262]
 
-[node name="StageDeck" type="CSGBox3D" parent="Visuals" unique_id=346055550]
+[node name="StageDeck" type="CSGBox3D" parent="Visuals" unique_id=937346594]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
 size = Vector3(2.2, 0.16, 1.4)
 material = SubResource("StandardMaterial3D_odob0")
 
-[node name="MicPole" type="CSGCylinder3D" parent="Visuals" unique_id=194125977]
+[node name="MicPole" type="CSGCylinder3D" parent="Visuals" unique_id=1208523864]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.85, 0.25)
 radius = 0.03
 height = 1.4
 material = SubResource("StandardMaterial3D_71v7g")
 
-[node name="MicHead" type="CSGSphere3D" parent="Visuals" unique_id=262219070]
+[node name="MicHead" type="CSGSphere3D" parent="Visuals" unique_id=354920989]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.55, 0.25)
 radius = 0.07
 material = SubResource("StandardMaterial3D_dn77g")
 
-[node name="MicGrill" type="CSGBox3D" parent="Visuals" unique_id=2042326458]
+[node name="MicGrill" type="CSGBox3D" parent="Visuals" unique_id=1786127871]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.55, 0.32)
 size = Vector3(0.06, 0.06, 0.04)
 material = SubResource("StandardMaterial3D_i4036")
 
-[node name="SpeakerL" type="CSGBox3D" parent="Visuals" unique_id=891154542]
+[node name="SpeakerL" type="CSGBox3D" parent="Visuals" unique_id=1891535103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.85, 0.55, 0.1)
 size = Vector3(0.35, 0.9, 0.3)
 material = SubResource("StandardMaterial3D_8fl6v")
 
-[node name="SpeakerR" type="CSGBox3D" parent="Visuals" unique_id=494649414]
+[node name="SpeakerR" type="CSGBox3D" parent="Visuals" unique_id=1444271760]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.85, 0.55, 0.1)
 size = Vector3(0.35, 0.9, 0.3)
 material = SubResource("StandardMaterial3D_qknu7")
@@ -85,24 +85,24 @@ transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 1.35, -0.25)
 [node name="Light_Stand1_Inst" type="Node3D" parent="Visuals" unique_id=1904711373 instance=ExtResource("2_3hfr5")]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, -1.15, 0, -0.2)
 
-[node name="AccentLight" type="CSGBox3D" parent="Visuals" unique_id=10082583]
+[node name="AccentLight" type="CSGBox3D" parent="Visuals" unique_id=1421364660]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.1)
 size = Vector3(0.3, 0.12, 0.3)
 material = SubResource("StandardMaterial3D_7op8q")
 
-[node name="Collision" type="StaticBody3D" parent="." unique_id=382177965]
+[node name="Collision" type="StaticBody3D" parent="." unique_id=517020593]
 
-[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=1144079532]
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=322531581]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
 shape = SubResource("BoxShape3D_athet")
 
-[node name="Anchors" type="Node3D" parent="." unique_id=1343243628]
+[node name="Anchors" type="Node3D" parent="." unique_id=642121068]
 
-[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=1079559078]
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=382235139]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
 
-[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1686195270]
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1327440311]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
 
-[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=53728666]
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=1647066124]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

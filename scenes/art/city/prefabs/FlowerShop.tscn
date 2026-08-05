@@ -26,12 +26,12 @@ roughness = 0.55
 [sub_resource type="BoxShape3D" id="BoxShape3D_ferqa"]
 size = Vector3(2.4, 2.4, 1.6)
 
-[node name="FlowerShop" type="Node3D" unique_id=352961080]
+[node name="FlowerShop" type="Node3D" unique_id=1634702618]
 metadata/source_pack = "Downtown MegaKit + Sushi Decoration + House plants"
 metadata/license = "CC0 Quaternius / pack licenses in assets/"
 metadata/temp_parts = "awning/window CSG accent only"
 
-[node name="Visuals" type="Node3D" parent="." unique_id=2055167832]
+[node name="Visuals" type="Node3D" parent="." unique_id=1485639951]
 
 [node name="Building_Small_1_Inst" type="Node3D" parent="Visuals" unique_id=969699209 instance=ExtResource("1_l2blp")]
 transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0, -0.4)
@@ -42,17 +42,17 @@ transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0.7, 0, 0.55)
 [node name="Brick_Window_Square_Single_Inst" type="Node3D" parent="Visuals" unique_id=497083836 instance=ExtResource("3_4g6dt")]
 transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -0.55, 0.9, 0.65)
 
-[node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=1683087397]
+[node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=832851278]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.35, 0.95)
 size = Vector3(2.6, 0.08, 0.9)
 material = SubResource("StandardMaterial3D_7dox7")
 
-[node name="AwningStripe" type="CSGBox3D" parent="Visuals" unique_id=1676856985]
+[node name="AwningStripe" type="CSGBox3D" parent="Visuals" unique_id=476352247]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.29, 0.95)
 size = Vector3(2.6, 0.04, 0.9)
 material = SubResource("StandardMaterial3D_7f2q0")
 
-[node name="WindowPane" type="CSGBox3D" parent="Visuals" unique_id=1232611487]
+[node name="WindowPane" type="CSGBox3D" parent="Visuals" unique_id=1622093531]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0.72)
 size = Vector3(1.6, 1.1, 0.05)
 material = SubResource("StandardMaterial3D_cbe8d")
@@ -69,19 +69,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1, 0, 1)
 [node name="Houseplant_1_Inst" type="Node3D" parent="Visuals" unique_id=1491733927 instance=ExtResource("7_rvgrk")]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 1.05, 0, 0.95)
 
-[node name="Collision" type="StaticBody3D" parent="." unique_id=31661229]
+[node name="Collision" type="StaticBody3D" parent="." unique_id=603838973]
 
-[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=765670105]
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=1551278918]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
 shape = SubResource("BoxShape3D_ferqa")
 
-[node name="Anchors" type="Node3D" parent="." unique_id=2062721477]
+[node name="Anchors" type="Node3D" parent="." unique_id=860177156]
 
-[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=1889998527]
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=1894832774]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
 
-[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1127386445]
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1729077117]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
 
-[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=71918547]
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=1938699403]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

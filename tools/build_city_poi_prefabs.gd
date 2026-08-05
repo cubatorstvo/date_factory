@@ -244,13 +244,32 @@ func _prefab_park_restaurant() -> Node3D:
 	var v: Node = root.get_node("Visuals")
 	_instance_at(v, P_BUILDING_M, Vector3(0, 0, -0.6), 0.0, Vector3(0.45, 0.45, 0.45))
 	_instance_at(v, P_DOOR, Vector3(0, 0, 0.7), 0.0, Vector3(1, 1, 1))
-	_awning(v, Color(0.75, 0.35, 0.3), 2.5)
-	_instance_at(v, P_COUNTER, Vector3(-0.8, 0, 0.9), 90.0, Vector3(0.8, 0.8, 0.8))
-	_instance_at(v, P_TABLE, Vector3(1.1, 0, 1.3), 15.0, Vector3(0.9, 0.9, 0.9))
-	_instance_at(v, P_STOOL, Vector3(1.5, 0, 1.1), 0.0, Vector3(1, 1, 1))
-	_instance_at(v, P_SIGN, Vector3(0, 2.7, 0.75), 0.0, Vector3(1, 1, 1))
-	_instance_at(v, P_PLANT, Vector3(-1.4, 0, 1.2), 0.0, Vector3(1.2, 1.2, 1.2))
-	_marker(root.get_node("Anchors"), "DateSeatAnchor", Vector3(1.1, 0.55, 1.3))
+	_awning(v, Color(0.85, 0.4, 0.35), 2.5)
+	## Same sushi-kit oversize correction as CafeTwoHearts (player ≈ 1.8m).
+	_instance_at(v, P_COUNTER, Vector3(-0.8, 0, 0.35), 90.0, Vector3(0.52, 0.52, 0.52))
+	_instance_at(v, P_TABLE, Vector3(1.4, 0, 0.45), 15.0, Vector3(0.48, 0.48, 0.48))
+	_instance_at(v, P_STOOL, Vector3(1.7, 0, 0.25), 0.0, Vector3(0.55, 0.55, 0.55))
+	_instance_at(v, P_PLANT, Vector3(-1.4, 0, 1.0), 0.0, Vector3(1.1, 1.1, 1.1))
+	## Compact romantic sign — no giant sushi billboard.
+	_csg_box(v, "SignBoard", Vector3(0.0, 2.6, 0.78), Vector3(1.8, 0.4, 0.08), Color(0.18, 0.08, 0.1))
+	_csg_box(v, "SignAccent", Vector3(0.0, 2.6, 0.84), Vector3(1.5, 0.12, 0.04), Color(1.0, 0.55, 0.35))
+	var label := Label3D.new()
+	label.name = "SignText"
+	label.text = "PARK BISTRO"
+	label.position = Vector3(0.0, 2.6, 0.9)
+	label.font_size = 24
+	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	label.shaded = true
+	label.modulate = Color(1.0, 0.95, 0.88, 1.0)
+	v.add_child(label)
+	var warm := OmniLight3D.new()
+	warm.name = "RestaurantWarm"
+	warm.position = Vector3(0.0, 2.4, 1.1)
+	warm.light_color = Color(1.0, 0.7, 0.42)
+	warm.light_energy = 1.35
+	warm.omni_range = 7.0
+	v.add_child(warm)
+	_marker(root.get_node("Anchors"), "DateSeatAnchor", Vector3(1.4, 0.5, 0.55))
 	root.set_meta("source_pack", "Downtown facade + Sushi Restaurant Kit interior cues")
 	root.set_meta("license_note", "Sushi kit: project-side license record incomplete — see ASSET_LICENSE_REGISTRY")
 	return root
@@ -398,10 +417,17 @@ func _prefab_cinema() -> Node3D:
 	_instance_at(v, P_BUILDING_M, Vector3(0, 0, -0.55), 0.0, Vector3(0.5, 0.5, 0.5))
 	_csg_box(v, "Marquee", Vector3(0, 2.55, 0.85), Vector3(3.2, 0.45, 0.7), Color(0.15, 0.15, 0.18))
 	_csg_box(v, "MarqueeLights", Vector3(0, 2.55, 1.15), Vector3(3.0, 0.12, 0.08), Color(0.95, 0.85, 0.35))
+	_csg_box(v, "PosterLeft", Vector3(-1.15, 1.35, 0.72), Vector3(0.55, 1.1, 0.05), Color(0.7, 0.25, 0.45))
+	_csg_box(v, "PosterRight", Vector3(1.15, 1.35, 0.72), Vector3(0.55, 1.1, 0.05), Color(0.25, 0.55, 0.75))
 	_instance_at(v, P_SCREEN_W, Vector3(0, 1.4, 0.55), 0.0, Vector3(1.4, 1.2, 1.0))
-	_instance_at(v, P_CHAIR, Vector3(-0.7, 0, 1.2), 180.0, Vector3(0.9, 0.9, 0.9))
-	_instance_at(v, P_CHAIR, Vector3(0.7, 0, 1.2), 180.0, Vector3(0.9, 0.9, 0.9))
 	_instance_at(v, P_DOOR, Vector3(0, 0, 0.75), 0.0, Vector3(1, 1, 1))
+	var marquee_light := OmniLight3D.new()
+	marquee_light.name = "MarqueeGlow"
+	marquee_light.position = Vector3(0.0, 2.5, 1.3)
+	marquee_light.light_color = Color(1.0, 0.85, 0.45)
+	marquee_light.light_energy = 1.1
+	marquee_light.omni_range = 5.5
+	v.add_child(marquee_light)
 	_marker(root.get_node("Anchors"), "SitAnchor", Vector3(0, 0.5, 1.2))
 	root.set_meta("temp_parts", "marquee CSG; seats/screen/door/building from packs")
 	root.set_meta("source_pack", "Downtown + Kenney screen-wide + House chairs")
@@ -411,12 +437,21 @@ func _prefab_cinema() -> Node3D:
 func _prefab_arcade() -> Node3D:
 	var root := _base("ArcadeFacade")
 	var v: Node = root.get_node("Visuals")
-	_instance_at(v, P_BUILDING_S, Vector3(0, 0, -0.45), 0.0, Vector3(0.55, 0.55, 0.55))
-	_awning(v, Color(0.55, 0.25, 0.75))
-	_authored_cabinet(v, "CabA", Vector3(-0.55, 0, 0.7), Color(0.25, 0.45, 0.9))
-	_authored_cabinet(v, "CabB", Vector3(0.45, 0, 0.7), Color(0.85, 0.3, 0.45))
-	_instance_at(v, P_SCREEN_S, Vector3(-0.55, 1.25, 0.95), 0.0, Vector3(0.85, 0.85, 0.85))
-	_instance_at(v, P_SCREEN_S, Vector3(0.45, 1.25, 0.95), 0.0, Vector3(0.85, 0.85, 0.85))
+	_instance_at(v, P_BUILDING_S, Vector3(0, 0, -0.55), 0.0, Vector3(0.55, 0.55, 0.55))
+	## Recessed nook under awning — cabinets stay off the walking line.
+	_csg_box(v, "NookFloor", Vector3(0.0, 0.02, 0.35), Vector3(2.4, 0.04, 1.2), Color(0.18, 0.14, 0.22))
+	_awning(v, Color(0.55, 0.25, 0.75), 2.45)
+	_authored_cabinet(v, "CabA", Vector3(-0.55, 0, 0.25), Color(0.25, 0.45, 0.9))
+	_authored_cabinet(v, "CabB", Vector3(0.45, 0, 0.25), Color(0.85, 0.3, 0.45))
+	_instance_at(v, P_SCREEN_S, Vector3(-0.55, 1.25, 0.45), 0.0, Vector3(0.8, 0.8, 0.8))
+	_instance_at(v, P_SCREEN_S, Vector3(0.45, 1.25, 0.45), 0.0, Vector3(0.8, 0.8, 0.8))
+	var neon := OmniLight3D.new()
+	neon.name = "ArcadeNeon"
+	neon.position = Vector3(0.0, 2.1, 0.7)
+	neon.light_color = Color(0.75, 0.35, 0.95)
+	neon.light_energy = 0.9
+	neon.omni_range = 4.5
+	v.add_child(neon)
 	root.set_meta("temp_parts", "cabinet housings CSG around Kenney screens")
 	root.set_meta("future_replacement", "stylized arcade cabinet 1.6-1.9m")
 	return root

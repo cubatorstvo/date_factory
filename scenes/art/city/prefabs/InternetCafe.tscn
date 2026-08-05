@@ -24,25 +24,25 @@ roughness = 0.55
 [sub_resource type="BoxShape3D" id="BoxShape3D_3cak5"]
 size = Vector3(2.4, 2.4, 1.6)
 
-[node name="InternetCafe" type="Node3D" unique_id=158116173]
+[node name="InternetCafe" type="Node3D" unique_id=421823052]
 metadata/source_pack = "Downtown + Sci-Fi desk/chair + Kenney screen + Food bottle"
 
-[node name="Visuals" type="Node3D" parent="." unique_id=1604915994]
+[node name="Visuals" type="Node3D" parent="." unique_id=309802588]
 
 [node name="Building_Small_1_Inst" type="Node3D" parent="Visuals" unique_id=969699209 instance=ExtResource("1_hcu7w")]
 transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0, -0.4)
 
-[node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=840167747]
+[node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=594403320]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.35, 0.95)
 size = Vector3(2.6, 0.08, 0.9)
 material = SubResource("StandardMaterial3D_v08qn")
 
-[node name="AwningStripe" type="CSGBox3D" parent="Visuals" unique_id=1082537379]
+[node name="AwningStripe" type="CSGBox3D" parent="Visuals" unique_id=535167584]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.29, 0.95)
 size = Vector3(2.6, 0.04, 0.9)
 material = SubResource("StandardMaterial3D_7v4ar")
 
-[node name="WindowPane" type="CSGBox3D" parent="Visuals" unique_id=935576608]
+[node name="WindowPane" type="CSGBox3D" parent="Visuals" unique_id=607697812]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0.72)
 size = Vector3(1.6, 1.1, 0.05)
 material = SubResource("StandardMaterial3D_64yyy")
@@ -59,19 +59,19 @@ transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, -0.35, 0, 0.85)
 [node name="Bottle1_Inst" type="Node3D" parent="Visuals" unique_id=1337793721 instance=ExtResource("5_0d0pv")]
 transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0.35, 0.95, 0.7)
 
-[node name="Collision" type="StaticBody3D" parent="." unique_id=321477336]
+[node name="Collision" type="StaticBody3D" parent="." unique_id=1272622462]
 
-[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=337852392]
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=1362641279]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
 shape = SubResource("BoxShape3D_3cak5")
 
-[node name="Anchors" type="Node3D" parent="." unique_id=775396698]
+[node name="Anchors" type="Node3D" parent="." unique_id=984000811]
 
-[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=160473758]
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=947486126]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
 
-[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1191671043]
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=824837528]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
 
-[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=1580065319]
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=722088587]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

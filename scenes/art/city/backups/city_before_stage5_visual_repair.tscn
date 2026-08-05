@@ -1,0 +1,716 @@
+[gd_scene format=3 uid="uid://dpqc78lq2llwg"]
+
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/PlayerHomeFacade.tscn" id="1_cootd"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/CafeTwoHearts.tscn" id="2_ocsna"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/BookstoreFacade.tscn" id="3_1o5or"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/JewelryShop.tscn" id="4_w4cs5"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/GiftShop.tscn" id="5_2iarm"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/FlowerShop.tscn" id="6_mvu7x"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/InternetCafe.tscn" id="7_5ma4y"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/HomewareShop.tscn" id="8_hpf5j"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/ClothingShop.tscn" id="9_gaqey"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/ParkRestaurant.tscn" id="10_gtqxx"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/GymFacade.tscn" id="11_juh3b"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/CinemaFacade.tscn" id="12_1l280"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/ArcadeFacade.tscn" id="13_nky8o"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/BarFacade.tscn" id="14_j33ck"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/PhotoStudio.tscn" id="15_33kpw"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/AgencyOffice.tscn" id="16_64fs5"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/BarberShop.tscn" id="17_dmywy"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/MainBench.tscn" id="18_3k20l"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/ParkBench.tscn" id="19_7uv6l"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/DuckFeeding.tscn" id="20_7mcwn"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/KaraokeStand.tscn" id="21_rh7lx"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/BusStopCandy.tscn" id="22_4hhy3"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/DistrictGate.tscn" id="23_u426w"]
+[ext_resource type="PackedScene" uid="uid://b0pilbqwe7tt8" path="res://assets/environment/city/downtown_megakit/meshes/Street_2Lane_noSidewalk.gltf" id="25_nkn8c"]
+[ext_resource type="PackedScene" uid="uid://b37f41tjah7tf" path="res://assets/environment/city/downtown_megakit/meshes/Street_Asphalt_9x9.gltf" id="26_lfdsf"]
+[ext_resource type="PackedScene" uid="uid://c7rukudx3uej2" path="res://assets/environment/city/downtown_megakit/meshes/Sidewalk_NoCurb_3m.gltf" id="27_kmp1w"]
+[ext_resource type="PackedScene" uid="uid://ivp31mv268c1" path="res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf" id="28_gbm14"]
+[ext_resource type="PackedScene" uid="uid://c1v3og5i7d5cg" path="res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf" id="29_hlo2u"]
+[ext_resource type="PackedScene" uid="uid://bkwxamkkeupgn" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_SakuraTree.gltf" id="30_5ceus"]
+[ext_resource type="PackedScene" uid="uid://v1jb038ujla4" path="res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf" id="31_vheip"]
+[ext_resource type="PackedScene" path="res://scenes/art/city/prefabs/StreetLampRomance.tscn" id="32_74nhd"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ppo7s"]
+size = Vector3(96, 0.4, 64)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnful"]
+albedo_color = Color(0.14, 0.16, 0.22, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_j7f6a"]
+size = Vector3(96, 0.08, 64)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sqxbc"]
+transparency = 1
+albedo_color = Color(0.08, 0.14, 0.28, 0.92)
+metallic = 0.55
+roughness = 0.12
+
+[sub_resource type="BoxMesh" id="BoxMesh_pe7w5"]
+size = Vector3(8, 0.25, 6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_p414b"]
+size = Vector3(8, 1.2, 6)
+
+[sub_resource type="Environment" id="Environment_6rfp6"]
+background_mode = 1
+background_color = Color(0.05, 0.06, 0.12, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.22, 0.24, 0.38, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 3
+glow_enabled = true
+glow_intensity = 0.35
+glow_bloom = 0.18
+
+[node name="City" type="Node3D" unique_id=613218591]
+
+[node name="Architecture" type="Node3D" parent="." unique_id=949724983]
+
+[node name="PerimeterCollision" type="StaticBody3D" parent="Architecture" unique_id=652161591]
+
+[node name="FloorCollider" type="StaticBody3D" parent="Architecture/PerimeterCollision" unique_id=1700003322]
+
+[node name="Shape" type="CollisionShape3D" parent="Architecture/PerimeterCollision/FloorCollider" unique_id=460078650]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, -0.2, 9)
+shape = SubResource("BoxShape3D_ppo7s")
+
+[node name="GroundVisual" type="MeshInstance3D" parent="Architecture" unique_id=1169720277]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, -0.04, 9)
+material_override = SubResource("StandardMaterial3D_nnful")
+mesh = SubResource("BoxMesh_j7f6a")
+
+[node name="Buildings" type="Node3D" parent="." unique_id=770940804]
+
+[node name="HomeFacade" parent="Buildings" unique_id=1101831559 instance=ExtResource("1_cootd")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 34.1, 0, 17)
+metadata/district_id = "main_street"
+metadata/poi_id = "player_home"
+
+[node name="CafeTwoHearts" parent="Buildings" unique_id=2139867333 instance=ExtResource("2_ocsna")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 23.4, 0, 15)
+metadata/district_id = "main_street"
+metadata/poi_id = "cafe_two_hearts"
+
+[node name="BookstoreLeisure" parent="Buildings" unique_id=392780094 instance=ExtResource("3_1o5or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, 11.4)
+metadata/district_id = "park_leisure"
+metadata/poi_id = "bookstore"
+
+[node name="POIs" type="Node3D" parent="." unique_id=214136351]
+
+[node name="JewelryShop" parent="POIs" unique_id=1842698322 instance=ExtResource("4_w4cs5")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 6, 0, 6.6)
+metadata/district_id = "main_street"
+metadata/poi_id = "jewelry_shop"
+
+[node name="GiftShop" parent="POIs" unique_id=1800069656 instance=ExtResource("5_2iarm")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 13, 0, 6.6)
+metadata/district_id = "main_street"
+metadata/poi_id = "gift_shop"
+
+[node name="FlowerShop" parent="POIs" unique_id=352961080 instance=ExtResource("6_mvu7x")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 20, 0, 6.6)
+metadata/district_id = "main_street"
+metadata/poi_id = "flower_shop"
+
+[node name="InternetCafe" parent="POIs" unique_id=158116173 instance=ExtResource("7_5ma4y")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -6.6)
+metadata/district_id = "main_street"
+metadata/poi_id = "internet_cafe"
+
+[node name="HomewareShop" parent="POIs" unique_id=843355290 instance=ExtResource("8_hpf5j")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -6.6)
+metadata/district_id = "main_street"
+metadata/poi_id = "homeware_shop"
+
+[node name="ClothingShop" parent="POIs" unique_id=1305755233 instance=ExtResource("9_gaqey")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -6.6)
+metadata/district_id = "main_street"
+metadata/poi_id = "clothing_shop"
+
+[node name="ParkRestaurant" parent="POIs" unique_id=2143324106 instance=ExtResource("10_gtqxx")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 12.6, 0, 22)
+metadata/district_id = "park_leisure"
+metadata/poi_id = "park_restaurant"
+
+[node name="GymFacade" parent="POIs" unique_id=2091557963 instance=ExtResource("11_juh3b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 11.4)
+metadata/district_id = "park_leisure"
+metadata/poi_id = "gym"
+
+[node name="CinemaFacade" parent="POIs" unique_id=1647243862 instance=ExtResource("12_1l280")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -28.1, 0, 17)
+metadata/district_id = "park_leisure"
+metadata/poi_id = "cinema"
+
+[node name="ArcadeFacade" parent="POIs" unique_id=1247285226 instance=ExtResource("13_nky8o")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -28.1, 0, 24.5)
+metadata/district_id = "park_leisure"
+metadata/poi_id = "arcade"
+
+[node name="BarFacade" parent="POIs" unique_id=1404250062 instance=ExtResource("14_j33ck")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -16, 0, 30.6)
+metadata/district_id = "park_leisure"
+metadata/poi_id = "bar"
+
+[node name="PhotoStudio" parent="POIs" unique_id=37844339 instance=ExtResource("15_33kpw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, -6.6)
+metadata/district_id = "agency_row"
+metadata/poi_id = "photo_studio"
+
+[node name="AgencyOffice" parent="POIs" unique_id=1486346771 instance=ExtResource("16_64fs5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0, -6.6)
+metadata/district_id = "agency_row"
+metadata/poi_id = "agency_office"
+
+[node name="BarberShop" parent="POIs" unique_id=1390843930 instance=ExtResource("17_dmywy")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -25, 0, 12.6)
+metadata/district_id = "agency_row"
+metadata/poi_id = "barber"
+
+[node name="MainBench" parent="POIs" unique_id=502147666 instance=ExtResource("18_3k20l")]
+transform = Transform3D(0.81915206, 0, -0.57357645, 0, 1, 0, 0.57357645, 0, 0.81915206, 1.8, 0, 1.5)
+metadata/district_id = "main_street"
+
+[node name="ParkBench" parent="POIs" unique_id=719577857 instance=ExtResource("19_7uv6l")]
+transform = Transform3D(-0.81915206, 0, 0.57357645, 0, 1, 0, -0.57357645, 0, -0.81915206, -4.5, 0, 22.5)
+metadata/district_id = "park_leisure"
+
+[node name="DuckFeeding" parent="POIs" unique_id=658548049 instance=ExtResource("20_7mcwn")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 6.5, 0, 17)
+metadata/district_id = "park_leisure"
+
+[node name="KaraokeStand" parent="POIs" unique_id=532253253 instance=ExtResource("21_rh7lx")]
+transform = Transform3D(0.81915206, 0, -0.57357645, 0, 1, 0, 0.57357645, 0, 0.81915206, -8.5, 0, 25)
+metadata/district_id = "park_leisure"
+
+[node name="BusStopCandy" parent="POIs" unique_id=948914521 instance=ExtResource("22_4hhy3")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -31, 0, 5)
+metadata/district_id = "agency_row"
+
+[node name="Decor" type="Node3D" parent="." unique_id=1338898681]
+
+[node name="ParkGate" parent="Decor" unique_id=863557385 groups=["district_gate"] instance=ExtResource("23_u426w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 7.5)
+district_id = "park_leisure"
+display_name = "Парковый барьер"
+
+[node name="AgencyGate" parent="Decor" unique_id=2111128703 groups=["district_gate"] instance=ExtResource("23_u426w")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -7.5, 0, 0)
+district_id = "agency_row"
+display_name = "Барьер агентства"
+metadata/district_id = "agency_row"
+
+[node name="AgencyGateLeisure" parent="Decor" unique_id=1351734932 groups=["district_gate"] instance=ExtResource("23_u426w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, 12.5)
+district_id = "agency_row"
+display_name = "Барьер агентства со стороны Leisure"
+barrier_size = Vector3(5.5, 3.2, 0.45)
+metadata/district_id = "agency_row"
+
+[node name="Markers" type="Node3D" parent="." unique_id=264488667]
+
+[node name="PlayerSpawn" type="Marker3D" parent="Markers" unique_id=1903522763]
+transform = Transform3D(-0.34174308, 0, -0.9397934, 0, 1, 0, 0.9397934, 0, -0.34174308, 30, 0, 17)
+
+[node name="ApartmentReturn" type="Marker3D" parent="Markers" unique_id=876895667]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 32, 0, 17)
+
+[node name="HomeEntrance" type="Marker3D" parent="Markers" unique_id=1773405643]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 33, 0, 17)
+
+[node name="CafeEntrance" type="Marker3D" parent="Markers" unique_id=1160414229]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 24.5, 0, 15)
+
+[node name="JewelryEntrance" type="Marker3D" parent="Markers" unique_id=37357055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 5.5)
+
+[node name="GiftEntrance" type="Marker3D" parent="Markers" unique_id=1207080487]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, 5.5)
+
+[node name="FlowerEntrance" type="Marker3D" parent="Markers" unique_id=202627073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 5.5)
+
+[node name="InternetCafeEntrance" type="Marker3D" parent="Markers" unique_id=492560582]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -5.5)
+
+[node name="HomewareEntrance" type="Marker3D" parent="Markers" unique_id=220397722]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -5.5)
+
+[node name="ClothingEntrance" type="Marker3D" parent="Markers" unique_id=85933040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -5.5)
+
+[node name="ParkPicnicSpot" type="Marker3D" parent="Markers" unique_id=812552212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 0, 11.5)
+
+[node name="ParkRestaurantEntrance" type="Marker3D" parent="Markers" unique_id=520928088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 0, 22)
+
+[node name="GymEntrance" type="Marker3D" parent="Markers" unique_id=355547319]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 12.5)
+
+[node name="BookstoreEntrance" type="Marker3D" parent="Markers" unique_id=1064340744]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, 12.5)
+
+[node name="CinemaEntrance" type="Marker3D" parent="Markers" unique_id=1038758984]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 0, 17)
+
+[node name="ArcadeEntrance" type="Marker3D" parent="Markers" unique_id=1241354499]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 0, 24.5)
+
+[node name="BarEntrance" type="Marker3D" parent="Markers" unique_id=1746083395]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 29.5)
+
+[node name="PhotoStudioEntrance" type="Marker3D" parent="Markers" unique_id=95494775]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, -5.5)
+
+[node name="AgencyOfficeEntrance" type="Marker3D" parent="Markers" unique_id=754531755]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0, -5.5)
+
+[node name="BarberEntrance" type="Marker3D" parent="Markers" unique_id=1907775213]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, 11.5)
+
+[node name="BusStop" type="Marker3D" parent="Markers" unique_id=1331546583]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31, 0, 5)
+
+[node name="PhotoMark" type="Marker3D" parent="Markers" unique_id=1857476881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, -4.5)
+
+[node name="OverviewCamera" type="Marker3D" parent="Markers" unique_id=2042975424]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 45, 7)
+
+[node name="WestBoundary" type="Marker3D" parent="Markers" unique_id=219685340]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 0, 5)
+
+[node name="EastBoundary" type="Marker3D" parent="Markers" unique_id=1120526140]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43, 0, 14)
+
+[node name="Districts" type="Node3D" parent="." unique_id=309660081]
+
+[node name="GeneratedCity" type="Node3D" parent="." unique_id=133072787]
+
+[node name="Roads" type="Node3D" parent="GeneratedCity" unique_id=1323505654]
+
+[node name="commercial_road" type="Node3D" parent="GeneratedCity/Roads" unique_id=1503387929]
+
+[node name="commercial_road_00" parent="GeneratedCity/Roads/commercial_road" unique_id=453736650 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3, 0, 0)
+
+[node name="commercial_road_01" parent="GeneratedCity/Roads/commercial_road" unique_id=3964409 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3, 0, 0)
+
+[node name="commercial_road_02" parent="GeneratedCity/Roads/commercial_road" unique_id=2065647750 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 9, 0, 0)
+
+[node name="commercial_road_03" parent="GeneratedCity/Roads/commercial_road" unique_id=1950202178 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, 0)
+
+[node name="commercial_road_04" parent="GeneratedCity/Roads/commercial_road" unique_id=1102305719 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 21, 0, 0)
+
+[node name="commercial_road_05" parent="GeneratedCity/Roads/commercial_road" unique_id=1370686521 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 27, 0, 0)
+
+[node name="residential_leg" type="Node3D" parent="GeneratedCity/Roads" unique_id=1518065986]
+
+[node name="residential_leg_00" parent="GeneratedCity/Roads/residential_leg" unique_id=708482133 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 3)
+
+[node name="residential_leg_01" parent="GeneratedCity/Roads/residential_leg" unique_id=1832449747 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 9)
+
+[node name="residential_leg_02" parent="GeneratedCity/Roads/residential_leg" unique_id=730105378 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 15)
+
+[node name="residential_leg_03" parent="GeneratedCity/Roads/residential_leg" unique_id=1708109184 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 21)
+
+[node name="agency_south_lane" type="Node3D" parent="GeneratedCity/Roads" unique_id=1509469965]
+
+[node name="agency_south_lane_00" parent="GeneratedCity/Roads/agency_south_lane" unique_id=1741212044 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -9, 0, 0)
+
+[node name="agency_south_lane_01" parent="GeneratedCity/Roads/agency_south_lane" unique_id=2043563784 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -15, 0, 0)
+
+[node name="agency_south_lane_02" parent="GeneratedCity/Roads/agency_south_lane" unique_id=685418592 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -21, 0, 0)
+
+[node name="agency_south_lane_03" parent="GeneratedCity/Roads/agency_south_lane" unique_id=2016435890 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27, 0, 0)
+
+[node name="agency_south_lane_04" parent="GeneratedCity/Roads/agency_south_lane" unique_id=601159989 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -33, 0, 0)
+
+[node name="agency_west_leg" type="Node3D" parent="GeneratedCity/Roads" unique_id=382105467]
+
+[node name="agency_west_leg_00" parent="GeneratedCity/Roads/agency_west_leg" unique_id=892126051 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31, 0, 3)
+
+[node name="agency_west_leg_01" parent="GeneratedCity/Roads/agency_west_leg" unique_id=20379423 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31, 0, 9)
+
+[node name="agency_north_lane" type="Node3D" parent="GeneratedCity/Roads" unique_id=1215062688]
+
+[node name="agency_north_lane_00" parent="GeneratedCity/Roads/agency_north_lane" unique_id=1086384693 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -31, 0, 9)
+
+[node name="agency_north_lane_01" parent="GeneratedCity/Roads/agency_north_lane" unique_id=550803364 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -26.5, 0, 9)
+
+[node name="agency_north_lane_02" parent="GeneratedCity/Roads/agency_north_lane" unique_id=916091020 instance=ExtResource("25_nkn8c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -22, 0, 9)
+
+[node name="Plazas" type="Node3D" parent="GeneratedCity/Roads" unique_id=1604456488]
+
+[node name="central_pocket" type="Node3D" parent="GeneratedCity/Roads/Plazas" unique_id=412050264]
+
+[node name="central_pocket_00" parent="GeneratedCity/Roads/Plazas/central_pocket" unique_id=1834391984 instance=ExtResource("26_lfdsf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
+
+[node name="leisure_forecourt" type="Node3D" parent="GeneratedCity/Roads/Plazas" unique_id=822413113]
+
+[node name="leisure_forecourt_00" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=863714362 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.01, 15)
+
+[node name="leisure_forecourt_01" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=808721344 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.01, 18)
+
+[node name="leisure_forecourt_02" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=2117729584 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.01, 21)
+
+[node name="leisure_forecourt_03" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1930753474 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.01, 24)
+
+[node name="leisure_forecourt_04" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=758336315 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -0.01, 27)
+
+[node name="leisure_forecourt_05" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=159098534 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, -0.01, 15)
+
+[node name="leisure_forecourt_06" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1100803879 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, -0.01, 18)
+
+[node name="leisure_forecourt_07" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1698533016 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, -0.01, 21)
+
+[node name="leisure_forecourt_08" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=233605753 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, -0.01, 24)
+
+[node name="leisure_forecourt_09" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=708831734 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, -0.01, 27)
+
+[node name="leisure_forecourt_10" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1808956442 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, -0.01, 15)
+
+[node name="leisure_forecourt_11" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=72013028 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, -0.01, 18)
+
+[node name="leisure_forecourt_12" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1630671812 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, -0.01, 21)
+
+[node name="leisure_forecourt_13" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1904492622 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, -0.01, 24)
+
+[node name="leisure_forecourt_14" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1065866440 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, -0.01, 27)
+
+[node name="leisure_forecourt_15" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1679192660 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, -0.01, 15)
+
+[node name="leisure_forecourt_16" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1194523063 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, -0.01, 18)
+
+[node name="leisure_forecourt_17" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1077909669 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, -0.01, 21)
+
+[node name="leisure_forecourt_18" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1414837696 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, -0.01, 24)
+
+[node name="leisure_forecourt_19" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1506802600 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, -0.01, 27)
+
+[node name="leisure_forecourt_20" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=664230264 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -0.01, 15)
+
+[node name="leisure_forecourt_21" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1558700667 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -0.01, 18)
+
+[node name="leisure_forecourt_22" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1542537927 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -0.01, 21)
+
+[node name="leisure_forecourt_23" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1933847270 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -0.01, 24)
+
+[node name="leisure_forecourt_24" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1651944082 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -0.01, 27)
+
+[node name="leisure_forecourt_25" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=660657746 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, -0.01, 15)
+
+[node name="leisure_forecourt_26" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=390343433 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, -0.01, 18)
+
+[node name="leisure_forecourt_27" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=537433989 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, -0.01, 21)
+
+[node name="leisure_forecourt_28" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=105442654 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, -0.01, 24)
+
+[node name="leisure_forecourt_29" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1363704460 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, -0.01, 27)
+
+[node name="leisure_forecourt_30" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1177447418 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -0.01, 15)
+
+[node name="leisure_forecourt_31" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=63954712 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -0.01, 18)
+
+[node name="leisure_forecourt_32" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=1824613673 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -0.01, 21)
+
+[node name="leisure_forecourt_33" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=163961220 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -0.01, 24)
+
+[node name="leisure_forecourt_34" parent="GeneratedCity/Roads/Plazas/leisure_forecourt" unique_id=642316556 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -0.01, 27)
+
+[node name="ParkPath" type="Node3D" parent="GeneratedCity/Roads" unique_id=1270541015]
+
+[node name="park_00" parent="GeneratedCity/Roads/ParkPath" unique_id=955205363 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.503871, 0, 0.8637789, 0, 1, 0, -0.8637789, 0, 0.503871, 0, -0.005, 7.5)
+
+[node name="park_01" parent="GeneratedCity/Roads/ParkPath" unique_id=660116131 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.503871, 0, 0.8637789, 0, 1, 0, -0.8637789, 0, 0.503871, 2, -0.005, 8.666667)
+
+[node name="park_02" parent="GeneratedCity/Roads/ParkPath" unique_id=554077749 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.503871, 0, 0.8637789, 0, 1, 0, -0.8637789, 0, 0.503871, 4, -0.005, 9.833333)
+
+[node name="park_03" parent="GeneratedCity/Roads/ParkPath" unique_id=1390702429 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.503871, 0, 0.8637789, 0, 1, 0, -0.8637789, 0, 0.503871, 6, -0.005, 11)
+
+[node name="park_04" parent="GeneratedCity/Roads/ParkPath" unique_id=70173426 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.8944272, 0, 0.44721362, 0, 1, 0, -0.44721362, 0, 0.8944272, 6, -0.005, 11)
+
+[node name="park_05" parent="GeneratedCity/Roads/ParkPath" unique_id=84823078 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.8944272, 0, 0.44721362, 0, 1, 0, -0.44721362, 0, 0.8944272, 7, -0.005, 13)
+
+[node name="park_06" parent="GeneratedCity/Roads/ParkPath" unique_id=1342851616 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.8944272, 0, 0.44721362, 0, 1, 0, -0.44721362, 0, 0.8944272, 8, -0.005, 15)
+
+[node name="park_07" parent="GeneratedCity/Roads/ParkPath" unique_id=1207218615 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.8944272, 0, 0.44721362, 0, 1, 0, -0.44721362, 0, 0.8944272, 9, -0.005, 17)
+
+[node name="park_08" parent="GeneratedCity/Roads/ParkPath" unique_id=1241490903 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.9486833, 0, -0.31622776, 0, 1, 0, 0.31622776, 0, 0.9486833, 9, -0.005, 17)
+
+[node name="park_09" parent="GeneratedCity/Roads/ParkPath" unique_id=47515464 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.9486833, 0, -0.31622776, 0, 1, 0, 0.31622776, 0, 0.9486833, 8.333333, -0.005, 19)
+
+[node name="park_10" parent="GeneratedCity/Roads/ParkPath" unique_id=157050958 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.9486833, 0, -0.31622776, 0, 1, 0, 0.31622776, 0, 0.9486833, 7.6666665, -0.005, 21)
+
+[node name="park_11" parent="GeneratedCity/Roads/ParkPath" unique_id=1712313355 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.9486833, 0, -0.31622776, 0, 1, 0, 0.31622776, 0, 0.9486833, 7, -0.005, 23)
+
+[node name="park_12" parent="GeneratedCity/Roads/ParkPath" unique_id=2132163721 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.5547002, 0, -0.8320503, 0, 1, 0, 0.8320503, 0, 0.5547002, 7, -0.005, 23)
+
+[node name="park_13" parent="GeneratedCity/Roads/ParkPath" unique_id=773501080 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.5547002, 0, -0.8320503, 0, 1, 0, 0.8320503, 0, 0.5547002, 5, -0.005, 24.333334)
+
+[node name="park_14" parent="GeneratedCity/Roads/ParkPath" unique_id=1035959585 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.5547002, 0, -0.8320503, 0, 1, 0, 0.8320503, 0, 0.5547002, 3, -0.005, 25.666666)
+
+[node name="park_15" parent="GeneratedCity/Roads/ParkPath" unique_id=931022439 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(0.5547002, 0, -0.8320503, 0, 1, 0, 0.8320503, 0, 0.5547002, 1, -0.005, 27)
+
+[node name="park_16" parent="GeneratedCity/Roads/ParkPath" unique_id=852213232 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.3939193, 0, -0.91914505, 0, 1, 0, 0.91914505, 0, -0.3939193, 1, -0.005, 27)
+
+[node name="park_17" parent="GeneratedCity/Roads/ParkPath" unique_id=1212490716 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.3939193, 0, -0.91914505, 0, 1, 0, 0.91914505, 0, -0.3939193, -1.3333334, -0.005, 26)
+
+[node name="park_18" parent="GeneratedCity/Roads/ParkPath" unique_id=1753913244 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.3939193, 0, -0.91914505, 0, 1, 0, 0.91914505, 0, -0.3939193, -3.6666667, -0.005, 25)
+
+[node name="park_19" parent="GeneratedCity/Roads/ParkPath" unique_id=153478916 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.3939193, 0, -0.91914505, 0, 1, 0, 0.91914505, 0, -0.3939193, -6, -0.005, 24)
+
+[node name="park_20" parent="GeneratedCity/Roads/ParkPath" unique_id=973819474 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.9486833, 0, -0.31622776, 0, 1, 0, 0.31622776, 0, -0.9486833, -6, -0.005, 24)
+
+[node name="park_21" parent="GeneratedCity/Roads/ParkPath" unique_id=104450588 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.9486833, 0, -0.31622776, 0, 1, 0, 0.31622776, 0, -0.9486833, -6.6666665, -0.005, 22)
+
+[node name="park_22" parent="GeneratedCity/Roads/ParkPath" unique_id=1064109427 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.9486833, 0, -0.31622776, 0, 1, 0, 0.31622776, 0, -0.9486833, -7.3333335, -0.005, 20)
+
+[node name="park_23" parent="GeneratedCity/Roads/ParkPath" unique_id=790228430 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.9486833, 0, -0.31622776, 0, 1, 0, 0.31622776, 0, -0.9486833, -8, -0.005, 18)
+
+[node name="park_24" parent="GeneratedCity/Roads/ParkPath" unique_id=1082283889 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.9486833, 0, 0.31622776, 0, 1, 0, -0.31622776, 0, -0.9486833, -8, -0.005, 18)
+
+[node name="park_25" parent="GeneratedCity/Roads/ParkPath" unique_id=1950602833 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.9486833, 0, 0.31622776, 0, 1, 0, -0.31622776, 0, -0.9486833, -7.3333335, -0.005, 16)
+
+[node name="park_26" parent="GeneratedCity/Roads/ParkPath" unique_id=2040478216 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.9486833, 0, 0.31622776, 0, 1, 0, -0.31622776, 0, -0.9486833, -6.6666665, -0.005, 14)
+
+[node name="park_27" parent="GeneratedCity/Roads/ParkPath" unique_id=1125980457 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.9486833, 0, 0.31622776, 0, 1, 0, -0.31622776, 0, -0.9486833, -6, -0.005, 12)
+
+[node name="park_28" parent="GeneratedCity/Roads/ParkPath" unique_id=188884312 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.5999999, 0, 0.8000001, 0, 1, 0, -0.8000001, 0, -0.5999999, -6, -0.005, 12)
+
+[node name="park_29" parent="GeneratedCity/Roads/ParkPath" unique_id=862062395 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.5999999, 0, 0.8000001, 0, 1, 0, -0.8000001, 0, -0.5999999, -4, -0.005, 10.5)
+
+[node name="park_30" parent="GeneratedCity/Roads/ParkPath" unique_id=1447612461 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.5999999, 0, 0.8000001, 0, 1, 0, -0.8000001, 0, -0.5999999, -2, -0.005, 9)
+
+[node name="park_31" parent="GeneratedCity/Roads/ParkPath" unique_id=1840085259 instance=ExtResource("27_kmp1w")]
+transform = Transform3D(-0.5999999, 0, 0.8000001, 0, 1, 0, -0.8000001, 0, -0.5999999, 0, -0.005, 7.5)
+
+[node name="Pond" type="Node3D" parent="GeneratedCity/Roads" unique_id=220883508]
+
+[node name="PondMesh" type="MeshInstance3D" parent="GeneratedCity/Roads/Pond" unique_id=597605160]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.05, 17.5)
+material_override = SubResource("StandardMaterial3D_sqxbc")
+mesh = SubResource("BoxMesh_pe7w5")
+
+[node name="PondCollision" type="StaticBody3D" parent="GeneratedCity/Roads/Pond" unique_id=1448762931]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.05, 17.5)
+
+[node name="@CollisionShape3D@2" type="CollisionShape3D" parent="GeneratedCity/Roads/Pond/PondCollision" unique_id=1932721562]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_p414b")
+
+[node name="BackgroundBuildings" type="Node3D" parent="GeneratedCity" unique_id=1293842369]
+
+[node name="residential_east_backdrop" parent="GeneratedCity/BackgroundBuildings" unique_id=780925803 instance=ExtResource("28_gbm14")]
+transform = Transform3D(-1.9670125e-08, 0, -0.45, 0, 0.45, 0, 0.45, 0, -1.9670125e-08, 42, 0, 18)
+
+[node name="commercial_south_backdrop" parent="GeneratedCity/BackgroundBuildings" unique_id=199150597 instance=ExtResource("29_hlo2u")]
+transform = Transform3D(0.48, 0, 0, 0, 0.48, 0, 0, 0, 0.48, 8, 0, -15)
+
+[node name="central_south_backdrop" parent="GeneratedCity/BackgroundBuildings" unique_id=826513346 instance=ExtResource("28_gbm14")]
+transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, -1, 0, -17)
+
+[node name="agency_south_backdrop" parent="GeneratedCity/BackgroundBuildings" unique_id=1442297851 instance=ExtResource("28_gbm14")]
+transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, -23, 0, -17)
+
+[node name="agency_west_backdrop" parent="GeneratedCity/BackgroundBuildings" unique_id=116985423 instance=ExtResource("29_hlo2u")]
+transform = Transform3D(-2.1855694e-08, 0, 0.5, 0, 0.5, 0, -0.5, 0, -2.1855694e-08, -39, 0, 4)
+
+[node name="leisure_west_backdrop" parent="GeneratedCity/BackgroundBuildings" unique_id=2066618631 instance=ExtResource("28_gbm14")]
+transform = Transform3D(-1.9670125e-08, 0, 0.45, 0, 0.45, 0, -0.45, 0, -1.9670125e-08, -38, 0, 22)
+
+[node name="Vegetation" type="Node3D" parent="GeneratedCity" unique_id=1114939450]
+
+[node name="Tree_00" parent="GeneratedCity/Vegetation" unique_id=804855302 instance=ExtResource("30_5ceus")]
+transform = Transform3D(1.2074072, 0, 0.32352382, 0, 1.25, 0, -0.32352382, 0, 1.2074072, -7, 0, 15)
+
+[node name="Tree_01" parent="GeneratedCity/Vegetation" unique_id=862239080 instance=ExtResource("30_5ceus")]
+transform = Transform3D(0.34940577, 0, 1.3039999, 0, 1.35, 0, -1.3039999, 0, 0.34940577, -5, 0, 27.5)
+
+[node name="Tree_02" parent="GeneratedCity/Vegetation" unique_id=1238070864 instance=ExtResource("30_5ceus")]
+transform = Transform3D(1.2216004, 0, -0.44462615, 0, 1.3, 0, 0.44462615, 0, 1.2216004, 2, 0, 30)
+
+[node name="Tree_03" parent="GeneratedCity/Vegetation" unique_id=1723356520 instance=ExtResource("30_5ceus")]
+transform = Transform3D(-0.41042417, 0, 1.1276312, 0, 1.2, 0, -1.1276312, 0, -0.41042417, 9, 0, 27)
+
+[node name="Tree_04" parent="GeneratedCity/Vegetation" unique_id=1393198590 instance=ExtResource("30_5ceus")]
+transform = Transform3D(0.81317276, 0, 0.81317276, 0, 1.15, 0, -0.81317276, 0, 0.81317276, 12, 0, 14.5)
+
+[node name="PlanterN_4" parent="GeneratedCity/Vegetation" unique_id=262268339 instance=ExtResource("31_vheip")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 4.8)
+
+[node name="PlanterS_4" parent="GeneratedCity/Vegetation" unique_id=1281417423 instance=ExtResource("31_vheip")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -4.8)
+
+[node name="PlanterN_11" parent="GeneratedCity/Vegetation" unique_id=1598394867 instance=ExtResource("31_vheip")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 4.8)
+
+[node name="PlanterS_11" parent="GeneratedCity/Vegetation" unique_id=875713243 instance=ExtResource("31_vheip")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, -4.8)
+
+[node name="PlanterN_18" parent="GeneratedCity/Vegetation" unique_id=434562639 instance=ExtResource("31_vheip")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 4.8)
+
+[node name="PlanterS_18" parent="GeneratedCity/Vegetation" unique_id=1218285867 instance=ExtResource("31_vheip")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -4.8)
+
+[node name="StreetLamps" type="Node3D" parent="GeneratedCity" unique_id=344500556]
+
+[node name="StreetLamp_00" parent="GeneratedCity/StreetLamps" unique_id=435327055 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -4.2)
+
+[node name="StreetLamp_01" parent="GeneratedCity/StreetLamps" unique_id=1169486987 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, -4.2)
+
+[node name="StreetLamp_02" parent="GeneratedCity/StreetLamps" unique_id=1374031573 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -4.2)
+
+[node name="StreetLamp_03" parent="GeneratedCity/StreetLamps" unique_id=1935682391 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0, -4.2)
+
+[node name="StreetLamp_04" parent="GeneratedCity/StreetLamps" unique_id=599380237 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4.2)
+
+[node name="StreetLamp_05" parent="GeneratedCity/StreetLamps" unique_id=1513363179 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 4.2)
+
+[node name="StreetLamp_06" parent="GeneratedCity/StreetLamps" unique_id=1256697803 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 4.2)
+
+[node name="StreetLamp_07" parent="GeneratedCity/StreetLamps" unique_id=2004107093 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0, 4.2)
+
+[node name="StreetLamp_08" parent="GeneratedCity/StreetLamps" unique_id=709508197 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0, 4.5)
+
+[node name="StreetLamp_09" parent="GeneratedCity/StreetLamps" unique_id=2087242565 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 0, 8.5)
+
+[node name="StreetLamp_10" parent="GeneratedCity/StreetLamps" unique_id=2116651235 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0, 4.2)
+
+[node name="StreetLamp_11" parent="GeneratedCity/StreetLamps" unique_id=2005861992 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 4.2)
+
+[node name="StreetLamp_12" parent="GeneratedCity/StreetLamps" unique_id=25909027 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, 4.2)
+
+[node name="StreetLamp_13" parent="GeneratedCity/StreetLamps" unique_id=1514941317 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0, -4.2)
+
+[node name="StreetLamp_14" parent="GeneratedCity/StreetLamps" unique_id=157304747 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -4.2)
+
+[node name="StreetLamp_15" parent="GeneratedCity/StreetLamps" unique_id=1899812348 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, -4.2)
+
+[node name="StreetLamp_16" parent="GeneratedCity/StreetLamps" unique_id=1077610665 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, 0, 11.5)
+
+[node name="StreetLamp_17" parent="GeneratedCity/StreetLamps" unique_id=501590662 instance=ExtResource("32_74nhd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, 14)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=429078714]
+environment = SubResource("Environment_6rfp6")
+
+[node name="NightKey" type="DirectionalLight3D" parent="." unique_id=2112464087]
+transform = Transform3D(0.88294756, -0.31413782, 0.34888536, 0, 0.7431448, 0.6691306, -0.46947157, -0.59080726, 0.6561579, 0, 0, 0)
+light_color = Color(0.55, 0.62, 0.85, 1)
+light_energy = 0.55
+shadow_enabled = true
+
+[node name="NightFill" type="DirectionalLight3D" parent="." unique_id=1069627848]
+transform = Transform3D(-0.50000006, 0.2961981, -0.81379765, 0, 0.9396926, 0.34202012, 0.8660254, 0.17101008, -0.46984637, 0, 0, 0)
+light_color = Color(0.35, 0.28, 0.45, 1)
+light_energy = 0.22
