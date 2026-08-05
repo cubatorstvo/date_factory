@@ -1,36 +1,34 @@
 # Current milestone acceptance
 
 ## Milestone
-`EVENT-COOLDOWN-011`
+`APT-INTERACT-COMPONENT-001`
 
 ## Required player route
-1. Запустить игру с deferred clone consequence или вызвать runtime event.
-2. После показа «Последствие пропуска» / runtime popup: в течение 9 игровых минут авто-popup не появляется.
-3. На 10-й минуте deferred/auto может сработать снова.
-4. Запись свидания через телефон всё ещё открывается сразу при выборе игрока.
-5. Save/load сохраняет stamp и очередь deferred_hits.
+1. Войти в квартиру FPS.
+2. Смотреть на холодильник — только его подсказка/обводка; меню еды.
+3. Смотреть на кухонные ящики — только их подсказка/обводка; меню напитков.
+4. Пройти вдоль кухни без ложных мерцающих подсказок от пересечения.
+5. Проверить кровать/стол/выход.
 
 ## Functional criteria
-- [x] Auto runtime и catalog делят один 10-минутный gate.
-- [x] Deferred hits не тикают due во время блокировки.
-- [x] Player-initiated phone booking не блокируется интервалом, но ставит stamp.
-- [x] Очередь deferred сохраняется и срабатывает после интервала.
+- [x] Fridge и KitchenDrawers interact AABB не пересекаются.
+- [x] Объёмы ≈ mesh AABB (+ padding).
+- [x] Interactable — дочерний компонент мебели (не плавающий 1.2³ на room root).
+- [x] Меню еды/напитков корректны.
 
 ## Visual criteria
-- [x] Нет спама окон «Последствие пропуска» каждые несколько секунд.
+- [x] Outline на правильной мебели.
+- [x] Нет FocusProxy-боксов на apartment furniture.
 
 ## Edge cases
-- [x] Active event UI блокирует следующий fire.
-- [x] Clock backward не создаёт вечную блокировку.
-- [x] Save/load stamp + deferred_hits.
+- [x] Scale FBX ~5.6 не раздувает Area.
+- [ ] City interacts smoke (не завершён в QA; out of primary route).
 
 ## Save/load
-- [x] Stamp в events blob.
-- [x] deferred_hits в clones blob.
+- [x] Не затронуто.
 
 ## Evidence
 - [x] Git diff reviewed
-- [x] Real Godot stdout/stderr
 - [x] Independent QA report
 
 ## Blocking failures

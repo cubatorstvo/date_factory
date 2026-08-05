@@ -758,6 +758,7 @@ func _build_room(room_id: StringName) -> void:
 			_bind_interact_outline(phone_i, apt_visual, "Furniture/NightStand")
 			_bind_interact_outline(exit_i, apt_visual, "Furniture/ExitDoor")
 			_bind_interact_outline(neighbor_i, apt_visual, "Furniture/NeighborDoor")
+			_assert_apartment_kitchen_interact_clearance(fridge_i, drawers_i)
 		"neighbor_apt":
 			_box(root, Vector3(7, 0.2, 7), Vector3(0, -0.1, 0), Color(0.6, 0.52, 0.55))
 			_wall_room(root, 7, 7, 2.6)
@@ -1077,14 +1078,39 @@ func _bind_interact_outline(area: Interactable, visual: Node, path: String) -> v
 	var n: Node = visual.get_node_or_null(path)
 	if n == null:
 		return
+	# Apartment furniture owns the interact: reparent under art node, fit AABB, outline meshes.
+	if n is Node3D:
+		var host: Node3D = n as Node3D
+		area.attach_to_host(host, Vector3.ZERO)
+		area.fit_collision_to_meshes(host)
 	area.bind_outline_root(n)
 	# Drop any leftover proxy/plane so only screen-space next_pass remains.
 	var visuals_node: Node = area.get_node_or_null("Visuals")
 	if visuals_node:
 		for child in visuals_node.get_children():
-			var cn := str(child.name)
+			var cn: String = str(child.name)
 			if cn == "FocusProxy" or cn.begins_with("FocusMarker") or cn.begins_with("OutlinePlane") or cn.begins_with("OutlineExtrude"):
 				child.free()
+
+
+func _assert_apartment_kitchen_interact_clearance(fridge: Interactable, drawers: Interactable) -> void:
+	if fridge == null or drawers == null:
+		return
+	var fridge_aabb: AABB = fridge.get_collision_world_aabb()
+	var drawers_aabb: AABB = drawers.get_collision_world_aabb()
+	if fridge_aabb.size.length() < 0.001 or drawers_aabb.size.length() < 0.001:
+		push_warning("APT kitchen interact AABB empty (fridge=%s drawers=%s)" % [fridge_aabb.size, drawers_aabb.size])
+		return
+	if fridge_aabb.intersects(drawers_aabb):
+		push_error(
+			"APT kitchen interact AABB overlap: Fridge %s @%s vs Drawers %s @%s"
+			% [fridge_aabb.size, fridge_aabb.position, drawers_aabb.size, drawers_aabb.position]
+		)
+	else:
+		print(
+			"APT kitchen interact AABB OK (no overlap): Fridge size=%s Drawers size=%s"
+			% [fridge_aabb.size, drawers_aabb.size]
+		)
 
 
 func _attach_focus_proxy(parent: Node3D) -> void:

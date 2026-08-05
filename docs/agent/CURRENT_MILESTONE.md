@@ -1,42 +1,40 @@
 # Current milestone
 
 ## ID
-`EVENT-COOLDOWN-011`
+`APT-INTERACT-COMPONENT-001`
 
 ## Product goal
-Не допускать спама любых автоматических event-popup, включая последствия клонов.
+Убрать пересечения областей интеракции на кухне и сделать Interactable дочерним компонентом мебели с объёмом по AABB.
 
 ## Player-visible result
-После любого показанного event UI (catalog или runtime) следующий автоматический popup не раньше 10 игровых минут. Очередь deferred clone consequences сохраняется и срабатывает позже. Игрок-инициированные окна (запись свидания в телефоне) открываются сразу.
+Холодильник и кухонные ящики имеют отдельные непересекающиеся зоны; подсказка и действие соответствуют тому объекту, на который смотрит игрок.
 
 ## Status
 `READY`
 
 ## In scope
-- Shared 10 game-minute stamp for catalog + auto runtime opens.
-- Clone `deferred_hits` pause due while gated.
-- Player-initiated phone booking still immediate, but stamps.
-- Save/load of stamp + deferred queue.
+- `Interactable.fit_collision_to_meshes` + parenting under apartment furniture.
+- Apartment furniture interacts sized to mesh AABB.
+- Keep title/action exports and InteractionRouter.
 
 ## Out of scope
-- Event content/probabilities.
-- TimeAPI redesign.
-- Homeware apartment interact (separate task APT-HOMEWARE-SHOP-001).
+- City interact size redesign.
+- New parallel interaction framework.
+- Dating/save changes.
 
 ## Dependencies
-- EVENT-COOLDOWN-010 shared stamp pattern.
-- Clones deferred_hits.
+- Existing Interactable + player RayCast3D.
 
 ## Active tasks
 
 | Task | Agent | Status | Evidence |
 |---|---|---|---|
-| EVENT-COOLDOWN-011 | df-gameplay-worker | COMPLETED | code diff + 9/10 deferred probes |
-| EVENT-COOLDOWN-011-QA | df-qa-worker | COMPLETED | `docs/agent/qa/EVENT-COOLDOWN-011_QA.md` — PASS/READY |
-| APT-HOMEWARE-SHOP-001 | df-gameplay-worker | COMPLETED | apartment «Посуда» removed; street shop remains |
+| APT-INTERACT-COMPONENT-001-RESEARCH | df-researcher | COMPLETED | parent+AABB recommended |
+| APT-INTERACT-COMPONENT-001 | df-gameplay-worker | COMPLETED | AABB reparent + gap ~1 cm |
+| APT-INTERACT-COMPONENT-001-QA | df-qa-worker | COMPLETED | `docs/agent/qa/APT-INTERACT-COMPONENT-001_QA.md` — PASS/READY |
 
 ## Blocking issues
-- Нет.
+- Нет. Не блокирует: screenshot timeout; city smoke не завершён.
 
 ## Next acceptance action
-- Milestone принят. Невидимая квартирная «Посуда» убрана.
+- Milestone принят.

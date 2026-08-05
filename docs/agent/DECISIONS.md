@@ -20,6 +20,16 @@
 - Related files: `modules/events/events_api.gd`, `modules/clones/clones_api.gd`.
 - Acceptance implications: после любого event UI следующий catalog/runtime/deferred не раньше +10 game minutes.
 
+### DEC-003 — Interactable как дочерний компонент мебели с AABB
+
+- Date: 2026-08-05
+- Context: Fridge и KitchenDrawers на расстоянии 0.7 м имели общие Area3D 1.2×1.2 → пересечение ~0.5 м; интеракты висели на room root, не на мебели.
+- Decision: расширить существующий `Interactable` (не второй framework): для apartment furniture reparent под узел мебели, `fit_collision_to_meshes` по AABB мешей + padding; city fixed boxes пока не трогать.
+- Rejected alternatives: только уменьшить shelf box; StaticBody interact layer; proximity без raycast.
+- Consequences: области не пересекаются и следуют за мебелью; outline root = parent furniture.
+- Related files: `modules/interaction/interactable.gd`, apartment path in `complex_world.gd`.
+- Acceptance implications: fridge/drawers AABBs disjoint; prompts map to correct units.
+
 ## Template
 
 ### DEC-000 — Название

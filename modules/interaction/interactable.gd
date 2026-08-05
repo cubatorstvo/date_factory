@@ -1,6 +1,8 @@
 class_name Interactable
 extends Area3D
 ## World interactable: shared screen-space 2D silhouette outline on focus.
+## Scene-component contract: display_name, action_label, action_id, payload are the
+## settings for this subordinate Area3D; parent furniture owns placement/meshes.
 
 const OUTLINE_SHADER: Shader = preload("res://shaders/interact_outline.gdshader")
 ## outline_width is in screen pixels (see interact_outline.gdshader).
@@ -16,6 +18,11 @@ const DETAIL_MESH_NAMES: Array[String] = [
 @export var action_label: String = "Использовать"
 @export var action_id: StringName = &""
 @export var payload: Dictionary = {}
+## When true, _ready deferred-fits BoxShape3D to mesh AABB under this node / parent.
+@export var auto_fit_mesh_aabb: bool = false
+## Extra half-extents added after mesh AABB union (meters in Interactable local space).
+## Keep small: adjacent kitchen units (Fridge/Drawers) are ~0.04 m apart on mesh AABB.
+@export var aabb_padding: Vector3 = Vector3(0.015, 0.03, 0.015)
 
 signal interacted(by: Node)
 
@@ -29,7 +36,92 @@ var _outlines_ready: bool = false
 
 func _ready() -> void:
 	_base_scale = scale
+	if auto_fit_mesh_aabb:
+		call_deferred("fit_collision_to_meshes")
 	call_deferred("_setup_outlines")
+
+
+## Reparent under host at local_offset without inheriting host non-uniform FBX scale.
+## Keeps this Area's global scale at ~Vector3.ONE so BoxShape sizes stay in meters.
+func attach_to_host(host: Node3D, local_offset: Vector3 = Vector3.ZERO) -> void:
+	if host == null or not is_instance_valid(host):
+		return
+	var old_parent: Node = get_parent()
+	if old_parent == host:
+		position = local_offset
+		rotation = Vector3.ZERO
+		_force_unit_global_scale()
+		return
+	if old_parent != null:
+		old_parent.remove_child(self)
+	host.add_child(self)
+	transform = Transform3D(Basis.IDENTITY, local_offset)
+	_force_unit_global_scale()
+
+
+## Union MeshInstance3D AABBs under mesh_root into the local BoxShape3D + CollisionShape3D.
+## mesh_root defaults to first outline root, else parent, else self.
+func fit_collision_to_meshes(mesh_root: Node = null) -> void:
+	var root: Node = mesh_root
+	if root == null:
+		if not _external_outline_roots.is_empty():
+			root = _external_outline_roots[0]
+		elif get_parent() != null:
+			root = get_parent()
+		else:
+			root = self
+	if root == null or not is_instance_valid(root):
+		return
+	var meshes: Array[MeshInstance3D] = []
+	if root is MeshInstance3D:
+		var root_mi: MeshInstance3D = root as MeshInstance3D
+		if not _is_detail_mesh(root_mi) and not _is_legacy_outline_mesh(root_mi):
+			meshes.append(root_mi)
+	_collect_meshes(root, meshes)
+	if meshes.is_empty():
+		push_warning("Interactable.fit_collision_to_meshes: no meshes under %s" % str(root.name))
+		return
+	var union_aabb: AABB
+	var has_aabb: bool = false
+	for mi in meshes:
+		if mi.mesh == null:
+			continue
+		var local_aabb: AABB = _mesh_aabb_in_self_space(mi)
+		if not has_aabb:
+			union_aabb = local_aabb
+			has_aabb = true
+		else:
+			union_aabb = union_aabb.merge(local_aabb)
+	if not has_aabb:
+		return
+	var pad: Vector3 = aabb_padding
+	union_aabb = AABB(union_aabb.position - pad, union_aabb.size + pad * 2.0)
+	var cs: CollisionShape3D = _ensure_box_collision()
+	var box: BoxShape3D = cs.shape as BoxShape3D
+	box.size = union_aabb.size
+	cs.position = union_aabb.get_center()
+
+
+func get_collision_world_aabb() -> AABB:
+	var cs: CollisionShape3D = _find_box_collision()
+	if cs == null:
+		return AABB()
+	var box: BoxShape3D = cs.shape as BoxShape3D
+	if box == null:
+		return AABB()
+	var half: Vector3 = box.size * 0.5
+	var local_aabb: AABB = AABB(-half, box.size)
+	var xf: Transform3D = cs.global_transform
+	var result: AABB
+	var first: bool = true
+	for i in 8:
+		var corner: Vector3 = xf * local_aabb.get_endpoint(i)
+		if first:
+			result = AABB(corner, Vector3.ZERO)
+			first = false
+		else:
+			result = result.expand(corner)
+	return result
 
 
 func bind_outline_root(root: Node) -> void:
@@ -162,3 +254,49 @@ func _strip_legacy_outline_nodes(node: Node) -> void:
 			child.queue_free()
 			continue
 		_strip_legacy_outline_nodes(child)
+
+
+func _force_unit_global_scale() -> void:
+	var gs: Vector3 = global_transform.basis.get_scale()
+	var sx: float = maxf(absf(gs.x), 0.0001)
+	var sy: float = maxf(absf(gs.y), 0.0001)
+	var sz: float = maxf(absf(gs.z), 0.0001)
+	scale = Vector3(scale.x / sx, scale.y / sy, scale.z / sz)
+	_base_scale = scale
+
+
+func _mesh_aabb_in_self_space(mi: MeshInstance3D) -> AABB:
+	var mesh_aabb: AABB = mi.get_aabb()
+	var to_self: Transform3D = global_transform.affine_inverse() * mi.global_transform
+	var result: AABB
+	var first: bool = true
+	for i in 8:
+		var corner: Vector3 = to_self * mesh_aabb.get_endpoint(i)
+		if first:
+			result = AABB(corner, Vector3.ZERO)
+			first = false
+		else:
+			result = result.expand(corner)
+	return result
+
+
+func _find_box_collision() -> CollisionShape3D:
+	for child in get_children():
+		if child is CollisionShape3D:
+			var cs: CollisionShape3D = child as CollisionShape3D
+			if cs.shape is BoxShape3D:
+				return cs
+	return null
+
+
+func _ensure_box_collision() -> CollisionShape3D:
+	var cs: CollisionShape3D = _find_box_collision()
+	if cs != null:
+		return cs
+	cs = CollisionShape3D.new()
+	var box: BoxShape3D = BoxShape3D.new()
+	box.size = Vector3(1.2, 1.8, 1.2)
+	cs.shape = box
+	cs.position = Vector3(0.0, 0.9, 0.0)
+	add_child(cs)
+	return cs

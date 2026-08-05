@@ -10,6 +10,9 @@
 | EVENT-COOLDOWN-011 | df-gameplay-worker | `modules/events/events_api.gd`; `modules/clones/clones_api.gd`; `scenes/ui/phone_ui.gd` (player_initiated flag) | Event UI; TimeAPI; clone deferred_hits save | dating state machine, ContentDB event content, project.godot | COMPLETED |
 | EVENT-COOLDOWN-011-QA | df-qa-worker | `docs/agent/qa/EVENT-COOLDOWN-011_QA.md` only | events/clones/phone diff; TimeAPI | all gameplay/code/scenes/assets | COMPLETED |
 | APT-HOMEWARE-SHOP-001 | df-gameplay-worker | `scenes/world/complex_world.gd` | DatePlaces shop catalogs; ShopUI homeware; street `open_homeware_shop` | apartment furniture art; dating state machine; Proxy POC | COMPLETED |
+| APT-INTERACT-COMPONENT-001-RESEARCH | df-researcher | none (read-only) | Interactable, player interact, apartment kitchen | all writes | COMPLETED |
+| APT-INTERACT-COMPONENT-001 | df-gameplay-worker | `modules/interaction/interactable.gd`; apartment interact path in `scenes/world/complex_world.gd` | player raycast; apartment Furniture nodes; outline shader | interaction_router (unless tiny); city spawn defaults; dating SM; save; Proxy POC | COMPLETED |
+| APT-INTERACT-COMPONENT-001-QA | df-qa-worker | `docs/agent/qa/APT-INTERACT-COMPONENT-001_QA.md` only | interactable/complex_world diff; apartment kitchen | all gameplay/code/scenes/assets | COMPLETED |
 
 ## Rules
 
