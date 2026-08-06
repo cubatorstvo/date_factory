@@ -57,13 +57,13 @@ static func places() -> Array:
 		},
 		{
 			"id": "arcade",
-			"venue_id": "cheap_cafe",
+			"venue_id": "arcade",
 			"name": "Аркада «Перегруз»",
 			"cost": 25,
 			"requires_prep": false,
 			"base_quality": 1.7,
 			"tags": ["игра", "парный минигейм", "без подготовки"],
-			"blurb": "Автомат «Парный перегруз»: совместный счёт и мягкий бонд. С парковым районом.",
+			"blurb": "Автомат «Парный перегруз»: совместный счёт и мягкий бонд. Отдельная вместимость (не кафе и не кино).",
 		},
 		{
 			"id": "apt_cozy",
@@ -260,7 +260,25 @@ static func is_cinema_bookable() -> bool:
 
 
 static func is_arcade_bookable() -> bool:
-	return is_leisure_unlocked()
+	## Own venue capacity `arcade` (never cheap_cafe / cinema_room). Leisure or explicit unlock.
+	if Game == null:
+		return false
+	if is_leisure_unlocked():
+		return true
+	if Game.facility != null and Game.facility.is_venue_unlocked(&"arcade"):
+		return true
+	return false
+
+
+static func normalize_venue_id(place_id: String, venue_id: String) -> String:
+	## Keep place_id stable; remap legacy arcade capacity ids from older saves/bookings.
+	if place_id == "arcade":
+		if venue_id == "" or venue_id == "cheap_cafe" or venue_id == "cinema_room":
+			return "arcade"
+	var def: Dictionary = place(place_id)
+	if venue_id == "" and not def.is_empty():
+		return str(def.get("venue_id", "kitchen_table"))
+	return venue_id if venue_id != "" else "kitchen_table"
 
 
 static func is_themed_apartment_bookable(place_id: String) -> bool:

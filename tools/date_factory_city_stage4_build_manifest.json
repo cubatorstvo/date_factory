@@ -1,0 +1,1618 @@
+{
+	"acceptance_checks": [
+		"Automated OBB/AABB validation reports zero overlap between POI building visuals.",
+		"No pair of POI building visual AABBs overlaps.",
+		"Player can walk from HomeEntrance to CentralPocket without collision snag.",
+		"Park and agency are visible but physically unreachable while locked.",
+		"Both agency gates disappear and lose collision on the same unlock.",
+		"Every interaction prompt appears at its new facade, not at a legacy coordinate.",
+		"No duplicate hidden legacy interaction remains.",
+		"All three district states survive save/load.",
+		"One complete unlocked loop is traversable: home → central → park → leisure → agency → central.",
+		"Spawn view shows Cafe Two Hearts as immediate objective.",
+		"Street retains cool ambient lighting and warm spherical lamp rhythm."
+	],
+	"background_buildings": [
+		{
+			"asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf",
+			"id": "residential_east_backdrop",
+			"position": [
+				42.0,
+				0.0,
+				18.0
+			],
+			"rotation_y_degrees": -90.0,
+			"scale": [
+				0.45,
+				0.45,
+				0.45
+			]
+		},
+		{
+			"asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf",
+			"id": "commercial_south_backdrop",
+			"position": [
+				8.0,
+				0.0,
+				-15.0
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				0.48,
+				0.48,
+				0.48
+			]
+		},
+		{
+			"asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf",
+			"id": "central_south_backdrop",
+			"position": [
+				-1.0,
+				0.0,
+				-17.0
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				0.45,
+				0.45,
+				0.45
+			]
+		},
+		{
+			"asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf",
+			"id": "agency_south_backdrop",
+			"position": [
+				-23.0,
+				0.0,
+				-17.0
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				0.45,
+				0.45,
+				0.45
+			]
+		},
+		{
+			"asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf",
+			"id": "agency_west_backdrop",
+			"position": [
+				-39.0,
+				0.0,
+				4.0
+			],
+			"rotation_y_degrees": 90.0,
+			"scale": [
+				0.5,
+				0.5,
+				0.5
+			]
+		},
+		{
+			"asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf",
+			"id": "leisure_west_backdrop",
+			"position": [
+				-38.0,
+				0.0,
+				22.0
+			],
+			"rotation_y_degrees": 90.0,
+			"scale": [
+				0.45,
+				0.45,
+				0.45
+			]
+		}
+	],
+	"code_changes": [
+		{
+			"file": "res://scenes/world/complex_world.gd",
+			"requirement": "replace every hardcoded city POI Vector3 with _marker_local(city_root, city_visual, marker_name, fallback)"
+		},
+		{
+			"file": "res://scenes/world/complex_world.gd",
+			"requirement": "wire and sync all nodes in group district_gate by metadata district_id; AgencyGate and AgencyGateLeisure must open together"
+		},
+		{
+			"file": "res://scenes/world/city_builder.gd",
+			"requirement": "remove legacy hidden geometry and duplicate interactables; retain only root creation or replace with marker-driven city spots and waypoints from this manifest"
+		},
+		{
+			"file": "res://scenes/world/complex_world.gd",
+			"requirement": "populate _city_data spots and waypoints from generated Marker3D nodes, then apply CITY_WORLD_SCALE exactly once"
+		}
+	],
+	"coordinate_space": {
+		"axis": {
+			"x": "east",
+			"y": "up",
+			"z": "north"
+		},
+		"city_visual_mount_offset": [
+			-30.0,
+			0.0,
+			0.0
+		],
+		"description": "local coordinates inside city.tscn before CityVisual offset and CITY_WORLD_SCALE",
+		"runtime_scale": 1.5
+	},
+	"design_intent": {
+		"district_visibility": "all districts exist from start and remain visible through translucent physical gates",
+		"full_runtime_bounds_approx": {
+			"local_max_xz": [
+				44.0,
+				36.0
+			],
+			"local_min_xz": [
+				-43.0,
+				-18.0
+			],
+			"runtime_size_m": [
+				130.5,
+				81.0
+			]
+		},
+		"visual_vibe": "cool navy/violet night street with warm spherical lamps and pink/gold destination accents",
+		"why_stage3_changed": "real prefab facades are about 6.8–7.5 local metres wide; earlier 3 m spacing caused visual overlap"
+	},
+	"gates": [
+		{
+			"barrier_size": [
+				7.0,
+				2.59999990463257,
+				0.280000001192093
+			],
+			"display_name": "Парковый барьер",
+			"district_id": "park_leisure",
+			"id": "ParkGate",
+			"node_name": "ParkGate",
+			"position": [
+				0.0,
+				0.0,
+				7.19999980926514
+			],
+			"rotation_y_degrees": 0.0,
+			"scene_path": "res://scenes/art/city/prefabs/DistrictGate.tscn",
+			"target_parent": "Decor"
+		},
+		{
+			"barrier_size": [
+				6.80000019073486,
+				2.59999990463257,
+				0.280000001192093
+			],
+			"display_name": "Барьер агентства",
+			"district_id": "agency_row",
+			"id": "AgencyGate",
+			"node_name": "AgencyGate",
+			"position": [
+				-7.19999980926514,
+				0.0,
+				0.0
+			],
+			"rotation_y_degrees": 90.0,
+			"scene_path": "res://scenes/art/city/prefabs/DistrictGate.tscn",
+			"target_parent": "Decor"
+		},
+		{
+			"barrier_size": [
+				5.40000009536743,
+				2.59999990463257,
+				0.280000001192093
+			],
+			"display_name": "Барьер агентства со стороны Leisure",
+			"district_id": "agency_row",
+			"id": "AgencyGateLeisure",
+			"node_name": "AgencyGateLeisure",
+			"position": [
+				-21.7999992370605,
+				0.0,
+				13.6000003814697
+			],
+			"rotation_y_degrees": 0.0,
+			"scene_path": "res://scenes/art/city/prefabs/DistrictGate.tscn",
+			"target_parent": "Decor"
+		}
+	],
+	"manifest_version": "4.0",
+	"markers": {
+		"AgencyOfficeEntrance": {
+			"position": [
+				-19.2000007629395,
+				0.0,
+				-5.25
+			]
+		},
+		"ApartmentReturn": {
+			"position": [
+				30.8,
+				0.0,
+				16.5
+			]
+		},
+		"ArcadeEntrance": {
+			"position": [
+				-26.1000003814697,
+				0.0,
+				24.2000007629395
+			]
+		},
+		"BarEntrance": {
+			"position": [
+				-16.5,
+				0.0,
+				28.7000007629395
+			]
+		},
+		"BarberEntrance": {
+			"position": [
+				-24.5,
+				0.0,
+				10.6999998092651
+			]
+		},
+		"BookstoreEntrance": {
+			"position": [
+				-14.1999998092651,
+				0.0,
+				13.1000003814697
+			]
+		},
+		"BusStop": {
+			"position": [
+				-30.5,
+				0.0,
+				5.0
+			]
+		},
+		"CafeEntrance": {
+			"position": [
+				24.8999996185303,
+				0.0,
+				14.1999998092651
+			]
+		},
+		"CinemaEntrance": {
+			"position": [
+				-26.1000003814697,
+				0.0,
+				17.5
+			]
+		},
+		"ClothingEntrance": {
+			"position": [
+				18.7999992370605,
+				0.0,
+				-5.25
+			]
+		},
+		"EastBoundary": {
+			"position": [
+				38.0,
+				0.0,
+				14.0
+			]
+		},
+		"FlowerEntrance": {
+			"position": [
+				18.7999992370605,
+				0.0,
+				5.25
+			]
+		},
+		"GiftEntrance": {
+			"position": [
+				12.1000003814697,
+				0.0,
+				5.25
+			]
+		},
+		"GymEntrance": {
+			"position": [
+				-7.5,
+				0.0,
+				13.1000003814697
+			]
+		},
+		"HomeEntrance": {
+			"position": [
+				31.5,
+				0.0,
+				16.5
+			]
+		},
+		"HomewareEntrance": {
+			"position": [
+				12.1000003814697,
+				0.0,
+				-5.25
+			]
+		},
+		"InternetCafeEntrance": {
+			"position": [
+				5.40000009536743,
+				0.0,
+				-5.25
+			]
+		},
+		"JewelryEntrance": {
+			"position": [
+				5.40000009536743,
+				0.0,
+				5.25
+			]
+		},
+		"OverviewCamera": {
+			"position": [
+				1.0,
+				48.0,
+				8.0
+			]
+		},
+		"ParkPicnicSpot": {
+			"position": [
+				5.5,
+				0.0,
+				12.0
+			]
+		},
+		"ParkRestaurantEntrance": {
+			"position": [
+				3.20000004768372,
+				0.0,
+				20.1000003814697
+			]
+		},
+		"PhotoMark": {
+			"position": [
+				-12.5,
+				0.0,
+				-4.4
+			]
+		},
+		"PhotoStudioEntrance": {
+			"position": [
+				-12.5,
+				0.0,
+				-5.25
+			]
+		},
+		"PlayerSpawn": {
+			"look_at": [
+				24.9,
+				1.55,
+				14.2
+			],
+			"position": [
+				29.2,
+				0.0,
+				9.0
+			]
+		},
+		"WestBoundary": {
+			"position": [
+				-38.0,
+				0.0,
+				8.0
+			]
+		}
+	},
+	"non_building_pois": [
+		{
+			"district_id": "main_street",
+			"id": "main_bench",
+			"node_name": "MainBench",
+			"position": [
+				-3.59999990463257,
+				0.0,
+				3.40000009536743
+			],
+			"preserve_action_id": "city_rest",
+			"rotation_y_degrees": -40.0,
+			"scene_path": "res://scenes/art/city/prefabs/MainBench.tscn",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "park_leisure",
+			"id": "park_bench",
+			"node_name": "ParkBench",
+			"position": [
+				-3.79999995231628,
+				0.0,
+				22.7999992370605
+			],
+			"preserve_action_id": "city_rest",
+			"rotation_y_degrees": 140.0,
+			"scene_path": "res://scenes/art/city/prefabs/ParkBench.tscn",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "park_leisure",
+			"id": "duck_feeding",
+			"node_name": "DuckFeeding",
+			"position": [
+				6.19999980926514,
+				0.0,
+				16.7999992370605
+			],
+			"preserve_action_id": "city_park_fun",
+			"rotation_y_degrees": -90.0,
+			"scene_path": "res://scenes/art/city/prefabs/DuckFeeding.tscn",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "park_leisure",
+			"id": "karaoke",
+			"node_name": "KaraokeStand",
+			"position": [
+				-10.5,
+				0.0,
+				26.5
+			],
+			"preserve_action_id": "city_karaoke",
+			"rotation_y_degrees": -30.0,
+			"scene_path": "res://scenes/art/city/prefabs/KaraokeStand.tscn",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "agency_row",
+			"id": "bus_stop_candy",
+			"node_name": "BusStopCandy",
+			"position": [
+				-30.5,
+				0.0,
+				5.0
+			],
+			"preserve_action_ids": [
+				"city_bus_info",
+				"city_buy_gift"
+			],
+			"rotation_y_degrees": 90.0,
+			"scene_path": "res://scenes/art/city/prefabs/BusStopCandy.tscn",
+			"target_parent": "POIs"
+		}
+	],
+	"npc_navigation_data": {
+		"spots": {
+			"agency": [
+				[
+					-12.5,
+					0,
+					-4.2
+				],
+				[
+					-19.2,
+					0,
+					-4.2
+				],
+				[
+					-24.5,
+					0,
+					10.0
+				]
+			],
+			"arcade": [
+				[
+					-25.0,
+					0,
+					24.2
+				]
+			],
+			"bookstore": [
+				[
+					-14.2,
+					0,
+					14.0
+				]
+			],
+			"bus_stop": [
+				[
+					-29.0,
+					0,
+					5.0
+				],
+				[
+					-30.5,
+					0,
+					6.0
+				]
+			],
+			"cinema": [
+				[
+					-25.0,
+					0,
+					17.5
+				]
+			],
+			"gym_front": [
+				[
+					-6.5,
+					0,
+					14.0
+				],
+				[
+					-8.5,
+					0,
+					14.0
+				]
+			],
+			"internet_cafe": [
+				[
+					5.0,
+					0,
+					-4.2
+				],
+				[
+					6.2,
+					0,
+					-4.2
+				]
+			],
+			"night_bar": [
+				[
+					-16.5,
+					0,
+					27.5
+				],
+				[
+					-11.0,
+					0,
+					25.5
+				]
+			],
+			"park": [
+				[
+					5.5,
+					0,
+					12.0
+				],
+				[
+					-3.8,
+					0,
+					22.8
+				],
+				[
+					5.0,
+					0,
+					18.0
+				]
+			],
+			"street_plaza": [
+				[
+					-2.5,
+					0,
+					2.5
+				],
+				[
+					2.0,
+					0,
+					-1.2
+				],
+				[
+					0.5,
+					0,
+					3.0
+				]
+			]
+		},
+		"waypoints": [
+			[
+				30.5,
+				0,
+				10
+			],
+			[
+				26,
+				0,
+				4
+			],
+			[
+				19,
+				0,
+				0
+			],
+			[
+				12,
+				0,
+				0
+			],
+			[
+				5.5,
+				0,
+				0
+			],
+			[
+				0,
+				0,
+				0
+			],
+			[
+				3,
+				0,
+				10
+			],
+			[
+				6,
+				0,
+				16
+			],
+			[
+				3,
+				0,
+				24
+			],
+			[
+				-4,
+				0,
+				22
+			],
+			[
+				-12,
+				0,
+				18
+			],
+			[
+				-20,
+				0,
+				20
+			],
+			[
+				-23,
+				0,
+				14
+			],
+			[
+				-29,
+				0,
+				8
+			],
+			[
+				-29,
+				0,
+				0
+			],
+			[
+				-19,
+				0,
+				0
+			],
+			[
+				-12.5,
+				0,
+				0
+			],
+			[
+				-7.2,
+				0,
+				0
+			]
+		]
+	},
+	"poi_buildings": [
+		{
+			"base_asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf",
+			"base_asset_visual_scale": 0.55,
+			"district_id": "main_street",
+			"entrance_marker": "HomeEntrance",
+			"entrance_position": [
+				31.5,
+				0.0,
+				16.5
+			],
+			"gameplay_role": "home_return",
+			"id": "player_home",
+			"local_front_offset": 1.1,
+			"node_name": "HomeFacade",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "go_home",
+			"root_position": [
+				32.5999984741211,
+				0.0,
+				16.5
+			],
+			"rotation_y_degrees": -90.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/PlayerHomeFacade.tscn",
+			"source_mode": "create_prefab",
+			"target_parent": "Buildings"
+		},
+		{
+			"base_asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf",
+			"base_asset_visual_scale": 0.45,
+			"district_id": "main_street",
+			"entrance_marker": "CafeEntrance",
+			"entrance_position": [
+				24.8999996185303,
+				0.0,
+				14.1999998092651
+			],
+			"gameplay_role": "early_date_landmark",
+			"id": "cafe_two_hearts",
+			"lighting_accent": "warm pink/gold; brightest landmark visible from HomeEntrance",
+			"local_front_offset": 1.1,
+			"node_name": "CafeTwoHearts",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "sit_cafe",
+			"root_position": [
+				23.7999992370605,
+				0.0,
+				14.1999998092651
+			],
+			"rotation_y_degrees": 90.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/CafeTwoHearts.tscn",
+			"source_mode": "create_prefab",
+			"target_parent": "Buildings"
+		},
+		{
+			"district_id": "main_street",
+			"entrance_marker": "JewelryEntrance",
+			"entrance_position": [
+				5.40000009536743,
+				0.0,
+				5.25
+			],
+			"gameplay_role": "shop",
+			"id": "jewelry_shop",
+			"local_front_offset": 1.1,
+			"node_name": "JewelryShop",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_jewelry_shop",
+			"root_position": [
+				5.40000009536743,
+				0.0,
+				6.34999990463257
+			],
+			"rotation_y_degrees": 180.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/JewelryShop.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "main_street",
+			"entrance_marker": "GiftEntrance",
+			"entrance_position": [
+				12.1000003814697,
+				0.0,
+				5.25
+			],
+			"gameplay_role": "shop",
+			"id": "gift_shop",
+			"local_front_offset": 1.1,
+			"node_name": "GiftShop",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_gift_shop",
+			"root_position": [
+				12.1000003814697,
+				0.0,
+				6.34999990463257
+			],
+			"rotation_y_degrees": 180.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/GiftShop.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "main_street",
+			"entrance_marker": "FlowerEntrance",
+			"entrance_position": [
+				18.7999992370605,
+				0.0,
+				5.25
+			],
+			"gameplay_role": "shop",
+			"id": "flower_shop",
+			"local_front_offset": 1.1,
+			"node_name": "FlowerShop",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_flower_shop",
+			"root_position": [
+				18.7999992370605,
+				0.0,
+				6.34999990463257
+			],
+			"rotation_y_degrees": 180.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/FlowerShop.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "main_street",
+			"entrance_marker": "InternetCafeEntrance",
+			"entrance_position": [
+				5.40000009536743,
+				0.0,
+				-5.25
+			],
+			"gameplay_role": "amenity",
+			"id": "internet_cafe",
+			"local_front_offset": 1.1,
+			"node_name": "InternetCafe",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_ids": [
+				"city_cafe_job",
+				"city_cafe_scroll",
+				"city_coffee"
+			],
+			"root_position": [
+				5.40000009536743,
+				0.0,
+				-6.34999990463257
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/InternetCafe.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "main_street",
+			"entrance_marker": "HomewareEntrance",
+			"entrance_position": [
+				12.1000003814697,
+				0.0,
+				-5.25
+			],
+			"gameplay_role": "shop",
+			"id": "homeware_shop",
+			"local_front_offset": 1.1,
+			"node_name": "HomewareShop",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_homeware_shop",
+			"root_position": [
+				12.1000003814697,
+				0.0,
+				-6.34999990463257
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/HomewareShop.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "main_street",
+			"entrance_marker": "ClothingEntrance",
+			"entrance_position": [
+				18.7999992370605,
+				0.0,
+				-5.25
+			],
+			"gameplay_role": "shop",
+			"id": "clothing_shop",
+			"local_front_offset": 1.1,
+			"node_name": "ClothingShop",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_clothing_shop",
+			"root_position": [
+				18.7999992370605,
+				0.0,
+				-6.34999990463257
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/ClothingShop.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "park_leisure",
+			"entrance_marker": "ParkRestaurantEntrance",
+			"entrance_position": [
+				3.20000004768372,
+				0.0,
+				20.1000003814697
+			],
+			"gameplay_role": "date_landmark",
+			"id": "park_restaurant",
+			"lighting_accent": "warm pink/gold",
+			"local_front_offset": 1.1,
+			"node_name": "ParkRestaurant",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "sit_restaurant",
+			"root_position": [
+				3.20000004768372,
+				0.0,
+				21.2000007629395
+			],
+			"rotation_y_degrees": 180.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/ParkRestaurant.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "park_leisure",
+			"entrance_marker": "GymEntrance",
+			"entrance_position": [
+				-7.5,
+				0.0,
+				13.1000003814697
+			],
+			"gameplay_role": "service",
+			"id": "gym",
+			"local_front_offset": 1.1,
+			"node_name": "GymFacade",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_ids": [
+				"city_workout",
+				"city_gym_pass"
+			],
+			"root_position": [
+				-7.5,
+				0.0,
+				12.0
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/GymFacade.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"base_asset": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf",
+			"base_asset_visual_scale": 0.55,
+			"district_id": "park_leisure",
+			"entrance_marker": "BookstoreEntrance",
+			"entrance_position": [
+				-14.1999998092651,
+				0.0,
+				13.1000003814697
+			],
+			"gameplay_role": "shop",
+			"id": "bookstore",
+			"local_front_offset": 1.1,
+			"node_name": "BookstoreLeisure",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_bookstore",
+			"root_position": [
+				-14.1999998092651,
+				0.0,
+				12.0
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/BookstoreFacade.tscn",
+			"source_mode": "create_prefab",
+			"target_parent": "Buildings"
+		},
+		{
+			"district_id": "park_leisure",
+			"entrance_marker": "CinemaEntrance",
+			"entrance_position": [
+				-26.1000003814697,
+				0.0,
+				17.5
+			],
+			"gameplay_role": "large_leisure_landmark",
+			"id": "cinema",
+			"local_front_offset": 1.1,
+			"node_name": "CinemaFacade",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "sit_cinema",
+			"root_position": [
+				-27.2000007629395,
+				0.0,
+				17.5
+			],
+			"rotation_y_degrees": 90.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/CinemaFacade.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "park_leisure",
+			"entrance_marker": "ArcadeEntrance",
+			"entrance_position": [
+				-26.1000003814697,
+				0.0,
+				24.2000007629395
+			],
+			"gameplay_role": "date_location",
+			"id": "arcade",
+			"local_front_offset": 1.1,
+			"node_name": "ArcadeFacade",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_ids": [
+				"open_arcade",
+				"sit_arcade"
+			],
+			"root_position": [
+				-27.2000007629395,
+				0.0,
+				24.2000007629395
+			],
+			"rotation_y_degrees": 90.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/ArcadeFacade.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "park_leisure",
+			"entrance_marker": "BarEntrance",
+			"entrance_position": [
+				-16.5,
+				0.0,
+				28.7000007629395
+			],
+			"gameplay_role": "evening_amenity",
+			"id": "bar",
+			"local_front_offset": 1.1,
+			"node_name": "BarFacade",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "city_bar_drink",
+			"root_position": [
+				-16.5,
+				0.0,
+				29.7999992370605
+			],
+			"rotation_y_degrees": 180.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/BarFacade.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "agency_row",
+			"entrance_marker": "PhotoStudioEntrance",
+			"entrance_position": [
+				-12.5,
+				0.0,
+				-5.25
+			],
+			"gameplay_role": "service",
+			"id": "photo_studio",
+			"local_front_offset": 1.1,
+			"node_name": "PhotoStudio",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_photo_studio",
+			"root_position": [
+				-12.5,
+				0.0,
+				-6.34999990463257
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/PhotoStudio.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "agency_row",
+			"entrance_marker": "AgencyOfficeEntrance",
+			"entrance_position": [
+				-19.2000007629395,
+				0.0,
+				-5.25
+			],
+			"gameplay_role": "progression_landmark",
+			"id": "agency_office",
+			"local_front_offset": 1.1,
+			"node_name": "AgencyOffice",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_agency_board",
+			"root_position": [
+				-19.2000007629395,
+				0.0,
+				-6.34999990463257
+			],
+			"rotation_y_degrees": 0.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/AgencyOffice.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		},
+		{
+			"district_id": "agency_row",
+			"entrance_marker": "BarberEntrance",
+			"entrance_position": [
+				-24.5,
+				0.0,
+				10.6999998092651
+			],
+			"gameplay_role": "service",
+			"id": "barber",
+			"local_front_offset": 1.1,
+			"node_name": "BarberShop",
+			"placement_rule": "local +Z faces the walkable route; InteractAnchor remains 1.1 m in front of root",
+			"preserve_action_id": "open_barber",
+			"root_position": [
+				-24.5,
+				0.0,
+				11.8000001907349
+			],
+			"rotation_y_degrees": 180.0,
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"scene_path": "res://scenes/art/city/prefabs/BarberShop.tscn",
+			"source_mode": "existing_prefab",
+			"target_parent": "POIs"
+		}
+	],
+	"required_new_prefabs": [
+		{
+			"path": "res://scenes/art/city/prefabs/PlayerHomeFacade.tscn",
+			"template": "copy structure and anchors from FlowerShop.tscn; use Building_Small_1; preserve root name HomeFacade"
+		},
+		{
+			"path": "res://scenes/art/city/prefabs/CafeTwoHearts.tscn",
+			"template": "copy structure and anchors from ParkRestaurant.tscn; use Building_Medium_2_001; create warm cafe sign and awning"
+		},
+		{
+			"path": "res://scenes/art/city/prefabs/BookstoreFacade.tscn",
+			"template": "copy structure and anchors from GiftShop.tscn; use Building_Small_1; bookstore sign and shelf display"
+		},
+		{
+			"path": "res://scenes/art/city/prefabs/DistrictGate.tscn",
+			"template": "Node3D with translucent BarrierMesh, StaticBody3D/CollisionShape3D, InteractionArea, label and district_id metadata"
+		},
+		{
+			"path": "res://scenes/art/city/prefabs/StreetLampRomance.tscn",
+			"template": "slim dark pole, warm spherical bulb, OmniLight3D; preserve old street vibe"
+		}
+	],
+	"roads": {
+		"corridors": [
+			{
+				"asset": "res://assets/environment/city/downtown_megakit/meshes/Street_2Lane_noSidewalk.gltf",
+				"end_xz": [
+					27.0,
+					0.0
+				],
+				"id": "commercial_road",
+				"rotation_y_degrees": 90.0,
+				"start_xz": [
+					-3.0,
+					0.0
+				],
+				"tile_spacing": 6.0
+			},
+			{
+				"asset": "res://assets/environment/city/downtown_megakit/meshes/Street_2Lane_noSidewalk.gltf",
+				"end_xz": [
+					28.0,
+					21.0
+				],
+				"id": "residential_leg",
+				"rotation_y_degrees": 0.0,
+				"start_xz": [
+					28.0,
+					3.0
+				],
+				"tile_spacing": 6.0
+			},
+			{
+				"asset": "res://assets/environment/city/downtown_megakit/meshes/Street_2Lane_noSidewalk.gltf",
+				"end_xz": [
+					-33.0,
+					0.0
+				],
+				"id": "agency_south_lane",
+				"rotation_y_degrees": 90.0,
+				"start_xz": [
+					-9.0,
+					0.0
+				],
+				"tile_spacing": 6.0
+			},
+			{
+				"asset": "res://assets/environment/city/downtown_megakit/meshes/Street_2Lane_noSidewalk.gltf",
+				"end_xz": [
+					-31.0,
+					9.0
+				],
+				"id": "agency_west_leg",
+				"rotation_y_degrees": 0.0,
+				"start_xz": [
+					-31.0,
+					3.0
+				],
+				"tile_spacing": 6.0
+			},
+			{
+				"asset": "res://assets/environment/city/downtown_megakit/meshes/Street_2Lane_noSidewalk.gltf",
+				"end_xz": [
+					-22.0,
+					9.0
+				],
+				"id": "agency_north_lane",
+				"rotation_y_degrees": 90.0,
+				"start_xz": [
+					-31.0,
+					9.0
+				],
+				"tile_spacing": 6.0
+			}
+		],
+		"park_path": {
+			"asset": "res://assets/environment/city/downtown_megakit/meshes/Sidewalk_NoCurb_3m.gltf",
+			"polyline_xz": [
+				[
+					0.0,
+					7.5
+				],
+				[
+					6.0,
+					11.0
+				],
+				[
+					9.0,
+					17.0
+				],
+				[
+					7.0,
+					23.0
+				],
+				[
+					1.0,
+					27.0
+				],
+				[
+					-6.0,
+					24.0
+				],
+				[
+					-8.0,
+					18.0
+				],
+				[
+					-6.0,
+					12.0
+				],
+				[
+					0.0,
+					7.5
+				]
+			],
+			"tile_spacing": 2.7
+		},
+		"plazas": [
+			{
+				"asset": "res://assets/environment/city/downtown_megakit/meshes/Street_Asphalt_9x9.gltf",
+				"id": "central_pocket",
+				"instances": [
+					{
+						"position": [
+							0.0,
+							-0.01,
+							0.0
+						],
+						"rotation_y_degrees": 0.0
+					}
+				]
+			},
+			{
+				"asset": "res://assets/environment/city/downtown_megakit/meshes/Sidewalk_NoCurb_3m.gltf",
+				"grid": {
+					"x_values": [
+						-24.0,
+						-21.0,
+						-18.0,
+						-15.0,
+						-12.0,
+						-9.0,
+						-6.0
+					],
+					"y": -0.01,
+					"z_values": [
+						15.0,
+						18.0,
+						21.0,
+						24.0,
+						27.0
+					]
+				},
+				"id": "leisure_forecourt"
+			}
+		],
+		"pond": {
+			"center": [
+				1.0,
+				-0.05,
+				17.5
+			],
+			"collision_required": true,
+			"material": "dark reflective navy",
+			"size": [
+				8.0,
+				0.25,
+				6.0
+			]
+		}
+	},
+	"scene": "res://scenes/world/city/city.tscn",
+	"status": "ready_for_cursor_execution",
+	"street_lamps": {
+		"instances": [
+			{
+				"position": [
+					2.0,
+					0.0,
+					-4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					9.0,
+					0.0,
+					-4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					16.0,
+					0.0,
+					-4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					23.0,
+					0.0,
+					-4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					2.0,
+					0.0,
+					4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					9.0,
+					0.0,
+					4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					16.0,
+					0.0,
+					4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					23.0,
+					0.0,
+					4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					24.0,
+					0.0,
+					4.5
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					32.0,
+					0.0,
+					8.5
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					-11.0,
+					0.0,
+					4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					-18.0,
+					0.0,
+					4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					-25.0,
+					0.0,
+					4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					-11.0,
+					0.0,
+					-4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					-18.0,
+					0.0,
+					-4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					-25.0,
+					0.0,
+					-4.2
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					-29.0,
+					0.0,
+					11.5
+				],
+				"rotation_y_degrees": 0.0
+			},
+			{
+				"position": [
+					-23.5,
+					0.0,
+					14.0
+				],
+				"rotation_y_degrees": 0.0
+			}
+		],
+		"prefab": "res://scenes/art/city/prefabs/StreetLampRomance.tscn"
+	},
+	"vegetation": {
+		"asset": "res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_SakuraTree.gltf",
+		"fallback": "procedural stylized tree matching the restaurant tree",
+		"instances": [
+			{
+				"position": [
+					-7.0,
+					0.0,
+					15.0
+				],
+				"rotation_y_degrees": 15.0,
+				"scale": [
+					1.25,
+					1.25,
+					1.25
+				]
+			},
+			{
+				"position": [
+					-5.0,
+					0.0,
+					27.5
+				],
+				"rotation_y_degrees": 75.0,
+				"scale": [
+					1.35,
+					1.35,
+					1.35
+				]
+			},
+			{
+				"position": [
+					2.0,
+					0.0,
+					30.0
+				],
+				"rotation_y_degrees": -20.0,
+				"scale": [
+					1.3,
+					1.3,
+					1.3
+				]
+			},
+			{
+				"position": [
+					9.0,
+					0.0,
+					27.0
+				],
+				"rotation_y_degrees": 110.0,
+				"scale": [
+					1.2,
+					1.2,
+					1.2
+				]
+			},
+			{
+				"position": [
+					12.0,
+					0.0,
+					14.5
+				],
+				"rotation_y_degrees": 45.0,
+				"scale": [
+					1.15,
+					1.15,
+					1.15
+				]
+			}
+		],
+		"planters_asset": "res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf"
+	}
+}

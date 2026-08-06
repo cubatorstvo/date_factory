@@ -1,0 +1,416 @@
+# POI Inventory
+Источник: Stage5 layout + `complex_world.gd` + prefab tree scan. `city.tscn` не изменялся.
+## `cafe_two_hearts`
+- **NodePath (в City visual):** `Buildings/CafeTwoHearts`
+- **Entrance / marker:** `Markers/CafeEntrance`
+- **action_id:** `sit_cafe`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1 / start
+- **функциональный тип:** `VenueEntrancePOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/CafeTwoHearts.tscn`
+- **building/mesh сейчас:** Building_Medium; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Table.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget', 'Anchors/DateSeatAnchor']
+- **вывески:** Label3D/CSG — [{'path': 'Visuals/SignText', 'text': 'TWO HEARTS'}]
+- **локальный свет:** ['Visuals/CafeWarmLight']
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** DateStage cafe
+- **нужен физический интерьер:** no (entrance+seat)
+## `park_restaurant`
+- **NodePath (в City visual):** `POIs/ParkRestaurant`
+- **Entrance / marker:** `Markers/ParkRestaurantEntrance`
+- **action_id:** `sit_restaurant`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2 / park unlock
+- **функциональный тип:** `VenueEntrancePOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/ParkRestaurant.tscn`
+- **building/mesh сейчас:** Building_Medium; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Table.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Plant1.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget', 'Anchors/DateSeatAnchor']
+- **вывески:** Label3D/CSG — [{'path': 'Visuals/SignText', 'text': 'PARK BISTRO'}]
+- **локальный свет:** ['Visuals/RestaurantWarm']
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** DateStage restaurant
+- **нужен физический интерьер:** no
+## `cinema`
+- **NodePath (в City visual):** `POIs/CinemaFacade`
+- **Entrance / marker:** `Markers/CinemaEntrance`
+- **action_id:** `sit_cinema`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2 / park unlock
+- **функциональный тип:** `VenueEntrancePOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/CinemaFacade.tscn`
+- **building/mesh сейчас:** Building_Medium; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf', 'res://assets/environment/factory/kenney_factory/meshes/screen-wide.glb', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget', 'Anchors/SitAnchor']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** ['Visuals/MarqueeGlow']
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** DateStage cinema
+- **нужен физический интерьер:** no
+## `arcade`
+- **NodePath (в City visual):** `POIs/ArcadeFacade`
+- **Entrance / marker:** `Markers/ArcadeEntrance`
+- **action_id:** `open_arcade+sit_arcade`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2 / park unlock
+- **функциональный тип:** `VenueEntrancePOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/ArcadeFacade.tscn`
+- **building/mesh сейчас:** Building_Small+screens; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/factory/kenney_factory/meshes/screen-small.glb', 'res://assets/environment/factory/kenney_factory/meshes/screen-small.glb']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** ['Visuals/ArcadeNeon']
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** DateStage arcade / UI play
+- **нужен физический интерьер:** optional walk-in later
+## `player_home`
+- **NodePath (в City visual):** `Buildings/HomeFacade`
+- **Entrance / marker:** `Markers/HomeEntrance`
+- **action_id:** `go_home`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1 / start
+- **функциональный тип:** `VenueEntrancePOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/PlayerHomeFacade.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — [{'path': 'Visuals/SignText', 'text': 'HOME'}]
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** apartment scene
+- **нужен физический интерьер:** no (travel)
+## `flower_shop`
+- **NodePath (в City visual):** `POIs/FlowerShop`
+- **Entrance / marker:** `Markers/FlowerEntrance`
+- **action_id:** `open_flower_shop`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/FlowerShop.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_SakuraFlower.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Plant1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI shop only
+- **нужен физический интерьер:** optional
+## `gift_shop`
+- **NodePath (в City visual):** `POIs/GiftShop`
+- **Entrance / marker:** `Markers/GiftEntrance`
+- **action_id:** `open_gift_shop`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/GiftShop.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf', 'res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx', 'res://assets/props/food/meshes/Cupcake.fbx', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI shop only
+- **нужен физический интерьер:** optional
+## `jewelry_shop`
+- **NodePath (в City visual):** `POIs/JewelryShop`
+- **Entrance / marker:** `Markers/JewelryEntrance`
+- **action_id:** `open_jewelry_shop`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/JewelryShop.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf', 'res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx', 'res://assets/props/food/meshes/Bottle1.fbx', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI shop only
+- **нужен физический интерьер:** optional
+## `clothing_shop`
+- **NodePath (в City visual):** `POIs/ClothingShop`
+- **Entrance / marker:** `Markers/ClothingEntrance`
+- **action_id:** `open_clothing_shop`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/ClothingShop.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf', 'res://assets/environment/interior/house_interior/meshes/Bookshelf.fbx', 'res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI shop only
+- **нужен физический интерьер:** optional
+## `homeware_shop`
+- **NodePath (в City visual):** `POIs/HomewareShop`
+- **Entrance / marker:** `Markers/HomewareEntrance`
+- **action_id:** `open_homeware_shop`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/HomewareShop.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf', 'res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx', 'res://assets/props/food/meshes/Apple.fbx', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI shop only
+- **нужен физический интерьер:** optional
+## `bookstore`
+- **NodePath (в City visual):** `Buildings/BookstoreLeisure`
+- **Entrance / marker:** `Markers/BookstoreEntrance`
+- **action_id:** `open_bookstore`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/BookstoreFacade.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf', 'res://assets/environment/interior/house_interior/meshes/Bookshelf.fbx', 'res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — [{'path': 'Visuals/SignText', 'text': 'BOOKS'}]
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI shop only
+- **нужен физический интерьер:** optional
+## `gym`
+- **NodePath (в City visual):** `POIs/GymFacade`
+- **Entrance / marker:** `Markers/GymEntrance`
+- **action_id:** `city_workout+city_gym_pass`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/GymFacade.tscn`
+- **building/mesh сейчас:** Building_Medium; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/factory/kenney_factory/meshes/machine.glb']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI only
+- **нужен физический интерьер:** optional
+## `internet_cafe`
+- **NodePath (в City visual):** `POIs/InternetCafe`
+- **Entrance / marker:** `Markers/InternetCafeEntrance`
+- **action_id:** `city_cafe_job+city_cafe_scroll+city_coffee`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/InternetCafe.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/lab/scifi_essentials/meshes/Prop_Desk_Small.gltf', 'res://assets/environment/factory/kenney_factory/meshes/screen-panel-small.glb', 'res://assets/environment/lab/scifi_essentials/meshes/Prop_Chair.gltf', 'res://assets/props/food/meshes/Bottle1.fbx']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** world interacts / UI
+- **нужен физический интерьер:** preferred walk-in later
+## `bar`
+- **NodePath (в City visual):** `POIs/BarFacade`
+- **Entrance / marker:** `Markers/BarEntrance`
+- **action_id:** `city_bar_drink`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/BarFacade.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf', 'res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf', 'res://assets/props/food/meshes/Bottle1.fbx', 'res://assets/props/food/meshes/Bottle1.fbx']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** world interact
+- **нужен физический интерьер:** optional
+## `photo_studio`
+- **NodePath (в City visual):** `POIs/PhotoStudio`
+- **Entrance / marker:** `Markers/PhotoStudioEntrance`
+- **action_id:** `open_photo_studio`
+- **district_id:** `agency_row`
+- **стадия прогрессии:** 3 / agency unlock
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/PhotoStudio.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/interior/house_interior/meshes/Light_Stand1.fbx', 'res://assets/environment/interior/house_interior/meshes/Light_Desk.fbx', 'res://assets/environment/factory/kenney_factory/meshes/screen-panel-small.glb']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI / venue photo
+- **нужен физический интерьер:** optional
+## `barber`
+- **NodePath (в City visual):** `POIs/BarberShop`
+- **Entrance / marker:** `Markers/BarberEntrance`
+- **action_id:** `open_barber`
+- **district_id:** `agency_row`
+- **стадия прогрессии:** 3
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/BarberShop.tscn`
+- **building/mesh сейчас:** Building_Small; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf', 'res://assets/environment/interior/house_interior/meshes/Chair_1.fbx', 'res://assets/environment/interior/house_interior/meshes/Bathroom_Mirror1.fbx', 'res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** UI
+- **нужен физический интерьер:** optional
+## `agency_office`
+- **NodePath (в City visual):** `POIs/AgencyOffice`
+- **Entrance / marker:** `Markers/AgencyOfficeEntrance`
+- **action_id:** `open_agency_board`
+- **district_id:** `agency_row`
+- **стадия прогрессии:** 3
+- **функциональный тип:** `StorefrontPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/AgencyOffice.tscn`
+- **building/mesh сейчас:** Building_Medium; instances: ['res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf', 'res://assets/environment/lab/scifi_essentials/meshes/Prop_Desk_Small.gltf', 'res://assets/environment/lab/scifi_essentials/meshes/Prop_Shelves_ThinTall.gltf', 'res://assets/environment/factory/kenney_factory/meshes/screen-wide.glb', 'res://assets/environment/lab/scifi_essentials/meshes/Prop_Chair.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** schedule board UI
+- **нужен физический интерьер:** optional
+## `main_bench`
+- **NodePath (в City visual):** `POIs/MainBench`
+- **Entrance / marker:** `(node root)`
+- **action_id:** `city_rest`
+- **district_id:** `main_street`
+- **стадия прогрессии:** 1
+- **функциональный тип:** `WorldActivityPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/MainBench.tscn`
+- **building/mesh сейчас:** Environment_Bench; instances: ['res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Prop_Bollard.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget', 'Anchors/SitAnchor', 'Anchors/StandAnchor']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** none
+- **нужен физический интерьер:** n/a
+## `park_bench`
+- **NodePath (в City visual):** `POIs/ParkBench`
+- **Entrance / marker:** `(node root)`
+- **action_id:** `city_rest`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2
+- **функциональный тип:** `WorldActivityPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/ParkBench.tscn`
+- **building/mesh сейчас:** Environment_Bench; instances: ['res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf', 'res://assets/environment/city/downtown_megakit/meshes/Sidewalk_Planter.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget', 'Anchors/SitAnchor', 'Anchors/StandAnchor']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** none
+- **нужен физический интерьер:** n/a
+## `duck_feeding`
+- **NodePath (в City visual):** `POIs/DuckFeeding`
+- **Entrance / marker:** `(node root)`
+- **action_id:** `city_park_fun`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2
+- **функциональный тип:** `WorldActivityPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/DuckFeeding.tscn`
+- **building/mesh сейчас:** props/planters; instances: ['res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget', 'Anchors/FoodAnchor', 'Anchors/DuckReactionArea']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** none
+- **нужен физический интерьер:** n/a
+## `karaoke`
+- **NodePath (в City visual):** `POIs/KaraokeStand`
+- **Entrance / marker:** `(node root)`
+- **action_id:** `city_karaoke`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2
+- **функциональный тип:** `WorldActivityPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/KaraokeStand.tscn`
+- **building/mesh сейчас:** desk+screen; instances: ['res://assets/environment/factory/kenney_factory/meshes/screen-small.glb', 'res://assets/environment/interior/house_interior/meshes/Light_Stand1.fbx']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** none
+- **нужен физический интерьер:** n/a
+## `bus_stop_candy`
+- **NodePath (в City visual):** `POIs/BusStopCandy`
+- **Entrance / marker:** `Markers/BusStop`
+- **action_id:** `city_bus_info+city_buy_gift`
+- **district_id:** `agency_row`
+- **стадия прогрессии:** 3
+- **функциональный тип:** `WorldActivityPOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/BusStopCandy.tscn`
+- **building/mesh сейчас:** props+machine; instances: ['res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf', 'res://assets/props/food/meshes/ChocolateBar.fbx', 'res://assets/environment/interior/house_interior/meshes/Trashcan_Cylindric.fbx']
+- **коллизии:** внутри prefab — ['Collision/Shape']
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** ['Anchors/InteractAnchor', 'Anchors/PromptAnchor', 'Anchors/OutlineTarget', 'Anchors/SitAnchor']
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** none
+- **нужен физический интерьер:** n/a
+## `park_picnic`
+- **NodePath (в City visual):** `Markers/ParkPicnicSpot`
+- **Entrance / marker:** `Markers/ParkPicnicSpot`
+- **action_id:** `sit_park`
+- **district_id:** `park_leisure`
+- **стадия прогрессии:** 2
+- **функциональный тип:** `VenueEntrancePOI`
+- **текущий prefab:** `res://scenes/art/city/prefabs/(marker + bench cluster)`
+- **building/mesh сейчас:** WorldActivity seating; instances: []
+- **коллизии:** внутри prefab — нет CollisionShape3D в prefab (часто только visual + runtime interact на маркере)
+- **взаимодействие:** Area/Interact создаётся runtime у маркера в `complex_world._bind_city_art_interactions` (не внутри packed interactable)
+- **anchors:** Anchors/* если есть в prefab; иначе только city Markers
+- **вывески:** Label3D/CSG — CSG SignBoard / SignText в Visuals
+- **локальный свет:** OmniLight3D в Visuals (если есть) / отсутствует
+- **вне корня POI:** city Markers, runtime Interact nodes на City root, district gates, streets/nav
+- **перенести внутрь будущей сцены:** visual building + DoorAnchor + collision capsule/box у двери + InteractionArea + signage + local lights + props; marker sync optional
+- **отдельная загружаемая сцена:** DateStage park
+- **нужен физический интерьер:** n/a outdoor

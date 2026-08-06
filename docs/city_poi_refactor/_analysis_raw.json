@@ -1,0 +1,4004 @@
+{
+	"buildings": [
+		{
+			"aabb_position": [
+				-7.23,
+				-0.012,
+				-12.23
+			],
+			"aabb_size": [
+				12.46,
+				17.026,
+				14.536
+			],
+			"dedicated_ok": true,
+			"door_guess": {
+				"front_face_center_guess": [
+					-1.0,
+					0.988,
+					2.306
+				],
+				"named_doors": [],
+				"note": "Door is baked into facade mesh for downtown Building_*; use Door_* props or DoorAnchor in front of visual opening."
+			},
+			"exists": true,
+			"has_collision_shapes": false,
+			"hollow_probes": [
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						-1.0,
+						5.947,
+						-4.962
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						1.492,
+						5.947,
+						-4.962
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						-3.492,
+						5.947,
+						-4.962
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						-1.0,
+						5.947,
+						-2.055
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						-1.0,
+						5.947,
+						-7.869
+					]
+				}
+			],
+			"interior_probe_hits": 0,
+			"likely_shell_or_solid": true,
+			"mesh_instance_count": 1,
+			"multi_tenant_ok": true,
+			"name": "Building_Small_1",
+			"open_sky_probes": 5,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf",
+			"shots": [
+				"res://docs/city_poi_refactor/hollow_shots/Building_Small_1_exterior.png",
+				"res://docs/city_poi_refactor/hollow_shots/Building_Small_1_interior.png",
+				"res://docs/city_poi_refactor/hollow_shots/Building_Small_1_topdown.png"
+			],
+			"visual_floors_estimate": 5,
+			"walk_in_candidate": false
+		},
+		{
+			"aabb_position": [
+				-7.528,
+				-0.01,
+				-12.488
+			],
+			"aabb_size": [
+				15.056,
+				25.009,
+				13.056
+			],
+			"dedicated_ok": true,
+			"door_guess": {
+				"front_face_center_guess": [
+					0.0,
+					0.99,
+					0.568
+				],
+				"named_doors": [],
+				"note": "Door is baked into facade mesh for downtown Building_*; use Door_* props or DoorAnchor in front of visual opening."
+			},
+			"exists": true,
+			"has_collision_shapes": false,
+			"hollow_probes": [
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						0.0,
+						8.743,
+						-5.96
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						3.011,
+						8.743,
+						-5.96
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						-3.011,
+						8.743,
+						-5.96
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						0.0,
+						8.743,
+						-3.349
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						0.0,
+						8.743,
+						-8.571
+					]
+				}
+			],
+			"interior_probe_hits": 0,
+			"likely_shell_or_solid": true,
+			"mesh_instance_count": 1,
+			"multi_tenant_ok": true,
+			"name": "Building_Medium_2_001",
+			"open_sky_probes": 5,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf",
+			"shots": [
+				"res://docs/city_poi_refactor/hollow_shots/Building_Medium_2_001_exterior.png",
+				"res://docs/city_poi_refactor/hollow_shots/Building_Medium_2_001_interior.png",
+				"res://docs/city_poi_refactor/hollow_shots/Building_Medium_2_001_topdown.png"
+			],
+			"visual_floors_estimate": 8,
+			"walk_in_candidate": false
+		},
+		{
+			"aabb_position": [
+				-9.322,
+				0.0,
+				-16.322
+			],
+			"aabb_size": [
+				20.644,
+				28.0,
+				16.645
+			],
+			"dedicated_ok": true,
+			"door_guess": {
+				"front_face_center_guess": [
+					1.0,
+					1.0,
+					0.322
+				],
+				"named_doors": [],
+				"note": "Door is baked into facade mesh for downtown Building_*; use Door_* props or DoorAnchor in front of visual opening."
+			},
+			"exists": true,
+			"has_collision_shapes": false,
+			"hollow_probes": [
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						1.0,
+						9.8,
+						-8.0
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						5.129,
+						9.8,
+						-8.0
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						-3.129,
+						9.8,
+						-8.0
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						1.0,
+						9.8,
+						-4.671
+					]
+				},
+				{
+					"back_wall": false,
+					"ceiling": false,
+					"floor": false,
+					"forward_wall": false,
+					"pos": [
+						1.0,
+						9.8,
+						-11.329
+					]
+				}
+			],
+			"interior_probe_hits": 0,
+			"likely_shell_or_solid": true,
+			"mesh_instance_count": 1,
+			"multi_tenant_ok": true,
+			"name": "Building_Large_2",
+			"open_sky_probes": 5,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf",
+			"shots": [
+				"res://docs/city_poi_refactor/hollow_shots/Building_Large_2_exterior.png",
+				"res://docs/city_poi_refactor/hollow_shots/Building_Large_2_interior.png",
+				"res://docs/city_poi_refactor/hollow_shots/Building_Large_2_topdown.png"
+			],
+			"visual_floors_estimate": 9,
+			"walk_in_candidate": false
+		}
+	],
+	"doors": [
+		{
+			"aabb_position": [
+				-1.0,
+				0.0,
+				-0.129
+			],
+			"aabb_size": [
+				1.0,
+				2.2,
+				0.26
+			],
+			"exists": true,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+		},
+		{
+			"aabb_position": [
+				-1.0,
+				0.0,
+				-0.103
+			],
+			"aabb_size": [
+				1.0,
+				2.2,
+				0.21
+			],
+			"exists": true,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/Door_2.gltf"
+		},
+		{
+			"aabb_position": [
+				-1.0,
+				0.0,
+				-0.095
+			],
+			"aabb_size": [
+				1.0,
+				2.2,
+				0.188
+			],
+			"exists": true,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/Door_3.gltf"
+		},
+		{
+			"aabb_position": [
+				-1.152,
+				0.0,
+				-0.255
+			],
+			"aabb_size": [
+				2.304,
+				3.0,
+				0.478
+			],
+			"exists": true,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/DoorFrame_Wooden.gltf"
+		},
+		{
+			"aabb_position": [
+				-1.0,
+				0.0,
+				-0.2
+			],
+			"aabb_size": [
+				2.0,
+				3.0,
+				0.2
+			],
+			"exists": true,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/DoorFrame_Metal_Single.gltf"
+		},
+		{
+			"aabb_position": [
+				-1.0,
+				0.0,
+				-0.226
+			],
+			"aabb_size": [
+				2.0,
+				3.0,
+				0.226
+			],
+			"exists": true,
+			"path": "res://assets/environment/city/downtown_megakit/meshes/DoorFrame_Trim.gltf"
+		}
+	],
+	"notes": [],
+	"prefabs": [
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				9.127
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Brick_Window_Square_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Brick_Window_Square_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignBoard",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignAccent",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignText",
+							"type": "Label3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Planter_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Planter_Single_Inst",
+							"type": "Node3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Brick_Window_Square_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf"
+				},
+				{
+					"path": "Visuals/Prop_Planter_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf"
+				}
+			],
+			"labels": [
+				{
+					"path": "Visuals/SignText",
+					"text": "HOME"
+				}
+			],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Brick_Window_Square_Single_Inst/Brick_Window_Square_Single",
+				"Visuals/Prop_Planter_Single_Inst/Prop_Planter_Single"
+			],
+			"name": "PlayerHomeFacade",
+			"path": "res://scenes/art/city/prefabs/PlayerHomeFacade.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget",
+				"Anchors/DateSeatAnchor"
+			],
+			"approx_aabb_size": [
+				6.775,
+				11.254,
+				7.559
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Medium_2_001",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Medium_2_001_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Counter_Straight",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Counter_Straight_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Table",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Table_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Stool",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Stool_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "SignBoard",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignAccent",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignText",
+							"type": "Label3D"
+						},
+						{
+							"children": [],
+							"name": "CafeWarmLight",
+							"type": "OmniLight3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "DateSeatAnchor",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Medium_2_001_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Environment_Counter_Straight_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf"
+				},
+				{
+					"path": "Visuals/Environment_Table_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Table.gltf"
+				},
+				{
+					"path": "Visuals/Environment_Stool_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf"
+				}
+			],
+			"labels": [
+				{
+					"path": "Visuals/SignText",
+					"text": "TWO HEARTS"
+				}
+			],
+			"lights": [
+				"Visuals/CafeWarmLight"
+			],
+			"mesh_instances": [
+				"Visuals/Building_Medium_2_001_Inst/Building_Medium_2_001",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Environment_Counter_Straight_Inst/Environment_Counter_Straight",
+				"Visuals/Environment_Table_Inst/Environment_Table",
+				"Visuals/Environment_Stool_Inst/Environment_Stool"
+			],
+			"name": "CafeTwoHearts",
+			"path": "res://scenes/art/city/prefabs/CafeTwoHearts.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				9.127
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Brick_Window_Square_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Brick_Window_Square_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "WindowPane",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Decoration_SakuraFlower",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Decoration_SakuraFlower_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Decoration_Plant1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Decoration_Plant1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Planter_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Planter_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Houseplant_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Houseplant_1_Inst",
+							"type": "Node3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Brick_Window_Square_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf"
+				},
+				{
+					"path": "Visuals/Decoration_SakuraFlower_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_SakuraFlower.gltf"
+				},
+				{
+					"path": "Visuals/Decoration_Plant1_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Plant1.gltf"
+				},
+				{
+					"path": "Visuals/Prop_Planter_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf"
+				},
+				{
+					"path": "Visuals/Houseplant_1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Brick_Window_Square_Single_Inst/Brick_Window_Square_Single",
+				"Visuals/Decoration_SakuraFlower_Inst/Decoration_SakuraFlower",
+				"Visuals/Decoration_Plant1_Inst/Decoration_Plant1",
+				"Visuals/Prop_Planter_Single_Inst/Prop_Planter_Single",
+				"Visuals/Houseplant_1_Inst/Houseplant_1"
+			],
+			"name": "FlowerShop",
+			"path": "res://scenes/art/city/prefabs/FlowerShop.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				7.995
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Brick_Window_Square_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Brick_Window_Square_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "WindowPane",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Shelf_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Shelf_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Bottle1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Bottle1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Decoration_Sign",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Decoration_Sign_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "IdentityBand",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Brick_Window_Square_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf"
+				},
+				{
+					"path": "Visuals/Shelf_1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx"
+				},
+				{
+					"path": "Visuals/Bottle1_Inst",
+					"scene": "res://assets/props/food/meshes/Bottle1.fbx"
+				},
+				{
+					"path": "Visuals/Decoration_Sign_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Brick_Window_Square_Single_Inst/Brick_Window_Square_Single",
+				"Visuals/Shelf_1_Inst/Shelf_1",
+				"Visuals/Bottle1_Inst/Bottle1",
+				"Visuals/Decoration_Sign_Inst/Decoration_Sign"
+			],
+			"name": "JewelryShop",
+			"path": "res://scenes/art/city/prefabs/JewelryShop.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				7.995
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Brick_Window_Square_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Brick_Window_Square_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "WindowPane",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Shelf_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Shelf_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Cupcake",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Cupcake_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Decoration_Sign",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Decoration_Sign_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "IdentityBand",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Brick_Window_Square_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf"
+				},
+				{
+					"path": "Visuals/Shelf_1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx"
+				},
+				{
+					"path": "Visuals/Cupcake_Inst",
+					"scene": "res://assets/props/food/meshes/Cupcake.fbx"
+				},
+				{
+					"path": "Visuals/Decoration_Sign_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Brick_Window_Square_Single_Inst/Brick_Window_Square_Single",
+				"Visuals/Shelf_1_Inst/Shelf_1",
+				"Visuals/Cupcake_Inst/Cupcake",
+				"Visuals/Decoration_Sign_Inst/Decoration_Sign"
+			],
+			"name": "GiftShop",
+			"path": "res://scenes/art/city/prefabs/GiftShop.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				7.995
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Brick_Window_Square_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Brick_Window_Square_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "WindowPane",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Bookshelf",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Bookshelf_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Houseplant_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Houseplant_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Decoration_Sign",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Decoration_Sign_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "IdentityBand",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Brick_Window_Square_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf"
+				},
+				{
+					"path": "Visuals/Bookshelf_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Bookshelf.fbx"
+				},
+				{
+					"path": "Visuals/Houseplant_1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx"
+				},
+				{
+					"path": "Visuals/Decoration_Sign_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Brick_Window_Square_Single_Inst/Brick_Window_Square_Single",
+				"Visuals/Bookshelf_Inst/Bookshelf",
+				"Visuals/Houseplant_1_Inst/Houseplant_1",
+				"Visuals/Decoration_Sign_Inst/Decoration_Sign"
+			],
+			"name": "ClothingShop",
+			"path": "res://scenes/art/city/prefabs/ClothingShop.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				7.995
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Brick_Window_Square_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Brick_Window_Square_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "WindowPane",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Shelf_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Shelf_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Apple",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Apple_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Decoration_Sign",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Decoration_Sign_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "IdentityBand",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Brick_Window_Square_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf"
+				},
+				{
+					"path": "Visuals/Shelf_1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx"
+				},
+				{
+					"path": "Visuals/Apple_Inst",
+					"scene": "res://assets/props/food/meshes/Apple.fbx"
+				},
+				{
+					"path": "Visuals/Decoration_Sign_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Sign.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Brick_Window_Square_Single_Inst/Brick_Window_Square_Single",
+				"Visuals/Shelf_1_Inst/Shelf_1",
+				"Visuals/Apple_Inst/Apple",
+				"Visuals/Decoration_Sign_Inst/Decoration_Sign"
+			],
+			"name": "HomewareShop",
+			"path": "res://scenes/art/city/prefabs/HomewareShop.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.37,
+				8.546
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "WindowPane",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Desk_Small",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Desk_Small_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "screen-panel-small",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "screen-panel-small_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Chair",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Chair_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Bottle1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Bottle1_Inst",
+							"type": "Node3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Prop_Desk_Small_Inst",
+					"scene": "res://assets/environment/lab/scifi_essentials/meshes/Prop_Desk_Small.gltf"
+				},
+				{
+					"path": "Visuals/screen-panel-small_Inst",
+					"scene": "res://assets/environment/factory/kenney_factory/meshes/screen-panel-small.glb"
+				},
+				{
+					"path": "Visuals/Prop_Chair_Inst",
+					"scene": "res://assets/environment/lab/scifi_essentials/meshes/Prop_Chair.gltf"
+				},
+				{
+					"path": "Visuals/Bottle1_Inst",
+					"scene": "res://assets/props/food/meshes/Bottle1.fbx"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Prop_Desk_Small_Inst/Prop_Desk_Small",
+				"Visuals/screen-panel-small_Inst/screen-panel-small",
+				"Visuals/Prop_Chair_Inst/Prop_Chair",
+				"Visuals/Bottle1_Inst/Bottle1"
+			],
+			"name": "InternetCafe",
+			"path": "res://scenes/art/city/prefabs/InternetCafe.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget",
+				"Anchors/DateSeatAnchor"
+			],
+			"approx_aabb_size": [
+				6.775,
+				11.254,
+				7.818
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Medium_2_001",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Medium_2_001_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Counter_Straight",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Counter_Straight_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Table",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Table_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Stool",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Stool_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Decoration_Plant1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Decoration_Plant1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "SignBoard",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignAccent",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignText",
+							"type": "Label3D"
+						},
+						{
+							"children": [],
+							"name": "RestaurantWarm",
+							"type": "OmniLight3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "DateSeatAnchor",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Medium_2_001_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Environment_Counter_Straight_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf"
+				},
+				{
+					"path": "Visuals/Environment_Table_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Table.gltf"
+				},
+				{
+					"path": "Visuals/Environment_Stool_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf"
+				},
+				{
+					"path": "Visuals/Decoration_Plant1_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Plant1.gltf"
+				}
+			],
+			"labels": [
+				{
+					"path": "Visuals/SignText",
+					"text": "PARK BISTRO"
+				}
+			],
+			"lights": [
+				"Visuals/RestaurantWarm"
+			],
+			"mesh_instances": [
+				"Visuals/Building_Medium_2_001_Inst/Building_Medium_2_001",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Environment_Counter_Straight_Inst/Environment_Counter_Straight",
+				"Visuals/Environment_Table_Inst/Environment_Table",
+				"Visuals/Environment_Stool_Inst/Environment_Stool",
+				"Visuals/Decoration_Plant1_Inst/Decoration_Plant1"
+			],
+			"name": "ParkRestaurant",
+			"path": "res://scenes/art/city/prefabs/ParkRestaurant.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				8.402
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "machine",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "machine_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "RackUprightL",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "RackUprightR",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "Barbell",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "PlateL",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "PlateR",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "Mat",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/machine_Inst",
+					"scene": "res://assets/environment/factory/kenney_factory/meshes/machine.glb"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/machine_Inst/machine"
+			],
+			"name": "GymFacade",
+			"path": "res://scenes/art/city/prefabs/GymFacade.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				7.995
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Brick_Window_Square_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Brick_Window_Square_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Bookshelf",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Bookshelf_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Shelf_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Shelf_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "SignBoard",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignAccent",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SignText",
+							"type": "Label3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				},
+				{
+					"path": "Visuals/Brick_Window_Square_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf"
+				},
+				{
+					"path": "Visuals/Bookshelf_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Bookshelf.fbx"
+				},
+				{
+					"path": "Visuals/Shelf_1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx"
+				}
+			],
+			"labels": [
+				{
+					"path": "Visuals/SignText",
+					"text": "BOOKS"
+				}
+			],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Door_1_Inst/Door_1",
+				"Visuals/Brick_Window_Square_Single_Inst/Brick_Window_Square_Single",
+				"Visuals/Bookshelf_Inst/Bookshelf",
+				"Visuals/Shelf_1_Inst/Shelf_1"
+			],
+			"name": "BookstoreFacade",
+			"path": "res://scenes/art/city/prefabs/BookstoreFacade.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget",
+				"Anchors/SitAnchor"
+			],
+			"approx_aabb_size": [
+				7.528,
+				12.504,
+				7.674
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Medium_2_001",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Medium_2_001_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Marquee",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "MarqueeLights",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "PosterLeft",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "PosterRight",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "screen-wide",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "screen-wide_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Door_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Door_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "MarqueeGlow",
+							"type": "OmniLight3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "SitAnchor",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Medium_2_001_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf"
+				},
+				{
+					"path": "Visuals/screen-wide_Inst",
+					"scene": "res://assets/environment/factory/kenney_factory/meshes/screen-wide.glb"
+				},
+				{
+					"path": "Visuals/Door_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [
+				"Visuals/MarqueeGlow"
+			],
+			"mesh_instances": [
+				"Visuals/Building_Medium_2_001_Inst/Building_Medium_2_001",
+				"Visuals/screen-wide_Inst/screen-wide",
+				"Visuals/Door_1_Inst/Door_1"
+			],
+			"name": "CinemaFacade",
+			"path": "res://scenes/art/city/prefabs/CinemaFacade.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				7.995
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "NookFloor",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Body",
+									"type": "CSGBox3D"
+								},
+								{
+									"children": [],
+									"name": "ControlDeck",
+									"type": "CSGBox3D"
+								},
+								{
+									"children": [],
+									"name": "Joystick",
+									"type": "CSGCylinder3D"
+								},
+								{
+									"children": [],
+									"name": "ButtonA",
+									"type": "CSGSphere3D"
+								},
+								{
+									"children": [],
+									"name": "ButtonB",
+									"type": "CSGSphere3D"
+								}
+							],
+							"name": "CabA",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Body",
+									"type": "CSGBox3D"
+								},
+								{
+									"children": [],
+									"name": "ControlDeck",
+									"type": "CSGBox3D"
+								},
+								{
+									"children": [],
+									"name": "Joystick",
+									"type": "CSGCylinder3D"
+								},
+								{
+									"children": [],
+									"name": "ButtonA",
+									"type": "CSGSphere3D"
+								},
+								{
+									"children": [],
+									"name": "ButtonB",
+									"type": "CSGSphere3D"
+								}
+							],
+							"name": "CabB",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "screen-small",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "screen-small_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "screen-small",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "@Node3D@4",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "ArcadeNeon",
+							"type": "OmniLight3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/screen-small_Inst",
+					"scene": "res://assets/environment/factory/kenney_factory/meshes/screen-small.glb"
+				},
+				{
+					"path": "Visuals/@Node3D@4",
+					"scene": "res://assets/environment/factory/kenney_factory/meshes/screen-small.glb"
+				}
+			],
+			"labels": [],
+			"lights": [
+				"Visuals/ArcadeNeon"
+			],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/screen-small_Inst/screen-small",
+				"Visuals/@Node3D@4/screen-small"
+			],
+			"name": "ArcadeFacade",
+			"path": "res://scenes/art/city/prefabs/ArcadeFacade.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				8.847
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Counter_Straight",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Counter_Straight_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Stool",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Stool_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Stool",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "@Node3D@2",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Bottle1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Bottle1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Bottle1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "@Node3D@3",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "NeonBand",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Environment_Counter_Straight_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf"
+				},
+				{
+					"path": "Visuals/Environment_Stool_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf"
+				},
+				{
+					"path": "Visuals/@Node3D@2",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf"
+				},
+				{
+					"path": "Visuals/Bottle1_Inst",
+					"scene": "res://assets/props/food/meshes/Bottle1.fbx"
+				},
+				{
+					"path": "Visuals/@Node3D@3",
+					"scene": "res://assets/props/food/meshes/Bottle1.fbx"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Environment_Counter_Straight_Inst/Environment_Counter_Straight",
+				"Visuals/Environment_Stool_Inst/Environment_Stool",
+				"Visuals/@Node3D@2/Environment_Stool",
+				"Visuals/Bottle1_Inst/Bottle1",
+				"Visuals/@Node3D@3/Bottle1"
+			],
+			"name": "BarFacade",
+			"path": "res://scenes/art/city/prefabs/BarFacade.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				8.03
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Light_Stand1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Light_Stand1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Light_Desk",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Light_Desk_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Backdrop",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "TripodLegA",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "TripodLegB",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "CameraBody",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "Lens",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "screen-panel-small",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "screen-panel-small_Inst",
+							"type": "Node3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Light_Stand1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Light_Stand1.fbx"
+				},
+				{
+					"path": "Visuals/Light_Desk_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Light_Desk.fbx"
+				},
+				{
+					"path": "Visuals/screen-panel-small_Inst",
+					"scene": "res://assets/environment/factory/kenney_factory/meshes/screen-panel-small.glb"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Light_Stand1_Inst/Light_Stand1",
+				"Visuals/Light_Desk_Inst/Light_Desk",
+				"Visuals/screen-panel-small_Inst/screen-panel-small"
+			],
+			"name": "PhotoStudio",
+			"path": "res://scenes/art/city/prefabs/PhotoStudio.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.775,
+				11.261,
+				7.689
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Medium_2_001",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Medium_2_001_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Desk_Small",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Desk_Small_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Shelves_ThinTall",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Shelves_ThinTall_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "screen-wide",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "screen-wide_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Chair",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Chair_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "BoardSign",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Medium_2_001_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf"
+				},
+				{
+					"path": "Visuals/Prop_Desk_Small_Inst",
+					"scene": "res://assets/environment/lab/scifi_essentials/meshes/Prop_Desk_Small.gltf"
+				},
+				{
+					"path": "Visuals/Prop_Shelves_ThinTall_Inst",
+					"scene": "res://assets/environment/lab/scifi_essentials/meshes/Prop_Shelves_ThinTall.gltf"
+				},
+				{
+					"path": "Visuals/screen-wide_Inst",
+					"scene": "res://assets/environment/factory/kenney_factory/meshes/screen-wide.glb"
+				},
+				{
+					"path": "Visuals/Prop_Chair_Inst",
+					"scene": "res://assets/environment/lab/scifi_essentials/meshes/Prop_Chair.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Medium_2_001_Inst/Building_Medium_2_001",
+				"Visuals/Prop_Desk_Small_Inst/Prop_Desk_Small",
+				"Visuals/Prop_Shelves_ThinTall_Inst/Prop_Shelves_ThinTall",
+				"Visuals/screen-wide_Inst/screen-wide",
+				"Visuals/Prop_Chair_Inst/Prop_Chair"
+			],
+			"name": "AgencyOffice",
+			"path": "res://scenes/art/city/prefabs/AgencyOffice.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				6.853,
+				9.364,
+				7.995
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Building_Small_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Building_Small_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "Awning",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "AwningStripe",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "PoleStripe",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "PoleStripeWhite",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Chair_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Chair_1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Bathroom_Mirror1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Bathroom_Mirror1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Shelf_1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Shelf_1_Inst",
+							"type": "Node3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Building_Small_1_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf"
+				},
+				{
+					"path": "Visuals/Chair_1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Chair_1.fbx"
+				},
+				{
+					"path": "Visuals/Bathroom_Mirror1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Bathroom_Mirror1.fbx"
+				},
+				{
+					"path": "Visuals/Shelf_1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Building_Small_1_Inst/Building_Small_1",
+				"Visuals/Chair_1_Inst/Chair_1",
+				"Visuals/Bathroom_Mirror1_Inst/Bathroom_Mirror1",
+				"Visuals/Shelf_1_Inst/Shelf_1"
+			],
+			"name": "BarberShop",
+			"path": "res://scenes/art/city/prefabs/BarberShop.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget",
+				"Anchors/SitAnchor",
+				"Anchors/StandAnchor"
+			],
+			"approx_aabb_size": [
+				3.358,
+				0.892,
+				1.905
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Bench",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Bench_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Planter_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Planter_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Bollard",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Bollard_Inst",
+							"type": "Node3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "SitAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "StandAnchor",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Environment_Bench_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf"
+				},
+				{
+					"path": "Visuals/Prop_Planter_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf"
+				},
+				{
+					"path": "Visuals/Prop_Bollard_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Prop_Bollard.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Environment_Bench_Inst/Environment_Bench",
+				"Visuals/Prop_Planter_Single_Inst/Prop_Planter_Single",
+				"Visuals/Prop_Bollard_Inst/Prop_Bollard"
+			],
+			"name": "MainBench",
+			"path": "res://scenes/art/city/prefabs/MainBench.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget",
+				"Anchors/SitAnchor",
+				"Anchors/StandAnchor"
+			],
+			"approx_aabb_size": [
+				2.371,
+				0.819,
+				1.83
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Bench",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Bench_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Sidewalk_Planter",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Sidewalk_Planter_Inst",
+							"type": "Node3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "SitAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "StandAnchor",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Environment_Bench_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf"
+				},
+				{
+					"path": "Visuals/Sidewalk_Planter_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Sidewalk_Planter.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Environment_Bench_Inst/Environment_Bench",
+				"Visuals/Sidewalk_Planter_Inst/Sidewalk_Planter"
+			],
+			"name": "ParkBench",
+			"path": "res://scenes/art/city/prefabs/ParkBench.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget",
+				"Anchors/FoodAnchor",
+				"Anchors/DuckReactionArea"
+			],
+			"approx_aabb_size": [
+				1.6,
+				0.48,
+				1.6
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "PondRim",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "Water",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Prop_Planter_Single",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Prop_Planter_Single_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Body",
+									"type": "CSGSphere3D"
+								},
+								{
+									"children": [],
+									"name": "Head",
+									"type": "CSGSphere3D"
+								},
+								{
+									"children": [],
+									"name": "Beak",
+									"type": "CSGBox3D"
+								},
+								{
+									"children": [],
+									"name": "WingL",
+									"type": "CSGBox3D"
+								},
+								{
+									"children": [],
+									"name": "WingR",
+									"type": "CSGBox3D"
+								}
+							],
+							"name": "DuckA",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Body",
+									"type": "CSGSphere3D"
+								},
+								{
+									"children": [],
+									"name": "Head",
+									"type": "CSGSphere3D"
+								},
+								{
+									"children": [],
+									"name": "Beak",
+									"type": "CSGBox3D"
+								},
+								{
+									"children": [],
+									"name": "WingL",
+									"type": "CSGBox3D"
+								},
+								{
+									"children": [],
+									"name": "WingR",
+									"type": "CSGBox3D"
+								}
+							],
+							"name": "DuckB",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "FeederBag",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "FeederTray",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "FoodAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "DuckReactionArea",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Prop_Planter_Single_Inst",
+					"scene": "res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Prop_Planter_Single_Inst/Prop_Planter_Single"
+			],
+			"name": "DuckFeeding",
+			"path": "res://scenes/art/city/prefabs/DuckFeeding.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget"
+			],
+			"approx_aabb_size": [
+				1.545,
+				2.54,
+				0.599
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "StageDeck",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "MicPole",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "MicHead",
+							"type": "CSGSphere3D"
+						},
+						{
+							"children": [],
+							"name": "MicGrill",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SpeakerL",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "SpeakerR",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "screen-small",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "screen-small_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Light_Stand1",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Light_Stand1_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "AccentLight",
+							"type": "CSGBox3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/screen-small_Inst",
+					"scene": "res://assets/environment/factory/kenney_factory/meshes/screen-small.glb"
+				},
+				{
+					"path": "Visuals/Light_Stand1_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Light_Stand1.fbx"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/screen-small_Inst/screen-small",
+				"Visuals/Light_Stand1_Inst/Light_Stand1"
+			],
+			"name": "KaraokeStand",
+			"path": "res://scenes/art/city/prefabs/KaraokeStand.tscn"
+		},
+		{
+			"anchors": [
+				"Anchors/InteractAnchor",
+				"Anchors/PromptAnchor",
+				"Anchors/OutlineTarget",
+				"Anchors/SitAnchor"
+			],
+			"approx_aabb_size": [
+				2.973,
+				1.364,
+				1.571
+			],
+			"areas": [],
+			"children": [
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "ShelterRoof",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "PoleL",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "PoleR",
+							"type": "CSGCylinder3D"
+						},
+						{
+							"children": [],
+							"name": "GlassBack",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Environment_Bench",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Environment_Bench_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [],
+							"name": "InfoSign",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "CandyMachineBody",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [],
+							"name": "CandyGlass",
+							"type": "CSGBox3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "ChocolateBar",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "ChocolateBar_Inst",
+							"type": "Node3D"
+						},
+						{
+							"children": [
+								{
+									"children": [],
+									"name": "Trashcan_Cylindric",
+									"type": "MeshInstance3D"
+								}
+							],
+							"name": "Trashcan_Cylindric_Inst",
+							"type": "Node3D"
+						}
+					],
+					"name": "Visuals",
+					"type": "Node3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "Shape",
+							"type": "CollisionShape3D"
+						}
+					],
+					"name": "Collision",
+					"type": "StaticBody3D"
+				},
+				{
+					"children": [
+						{
+							"children": [],
+							"name": "InteractAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "PromptAnchor",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "OutlineTarget",
+							"type": "Marker3D"
+						},
+						{
+							"children": [],
+							"name": "SitAnchor",
+							"type": "Marker3D"
+						}
+					],
+					"name": "Anchors",
+					"type": "Node3D"
+				}
+			],
+			"collision": [
+				"Collision/Shape"
+			],
+			"exists": true,
+			"external_instances": [
+				{
+					"path": "Visuals/Environment_Bench_Inst",
+					"scene": "res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf"
+				},
+				{
+					"path": "Visuals/ChocolateBar_Inst",
+					"scene": "res://assets/props/food/meshes/ChocolateBar.fbx"
+				},
+				{
+					"path": "Visuals/Trashcan_Cylindric_Inst",
+					"scene": "res://assets/environment/interior/house_interior/meshes/Trashcan_Cylindric.fbx"
+				}
+			],
+			"labels": [],
+			"lights": [],
+			"mesh_instances": [
+				"Visuals/Environment_Bench_Inst/Environment_Bench",
+				"Visuals/ChocolateBar_Inst/ChocolateBar",
+				"Visuals/Trashcan_Cylindric_Inst/Trashcan_Cylindric"
+			],
+			"name": "BusStopCandy",
+			"path": "res://scenes/art/city/prefabs/BusStopCandy.tscn"
+		}
+	]
+}

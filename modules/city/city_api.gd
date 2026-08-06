@@ -598,11 +598,17 @@ func _build_roster() -> void:
 	roster.append(_city_girl("city_tourist", "Туристка", "travel", Color(0.98, 0.88, 0.75),
 		{"min_popularity": 3, "min_dates": 1}, "long", Color(0.85, 0.7, 0.4),
 		["weird", "luxury"], ["order"], "park"))
-	# Unique anchors when stage allows (spawned by director if not yet contacted).
-	roster.append(_unique_anchor("fitness", "gym_front", {"min_popularity": 8, "min_dates": 1, "stage": "stage_2"}))
-	roster.append(_unique_anchor("goth", "night_bar", {"min_popularity": 12, "min_dates": 1, "stage": "stage_2"}))
-	roster.append(_unique_anchor("streamer", "internet_cafe", {"min_popularity": 15, "min_dates": 2, "stage": "stage_2"}))
-	roster.append(_unique_anchor("chef", "corner_shop", {"min_popularity": 35, "min_dates": 3, "stage": "stage_3"}))
+	# Unique anchors (stage + popularity from ContentDB). Neighbor = phone contact; algorithm = finale-only.
+	roster.append(_unique_roster_anchor("fitness", "gym_front", 1))
+	roster.append(_unique_roster_anchor("goth", "night_bar", 1))
+	roster.append(_unique_roster_anchor("streamer", "internet_cafe", 2))
+	roster.append(_unique_roster_anchor("chef", "corner_shop", 3))
+	roster.append(_unique_roster_anchor("business", "bus_stop", 3))
+	roster.append(_unique_roster_anchor("fashionista", "street_plaza", 3))
+	roster.append(_unique_roster_anchor("scientist", "internet_cafe", 3))
+	roster.append(_unique_roster_anchor("lawyer", "bus_stop", 4))
+	roster.append(_unique_roster_anchor("star", "night_bar", 5))
+	roster.append(_unique_roster_anchor("alien", "park", 5))
 
 
 func _city_girl(id: String, name: String, archetype: String, skin: Color, worth: Dictionary, hair: String, hair_c: Color, likes: Array, dislikes: Array, home: String) -> Dictionary:
@@ -636,6 +642,17 @@ func _city_girl(id: String, name: String, archetype: String, skin: Color, worth:
 		"quirk": str(pack.get("quirk", "")),
 		"soft_signal": str(pack.get("soft_signal", "")),
 	}
+
+
+func _unique_roster_anchor(id: String, home: String, min_dates: int) -> Dictionary:
+	## Worthiness stage/popularity come from ContentDB so routes stay aligned with unlock_stage.
+	var def: Dictionary = ContentDB.girl(StringName(id))
+	var worth: Dictionary = {
+		"min_popularity": float(def.get("popularity_need", 0.0)),
+		"min_dates": min_dates,
+		"stage": str(def.get("unlock_stage", "stage_1")),
+	}
+	return _unique_anchor(id, home, worth)
 
 
 func _unique_anchor(id: String, home: String, worth: Dictionary) -> Dictionary:
@@ -672,6 +689,8 @@ func get_profile(id: String) -> Dictionary:
 func is_worthy(id: String) -> bool:
 	if id == "neighbor":
 		return true
+	if id == "algorithm":
+		return false
 	var p: Dictionary = get_profile(id)
 	if p.is_empty():
 		return false
@@ -680,13 +699,17 @@ func is_worthy(id: String) -> bool:
 		return false
 	if Game.total_successful_dates < int(w.get("min_dates", 0)):
 		return false
-	var need_stage := str(w.get("stage", ""))
+	var need_stage: String = str(w.get("stage", ""))
 	if need_stage != "" and not _stage_reached(need_stage):
 		return false
-	if bool(p.get("unique", false)):
+	if bool(p.get("unique", false)) or ContentDB.girls.has(id):
 		var def: Dictionary = ContentDB.girl(StringName(id))
 		if not _stage_reached(str(def.get("unlock_stage", "stage_1"))):
 			return false
+		if Game.girls != null:
+			Game.girls.try_unlock_by_progress()
+			if Game.girls.has_method("is_discovered") and not bool(Game.girls.is_discovered(StringName(id))):
+				return false
 	return true
 
 
@@ -704,6 +727,8 @@ func talk(id: String) -> Dictionary:
 	if id == "neighbor":
 		var lines: Array = ContentDB.girl(&"neighbor").get("lines", ["Привет, сосед."])
 		return {"ok": true, "line": str(lines[0]), "already": true}
+	if id == "algorithm":
+		return {"ok": false, "line": "Её нельзя встретить на улице.", "already": false}
 	if has_contact(id):
 		return {"ok": true, "line": "Мы уже на связи. Пиши в телефон.", "already": true}
 	if not is_worthy(id):
@@ -734,19 +759,39 @@ func pick_tutorial_target() -> String:
 
 
 func profiles_for_spawn() -> Array:
-	var out: Array = []
+	## Prefer unique meet-paths so stage anchors are not crowded out by city filler.
+	if Game.girls != null and Game.girls.has_method("try_unlock_by_progress"):
+		Game.girls.try_unlock_by_progress()
+	var uniques: Array = []
+	var city_girls: Array = []
+	var seen: Dictionary = {}
 	for g in roster:
-		var id := str(g.get("id", ""))
-		if has_contact(id) and bool(g.get("unique", false)):
-			# Still can wander, but no need to force
-			pass
+		var id: String = str(g.get("id", ""))
+		if id == "" or seen.has(id):
+			continue
+		var is_unique: bool = bool(g.get("unique", false))
 		var w: Dictionary = g.get("worthiness", {})
-		var need_stage := str(w.get("stage", "stage_1"))
-		if need_stage != "" and not _stage_reached(need_stage if need_stage != "" else "stage_1"):
-			# Allow stage_1 city girls always; unique anchors gated.
-			if bool(g.get("unique", false)):
+		var need_stage: String = str(w.get("stage", "stage_1"))
+		if need_stage != "" and not _stage_reached(need_stage):
+			if is_unique:
 				continue
-		out.append(g)
+		if is_unique:
+			var discovered_ok: bool = true
+			if Game.girls != null and Game.girls.has_method("is_discovered"):
+				discovered_ok = bool(Game.girls.call("is_discovered", StringName(id)))
+			elif Game.girls != null:
+				var disc: Array = Game.girls.discovered_unique
+				discovered_ok = disc.has(StringName(id))
+			if not discovered_ok:
+				continue
+			seen[id] = true
+			uniques.append(g)
+		else:
+			seen[id] = true
+			city_girls.append(g)
+	var out: Array = []
+	out.append_array(uniques)
+	out.append_array(city_girls)
 	return out
 
 
