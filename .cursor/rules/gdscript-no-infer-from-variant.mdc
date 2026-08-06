@@ -1,24 +1,51 @@
 ---
-description: Не использовать := для Variant/untyped RHS в GDScript.
-globs:
-  - "**/*.gd"
-alwaysApply: false
+description: Never use := when the RHS is Variant/untyped (Game.* APIs, Dictionaries, groups)
+alwaysApply: true
 ---
 
-# Typed locals for Variant APIs
+# GDScript: no `:=` on Variant / untyped RHS
 
-Не использовать `:=`, если RHS приходит из:
+Godot 4 cannot infer a local type when the right-hand side has no concrete static type. This is a **parser error**, not a runtime issue:
 
-- `Game.*`;
-- `Dictionary.get`;
-- untyped Dictionary;
-- groups;
-- `find_child`;
-- другого Variant API.
+`Cannot infer the type of "X" variable because the value doesn't have a set type.`
 
-Использовать:
+## Why it happens here
 
-- `var value: ConcreteType = expression`;
-- либо явный cast.
+`Game` is an autoload façade. Chains like `Game.dating.schedule.target_id()` are often typed as **Variant** (dynamic member / untyped return through the façade), even when the real method returns `String`.
 
-После изменения `.gd` проверить parser/errors для затронутого файла.
+Same risk for:
+
+- `Game.*` / module API calls without a typed return in the call site’s view
+- `Dictionary.get(...)`, untyped dict values
+- `get_first_node_in_group(...)` / `find_child(...)` without `as Type`
+- anything that is effectively `Variant`
+
+`:=` requires a known type. Explicit annotation does not.
+
+## Rule (mandatory)
+
+1. **Do not** write `var name := <expr>` when `<expr>` comes from `Game.*`, dict/`get`, groups, or any untyped API.
+2. **Do** write `var name: ConcreteType = <expr>` (or cast: `as Type` / `str()` / `int()` etc. so the RHS has a type).
+3. Prefer `:=` only for literals, constructors, and clearly typed locals (`var n := 0`, `var p := Vector3.ZERO`, `var t := Engine.get_main_loop() as SceneTree`).
+
+## Fix pattern
+
+```gdscript
+# BAD — parser error
+var tid := Game.dating.schedule.target_id()
+var target := Game.dating.schedule.target_id()
+
+# GOOD
+var tid: String = Game.dating.schedule.target_id()
+var target: String = Game.dating.schedule.target_id()
+
+# Also GOOD — make RHS typed
+var node := tree.get_first_node_in_group("player") as Node3D
+var cost: float = float(def.get("cost", 10))
+```
+
+## Checklist before finishing a `.gd` edit
+
+- Grep new code for `:= Game.` and `:= .*schedule.` / `:= .*get(` — replace with `: Type =`.
+- After edit: `check_errors` on that file (do not batch many scripts then debug).
+---

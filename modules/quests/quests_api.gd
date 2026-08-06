@@ -6,8 +6,8 @@ extends Node
 signal quests_changed
 
 const STAGE1_MAIN_ORDER: Array[String] = [
-	"s1_money", "s1_outfit", "s1_prepare", "s1_city",
-	"s1_date", "s1_profile", "s1_contact", "s1_expand",
+	"s1_profile", "s1_money", "s1_outfit", "s1_prepare",
+	"s1_city", "s1_date", "s1_contact", "s1_expand",
 ]
 
 var active: Array = []
@@ -29,13 +29,13 @@ func reset_for_stage(stage_id: StringName) -> void:
 	active.clear()
 	match str(stage_id):
 		"stage_1":
-			_add("s1_money", "1/8 Поработай на кровати, затем купи подарок в городском магазине", "main")
-			_add("s1_outfit", "2/8 Смени одежду в шкафу", "main")
-			_add("s1_prepare", "3/8 В телефоне назначь свидание с соседкой (дом или кафе + время)", "main")
-			_add("s1_city", "4/8 Подготовь стол дома или выйди к кафе Two Hearts", "main")
-			_add("s1_date", "5/8 Проведи свидание и нажми «Завершить»", "main")
-			_add("s1_profile", "6/8 Открой телефон → Журнал/Связи: профиль соседки и итог свидания", "main")
-			_add("s1_contact", "7/8 Заполучи ещё один номер — поговори с любой девушкой в городе", "main")
+			_add("s1_profile", "1/8 Открой телефон (Q или тумба) и посмотри профиль Соседки", "main")
+			_add("s1_money", "2/8 Поработай на кровати, затем зайди в городской магазин", "main")
+			_add("s1_outfit", "3/8 Смени одежду в шкафу", "main")
+			_add("s1_prepare", "4/8 В телефоне назначь свидание (дом или ресторан + время)", "main")
+			_add("s1_city", "5/8 Подготовь стол дома или выйди к ресторану Two Hearts", "main")
+			_add("s1_date", "6/8 Проведи свидание и нажми «Завершить»", "main")
+			_add("s1_contact", "7/8 Заполучи ещё один номер — поговори с любой девушкой", "main")
 			_add("s1_expand", "8/8 Набери 5⭐ и открой дверь расширения (+X)", "main")
 		"stage_2":
 			_add("s2_girls", "Познакомься с новой уникальной девушкой через телефон", "main")
@@ -85,28 +85,21 @@ func can_do(action: StringName) -> bool:
 		return true
 	match str(action):
 		"phone":
-			## Phone may open early for UI, but booking is gated via book_date.
 			return true
 		"job":
-			return true
+			## Step 2 — blocked until step 1 (phone/profile) is done.
+			return is_done("s1_profile")
 		"buy_gift", "take_gift", "open_flower_shop", "open_jewelry_shop", "open_gift_shop", "open_bookstore", "open_clothing_shop", "open_homeware_shop", "city_buy_gift":
-			## Shop during/after money step (need cash from job).
-			return true
+			return is_done("s1_profile")
 		"wardrobe":
 			return is_done("s1_money")
-		"book_date", "schedule_date":
-			## No scheduling before work + wardrobe.
-			return is_done("s1_outfit")
 		"prepare_table", "prepare_and_start", "start_date", "take_food", "take_drink", "place_on_table", "upgrade_homeware", "date_wait_skip", "date_wait_stand":
 			return is_done("s1_outfit") and Game.dating.has_scheduled_date()
 		"enter_restaurant", "sit_restaurant", "sit_cafe", "sit_park", "sit_cinema", "sit_arcade":
 			return Game.dating.has_scheduled_date() and Game.dating.schedule.is_no_prep()
 		"expand":
-			return is_done("s1_date") and is_done("s1_profile") and is_done("s1_contact")
-		"talk_girl":
-			## Second contact comes after reviewing the first date profile.
-			return is_done("s1_profile")
-		"go_outside", "go_neighbor", "go_home", "go_home_from_neighbor":
+			return is_done("s1_date") and is_done("s1_contact")
+		"go_outside", "talk_girl", "go_neighbor", "go_home", "go_home_from_neighbor":
 			return true
 		"city_rest", "city_cafe_job", "city_cafe_scroll", "city_coffee", "city_workout", "city_gym_pass", "city_park_fun", "city_bar_drink", "city_karaoke", "city_bus_info", "neighbor_look", "open_arcade":
 			return true
@@ -179,14 +172,13 @@ func complete(id: String) -> void:
 
 func on_phone_opened() -> void:
 	flags["phone_opened"] = true
-	## Post-date profile step is completed via on_profile_seen (journal/relations).
+	## Opening phone is enough for step 1 (label also mentions profile).
+	complete("s1_profile")
 
 
 func on_profile_seen() -> void:
 	flags["profile_seen"] = true
-	## Profile tutorial comes after the first date — not at booking time.
-	if is_done("s1_date"):
-		complete("s1_profile")
+	complete("s1_profile")
 
 
 func on_date_finished(result: Dictionary) -> void:
@@ -195,7 +187,7 @@ func on_date_finished(result: Dictionary) -> void:
 		complete("s1_date")
 		complete("s2_girls")
 		if tid == "neighbor":
-			EventBus.toast("Открой телефон → Журнал: профиль соседки и итог свидания", &"story")
+			EventBus.toast("Выйди в город — заполучи ещё один номер у любой девушки", &"story")
 		if tid == "scientist":
 			complete("s3_scientist")
 		if tid == "alien":
@@ -233,27 +225,4 @@ func from_dict(data: Dictionary) -> void:
 	active = data.get("active", [])
 	completed = data.get("completed", [])
 	flags = data.get("flags", {})
-	## Profile moved after the first date — undo early completion from older tutorials.
-	if completed.has("s1_profile") and not completed.has("s1_date"):
-		completed.erase("s1_profile")
-		flags.erase("profile_seen")
-	if str(Game.stage_id) == "stage_1":
-		_resync_stage1_labels()
 	quests_changed.emit()
-
-
-func _resync_stage1_labels() -> void:
-	## Keep progress flags, refresh labels/order after tutorial reorder.
-	var labels: Dictionary = {
-		"s1_money": "1/8 Поработай на кровати, затем купи подарок в городском магазине",
-		"s1_outfit": "2/8 Смени одежду в шкафу",
-		"s1_prepare": "3/8 В телефоне назначь свидание с соседкой (дом или кафе + время)",
-		"s1_city": "4/8 Подготовь стол дома или выйди к кафе Two Hearts",
-		"s1_date": "5/8 Проведи свидание и нажми «Завершить»",
-		"s1_profile": "6/8 Открой телефон → Журнал/Связи: профиль соседки и итог свидания",
-		"s1_contact": "7/8 Заполучи ещё один номер — поговори с любой девушкой в городе",
-		"s1_expand": "8/8 Набери 5⭐ и открой дверь расширения (+X)",
-	}
-	active.clear()
-	for id in STAGE1_MAIN_ORDER:
-		_add(str(id), str(labels.get(id, id)), "main")

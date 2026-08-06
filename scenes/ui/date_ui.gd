@@ -100,7 +100,6 @@ func _ensure_date_actions() -> void:
 		_gift_btn.name = "GiftBtn"
 		_gift_btn.text = "Подарить подарок"
 		_gift_btn.visible = false
-		_gift_btn.custom_minimum_size = Vector2(0, 40)
 		_gift_btn.focus_mode = Control.FOCUS_NONE
 		_gift_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 		_gift_btn.pressed.connect(_on_gift_pressed)
@@ -122,17 +121,9 @@ func _ensure_date_actions() -> void:
 		_finish_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 		_finish_btn.pressed.connect(func(): Game.dating.finish_manual())
 		vbox.add_child(_finish_btn)
-	# Keep gift controls above dialogue choices so they are never clipped under answers.
-	if buttons != null and _gift_btn != null and is_instance_valid(_gift_btn):
-		vbox.move_child(_gift_btn, buttons.get_index())
-	if _gift_btn != null and is_instance_valid(_gift_btn) and _gift_list != null and is_instance_valid(_gift_list):
-		vbox.move_child(_gift_list, _gift_btn.get_index() + 1)
 
 
 func _on_gift_pressed() -> void:
-	if not Game.dating.can_give_date_gift():
-		EventBus.toast("Нужен подарок в инвентаре (купи в магазине до свидания)", &"warn")
-		return
 	_gift_for_result = false
 	_open_gift_inventory()
 
@@ -156,18 +147,13 @@ func _on_gift_list_gui_input(event: InputEvent) -> void:
 
 
 func _refresh_action_buttons() -> void:
-	var active: bool = not Game.dating.active_manual.is_empty()
-	var done: bool = bool(Game.dating.active_manual.get("phases_done", false))
-	var gift_given: bool = bool(Game.dating.active_manual.get("gift_given", false))
+	var active := not Game.dating.active_manual.is_empty()
+	var done := bool(Game.dating.active_manual.get("phases_done", false))
 	if _finish_btn:
 		_finish_btn.visible = done and not _showing_result
 	if _gift_btn:
-		## Always show during an active date until a gift is given (visible above answers).
-		_gift_btn.visible = active and (not _showing_result) and (not gift_given)
-		var can_gift: bool = Game.dating.can_give_date_gift()
-		_gift_btn.disabled = not can_gift
-		_gift_btn.text = "Подарить подарок" if can_gift else "Подарить подарок (нет в инвентаре)"
-	if _gift_list and (not active or gift_given or _showing_result):
+		_gift_btn.visible = active and (not _showing_result) and Game.dating.can_give_date_gift()
+	if _gift_list and (not active or not Game.dating.can_give_date_gift() or _showing_result):
 		_gift_list.visible = false
 	if _result_gift_btn:
 		_result_gift_btn.visible = _showing_result
@@ -621,20 +607,11 @@ func _open(payload: Dictionary) -> void:
 
 
 func show_after_intro() -> void:
-	## Called by DateStage right after girl sits — dialogue must appear immediately.
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh_coach()
-	# If phase buttons were never built (or cleared), rebuild from live active date.
-	if buttons != null and buttons.get_child_count() == 0 and not Game.dating.active_manual.is_empty():
-		var opts: Array = Game.dating.active_manual.get("options", [])
-		var phase_i: int = int(Game.dating.active_manual.get("phase", 0))
-		if not opts.is_empty():
-			_on_phase(phase_i, opts)
 	var panel := get_node_or_null("Panel") as Control
 	if panel:
-		panel.visible = true
 		_configure_panel_layout(panel)
 		panel.pivot_offset = panel.size * 0.5
 		panel.modulate.a = 0.0
@@ -643,7 +620,6 @@ func show_after_intro() -> void:
 		tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		tween.tween_property(panel, "modulate:a", 1.0, 0.34)
 		tween.tween_property(panel, "scale", Vector2.ONE, 0.34)
-	_refresh_action_buttons()
 	Sfx.play_ui(&"date_ok")
 
 
@@ -732,13 +708,12 @@ func _on_phase(phase_index: int, options: Array) -> void:
 
 
 func _configure_panel_layout(panel: Control) -> void:
-	panel.clip_contents = false
 	panel.anchor_left = 0.18
 	panel.anchor_top = 1.0
 	panel.anchor_right = 0.82
 	panel.anchor_bottom = 1.0
 	panel.offset_left = 0.0
-	panel.offset_top = -520.0
+	panel.offset_top = -448.0
 	panel.offset_right = 0.0
 	panel.offset_bottom = -16.0
 

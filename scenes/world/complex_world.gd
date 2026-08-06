@@ -17,7 +17,6 @@ var _built_rooms: Dictionary = {}
 var _wanderers: Array[Dictionary] = []
 var _city_girls: Array[Dictionary] = []
 var _city_data: Dictionary = {}
-var _city_nav_source: Dictionary = {}
 var _ambient_time: float = 0.0
 var _neighbor_girl: Node3D
 var _current_location: StringName = &"home"
@@ -69,7 +68,6 @@ func _rebuild() -> void:
 	_wanderers.clear()
 	_city_girls.clear()
 	_city_data.clear()
-	_city_nav_source.clear()
 	_neighbor_girl = null
 	_built_rooms.clear()
 	_update_stage_lighting()
@@ -245,133 +243,85 @@ func _build_city() -> void:
 		var city_visual := _mount_visual_scene(city_root, CITY_SCENE, "CityVisual", Vector3(-30.0, 0.0, 0.0))
 		_hide_placeholder_meshes(city_root)
 		_hide_placeholder_meshes(props_root)
-		_bind_city_art_interactions(city_root, city_visual)
-		_wire_all_district_gates(city_root, city_visual)
-		_sync_district_gates(city_visual)
+		var home_p := _marker_local(city_root, city_visual, "Markers/HomeEntrance", Vector3(-13.0, 0.0, 4.7))
+		_add_interact(city_root, home_p, "Мой дом", "Войти домой", &"go_home", {"art_backed": true}, &"door")
+		_add_interact(city_root, Vector3(-19.5, 0.0, -4.35), "Кафе Two Hearts", "Сесть и ждать свидание", &"sit_cafe", {"art_backed": true}, &"door")
+		_add_interact(city_root, Vector3(-24.0, 0.0, 2.0), "Цветочный", "Открыть витрину", &"open_flower_shop", {"art_backed": true}, &"shelf")
+		_add_interact(city_root, Vector3(-26.5, 0.0, 1.5), "Ювелирный", "Открыть витрину", &"open_jewelry_shop", {"art_backed": true}, &"shelf")
+		_add_interact(city_root, Vector3(-22.0, 0.0, 3.0), "Магазин подарков", "Открыть", &"open_gift_shop", {"art_backed": true}, &"shelf")
+		_add_interact(city_root, Vector3(-23.2, 0.0, 3.6), "Одежда", "Открыть магазин", &"open_clothing_shop", {"art_backed": true}, &"wardrobe")
+		_add_interact(city_root, Vector3(-21.2, 0.0, 3.6), "Дом и посуда", "Открыть магазин", &"open_homeware_shop", {"art_backed": true}, &"shelf")
+		var picnic_p := _marker_local(city_root, city_visual, "Markers/ParkPicnicSpot", Vector3(-38.0, 0.0, 7.2))
+		var rest_p := _marker_local(city_root, city_visual, "Markers/ParkRestaurantEntrance", Vector3(-45.5, 0.0, -1.0))
+		_add_interact(city_root, picnic_p, "Пикник в парке", "Сесть и ждать свидание", &"sit_park", {"art_backed": true}, &"desk")
+		_add_interact(city_root, rest_p, "Ресторан у парка", "Сесть и ждать свидание", &"sit_restaurant", {"art_backed": true}, &"door")
+		var gym_p := _marker_local(city_root, city_visual, "Markers/GymEntrance", Vector3(-36.0, 0.0, -4.0))
+		var book_p := _marker_local(city_root, city_visual, "Markers/BookstoreEntrance", Vector3(-34.0, 0.0, 1.0))
+		var cine_p := _marker_local(city_root, city_visual, "Markers/CinemaEntrance", Vector3(-42.0, 0.0, -5.0))
+		var arcade_p := _marker_local(city_root, city_visual, "Markers/ArcadeEntrance", Vector3(-44.0, 0.0, 1.0))
+		_add_interact(city_root, gym_p, "Фитнес Leisure", "Тренировка (UI)", &"city_workout", {"art_backed": true}, &"machine")
+		_add_interact(city_root, gym_p + Vector3(-1.6, 0.0, 0.4), "Абонемент Leisure", "Купить (+макс. внимание)", &"city_gym_pass", {"art_backed": true}, &"poster")
+		_add_interact(city_root, book_p, "Книжный Leisure", "Открыть витрину", &"open_bookstore", {"art_backed": true}, &"shelf")
+		_add_interact(city_root, cine_p, "Кинотеатр Leisure", "Сесть и ждать сеанс", &"sit_cinema", {"art_backed": true}, &"door")
+		_add_interact(city_root, arcade_p, "Аркада Перегруз", "Сыграть / свидание", &"open_arcade", {"art_backed": true}, &"console")
+		# If arcade date booked, sit_arcade is also available at same spot via dedicated marker use.
+		_add_interact(city_root, arcade_p + Vector3(1.2, 0.0, 0.0), "Аркада (свидание)", "Сесть к автомату", &"sit_arcade", {"art_backed": true}, &"console")
+		var photo_p := _marker_local(city_root, city_visual, "Markers/PhotoStudioEntrance", Vector3(-48.0, 0.0, -3.0))
+		var barber_p := _marker_local(city_root, city_visual, "Markers/BarberEntrance", Vector3(-54.0, 0.0, -1.5))
+		var agency_p := _marker_local(city_root, city_visual, "Markers/AgencyOfficeEntrance", Vector3(-60.0, 0.0, -4.0))
+		_add_interact(city_root, photo_p, "Фотостудия Agency", "Сессия / публикация", &"open_photo_studio", {"art_backed": true, "venue_id": "photo_studio"}, &"poster")
+		_add_interact(city_root, barber_p, "Барбер Agency", "Стрижка / стиль", &"open_barber", {"art_backed": true}, &"desk")
+		_add_interact(city_root, agency_p, "Офис агентства", "Доска расписания", &"open_agency_board", {"art_backed": true}, &"console")
+		_wire_district_gate_interact(city_root, city_visual, "Decor/ParkGate", CityDistricts.PARK_LEISURE, "Парковые ворота")
+		_wire_district_gate_interact(city_root, city_visual, "Decor/AgencyGate", CityDistricts.AGENCY_ROW, "Барьер агентства")
+		_sync_park_gate(city_visual)
+		_sync_agency_gate(city_visual)
 		if Game.city != null and Game.city.has_method("try_unlock_park_from_progress"):
 			Game.city.try_unlock_park_from_progress()
 		if Game.city != null and Game.city.has_method("try_unlock_agency_row_from_progress"):
 			Game.city.try_unlock_agency_row_from_progress()
-		_sync_district_gates(city_visual)
 		# One coherent outdoor factor: art + interacts + gates under city_root.
-		# Nav data from CityBuilder is already in city_root local (manifest + mount offset).
 		city_root.scale = Vector3.ONE * CITY_WORLD_SCALE
 		_scale_city_nav_data(CITY_WORLD_SCALE)
-		_city_nav_source = {
-			"waypoints": (_city_data.get("waypoints", []) as Array).duplicate(),
-			"waypoint_districts": (_city_data.get("waypoint_districts", []) as Array).duplicate(),
-			"spots": (_city_data.get("spots", {}) as Dictionary).duplicate(true),
-			"spot_districts": (_city_data.get("spot_districts", {}) as Dictionary).duplicate(true),
-		}
-		_filter_city_nav_by_districts()
 
 
-func _bind_city_art_interactions(city_root: Node3D, city_visual: Node3D) -> void:
-	## All art-backed city interacts resolve through Marker3D / node anchors.
-	var home_p := _marker_local(city_root, city_visual, "Markers/HomeEntrance", Vector3(3.0, 0.0, 17.0))
-	_add_interact(city_root, home_p, "Мой дом", "Войти домой", &"go_home", {"art_backed": true}, &"door")
-	var cafe_p := _marker_local(city_root, city_visual, "Markers/CafeEntrance", Vector3(-5.5, 0.0, 15.0))
-	_add_interact(city_root, cafe_p, "Кафе Two Hearts", "Сесть и ждать свидание", &"sit_cafe", {"art_backed": true}, &"door")
-	var flower_p := _marker_local(city_root, city_visual, "Markers/FlowerEntrance", Vector3(-10.0, 0.0, 5.5))
-	_add_interact(city_root, flower_p, "Цветочный", "Открыть витрину", &"open_flower_shop", {"art_backed": true}, &"shelf")
-	var jewelry_p := _marker_local(city_root, city_visual, "Markers/JewelryEntrance", Vector3(-24.0, 0.0, 5.5))
-	_add_interact(city_root, jewelry_p, "Ювелирный", "Открыть витрину", &"open_jewelry_shop", {"art_backed": true}, &"shelf")
-	var gift_p := _marker_local(city_root, city_visual, "Markers/GiftEntrance", Vector3(-17.0, 0.0, 5.5))
-	_add_interact(city_root, gift_p, "Магазин подарков", "Открыть", &"open_gift_shop", {"art_backed": true}, &"shelf")
-	var clothing_p := _marker_local(city_root, city_visual, "Markers/ClothingEntrance", Vector3(-10.0, 0.0, -5.5))
-	_add_interact(city_root, clothing_p, "Одежда", "Открыть магазин", &"open_clothing_shop", {"art_backed": true}, &"wardrobe")
-	var homeware_p := _marker_local(city_root, city_visual, "Markers/HomewareEntrance", Vector3(-17.0, 0.0, -5.5))
-	_add_interact(city_root, homeware_p, "Дом и посуда", "Открыть магазин", &"open_homeware_shop", {"art_backed": true}, &"shelf")
-	var net_p := _marker_local(city_root, city_visual, "Markers/InternetCafeEntrance", Vector3(-24.0, 0.0, -5.5))
-	_add_interact(city_root, net_p + Vector3(-1.2, 0.0, 0.0), "ПК №1", "Поработать онлайн", &"city_cafe_job", {"art_backed": true}, &"console")
-	_add_interact(city_root, net_p + Vector3(1.2, 0.0, 0.0), "ПК №2", "Скроллить (+популярность)", &"city_cafe_scroll", {"art_backed": true}, &"console")
-	_add_interact(city_root, net_p + Vector3(0.0, 0.0, 1.0), "Кофейня", "Купить кофе (+внимание)", &"city_coffee", {"art_backed": true}, &"desk")
-	var picnic_p := _marker_local(city_root, city_visual, "Markers/ParkPicnicSpot", Vector3(-23.5, 0.0, 11.5))
-	var rest_p := _marker_local(city_root, city_visual, "Markers/ParkRestaurantEntrance", Vector3(-18.5, 0.0, 22.0))
-	_add_interact(city_root, picnic_p, "Пикник в парке", "Сесть и ждать свидание", &"sit_park", {"art_backed": true}, &"desk")
-	_add_interact(city_root, rest_p, "Ресторан у парка", "Сесть и ждать свидание", &"sit_restaurant", {"art_backed": true}, &"door")
-	var gym_p := _marker_local(city_root, city_visual, "Markers/GymEntrance", Vector3(-36.0, 0.0, 12.5))
-	var book_p := _marker_local(city_root, city_visual, "Markers/BookstoreEntrance", Vector3(-43.5, 0.0, 12.5))
-	var cine_p := _marker_local(city_root, city_visual, "Markers/CinemaEntrance", Vector3(-57.0, 0.0, 17.0))
-	var arcade_p := _marker_local(city_root, city_visual, "Markers/ArcadeEntrance", Vector3(-57.0, 0.0, 24.5))
-	_add_interact(city_root, gym_p, "Фитнес Leisure", "Тренировка (UI)", &"city_workout", {"art_backed": true}, &"machine")
-	_add_interact(city_root, gym_p + Vector3(-1.2, 0.0, 0.8), "Абонемент Leisure", "Купить (+макс. внимание)", &"city_gym_pass", {"art_backed": true}, &"poster")
-	_add_interact(city_root, book_p, "Книжный Leisure", "Открыть витрину", &"open_bookstore", {"art_backed": true}, &"shelf")
-	_add_interact(city_root, cine_p, "Кинотеатр Leisure", "Сесть и ждать сеанс", &"sit_cinema", {"art_backed": true}, &"door")
-	_add_interact(city_root, arcade_p, "Аркада Перегруз", "Сыграть / свидание", &"open_arcade", {"art_backed": true}, &"console")
-	_add_interact(city_root, arcade_p + Vector3(1.0, 0.0, 0.0), "Аркада (свидание)", "Сесть к автомату", &"sit_arcade", {"art_backed": true}, &"console")
-	var bar_p := _marker_local(city_root, city_visual, "Markers/BarEntrance", Vector3(-46.0, 0.0, 29.5))
-	_add_interact(city_root, bar_p, "Ночной бар", "Выпить (−$ +скандал/⭐)", &"city_bar_drink", {"art_backed": true}, &"desk")
-	var photo_p := _marker_local(city_root, city_visual, "Markers/PhotoStudioEntrance", Vector3(-43.0, 0.0, -5.5))
-	var barber_p := _marker_local(city_root, city_visual, "Markers/BarberEntrance", Vector3(-55.0, 0.0, 11.5))
-	var agency_p := _marker_local(city_root, city_visual, "Markers/AgencyOfficeEntrance", Vector3(-51.0, 0.0, -5.5))
-	_add_interact(city_root, photo_p, "Фотостудия Agency", "Сессия / публикация", &"open_photo_studio", {"art_backed": true, "venue_id": "photo_studio"}, &"poster")
-	_add_interact(city_root, barber_p, "Барбер Agency", "Стрижка / стиль", &"open_barber", {"art_backed": true}, &"desk")
-	_add_interact(city_root, agency_p, "Офис агентства", "Доска расписания", &"open_agency_board", {"art_backed": true}, &"console")
-	var bus_p := _marker_local(city_root, city_visual, "Markers/BusStop", Vector3(-61.0, 0.0, 5.0))
-	_add_interact(city_root, bus_p, "Расписание", "Посмотреть маршруты", &"city_bus_info", {"art_backed": true}, &"poster")
-	_add_interact(city_root, bus_p + Vector3(1.2, 0.0, 0.0), "Автомат", "Купить сувенир-конфеты", &"city_buy_gift", {"gift_id": "candy", "discount": 1.0, "art_backed": true}, &"machine")
-	var main_bench_p := _node_local(city_root, city_visual, "POIs/MainBench", Vector3(-28.2, 0.0, 1.5))
-	_add_interact(city_root, main_bench_p, "Скамейка", "Отдохнуть (+внимание)", &"city_rest", {"art_backed": true}, &"desk")
-	var park_bench_p := _node_local(city_root, city_visual, "POIs/ParkBench", Vector3(-34.5, 0.0, 22.5))
-	_add_interact(city_root, park_bench_p, "Скамейка в парке", "Посидеть", &"city_rest", {"bonus": 1.5, "art_backed": true}, &"desk")
-	var duck_p := _node_local(city_root, city_visual, "POIs/DuckFeeding", Vector3(-23.5, 0.0, 17.0))
-	_add_interact(city_root, duck_p, "Кормушка", "Покормить уток (+⭐)", &"city_park_fun", {"art_backed": true}, &"shelf")
-	var karaoke_p := _node_local(city_root, city_visual, "POIs/KaraokeStand", Vector3(-38.5, 0.0, 25.0))
-	_add_interact(city_root, karaoke_p, "Караоке", "Спеть (+⭐ +скандал)", &"city_karaoke", {"art_backed": true}, &"console")
-
-
-func _node_local(parent: Node3D, visual: Node3D, rel_path: String, fallback: Vector3) -> Vector3:
-	if parent == null or visual == null:
-		return fallback
-	var node := visual.get_node_or_null(rel_path) as Node3D
-	if node == null:
-		return fallback
-	return parent.to_local(node.global_position)
-
-
-func _sync_district_gates(city_visual: Node3D) -> void:
+func _sync_park_gate(city_visual: Node3D) -> void:
 	if city_visual == null:
 		return
-	var park_open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.PARK_LEISURE)
-	var agency_open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.AGENCY_ROW)
-	var gates: Array = city_visual.get_tree().get_nodes_in_group("district_gate")
-	for gate_v in gates:
-		var gate: Node3D = gate_v as Node3D
-		if gate == null or not city_visual.is_ancestor_of(gate):
-			continue
-		var district_id: String = ""
-		if gate.has_meta("district_id"):
-			district_id = str(gate.get_meta("district_id"))
-		else:
-			var prop_v: Variant = gate.get("district_id")
-			if typeof(prop_v) == TYPE_STRING or typeof(prop_v) == TYPE_STRING_NAME:
-				district_id = str(prop_v)
-		var open: bool = false
-		if district_id == String(CityDistricts.PARK_LEISURE) or district_id == "park_leisure":
-			open = park_open
-		elif district_id == String(CityDistricts.AGENCY_ROW) or district_id == "agency_row":
-			open = agency_open
-		_apply_district_gate(gate, open)
+	var gate := city_visual.get_node_or_null("Decor/ParkGate") as Node3D
+	if gate == null:
+		gate = city_visual.find_child("ParkGate", true, false) as Node3D
+	if gate == null:
+		return
+	var open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.PARK_LEISURE)
+	_apply_district_gate(gate, open)
+
+
+func _sync_agency_gate(city_visual: Node3D) -> void:
+	if city_visual == null:
+		return
+	var gate := city_visual.get_node_or_null("Decor/AgencyGate") as Node3D
+	if gate == null:
+		gate = city_visual.find_child("AgencyGate", true, false) as Node3D
+	if gate == null:
+		return
+	var open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.AGENCY_ROW)
+	_apply_district_gate(gate, open)
 
 
 func _apply_district_gate(gate: Node3D, open: bool) -> void:
-	if gate.has_method("set_unlocked"):
-		gate.call("set_unlocked", open)
-	else:
-		gate.visible = not open
-		_style_district_barrier(gate)
-		for child in gate.get_children():
-			if child is CollisionShape3D:
-				(child as CollisionShape3D).disabled = open
-			elif child is CollisionObject3D:
-				(child as CollisionObject3D).set_collision_layer_value(1, not open)
-				for cs in child.get_children():
-					if cs is CollisionShape3D:
-						(cs as CollisionShape3D).disabled = open
-		if gate is CollisionObject3D:
-			(gate as CollisionObject3D).set_collision_layer_value(1, not open)
+	gate.visible = not open
 	_style_district_barrier(gate)
+	for child in gate.get_children():
+		if child is CollisionShape3D:
+			(child as CollisionShape3D).disabled = open
+		elif child is CollisionObject3D:
+			(child as CollisionObject3D).set_collision_layer_value(1, not open)
+	if gate is CollisionObject3D:
+		(gate as CollisionObject3D).set_collision_layer_value(1, not open)
+		for cs in gate.get_children():
+			if cs is CollisionShape3D:
+				(cs as CollisionShape3D).disabled = open
 	var probe: Node = gate.get_meta("gate_interact", null) as Node
 	if probe != null and is_instance_valid(probe):
 		probe.visible = not open
@@ -389,72 +339,36 @@ func _apply_district_gate(gate: Node3D, open: bool) -> void:
 
 
 func _style_district_barrier(gate: Node3D) -> void:
-	## Prefer DistrictGate script styling (Stage 5 low-opacity + focus label).
-	if gate.has_method("_style_locked"):
-		gate.call("_style_locked")
-		return
+	## Semi-transparent GTA/NFS-style wall on CSG barrier meshes.
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.40, 0.62, 0.98, 0.18)
-	mat.emission_enabled = true
-	mat.emission = Color(0.30, 0.55, 1.0)
-	mat.emission_energy_multiplier = 0.2
+	mat.albedo_color = Color(0.35, 0.62, 0.95, 0.38)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	var barrier := gate.get_node_or_null("BarrierMesh") as MeshInstance3D
-	if barrier != null:
-		barrier.material_override = mat
 	for child in gate.get_children():
 		if child is CSGShape3D:
 			(child as CSGShape3D).material = mat
-		elif child is MeshInstance3D and child.name.begins_with("Barrier"):
+		elif child is MeshInstance3D:
 			(child as MeshInstance3D).material_override = mat
-	var label := gate.get_node_or_null("ConditionLabel") as Label3D
-	if label == null:
-		label = gate.get_node_or_null("SoonLabel") as Label3D
+	var label := gate.get_node_or_null("SoonLabel") as Label3D
 	if label != null:
-		label.visible = false
+		label.text = "Взаимодействуй"
 
 
-func _wire_all_district_gates(city_root: Node3D, city_visual: Node3D) -> void:
+func _wire_district_gate_interact(city_root: Node3D, city_visual: Node3D, gate_path: String, district_id: StringName, title: String) -> void:
 	if city_root == null or city_visual == null:
 		return
-	var gates: Array = city_visual.get_tree().get_nodes_in_group("district_gate")
-	# Fallback for packed instances that have not entered group yet.
-	if gates.is_empty():
-		for path in ["Decor/ParkGate", "Decor/AgencyGate", "Decor/AgencyGateLeisure"]:
-			var g := city_visual.get_node_or_null(path) as Node3D
-			if g != null:
-				g.add_to_group("district_gate")
-				gates.append(g)
-	for gate_v in gates:
-		var gate: Node3D = gate_v as Node3D
-		if gate == null or not city_visual.is_ancestor_of(gate):
-			continue
-		var district_id: String = "park_leisure"
-		if gate.has_meta("district_id"):
-			district_id = str(gate.get_meta("district_id"))
-		var title: String = gate.name
-		var cond := gate.get_node_or_null("ConditionLabel") as Label3D
-		if cond != null and cond.text != "":
-			title = cond.text
-		_wire_district_gate_interact_node(city_root, gate, StringName(district_id), title)
-
-
-func _wire_district_gate_interact_node(city_root: Node3D, gate: Node3D, district_id: StringName, title: String) -> void:
-	if city_root == null or gate == null:
+	var gate := city_visual.get_node_or_null(gate_path) as Node3D
+	if gate == null:
+		gate = city_visual.find_child(gate_path.get_file(), true, false) as Node3D
+	if gate == null:
 		return
 	if gate.has_meta("gate_interact") and is_instance_valid(gate.get_meta("gate_interact")):
 		return
-	var local_pos: Vector3 = city_root.to_local(gate.global_position)
-	var anchor := gate.get_node_or_null("InteractAnchor") as Node3D
-	if anchor != null:
-		local_pos = city_root.to_local(anchor.global_position)
-	else:
-		## Approach from local -Z (street side of prefab).
-		var offset: Vector3 = gate.global_transform.basis * Vector3(0.0, 0.0, -1.4)
-		local_pos = city_root.to_local(gate.global_position + offset)
+	## Place probe on the street (+X) side of the barrier so the player can reach it while closed.
+	var local_pos: Vector3 = city_root.to_local(gate.global_position) + Vector3(1.6, 0.0, 0.0)
 	var area: Interactable = Interactable.new()
-	area.name = "GateProbe_%s_%s" % [str(district_id), gate.name]
+	area.name = "GateProbe_%s" % str(district_id)
 	area.display_name = title
 	area.action_label = "Осмотреть район"
 	area.action_id = &"inspect_district_gate"
@@ -468,44 +382,6 @@ func _wire_district_gate_interact_node(city_root: Node3D, gate: Node3D, district
 	area.add_child(cs)
 	city_root.add_child(area)
 	gate.set_meta("gate_interact", area)
-
-
-func _filter_city_nav_by_districts() -> void:
-	## NPCs only use waypoints/spots in currently unlocked districts.
-	if _city_nav_source.is_empty():
-		return
-	var park_open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.PARK_LEISURE)
-	var agency_open: bool = Game.city != null and Game.city.is_district_unlocked(CityDistricts.AGENCY_ROW)
-	var wp_districts: Array = _city_nav_source.get("waypoint_districts", []) as Array
-	var waypoints: Array = _city_nav_source.get("waypoints", []) as Array
-	var filtered_wp: Array = []
-	var filtered_wp_d: Array = []
-	for i in range(waypoints.size()):
-		var district: String = "main_street"
-		if i < wp_districts.size():
-			district = str(wp_districts[i])
-		if district == "park_leisure" and not park_open:
-			continue
-		if district == "agency_row" and not agency_open:
-			continue
-		filtered_wp.append(waypoints[i])
-		filtered_wp_d.append(district)
-	if not filtered_wp.is_empty():
-		_city_data["waypoints"] = filtered_wp
-		_city_data["waypoint_districts"] = filtered_wp_d
-
-	var spots: Dictionary = _city_nav_source.get("spots", {}) as Dictionary
-	var spot_districts: Dictionary = _city_nav_source.get("spot_districts", {}) as Dictionary
-	var filtered_spots: Dictionary = {}
-	for key_v in spots.keys():
-		var key: String = str(key_v)
-		var district: String = str(spot_districts.get(key, "main_street"))
-		if district == "park_leisure" and not park_open:
-			continue
-		if district == "agency_row" and not agency_open:
-			continue
-		filtered_spots[key] = spots[key]
-	_city_data["spots"] = filtered_spots
 
 
 func _marker_pos(visual: Node3D, rel_path: String, fallback: Vector3) -> Vector3:
@@ -818,8 +694,8 @@ func _on_city_districts_changed() -> void:
 	if _current_location != &"city":
 		return
 	var city_visual := props_root.find_child("CityVisual", true, false) as Node3D
-	_sync_district_gates(city_visual)
-	_filter_city_nav_by_districts()
+	_sync_park_gate(city_visual)
+	_sync_agency_gate(city_visual)
 
 
 func _refresh_tutorial_markers() -> void:

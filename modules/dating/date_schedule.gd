@@ -139,15 +139,11 @@ func book(target: String, place: String, day: int, minutes: int, unique: bool = 
 		if Game.economy.get_value(&"money") < cost:
 			EventBus.toast("На это место может не хватить денег (нужно ~%.0f$)" % cost, &"info")
 	var outfit: String = str(Game.inventory.equipped_outfit)
-	var venue_id: String = DatePlaces.normalize_venue_id(place, str(place_def.get("venue_id", "kitchen_table")))
-	## Ensure capacity identity exists before a later reserve_venue call.
-	if place == "arcade" and Game.facility != null and not Game.facility.is_venue_unlocked(&"arcade"):
-		Game.facility.unlock_venue(&"arcade", false)
 	scheduled = {
 		"target_id": target,
 		"unique": unique,
 		"place_id": place,
-		"venue_id": venue_id,
+		"venue_id": str(place_def.get("venue_id", "kitchen_table")),
 		"day": day,
 		"minutes": minutes,
 		"outfit_id": outfit,
@@ -432,14 +428,7 @@ func compute_punctuality(player_ready_abs: int) -> void:
 func build_prep_from_booking() -> Dictionary:
 	var place: String = place_id()
 	var place_def: Dictionary = DatePlaces.place(place)
-	var venue_id: String = DatePlaces.normalize_venue_id(
-		place,
-		str(scheduled.get("venue_id", place_def.get("venue_id", "kitchen_table")))
-	)
-	if place == "arcade" and scheduled.get("venue_id", "") != venue_id:
-		scheduled["venue_id"] = venue_id
-	if place == "arcade" and Game.facility != null and not Game.facility.is_venue_unlocked(&"arcade"):
-		Game.facility.unlock_venue(&"arcade", false)
+	var venue_id: String = str(scheduled.get("venue_id", place_def.get("venue_id", "kitchen_table")))
 	var quality: float = float(place_def.get("base_quality", 1.0))
 	if place == "home":
 		quality = DatePlaces.home_quality(homeware_level, int(table.get("food_tier", 0)), int(table.get("drink_tier", 0)))
@@ -564,10 +553,6 @@ func from_dict(data: Dictionary) -> void:
 	homeware_level = int(data.get("homeware_level", 1))
 	table = data.get("table", table)
 	gift_given_id = str(data.get("gift_given_id", ""))
-	## RC-M007: place_id stays "arcade"; remap legacy cheap_cafe/cinema_room capacity ids.
-	## Unlock happens later via stage packs / build_prep (facility may reload after dating).
-	if typeof(scheduled) == TYPE_DICTIONARY and str(scheduled.get("place_id", "")) == "arcade":
-		scheduled["venue_id"] = DatePlaces.normalize_venue_id("arcade", str(scheduled.get("venue_id", "")))
 	girl_at_door = false
 	girl_arrived = false
 	player_seated = false

@@ -123,7 +123,6 @@ static func venues() -> Dictionary:
 		_v("kitchen_table", "Кухонный стол", 0, 1, 1, ["calm", "cheap"], "stage_1", "home"),
 		_v("cheap_cafe", "Дешёвое кафе", 10, 2, 1, ["casual", "cheap"], "stage_2", "city_east"),
 		_v("park", "Парк", 5, 2, 1, ["calm", "sport"], "stage_2", "city_east"),
-		_v("arcade", "Аркада «Перегруз»", 25, 2, 1, ["casual", "sport"], "stage_2", "city_east"),
 		_v("cinema_room", "Кино-комната", 20, 3, 2, ["media", "casual"], "stage_3", "complex"),
 		_v("restaurant", "Ресторан", 40, 4, 2, ["luxury", "tasty"], "stage_3", "city_west"),
 		_v("photo_studio", "Фотостудия", 35, 3, 2, ["media", "fashion", "scandal"], "stage_3", "city_west"),
