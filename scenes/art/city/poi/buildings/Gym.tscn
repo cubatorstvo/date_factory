@@ -1,0 +1,227 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOIBuilding.gd" id="1_57p73"]
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOITenant.gd" id="2_wwg04"]
+[ext_resource type="Script" path="res://modules/interaction/interactable.gd" id="3_0gncn"]
+[ext_resource type="PackedScene" path="res://assets/environment/factory/kenney_factory/meshes/machine.glb" id="4_4sdcm"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c0dum"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="BoxMesh_2khbw"]
+size = Vector3(7.2, 2.6, 4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5ujea"]
+albedo_color = Color(0.4, 0.4, 0.42, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j3qwa"]
+albedo_color = Color(0.08, 0.07, 0.09, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1xljn"]
+albedo_color = Color(0.41250002, 0.41250002, 0.435, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2dlrs"]
+albedo_color = Color(0.95, 0.45, 0.15, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mo1ai"]
+albedo_color = Color(0.12, 0.12, 0.14, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ks0v1"]
+albedo_color = Color(0.95, 0.45, 0.15, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xkpd7"]
+size = Vector3(7.2, 2.6, 4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4jj76"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7djc6"]
+size = Vector3(9, 0.08, 8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4sphw"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v4upj"]
+albedo_color = Color(0.2, 0.15, 0.1, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lrybv"]
+albedo_color = Color(0.95, 0.45, 0.15, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jfbfb"]
+albedo_color = Color(0.2, 0.2, 0.22, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0hrte"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[node name="Gym" type="Node3D" unique_id=1042253290]
+script = ExtResource("1_57p73")
+building_id = "gym"
+district_id = "park_leisure"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(9, 8)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=1293134137]
+
+[node name="ProxyBody" type="MeshInstance3D" parent="VisualRoot" unique_id=1291369186]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, -1.3)
+material_override = SubResource("StandardMaterial3D_c0dum")
+mesh = SubResource("BoxMesh_2khbw")
+
+[node name="Roof" type="CSGBox3D" parent="VisualRoot" unique_id=1194537868]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7199998, -1.3)
+size = Vector3(7.45, 0.22, 4.15)
+material = SubResource("StandardMaterial3D_5ujea")
+
+[node name="PortalInset" type="CSGBox3D" parent="VisualRoot" unique_id=1186671191]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.51)
+size = Vector3(2.4, 2.2, 0.38)
+material = SubResource("StandardMaterial3D_j3qwa")
+
+[node name="PortalFrame" type="CSGBox3D" parent="VisualRoot" unique_id=397337863]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.68)
+size = Vector3(2.56, 2.36, 0.08)
+material = SubResource("StandardMaterial3D_1xljn")
+
+[node name="OrangeBand" type="CSGBox3D" parent="VisualRoot" unique_id=2031993066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, 0.78)
+size = Vector3(7, 0.28, 0.12)
+material = SubResource("StandardMaterial3D_2dlrs")
+
+[node name="OpenBay" type="CSGBox3D" parent="VisualRoot" unique_id=813884594]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.45)
+size = Vector3(2.6, 2.2, 0.5)
+material = SubResource("StandardMaterial3D_mo1ai")
+
+[node name="BayLintel" type="CSGBox3D" parent="VisualRoot" unique_id=850351741]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0.72)
+size = Vector3(2.9, 0.15, 0.2)
+material = SubResource("StandardMaterial3D_ks0v1")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=323145983]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1272718862]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=523866434]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, -1.3)
+shape = SubResource("BoxShape3D_xkpd7")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1136671395]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_4jj76")
+mesh = SubResource("BoxMesh_7djc6")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=999524802]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=71117561]
+
+[node name="Gym" type="Node3D" parent="TenantSlots" unique_id=1308206488]
+script = ExtResource("2_wwg04")
+poi_id = "gym"
+action_id = &"city_workout"
+prompt_text = "Тренировка (UI)"
+functional_type = "StorefrontPOI"
+progression_stage = 2
+display_name = "Фитнес Leisure"
+action_label = "Тренировка (UI)"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Gym" unique_id=1898723831]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Gym" unique_id=724438931]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_0gncn")
+display_name = "Фитнес Leisure"
+action_label = "Тренировка (UI)"
+action_id = &"city_workout"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Gym/InteractionArea" unique_id=1135468027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_4sphw")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Gym" unique_id=1951853696]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Gym" unique_id=927076267]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Gym" unique_id=1953313877]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/Gym/Signage" unique_id=1934309063]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_v4upj")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/Gym/Signage" unique_id=106086572]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_lrybv")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Gym/Signage" unique_id=875074428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "GYM"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Gym" unique_id=1168201699]
+
+[node name="GymOrange" type="OmniLight3D" parent="TenantSlots/Gym/LocalLights" unique_id=2009376844]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.9)
+light_color = Color(1, 0.55, 0.25, 1)
+light_energy = 1.1
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Gym" unique_id=1219067921]
+
+[node name="machine_Inst" type="Node3D" parent="TenantSlots/Gym/IdentityProps" unique_id=943348078 instance=ExtResource("4_4sdcm")]
+transform = Transform3D(0.7794228, 0, -0.45, 0, 0.9, 0, 0.45, 0, 0.7794228, 1.2, 0, 0.2)
+
+[node name="Mat" type="CSGBox3D" parent="TenantSlots/Gym/IdentityProps" unique_id=929963066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.03, 0.4)
+size = Vector3(1.2, 0.05, 0.7)
+material = SubResource("StandardMaterial3D_jfbfb")
+
+[node name="InteractPass" type="Area3D" parent="TenantSlots/Gym" unique_id=1327170547]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0, 1.85)
+script = ExtResource("3_0gncn")
+display_name = "Абонемент Leisure"
+action_label = "Купить (+макс. внимание)"
+action_id = &"city_gym_pass"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Gym/InteractPass" unique_id=2091244564]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_0hrte")

@@ -1,0 +1,216 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOIBuilding.gd" id="1_v0c00"]
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOITenant.gd" id="2_516wt"]
+[ext_resource type="Script" path="res://modules/interaction/interactable.gd" id="3_1roap"]
+[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Chair_1.fbx" id="4_4w0b7"]
+[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Bathroom_Mirror1.fbx" id="5_v4nmi"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4w3cw"]
+albedo_color = Color(0.78, 0.72, 0.65, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="BoxMesh_loj1r"]
+size = Vector3(3.6, 3.3, 3.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4mfg6"]
+albedo_color = Color(0.45, 0.35, 0.3, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h52ja"]
+albedo_color = Color(0.08, 0.07, 0.09, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tx687"]
+albedo_color = Color(0.585, 0.54, 0.48749998, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_aw2uo"]
+albedo_color = Color(0.95, 0.95, 0.95, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yts7d"]
+albedo_color = Color(0.85, 0.15, 0.15, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8jp67"]
+albedo_color = Color(0.15, 0.25, 0.75, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tggin"]
+albedo_color = Color(0.95, 0.85, 0.7, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wydqi"]
+size = Vector3(3.6, 3.3, 3.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3acmh"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vb428"]
+size = Vector3(6, 0.08, 7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qijrh"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f6lke"]
+albedo_color = Color(0.25, 0.1, 0.1, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d7544"]
+albedo_color = Color(0.9, 0.3, 0.3, 1)
+metallic = 0.05
+roughness = 0.55
+
+[node name="BarberShop" type="Node3D" unique_id=948708900]
+script = ExtResource("1_v0c00")
+building_id = "barber_shop"
+district_id = "agency_row"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(6, 7)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=1604050051]
+
+[node name="ProxyBody" type="MeshInstance3D" parent="VisualRoot" unique_id=630906155]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, -1)
+material_override = SubResource("StandardMaterial3D_4w3cw")
+mesh = SubResource("BoxMesh_loj1r")
+
+[node name="Roof" type="CSGBox3D" parent="VisualRoot" unique_id=25393455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4199998, -1)
+size = Vector3(3.85, 0.22, 3.5500002)
+material = SubResource("StandardMaterial3D_4mfg6")
+
+[node name="PortalInset" type="CSGBox3D" parent="VisualRoot" unique_id=125384597]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.075, 0.51)
+size = Vector3(0.95, 2.15, 0.38)
+material = SubResource("StandardMaterial3D_h52ja")
+
+[node name="PortalFrame" type="CSGBox3D" parent="VisualRoot" unique_id=1820404966]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.075, 0.68)
+size = Vector3(1.11, 2.31, 0.08)
+material = SubResource("StandardMaterial3D_tx687")
+
+[node name="PoleWhite" type="CSGCylinder3D" parent="VisualRoot" unique_id=1414422272]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 1.2, 0.85)
+radius = 0.08
+height = 1.6
+material = SubResource("StandardMaterial3D_aw2uo")
+
+[node name="PoleRed" type="CSGCylinder3D" parent="VisualRoot" unique_id=1921759368]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 1.55, 0.85)
+radius = 0.085
+height = 0.35
+material = SubResource("StandardMaterial3D_yts7d")
+
+[node name="PoleBlue" type="CSGCylinder3D" parent="VisualRoot" unique_id=1132165990]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.95, 0.85)
+radius = 0.085
+height = 0.35
+material = SubResource("StandardMaterial3D_8jp67")
+
+[node name="NarrowWin" type="CSGBox3D" parent="VisualRoot" unique_id=329653160]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1, 1.5, 0.72)
+size = Vector3(0.7, 1.5, 0.05)
+material = SubResource("StandardMaterial3D_tggin")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=782437463]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=411155415]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=2094530690]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, -1)
+shape = SubResource("BoxShape3D_wydqi")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1216035184]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_3acmh")
+mesh = SubResource("BoxMesh_vb428")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=1741789859]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=771015104]
+
+[node name="Barber" type="Node3D" parent="TenantSlots" unique_id=223554550]
+script = ExtResource("2_516wt")
+poi_id = "barber_shop"
+action_id = &"open_barber"
+prompt_text = "Стрижка / стиль"
+functional_type = "StorefrontPOI"
+progression_stage = 2
+display_name = "Барбер Agency"
+action_label = "Стрижка / стиль"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Barber" unique_id=1050762741]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Barber" unique_id=1262538550]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_1roap")
+display_name = "Барбер Agency"
+action_label = "Стрижка / стиль"
+action_id = &"open_barber"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Barber/InteractionArea" unique_id=320875369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_qijrh")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Barber" unique_id=465514608]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Barber" unique_id=2038418119]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Barber" unique_id=1154753333]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/Barber/Signage" unique_id=464715491]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_f6lke")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/Barber/Signage" unique_id=1491940634]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_d7544")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Barber/Signage" unique_id=1644827362]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "BARBER"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Barber" unique_id=1462662231]
+
+[node name="WarmShop" type="OmniLight3D" parent="TenantSlots/Barber/LocalLights" unique_id=1379196653]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.7)
+light_color = Color(1, 0.75, 0.5, 1)
+light_energy = 1.15
+omni_range = 4.0
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Barber" unique_id=1919654336]
+
+[node name="Chair_1_Inst" type="Node3D" parent="TenantSlots/Barber/IdentityProps" unique_id=1230087039 instance=ExtResource("4_4w0b7")]
+transform = Transform3D(-0.6577848, 0, 0.23941414, 0, 0.7, 0, -0.23941414, 0, -0.6577848, 0.2, 0, 0.15)
+
+[node name="Bathroom_Mirror1_Inst" type="Node3D" parent="TenantSlots/Barber/IdentityProps" unique_id=415609812 instance=ExtResource("5_v4nmi")]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, -0.3, 1.2, -0.1)

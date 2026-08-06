@@ -1,0 +1,167 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOIBuilding.gd" id="1_7xapf"]
+[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf" id="2_d6m1g"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Table.gltf" id="3_g44ue"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf" id="4_5fgqk"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_Plant1.gltf" id="5_2hnd8"]
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOITenant.gd" id="6_2l80k"]
+[ext_resource type="Script" path="res://modules/interaction/interactable.gd" id="7_5k7df"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mggng"]
+albedo_color = Color(0.75, 0.28, 0.22, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yf5sy"]
+albedo_color = Color(0.585, 0.21839999, 0.1716, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1qj3d"]
+albedo_color = Color(0.35, 0.2, 0.15, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lv510"]
+size = Vector3(4.6, 3.6, 3.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2pgwq"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_h4e50"]
+size = Vector3(10, 0.08, 9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_88pne"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uohty"]
+albedo_color = Color(0.18, 0.08, 0.08, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v15vr"]
+albedo_color = Color(1, 0.5, 0.3, 1)
+metallic = 0.05
+roughness = 0.55
+
+[node name="ParkRestaurant" type="Node3D" unique_id=1712934342]
+script = ExtResource("1_7xapf")
+building_id = "park_restaurant"
+district_id = "park_leisure"
+building_mode = "VenueEntrance"
+reserved_lot_size = Vector2(10, 9)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=1180985599]
+
+[node name="Building_Medium_2_001_Inst" type="Node3D" parent="VisualRoot" unique_id=199150597 instance=ExtResource("2_d6m1g")]
+transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, 0, 0, -0.55)
+
+[node name="Awning" type="CSGBox3D" parent="VisualRoot" unique_id=297810103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 1)
+size = Vector3(3.2, 0.08, 0.85)
+material = SubResource("StandardMaterial3D_mggng")
+
+[node name="AwningStripe" type="CSGBox3D" parent="VisualRoot" unique_id=1544881369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.49, 1)
+size = Vector3(3.2, 0.04, 0.85)
+material = SubResource("StandardMaterial3D_yf5sy")
+
+[node name="PitchedRoof" type="CSGBox3D" parent="VisualRoot" unique_id=683352882]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -0.3)
+size = Vector3(4.8, 0.35, 3.2)
+material = SubResource("StandardMaterial3D_1qj3d")
+
+[node name="Environment_Table_Inst" type="Node3D" parent="VisualRoot" unique_id=312039153 instance=ExtResource("3_g44ue")]
+transform = Transform3D(0.4698463, 0, -0.17101006, 0, 0.5, 0, 0.17101006, 0, 0.4698463, -1.4, 0, 0.55)
+
+[node name="Environment_Stool_Inst" type="Node3D" parent="VisualRoot" unique_id=1733044670 instance=ExtResource("4_5fgqk")]
+transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, -1.7, 0, 0.35)
+
+[node name="Decoration_Plant1_Inst" type="Node3D" parent="VisualRoot" unique_id=813585573 instance=ExtResource("5_2hnd8")]
+transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 1.5, 0, 0.9)
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=1087683050]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1159941414]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=260175715]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, -0.2)
+shape = SubResource("BoxShape3D_lv510")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1851076868]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_2pgwq")
+mesh = SubResource("BoxMesh_h4e50")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=1413006088]
+
+[node name="BistroWarm" type="OmniLight3D" parent="SharedLighting" unique_id=1353614801]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 1.1)
+light_color = Color(1, 0.65, 0.4, 1)
+light_energy = 1.35
+omni_range = 7.0
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=813747642]
+
+[node name="Restaurant" type="Node3D" parent="TenantSlots" unique_id=1345174063]
+script = ExtResource("6_2l80k")
+poi_id = "park_restaurant"
+action_id = &"sit_restaurant"
+prompt_text = "Сесть и ждать свидание"
+progression_stage = 2
+display_name = "Ресторан у парка"
+action_label = "Сесть и ждать свидание"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Restaurant" unique_id=1735902948]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Restaurant" unique_id=1911835421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("7_5k7df")
+display_name = "Ресторан у парка"
+action_label = "Сесть и ждать свидание"
+action_id = &"sit_restaurant"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Restaurant/InteractionArea" unique_id=259057860]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_88pne")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Restaurant" unique_id=1253989555]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Restaurant" unique_id=1858155563]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Restaurant" unique_id=827800579]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/Restaurant/Signage" unique_id=1921986346]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_uohty")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/Restaurant/Signage" unique_id=1314717709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_v15vr")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Restaurant/Signage" unique_id=1837402203]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "PARK BISTRO"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Restaurant" unique_id=73376201]
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Restaurant" unique_id=348969745]

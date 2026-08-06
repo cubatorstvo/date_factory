@@ -1,38 +1,50 @@
 # Current milestone acceptance
 
 ## Milestone
-`APT-INTERACT-COMPONENT-001`
+`CITY-PROXY-POI-001`
 
 ## Required player route
-1. Войти в квартиру FPS.
-2. Смотреть на холодильник — только его подсказка/обводка; меню еды.
-3. Смотреть на кухонные ящики — только их подсказка/обводка; меню напитков.
-4. Пройти вдоль кухни без ложных мерцающих подсказок от пересечения.
-5. Проверить кровать/стол/выход.
+1. Spawn city → подойти к дому и кафе → prompts работают.
+2. Flower/Gift (multi-tenant) и Jewelry/Clothing (multi-tenant) — отдельные входы/действия.
+3. Остальные storefront/venue proxies — action_id как раньше.
+4. WorldActivity (bench/duck/karaoke/bus) работают без здания.
+5. Park/Agency gates блокируют/открывают как раньше.
+6. Save/load с unlocked districts восстанавливает доступ.
 
 ## Functional criteria
-- [x] Fridge и KitchenDrawers interact AABB не пересекаются.
-- [x] Объёмы ≈ mesh AABB (+ padding).
-- [x] Interactable — дочерний компонент мебели (не плавающий 1.2³ на room root).
-- [x] Меню еды/напитков корректны.
+- [ ] Каждый POI — PackedScene root или tenant внутри building PackedScene.
+- [ ] В city.tscn нет отдельных дверей/вывесок/InteractionArea/коллизий/ламп конкретного POI вне экземпляров.
+- [ ] Перенос корня здания переносит visual+collision+interact.
+- [ ] Нет NodePath из POI prefab в узлы city.tscn.
+- [ ] Все прежние action_id сохранены и reachable.
+- [ ] Подходы к входам не заблокированы.
+- [ ] DistrictGate — одна сцена из `poi/core`, 3 экземпляра.
+- [ ] Маршруты/районы не перестроены.
 
 ## Visual criteria
-- [x] Outline на правильной мебели.
-- [x] Нет FocusProxy-боксов на apartment furniture.
+- [ ] Proxy не один голый куб на все.
+- [ ] Не одинаковый фасад с разными надписями.
+- [ ] Нет двери поверх baked-двери.
+- [ ] Каждый proxy отличается ≥3 признаками от соседей.
+- [ ] LotBounds только editor/debug.
 
 ## Edge cases
-- [x] Scale FBX ~5.6 не раздувает Area.
-- [ ] City interacts smoke (не завершён в QA; out of primary route).
+- [ ] Multi-action tenants (InternetCafe×3, Gym×2, Arcade×2, Bus×2).
+- [ ] Picnic marker `sit_park` без building.
+- [ ] Cinema Large footprint не режет тротуар критично.
 
 ## Save/load
-- [x] Не затронуто.
+- [ ] District unlock blob продолжает работать.
 
 ## Evidence
-- [x] Git diff reviewed
-- [x] Independent QA report
+- [ ] Git diff reviewed
+- [ ] Engine logs
+- [ ] Screenshots
+- [ ] Independent QA report
+- [ ] docs/city_proxy_poi/*
 
 ## Blocking failures
-- Нет.
+- TBD
 
 ## Final decision
-`READY`
+`NOT READY`

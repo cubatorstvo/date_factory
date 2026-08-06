@@ -1,40 +1,47 @@
 # Current milestone
 
 ## ID
-`APT-INTERACT-COMPONENT-001`
+`CITY-PROXY-POI-001`
 
 ## Product goal
-Убрать пересечения областей интеракции на кухне и сделать Interactable дочерним компонентом мебели с объёмом по AABB.
+Временная, но архитектурно правильная версия городских POI: каждый POI — отдельная PackedScene (или tenant внутри здания) с финальным функциональным контрактом. Proxy-графика допустима. Визуальная работа над городом после этапа приостанавливается.
 
 ## Player-visible result
-Холодильник и кухонные ящики имеют отдельные непересекающиеся зоны; подсказка и действие соответствуют тому объекту, на который смотрит игрок.
+Городские ориентиры и магазины различимы, входы работают, action_id сохранены, районы/unlock не сломаны. В `city.tscn` только корневые экземпляры зданий/активностей — без разрозненных дверей/вывесок/InteractionArea конкретного POI.
 
 ## Status
-`READY`
+`IN_PROGRESS`
 
 ## In scope
-- `Interactable.fit_collision_to_meshes` + parenting under apartment furniture.
-- Apartment furniture interacts sized to mesh AABB.
-- Keep title/action exports and InteractionRouter.
+- `CityPOIBuilding` / `CityPOITenant` core
+- Proxy PackedScenes + multi-tenant pairs
+- Перенос в `city.tscn` корневыми экземплярами
+- DistrictGate в `poi/core` с export-параметрами
+- Binding interacts из tenant InteractionArea
+- Docs: BUILD / VALIDATION / POI_REPLACEMENT_GUIDE
 
 ## Out of scope
-- City interact size redesign.
-- New parallel interaction framework.
-- Dating/save changes.
+- Платный Downtown MegaKit audit / новые ассеты
+- Перестройка маршрутов и районов
+- Walk-in интерьеры, финальный свет, общий декор, модульная архитектура
 
 ## Dependencies
-- Existing Interactable + player RayCast3D.
+- Free Downtown MegaKit buildings/parts
+- Existing `Interactable` + `complex_world` city bind
+- Existing action_ids and district unlock save
 
 ## Active tasks
 
 | Task | Agent | Status | Evidence |
 |---|---|---|---|
-| APT-INTERACT-COMPONENT-001-RESEARCH | df-researcher | COMPLETED | parent+AABB recommended |
-| APT-INTERACT-COMPONENT-001 | df-gameplay-worker | COMPLETED | AABB reparent + gap ~1 cm |
-| APT-INTERACT-COMPONENT-001-QA | df-qa-worker | COMPLETED | `docs/agent/qa/APT-INTERACT-COMPONENT-001_QA.md` — PASS/READY |
+| CITY-PROXY-POI-001-RESEARCH | df-researcher | COMPLETED | research report in chat |
+| CITY-PROXY-POI-001-CORE | df-gameplay-worker | PENDING | |
+| CITY-PROXY-POI-001-SCENES | df-scene-worker | PENDING | |
+| CITY-PROXY-POI-001-DOCS | Orchestrator / content | PENDING | |
+| CITY-PROXY-POI-001-QA | df-qa-worker | PENDING | |
 
 ## Blocking issues
-- Нет. Не блокирует: screenshot timeout; city smoke не завершён.
+- GodotIQ MCP CallMcpTool registration flaky in Orchestrator session; workers must retry / fall back carefully.
 
 ## Next acceptance action
-- Milestone принят.
+- Core + scenes integrate → docs → independent QA → Orchestrator READY/NOT READY.

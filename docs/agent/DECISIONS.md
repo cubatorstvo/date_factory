@@ -30,6 +30,22 @@
 - Related files: `modules/interaction/interactable.gd`, apartment path in `complex_world.gd`.
 - Acceptance implications: fridge/drawers AABBs disjoint; prompts map to correct units.
 
+### DEC-004 — City proxy POI architecture (temporary, replaceable)
+
+- Date: 2026-08-06
+- Context: Paid Downtown MegaKit unavailable; need architecturally correct temporary city POIs before pausing city visual work.
+- Decision:
+  1. Every venue/storefront is a `CityPOIBuilding` PackedScene with optional `CityPOITenant` slots; WorldActivity stays standalone PackedScene (tenant-like, no building shell).
+  2. Landmark ready shells: PlayerHome=`Building_Small_1`, CafeTwoHearts=`Building_Medium_2_001`, Cinema=`Building_Large_2`. Others are differentiated BoxMesh/proxy façades using free kit windows/roofs/props.
+  3. Multi-tenant only: `RetailPairFlowerGift` (Flower+Gift), `FashionPairJewelryClothing` (Jewelry+Clothing). No cross-district merges.
+  4. Interactions live inside tenant `InteractionArea` (`Interactable`); `complex_world` discovers them. Keep Markers for spawn/return/picnic/camera only — do not recreate POI interacts from Markers.
+  5. `DistrictGate` moves to `scenes/art/city/poi/core/`; keep current visual; expose width/height/alphas/locked_text/fade.
+  6. Replace rule: later swap VisualRoot/CollisionRoot/EntranceAnchor local pose only — never building root in city, poi_id, action_id, district_id, save, or interaction routing.
+- Rejected alternatives: wait for paid kit; one cube + different signs; keep POI doors/signs/interacts authored in `city.tscn`; Photo+Barber multi-tenant from older analysis.
+- Consequences: city visual pause after this milestone; final assets drop into prefabs without city rewrite.
+- Related files: `scenes/art/city/poi/**`, `scenes/world/city/city.tscn`, `scenes/world/complex_world.gd`, `docs/city_proxy_poi/*`.
+- Acceptance implications: all existing action_ids work; districts unlock; no POI-specific children left loose in city root beyond PackedScene instances.
+
 ## Template
 
 ### DEC-000 — Название

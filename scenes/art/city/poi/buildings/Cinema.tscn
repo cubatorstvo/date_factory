@@ -1,0 +1,159 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOIBuilding.gd" id="1_4cgng"]
+[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf" id="2_q7o5r"]
+[ext_resource type="PackedScene" path="res://assets/environment/factory/kenney_factory/meshes/screen-wide.glb" id="3_mfj04"]
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOITenant.gd" id="4_o332y"]
+[ext_resource type="Script" path="res://modules/interaction/interactable.gd" id="5_4j5wg"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eh2if"]
+albedo_color = Color(0.12, 0.08, 0.18, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eemoj"]
+albedo_color = Color(0.95, 0.35, 0.85, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ywbq"]
+albedo_color = Color(0.35, 0.9, 1, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ku8bh"]
+size = Vector3(6.5, 4.8, 4.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2kf7r"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_epmsm"]
+size = Vector3(14, 0.08, 11)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_k280d"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f0yxf"]
+albedo_color = Color(0.08, 0.05, 0.12, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rcqkd"]
+albedo_color = Color(0.95, 0.35, 0.85, 1)
+metallic = 0.05
+roughness = 0.55
+
+[node name="Cinema" type="Node3D" unique_id=50758356]
+script = ExtResource("1_4cgng")
+building_id = "cinema"
+district_id = "park_leisure"
+building_mode = "Landmark"
+reserved_lot_size = Vector2(14, 11)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=1998556115]
+
+[node name="Building_Large_2_Inst" type="Node3D" parent="VisualRoot" unique_id=780925803 instance=ExtResource("2_q7o5r")]
+transform = Transform3D(0.32, 0, 0, 0, 0.32, 0, 0, 0, 0.32, 0, 0, -1)
+
+[node name="Marquee" type="CSGBox3D" parent="VisualRoot" unique_id=1529927489]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 0.55)
+size = Vector3(5.5, 0.55, 0.9)
+material = SubResource("StandardMaterial3D_eh2if")
+
+[node name="MarqueeNeon" type="CSGBox3D" parent="VisualRoot" unique_id=1416364755]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 0.95)
+size = Vector3(5, 0.18, 0.08)
+material = SubResource("StandardMaterial3D_eemoj")
+
+[node name="NeonCyan" type="CSGBox3D" parent="VisualRoot" unique_id=1047838587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.85, 0.95)
+size = Vector3(4.6, 0.1, 0.06)
+material = SubResource("StandardMaterial3D_4ywbq")
+
+[node name="screen-wide_Inst" type="Node3D" parent="VisualRoot" unique_id=148367003 instance=ExtResource("3_mfj04")]
+transform = Transform3D(1.4, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0.4)
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=499530829]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=152065158]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=2009721710]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -0.6)
+shape = SubResource("BoxShape3D_ku8bh")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=101803816]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_2kf7r")
+mesh = SubResource("BoxMesh_epmsm")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=1674068356]
+
+[node name="MarqueeLight" type="OmniLight3D" parent="SharedLighting" unique_id=1194376382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 1.2)
+light_color = Color(1, 0.45, 0.9, 1)
+light_energy = 1.6
+omni_range = 8.0
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=304587140]
+
+[node name="Cinema" type="Node3D" parent="TenantSlots" unique_id=188803511]
+script = ExtResource("4_o332y")
+poi_id = "cinema"
+action_id = &"sit_cinema"
+prompt_text = "Сесть и ждать сеанс"
+progression_stage = 2
+display_name = "Кинотеатр Leisure"
+action_label = "Сесть и ждать сеанс"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Cinema" unique_id=1139161306]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.2)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Cinema" unique_id=20908478]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.2)
+script = ExtResource("5_4j5wg")
+display_name = "Кинотеатр Leisure"
+action_label = "Сесть и ждать сеанс"
+action_id = &"sit_cinema"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Cinema/InteractionArea" unique_id=760486654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_k280d")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Cinema" unique_id=1362828422]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.2)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Cinema" unique_id=2025174662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Cinema" unique_id=1557039963]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/Cinema/Signage" unique_id=663291193]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_f0yxf")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/Cinema/Signage" unique_id=1826848941]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_rcqkd")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Cinema/Signage" unique_id=1171707363]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "CINEMA"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Cinema" unique_id=285553109]
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Cinema" unique_id=815120287]

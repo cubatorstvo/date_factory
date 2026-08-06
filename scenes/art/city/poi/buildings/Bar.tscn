@@ -1,0 +1,207 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOIBuilding.gd" id="1_3ppsh"]
+[ext_resource type="Script" path="res://scenes/art/city/poi/core/CityPOITenant.gd" id="2_72nju"]
+[ext_resource type="Script" path="res://modules/interaction/interactable.gd" id="3_kvj0o"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf" id="4_rxr0h"]
+[ext_resource type="PackedScene" path="res://assets/props/food/meshes/Bottle1.fbx" id="5_f6jup"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf" id="6_f7slo"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cld2r"]
+albedo_color = Color(0.28, 0.18, 0.12, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="BoxMesh_7sfko"]
+size = Vector3(5, 3.2, 3.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8keyg"]
+albedo_color = Color(0.15, 0.1, 0.08, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dvcsg"]
+albedo_color = Color(0.08, 0.07, 0.09, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e0jwb"]
+albedo_color = Color(0.21000001, 0.135, 0.089999996, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_u3oqn"]
+albedo_color = Color(0.06, 0.04, 0.03, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2k04b"]
+albedo_color = Color(0.4, 0.25, 0.15, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ne31q"]
+albedo_color = Color(0.95, 0.7, 0.4, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7e02c"]
+size = Vector3(5, 3.2, 3.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_acvxr"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2ja35"]
+size = Vector3(7, 0.08, 7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tvpsr"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f1cib"]
+albedo_color = Color(0.12, 0.06, 0.04, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o0cud"]
+albedo_color = Color(0.85, 0.45, 0.25, 1)
+metallic = 0.05
+roughness = 0.55
+
+[node name="Bar" type="Node3D" unique_id=317083109]
+script = ExtResource("1_3ppsh")
+building_id = "bar"
+district_id = "park_leisure"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(7, 7)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=590359040]
+
+[node name="ProxyBody" type="MeshInstance3D" parent="VisualRoot" unique_id=984507623]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -1.1999999)
+material_override = SubResource("StandardMaterial3D_cld2r")
+mesh = SubResource("BoxMesh_7sfko")
+
+[node name="Roof" type="CSGBox3D" parent="VisualRoot" unique_id=543271802]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.32, -1.1999999)
+size = Vector3(5.25, 0.22, 3.95)
+material = SubResource("StandardMaterial3D_8keyg")
+
+[node name="PortalInset" type="CSGBox3D" parent="VisualRoot" unique_id=228569066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.51)
+size = Vector3(1.15, 2.2, 0.38)
+material = SubResource("StandardMaterial3D_dvcsg")
+
+[node name="PortalFrame" type="CSGBox3D" parent="VisualRoot" unique_id=88477291]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.68)
+size = Vector3(1.31, 2.36, 0.08)
+material = SubResource("StandardMaterial3D_e0jwb")
+
+[node name="DeepPortal" type="CSGBox3D" parent="VisualRoot" unique_id=497748336]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.35)
+size = Vector3(1.4, 2.25, 0.7)
+material = SubResource("StandardMaterial3D_u3oqn")
+
+[node name="WoodTrim" type="CSGBox3D" parent="VisualRoot" unique_id=755970459]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 0.78)
+size = Vector3(4.8, 0.18, 0.1)
+material = SubResource("StandardMaterial3D_2k04b")
+
+[node name="WarmWin" type="CSGBox3D" parent="VisualRoot" unique_id=1089032242]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.5, 0.72)
+size = Vector3(1, 1.1, 0.05)
+material = SubResource("StandardMaterial3D_ne31q")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=521171876]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1962082848]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=929724703]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -1.2)
+shape = SubResource("BoxShape3D_7e02c")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=295619171]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_acvxr")
+mesh = SubResource("BoxMesh_2ja35")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=1243199602]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=1404947829]
+
+[node name="Bar" type="Node3D" parent="TenantSlots" unique_id=443464249]
+script = ExtResource("2_72nju")
+poi_id = "bar"
+action_id = &"city_bar_drink"
+prompt_text = "Выпить (−$ +скандал/⭐)"
+functional_type = "StorefrontPOI"
+progression_stage = 2
+display_name = "Ночной бар"
+action_label = "Выпить (−$ +скандал/⭐)"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Bar" unique_id=1705621554]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Bar" unique_id=147467736]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_kvj0o")
+display_name = "Ночной бар"
+action_label = "Выпить (−$ +скандал/⭐)"
+action_id = &"city_bar_drink"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Bar/InteractionArea" unique_id=22674425]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_tvpsr")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Bar" unique_id=1259503501]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Bar" unique_id=787454906]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Bar" unique_id=1349706874]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/Bar/Signage" unique_id=864587501]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_f1cib")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/Bar/Signage" unique_id=878350354]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_o0cud")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Bar/Signage" unique_id=1274179526]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "BAR"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Bar" unique_id=1470783580]
+
+[node name="LowWarm" type="OmniLight3D" parent="TenantSlots/Bar/LocalLights" unique_id=613936371]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0.7)
+light_color = Color(1, 0.55, 0.3, 1)
+light_energy = 0.85
+omni_range = 4.0
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Bar" unique_id=1011424581]
+
+[node name="Environment_Counter_Straight_Inst" type="Node3D" parent="TenantSlots/Bar/IdentityProps" unique_id=1389080145 instance=ExtResource("4_rxr0h")]
+transform = Transform3D(-1.9670125e-08, 0, 0.45, 0, 0.45, 0, -0.45, 0, -1.9670125e-08, 0.3, 0, 0.1)
+
+[node name="Bottle1_Inst" type="Node3D" parent="TenantSlots/Bar/IdentityProps" unique_id=1337793721 instance=ExtResource("5_f6jup")]
+transform = Transform3D(1.4, 0, 0, 0, 1.4, 0, 0, 0, 1.4, -0.4, 1.05, 0.45)
+
+[node name="Environment_Stool_Inst" type="Node3D" parent="TenantSlots/Bar/IdentityProps" unique_id=1733044670 instance=ExtResource("6_f7slo")]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.7, 0, 0.55)

@@ -267,58 +267,155 @@ func _build_city() -> void:
 
 
 func _bind_city_art_interactions(city_root: Node3D, city_visual: Node3D) -> void:
-	## All art-backed city interacts resolve through Marker3D / node anchors.
-	var home_p := _marker_local(city_root, city_visual, "Markers/HomeEntrance", Vector3(3.0, 0.0, 17.0))
-	_add_interact(city_root, home_p, "Мой дом", "Войти домой", &"go_home", {"art_backed": true}, &"door")
-	var cafe_p := _marker_local(city_root, city_visual, "Markers/CafeEntrance", Vector3(-5.5, 0.0, 15.0))
-	_add_interact(city_root, cafe_p, "Кафе Two Hearts", "Сесть и ждать свидание", &"sit_cafe", {"art_backed": true}, &"door")
-	var flower_p := _marker_local(city_root, city_visual, "Markers/FlowerEntrance", Vector3(-10.0, 0.0, 5.5))
-	_add_interact(city_root, flower_p, "Цветочный", "Открыть витрину", &"open_flower_shop", {"art_backed": true}, &"shelf")
-	var jewelry_p := _marker_local(city_root, city_visual, "Markers/JewelryEntrance", Vector3(-24.0, 0.0, 5.5))
-	_add_interact(city_root, jewelry_p, "Ювелирный", "Открыть витрину", &"open_jewelry_shop", {"art_backed": true}, &"shelf")
-	var gift_p := _marker_local(city_root, city_visual, "Markers/GiftEntrance", Vector3(-17.0, 0.0, 5.5))
-	_add_interact(city_root, gift_p, "Магазин подарков", "Открыть", &"open_gift_shop", {"art_backed": true}, &"shelf")
-	var clothing_p := _marker_local(city_root, city_visual, "Markers/ClothingEntrance", Vector3(-10.0, 0.0, -5.5))
-	_add_interact(city_root, clothing_p, "Одежда", "Открыть магазин", &"open_clothing_shop", {"art_backed": true}, &"wardrobe")
-	var homeware_p := _marker_local(city_root, city_visual, "Markers/HomewareEntrance", Vector3(-17.0, 0.0, -5.5))
-	_add_interact(city_root, homeware_p, "Дом и посуда", "Открыть магазин", &"open_homeware_shop", {"art_backed": true}, &"shelf")
-	var net_p := _marker_local(city_root, city_visual, "Markers/InternetCafeEntrance", Vector3(-24.0, 0.0, -5.5))
-	_add_interact(city_root, net_p + Vector3(-1.2, 0.0, 0.0), "ПК №1", "Поработать онлайн", &"city_cafe_job", {"art_backed": true}, &"console")
-	_add_interact(city_root, net_p + Vector3(1.2, 0.0, 0.0), "ПК №2", "Скроллить (+популярность)", &"city_cafe_scroll", {"art_backed": true}, &"console")
-	_add_interact(city_root, net_p + Vector3(0.0, 0.0, 1.0), "Кофейня", "Купить кофе (+внимание)", &"city_coffee", {"art_backed": true}, &"desk")
-	var picnic_p := _marker_local(city_root, city_visual, "Markers/ParkPicnicSpot", Vector3(-23.5, 0.0, 11.5))
-	var rest_p := _marker_local(city_root, city_visual, "Markers/ParkRestaurantEntrance", Vector3(-18.5, 0.0, 22.0))
+	## Prefer Interactables authored inside CityPOITenant prefabs (group city_poi_interact).
+	## FALLBACK: Marker/node-based _add_interact when no tenant Interactable with that
+	## action_id exists under city_visual yet (pre-SCENES wiring). WorldActivity POIs
+	## will become PackedScenes with CityPOITenant — fallback covers them until then.
+	## sit_park always binds from Markers/ParkPicnicSpot (no building).
+	_bind_city_poi_tenant_interacts(city_visual)
+	var owned: Dictionary = _collect_city_poi_action_ids(city_visual)
+
+	var home_p: Vector3 = _marker_local(city_root, city_visual, "Markers/HomeEntrance", Vector3(3.0, 0.0, 17.0))
+	_add_city_interact_fallback(city_root, owned, home_p, "Мой дом", "Войти домой", &"go_home", {"art_backed": true}, &"door")
+	var cafe_p: Vector3 = _marker_local(city_root, city_visual, "Markers/CafeEntrance", Vector3(-5.5, 0.0, 15.0))
+	_add_city_interact_fallback(city_root, owned, cafe_p, "Кафе Two Hearts", "Сесть и ждать свидание", &"sit_cafe", {"art_backed": true}, &"door")
+	var flower_p: Vector3 = _marker_local(city_root, city_visual, "Markers/FlowerEntrance", Vector3(-10.0, 0.0, 5.5))
+	_add_city_interact_fallback(city_root, owned, flower_p, "Цветочный", "Открыть витрину", &"open_flower_shop", {"art_backed": true}, &"shelf")
+	var jewelry_p: Vector3 = _marker_local(city_root, city_visual, "Markers/JewelryEntrance", Vector3(-24.0, 0.0, 5.5))
+	_add_city_interact_fallback(city_root, owned, jewelry_p, "Ювелирный", "Открыть витрину", &"open_jewelry_shop", {"art_backed": true}, &"shelf")
+	var gift_p: Vector3 = _marker_local(city_root, city_visual, "Markers/GiftEntrance", Vector3(-17.0, 0.0, 5.5))
+	_add_city_interact_fallback(city_root, owned, gift_p, "Магазин подарков", "Открыть", &"open_gift_shop", {"art_backed": true}, &"shelf")
+	var clothing_p: Vector3 = _marker_local(city_root, city_visual, "Markers/ClothingEntrance", Vector3(-10.0, 0.0, -5.5))
+	_add_city_interact_fallback(city_root, owned, clothing_p, "Одежда", "Открыть магазин", &"open_clothing_shop", {"art_backed": true}, &"wardrobe")
+	var homeware_p: Vector3 = _marker_local(city_root, city_visual, "Markers/HomewareEntrance", Vector3(-17.0, 0.0, -5.5))
+	_add_city_interact_fallback(city_root, owned, homeware_p, "Дом и посуда", "Открыть магазин", &"open_homeware_shop", {"art_backed": true}, &"shelf")
+	var net_p: Vector3 = _marker_local(city_root, city_visual, "Markers/InternetCafeEntrance", Vector3(-24.0, 0.0, -5.5))
+	_add_city_interact_fallback(city_root, owned, net_p + Vector3(-1.2, 0.0, 0.0), "ПК №1", "Поработать онлайн", &"city_cafe_job", {"art_backed": true}, &"console")
+	_add_city_interact_fallback(city_root, owned, net_p + Vector3(1.2, 0.0, 0.0), "ПК №2", "Скроллить (+популярность)", &"city_cafe_scroll", {"art_backed": true}, &"console")
+	_add_city_interact_fallback(city_root, owned, net_p + Vector3(0.0, 0.0, 1.0), "Кофейня", "Купить кофе (+внимание)", &"city_coffee", {"art_backed": true}, &"desk")
+	## Picnic has no building — always Marker-based (not gated by tenant ownership).
+	var picnic_p: Vector3 = _marker_local(city_root, city_visual, "Markers/ParkPicnicSpot", Vector3(-23.5, 0.0, 11.5))
 	_add_interact(city_root, picnic_p, "Пикник в парке", "Сесть и ждать свидание", &"sit_park", {"art_backed": true}, &"desk")
-	_add_interact(city_root, rest_p, "Ресторан у парка", "Сесть и ждать свидание", &"sit_restaurant", {"art_backed": true}, &"door")
-	var gym_p := _marker_local(city_root, city_visual, "Markers/GymEntrance", Vector3(-36.0, 0.0, 12.5))
-	var book_p := _marker_local(city_root, city_visual, "Markers/BookstoreEntrance", Vector3(-43.5, 0.0, 12.5))
-	var cine_p := _marker_local(city_root, city_visual, "Markers/CinemaEntrance", Vector3(-57.0, 0.0, 17.0))
-	var arcade_p := _marker_local(city_root, city_visual, "Markers/ArcadeEntrance", Vector3(-57.0, 0.0, 24.5))
-	_add_interact(city_root, gym_p, "Фитнес Leisure", "Тренировка (UI)", &"city_workout", {"art_backed": true}, &"machine")
-	_add_interact(city_root, gym_p + Vector3(-1.2, 0.0, 0.8), "Абонемент Leisure", "Купить (+макс. внимание)", &"city_gym_pass", {"art_backed": true}, &"poster")
-	_add_interact(city_root, book_p, "Книжный Leisure", "Открыть витрину", &"open_bookstore", {"art_backed": true}, &"shelf")
-	_add_interact(city_root, cine_p, "Кинотеатр Leisure", "Сесть и ждать сеанс", &"sit_cinema", {"art_backed": true}, &"door")
-	_add_interact(city_root, arcade_p, "Аркада Перегруз", "Сыграть / свидание", &"open_arcade", {"art_backed": true}, &"console")
-	_add_interact(city_root, arcade_p + Vector3(1.0, 0.0, 0.0), "Аркада (свидание)", "Сесть к автомату", &"sit_arcade", {"art_backed": true}, &"console")
-	var bar_p := _marker_local(city_root, city_visual, "Markers/BarEntrance", Vector3(-46.0, 0.0, 29.5))
-	_add_interact(city_root, bar_p, "Ночной бар", "Выпить (−$ +скандал/⭐)", &"city_bar_drink", {"art_backed": true}, &"desk")
-	var photo_p := _marker_local(city_root, city_visual, "Markers/PhotoStudioEntrance", Vector3(-43.0, 0.0, -5.5))
-	var barber_p := _marker_local(city_root, city_visual, "Markers/BarberEntrance", Vector3(-55.0, 0.0, 11.5))
-	var agency_p := _marker_local(city_root, city_visual, "Markers/AgencyOfficeEntrance", Vector3(-51.0, 0.0, -5.5))
-	_add_interact(city_root, photo_p, "Фотостудия Agency", "Сессия / публикация", &"open_photo_studio", {"art_backed": true, "venue_id": "photo_studio"}, &"poster")
-	_add_interact(city_root, barber_p, "Барбер Agency", "Стрижка / стиль", &"open_barber", {"art_backed": true}, &"desk")
-	_add_interact(city_root, agency_p, "Офис агентства", "Доска расписания", &"open_agency_board", {"art_backed": true}, &"console")
-	var bus_p := _marker_local(city_root, city_visual, "Markers/BusStop", Vector3(-61.0, 0.0, 5.0))
-	_add_interact(city_root, bus_p, "Расписание", "Посмотреть маршруты", &"city_bus_info", {"art_backed": true}, &"poster")
-	_add_interact(city_root, bus_p + Vector3(1.2, 0.0, 0.0), "Автомат", "Купить сувенир-конфеты", &"city_buy_gift", {"gift_id": "candy", "discount": 1.0, "art_backed": true}, &"machine")
-	var main_bench_p := _node_local(city_root, city_visual, "POIs/MainBench", Vector3(-28.2, 0.0, 1.5))
-	_add_interact(city_root, main_bench_p, "Скамейка", "Отдохнуть (+внимание)", &"city_rest", {"art_backed": true}, &"desk")
-	var park_bench_p := _node_local(city_root, city_visual, "POIs/ParkBench", Vector3(-34.5, 0.0, 22.5))
-	_add_interact(city_root, park_bench_p, "Скамейка в парке", "Посидеть", &"city_rest", {"bonus": 1.5, "art_backed": true}, &"desk")
-	var duck_p := _node_local(city_root, city_visual, "POIs/DuckFeeding", Vector3(-23.5, 0.0, 17.0))
-	_add_interact(city_root, duck_p, "Кормушка", "Покормить уток (+⭐)", &"city_park_fun", {"art_backed": true}, &"shelf")
-	var karaoke_p := _node_local(city_root, city_visual, "POIs/KaraokeStand", Vector3(-38.5, 0.0, 25.0))
-	_add_interact(city_root, karaoke_p, "Караоке", "Спеть (+⭐ +скандал)", &"city_karaoke", {"art_backed": true}, &"console")
+	var rest_p: Vector3 = _marker_local(city_root, city_visual, "Markers/ParkRestaurantEntrance", Vector3(-18.5, 0.0, 22.0))
+	_add_city_interact_fallback(city_root, owned, rest_p, "Ресторан у парка", "Сесть и ждать свидание", &"sit_restaurant", {"art_backed": true}, &"door")
+	var gym_p: Vector3 = _marker_local(city_root, city_visual, "Markers/GymEntrance", Vector3(-36.0, 0.0, 12.5))
+	var book_p: Vector3 = _marker_local(city_root, city_visual, "Markers/BookstoreEntrance", Vector3(-43.5, 0.0, 12.5))
+	var cine_p: Vector3 = _marker_local(city_root, city_visual, "Markers/CinemaEntrance", Vector3(-57.0, 0.0, 17.0))
+	var arcade_p: Vector3 = _marker_local(city_root, city_visual, "Markers/ArcadeEntrance", Vector3(-57.0, 0.0, 24.5))
+	_add_city_interact_fallback(city_root, owned, gym_p, "Фитнес Leisure", "Тренировка (UI)", &"city_workout", {"art_backed": true}, &"machine")
+	_add_city_interact_fallback(city_root, owned, gym_p + Vector3(-1.2, 0.0, 0.8), "Абонемент Leisure", "Купить (+макс. внимание)", &"city_gym_pass", {"art_backed": true}, &"poster")
+	_add_city_interact_fallback(city_root, owned, book_p, "Книжный Leisure", "Открыть витрину", &"open_bookstore", {"art_backed": true}, &"shelf")
+	_add_city_interact_fallback(city_root, owned, cine_p, "Кинотеатр Leisure", "Сесть и ждать сеанс", &"sit_cinema", {"art_backed": true}, &"door")
+	_add_city_interact_fallback(city_root, owned, arcade_p, "Аркада Перегруз", "Сыграть / свидание", &"open_arcade", {"art_backed": true}, &"console")
+	_add_city_interact_fallback(city_root, owned, arcade_p + Vector3(1.0, 0.0, 0.0), "Аркада (свидание)", "Сесть к автомату", &"sit_arcade", {"art_backed": true}, &"console")
+	var bar_p: Vector3 = _marker_local(city_root, city_visual, "Markers/BarEntrance", Vector3(-46.0, 0.0, 29.5))
+	_add_city_interact_fallback(city_root, owned, bar_p, "Ночной бар", "Выпить (−$ +скандал/⭐)", &"city_bar_drink", {"art_backed": true}, &"desk")
+	var photo_p: Vector3 = _marker_local(city_root, city_visual, "Markers/PhotoStudioEntrance", Vector3(-43.0, 0.0, -5.5))
+	var barber_p: Vector3 = _marker_local(city_root, city_visual, "Markers/BarberEntrance", Vector3(-55.0, 0.0, 11.5))
+	var agency_p: Vector3 = _marker_local(city_root, city_visual, "Markers/AgencyOfficeEntrance", Vector3(-51.0, 0.0, -5.5))
+	_add_city_interact_fallback(city_root, owned, photo_p, "Фотостудия Agency", "Сессия / публикация", &"open_photo_studio", {"art_backed": true, "venue_id": "photo_studio"}, &"poster")
+	_add_city_interact_fallback(city_root, owned, barber_p, "Барбер Agency", "Стрижка / стиль", &"open_barber", {"art_backed": true}, &"desk")
+	_add_city_interact_fallback(city_root, owned, agency_p, "Офис агентства", "Доска расписания", &"open_agency_board", {"art_backed": true}, &"console")
+	var bus_p: Vector3 = _marker_local(city_root, city_visual, "Markers/BusStop", Vector3(-61.0, 0.0, 5.0))
+	_add_city_interact_fallback(city_root, owned, bus_p, "Расписание", "Посмотреть маршруты", &"city_bus_info", {"art_backed": true}, &"poster")
+	_add_city_interact_fallback(city_root, owned, bus_p + Vector3(1.2, 0.0, 0.0), "Автомат", "Купить сувенир-конфеты", &"city_buy_gift", {"gift_id": "candy", "discount": 1.0, "art_backed": true}, &"machine")
+	var main_bench_p: Vector3 = _node_local(city_root, city_visual, "POIs/MainBench", Vector3(-28.2, 0.0, 1.5))
+	_add_city_interact_fallback(city_root, owned, main_bench_p, "Скамейка", "Отдохнуть (+внимание)", &"city_rest", {"art_backed": true}, &"desk")
+	var park_bench_p: Vector3 = _node_local(city_root, city_visual, "POIs/ParkBench", Vector3(-34.5, 0.0, 22.5))
+	## Second city_rest (bonus) — skipped only if that action_id already owned by a tenant.
+	_add_city_interact_fallback(city_root, owned, park_bench_p, "Скамейка в парке", "Посидеть", &"city_rest", {"bonus": 1.5, "art_backed": true}, &"desk")
+	var duck_p: Vector3 = _node_local(city_root, city_visual, "POIs/DuckFeeding", Vector3(-23.5, 0.0, 17.0))
+	_add_city_interact_fallback(city_root, owned, duck_p, "Кормушка", "Покормить уток (+⭐)", &"city_park_fun", {"art_backed": true}, &"shelf")
+	var karaoke_p: Vector3 = _node_local(city_root, city_visual, "POIs/KaraokeStand", Vector3(-38.5, 0.0, 25.0))
+	_add_city_interact_fallback(city_root, owned, karaoke_p, "Караоке", "Спеть (+⭐ +скандал)", &"city_karaoke", {"art_backed": true}, &"console")
+
+
+func _bind_city_poi_tenant_interacts(city_visual: Node3D) -> void:
+	## Activate Interactables already authored under CityPOITenant prefabs.
+	## Does not spawn duplicates — only ensures art_backed payload + FocusProxy outline.
+	if city_visual == null:
+		return
+	var tree: SceneTree = city_visual.get_tree()
+	if tree == null:
+		return
+	var nodes: Array = tree.get_nodes_in_group("city_poi_interact")
+	if nodes.is_empty():
+		## Soft discovery if group not populated yet (tenant _ready order).
+		nodes = tree.get_nodes_in_group("city_poi_tenant")
+		for tenant_v in nodes:
+			var tenant: Node = tenant_v as Node
+			if tenant == null or not city_visual.is_ancestor_of(tenant):
+				continue
+			_ensure_tenant_interacts_registered(tenant)
+		nodes = tree.get_nodes_in_group("city_poi_interact")
+	for node_v in nodes:
+		var node: Node = node_v as Node
+		if node == null or not city_visual.is_ancestor_of(node):
+			continue
+		if node is Interactable:
+			_ensure_city_poi_interact_ready(node as Interactable)
+
+
+func _ensure_tenant_interacts_registered(tenant: Node) -> void:
+	for child in tenant.get_children():
+		if child is Interactable:
+			var ia: Interactable = child as Interactable
+			if ia.action_id != &"" and not ia.is_in_group("city_poi_interact"):
+				ia.add_to_group("city_poi_interact")
+		_ensure_tenant_interacts_registered(child)
+
+
+func _collect_city_poi_action_ids(city_visual: Node3D) -> Dictionary:
+	## action_id (String) -> true for tenant-owned Interactables under city_visual.
+	var found: Dictionary = {}
+	if city_visual == null:
+		return found
+	var tree: SceneTree = city_visual.get_tree()
+	if tree == null:
+		return found
+	var nodes: Array = tree.get_nodes_in_group("city_poi_interact")
+	for node_v in nodes:
+		var node: Node = node_v as Node
+		if node == null or not city_visual.is_ancestor_of(node):
+			continue
+		if node is Interactable:
+			var ia: Interactable = node as Interactable
+			if ia.action_id != &"":
+				found[String(ia.action_id)] = true
+	return found
+
+
+func _add_city_interact_fallback(
+	city_root: Node3D,
+	owned: Dictionary,
+	pos: Vector3,
+	title: String,
+	action: String,
+	action_id: StringName,
+	payload: Dictionary = {},
+	prop_kind: StringName = &""
+) -> void:
+	## FALLBACK Marker spawn — skipped when a tenant Interactable already owns action_id.
+	if owned.has(String(action_id)):
+		return
+	_add_interact(city_root, pos, title, action, action_id, payload, prop_kind)
+
+
+func _ensure_city_poi_interact_ready(area: Interactable) -> void:
+	if area == null:
+		return
+	var p: Dictionary = area.payload.duplicate()
+	if not bool(p.get("art_backed", false)):
+		p["art_backed"] = true
+		area.payload = p
+	## Mirror _add_interact art_backed FocusProxy so outline works without bound meshes.
+	var visuals: Node3D = area.get_node_or_null("Visuals") as Node3D
+	if visuals == null:
+		visuals = Node3D.new()
+		visuals.name = "Visuals"
+		area.add_child(visuals)
+	if visuals.get_node_or_null("FocusProxy") == null:
+		_attach_focus_proxy(visuals)
 
 
 func _node_local(parent: Node3D, visual: Node3D, rel_path: String, fallback: Vector3) -> Vector3:
