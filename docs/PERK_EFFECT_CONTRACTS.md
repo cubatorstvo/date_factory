@@ -41,12 +41,12 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 
 | PerkId | ID | Contract (summary) | Future owners |
 |---|---|---|---|
-| `CAPITAL_PAYABLE_INTENT` | `perk_capital_payable_intent` | Unlocks capital actions by level; unlocks money contests | MODULE 06; 07D Money; 09 |
+| `CAPITAL_PAYABLE_INTENT` | `perk_capital_payable_intent` | Unlocks capital actions by level; unlocks money contests (MODULE 06 access only — no extra Money match modifier) | MODULE 06; 07D Money; 09 |
 | `CAPITAL_REPRESENTATION_EXPENSES` | `perk_capital_representation_expenses` | First normal paid date action does not spend money (still counts as paid) | MODULE 09 |
 | `CAPITAL_BUY_PROBLEM` | `perk_capital_buy_problem` | Once per date: authored purchase of an obstacle (event must allow it) | MODULE 09 + authored event |
-| `CAPITAL_HOSTILE_ACQUISITION` | `perk_capital_hostile_acquisition` | After marked money victory, a small object may stay owned / open a shortcut (world fact elsewhere) | MODULE 07D; 11/12 Story/World |
+| `CAPITAL_HOSTILE_ACQUISITION` | `perk_capital_hostile_acquisition` | After MONEY match `PLAYER_WIN` vs rival with `competition_modifier_id=&"money_acquisition"`, Runner emits `hostile_acquisition_requested` once (no world mutation in 07D; ownership later) | MODULE 07D hook; 11/12 Story/World |
 | `CAPITAL_SALARY_ADVANCE` | `perk_capital_salary_advance` | Once per salary period: take nearest available payout without going to payout place | MODULE 13 Salary Mine |
-| `CAPITAL_DIGNITY_REFUND` | `perk_capital_dignity_refund` | Failed paid action refunds money; failure/tags remain | MODULE 09 paid resolver |
+| `CAPITAL_DIGNITY_REFUND` | `perk_capital_dignity_refund` | Failed paid Dating action refunds money; failure/tags remain. Does **not** refund Money Contest auction spends | MODULE 09 paid resolver |
 | `CAPITAL_FINANCIAL_INERTIA` | `perk_capital_financial_inertia` | After salary joke/manual cycle seen, salary level-up may add small passive money | MODULE 13 |
 | `CAPITAL_NO_LIMIT` | `perk_capital_no_limit` | Once per major story stage: allow authored capital solution regardless of price | MODULE 09; 11/12 |
 

@@ -1,15 +1,14 @@
-# Acceptance — MODULE 07C Sigma Pressure
+# Acceptance — MODULE 07D Money Contest
 
 ## Player-visible result
-Rival SIGMA competition: mouse-X composure hold under pressure/disturbances → typed result via RivalCompetitionRunner → RivalEncounters Authority (not inside Sigma).
+Rival MONEY auction via RivalCompetitionRunner → MoneyMinigame → real spend on won rounds → typed result → RivalEncounters Authority (not inside Money).
 
-## PASS
-- RivalCompetitionRunner routes SIGMA; MONEY unsupported; no *CompetitionHost
-- Section 5.0s / hold 3.0s; targets 3/5; Aura width/pressure formulas exact
-- Disturbances telegraphed (1 ordinary / 2 story); error −0.65 once per excursion
-- Six perks exact (Mirror, Control Profile, Don't Blink, Silence, Reverse Pressure, Atmospheric)
-- Headless MODULE_07C_TEST ALL PASS + regressions 02–07B + FPS
-- No Authority mutation in sigma code; no MODULE 07D
+## Criteria
+- All 4 routes implemented (SLAP/DANCE/SIGMA/MONEY); no MONEY unsupported
+- Headless MoneyMatch + MoneyMinigame UI; mouse visible
+- Stake/ceiling/actions/tells/timeout/broke exact per MODULE_07D
+- Hostile Acquisition signal hook only (perk + marked rival + full win)
+- Headless MODULE_07D_TEST ALL PASS + 07A/B/C + 02–06 + FPS
 
-## Product questions
-None.
+## Status
+**PASS** — MODULE_07D_TEST ALL PASS (129); 07A/B/C + 02–06 regressions green. MODULE 08 not started.

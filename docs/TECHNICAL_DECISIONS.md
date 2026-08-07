@@ -518,3 +518,22 @@ Sigma is a continuous hold fantasy distinct from Slap/Dance timing, while sharin
 
 Scope:
 `minigames/sigma/**`, `game/rivals/rival_competition_runner.gd`, `minigames/dance/test/dance_minigame_self_test.gd` (MONEY unsupported assert), docs
+
+## MODULE 07D: Money Contest minigame
+
+Context:
+Fourth rival contest is a demonstration auction: bid levels vs rival Capital ceiling, real `GameState.money` spend only on won rounds, routed through the same `RivalCompetitionRunner`.
+
+Decision:
+- Path `res://minigames/money/`: `MoneyMatch` (headless) + `MoneyMinigame` (CanvasLayer UI); contract `setup(request, …)` + `signal match_finished(result)`.
+- Runner routes `MONEY` → `MoneyMinigame` with `Input.MOUSE_MODE_VISIBLE`; all four types implemented. No `*CompetitionHost`.
+- `stake_unit = max(1, floor(starting_money / (target_score * 15)))`; `rival_max_level = clamp(2 + floor(rival_capital/2) + var{-1,0,+1}, 2, 7)`; target 3/5; RAISE+1 / OUTBID+2@Capital≥3 / BUYOUT+3@Capital≥6.
+- Intermediate bids cost 0; final winning purchase spends once via `GameState.spend_money`; Dignity Refund does not apply; Payable Intent has no extra match modifier.
+- Hostile Acquisition: Runner emits `hostile_acquisition_requested(rival_id)` once on MONEY `PLAYER_WIN` if perk owned and `competition_modifier_id == &"money_acquisition"`; no world mutation in 07D.
+- Grade via `SlapTiming.compute_victory_grade`; summary like `MONEY 3:1 spent=24`.
+
+Reason:
+Money is a spend-risk auction fantasy distinct from timing games, while sharing Runner lifetime, typed result, and score-grade matrix.
+
+Scope:
+`minigames/money/**`, `game/rivals/rival_competition_runner.gd`, `data/test/rival_test_money*.tres`, dance/sigma test MONEY-unsupported cleanup, docs

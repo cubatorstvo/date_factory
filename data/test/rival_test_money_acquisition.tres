@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_script")
-id = &"rival_test_money"
-display_name = "Test Rival Money"
+id = &"rival_test_money_acquisition"
+display_name = "Test Rival Money Acquisition"
 is_story = false
 has_story_stage = false
 story_stage = 0
@@ -13,9 +13,9 @@ required_authority = 0
 authority_reward = 1
 muscle = 3
 appearance = 3
-capital = 5
+capital = 4
 aura = 3
 preferred_competition = 2
 allowed_competitions = Array[int]([2])
 appearance_profile_id = &""
-competition_modifier_id = &""
+competition_modifier_id = &"money_acquisition"

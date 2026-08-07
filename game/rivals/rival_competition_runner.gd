@@ -1,14 +1,18 @@
 extends Node
-## Production Rival competition runner (MODULE 07B).
+## Production Rival competition runner (MODULE 07B–07D).
 ## Autoload: RivalCompetitionRunner. Registers via RivalEncounters.set_competition_runner.
 ## competition_requested remains notification-only; this Callable is the sole launch/submit path.
 
 
+signal hostile_acquisition_requested(rival_id: StringName)
+
 var _active: CanvasLayer = null
 var _busy: bool = false
 var _submitted: bool = false
+var _hostile_emitted: bool = false
 var _player: PlayerController = null
 var _return_mode: int = int(PlayerController.ControlMode.GAMEPLAY)
+var _current_request: RivalCompetitionRequest = null
 
 
 func get_active_minigame() -> CanvasLayer:
@@ -28,7 +32,7 @@ func register_as_runner() -> void:
 
 func _ready() -> void:
 	register_as_runner()
-	DfLog.info("MODULE_07C", "RivalCompetitionRunner ready")
+	DfLog.info("MODULE_07D", "RivalCompetitionRunner ready")
 
 
 func run_competition(request: RivalCompetitionRequest) -> void:
@@ -46,10 +50,7 @@ func run_competition(request: RivalCompetitionRequest) -> void:
 		GameTypes.CompetitionType.SIGMA:
 			_start_sigma(request)
 		GameTypes.CompetitionType.MONEY:
-			push_error(
-				"[RivalCompetitionRunner] unsupported competition_type=%s (no fake result)"
-				% str(request.competition_type)
-			)
+			_start_money(request)
 		_:
 			push_error(
 				"[RivalCompetitionRunner] unknown competition_type=%s"
@@ -60,13 +61,15 @@ func run_competition(request: RivalCompetitionRequest) -> void:
 func _start_slap(request: RivalCompetitionRequest) -> void:
 	_busy = true
 	_submitted = false
+	_hostile_emitted = false
+	_current_request = request
 	var encounters: Node = get_node("/root/RivalEncounters")
 	var is_story: bool = false
 	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
 	if def != null:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_slap_perks()
-	_prepare_player_mode(encounters)
+	_prepare_player_mode(encounters, Input.MOUSE_MODE_CAPTURED)
 	_active = SlapMinigame.new()
 	get_tree().root.add_child(_active)
 	(_active as SlapMinigame).setup(request, is_story, perks)
@@ -77,13 +80,15 @@ func _start_slap(request: RivalCompetitionRequest) -> void:
 func _start_dance(request: RivalCompetitionRequest) -> void:
 	_busy = true
 	_submitted = false
+	_hostile_emitted = false
+	_current_request = request
 	var encounters: Node = get_node("/root/RivalEncounters")
 	var is_story: bool = false
 	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
 	if def != null:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_dance_perks()
-	_prepare_player_mode(encounters)
+	_prepare_player_mode(encounters, Input.MOUSE_MODE_CAPTURED)
 	var dance: DanceMinigame = DanceMinigame.new()
 	_active = dance
 	get_tree().root.add_child(dance)
@@ -95,13 +100,15 @@ func _start_dance(request: RivalCompetitionRequest) -> void:
 func _start_sigma(request: RivalCompetitionRequest) -> void:
 	_busy = true
 	_submitted = false
+	_hostile_emitted = false
+	_current_request = request
 	var encounters: Node = get_node("/root/RivalEncounters")
 	var is_story: bool = false
 	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
 	if def != null:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_sigma_perks()
-	_prepare_player_mode(encounters)
+	_prepare_player_mode(encounters, Input.MOUSE_MODE_CAPTURED)
 	var sigma: SigmaMinigame = SigmaMinigame.new()
 	_active = sigma
 	get_tree().root.add_child(sigma)
@@ -110,14 +117,36 @@ func _start_sigma(request: RivalCompetitionRequest) -> void:
 		sigma.match_finished.connect(_on_match_finished)
 
 
-func _prepare_player_mode(encounters: Node) -> void:
+func _start_money(request: RivalCompetitionRequest) -> void:
+	_busy = true
+	_submitted = false
+	_hostile_emitted = false
+	_current_request = request
+	var encounters: Node = get_node("/root/RivalEncounters")
+	var is_story: bool = false
+	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
+	if def != null:
+		is_story = def.is_story
+	_prepare_player_mode(encounters, Input.MOUSE_MODE_VISIBLE)
+	var money: MoneyMinigame = MoneyMinigame.new()
+	_active = money
+	get_tree().root.add_child(money)
+	money.setup(request, is_story)
+	if not money.match_finished.is_connected(_on_match_finished):
+		money.match_finished.connect(_on_match_finished)
+
+
+func _prepare_player_mode(
+	encounters: Node,
+	mouse_mode: Input.MouseMode = Input.MOUSE_MODE_CAPTURED,
+) -> void:
 	_return_mode = int(PlayerController.ControlMode.GAMEPLAY)
 	var session: RivalEncounterSession = encounters.call("get_active_session") as RivalEncounterSession
 	if session != null and session.return_control_mode >= 0:
 		_return_mode = session.return_control_mode
 	_player = get_tree().get_first_node_in_group("player") as PlayerController
 	if _player != null:
-		_player.enter_minigame(Input.MOUSE_MODE_CAPTURED)
+		_player.enter_minigame(mouse_mode)
 
 
 func _snapshot_slap_perks() -> Dictionary:
@@ -179,12 +208,41 @@ func _on_match_finished(result: RivalCompetitionResult) -> void:
 	if _submitted:
 		return
 	_submitted = true
+	_maybe_emit_hostile_acquisition(result)
 	var encounters: Node = get_node_or_null("/root/RivalEncounters")
 	if encounters != null and result != null:
 		encounters.call("submit_competition_result", result)
 	_restore_player()
 	_cleanup_active()
 	_busy = false
+	_current_request = null
+
+
+func _maybe_emit_hostile_acquisition(result: RivalCompetitionResult) -> void:
+	if _hostile_emitted:
+		return
+	if result == null or _current_request == null:
+		return
+	if _current_request.competition_type != GameTypes.CompetitionType.MONEY:
+		return
+	if result.outcome != GameTypes.RivalCompetitionOutcome.PLAYER_WIN:
+		return
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null or not bool(gs.call("has_perk", PerkIds.CAPITAL_HOSTILE_ACQUISITION)):
+		return
+	var encounters: Node = get_node_or_null("/root/RivalEncounters")
+	if encounters == null:
+		return
+	var def: RivalDefinition = encounters.call(
+		"get_rival_definition",
+		_current_request.rival_id,
+	) as RivalDefinition
+	if def == null:
+		return
+	if def.competition_modifier_id != &"money_acquisition":
+		return
+	_hostile_emitted = true
+	hostile_acquisition_requested.emit(_current_request.rival_id)
 
 
 func _restore_player() -> void:
