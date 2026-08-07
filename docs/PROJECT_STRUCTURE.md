@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 08 — Girl Discovery & Phone Journal**.  
+Фактическая структура после **MODULE 09 — Dating Core**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -13,8 +13,8 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + future HUD shell | `phone/phone_journal.tscn` (MODULE 08 functional journal) | Dating CTAs / messaging |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn`; `dating/dating_ui.tscn` (MODULE 09 functional) | Final phone/date art |
 | `world/` | World / test scenes | FPS test, GameState/ContentDB self-tests | Central game controllers |
 | `main.tscn` | Canonical entry | bootstrap в FPS test | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
@@ -40,11 +40,11 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 
 - `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
 - `types/perk_ids.gd` — `class_name PerkIds` 32 canonical perk `StringName` constants
-- `definitions/*.gd` — typed `Resource` schemas (incl. `AppearanceProfileDefinition`, `AnimationProfileDefinition`, `DiscoverySituationDefinition`, `DiscoveryApproachDefinition`)
-- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); `discovery_situations` empty until MODULE 14
-- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; discovery situation/approach indexes)
+- `definitions/*.gd` — typed `Resource` schemas (incl. dating action/event/pool/greeting/farewell, discovery, appearance)
+- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); `discovery_situations` / dating greetings/farewells empty until MODULE 14
+- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; dating greeting/farewell + test overrides)
 - `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations)
-- `test/` — fixtures + `content_data_self_test.gd` + MODULE 06 `rival_test_*.tres` + MODULE 08 `girl_test_discovery*`, `discovery_situation_test_*` (not in production catalog)
+- `test/` — fixtures + MODULE 06–09 test content (`dating_test_fixtures.gd`, discovery/rival fixtures; not in production catalog)
 
 ### `game/state/`
 
@@ -57,6 +57,17 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 - `girl_discovery_attempt.gd` — transient attempt session
 - `girl_actor.gd` / `girl_actor.tscn` — Interactable + CharacterActor + 4m seen trigger
 - `test/girl_discovery_test.tscn` + `girl_discovery_self_test.gd` — MODULE 08 headless runner
+
+### `game/dating/`
+
+- `dating_core.gd` — autoload `DatingCore` (after GirlDiscovery): one active date session, planner, perks, money, known reactions; returns `DatingResult.date_delta` only
+- `dating_session.gd` / typed request/result/decision/execution helpers
+- `primary_trait_evaluator.gd` / `secondary_trait_evaluator.gd` / `dating_event_planner.gd` — pure helpers
+- `test/dating_test.tscn` + `dating_self_test.gd` — MODULE 09 headless runner
+
+### `ui/dating/`
+
+- `dating_ui.tscn` + `dating_ui.gd` — functional MODAL_UI date choices (not final art)
 
 ### `game/progression/`
 
@@ -127,6 +138,7 @@ Interaction ray mask: world + interactable (bits 1+3).
 | `GameState` | Canonical runtime playthrough state (MODULE 02); owns purchased perks |
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
 | `GirlDiscovery` | Girl discovery / acquaintance (MODULE 08); after ContentDB; uses GameState + ContentDB; no Dating |
+| `DatingCore` | One-date runtime (MODULE 09); after GirlDiscovery; uses GameState + ContentDB; does **not** apply relationship |
 | `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
 | `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
 | `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07D routes SLAP/DANCE/SIGMA/MONEY); Hostile Acquisition hook; after RivalEncounters; Callable seam only |
@@ -142,7 +154,9 @@ audio/
 `minigames/sigma/` реализован (MODULE 07C).  
 `minigames/money/` реализован (MODULE 07D).  
 `game/girls/` реализован (MODULE 08).  
-`ui/phone/` функциональный журнал (MODULE 08); финальный phone shell — MODULE 22.
+`game/dating/` реализован (MODULE 09); relationship apply — MODULE 10.  
+`ui/phone/` функциональный журнал (MODULE 08); финальный phone shell — MODULE 22.  
+`ui/dating/` функциональный dating UI (MODULE 09).
 
 ## Donor
 

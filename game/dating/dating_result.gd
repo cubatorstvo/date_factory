@@ -1,0 +1,17 @@
+class_name DatingResult
+extends RefCounted
+## Immutable-ish finish payload for one date (MODULE 09).
+## Does not mutate GameState relationship.
+
+var girl_id: StringName = &""
+var location_id: StringName = &""
+var greeting_id: StringName = &""
+var greeting_reaction: int = 0
+var central_event_ids: Array[StringName] = []
+var decision_records: Array[DatingDecisionRecord] = []
+var primary_total: int = 0
+var secondary_reaction: int = 0
+var date_delta: int = 0
+var money_spent_total: int = 0
+var used_right_to_say_nothing: bool = false
+var used_second_outfit: bool = false

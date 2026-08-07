@@ -1,0 +1,37 @@
+class_name DatingTypes
+extends RefCounted
+## Shared dating enums and error codes (MODULE 09).
+
+
+enum Phase {
+	ARRIVAL,
+	GREETING,
+	CENTRAL_EVENT,
+	RESOLVING_ACTION,
+	ENCORE_DECISION,
+	FAREWELL,
+	SECONDARY_EVALUATION,
+	FINISHED,
+}
+
+
+enum ExecutionOutcome {
+	SUCCESS,
+	FAILURE,
+}
+
+
+const ERR_OK: StringName = &"OK"
+const ERR_NO_GIRL: StringName = &"NO_GIRL"
+const ERR_NO_CONTACT: StringName = &"NO_CONTACT"
+const ERR_MISSING_GREETING: StringName = &"MISSING_GREETING"
+const ERR_MISSING_FAREWELL: StringName = &"MISSING_FAREWELL"
+const ERR_INSUFFICIENT_DATE_CONTENT: StringName = &"INSUFFICIENT_DATE_CONTENT"
+const ERR_DATE_ALREADY_ACTIVE: StringName = &"DATE_ALREADY_ACTIVE"
+const ERR_INVALID_PHASE: StringName = &"INVALID_PHASE"
+const ERR_INVALID_CHOICE: StringName = &"INVALID_CHOICE"
+const ERR_INVALID_ACTION_RESULT: StringName = &"INVALID_ACTION_RESULT"
+const ERR_ACTION_UNAVAILABLE: StringName = &"ACTION_UNAVAILABLE"
+const ERR_SESSION_FINISHED: StringName = &"SESSION_FINISHED"
+
+const SILENCE_GREETING_ID: StringName = &"dating_greeting_silence"

@@ -222,10 +222,22 @@ func _reaction_text(reaction: int) -> String:
 
 func _resolve_reaction_source_label(source_id: StringName) -> String:
 	var db: Node = get_node_or_null("/root/ContentDB")
-	if db != null and db.has_method("get_dating_event"):
-		var ev: DatingEventDefinition = db.call("get_dating_event", source_id) as DatingEventDefinition
-		if ev != null:
-			return String(ev.id)
+	if db != null:
+		if db.has_method("find_dating_greeting"):
+			var greeting: DatingGreetingDefinition = db.call("find_dating_greeting", source_id) as DatingGreetingDefinition
+			if greeting != null and greeting.label.strip_edges() != "":
+				return greeting.label
+		if source_id == &"dating_greeting_silence":
+			return "Ничего не говорить"
+		if db.has_method("find_dating_action"):
+			var action: DatingActionDefinition = db.call("find_dating_action", source_id) as DatingActionDefinition
+			if action != null and action.label.strip_edges() != "":
+				return action.label
+		if String(source_id).begins_with("date_event_") and db.has_method("get_dating_event"):
+			var ev: DatingEventDefinition = db.call("get_dating_event", source_id) as DatingEventDefinition
+			if ev != null:
+				var title: String = ev.title.strip_edges()
+				return title if title != "" else String(ev.id)
 	var gd: Node = get_node_or_null("/root/GirlDiscovery")
 	if gd != null:
 		var approach: DiscoveryApproachDefinition = gd.call("find_discovery_approach", source_id) as DiscoveryApproachDefinition

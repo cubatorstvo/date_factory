@@ -558,3 +558,26 @@ Event-driven autoload matches MODULE 05/06 ownership; GameState keeps cooldown a
 
 Scope:
 `data/definitions/discovery_*.gd`, `data/catalog/*`, `game/state/game_state.gd`, `game/girls/**`, `ui/phone/**`, `data/test/girl_test_*`, `data/test/discovery_*`, `project.godot` `[autoload]`, docs
+
+## MODULE 09: DatingCore autoload — date_delta only
+
+Context:
+Need a full one-date runtime (arrival → greeting → 3 central events → farewell → secondary) with exact primary/secondary rules and dating perks, without applying relationship / XP / conquer / cooldown.
+
+Decision:
+- Autoload `DatingCore` → `res://game/dating/dating_core.gd`, registered **after GirlDiscovery**.
+- Transient `DatingSession` (not saved); typed `DatingStartRequest` / `DatingResult` / `DatingDecisionRecord`.
+- Category planner: 24 ordered triples (exclude CCC/SSS/GGG), content-aware filter, then slot-by-slot unique events; central IDs immutable after start.
+- Primary evaluator reads ContentDB liked/disliked tags; greeting diagnostic only (`date_delta += 0`).
+- Secondary after exactly 4 decision records; `date_delta = primary_total + secondary ∈ [-5,+5]`.
+- External resolver seam: injectable Callable or `submit_action_execution_result` in `RESOLVING_ACTION`.
+- Money: spend before resolve; Representation Expenses (first normal paid free); Dignity Refund on FAILURE; **no** `CAPITAL_NO_LIMIT` once/date freebie.
+- Perks: silence/clues, Second Outfit flag, Public Significance, Encore tag transform, authored `required_perk_id` gates.
+- Never call `set/add_girl_relationship`, `mark_girl_conquered`, `add_experience`. MODULE 10 applies `date_delta`.
+- Functional `ui/dating/dating_ui.tscn` uses `PlayerController.ControlMode.MODAL_UI`.
+
+Reason:
+Keeps Dating Core as a pure session calculator so Relationships can own persistent consequences without mid-date save or dual managers.
+
+Scope:
+`game/dating/**`, `ui/dating/**`, `data/definitions/dating_*`, ContentDB greeting/farewell indexes + overrides, `ui/phone/phone_journal.gd` labels, `data/test/dating_test_fixtures.gd`, `project.godot`, docs

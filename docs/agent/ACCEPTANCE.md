@@ -1,16 +1,15 @@
-# Acceptance — MODULE 08 Girl Discovery & Phone Journal
+# Acceptance — MODULE 09 Dating Core
 
 ## Player-visible result
-See girl → discover + clue0 → interact → experience gate → authored approach → number in phone OR fail + clue + 1–3 day cooldown → same girl returns. Phone journal lists discovered only; no Dating buttons.
+Contact → start one date → greeting (score 0) → 3 central events → farewell → secondary → typed DatingResult with date_delta ∈ [-5,+5]. Relationship/XP/conquest untouched.
 
 ## PASS
-- DiscoverySituation/Approach defs + ContentDB index/validate
-- GameState: discovered (ordered), contacts, clues, primary reveal, reactions seam, retry days
-- Autoload GirlDiscovery (event-driven, day-advance seam, no clock)
-- Good Profile: second initial clue on first discovery only
-- GirlActor + test scene; PhoneJournal MODAL_UI; no permanent phone hotkey
-- MODULE_08_TEST ALL PASS + regressions 02–07D + FPS
-- No MODULE 09
+- Autoload DatingCore + DatingSession; one active date; contact required
+- Content-aware 24-triple event planner; Primary/Secondary exact
+- Perks: Right to Say Nothing, She Already Started, Second Outfit, Public Significance, Representation Expenses, Dignity Refund, Encore; Hold Doorway/Buy Problem as perk gates
+- Phone known reactions + label resolve for greetings/actions
+- MODULE_09_TEST ALL PASS + regressions 02–08 + FPS
+- No MODULE 10
 
 ## Product questions
-None — follow MODULE_08 spec; use PlayerController.ControlMode.MODAL_UI (not invent PlayerControlMode).
+None.

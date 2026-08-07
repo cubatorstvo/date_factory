@@ -15,7 +15,7 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 | `MUSCLE_TOUGH_CHEEK` | `perk_muscle_tough_cheek` | **Slap (implemented):** once/match on DEFENSE fail rival still +1; if prev streak>0 → `streak=max(1,ceil(prev/2))` and consume; streak0 does not consume | MODULE 07A Slap |
 | `MUSCLE_DOUBLE_SLAP` | `perk_muscle_double_slap` | **Slap (implemented):** Q once/match; perfect +2; non-perfect +1 (or 0 on miss) and next DEFENSE width `×0.65` (min `0.08`) | MODULE 07A |
 | `MUSCLE_COUNTER_ARGUMENT` | `perk_muscle_counter_argument` | **Slap (implemented):** perfect DEFENSE arms next ATTACK; that ATTACK perfect +1 extra then consume; stacks with Double (+3) | MODULE 07A |
-| `MUSCLE_HOLD_DOORWAY` | `perk_muscle_hold_doorway` | Unlocks authored hold-doorway / position actions only | Dating content; world scripted interactions |
+| `MUSCLE_HOLD_DOORWAY` | `perk_muscle_hold_doorway` | **Dating (implemented):** `required_perk_id` gate on authored actions only | MODULE 09 Dating; world scripted interactions |
 | `MUSCLE_HEROIC_DEFEAT` | `perk_muscle_heroic_defeat` | Softens authority punishment vs clearly stronger rival; dating defeat may add VULNERABILITY + RISK | MODULE 06 Rival; MODULE 09 Dating |
 | `MUSCLE_MASS_RESERVE` | `perk_muscle_mass_reserve` | **Slap (implemented):** once/match first ordinary ATTACK miss → no score change, new ATTACK, streak0; not on Double/TwoHanded | MODULE 07A Slap |
 | `MUSCLE_TWO_HANDED_ARGUMENT` | `perk_muscle_two_handed_argument` | **Slap (implemented):** story only; R once; exclusive with Double; perfect +2 (+counter); non-perfect → rival +2, skip DEFENSE | MODULE 07A |
@@ -30,10 +30,10 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 | `APPEARANCE_STAGED_WALK` | `perk_appearance_staged_walk` | Dance: once/match, first ERROR at streak>0 → streak=`max(1,ceil(prev/2))` (error still counts); unused if first error at streak 0 | MODULE 07B Dance |
 | `APPEARANCE_POCKET_MIRROR` | `perk_appearance_pocket_mirror` | Sigma: Q once/match, 2.5s; `zone_center=0`, `normal_half_width*=1.20` clamp≤0.46; pressure/disturbances continue; timer may carry across sections | MODULE 07C Sigma |
 | `APPEARANCE_CONTROL_PROFILE` | `perk_appearance_control_profile` | Sigma: if PERFECT completes while Mirror still active → +1 extra (total +2 with base); stacks with Reverse Pressure (+3 max) | MODULE 07C |
-| `APPEARANCE_SECOND_OUTFIT` | `perk_appearance_second_outfit` | Once per date, after girl arrives, before first scored event: swap prepared accessory set | MODULE 09; character presentation |
-| `APPEARANCE_ENCORE` | `perk_appearance_encore` | Once per date after neutral (0) appearance action: extra visual action; success may replace one tag with ORIGINALITY | MODULE 09 |
+| `APPEARANCE_SECOND_OUTFIT` | `perk_appearance_second_outfit` | **Dating (implemented):** once/date ARRIVAL/GREETING before first evaluated action; presentation flag + `second_outfit_requested` (no score/tags) | MODULE 09; character presentation |
+| `APPEARANCE_ENCORE` | `perk_appearance_encore` | **Dating (implemented):** once/date after Appearance base primary 0 → ENCORE_DECISION; ORIGINALITY tag transform + re-eval; decline keeps charge | MODULE 09 |
 | `APPEARANCE_RHYTHM_IN_BODY` | `perk_appearance_rhythm_in_body` | Dance: `base_window *= 1.20` before streak bonus (final ≤0.30); first complex (`length>=4`) PLAYER_REPEAT shows next-direction clue 0.25s before beats | MODULE 07B |
-| `APPEARANCE_PUBLIC_SIGNIFICANCE` | `perk_appearance_public_significance` | Once per date: choose appearance option requiring appearance+1; activity still must be played | MODULE 09 |
+| `APPEARANCE_PUBLIC_SIGNIFICANCE` | `perk_appearance_public_significance` | **Dating (implemented):** once/date unlock Appearance action at current+1 only; consume on select; resolver still runs | MODULE 09 |
 
 ---
 
@@ -42,13 +42,13 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 | PerkId | ID | Contract (summary) | Future owners |
 |---|---|---|---|
 | `CAPITAL_PAYABLE_INTENT` | `perk_capital_payable_intent` | Unlocks capital actions by level; unlocks money contests (MODULE 06 access only — no extra Money match modifier) | MODULE 06; 07D Money; 09 |
-| `CAPITAL_REPRESENTATION_EXPENSES` | `perk_capital_representation_expenses` | First normal paid date action does not spend money (still counts as paid) | MODULE 09 |
-| `CAPITAL_BUY_PROBLEM` | `perk_capital_buy_problem` | Once per date: authored purchase of an obstacle (event must allow it) | MODULE 09 + authored event |
+| `CAPITAL_REPRESENTATION_EXPENSES` | `perk_capital_representation_expenses` | **Dating (implemented):** first normal paid (`!is_major_expense`) action free; consume on select | MODULE 09 |
+| `CAPITAL_BUY_PROBLEM` | `perk_capital_buy_problem` | **Dating (implemented):** `required_perk_id` gate on authored actions only | MODULE 09 + authored event |
 | `CAPITAL_HOSTILE_ACQUISITION` | `perk_capital_hostile_acquisition` | After MONEY match `PLAYER_WIN` vs rival with `competition_modifier_id=&"money_acquisition"`, Runner emits `hostile_acquisition_requested` once (no world mutation in 07D; ownership later) | MODULE 07D hook; 11/12 Story/World |
 | `CAPITAL_SALARY_ADVANCE` | `perk_capital_salary_advance` | Once per salary period: take nearest available payout without going to payout place | MODULE 13 Salary Mine |
-| `CAPITAL_DIGNITY_REFUND` | `perk_capital_dignity_refund` | Failed paid Dating action refunds money; failure/tags remain. Does **not** refund Money Contest auction spends | MODULE 09 paid resolver |
+| `CAPITAL_DIGNITY_REFUND` | `perk_capital_dignity_refund` | **Dating (implemented):** on execution FAILURE with `money_spent>0`, `GameState.add_money` refund; tags/reaction unchanged. Does **not** refund Money Contest auction spends | MODULE 09 paid resolver |
 | `CAPITAL_FINANCIAL_INERTIA` | `perk_capital_financial_inertia` | After salary joke/manual cycle seen, salary level-up may add small passive money | MODULE 13 |
-| `CAPITAL_NO_LIMIT` | `perk_capital_no_limit` | Once per major story stage: allow authored capital solution regardless of price | MODULE 09; 11/12 |
+| `CAPITAL_NO_LIMIT` | `perk_capital_no_limit` | Once per major story stage: allow authored capital solution regardless of price. **MODULE 09 does NOT implement once/date freebie** | MODULE 11/12 Story; not MODULE 09 session |
 
 ---
 
@@ -60,8 +60,8 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 | `AURA_DONT_BLINK_FIRST` | `perk_aura_dont_blink_first` | Sigma: first hold error once/match skips −0.65; `total_error_count+=1`; perfect impossible; used even at progress 0 | MODULE 07C |
 | `AURA_SILENCE_LONGER` | `perk_aura_silence_longer` | Sigma: R once/match, 2.0s; freezes disturbance schedule clock only; active disturbance finishes; baseline continues; may carry across sections | MODULE 07C |
 | `AURA_REVERSE_PRESSURE` | `perk_aura_reverse_pressure` | Sigma: survive ACTIVE disturbance +0.75s with zero hold errors → arm; next PERFECT consumes for +1; arm persists across non-perfect sections | MODULE 07C |
-| `AURA_RIGHT_TO_SAY_NOTHING` | `perk_aura_right_to_say_nothing` | Dating: once/date skip greeting, girl starts (diagnostic, no relationship). Rival: once/encounter replace rival-chosen competition if they initiated; **no Authority penalty** for the swap | MODULE 09; MODULE 06 |
-| `AURA_SHE_ALREADY_STARTED` | `perk_aura_she_already_started` | Dating only: after Right to Say Nothing, girl's first initiative gives a clearer primary-trait clue. **No Rival Encounter effect** | MODULE 09 |
+| `AURA_RIGHT_TO_SAY_NOTHING` | `perk_aura_right_to_say_nothing` | **Dating (implemented):** silence greeting (reaction 0, no fake tags); reveal next unknown clue. Rival: once/encounter replace rival-chosen competition if they initiated; **no Authority penalty** for the swap | MODULE 09; MODULE 06 |
+| `AURA_SHE_ALREADY_STARTED` | `perk_aura_she_already_started` | **Dating (implemented):** after silence, +1 more next unknown clue (max 2); does **not** call `reveal_primary_trait`. **No Rival Encounter effect** | MODULE 09 |
 | `AURA_ATMOSPHERIC_INFLUENCE` | `perk_aura_atmospheric_influence` | Sigma: if observers present → `observer_wobble=0`; does not remove rival wobble/pressure/disturbances | MODULE 07C |
 | `AURA_LOCAL_SIGNIFICANCE` | `perk_aura_local_significance` | Once per normal rival encounter: clearly weaker rival may concede before minigame (not story rivals) | MODULE 06 |
 
@@ -75,8 +75,8 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 - **MODULE 07C Sigma:** pocket mirror; control profile; don’t blink first; silence longer; reverse pressure; atmospheric influence
 - **MODULE 07D Money:** payable intent; hostile acquisition
 - **MODULE 08 Discovery:** good profile (visual clue)
-- **MODULE 09 Dating:** hold doorway; heroic defeat; good profile; second outfit; encore; public significance; payable intent; representation expenses; buy problem; dignity refund; no limit; presence registered; right to say nothing; she already started
-- **MODULE 11/12 Story/World:** hostile acquisition; no limit; hold doorway (authored persistent consequences)
+- **MODULE 09 Dating (implemented):** hold doorway gate; buy problem gate; second outfit; encore; public significance; representation expenses; dignity refund; right to say nothing; she already started. **Not:** No Limit once/date; heroic defeat dating path (external resolver later); automatic trait reveal
+- **MODULE 11/12 Story/World:** hostile acquisition; no limit stage usage; hold doorway (authored persistent consequences)
 - **MODULE 13 Salary Mine:** salary advance; financial inertia
 
 MODULE 07A implements Muscle slap rows above. Other unimplemented effect contracts remain expected, not bugs.

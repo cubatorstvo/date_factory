@@ -1,5 +1,5 @@
-﻿# File ownership — MODULE 08
+﻿# File ownership — MODULE 09
 
 | Task | Agent | Writable | Status |
 |------|-------|----------|--------|
-| MODULE_08_GIRL_DISCOVERY | df-gameplay-worker | discovery defs, ContentDB, GameState, game/girls/**, ui/phone/**, docs | done |
+| MODULE_09_DATING_CORE | df-gameplay-worker | game/dating/**, ui/dating/**, dating defs, ContentDB, phone labels, docs | done |

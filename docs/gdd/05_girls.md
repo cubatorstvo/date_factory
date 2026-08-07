@@ -283,6 +283,8 @@
 
 После раскрытия телефон показывает её правила открыто.
 
+> Technical note (MODULE 09): Dating Core records clues/reactions but does **not** automatically reveal primary/secondary trait names. Threshold / auto-reveal remains an open product question.
+
 ---
 
 # 24. Поиск девушки в городе

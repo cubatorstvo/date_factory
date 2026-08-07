@@ -84,6 +84,13 @@ var _appearances_by_id: Dictionary = {}
 var _animations_by_id: Dictionary = {}
 var _discovery_situations_by_id: Dictionary = {}
 var _discovery_approaches_by_id: Dictionary = {}
+var _greetings_by_id: Dictionary = {}
+var _farewells_by_id: Dictionary = {}
+var _girl_overrides: Dictionary = {}
+var _event_overrides: Dictionary = {}
+var _pool_overrides: Dictionary = {}
+var _greeting_overrides: Dictionary = {}
+var _farewell_overrides: Dictionary = {}
 var _ready_ok: bool = false
 
 
@@ -129,6 +136,8 @@ func get_secondary_trait(secondary_trait: GameTypes.SecondaryGirlTrait) -> Secon
 
 
 func get_girl(id: StringName) -> GirlDefinition:
+	if _girl_overrides.has(id):
+		return _girl_overrides[id] as GirlDefinition
 	if not _girls_by_id.has(id):
 		push_error("[ContentDB] missing girl: %s" % String(id))
 		return null
@@ -143,6 +152,8 @@ func get_rival(id: StringName) -> RivalDefinition:
 
 
 func get_dating_event(id: StringName) -> DatingEventDefinition:
+	if _event_overrides.has(id):
+		return _event_overrides[id] as DatingEventDefinition
 	if not _events_by_id.has(id):
 		push_error("[ContentDB] missing dating event: %s" % String(id))
 		return null
@@ -150,10 +161,74 @@ func get_dating_event(id: StringName) -> DatingEventDefinition:
 
 
 func get_dating_pool(id: StringName) -> DatingEventPoolDefinition:
+	if _pool_overrides.has(id):
+		return _pool_overrides[id] as DatingEventPoolDefinition
 	if not _pools_by_id.has(id):
 		push_error("[ContentDB] missing dating pool: %s" % String(id))
 		return null
 	return _pools_by_id[id] as DatingEventPoolDefinition
+
+
+func get_dating_greeting(id: StringName) -> DatingGreetingDefinition:
+	var found: DatingGreetingDefinition = find_dating_greeting(id)
+	if found == null:
+		push_error("[ContentDB] missing dating greeting: %s" % String(id))
+	return found
+
+
+func find_dating_greeting(id: StringName) -> DatingGreetingDefinition:
+	if _greeting_overrides.has(id):
+		return _greeting_overrides[id] as DatingGreetingDefinition
+	if _greetings_by_id.has(id):
+		return _greetings_by_id[id] as DatingGreetingDefinition
+	return null
+
+
+func get_dating_farewell(id: StringName) -> DatingFarewellDefinition:
+	var found: DatingFarewellDefinition = find_dating_farewell(id)
+	if found == null:
+		push_error("[ContentDB] missing dating farewell: %s" % String(id))
+	return found
+
+
+func find_dating_farewell(id: StringName) -> DatingFarewellDefinition:
+	if _farewell_overrides.has(id):
+		return _farewell_overrides[id] as DatingFarewellDefinition
+	if _farewells_by_id.has(id):
+		return _farewells_by_id[id] as DatingFarewellDefinition
+	return null
+
+
+func find_dating_action(action_id: StringName) -> DatingActionDefinition:
+	if String(action_id) == "":
+		return null
+	for key in _event_overrides.keys():
+		var ev_o: DatingEventDefinition = _event_overrides[key] as DatingEventDefinition
+		if ev_o != null:
+			for action in ev_o.actions:
+				if action != null and action.id == action_id:
+					return action
+	for key2 in _events_by_id.keys():
+		var ev: DatingEventDefinition = _events_by_id[key2] as DatingEventDefinition
+		if ev == null:
+			continue
+		for action2 in ev.actions:
+			if action2 != null and action2.id == action_id:
+				return action2
+	for fkey in _farewell_overrides.keys():
+		var fw_o: DatingFarewellDefinition = _farewell_overrides[fkey] as DatingFarewellDefinition
+		if fw_o != null:
+			for action3 in fw_o.actions:
+				if action3 != null and action3.id == action_id:
+					return action3
+	for fkey2 in _farewells_by_id.keys():
+		var fw: DatingFarewellDefinition = _farewells_by_id[fkey2] as DatingFarewellDefinition
+		if fw == null:
+			continue
+		for action4 in fw.actions:
+			if action4 != null and action4.id == action_id:
+				return action4
+	return null
 
 
 func get_perk(id: StringName) -> PerkDefinition:
@@ -235,6 +310,57 @@ func list_dating_pools() -> Array[DatingEventPoolDefinition]:
 	return _catalog.dating_pools if _catalog != null else []
 
 
+func list_dating_greetings() -> Array[DatingGreetingDefinition]:
+	return _catalog.dating_greetings if _catalog != null else []
+
+
+func list_dating_farewells() -> Array[DatingFarewellDefinition]:
+	return _catalog.dating_farewells if _catalog != null else []
+
+
+func register_girl_definition(def: GirlDefinition) -> void:
+	if def == null or String(def.id) == "":
+		push_error("[ContentDB] register_girl_definition invalid")
+		return
+	_girl_overrides[def.id] = def
+
+
+func register_dating_event(def: DatingEventDefinition) -> void:
+	if def == null or String(def.id) == "":
+		push_error("[ContentDB] register_dating_event invalid")
+		return
+	_event_overrides[def.id] = def
+
+
+func register_dating_pool(def: DatingEventPoolDefinition) -> void:
+	if def == null or String(def.id) == "":
+		push_error("[ContentDB] register_dating_pool invalid")
+		return
+	_pool_overrides[def.id] = def
+
+
+func register_dating_greeting(def: DatingGreetingDefinition) -> void:
+	if def == null or String(def.id) == "":
+		push_error("[ContentDB] register_dating_greeting invalid")
+		return
+	_greeting_overrides[def.id] = def
+
+
+func register_dating_farewell(def: DatingFarewellDefinition) -> void:
+	if def == null or String(def.id) == "":
+		push_error("[ContentDB] register_dating_farewell invalid")
+		return
+	_farewell_overrides[def.id] = def
+
+
+func clear_dating_overrides() -> void:
+	_girl_overrides.clear()
+	_event_overrides.clear()
+	_pool_overrides.clear()
+	_greeting_overrides.clear()
+	_farewell_overrides.clear()
+
+
 func list_perks() -> Array[PerkDefinition]:
 	return _catalog.perks if _catalog != null else []
 
@@ -283,6 +409,8 @@ static func validate_catalog(catalog: ContentCatalog) -> Dictionary:
 	_validate_rivals(catalog, errors)
 	_validate_dating_events(catalog, errors)
 	_validate_dating_pools(catalog, errors)
+	_validate_dating_greetings(catalog, errors)
+	_validate_dating_farewells(catalog, errors)
 	_validate_animation_profiles(catalog, errors)
 	_validate_appearance_profiles(catalog, errors)
 	_validate_discovery_situations(catalog, errors)
@@ -321,6 +449,8 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 	var animations_by_id: Dictionary = {}
 	var discovery_situations_by_id: Dictionary = {}
 	var discovery_approaches_by_id: Dictionary = {}
+	var greetings_by_id: Dictionary = {}
+	var farewells_by_id: Dictionary = {}
 	var dup_errors: Array[String] = []
 	for def in catalog.primary_traits:
 		if def == null:
@@ -364,6 +494,20 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 			dup_errors.append("duplicate dating pool id %s" % String(def.id))
 		else:
 			pools_by_id[def.id] = def
+	for def in catalog.dating_greetings:
+		if def == null:
+			continue
+		if greetings_by_id.has(def.id):
+			dup_errors.append("duplicate dating greeting id %s" % String(def.id))
+		else:
+			greetings_by_id[def.id] = def
+	for def in catalog.dating_farewells:
+		if def == null:
+			continue
+		if farewells_by_id.has(def.id):
+			dup_errors.append("duplicate dating farewell id %s" % String(def.id))
+		else:
+			farewells_by_id[def.id] = def
 	for def in catalog.perks:
 		if def == null:
 			continue
@@ -435,6 +579,8 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 		"animations_by_id": animations_by_id,
 		"discovery_situations_by_id": discovery_situations_by_id,
 		"discovery_approaches_by_id": discovery_approaches_by_id,
+		"greetings_by_id": greetings_by_id,
+		"farewells_by_id": farewells_by_id,
 		"dup_errors": dup_errors,
 	}
 
@@ -455,6 +601,8 @@ func _index_catalog(catalog: ContentCatalog) -> void:
 	_animations_by_id = idx["animations_by_id"]
 	_discovery_situations_by_id = idx["discovery_situations_by_id"]
 	_discovery_approaches_by_id = idx["discovery_approaches_by_id"]
+	_greetings_by_id = idx["greetings_by_id"]
+	_farewells_by_id = idx["farewells_by_id"]
 
 
 static func _validate_traits(catalog: ContentCatalog, errors: Array[String]) -> void:
@@ -789,6 +937,12 @@ static func _validate_action(action: DatingActionDefinition, event_id: String, e
 		if seen.has(tag):
 			errors.append("event %s action %s duplicate tag" % [event_id, String(action.id)])
 		seen[tag] = true
+	if String(action.required_perk_id) != "":
+		if not CANONICAL_PERK_IDS.has(action.required_perk_id):
+			errors.append(
+				"event %s action %s unknown required_perk_id %s"
+				% [event_id, String(action.id), String(action.required_perk_id)]
+			)
 	if action.resolver_id == &"direct" and action.direct_tags.size() == 0:
 		# Production evaluated direct actions should have 1–2 tags.
 		# Allow empty only for explicitly technical fixtures (label starts with TECH).
@@ -907,3 +1061,55 @@ static func _validate_discovery_situations(catalog: ContentCatalog, errors: Arra
 					errors.append("discovery approach %s required_level out of 0..8" % aid)
 			if approach.result_text.strip_edges() == "":
 				errors.append("discovery approach %s empty result_text" % aid)
+
+
+static func _validate_dating_greetings(catalog: ContentCatalog, errors: Array[String]) -> void:
+	var by_id: Dictionary = {}
+	for def in catalog.dating_greetings:
+		if def == null:
+			errors.append("null dating greeting")
+			continue
+		var sid: String = String(def.id)
+		if sid == "" or not sid.begins_with("dating_greeting_"):
+			errors.append("dating greeting invalid id %s" % sid)
+		if by_id.has(def.id):
+			errors.append("duplicate dating greeting id %s" % sid)
+		else:
+			by_id[def.id] = true
+		if def.direct_tags.size() > 2:
+			errors.append("dating greeting %s tags > 2" % sid)
+		var seen: Dictionary = {}
+		for tag in def.direct_tags:
+			if seen.has(tag):
+				errors.append("dating greeting %s duplicate tag" % sid)
+			seen[tag] = true
+		if def.has_requirement:
+			if def.required_level < 0 or def.required_level > 8:
+				errors.append("dating greeting %s required_level out of 0..8" % sid)
+
+
+static func _validate_dating_farewells(catalog: ContentCatalog, errors: Array[String]) -> void:
+	var by_id: Dictionary = {}
+	var action_ids: Dictionary = {}
+	for def in catalog.dating_farewells:
+		if def == null:
+			errors.append("null dating farewell")
+			continue
+		var sid: String = String(def.id)
+		if sid == "" or not sid.begins_with("dating_farewell_"):
+			errors.append("dating farewell invalid id %s" % sid)
+		if by_id.has(def.id):
+			errors.append("duplicate dating farewell id %s" % sid)
+		else:
+			by_id[def.id] = true
+		if def.actions.is_empty():
+			errors.append("dating farewell %s has no actions" % sid)
+		for action in def.actions:
+			if action == null:
+				errors.append("dating farewell %s null action" % sid)
+				continue
+			_validate_action(action, sid, errors)
+			if action_ids.has(action.id):
+				errors.append("dating farewell duplicate action id %s" % String(action.id))
+			else:
+				action_ids[action.id] = true
