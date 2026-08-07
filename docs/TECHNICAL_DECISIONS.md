@@ -435,3 +435,25 @@ Enforces the MODULE 05 invariant, keeps GameState free of ContentDB at startup/r
 
 Scope:
 `game/state/*`, `game/progression/**`, `data/types/perk_ids.gd`, `data/catalog/content_db.gd`, `docs/PERK_EFFECT_CONTRACTS.md`
+
+---
+
+## MODULE 06: RivalEncounters autoload + session
+
+Context:
+Rival challenges can start from world and future Dating/Story; session is transient; defeat/authority are persistent; MODULE 07 minigames must plug in without a generic EventBus.
+
+Decision:
+- Autoload `RivalEncounters` → `res://game/rivals/rival_encounters.gd`, registered **after** `Progression`.
+- Transient `RivalEncounterSession` (RefCounted) owns phase/choice/snapshots for one encounter only.
+- Typed `RivalCompetitionRequest` / `RivalCompetitionResult` / `RivalEncounterResult`; fake test runner forces WIN/LOSS × CLOSE/CRUSHING.
+- Persistent state only in GameState: `defeated_rivals` set + `lose_authority(amount) -> int` (never `< 0`; never `add_authority(-1)`).
+- Competition characteristic mapping via ContentDB `CompetitionDefinition` (SLAP→MUSCLE etc.).
+- Presentation signals live on RivalEncounters (no EventBus). Test rivals load via ResourceLoader overrides — not production catalog.
+- MODULE 07 gameplay is explicitly out of scope; only the integration boundary exists.
+
+Reason:
+Matches existing autoload ownership, keeps GameState free of ContentDB, and lets world/date hosts start encounters without a second global manager.
+
+Scope:
+`game/rivals/**`, `game/state/*`, `data/types/game_types.gd`, `data/test/rival_test_*.tres`, `project.godot` `[autoload]`

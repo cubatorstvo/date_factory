@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 05 — Progression & Perks**.  
+Фактическая структура после **MODULE 06 — Rival Encounter Framework**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -13,7 +13,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression | Parallel resource copies / EventBus / effect engines |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters | Parallel resource copies / EventBus / effect engines |
 | `ui/` | зарезервировано (HUD сейчас внутри Player) | общие UI позже | Domain logic |
 | `world/` | World / test scenes | FPS test, GameState/ContentDB self-tests | Central game controllers |
 | `main.tscn` | Canonical entry | bootstrap в FPS test | Бог-объект |
@@ -44,17 +44,25 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 - `catalog/content_catalog.tres` — explicit production catalog (no FS scan)
 - `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; exact perk tree slots)
 - `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations)
-- `test/` — fixtures + `content_data_self_test.gd` (not in production catalog)
+- `test/` — fixtures + `content_data_self_test.gd` + MODULE 06 `rival_test_*.tres` (not in production catalog)
 
 ### `game/state/`
 
-- `game_state.gd` — autoload `GameState`: currency/XP/characteristics + `purchased_perks` ownership
+- `game_state.gd` — autoload `GameState`: currency/XP/characteristics + `purchased_perks` + `defeated_rivals` + `lose_authority`
 - `game_state_self_test.gd` — reproducible MODULE 02 API/invariant tests
 
 ### `game/progression/`
 
 - `progression.gd` — autoload `Progression`: purchase, cost `3^N`, tree prereqs, availability, `perk_purchased`
 - `test/progression_test.tscn` + `progression_self_test.gd` — MODULE 05 headless runner
+
+### `game/rivals/`
+
+- `rival_encounters.gd` — autoload `RivalEncounters`: encounter lifecycle, competition gates, perk hooks, minigame contract
+- `rival_encounter_session.gd` / `rival_competition_request.gd` / `rival_competition_result.gd` / `rival_encounter_result.gd` — typed transient objects
+- `rival_fake_competition_runner.gd` — test-only forced WIN/LOSS CLOSE/CRUSHING
+- `rival_actor.gd` — thin Interactable adapter (`[E] Вызвать`)
+- `test/rival_encounter_test.tscn` + `rival_encounter_self_test.gd` — MODULE 06 headless runner
 
 ### `world/test/`
 
@@ -85,6 +93,7 @@ Interaction ray mask: world + interactable (bits 1+3).
 | `GameState` | Canonical runtime playthrough state (MODULE 02); owns purchased perks |
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
 | `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
+| `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
 
 ## Canonical future destinations (ещё не созданы)
 

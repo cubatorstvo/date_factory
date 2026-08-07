@@ -95,6 +95,7 @@ func _test_reset_defaults() -> void:
 	_ok(int(_gs.call("get_capital")) == 0, "reset capital 0")
 	_ok(int(_gs.call("get_aura")) == 0, "reset aura 0")
 	_ok(int(_gs.call("get_purchased_perk_count")) == 0, "reset perks empty")
+	_ok(not bool(_gs.call("is_rival_defeated", &"rival_any")), "reset defeated_rivals empty")
 	_ok(int(_gs.call("get_total_clones")) == 0, "reset total clones 0")
 	_ok(int(_gs.call("get_free_clones")) == 0, "reset free clones 0")
 	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 0.0), "reset mpm 0")
@@ -127,6 +128,20 @@ func _test_authority() -> void:
 	_gs.call("add_authority", -1)
 	_ok(int(_gs.call("get_authority")) == 7, "negative authority rejected")
 	_ok(not _gs.has_method("spend_authority"), "no spend_authority API")
+	var lost: int = int(_gs.call("lose_authority", 1))
+	_ok(lost == 1 and int(_gs.call("get_authority")) == 6, "lose_authority 1 => 6")
+	_gs.call("lose_authority", 100)
+	_ok(int(_gs.call("get_authority")) == 0, "lose_authority floors at 0")
+	var lost_zero: int = int(_gs.call("lose_authority", 1))
+	_ok(lost_zero == 0 and int(_gs.call("get_authority")) == 0, "lose_authority at 0 returns 0")
+	_ok(int(_gs.call("lose_authority", -1)) == 0, "lose_authority negative rejected")
+	var rid: StringName = &"rival_test_mod02"
+	_ok(not bool(_gs.call("is_rival_defeated", rid)), "rival not defeated")
+	_ok(bool(_gs.call("mark_rival_defeated", rid)), "mark rival defeated first")
+	_ok(bool(_gs.call("is_rival_defeated", rid)), "rival defeated")
+	_ok(not bool(_gs.call("mark_rival_defeated", rid)), "mark rival defeated duplicate false")
+	_gs.call("reset_for_new_game")
+	_ok(not bool(_gs.call("is_rival_defeated", rid)), "reset clears defeated_rivals")
 
 
 func _test_experience_upgrade_points() -> void:

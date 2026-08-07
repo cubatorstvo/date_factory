@@ -83,3 +83,38 @@ enum CharacterBodyType {
 	MALE,
 	FEMALE,
 }
+
+
+enum RivalEncounterInitiator {
+	PLAYER,
+	RIVAL,
+}
+
+
+enum RivalEncounterPhase {
+	CREATED,
+	CHOOSING,
+	READY,
+	RUNNING,
+	RESOLVING,
+	FINISHED,
+}
+
+
+enum RivalCompetitionOutcome {
+	PLAYER_WIN,
+	PLAYER_LOSS,
+}
+
+
+enum VictoryGrade {
+	CLOSE,
+	CRUSHING,
+}
+
+
+enum RivalEncounterContext {
+	WORLD,
+	DATE,
+	STORY,
+}

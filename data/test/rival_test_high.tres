@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RivalDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/rival_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"rival_test_high"
+display_name = "Test Rival High"
+is_story = false
+has_story_stage = false
+story_stage = 0
+required_authority = 5
+authority_reward = 3
+muscle = 6
+appearance = 6
+capital = 6
+aura = 6
+preferred_competition = 1
+allowed_competitions = Array[int]([0, 1, 2, 3])
+appearance_profile_id = &""
+competition_modifier_id = &""

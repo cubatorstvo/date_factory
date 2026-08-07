@@ -60,8 +60,8 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 | `AURA_DONT_BLINK_FIRST` | `perk_aura_dont_blink_first` | First hold mistake in sigma does not reduce accumulated progress | MODULE 07C |
 | `AURA_SILENCE_LONGER` | `perk_aura_silence_longer` | Once per sigma: opponent briefly stops disturbances | MODULE 07C |
 | `AURA_REVERSE_PRESSURE` | `perk_aura_reverse_pressure` | After handling a disturbance, next perfect sigma section gets +1 point | MODULE 07C |
-| `AURA_RIGHT_TO_SAY_NOTHING` | `perk_aura_right_to_say_nothing` | Dating: once/date skip greeting, girl starts (diagnostic, no relationship). Rival: once/encounter replace opponent-chosen competition if they initiated | MODULE 09; MODULE 06 |
-| `AURA_SHE_ALREADY_STARTED` | `perk_aura_she_already_started` | Amplifies previous perk (clearer trait clue / no extra authority penalty on competition swap) | MODULE 06; 09 |
+| `AURA_RIGHT_TO_SAY_NOTHING` | `perk_aura_right_to_say_nothing` | Dating: once/date skip greeting, girl starts (diagnostic, no relationship). Rival: once/encounter replace rival-chosen competition if they initiated; **no Authority penalty** for the swap | MODULE 09; MODULE 06 |
+| `AURA_SHE_ALREADY_STARTED` | `perk_aura_she_already_started` | Dating only: after Right to Say Nothing, girl's first initiative gives a clearer primary-trait clue. **No Rival Encounter effect** | MODULE 09 |
 | `AURA_ATMOSPHERIC_INFLUENCE` | `perk_aura_atmospheric_influence` | Crowd no longer hardens aura hold; may only change presentation | MODULE 07C; presentation |
 | `AURA_LOCAL_SIGNIFICANCE` | `perk_aura_local_significance` | Once per normal rival encounter: clearly weaker rival may concede before minigame (not story rivals) | MODULE 06 |
 
@@ -69,7 +69,7 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 
 ## Ownership matrix (by future module)
 
-- **MODULE 06 Rival:** heroic defeat; right to say nothing; she already started; local significance; payable intent / presence registered as access
+- **MODULE 06 Rival:** heroic defeat; right to say nothing (override, no auth penalty); local significance; payable intent / presence registered as access. Not: she already started
 - **MODULE 07A Slap:** no warmup; tough cheek; double slap; counter argument; mass reserve; two-handed argument (as applicable)
 - **MODULE 07B Dance:** staged walk; rhythm in body
 - **MODULE 07C Sigma:** pocket mirror; control profile; don’t blink first; silence longer; reverse pressure; atmospheric influence

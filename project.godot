@@ -22,6 +22,7 @@ GodotIQRuntime="*uid://b2otg5noq2igh"
 GameState="*res://game/state/game_state.gd"
 ContentDB="*res://data/catalog/content_db.gd"
 Progression="*res://game/progression/progression.gd"
+RivalEncounters="*res://game/rivals/rival_encounters.gd"
 
 [display]
 

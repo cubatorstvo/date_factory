@@ -36,6 +36,7 @@ var _clones_dating: int = 0
 var _money_per_minute: float = 0.0
 var _dates_per_minute: float = 0.0
 var _purchased_perks: Dictionary = {}
+var _defeated_rivals: Dictionary = {}
 
 const CHAR_MIN: int = 0
 const CHAR_MAX: int = 10
@@ -66,6 +67,7 @@ func reset_for_new_game() -> void:
 	_money_per_minute = 0.0
 	_dates_per_minute = 0.0
 	_purchased_perks = {}
+	_defeated_rivals = {}
 	state_reset.emit()
 
 
@@ -150,6 +152,40 @@ func add_authority(amount: int) -> void:
 		return
 	_authority += amount
 	authority_changed.emit(_authority, amount)
+
+
+## Controlled Authority loss. Never goes below 0. Do not use add_authority(-1).
+func lose_authority(amount: int) -> int:
+	if amount < 0:
+		push_error("[GameState] lose_authority negative amount: %s" % amount)
+		return 0
+	if amount == 0:
+		return 0
+	var actual: int = mini(amount, _authority)
+	if actual == 0:
+		return 0
+	_authority -= actual
+	authority_changed.emit(_authority, -actual)
+	return actual
+
+
+# --- Defeated rivals (MODULE 06) ---
+
+func is_rival_defeated(rival_id: StringName) -> bool:
+	if not _is_valid_id(rival_id):
+		return false
+	return _defeated_rivals.has(rival_id)
+
+
+## Returns true only the first time. Does not grant Authority reward.
+func mark_rival_defeated(rival_id: StringName) -> bool:
+	if not _is_valid_id(rival_id):
+		push_error("[GameState] mark_rival_defeated empty id")
+		return false
+	if _defeated_rivals.has(rival_id):
+		return false
+	_defeated_rivals[rival_id] = true
+	return true
 
 
 # --- Experience / Upgrade Points ---
@@ -482,10 +518,11 @@ func set_late_rates(money_per_minute: float, dates_per_minute: float) -> bool:
 func debug_dump() -> String:
 	if not OS.is_debug_build() and not OS.has_feature("editor"):
 		return ""
-	return "stage=%s money=%s auth=%s xp=%s up=%s chars=%s/%s/%s/%s perks=%s clones=%s/%s/%s free=%s rates=%s/%s rel=%s conquered=%s locs=%s flags=%s" % [
+	return "stage=%s money=%s auth=%s xp=%s up=%s chars=%s/%s/%s/%s perks=%s defeated_rivals=%s clones=%s/%s/%s free=%s rates=%s/%s rel=%s conquered=%s locs=%s flags=%s" % [
 		_stage, _money, _authority, _experience, _upgrade_points,
 		_muscle, _appearance, _capital, _aura,
 		_purchased_perks.size(),
+		_defeated_rivals.size(),
 		_total_clones, _clones_working, _clones_dating, get_free_clones(),
 		_money_per_minute, _dates_per_minute,
 		_girl_relationships.size(), _conquered_girls.size(),
