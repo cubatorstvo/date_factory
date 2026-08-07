@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://djdethq0bcjro"]
+
+[ext_resource type="Script" uid="uid://bcob6wb14b24t" path="res://characters/player/player.gd" id="1_xxgcw"]
+[ext_resource type="Script" uid="uid://cfno4k7qekdfi" path="res://characters/player/player_interaction.gd" id="2_exd8k"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5dc8e"]
+radius = 0.32
+height = 1.8
+
+[node name="Player" type="CharacterBody3D" unique_id=670911453]
+collision_layer = 2
+script = ExtResource("1_xxgcw")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=296882719]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_5dc8e")
+
+[node name="CameraPivot" type="Node3D" parent="." unique_id=1552137205]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
+
+[node name="Camera" type="Camera3D" parent="CameraPivot" unique_id=557549660]
+
+[node name="InteractionQuery" type="RayCast3D" parent="CameraPivot/Camera" unique_id=458480546]
+target_position = Vector3(0, 0, -2.5)
+collision_mask = 5
+collide_with_areas = true
+script = ExtResource("2_exd8k")
+
+[node name="FpsHud" type="CanvasLayer" parent="." unique_id=563788551]
+process_mode = 3
+
+[node name="Crosshair" type="ColorRect" parent="FpsHud" unique_id=1054911424]
+custom_minimum_size = Vector2(4, 4)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 2.0
+offset_bottom = 2.0
+color = Color(1, 1, 1, 0.85)
+
+[node name="PromptLabel" type="Label" parent="FpsHud" unique_id=679403607]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.62
+anchor_right = 0.5
+anchor_bottom = 0.62
+offset_left = -160.0
+offset_top = -12.0
+offset_right = 160.0
+offset_bottom = 20.0
+horizontal_alignment = 1
+
+[node name="DebugLabel" type="Label" parent="FpsHud" unique_id=1345502800]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 480.0
+offset_bottom = 40.0
+
+[node name="PauseOverlay" type="Control" parent="FpsHud" unique_id=2117270702]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="FpsHud/PauseOverlay" unique_id=1741548702]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.55)
+
+[node name="Box" type="VBoxContainer" parent="FpsHud/PauseOverlay" unique_id=1901588095]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -50.0
+offset_right = 100.0
+offset_bottom = 50.0
+
+[node name="PauseLabel" type="Label" parent="FpsHud/PauseOverlay/Box" unique_id=1472131986]
+layout_mode = 2
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="ResumeButton" type="Button" parent="FpsHud/PauseOverlay/Box" unique_id=1162177424]
+layout_mode = 2
+text = "Resume"

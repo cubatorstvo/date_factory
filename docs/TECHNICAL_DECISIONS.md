@@ -123,3 +123,63 @@ Reason:
 
 Scope:
 `project.godot` `[input]`
+
+---
+
+## MODULE 01: rewrite FPS instead of porting donor player
+
+Context:
+Donor `scenes/player/player.gd` contains usable movement/look/ray ideas but is coupled to `Game`, phone, dating, upgrades, EventBus, sprint/bob.
+
+Options:
+- Copy donor player and strip dependencies
+- Write a clean MODULE 01 controller from the new spec
+
+Decision:
+Write new `characters/player/*` + `core/interactable.gd`. Reuse numbers/ideas only (capsule ~1.8, eye ~1.65, step-up approach). No donor file copies.
+
+Reason:
+Spec forbids sprint/bob/domain coupling; clean rewrite is smaller than untangling legacy.
+
+Scope:
+`characters/player/`, `core/interactable.gd`, `world/test/`
+
+---
+
+## Control modes as player enum (not a framework)
+
+Context:
+Need GAMEPLAY / MODAL_UI / MINIGAME / PAUSED ownership.
+
+Options:
+- Separate InputGate autoload/service
+- Enum + API on PlayerController
+
+Decision:
+`PlayerController.ControlMode` with `enter_gameplay/modal_ui/minigame/paused`.
+
+Reason:
+Minimal, local, enough for future consumers without a global state machine framework.
+
+Scope:
+`characters/player/player.gd`
+
+---
+
+## Physics layers: world / player / interactable
+
+Context:
+Need solids vs player vs interaction targets without future layer sprawl.
+
+Options:
+- Everything on layer 1
+- Three named layers
+
+Decision:
+Layer1 `world`, Layer2 `player`, Layer3 `interactable`.
+
+Reason:
+Ray can hit interactables and be blocked by world; player collides only with world.
+
+Scope:
+`project.godot` layer names; player/test scenes

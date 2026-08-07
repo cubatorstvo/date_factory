@@ -1,7 +1,7 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 00 — Project Foundation**.  
-Godot 4.7 · Forward Plus · main scene: `res://main.tscn`
+Фактическая структура после **MODULE 01 — Player FPS Core**.  
+Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
 
@@ -9,59 +9,60 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn`
 |---|---|---|---|
 | `addons/` | Editor/tool plugins | GodotIQ и будущие tooling plugins | Gameplay systems |
 | `assets/` | Импортируемые визуальные ресурсы | модели, текстуры, материалы, fonts, props | Gameplay scripts / domain logic |
-| `core/` | Техническая инфраструктура | debug helpers, bootstrap, generic utilities | Game managers, gameplay systems |
-| `docs/` | Документация репозитория (вне gameplay runtime) | GDD, tech plan, module specs, decisions | Runtime code |
-| `main.tscn` | Canonical entry scene | минимальный foundation smoke UI | Бог-объект / game loop |
-| `project.godot` | Godot project settings | app/input/display/rendering/plugins | Legacy autoloads |
+| `characters/` | Player / будущие character scenes | `player/` FPS controller | Dating/NPC domain systems |
+| `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
+| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions | Runtime code |
+| `ui/` | зарезервировано (HUD сейчас внутри Player) | общие UI позже | Domain logic |
+| `world/` | World / test scenes | test FPS world, будущие локации | Central game controllers |
+| `main.tscn` | Canonical entry | bootstrap в FPS test | Бог-объект |
+| `project.godot` | Godot project settings | app/input/display/layers/plugins | Legacy autoloads |
 | `icon.svg` | Иконка приложения | — | — |
 
-### `core/` сейчас
+### `characters/player/`
 
-- `core/df_log.gd` — `DfLog` debug helper
-- `core/main_bootstrap.gd` — временный bootstrap MODULE 00
+- `player.tscn` / `player.gd` — FPS locomotion, look, control modes, pause
+- `player_interaction.gd` — center-screen RayCast interaction query
 
-### `docs/` сейчас
+### `core/`
 
-- `MASTER_GDD.md` + `gdd/` — продуктовый канон
-- `TECH_PLAN.md` + `tech/` — поверхностный порядок модулей
-- `modules/` — подробные спецификации модулей
-- `TECHNICAL_DECISIONS.md` — decision log
-- `PROJECT_STRUCTURE.md` — этот файл
-- `README.md` — индекс docs
+- `df_log.gd` — `DfLog`
+- `main_bootstrap.gd` — entry → FPS test world
+- `interactable.gd` — `Interactable` contract (`can_interact` / `get_interaction_prompt` / `interact`)
 
-## Canonical future destinations (ещё не созданы)
+### `world/test/`
 
-Создавать только когда появится реальный файл соответствующего модуля:
+- `player_fps_test.tscn` — technical FPS testbed (floor, door gap, steps, slope, jump platform, test interactables)
+- `test_interactables.gd` — smoke interactable wiring + modal test UI
 
-```text
-audio/
-characters/
-data/
-game/
-minigames/
-ui/
-world/
-```
+## Physics layers (3D)
 
-| Future path | Для чего |
-|---|---|
-| `audio/` | музыка и аудиоресурсы |
-| `characters/` | player/NPC presentation |
-| `data/` | content definitions (MODULE 03+) |
-| `game/` | feature-level gameplay systems |
-| `minigames/` | изолированные мини-игры |
-| `ui/` | общие UI scenes/widgets |
-| `world/` | локации и world composition |
+| Layer | Name | Use |
+|---|---|---|
+| 1 | `world` | Solid geometry |
+| 2 | `player` | Player body |
+| 3 | `interactable` | Interactable Area3D targets |
+
+Player: layer 2, mask 1.  
+Interaction ray mask: world + interactable (bits 1+3).
 
 ## Autoload
 
 | Name | Почему |
 |---|---|
-| `GodotIQRuntime` | Часть editor/runtime bridge addon; не gameplay |
+| `GodotIQRuntime` | Editor/runtime bridge addon; не gameplay |
 
-Gameplay autoload отсутствуют намеренно.
+## Canonical future destinations (ещё не созданы)
+
+```text
+audio/
+data/
+game/
+minigames/
+```
+
+`ui/` существует как папка-заготовка; FPS HUD временно живёт в `player.tscn`.
 
 ## Donor
 
-Read-only donor: `../date_factory_legacy` (`legacy-v1`).  
-Runtime проекта не зависит от donor.
+Read-only: `../date_factory_legacy` (`legacy-v1`).  
+Runtime не зависит от donor.
