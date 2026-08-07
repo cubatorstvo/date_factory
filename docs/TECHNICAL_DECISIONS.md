@@ -393,3 +393,45 @@ Without BoneMap retarget, male stayed in T-pose (tracks could not bind). Female 
 
 Scope:
 assets/animation/universal_library/retargeted/DF_*_BoneMap.tres, male/female .gltf.import, character_actor.gd
+
+---
+
+## MODULE 05: Progression autoload
+
+Context:
+Need perk purchase, global cost, tree prerequisites, and characteristic growth without a generic effect engine.
+
+Options:
+- Stateless `ProgressionService` / RefCounted factory
+- Autoload `Progression`
+- Methods bolted onto GameState
+
+Decision:
+Autoload `Progression` → `res://game/progression/progression.gd`, registered **after** `ContentDB`. Persistent ownership stays in `GameState` (`_purchased_perks` Dictionary-as-set). `GameState.has_perk` is canonical; Progression aliases it. Purchase/cost/prereq/availability/tree reads live on Progression. Signal `perk_purchased(perk_id, characteristic, cost)`.
+
+Reason:
+Nearly stateless service with clear GameState + ContentDB composition; matches existing autoload pattern; no EventBus / `_process` / price cache / `chosen_branch`.
+
+Scope:
+`game/progression/progression.gd`, `project.godot` `[autoload]`, `game/state/game_state.gd`
+
+---
+
+## MODULE 05: characteristic lockdown + 3^N cost
+
+Context:
+Characteristic levels must equal owned perk count per characteristic; gameplay must not freely `set_characteristic`.
+
+Decision:
+- Replace public `set_characteristic` with `restore_characteristic` (save/debug only).
+- Atomic `GameState._commit_perk_purchase` (spend points + add perk + char+1 or nothing) called only by Progression.
+- Next purchase cost = integer `3^N` where `N = purchased_perks.size()` (multiply loop, not float `pow`).
+- Tree prerequisites derived from `PerkDefinition.section` + `order_in_section` (branches never permanently lock each other; LATE requires BRANCH_A#2 OR BRANCH_B#2).
+- ContentDB validates exact slots EARLY{1,2}, BRANCH_A{1,2}, BRANCH_B{1,2}, LATE{1,2} per characteristic.
+- `PerkIds` constants for all 32 IDs; effect contracts documented only in `docs/PERK_EFFECT_CONTRACTS.md`.
+
+Reason:
+Enforces the MODULE 05 invariant, keeps GameState free of ContentDB at startup/reset, and avoids fake effect systems.
+
+Scope:
+`game/state/*`, `game/progression/**`, `data/types/perk_ids.gd`, `data/catalog/content_db.gd`, `docs/PERK_EFFECT_CONTRACTS.md`

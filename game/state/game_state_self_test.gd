@@ -94,6 +94,7 @@ func _test_reset_defaults() -> void:
 	_ok(int(_gs.call("get_appearance")) == 0, "reset appearance 0")
 	_ok(int(_gs.call("get_capital")) == 0, "reset capital 0")
 	_ok(int(_gs.call("get_aura")) == 0, "reset aura 0")
+	_ok(int(_gs.call("get_purchased_perk_count")) == 0, "reset perks empty")
 	_ok(int(_gs.call("get_total_clones")) == 0, "reset total clones 0")
 	_ok(int(_gs.call("get_free_clones")) == 0, "reset free clones 0")
 	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 0.0), "reset mpm 0")
@@ -147,13 +148,16 @@ func _test_experience_upgrade_points() -> void:
 
 func _test_characteristics() -> void:
 	_gs.call("reset_for_new_game")
-	_ok(bool(_gs.call("set_characteristic", GameTypes.PlayerCharacteristic.MUSCLE, 3)), "set muscle 3")
+	_ok(int(_gs.call("get_purchased_perk_count")) == 0, "reset purchased_perks empty")
+	_ok(not bool(_gs.call("has_perk", &"perk_muscle_no_warmup")), "reset has_perk false")
+	_ok(bool(_gs.call("restore_characteristic", GameTypes.PlayerCharacteristic.MUSCLE, 3)), "restore muscle 3")
 	_ok(int(_gs.call("get_muscle")) == 3, "get muscle 3")
-	_ok(not bool(_gs.call("set_characteristic", GameTypes.PlayerCharacteristic.APPEARANCE, 11)), "char >10 rejected")
+	_ok(not bool(_gs.call("restore_characteristic", GameTypes.PlayerCharacteristic.APPEARANCE, 11)), "char >10 rejected")
 	_ok(int(_gs.call("get_appearance")) == 0, "appearance stays 0")
-	_ok(not bool(_gs.call("set_characteristic", GameTypes.PlayerCharacteristic.CAPITAL, -1)), "char <0 rejected")
-	_ok(bool(_gs.call("set_characteristic", GameTypes.PlayerCharacteristic.AURA, 10)), "set aura 10")
+	_ok(not bool(_gs.call("restore_characteristic", GameTypes.PlayerCharacteristic.CAPITAL, -1)), "char <0 rejected")
+	_ok(bool(_gs.call("restore_characteristic", GameTypes.PlayerCharacteristic.AURA, 10)), "restore aura 10")
 	_ok(int(_gs.call("get_aura")) == 10, "get aura 10")
+	_ok(not _gs.has_method("set_characteristic"), "set_characteristic locked")
 
 
 func _test_relationships() -> void:

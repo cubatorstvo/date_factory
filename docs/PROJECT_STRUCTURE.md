@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 04 — Character Framework**.  
+Фактическая структура после **MODULE 05 — Progression & Perks**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -12,8 +12,8 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | `characters/` | Player + Character Framework | `framework/`, `male/`, `female/`, `player/`, `test/` | Dating/Rival/AI domain systems |
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
-| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState | Parallel resource copies / EventBus |
+| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression | Parallel resource copies / EventBus / effect engines |
 | `ui/` | зарезервировано (HUD сейчас внутри Player) | общие UI позже | Domain logic |
 | `world/` | World / test scenes | FPS test, GameState/ContentDB self-tests | Central game controllers |
 | `main.tscn` | Canonical entry | bootstrap в FPS test | Бог-объект |
@@ -39,16 +39,22 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 ### `data/`
 
 - `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
+- `types/perk_ids.gd` — `class_name PerkIds` 32 canonical perk `StringName` constants
 - `definitions/*.gd` — typed `Resource` schemas (incl. `AppearanceProfileDefinition`, `AnimationProfileDefinition`)
 - `catalog/content_catalog.tres` — explicit production catalog (no FS scan)
-- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup)
+- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; exact perk tree slots)
 - `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations)
 - `test/` — fixtures + `content_data_self_test.gd` (not in production catalog)
 
 ### `game/state/`
 
-- `game_state.gd` — autoload `GameState`: uses `GameTypes.GameStage` / `GameTypes.PlayerCharacteristic`
+- `game_state.gd` — autoload `GameState`: currency/XP/characteristics + `purchased_perks` ownership
 - `game_state_self_test.gd` — reproducible MODULE 02 API/invariant tests
+
+### `game/progression/`
+
+- `progression.gd` — autoload `Progression`: purchase, cost `3^N`, tree prereqs, availability, `perk_purchased`
+- `test/progression_test.tscn` + `progression_self_test.gd` — MODULE 05 headless runner
 
 ### `world/test/`
 
@@ -76,8 +82,9 @@ Interaction ray mask: world + interactable (bits 1+3).
 | Name | Почему |
 |---|---|
 | `GodotIQRuntime` | Editor/runtime bridge addon; не gameplay |
-| `GameState` | Canonical runtime playthrough state (MODULE 02) |
+| `GameState` | Canonical runtime playthrough state (MODULE 02); owns purchased perks |
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
+| `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
 
 ## Canonical future destinations (ещё не созданы)
 

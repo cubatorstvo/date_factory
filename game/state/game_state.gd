@@ -35,6 +35,7 @@ var _clones_working: int = 0
 var _clones_dating: int = 0
 var _money_per_minute: float = 0.0
 var _dates_per_minute: float = 0.0
+var _purchased_perks: Dictionary = {}
 
 const CHAR_MIN: int = 0
 const CHAR_MAX: int = 10
@@ -64,6 +65,7 @@ func reset_for_new_game() -> void:
 	_clones_dating = 0
 	_money_per_minute = 0.0
 	_dates_per_minute = 0.0
+	_purchased_perks = {}
 	state_reset.emit()
 
 
@@ -236,9 +238,11 @@ func get_characteristic(characteristic: GameTypes.PlayerCharacteristic) -> int:
 	return 0
 
 
-func set_characteristic(characteristic: GameTypes.PlayerCharacteristic, value: int) -> bool:
+## Save/Load / debug restore — not a gameplay grant path.
+## Characteristic levels normally rise only via perk purchase (MODULE 05).
+func restore_characteristic(characteristic: GameTypes.PlayerCharacteristic, value: int) -> bool:
 	if value < CHAR_MIN or value > CHAR_MAX:
-		push_error("[GameState] set_characteristic out of range %s=%s" % [characteristic, value])
+		push_error("[GameState] restore_characteristic out of range %s=%s" % [characteristic, value])
 		return false
 	var prev: int = get_characteristic(characteristic)
 	if prev == value:
@@ -253,6 +257,79 @@ func set_characteristic(characteristic: GameTypes.PlayerCharacteristic, value: i
 		GameTypes.PlayerCharacteristic.AURA:
 			_aura = value
 	characteristic_changed.emit(characteristic, value, prev)
+	return true
+
+
+# --- Purchased perks (MODULE 05) ---
+
+func has_perk(perk_id: StringName) -> bool:
+	if not _is_valid_id(perk_id):
+		return false
+	return _purchased_perks.has(perk_id)
+
+
+func get_purchased_perk_count() -> int:
+	return _purchased_perks.size()
+
+
+func get_purchased_perk_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for key in _purchased_perks.keys():
+		out.append(key as StringName)
+	return out
+
+
+## Save/Load / debug — replaces ownership set without spending points.
+func restore_purchased_perks(perk_ids: Array) -> void:
+	_purchased_perks = {}
+	for entry in perk_ids:
+		var perk_id: StringName = entry as StringName
+		if not _is_valid_id(perk_id):
+			push_error("[GameState] restore_purchased_perks empty id")
+			continue
+		_purchased_perks[perk_id] = true
+
+
+## Atomic spend + own + characteristic +1. Called only by Progression.
+func _commit_perk_purchase(
+	perk_id: StringName,
+	characteristic: GameTypes.PlayerCharacteristic,
+	cost: int,
+) -> bool:
+	if not _is_valid_id(perk_id):
+		push_error("[GameState] _commit_perk_purchase empty id")
+		return false
+	if _purchased_perks.has(perk_id):
+		return false
+	if cost < 0:
+		push_error("[GameState] _commit_perk_purchase negative cost: %s" % cost)
+		return false
+	if _upgrade_points < cost:
+		return false
+	var prev: int = get_characteristic(characteristic)
+	var next: int = prev + 1
+	if next > CHAR_MAX:
+		push_error("[GameState] _commit_perk_purchase would exceed CHAR_MAX for %s" % characteristic)
+		return false
+	_upgrade_points -= cost
+	_purchased_perks[perk_id] = true
+	match characteristic:
+		GameTypes.PlayerCharacteristic.MUSCLE:
+			_muscle = next
+		GameTypes.PlayerCharacteristic.APPEARANCE:
+			_appearance = next
+		GameTypes.PlayerCharacteristic.CAPITAL:
+			_capital = next
+		GameTypes.PlayerCharacteristic.AURA:
+			_aura = next
+		_:
+			_purchased_perks.erase(perk_id)
+			_upgrade_points += cost
+			push_error("[GameState] _commit_perk_purchase unknown characteristic")
+			return false
+	if cost != 0:
+		upgrade_points_changed.emit(_upgrade_points, -cost)
+	characteristic_changed.emit(characteristic, next, prev)
 	return true
 
 
@@ -405,9 +482,10 @@ func set_late_rates(money_per_minute: float, dates_per_minute: float) -> bool:
 func debug_dump() -> String:
 	if not OS.is_debug_build() and not OS.has_feature("editor"):
 		return ""
-	return "stage=%s money=%s auth=%s xp=%s up=%s chars=%s/%s/%s/%s clones=%s/%s/%s free=%s rates=%s/%s rel=%s conquered=%s locs=%s flags=%s" % [
+	return "stage=%s money=%s auth=%s xp=%s up=%s chars=%s/%s/%s/%s perks=%s clones=%s/%s/%s free=%s rates=%s/%s rel=%s conquered=%s locs=%s flags=%s" % [
 		_stage, _money, _authority, _experience, _upgrade_points,
 		_muscle, _appearance, _capital, _aura,
+		_purchased_perks.size(),
 		_total_clones, _clones_working, _clones_dating, get_free_clones(),
 		_money_per_minute, _dates_per_minute,
 		_girl_relationships.size(), _conquered_girls.size(),

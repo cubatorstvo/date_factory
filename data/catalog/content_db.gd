@@ -554,6 +554,14 @@ static func _validate_perks(catalog: ContentCatalog, errors: Array[String]) -> v
 			var orders2: Dictionary = section_orders.get(sk2, {})
 			if orders2.size() != 2:
 				errors.append("perk section %s size %s != 2" % [sk2, orders2.size()])
+			if not orders2.has(1):
+				errors.append("perk section %s missing order 1" % sk2)
+			if not orders2.has(2):
+				errors.append("perk section %s missing order 2" % sk2)
+			for order_key in orders2.keys():
+				var order_val: int = int(order_key)
+				if order_val != 1 and order_val != 2:
+					errors.append("perk section %s unexpected order %s" % [sk2, order_val])
 
 
 static func _validate_locations(catalog: ContentCatalog, errors: Array[String]) -> void:
