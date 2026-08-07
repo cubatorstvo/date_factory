@@ -537,3 +537,24 @@ Money is a spend-risk auction fantasy distinct from timing games, while sharing 
 
 Scope:
 `minigames/money/**`, `game/rivals/rival_competition_runner.gd`, `data/test/rival_test_money*.tres`, dance/sigma test MONEY-unsupported cleanup, docs
+
+## MODULE 08: GirlDiscovery autoload + Phone Journal
+
+Context:
+Need fixed-situation girl discovery, authored acquaintance approaches, Experience gate, 1–3 day retry cooldown, and a functional phone journal — without Dating Core.
+
+Decision:
+- Autoload `GirlDiscovery` → `res://game/girls/girl_discovery.gd`, registered **after ContentDB** (before RivalEncounters is fine).
+- Persistent discovery state in `GameState`: ordered unique `discovered_girls`, contacts, known clue indices, primary trait reveal, known reactions, retry days remaining.
+- Static `DiscoverySituationDefinition` / `DiscoveryApproachDefinition` (`SUCCESS`/`FAILURE` only) indexed by ContentDB; production `discovery_situations` and `girls` stay empty until MODULE 14.
+- Injectable RNG for failure cooldown `randi_range(1, 3)`; day seam `notify_game_day_advanced()` (no full clock).
+- `APPEARANCE_GOOD_PROFILE`: on first discovery only, also reveal clue 1 if present (not retroactive).
+- `GirlActor` thin Interactable + CharacterActor + 4m seen Area3D; hidden during cooldown.
+- `PhoneJournal` MODAL_UI journal; discovered-only list; no Dating CTA; no permanent phone InputMap.
+- Discovery resolve never calls `add_experience` / `mark_girl_conquered` / `add_girl_relationship`.
+
+Reason:
+Event-driven autoload matches MODULE 05/06 ownership; GameState keeps cooldown across scenes; ContentDB stays the static catalog owner.
+
+Scope:
+`data/definitions/discovery_*.gd`, `data/catalog/*`, `game/state/game_state.gd`, `game/girls/**`, `ui/phone/**`, `data/test/girl_test_*`, `data/test/discovery_*`, `project.godot` `[autoload]`, docs

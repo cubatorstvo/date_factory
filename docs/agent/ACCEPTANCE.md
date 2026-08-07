@@ -1,14 +1,16 @@
-# Acceptance — MODULE 07D Money Contest
+# Acceptance — MODULE 08 Girl Discovery & Phone Journal
 
 ## Player-visible result
-Rival MONEY auction via RivalCompetitionRunner → MoneyMinigame → real spend on won rounds → typed result → RivalEncounters Authority (not inside Money).
+See girl → discover + clue0 → interact → experience gate → authored approach → number in phone OR fail + clue + 1–3 day cooldown → same girl returns. Phone journal lists discovered only; no Dating buttons.
 
-## Criteria
-- All 4 routes implemented (SLAP/DANCE/SIGMA/MONEY); no MONEY unsupported
-- Headless MoneyMatch + MoneyMinigame UI; mouse visible
-- Stake/ceiling/actions/tells/timeout/broke exact per MODULE_07D
-- Hostile Acquisition signal hook only (perk + marked rival + full win)
-- Headless MODULE_07D_TEST ALL PASS + 07A/B/C + 02–06 + FPS
+## PASS
+- DiscoverySituation/Approach defs + ContentDB index/validate
+- GameState: discovered (ordered), contacts, clues, primary reveal, reactions seam, retry days
+- Autoload GirlDiscovery (event-driven, day-advance seam, no clock)
+- Good Profile: second initial clue on first discovery only
+- GirlActor + test scene; PhoneJournal MODAL_UI; no permanent phone hotkey
+- MODULE_08_TEST ALL PASS + regressions 02–07D + FPS
+- No MODULE 09
 
-## Status
-**PASS** — MODULE_07D_TEST ALL PASS (129); 07A/B/C + 02–06 regressions green. MODULE 08 not started.
+## Product questions
+None — follow MODULE_08 spec; use PlayerController.ControlMode.MODAL_UI (not invent PlayerControlMode).

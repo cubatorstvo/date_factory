@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DiscoverySituationDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_situation_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_approach"]
+[ext_resource type="Resource" path="res://data/test/discovery_approach_test_help.tres" id="2_help"]
+[ext_resource type="Resource" path="res://data/test/discovery_approach_test_flex.tres" id="3_flex"]
+[ext_resource type="Resource" path="res://data/test/discovery_approach_test_buy.tres" id="4_buy"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_situation_test_bicycle"
+location_id = &"city_hub"
+setup_text = "Девушка помогает поднять упавший велосипед."
+approaches = Array[ExtResource("1_approach")]([ExtResource("2_help"), ExtResource("3_flex"), ExtResource("4_buy")])

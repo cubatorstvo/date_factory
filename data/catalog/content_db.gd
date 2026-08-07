@@ -82,6 +82,8 @@ var _locations_by_id: Dictionary = {}
 var _stages_by_stage: Dictionary = {}
 var _appearances_by_id: Dictionary = {}
 var _animations_by_id: Dictionary = {}
+var _discovery_situations_by_id: Dictionary = {}
+var _discovery_approaches_by_id: Dictionary = {}
 var _ready_ok: bool = false
 
 
@@ -196,6 +198,19 @@ func get_animation_profile(id: StringName) -> AnimationProfileDefinition:
 	return _animations_by_id[id] as AnimationProfileDefinition
 
 
+func get_discovery_situation(id: StringName) -> DiscoverySituationDefinition:
+	if not _discovery_situations_by_id.has(id):
+		push_error("[ContentDB] missing discovery situation: %s" % String(id))
+		return null
+	return _discovery_situations_by_id[id] as DiscoverySituationDefinition
+
+
+func find_discovery_approach(approach_id: StringName) -> DiscoveryApproachDefinition:
+	if not _discovery_approaches_by_id.has(approach_id):
+		return null
+	return _discovery_approaches_by_id[approach_id] as DiscoveryApproachDefinition
+
+
 func list_primary_traits() -> Array[PrimaryTraitDefinition]:
 	return _catalog.primary_traits if _catalog != null else []
 
@@ -244,6 +259,10 @@ func list_animation_profiles() -> Array[AnimationProfileDefinition]:
 	return _catalog.animation_profiles if _catalog != null else []
 
 
+func list_discovery_situations() -> Array[DiscoverySituationDefinition]:
+	return _catalog.discovery_situations if _catalog != null else []
+
+
 func validate_all() -> Dictionary:
 	if _catalog == null:
 		return {"ok": false, "errors": ["catalog not loaded"]}
@@ -266,6 +285,7 @@ static func validate_catalog(catalog: ContentCatalog) -> Dictionary:
 	_validate_dating_pools(catalog, errors)
 	_validate_animation_profiles(catalog, errors)
 	_validate_appearance_profiles(catalog, errors)
+	_validate_discovery_situations(catalog, errors)
 	return {"ok": errors.is_empty(), "errors": errors}
 
 
@@ -299,6 +319,8 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 	var stages_by_stage: Dictionary = {}
 	var appearances_by_id: Dictionary = {}
 	var animations_by_id: Dictionary = {}
+	var discovery_situations_by_id: Dictionary = {}
+	var discovery_approaches_by_id: Dictionary = {}
 	var dup_errors: Array[String] = []
 	for def in catalog.primary_traits:
 		if def == null:
@@ -384,6 +406,20 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 			dup_errors.append("duplicate animation profile id %s" % String(def.id))
 		else:
 			animations_by_id[def.id] = def
+	for def in catalog.discovery_situations:
+		if def == null:
+			continue
+		if discovery_situations_by_id.has(def.id):
+			dup_errors.append("duplicate discovery situation id %s" % String(def.id))
+		else:
+			discovery_situations_by_id[def.id] = def
+		for approach in def.approaches:
+			if approach == null:
+				continue
+			if discovery_approaches_by_id.has(approach.id):
+				dup_errors.append("duplicate discovery approach id %s" % String(approach.id))
+			else:
+				discovery_approaches_by_id[approach.id] = approach
 	return {
 		"primary_by_trait": primary_by_trait,
 		"secondary_by_trait": secondary_by_trait,
@@ -397,6 +433,8 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 		"stages_by_stage": stages_by_stage,
 		"appearances_by_id": appearances_by_id,
 		"animations_by_id": animations_by_id,
+		"discovery_situations_by_id": discovery_situations_by_id,
+		"discovery_approaches_by_id": discovery_approaches_by_id,
 		"dup_errors": dup_errors,
 	}
 
@@ -415,6 +453,8 @@ func _index_catalog(catalog: ContentCatalog) -> void:
 	_stages_by_stage = idx["stages_by_stage"]
 	_appearances_by_id = idx["appearances_by_id"]
 	_animations_by_id = idx["animations_by_id"]
+	_discovery_situations_by_id = idx["discovery_situations_by_id"]
+	_discovery_approaches_by_id = idx["discovery_approaches_by_id"]
 
 
 static func _validate_traits(catalog: ContentCatalog, errors: Array[String]) -> void:
@@ -659,6 +699,15 @@ static func _validate_girls(catalog: ContentCatalog, errors: Array[String]) -> v
 			seen_pools[pid] = true
 			if not pool_ids.has(pid):
 				errors.append("girl %s unknown pool %s" % [sid, String(pid)])
+		var sit_id: String = String(def.discovery_situation_id)
+		if sit_id != "":
+			var sit_found: bool = false
+			for sit in catalog.discovery_situations:
+				if sit != null and sit.id == def.discovery_situation_id:
+					sit_found = true
+					break
+			if not sit_found:
+				errors.append("girl %s unknown discovery_situation_id %s" % [sid, sit_id])
 
 
 static func _validate_rivals(catalog: ContentCatalog, errors: Array[String]) -> void:
@@ -811,3 +860,50 @@ static func _validate_appearance_profiles(catalog: ContentCatalog, errors: Array
 		var anim_id: String = String(def.animation_profile_id)
 		if anim_id != "" and not animation_ids.has(def.animation_profile_id):
 			errors.append("appearance %s unknown animation_profile_id %s" % [sid, anim_id])
+
+
+static func _validate_discovery_situations(catalog: ContentCatalog, errors: Array[String]) -> void:
+	var loc_ids: Dictionary = {}
+	for loc in catalog.locations:
+		if loc != null and String(loc.id) != "":
+			loc_ids[loc.id] = true
+	var approach_ids: Dictionary = {}
+	for def in catalog.discovery_situations:
+		if def == null:
+			errors.append("null discovery situation")
+			continue
+		var sid: String = String(def.id)
+		if sid == "" or not sid.begins_with("discovery_situation_"):
+			errors.append("discovery situation invalid id %s" % sid)
+		if String(def.location_id) == "":
+			errors.append("discovery situation %s empty location_id" % sid)
+		elif not loc_ids.is_empty() and not loc_ids.has(def.location_id):
+			errors.append("discovery situation %s unknown location %s" % [sid, String(def.location_id)])
+		if def.setup_text.strip_edges() == "":
+			errors.append("discovery situation %s empty setup_text" % sid)
+		if def.approaches.is_empty():
+			errors.append("discovery situation %s has no approaches" % sid)
+		for approach in def.approaches:
+			if approach == null:
+				errors.append("discovery situation %s null approach" % sid)
+				continue
+			var aid: String = String(approach.id)
+			if aid == "" or not aid.begins_with("discovery_approach_"):
+				errors.append("discovery approach invalid id %s" % aid)
+			if approach_ids.has(approach.id):
+				errors.append("duplicate discovery approach id %s" % aid)
+			else:
+				approach_ids[approach.id] = true
+			if approach.label.strip_edges() == "":
+				errors.append("discovery approach %s empty label" % aid)
+			var outcome_i: int = int(approach.outcome)
+			if (
+				outcome_i != int(DiscoveryApproachDefinition.DiscoveryApproachOutcome.SUCCESS)
+				and outcome_i != int(DiscoveryApproachDefinition.DiscoveryApproachOutcome.FAILURE)
+			):
+				errors.append("discovery approach %s invalid outcome" % aid)
+			if approach.has_requirement:
+				if approach.required_level < 0 or approach.required_level > 8:
+					errors.append("discovery approach %s required_level out of 0..8" % aid)
+			if approach.result_text.strip_edges() == "":
+				errors.append("discovery approach %s empty result_text" % aid)

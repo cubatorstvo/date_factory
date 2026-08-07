@@ -26,7 +26,7 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 
 | PerkId | ID | Contract (summary) | Future owners |
 |---|---|---|---|
-| `APPEARANCE_GOOD_PROFILE` | `perk_appearance_good_profile` | Unlocks appearance actions by level; girl entrance clue detail more readable | MODULE 08 Discovery; MODULE 09 |
+| `APPEARANCE_GOOD_PROFILE` | `perk_appearance_good_profile` | On **first discovery only**: clue 0 as usual + clue 1 if it exists (not retroactive; not on journal open/respawn/failure). Also unlocks appearance actions by level (MODULE 09). | MODULE 08 Discovery (clue); MODULE 09 |
 | `APPEARANCE_STAGED_WALK` | `perk_appearance_staged_walk` | Dance: once/match, first ERROR at streak>0 → streak=`max(1,ceil(prev/2))` (error still counts); unused if first error at streak 0 | MODULE 07B Dance |
 | `APPEARANCE_POCKET_MIRROR` | `perk_appearance_pocket_mirror` | Sigma: Q once/match, 2.5s; `zone_center=0`, `normal_half_width*=1.20` clamp≤0.46; pressure/disturbances continue; timer may carry across sections | MODULE 07C Sigma |
 | `APPEARANCE_CONTROL_PROFILE` | `perk_appearance_control_profile` | Sigma: if PERFECT completes while Mirror still active → +1 extra (total +2 with base); stacks with Reverse Pressure (+3 max) | MODULE 07C |

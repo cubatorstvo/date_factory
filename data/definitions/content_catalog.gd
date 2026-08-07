@@ -14,3 +14,4 @@ extends Resource
 @export var stages: Array[StoryStageDefinition] = []
 @export var appearance_profiles: Array[AppearanceProfileDefinition] = []
 @export var animation_profiles: Array[AnimationProfileDefinition] = []
+@export var discovery_situations: Array[DiscoverySituationDefinition] = []

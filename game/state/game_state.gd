@@ -10,6 +10,10 @@ signal upgrade_points_changed(new_value: int, delta: int)
 signal characteristic_changed(characteristic: GameTypes.PlayerCharacteristic, new_value: int, previous_value: int)
 signal girl_relationship_changed(girl_id: StringName, new_value: int, delta: int)
 signal girl_conquered(girl_id: StringName)
+signal girl_discovered(girl_id: StringName)
+signal girl_contact_added(girl_id: StringName)
+signal girl_clue_revealed(girl_id: StringName, clue_index: int)
+signal primary_trait_revealed(girl_id: StringName)
 signal location_unlocked(location_id: StringName)
 signal story_flag_changed(flag_id: StringName, value: bool)
 signal stage_changed(new_stage: GameTypes.GameStage, previous_stage: GameTypes.GameStage)
@@ -28,6 +32,12 @@ var _capital: int = 0
 var _aura: int = 0
 var _girl_relationships: Dictionary = {}
 var _conquered_girls: Dictionary = {}
+var _discovered_girls: Array[StringName] = []
+var _girl_contacts: Dictionary = {}
+var _known_girl_clues: Dictionary = {}
+var _revealed_primary_traits: Dictionary = {}
+var _known_girl_reactions: Dictionary = {}
+var _girl_retry_days_remaining: Dictionary = {}
 var _unlocked_locations: Dictionary = {}
 var _story_flags: Dictionary = {}
 var _total_clones: int = 0
@@ -59,6 +69,12 @@ func reset_for_new_game() -> void:
 	_aura = 0
 	_girl_relationships = {}
 	_conquered_girls = {}
+	_discovered_girls = []
+	_girl_contacts = {}
+	_known_girl_clues = {}
+	_revealed_primary_traits = {}
+	_known_girl_reactions = {}
+	_girl_retry_days_remaining = {}
 	_unlocked_locations = {}
 	_story_flags = {}
 	_total_clones = 0
@@ -417,6 +433,166 @@ func mark_girl_conquered(girl_id: StringName) -> bool:
 	_conquered_girls[girl_id] = true
 	girl_conquered.emit(girl_id)
 	return true
+
+
+# --- Girl discovery / contacts / clues (MODULE 08) ---
+
+func is_girl_discovered(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		return false
+	return _discovered_girls.has(girl_id)
+
+
+## Returns true only on first discovery. Ordered unique array for Phone list.
+func mark_girl_discovered(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] mark_girl_discovered empty id")
+		return false
+	if _discovered_girls.has(girl_id):
+		return false
+	_discovered_girls.append(girl_id)
+	girl_discovered.emit(girl_id)
+	return true
+
+
+func get_discovered_girl_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for gid in _discovered_girls:
+		out.append(gid)
+	return out
+
+
+func has_girl_contact(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		return false
+	return _girl_contacts.has(girl_id)
+
+
+## Contact implies discovered. Returns true only the first time.
+func add_girl_contact(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] add_girl_contact empty id")
+		return false
+	if _girl_contacts.has(girl_id):
+		return false
+	if not _discovered_girls.has(girl_id):
+		_discovered_girls.append(girl_id)
+		girl_discovered.emit(girl_id)
+	_girl_contacts[girl_id] = true
+	_girl_retry_days_remaining.erase(girl_id)
+	girl_contact_added.emit(girl_id)
+	return true
+
+
+func get_girl_contact_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for key in _girl_contacts.keys():
+		out.append(key as StringName)
+	return out
+
+
+func is_girl_clue_known(girl_id: StringName, clue_index: int) -> bool:
+	if not _is_valid_id(girl_id) or clue_index < 0:
+		return false
+	if not _known_girl_clues.has(girl_id):
+		return false
+	var known: Dictionary = _known_girl_clues[girl_id] as Dictionary
+	return known.has(clue_index)
+
+
+func reveal_girl_clue(girl_id: StringName, clue_index: int) -> bool:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] reveal_girl_clue empty id")
+		return false
+	if clue_index < 0:
+		push_error("[GameState] reveal_girl_clue negative index")
+		return false
+	if not _known_girl_clues.has(girl_id):
+		_known_girl_clues[girl_id] = {}
+	var known: Dictionary = _known_girl_clues[girl_id] as Dictionary
+	if known.has(clue_index):
+		return false
+	known[clue_index] = true
+	girl_clue_revealed.emit(girl_id, clue_index)
+	return true
+
+
+func get_known_girl_clue_indices(girl_id: StringName) -> Array[int]:
+	var out: Array[int] = []
+	if not _is_valid_id(girl_id) or not _known_girl_clues.has(girl_id):
+		return out
+	var known: Dictionary = _known_girl_clues[girl_id] as Dictionary
+	var keys: Array = known.keys()
+	keys.sort()
+	for k in keys:
+		out.append(int(k))
+	return out
+
+
+func is_primary_trait_revealed(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		return false
+	return _revealed_primary_traits.has(girl_id)
+
+
+func reveal_primary_trait(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] reveal_primary_trait empty id")
+		return false
+	if _revealed_primary_traits.has(girl_id):
+		return false
+	_revealed_primary_traits[girl_id] = true
+	primary_trait_revealed.emit(girl_id)
+	return true
+
+
+func record_girl_known_reaction(girl_id: StringName, source_id: StringName, reaction: int) -> bool:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] record_girl_known_reaction empty girl id")
+		return false
+	if not _is_valid_id(source_id):
+		push_error("[GameState] record_girl_known_reaction empty source id")
+		return false
+	if reaction != -1 and reaction != 0 and reaction != 1:
+		push_error("[GameState] record_girl_known_reaction invalid reaction %s" % reaction)
+		return false
+	if not _known_girl_reactions.has(girl_id):
+		_known_girl_reactions[girl_id] = {}
+	var by_source: Dictionary = _known_girl_reactions[girl_id] as Dictionary
+	by_source[source_id] = reaction
+	return true
+
+
+func get_girl_known_reactions(girl_id: StringName) -> Dictionary:
+	var out: Dictionary = {}
+	if not _is_valid_id(girl_id) or not _known_girl_reactions.has(girl_id):
+		return out
+	var by_source: Dictionary = _known_girl_reactions[girl_id] as Dictionary
+	for key in by_source.keys():
+		out[key] = int(by_source[key])
+	return out
+
+
+func get_girl_retry_days_remaining(girl_id: StringName) -> int:
+	if not _is_valid_id(girl_id):
+		return 0
+	return int(_girl_retry_days_remaining.get(girl_id, 0))
+
+
+func set_girl_retry_days_remaining(girl_id: StringName, days: int) -> void:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] set_girl_retry_days_remaining empty id")
+		return
+	if days <= 0:
+		_girl_retry_days_remaining.erase(girl_id)
+	else:
+		_girl_retry_days_remaining[girl_id] = days
+
+
+func is_girl_available_for_discovery(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		return false
+	return get_girl_retry_days_remaining(girl_id) <= 0
 
 
 # --- Locations ---

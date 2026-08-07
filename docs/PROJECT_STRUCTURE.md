@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 07D — Money Contest**.  
+Фактическая структура после **MODULE 08 — Girl Discovery & Phone Journal**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -13,8 +13,8 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters | Parallel resource copies / EventBus / effect engines |
-| `ui/` | зарезервировано (HUD сейчас внутри Player) | общие UI позже | Domain logic |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Phone journal + future HUD shell | `phone/phone_journal.tscn` (MODULE 08 functional journal) | Dating CTAs / messaging |
 | `world/` | World / test scenes | FPS test, GameState/ContentDB self-tests | Central game controllers |
 | `main.tscn` | Canonical entry | bootstrap в FPS test | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
@@ -40,16 +40,23 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 
 - `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
 - `types/perk_ids.gd` — `class_name PerkIds` 32 canonical perk `StringName` constants
-- `definitions/*.gd` — typed `Resource` schemas (incl. `AppearanceProfileDefinition`, `AnimationProfileDefinition`)
-- `catalog/content_catalog.tres` — explicit production catalog (no FS scan)
-- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; exact perk tree slots)
+- `definitions/*.gd` — typed `Resource` schemas (incl. `AppearanceProfileDefinition`, `AnimationProfileDefinition`, `DiscoverySituationDefinition`, `DiscoveryApproachDefinition`)
+- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); `discovery_situations` empty until MODULE 14
+- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; discovery situation/approach indexes)
 - `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations)
-- `test/` — fixtures + `content_data_self_test.gd` + MODULE 06 `rival_test_*.tres` (not in production catalog)
+- `test/` — fixtures + `content_data_self_test.gd` + MODULE 06 `rival_test_*.tres` + MODULE 08 `girl_test_discovery*`, `discovery_situation_test_*` (not in production catalog)
 
 ### `game/state/`
 
-- `game_state.gd` — autoload `GameState`: currency/XP/characteristics + `purchased_perks` + `defeated_rivals` + `lose_authority`
+- `game_state.gd` — autoload `GameState`: currency/XP/characteristics + `purchased_perks` + `defeated_rivals` + `lose_authority` + discovery/contacts/clues/trait reveal/reactions/retry days (MODULE 08)
 - `game_state_self_test.gd` — reproducible MODULE 02 API/invariant tests
+
+### `game/girls/`
+
+- `girl_discovery.gd` — autoload `GirlDiscovery`: discover, begin/select approach, cooldown day seam, Good Profile clue, test content overrides
+- `girl_discovery_attempt.gd` — transient attempt session
+- `girl_actor.gd` / `girl_actor.tscn` — Interactable + CharacterActor + 4m seen trigger
+- `test/girl_discovery_test.tscn` + `girl_discovery_self_test.gd` — MODULE 08 headless runner
 
 ### `game/progression/`
 
@@ -119,6 +126,7 @@ Interaction ray mask: world + interactable (bits 1+3).
 | `GodotIQRuntime` | Editor/runtime bridge addon; не gameplay |
 | `GameState` | Canonical runtime playthrough state (MODULE 02); owns purchased perks |
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
+| `GirlDiscovery` | Girl discovery / acquaintance (MODULE 08); after ContentDB; uses GameState + ContentDB; no Dating |
 | `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
 | `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
 | `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07D routes SLAP/DANCE/SIGMA/MONEY); Hostile Acquisition hook; after RivalEncounters; Callable seam only |
@@ -133,7 +141,8 @@ audio/
 `minigames/dance/` реализован (MODULE 07B).  
 `minigames/sigma/` реализован (MODULE 07C).  
 `minigames/money/` реализован (MODULE 07D).  
-`ui/` существует как папка-заготовка; FPS HUD временно живёт в `player.tscn`.
+`game/girls/` реализован (MODULE 08).  
+`ui/phone/` функциональный журнал (MODULE 08); финальный phone shell — MODULE 22.
 
 ## Donor
 
