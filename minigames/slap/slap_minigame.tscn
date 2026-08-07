@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b2mt1a56bp7p2"]
+
+[ext_resource type="Script" uid="uid://cj167efaedvxx" path="res://minigames/slap/slap_minigame.gd" id="1_sw30y"]
+
+[node name="SlapMinigame" type="CanvasLayer" unique_id=1542696042]
+script = ExtResource("1_sw30y")

@@ -450,10 +450,31 @@ Decision:
 - Persistent state only in GameState: `defeated_rivals` set + `lose_authority(amount) -> int` (never `< 0`; never `add_authority(-1)`).
 - Competition characteristic mapping via ContentDB `CompetitionDefinition` (SLAP→MUSCLE etc.).
 - Presentation signals live on RivalEncounters (no EventBus). Test rivals load via ResourceLoader overrides — not production catalog.
-- MODULE 07 gameplay is explicitly out of scope; only the integration boundary exists.
+- MODULE 07 gameplay plugs in via `competition_requested` signal + typed result submit; fake runner remains test-only.
 
 Reason:
 Matches existing autoload ownership, keeps GameState free of ContentDB, and lets world/date hosts start encounters without a second global manager.
 
 Scope:
 `game/rivals/**`, `game/state/*`, `data/types/game_types.gd`, `data/test/rival_test_*.tres`, `project.godot` `[autoload]`
+
+---
+
+## MODULE 07A: Slap minigame host + headless match
+
+Context:
+MODULE 06 emits `competition_requested` for SLAP; production needs a real timing match that returns one `RivalCompetitionResult` without rewriting Authority/defeat.
+
+Decision:
+- Pure `SlapMatch` (RefCounted) owns FSM, formulas, streak, perks; injectable RNG; headless-testable.
+- `SlapMinigame` CanvasLayer overlay ticks/input; world stays visible; player enters `ControlMode.MINIGAME`.
+- `SlapCompetitionHost` Node on `/root` (spawned from `main_bootstrap`), `enabled` flag; ignores non-SLAP; MODULE 06 tests omit host or disable it so `RivalFakeCompetitionRunner` alone submits.
+- Input map: `minigame_primary` (Space+LMB), `minigame_special_1` (Q), `minigame_special_2` (R).
+- Pause from MINIGAME restores prior mode; SceneTree pause stops pointer (`PROCESS_MODE_PAUSABLE`).
+- No hidden hit RNG; difficulty only via width/speed from request level snapshot.
+
+Reason:
+Keeps RivalEncounters ownership of Authority/defeat, allows deterministic tests, and avoids a second global competition manager.
+
+Scope:
+`minigames/slap/**`, `core/main_bootstrap.gd`, `characters/player/player.gd` (pause), `project.godot` `[input]`, perk contract docs

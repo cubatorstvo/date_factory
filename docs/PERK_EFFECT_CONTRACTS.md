@@ -11,14 +11,14 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 
 | PerkId | ID | Contract (summary) | Future owners |
 |---|---|---|---|
-| `MUSCLE_NO_WARMUP` | `perk_muscle_no_warmup` | Unlocks muscle actions by level; first strength activity of a scene gets a wider start timing window | Dating/World availability; strength minigame |
-| `MUSCLE_TOUGH_CHEEK` | `perk_muscle_tough_cheek` | Once per slap match, a missed opponent hit does not fully wipe the current streak | MODULE 07A Slap |
-| `MUSCLE_DOUBLE_SLAP` | `perk_muscle_double_slap` | Once per slap match: special attack; perfect = 2 points; fail makes next defense harder | MODULE 07A |
-| `MUSCLE_COUNTER_ARGUMENT` | `perk_muscle_counter_argument` | Perfect block arms bonus; next perfect attack gets +1 point (not carried forever) | MODULE 07A |
+| `MUSCLE_NO_WARMUP` | `perk_muscle_no_warmup` | Unlocks muscle actions by level; **Slap:** first ATTACK zone width `×1.25` (cap `0.34`) | Dating/World availability; MODULE 07A Slap |
+| `MUSCLE_TOUGH_CHEEK` | `perk_muscle_tough_cheek` | **Slap (implemented):** once/match on DEFENSE fail rival still +1; if prev streak>0 → `streak=max(1,ceil(prev/2))` and consume; streak0 does not consume | MODULE 07A Slap |
+| `MUSCLE_DOUBLE_SLAP` | `perk_muscle_double_slap` | **Slap (implemented):** Q once/match; perfect +2; non-perfect +1 (or 0 on miss) and next DEFENSE width `×0.65` (min `0.08`) | MODULE 07A |
+| `MUSCLE_COUNTER_ARGUMENT` | `perk_muscle_counter_argument` | **Slap (implemented):** perfect DEFENSE arms next ATTACK; that ATTACK perfect +1 extra then consume; stacks with Double (+3) | MODULE 07A |
 | `MUSCLE_HOLD_DOORWAY` | `perk_muscle_hold_doorway` | Unlocks authored hold-doorway / position actions only | Dating content; world scripted interactions |
 | `MUSCLE_HEROIC_DEFEAT` | `perk_muscle_heroic_defeat` | Softens authority punishment vs clearly stronger rival; dating defeat may add VULNERABILITY + RISK | MODULE 06 Rival; MODULE 09 Dating |
-| `MUSCLE_MASS_RESERVE` | `perk_muscle_mass_reserve` | Once per strength minigame: one extra mistake or round (form TBD) | Strength minigame owner |
-| `MUSCLE_TWO_HANDED_ARGUMENT` | `perk_muscle_two_handed_argument` | Once per major strength contest: high-risk decisive move | MODULE 07A / major strength activities |
+| `MUSCLE_MASS_RESERVE` | `perk_muscle_mass_reserve` | **Slap (implemented):** once/match first ordinary ATTACK miss → no score change, new ATTACK, streak0; not on Double/TwoHanded | MODULE 07A Slap |
+| `MUSCLE_TWO_HANDED_ARGUMENT` | `perk_muscle_two_handed_argument` | **Slap (implemented):** story only; R once; exclusive with Double; perfect +2 (+counter); non-perfect → rival +2, skip DEFENSE | MODULE 07A |
 
 ---
 
@@ -79,4 +79,4 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 - **MODULE 11/12 Story/World:** hostile acquisition; no limit; hold doorway (authored persistent consequences)
 - **MODULE 13 Salary Mine:** salary advance; financial inertia
 
-Unimplemented effect contracts after MODULE 05 are expected, not bugs.
+MODULE 07A implements Muscle slap rows above. Other unimplemented effect contracts remain expected, not bugs.

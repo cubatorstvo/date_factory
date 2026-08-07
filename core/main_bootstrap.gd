@@ -5,7 +5,26 @@ const FPS_TEST_SCENE := "res://world/test/player_fps_test.tscn"
 
 
 func _ready() -> void:
-	call_deferred("_enter_fps_test")
+	call_deferred("_boot")
+
+
+func _boot() -> void:
+	_ensure_slap_competition_host()
+	_enter_fps_test()
+
+
+func _ensure_slap_competition_host() -> void:
+	var root: Window = get_tree().root
+	if root.get_node_or_null("SlapCompetitionHost") != null:
+		return
+	var host_script: Script = load("res://minigames/slap/slap_competition_host.gd") as Script
+	if host_script == null:
+		DfLog.error("MODULE_07A", "Missing SlapCompetitionHost script")
+		return
+	var host: Node = host_script.new() as Node
+	host.name = "SlapCompetitionHost"
+	root.add_child(host)
+	DfLog.info("MODULE_07A", "SlapCompetitionHost attached to root")
 
 
 func _enter_fps_test() -> void:

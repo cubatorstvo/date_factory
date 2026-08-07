@@ -33,7 +33,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 ### `core/`
 
 - `df_log.gd` — `DfLog`
-- `main_bootstrap.gd` — entry → FPS test world
+- `main_bootstrap.gd` — entry → FPS test world; attaches root `SlapCompetitionHost` (MODULE 07A)
 - `interactable.gd` — `Interactable` contract (`can_interact` / `get_interaction_prompt` / `interact`)
 
 ### `data/`
@@ -63,6 +63,14 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 - `rival_fake_competition_runner.gd` — test-only forced WIN/LOSS CLOSE/CRUSHING
 - `rival_actor.gd` — thin Interactable adapter (`[E] Вызвать`)
 - `test/rival_encounter_test.tscn` + `rival_encounter_self_test.gd` — MODULE 06 headless runner
+
+### `minigames/slap/`
+
+- `slap_match.gd` — headless Slap FSM + formulas + perk rules (MODULE 07A)
+- `slap_timing.gd` — pure timing/grade helpers
+- `slap_minigame.tscn` / `slap_minigame.gd` — CanvasLayer overlay UI over current 3D world
+- `slap_competition_host.gd` — production host for `CompetitionType.SLAP` (`enabled` flag; coexist with MODULE 06 fake runner)
+- `test/slap_minigame_test.tscn` + `slap_minigame_self_test.gd` — MODULE 07A headless runner
 
 ### `world/test/`
 
@@ -99,9 +107,12 @@ Interaction ray mask: world + interactable (bits 1+3).
 
 ```text
 audio/
-minigames/
+minigames/dance/   # MODULE 07B
+minigames/sigma/   # MODULE 07C
+minigames/money/   # MODULE 07D
 ```
 
+`minigames/slap/` реализован (MODULE 07A).  
 `ui/` существует как папка-заготовка; FPS HUD временно живёт в `player.tscn`.
 
 ## Donor

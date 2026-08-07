@@ -37,6 +37,7 @@ var _mode: ControlMode = ControlMode.GAMEPLAY
 var _pitch: float = 0.0
 var _minigame_mouse_mode: Input.MouseMode = Input.MOUSE_MODE_VISIBLE
 var _was_window_focused: bool = true
+var _mode_before_pause: ControlMode = ControlMode.GAMEPLAY
 
 
 func _ready() -> void:
@@ -151,10 +152,11 @@ func get_interaction_target() -> Area3D:
 
 func _handle_pause_action() -> void:
 	match _mode:
-		ControlMode.GAMEPLAY:
+		ControlMode.GAMEPLAY, ControlMode.MINIGAME:
+			_mode_before_pause = _mode
 			enter_paused()
 		ControlMode.PAUSED:
-			enter_gameplay()
+			set_control_mode(_mode_before_pause)
 		_:
 			pass
 
@@ -261,4 +263,4 @@ func _update_debug_label() -> void:
 
 func _on_resume_pressed() -> void:
 	if _mode == ControlMode.PAUSED:
-		enter_gameplay()
+		set_control_mode(_mode_before_pause)
