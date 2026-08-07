@@ -266,3 +266,87 @@ Reason:
 
 Scope:
 `characters/player/player.gd`
+
+---
+
+## MODULE 03: typed Resources + explicit ContentCatalog
+
+Context:
+Нужен static content layer без механик исполнения и без JSON/CSV parser.
+
+Options:
+- JSON/CSV + custom loader
+- Filesystem recursive scan of `res://data/content`
+- Typed custom Resources + explicit catalog Resource
+
+Decision:
+Custom `Resource` definitions under `data/definitions/`, seed `.tres` under `data/content/`, one explicit `ContentCatalog` at `data/catalog/content_catalog.tres`. No production FS scan. Test fixtures stay under `data/test/` and are not registered in the production catalog.
+
+Reason:
+Editor-friendly typing, Git-friendly diffs, deterministic startup, clear production vs test boundary.
+
+Scope:
+`data/**`, `docs/PROJECT_STRUCTURE.md`
+
+---
+
+## MODULE 03: ContentDB autoload ownership
+
+Context:
+Consumers need a single read-only lookup/validation entry point.
+
+Options:
+- Pass ContentCatalog Resource manually everywhere
+- Autoload `ContentDB`
+- Per-folder mini-managers
+
+Decision:
+Autoload `ContentDB` → `res://data/catalog/content_db.gd`, registered after `GameState`. Loads catalog once, indexes by ID/enum, `validate_all()`, getters return null + `push_error` on missing. No `_process`, no scene changes, never mutates GameState.
+
+Reason:
+Matches MODULE 02 autoload pattern; ContentDB must boot without runtime state and GameState must reset without ContentDB.
+
+Scope:
+`data/catalog/content_db.gd`, `project.godot` `[autoload]`
+
+---
+
+## MODULE 03: shared enum ownership in GameTypes
+
+Context:
+Stage/characteristic enums must not be redefined per system.
+
+Options:
+- Keep enums inside GameState and duplicate in definitions
+- Single `class_name GameTypes` shared enums
+- Giant future `Enums.gd`
+
+Decision:
+`res://data/types/game_types.gd` owns `PlayerCharacteristic`, `GameStage` (0..7), `ActionTag` (12), primary/secondary traits, dating categories, competition types, perk sections. `GameState` consumes `GameTypes.*` and no longer declares its own Stage/Characteristic enums. Note: GDScript reserved word `trait` — definition fields use `primary_trait` / `secondary_trait`; competition identity field is `competition_type`.
+
+Reason:
+One canonical enum source; MODULE 02 numeric stage values preserved; MODULE 02 tests updated accordingly.
+
+Scope:
+`data/types/game_types.gd`, `game/state/game_state.gd`, `game/state/game_state_self_test.gd`
+
+---
+
+## MODULE 03: validation approach
+
+Context:
+Need pass/fail content validation for editor/headless without a heavy framework.
+
+Options:
+- Editor-only plugin validator
+- Runtime assert-only
+- `ContentDB.validate_catalog` / `validate_all` returning `{ok, errors}`
+
+Decision:
+Lightweight validation in ContentDB covering duplicate IDs, trait partition (12 liked tags), perk counts/sections, competition mapping, action max 2 tags, stages reserved-ID rules (story girl/rival IDs may be reserved without GirlDefinition/RivalDefinition existing). Self-test: `world/test/content_data_test.tscn`.
+
+Reason:
+Enough for MODULE 03 DoD; no DSL, no quest/dialogue/RNG engines.
+
+Scope:
+`data/catalog/content_db.gd`, `data/test/content_data_self_test.gd`, `world/test/content_data_test.tscn`

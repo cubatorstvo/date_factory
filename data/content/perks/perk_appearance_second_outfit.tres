@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PerkDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/perk_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"perk_appearance_second_outfit"
+display_name = "Второй комплект"
+description = "После прихода девушки, но до первого оцениваемого события, можно один раз сменить заранее подготовленный аксессуарный комплект."
+characteristic = 1
+section = 2
+order_in_section = 1
+branch_label = "Образ"

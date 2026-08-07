@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PerkDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/perk_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"perk_appearance_encore"
+display_name = "Выход на бис"
+description = "Один раз за свидание после нейтральной реакции на действие Внешности открывается короткий дополнительный визуальный жест."
+characteristic = 1
+section = 2
+order_in_section = 2
+branch_label = "Образ"

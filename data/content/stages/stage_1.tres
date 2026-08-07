@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StoryStageDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/story_stage_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+stage = 1
+display_name = "Стадия 1 — Актриса"
+story_girl_id = &"girl_actress"
+story_rival_id = &"rival_actress"
+notes = "Reserved story IDs only."

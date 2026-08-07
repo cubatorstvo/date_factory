@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StoryStageDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/story_stage_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+stage = 5
+display_name = "Стадия 5 — Президент"
+story_girl_id = &"girl_president"
+story_rival_id = &"rival_president"
+notes = "Reserved story IDs only."

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PerkDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/perk_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"perk_muscle_hold_doorway"
+display_name = "Удержание проёма"
+description = "Открывает специальные силовые сцены, где герой удерживает проход, позицию или объект через Мышцу."
+characteristic = 0
+section = 2
+order_in_section = 1
+branch_label = "Масса"

@@ -1,40 +1,23 @@
 extends Node
 ## Canonical runtime Game State for Date Factory v2 (MODULE 02).
 ## Autoload name: GameState. Mutate only through this API.
-
-enum Stage {
-	PROLOGUE = 0,
-	STAGE_1 = 1,
-	STAGE_2 = 2,
-	STAGE_3 = 3,
-	STAGE_4 = 4,
-	STAGE_5 = 5,
-	STAGE_6 = 6,
-	FINALE = 7,
-}
-
-enum Characteristic {
-	MUSCLE,
-	APPEARANCE,
-	CAPITAL,
-	AURA,
-}
+## Shared enums live in GameTypes (MODULE 03) — do not redefine here.
 
 signal money_changed(new_value: int, delta: int)
 signal authority_changed(new_value: int, delta: int)
 signal experience_changed(new_value: int, delta: int)
 signal upgrade_points_changed(new_value: int, delta: int)
-signal characteristic_changed(characteristic: Characteristic, new_value: int, previous_value: int)
+signal characteristic_changed(characteristic: GameTypes.PlayerCharacteristic, new_value: int, previous_value: int)
 signal girl_relationship_changed(girl_id: StringName, new_value: int, delta: int)
 signal girl_conquered(girl_id: StringName)
 signal location_unlocked(location_id: StringName)
 signal story_flag_changed(flag_id: StringName, value: bool)
-signal stage_changed(new_stage: Stage, previous_stage: Stage)
+signal stage_changed(new_stage: GameTypes.GameStage, previous_stage: GameTypes.GameStage)
 signal clone_counts_changed(total: int, working: int, dating: int, free: int)
 signal late_rates_changed(money_per_minute: float, dates_per_minute: float)
 signal state_reset()
 
-var _stage: Stage = Stage.PROLOGUE
+var _stage: GameTypes.GameStage = GameTypes.GameStage.PROLOGUE
 var _money: int = 0
 var _authority: int = 0
 var _experience: int = 0
@@ -63,7 +46,7 @@ func _ready() -> void:
 
 
 func reset_for_new_game() -> void:
-	_stage = Stage.PROLOGUE
+	_stage = GameTypes.GameStage.PROLOGUE
 	_money = 0
 	_authority = 0
 	_experience = 0
@@ -86,29 +69,29 @@ func reset_for_new_game() -> void:
 
 # --- Stage ---
 
-func get_stage() -> Stage:
+func get_stage() -> GameTypes.GameStage:
 	return _stage
 
 
-func advance_stage(next_stage: Stage) -> bool:
+func advance_stage(next_stage: GameTypes.GameStage) -> bool:
 	if int(next_stage) != int(_stage) + 1:
 		push_error("[GameState] advance_stage rejected: %s -> %s" % [_stage, next_stage])
 		return false
-	if next_stage < Stage.PROLOGUE or next_stage > Stage.FINALE:
+	if next_stage < GameTypes.GameStage.PROLOGUE or next_stage > GameTypes.GameStage.FINALE:
 		push_error("[GameState] advance_stage invalid stage: %s" % next_stage)
 		return false
-	var prev: Stage = _stage
+	var prev: GameTypes.GameStage = _stage
 	_stage = next_stage
 	stage_changed.emit(_stage, prev)
 	return true
 
 
 ## Save/Load restore path — bypasses monotonic gameplay rules.
-func restore_stage(stage: Stage) -> void:
-	if stage < Stage.PROLOGUE or stage > Stage.FINALE:
+func restore_stage(stage: GameTypes.GameStage) -> void:
+	if stage < GameTypes.GameStage.PROLOGUE or stage > GameTypes.GameStage.FINALE:
 		push_error("[GameState] restore_stage invalid: %s" % stage)
 		return
-	var prev: Stage = _stage
+	var prev: GameTypes.GameStage = _stage
 	if prev == stage:
 		return
 	_stage = stage
@@ -240,20 +223,20 @@ func get_aura() -> int:
 	return _aura
 
 
-func get_characteristic(characteristic: Characteristic) -> int:
+func get_characteristic(characteristic: GameTypes.PlayerCharacteristic) -> int:
 	match characteristic:
-		Characteristic.MUSCLE:
+		GameTypes.PlayerCharacteristic.MUSCLE:
 			return _muscle
-		Characteristic.APPEARANCE:
+		GameTypes.PlayerCharacteristic.APPEARANCE:
 			return _appearance
-		Characteristic.CAPITAL:
+		GameTypes.PlayerCharacteristic.CAPITAL:
 			return _capital
-		Characteristic.AURA:
+		GameTypes.PlayerCharacteristic.AURA:
 			return _aura
 	return 0
 
 
-func set_characteristic(characteristic: Characteristic, value: int) -> bool:
+func set_characteristic(characteristic: GameTypes.PlayerCharacteristic, value: int) -> bool:
 	if value < CHAR_MIN or value > CHAR_MAX:
 		push_error("[GameState] set_characteristic out of range %s=%s" % [characteristic, value])
 		return false
@@ -261,13 +244,13 @@ func set_characteristic(characteristic: Characteristic, value: int) -> bool:
 	if prev == value:
 		return true
 	match characteristic:
-		Characteristic.MUSCLE:
+		GameTypes.PlayerCharacteristic.MUSCLE:
 			_muscle = value
-		Characteristic.APPEARANCE:
+		GameTypes.PlayerCharacteristic.APPEARANCE:
 			_appearance = value
-		Characteristic.CAPITAL:
+		GameTypes.PlayerCharacteristic.CAPITAL:
 			_capital = value
-		Characteristic.AURA:
+		GameTypes.PlayerCharacteristic.AURA:
 			_aura = value
 	characteristic_changed.emit(characteristic, value, prev)
 	return true

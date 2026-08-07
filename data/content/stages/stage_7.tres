@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StoryStageDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/story_stage_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+stage = 7
+display_name = "Финал"
+story_girl_id = &"girl_final_target"
+story_rival_id = &""
+notes = "Finale rivals are a separate sequence."

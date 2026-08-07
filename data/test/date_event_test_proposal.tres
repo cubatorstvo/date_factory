@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"action_prop_a"
+label = "Action A"
+characteristic = 0
+required_characteristic_level = 0
+money_cost = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([7])
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"action_prop_b"
+label = "Action B"
+characteristic = 2
+required_characteristic_level = 0
+money_cost = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([11, 8])
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_test_proposal"
+category = 2
+title = "Test Proposal"
+setup_text = "Test Proposal setup"
+actions = [SubResource("Action_0"), SubResource("Action_1")]
+allowed_location_ids = Array[StringName]([])

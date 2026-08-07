@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CompetitionDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/competition_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+competition_type = 0
+display_name = "Пощёчинный бой"
+characteristic = 0
+expected_duration_min_seconds = 25
+expected_duration_max_seconds = 45

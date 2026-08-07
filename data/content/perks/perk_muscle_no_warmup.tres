@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PerkDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/perk_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"perk_muscle_no_warmup"
+display_name = "Без разминки"
+description = "Открывает основные специальные варианты Мышцы. В первой силовой активности новой сцены стартовое окно тайминга немного шире."
+characteristic = 0
+section = 0
+order_in_section = 1
+branch_label = ""

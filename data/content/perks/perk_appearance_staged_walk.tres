@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PerkDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/perk_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"perk_appearance_staged_walk"
+display_name = "Поставленная походка"
+description = "Первая ошибка в танцевальной или модельной активности не разрушает серию полностью."
+characteristic = 1
+section = 0
+order_in_section = 2
+branch_label = ""

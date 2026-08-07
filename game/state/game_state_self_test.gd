@@ -2,7 +2,6 @@ extends Node
 ## Reproducible MODULE 02 GameState tests (spec sections 48–59).
 ## Run via world/test/game_state_test.tscn (headless: --path . --headless res://world/test/game_state_test.tscn).
 
-const _GS := preload("res://game/state/game_state.gd")
 
 var _failed: int = 0
 var _passed: int = 0
@@ -86,7 +85,7 @@ func _ok(cond: bool, label: String) -> void:
 func _test_reset_defaults() -> void:
 	var before_reset: int = _reset_signal_count
 	_gs.call("reset_for_new_game")
-	_ok(int(_gs.call("get_stage")) == int(_GS.Stage.PROLOGUE), "reset stage PROLOGUE")
+	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.PROLOGUE), "reset stage PROLOGUE")
 	_ok(int(_gs.call("get_money")) == 0, "reset money 0")
 	_ok(int(_gs.call("get_authority")) == 0, "reset authority 0")
 	_ok(int(_gs.call("get_experience")) == 0, "reset experience 0")
@@ -148,12 +147,12 @@ func _test_experience_upgrade_points() -> void:
 
 func _test_characteristics() -> void:
 	_gs.call("reset_for_new_game")
-	_ok(bool(_gs.call("set_characteristic", _GS.Characteristic.MUSCLE, 3)), "set muscle 3")
+	_ok(bool(_gs.call("set_characteristic", GameTypes.PlayerCharacteristic.MUSCLE, 3)), "set muscle 3")
 	_ok(int(_gs.call("get_muscle")) == 3, "get muscle 3")
-	_ok(not bool(_gs.call("set_characteristic", _GS.Characteristic.APPEARANCE, 11)), "char >10 rejected")
+	_ok(not bool(_gs.call("set_characteristic", GameTypes.PlayerCharacteristic.APPEARANCE, 11)), "char >10 rejected")
 	_ok(int(_gs.call("get_appearance")) == 0, "appearance stays 0")
-	_ok(not bool(_gs.call("set_characteristic", _GS.Characteristic.CAPITAL, -1)), "char <0 rejected")
-	_ok(bool(_gs.call("set_characteristic", _GS.Characteristic.AURA, 10)), "set aura 10")
+	_ok(not bool(_gs.call("set_characteristic", GameTypes.PlayerCharacteristic.CAPITAL, -1)), "char <0 rejected")
+	_ok(bool(_gs.call("set_characteristic", GameTypes.PlayerCharacteristic.AURA, 10)), "set aura 10")
 	_ok(int(_gs.call("get_aura")) == 10, "get aura 10")
 
 
@@ -203,15 +202,15 @@ func _test_story_flags() -> void:
 
 func _test_stages() -> void:
 	_gs.call("reset_for_new_game")
-	_ok(int(_gs.call("get_stage")) == int(_GS.Stage.PROLOGUE), "start PROLOGUE")
-	_ok(bool(_gs.call("advance_stage", _GS.Stage.STAGE_1)), "advance to STAGE_1")
-	_ok(int(_gs.call("get_stage")) == int(_GS.Stage.STAGE_1), "now STAGE_1")
-	_ok(not bool(_gs.call("advance_stage", _GS.Stage.PROLOGUE)), "no reverse")
-	_ok(int(_gs.call("get_stage")) == int(_GS.Stage.STAGE_1), "still STAGE_1 after reverse")
-	_ok(not bool(_gs.call("advance_stage", _GS.Stage.STAGE_4)), "no skip")
-	_ok(int(_gs.call("get_stage")) == int(_GS.Stage.STAGE_1), "still STAGE_1 after skip")
-	_gs.call("restore_stage", _GS.Stage.STAGE_4)
-	_ok(int(_gs.call("get_stage")) == int(_GS.Stage.STAGE_4), "restore_stage allows jump")
+	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.PROLOGUE), "start PROLOGUE")
+	_ok(bool(_gs.call("advance_stage", GameTypes.GameStage.STAGE_1)), "advance to STAGE_1")
+	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.STAGE_1), "now STAGE_1")
+	_ok(not bool(_gs.call("advance_stage", GameTypes.GameStage.PROLOGUE)), "no reverse")
+	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.STAGE_1), "still STAGE_1 after reverse")
+	_ok(not bool(_gs.call("advance_stage", GameTypes.GameStage.STAGE_4)), "no skip")
+	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.STAGE_1), "still STAGE_1 after skip")
+	_gs.call("restore_stage", GameTypes.GameStage.STAGE_4)
+	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.STAGE_4), "restore_stage allows jump")
 
 
 func _test_clones() -> void:

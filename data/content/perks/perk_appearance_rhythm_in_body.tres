@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PerkDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/perk_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"perk_appearance_rhythm_in_body"
+display_name = "Ритм в теле"
+description = "Окна правильного ритма в танцевальных состязаниях немного шире; первая сложная связка содержит подсказку."
+characteristic = 1
+section = 3
+order_in_section = 1
+branch_label = ""
