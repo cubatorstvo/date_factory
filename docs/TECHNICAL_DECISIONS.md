@@ -628,3 +628,30 @@ Date Factory has a fixed linear stage map; a quest engine would overbuild withou
 
 Scope:
 `game/story/**`, `StoryStageDefinition` + stage `.tres`, ContentDB stage validation, GirlDiscovery gate insert, `project.godot`, docs
+
+---
+
+## MODULE 12: World autoload — hub-and-spoke locations
+
+Alternatives considered:
+- Open-world streaming / seamless city
+- Separate WorldManager + LocationManager + TravelManager
+- Duplicate canonical access into `GameState.unlocked_locations`
+
+Decision:
+- Autoload `World` → `res://world/world.gd`, registered **after Story**.
+- Nine compact scenes at `res://world/locations/<id>/<id>.tscn`; root `WorldLocation`.
+- Hub-and-spoke: apartment ↔ city_hub ↔ seven spokes; travel only via `WorldTransition` (E / Interactable), never `body_entered`.
+- Access map is an explicit StoryFeature table inside World; apartment always available; fail-closed if Story missing on gated IDs.
+- `GameState.unlock_location` remains for future non-canonical/manual unlocks only — not used for the nine Story gates.
+- `PUBLIC_CITY_ACCESS` is a `WorldFeatureGate` inside `city_hub` (second segment placeholder), not a 10th location.
+- Persistent `WorldHost` under `/root`: `LocationRoot` + Player + PersistentUI (PhoneJournal); location scenes unload safely.
+- Travel order: validate → load target → resolve spawn → MODAL_UI → swap → place (velocity/pitch reset) → free old → GAMEPLAY; busy = no queue; failed = no mutation.
+- Physical apartment phone → existing `PhoneJournal.open`; no phone hotkey.
+- Main bootstrap → `World.boot_from_main()` apartment; FPS test harness preserved.
+
+Reason:
+Matches compact GDD world, keeps Story as single access source, avoids manager proliferation and destructive unload races.
+
+Scope:
+`world/**`, `core/main_bootstrap.gd`, location `.tres` `scene_path`, ContentDB path validation, `project.godot`, docs

@@ -7,4 +7,4 @@ script = ExtResource("1_script")
 id = &"apartment"
 display_name = "Квартира"
 description = "Домашняя база героя."
-scene_path = ""
+scene_path = "res://world/locations/apartment/apartment.tscn"

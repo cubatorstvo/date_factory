@@ -7,4 +7,4 @@ script = ExtResource("1_script")
 id = &"city_hub"
 display_name = "Улица и городской хаб"
 description = "Городской хаб и улицы."
-scene_path = ""
+scene_path = "res://world/locations/city_hub/city_hub.tscn"

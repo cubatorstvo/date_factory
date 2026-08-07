@@ -7,4 +7,4 @@ script = ExtResource("1_script")
 id = &"production_area"
 display_name = "Поздняя производственная зона"
 description = "Поздняя фабрика/производство."
-scene_path = ""
+scene_path = "res://world/locations/production_area/production_area.tscn"

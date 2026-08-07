@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://world/world_location.gd" id="1_loc"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_Floor"]
+size = Vector3(4, 0.2, 4)
+
+[node name="spawn_missing_location" type="Node3D"]
+script = ExtResource("1_loc")
+location_id = &"gym"
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_Floor")

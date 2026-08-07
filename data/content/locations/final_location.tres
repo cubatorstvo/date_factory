@@ -7,4 +7,4 @@ script = ExtResource("1_script")
 id = &"final_location"
 display_name = "Финальная локация"
 description = "Финальная сюжетная локация."
-scene_path = ""
+scene_path = "res://world/locations/final_location/final_location.tscn"

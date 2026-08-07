@@ -1,15 +1,21 @@
-# Acceptance — MODULE 11 Story / Stage Framework
+# Acceptance — MODULE 12 World & Location Framework
 
 ## Player-visible result
-Linear stages PROLOGUE→FINALE with rival→girl→+5 advance (earth stages), story gates on reserved girls, stage-derived feature unlocks.
+Play from apartment blockout; E-travel hub-and-spoke; StoryFeature gates; phone opens PhoneJournal; PROLOGUE = apartment only.
 
 ## Locked decisions
-- Autoload `Story` after Relationships (listens girl_completed + encounter_won)
-- Extend existing StoryStageDefinition + 8 stage .tres (no production Girl/Rival defs required)
-- Features derived from stage (≥ thresholds); only new flag FLAG_WORLD_EXPANSION_COMPLETE
-- GirlDiscovery consults Story before Experience; STORY_* ≠ FAILURE
-- RivalEncounters core stays Story-agnostic
-- No MODULE 12
+- Autoload `World` owns travel/access/current location
+- Scenes: `res://world/locations/<id>/<id>.tscn` for all 9 IDs
+- Access from Story features (not GameState.unlock_location for the 9)
+- PUBLIC_CITY_ACCESS = internal city_hub gate, not 10th location
+- main bootstrap → apartment (FPS test harness remains)
+- Blockout OK (Mesh+StaticBody, TextMesh signs)
+- No MODULE 13
 
 ## PASS
-MODULE_11_TEST ALL PASS + regressions 02–10 + FPS
+MODULE_12_TEST ALL PASS (127) + regressions 02/03/04/05/06/08/09/10/11 + FPS boot + main→apartment
+
+## Evidence
+- `world/test/world_location_test.tscn` → `MODULE_12_TEST: ALL PASS (127)`
+- Regressions: MODULE_02/03/04/05/06/08/09/10/11 ALL PASS; `player_fps_test` boots
+- `main.tscn` headless: `Boot -> apartment via World`

@@ -1,7 +1,7 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 11 — Story / Stage Framework**.  
-Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
+Фактическая структура после **MODULE 12 — World & Location Framework**.  
+Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
 ## Top-level (существует сейчас)
 
@@ -10,13 +10,13 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | `addons/` | Editor/tool plugins | GodotIQ и будущие tooling plugins | Gameplay systems |
 | `assets/` | Импортируемые визуальные ресурсы | модели, текстуры, материалы, fonts, props, animation libraries | Gameplay scripts / domain logic |
 | `characters/` | Player + Character Framework | `framework/`, `male/`, `female/`, `player/`, `test/` | Dating/Rival/AI domain systems |
-| `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
+| `core/` | Техническая инфраструктура | debug helpers, bootstrap → World apartment, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
 | `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
 | `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (rel/cooldown/completion); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
-| `world/` | World / test scenes | FPS test, GameState/ContentDB self-tests | Central game controllers |
-| `main.tscn` | Canonical entry | bootstrap в FPS test | Бог-объект |
+| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / Salary Mine economy |
+| `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
 | `icon.svg` | Иконка приложения | — | — |
 
@@ -33,7 +33,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 ### `core/`
 
 - `df_log.gd` — `DfLog`
-- `main_bootstrap.gd` — entry → FPS test world (RivalCompetitionRunner is autoload; not attached here)
+- `main_bootstrap.gd` — entry → `World.boot_from_main()` → apartment (FPS test harness kept at `world/test/player_fps_test.tscn`)
 - `interactable.gd` — `Interactable` contract (`can_interact` / `get_interaction_prompt` / `interact`)
 
 ### `data/`
@@ -122,12 +122,20 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 - `money_minigame.tscn` / `money_minigame.gd` — CanvasLayer overlay; spends `GameState.money` on won rounds; mouse UI
 - `test/money_minigame_test.tscn` + `money_minigame_self_test.gd` — MODULE 07D headless runner
 
-### `world/test/`
+### `world/`
 
-- `player_fps_test.tscn` — technical FPS testbed
-- `test_interactables.gd` — smoke interactable wiring + modal test UI
-- `game_state_test.tscn` — MODULE 02 self-test runner
-- `content_data_test.tscn` — MODULE 03 self-test runner
+- `world.gd` — autoload `World` (after Story): access/travel/load/unload, persistent Player + PhoneJournal under `WorldHost`
+- `world_types.gd` / `world_access_result.gd` — travel/access enums + typed access result
+- `world_location.gd` — scene-root contract + local marker lookup / gate refresh
+- `world_transition.gd` — E-only travel Interactable (never body_entered)
+- `world_feature_gate.gd` — StoryFeature barrier (city public segment)
+- `player_spawn_point.gd` / `npc_spawn_point.gd` / `story_event_point.gd` — Marker3D slots (NPC does not auto-spawn)
+- `phone_interactable.gd` — apartment phone → `PhoneJournal.open`
+- `locations/<id>/<id>.tscn` — nine blockout scenes (hub-and-spoke)
+- `test/player_fps_test.tscn` — technical FPS testbed (preserved)
+- `test/world_location_test.tscn` + `world_location_self_test.gd` — MODULE 12 headless runner
+- `test/game_state_test.tscn` / `content_data_test.tscn` — MODULE 02/03 runners
+- `test/fixtures/` — spawn-missing / duplicate-marker fixtures
 
 ## Physics layers (3D)
 
@@ -153,6 +161,8 @@ Interaction ray mask: world + interactable (bits 1+3).
 | `GirlDiscovery` | Girl discovery / acquaintance (MODULE 08); after ContentDB; uses GameState + ContentDB; no Dating |
 | `DatingCore` | One-date runtime (MODULE 09); after GirlDiscovery; uses GameState + ContentDB; does **not** apply relationship; assigns monotonic `date_id` |
 | `Relationships` | Apply date results / completion / date cooldown / event history (MODULE 10); after DatingCore |
+| `Story` | Stage completion / StoryFeature / girl-rival gates (MODULE 11); after Relationships |
+| `World` | Location load/travel/access (MODULE 12); after Story; StoryFeature gates; not GameState.unlock_location for the 9 |
 | `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
 | `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
 | `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07D routes SLAP/DANCE/SIGMA/MONEY); Hostile Acquisition hook; after RivalEncounters; Callable seam only |
@@ -170,7 +180,9 @@ audio/
 `game/girls/` реализован (MODULE 08).  
 `game/dating/` реализован (MODULE 09).  
 `game/relationships/` реализован (MODULE 10).  
-`ui/phone/` функциональный журнал (MODULE 08/10); финальный phone shell — MODULE 22.  
+`game/story/` реализован (MODULE 11).  
+`world/` каркас 9 локаций реализован (MODULE 12); Salary Mine economy — MODULE 13.  
+`ui/phone/` функциональный журнал (MODULE 08/10/12 physical entry); финальный phone shell — MODULE 22.  
 `ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
 
 ## Donor

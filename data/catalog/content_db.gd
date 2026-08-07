@@ -768,6 +768,14 @@ static func _validate_locations(catalog: ContentCatalog, errors: Array[String]) 
 		by_id[def.id] = def
 		if def.display_name.strip_edges() == "":
 			errors.append("location %s empty display_name" % String(def.id))
+		var sp: String = def.scene_path.strip_edges()
+		if sp == "":
+			errors.append("location %s empty scene_path" % String(def.id))
+		else:
+			if not sp.ends_with(".tscn"):
+				errors.append("location %s scene_path not .tscn" % String(def.id))
+			if not ResourceLoader.exists(sp):
+				errors.append("location %s scene_path missing: %s" % [String(def.id), sp])
 	for lid in CANONICAL_LOCATION_IDS:
 		if not by_id.has(lid):
 			errors.append("missing canonical location %s" % String(lid))

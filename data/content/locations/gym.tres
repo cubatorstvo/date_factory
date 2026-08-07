@@ -7,4 +7,4 @@ script = ExtResource("1_script")
 id = &"gym"
 display_name = "Качалка"
 description = "Локация прокачки Мышцы."
-scene_path = ""
+scene_path = "res://world/locations/gym/gym.tscn"

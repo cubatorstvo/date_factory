@@ -1,0 +1,210 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://world/world_location.gd" id="1_loc"]
+[ext_resource type="Script" path="res://world/world_transition.gd" id="2_transition"]
+[ext_resource type="Script" path="res://world/player_spawn_point.gd" id="3_pspawn"]
+[ext_resource type="Script" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
+[ext_resource type="Script" path="res://world/story_event_point.gd" id="5_story"]
+[ext_resource type="Script" path="res://world/phone_interactable.gd" id="6_phone"]
+[ext_resource type="Script" path="res://world/world_feature_gate.gd" id="7_gate"]
+[sub_resource type="Environment" id="Env"]
+background_mode = 1
+background_color = Color(0.42, 0.48, 0.55, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.78, 0.78, 0.82, 1)
+ambient_light_energy = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
+albedo_color = Color(0.25, 0.25, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Floor"]
+size = Vector3(12, 0.2, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape_Floor"]
+size = Vector3(12, 0.2, 12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_WallN"]
+albedo_color = Color(0.35, 0.35, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallN"]
+size = Vector3(12, 3, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape_WallN"]
+size = Vector3(12, 3, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_WallS"]
+albedo_color = Color(0.35, 0.35, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallS"]
+size = Vector3(12, 3, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape_WallS"]
+size = Vector3(12, 3, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_WallE"]
+albedo_color = Color(0.35, 0.35, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallE"]
+size = Vector3(0.3, 3, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape_WallE"]
+size = Vector3(0.3, 3, 12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_WallW"]
+albedo_color = Color(0.35, 0.35, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallW"]
+size = Vector3(0.3, 3, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape_WallW"]
+size = Vector3(0.3, 3, 12)
+
+[sub_resource type="StandardMaterial3D" id="TransitionMat"]
+albedo_color = Color(0.2, 0.55, 0.75, 1)
+
+[sub_resource type="BoxMesh" id="TransitionMesh"]
+size = Vector3(1.2, 2.2, 0.4)
+
+[sub_resource type="BoxShape3D" id="TransitionShape"]
+size = Vector3(1.2, 2.2, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="PhoneMat"]
+albedo_color = Color(0.15, 0.15, 0.18, 1)
+
+[sub_resource type="BoxMesh" id="PhoneMesh"]
+size = Vector3(0.35, 0.55, 0.2)
+
+[sub_resource type="BoxShape3D" id="PhoneShape"]
+size = Vector3(0.35, 0.55, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="GateMat"]
+albedo_color = Color(0.65, 0.2, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="GateMesh"]
+size = Vector3(6, 3, 0.35)
+
+[sub_resource type="BoxShape3D" id="GateShape"]
+size = Vector3(6, 3, 0.35)
+
+[sub_resource type="StandardMaterial3D" id="Mat_PublicFloor"]
+albedo_color = Color(0.45, 0.42, 0.38, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_PublicFloor"]
+size = Vector3(8, 0.2, 8)
+
+[sub_resource type="BoxShape3D" id="BoxShape_PublicFloor"]
+size = Vector3(8, 0.2, 8)
+
+[node name="final_location" type="Node3D"]
+script = ExtResource("1_loc")
+location_id = &"final_location"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 6, 0)
+light_energy = 0.85
+shadow_enabled = false
+
+[node name="Geometry" type="Node3D" parent="."]
+
+[node name="Floor" type="MeshInstance3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+mesh = SubResource("BoxMesh_Floor")
+surface_material_override/0 = SubResource("Mat_Floor")
+
+[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor"]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody"]
+shape = SubResource("BoxShape_Floor")
+
+[node name="WallN" type="MeshInstance3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6)
+mesh = SubResource("BoxMesh_WallN")
+surface_material_override/0 = SubResource("Mat_WallN")
+
+[node name="Body" type="StaticBody3D" parent="Geometry/WallN"]
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body"]
+shape = SubResource("BoxShape_WallN")
+
+[node name="WallS" type="MeshInstance3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6)
+mesh = SubResource("BoxMesh_WallS")
+surface_material_override/0 = SubResource("Mat_WallS")
+
+[node name="Body" type="StaticBody3D" parent="Geometry/WallS"]
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body"]
+shape = SubResource("BoxShape_WallS")
+
+[node name="WallE" type="MeshInstance3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, 0)
+mesh = SubResource("BoxMesh_WallE")
+surface_material_override/0 = SubResource("Mat_WallE")
+
+[node name="Body" type="StaticBody3D" parent="Geometry/WallE"]
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body"]
+shape = SubResource("BoxShape_WallE")
+
+[node name="WallW" type="MeshInstance3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 0)
+mesh = SubResource("BoxMesh_WallW")
+surface_material_override/0 = SubResource("Mat_WallW")
+
+[node name="Body" type="StaticBody3D" parent="Geometry/WallW"]
+collision_layer = 1
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body"]
+shape = SubResource("BoxShape_WallW")
+
+[node name="Sign" type="Label3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+text = "ФИНАЛ"
+font_size = 64
+
+[node name="PlayerSpawns" type="Node3D" parent="."]
+
+[node name="spawn_default" type="Marker3D" parent="PlayerSpawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, 2.5)
+script = ExtResource("3_pspawn")
+spawn_id = &"spawn_default"
+
+[node name="NpcSpawns" type="Node3D" parent="."]
+
+[node name="StoryEventPoints" type="Node3D" parent="."]
+
+[node name="FeatureGates" type="Node3D" parent="."]
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="Transitions" type="Node3D" parent="."]
+
+[node name="ToCity" type="Area3D" parent="Transitions"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 5.2)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_transition")
+target_location_id = &"city_hub"
+target_spawn_id = &"spawn_default"
+display_name = "В город"
+
+[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity"]
+shape = SubResource("TransitionShape")
+
+[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity"]
+mesh = SubResource("TransitionMesh")
+surface_material_override/0 = SubResource("TransitionMat")
+
+[node name="story_point_final_sequence" type="Marker3D" parent="StoryEventPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3)
+script = ExtResource("5_story")
+event_point_id = &"story_point_final_sequence"

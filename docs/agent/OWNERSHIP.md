@@ -1,5 +1,5 @@
-﻿# File ownership — MODULE 11
+﻿# File ownership — MODULE 12
 
 | Task | Agent | Writable | Status |
 |------|-------|----------|--------|
-| MODULE_11_STORY | df-gameplay-worker | game/story/**, stage defs/tres, ContentDB stage validation, GirlDiscovery gate, docs | done |
+| MODULE_12_WORLD | df-gameplay-worker | world/**, main_bootstrap, location scene_paths, ContentDB, docs | done |
