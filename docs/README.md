@@ -9,18 +9,52 @@ The previous prototype lives only as a read-only donor:
 
 ## Product truth
 
-When a new Master GDD is provided, place it at:
+Канонический Master GDD 2.0:
 
 ```text
 docs/MASTER_GDD.md
 ```
 
-Conflict priority:
+Разбивка по блокам: `docs/gdd/`  
+Полный текст одним файлом: `docs/gdd/MASTER_GDD_FULL.md`
+
+## Technical plan (surface only)
+
+Верхнеуровневый порядок модулей и зависимостей:
+
+```text
+docs/TECH_PLAN.md
+```
+
+Разбивка: `docs/tech/`  
+Полный текст: `docs/tech/TECH_PLAN_FULL.md`
+
+Это **не** описание итоговой реализации.  
+Для каждого модуля перед стартом будет отдельная финальная спецификация.
+
+## Module specs
+
+```text
+docs/modules/
+```
+
+Текущий: [`MODULE_00_PROJECT_FOUNDATION.md`](modules/MODULE_00_PROJECT_FOUNDATION.md)
+
+Также:
+
+- [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md)
+- [`TECHNICAL_DECISIONS.md`](TECHNICAL_DECISIONS.md)
+
+## Conflict priority
 
 ```text
 new MASTER_GDD
 >
 explicit latest user instruction
+>
+per-module implementation spec (когда выдана)
+>
+TECH_PLAN (только порядок / границы / зависимости)
 >
 new project code
 >
