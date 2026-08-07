@@ -3,8 +3,6 @@
 [ext_resource type="Script" uid="uid://bbifjkadnhhsb" path="res://world/test/test_interactables.gd" id="1_n78j6"]
 [ext_resource type="PackedScene" uid="uid://djdethq0bcjro" path="res://characters/player/player.tscn" id="2_lequ8"]
 [ext_resource type="Script" uid="uid://bvuytfooncrea" path="res://core/interactable.gd" id="2_unn2r"]
-[ext_resource type="Script" uid="uid://bcob6wb14b24t" path="res://characters/player/player.gd" id="3_unn2r"]
-[ext_resource type="Script" uid="uid://cfno4k7qekdfi" path="res://characters/player/player_interaction.gd" id="5_jx3h5"]
 
 [sub_resource type="Environment" id="Environment_lequ8"]
 background_mode = 1
@@ -130,10 +128,6 @@ albedo_color = Color(0.2, 0.65, 0.95, 1)
 [sub_resource type="BoxMesh" id="BoxMesh_lu4qh"]
 size = Vector3(0.7, 1.8, 0.7)
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5dc8e"]
-radius = 0.32
-height = 1.8
-
 [node name="PlayerFpsTest" type="Node3D" unique_id=1191307981]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1059890369]
@@ -147,109 +141,109 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20899" type="MeshInstance3D" parent="Floor" unique_id=569192084]
+[node name="Mesh" type="MeshInstance3D" parent="Floor" unique_id=569192084]
 material_override = SubResource("StandardMaterial3D_unn2r")
 mesh = SubResource("BoxMesh_jx3h5")
 
-[node name="@CollisionShape3D@20900" type="CollisionShape3D" parent="Floor" unique_id=348037535]
+[node name="Collision" type="CollisionShape3D" parent="Floor" unique_id=348037535]
 shape = SubResource("BoxShape3D_yt4sx")
 
 [node name="WallBack" type="StaticBody3D" parent="." unique_id=220177409]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -10)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20901" type="MeshInstance3D" parent="WallBack" unique_id=59007539]
+[node name="Mesh" type="MeshInstance3D" parent="WallBack" unique_id=59007539]
 material_override = SubResource("StandardMaterial3D_1jp0g")
 mesh = SubResource("BoxMesh_k6dap")
 
-[node name="@CollisionShape3D@20902" type="CollisionShape3D" parent="WallBack" unique_id=1610882170]
+[node name="Collision" type="CollisionShape3D" parent="WallBack" unique_id=1610882170]
 shape = SubResource("BoxShape3D_44knh")
 
 [node name="WallLeftDoor" type="StaticBody3D" parent="." unique_id=906462401]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1.5, -8)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20903" type="MeshInstance3D" parent="WallLeftDoor" unique_id=496733259]
+[node name="Mesh" type="MeshInstance3D" parent="WallLeftDoor" unique_id=496733259]
 material_override = SubResource("StandardMaterial3D_rawxp")
 mesh = SubResource("BoxMesh_ljmwk")
 
-[node name="@CollisionShape3D@20904" type="CollisionShape3D" parent="WallLeftDoor" unique_id=421918274]
+[node name="Collision" type="CollisionShape3D" parent="WallLeftDoor" unique_id=421918274]
 shape = SubResource("BoxShape3D_lu4qh")
 
 [node name="WallRightDoor" type="StaticBody3D" parent="." unique_id=165391925]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.5, -8)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20905" type="MeshInstance3D" parent="WallRightDoor" unique_id=887029886]
+[node name="Mesh" type="MeshInstance3D" parent="WallRightDoor" unique_id=887029886]
 material_override = SubResource("StandardMaterial3D_nqkh5")
 mesh = SubResource("BoxMesh_070ok")
 
-[node name="@CollisionShape3D@20906" type="CollisionShape3D" parent="WallRightDoor" unique_id=793604229]
+[node name="Collision" type="CollisionShape3D" parent="WallRightDoor" unique_id=793604229]
 shape = SubResource("BoxShape3D_ooohw")
 
 [node name="DoorLintel" type="StaticBody3D" parent="." unique_id=468422061]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, -8)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20907" type="MeshInstance3D" parent="DoorLintel" unique_id=1248391889]
+[node name="Mesh" type="MeshInstance3D" parent="DoorLintel" unique_id=1248391889]
 material_override = SubResource("StandardMaterial3D_fohfp")
 mesh = SubResource("BoxMesh_ju2v2")
 
-[node name="@CollisionShape3D@20908" type="CollisionShape3D" parent="DoorLintel" unique_id=1960231978]
+[node name="Collision" type="CollisionShape3D" parent="DoorLintel" unique_id=1960231978]
 shape = SubResource("BoxShape3D_5l0jy")
 
 [node name="Step1" type="StaticBody3D" parent="." unique_id=2093443485]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.15, -2)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20909" type="MeshInstance3D" parent="Step1" unique_id=1769551649]
+[node name="Mesh" type="MeshInstance3D" parent="Step1" unique_id=1769551649]
 material_override = SubResource("StandardMaterial3D_fowwa")
 mesh = SubResource("BoxMesh_xkpal")
 
-[node name="@CollisionShape3D@20910" type="CollisionShape3D" parent="Step1" unique_id=1217007652]
+[node name="Collision" type="CollisionShape3D" parent="Step1" unique_id=1217007652]
 shape = SubResource("BoxShape3D_gc6lo")
 
 [node name="Step2" type="StaticBody3D" parent="." unique_id=1690278166]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.45, -2.6)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20911" type="MeshInstance3D" parent="Step2" unique_id=888176707]
+[node name="Mesh" type="MeshInstance3D" parent="Step2" unique_id=888176707]
 material_override = SubResource("StandardMaterial3D_jj66y")
 mesh = SubResource("BoxMesh_fxadw")
 
-[node name="@CollisionShape3D@20912" type="CollisionShape3D" parent="Step2" unique_id=1670367576]
+[node name="Collision" type="CollisionShape3D" parent="Step2" unique_id=1670367576]
 shape = SubResource("BoxShape3D_372ww")
 
 [node name="Step3" type="StaticBody3D" parent="." unique_id=378337153]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.75, -3.2)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20913" type="MeshInstance3D" parent="Step3" unique_id=185585699]
+[node name="Mesh" type="MeshInstance3D" parent="Step3" unique_id=185585699]
 material_override = SubResource("StandardMaterial3D_8x1ri")
 mesh = SubResource("BoxMesh_bhl0b")
 
-[node name="@CollisionShape3D@20914" type="CollisionShape3D" parent="Step3" unique_id=91325500]
+[node name="Collision" type="CollisionShape3D" parent="Step3" unique_id=91325500]
 shape = SubResource("BoxShape3D_l58lp")
 
 [node name="JumpPlatform" type="StaticBody3D" parent="." unique_id=503034426]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 3)
 collision_mask = 0
 
-[node name="@MeshInstance3D@20915" type="MeshInstance3D" parent="JumpPlatform" unique_id=1129636706]
+[node name="Mesh" type="MeshInstance3D" parent="JumpPlatform" unique_id=1129636706]
 material_override = SubResource("StandardMaterial3D_pkwfn")
 mesh = SubResource("BoxMesh_w0l34")
 
-[node name="@CollisionShape3D@20916" type="CollisionShape3D" parent="JumpPlatform" unique_id=1742038903]
+[node name="Collision" type="CollisionShape3D" parent="JumpPlatform" unique_id=1742038903]
 shape = SubResource("BoxShape3D_fi27j")
 
 [node name="Slope" type="StaticBody3D" parent="." unique_id=2110422756]
 transform = Transform3D(0.95105654, 0.309017, 0, -0.309017, 0.95105654, 0, 0, 0, 1, 4, 0.35, -2)
 
-[node name="@MeshInstance3D@20917" type="MeshInstance3D" parent="Slope" unique_id=1818058027]
+[node name="Mesh" type="MeshInstance3D" parent="Slope" unique_id=1818058027]
 material_override = SubResource("StandardMaterial3D_sfqh2")
 mesh = SubResource("BoxMesh_essfh")
 
-[node name="@CollisionShape3D@20918" type="CollisionShape3D" parent="Slope" unique_id=28300374]
+[node name="Collision" type="CollisionShape3D" parent="Slope" unique_id=28300374]
 shape = SubResource("BoxShape3D_7378e")
 
 [node name="TestInteractables" type="Node3D" parent="." unique_id=491830428]
@@ -261,11 +255,11 @@ collision_layer = 4
 collision_mask = 0
 script = ExtResource("2_unn2r")
 
-[node name="@CollisionShape3D@20919" type="CollisionShape3D" parent="TestInteractables/UseTarget" unique_id=310919556]
+[node name="Collision" type="CollisionShape3D" parent="TestInteractables/UseTarget" unique_id=310919556]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_unn2r")
 
-[node name="@MeshInstance3D@20920" type="MeshInstance3D" parent="TestInteractables/UseTarget" unique_id=793041883]
+[node name="Mesh" type="MeshInstance3D" parent="TestInteractables/UseTarget" unique_id=793041883]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 material_override = SubResource("StandardMaterial3D_k72wp")
 mesh = SubResource("BoxMesh_yt4sx")
@@ -278,11 +272,11 @@ script = ExtResource("2_unn2r")
 prompt_action = "Недоступно"
 interaction_enabled = false
 
-[node name="@CollisionShape3D@20921" type="CollisionShape3D" parent="TestInteractables/DisabledTarget" unique_id=997272863]
+[node name="Collision" type="CollisionShape3D" parent="TestInteractables/DisabledTarget" unique_id=997272863]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_1jp0g")
 
-[node name="@MeshInstance3D@20922" type="MeshInstance3D" parent="TestInteractables/DisabledTarget" unique_id=1068434907]
+[node name="Mesh" type="MeshInstance3D" parent="TestInteractables/DisabledTarget" unique_id=1068434907]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 material_override = SubResource("StandardMaterial3D_3t47n")
 mesh = SubResource("BoxMesh_44knh")
@@ -294,11 +288,11 @@ collision_mask = 0
 script = ExtResource("2_unn2r")
 prompt_action = "Открыть тест UI"
 
-[node name="@CollisionShape3D@20923" type="CollisionShape3D" parent="TestInteractables/ModalTarget" unique_id=245073343]
+[node name="Collision" type="CollisionShape3D" parent="TestInteractables/ModalTarget" unique_id=245073343]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_rawxp")
 
-[node name="@MeshInstance3D@20924" type="MeshInstance3D" parent="TestInteractables/ModalTarget" unique_id=137770886]
+[node name="Mesh" type="MeshInstance3D" parent="TestInteractables/ModalTarget" unique_id=137770886]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 material_override = SubResource("StandardMaterial3D_hxw48")
 mesh = SubResource("BoxMesh_lu4qh")
@@ -329,92 +323,5 @@ horizontal_alignment = 1
 layout_mode = 2
 text = "Close"
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=670911453 instance=ExtResource("2_lequ8")]
+[node name="Player" parent="." unique_id=670911453 instance=ExtResource("2_lequ8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
-collision_layer = 2
-script = ExtResource("3_unn2r")
-
-[node name="Collision" type="CollisionShape3D" parent="Player" unique_id=296882719]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-shape = SubResource("CapsuleShape3D_5dc8e")
-
-[node name="CameraPivot" type="Node3D" parent="Player" unique_id=1552137205]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
-
-[node name="Camera" type="Camera3D" parent="Player/CameraPivot" unique_id=557549660]
-
-[node name="InteractionQuery" type="RayCast3D" parent="Player/CameraPivot/Camera" unique_id=458480546]
-target_position = Vector3(0, 0, -2.5)
-collision_mask = 5
-collide_with_areas = true
-script = ExtResource("5_jx3h5")
-
-[node name="FpsHud" type="CanvasLayer" parent="Player" unique_id=563788551]
-process_mode = 3
-
-[node name="Crosshair" type="ColorRect" parent="Player/FpsHud" unique_id=1054911424]
-custom_minimum_size = Vector2(4, 4)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -2.0
-offset_top = -2.0
-offset_right = 2.0
-offset_bottom = 2.0
-color = Color(1, 1, 1, 0.85)
-
-[node name="PromptLabel" type="Label" parent="Player/FpsHud" unique_id=679403607]
-anchors_preset = -1
-anchor_left = 0.5
-anchor_top = 0.62
-anchor_right = 0.5
-anchor_bottom = 0.62
-offset_left = -160.0
-offset_top = -12.0
-offset_right = 160.0
-offset_bottom = 20.0
-horizontal_alignment = 1
-
-[node name="DebugLabel" type="Label" parent="Player/FpsHud" unique_id=1345502800]
-offset_left = 12.0
-offset_top = 12.0
-offset_right = 480.0
-offset_bottom = 40.0
-
-[node name="PauseOverlay" type="Control" parent="Player/FpsHud" unique_id=2117270702]
-process_mode = 3
-visible = false
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Dim" type="ColorRect" parent="Player/FpsHud/PauseOverlay" unique_id=1741548702]
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.55)
-
-[node name="Box" type="VBoxContainer" parent="Player/FpsHud/PauseOverlay" unique_id=1901588095]
-layout_mode = 0
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -50.0
-offset_right = 100.0
-offset_bottom = 50.0
-
-[node name="PauseLabel" type="Label" parent="Player/FpsHud/PauseOverlay/Box" unique_id=1472131986]
-layout_mode = 2
-text = "PAUSED"
-horizontal_alignment = 1
-
-[node name="ResumeButton" type="Button" parent="Player/FpsHud/PauseOverlay/Box" unique_id=1162177424]
-layout_mode = 2
-text = "Resume"
