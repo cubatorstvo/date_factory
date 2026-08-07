@@ -124,6 +124,9 @@ func _ensure_date_actions() -> void:
 
 
 func _on_gift_pressed() -> void:
+	if not Game.dating.can_give_date_gift():
+		EventBus.toast("Сначала купи подарок в магазине", &"info")
+		return
 	_gift_for_result = false
 	_open_gift_inventory()
 
@@ -147,13 +150,23 @@ func _on_gift_list_gui_input(event: InputEvent) -> void:
 
 
 func _refresh_action_buttons() -> void:
-	var active := not Game.dating.active_manual.is_empty()
-	var done := bool(Game.dating.active_manual.get("phases_done", false))
+	var active: bool = not Game.dating.active_manual.is_empty()
+	var done: bool = bool(Game.dating.active_manual.get("phases_done", false))
+	var can_gift: bool = Game.dating.can_give_date_gift()
 	if _finish_btn:
 		_finish_btn.visible = done and not _showing_result
 	if _gift_btn:
-		_gift_btn.visible = active and (not _showing_result) and Game.dating.can_give_date_gift()
-	if _gift_list and (not active or not Game.dating.can_give_date_gift() or _showing_result):
+		## Always show during an active date; disable when inventory has nothing to give.
+		var gift_already: bool = bool(Game.dating.active_manual.get("gift_given", false))
+		_gift_btn.visible = active and (not _showing_result)
+		_gift_btn.disabled = not can_gift
+		if gift_already:
+			_gift_btn.text = "Подарок вручён"
+		elif can_gift:
+			_gift_btn.text = "Подарить подарок"
+		else:
+			_gift_btn.text = "Подарить подарок (нет в инвентаре)"
+	if _gift_list and (not active or not can_gift or _showing_result):
 		_gift_list.visible = false
 	if _result_gift_btn:
 		_result_gift_btn.visible = _showing_result
@@ -609,6 +622,7 @@ func _open(payload: Dictionary) -> void:
 func show_after_intro() -> void:
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_refresh_action_buttons()
 	_refresh_coach()
 	var panel := get_node_or_null("Panel") as Control
 	if panel:

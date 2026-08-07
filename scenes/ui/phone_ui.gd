@@ -52,6 +52,8 @@ func _ready() -> void:
 	_ensure_claimed_tab()
 	_ensure_journal_tab()
 	_ensure_orbit_tab()
+	if tabs != null and not tabs.tab_changed.is_connected(_on_phone_tab_changed):
+		tabs.tab_changed.connect(_on_phone_tab_changed)
 	var start_btn := get_node_or_null("Panel/Margin/Body/Tabs/Candidates/Start") as Button
 	if start_btn:
 		start_btn.text = "Выбрать место: кафе"
@@ -129,6 +131,17 @@ func _ensure_journal_tab() -> void:
 
 func _on_journal_girl_selected(index: int) -> void:
 	_fill_journal_body(index)
+	if index >= 0 and index < _journal_ids.size():
+		## After the first date, opening a contact journal counts as viewing the profile.
+		Game.quests.on_profile_seen()
+
+
+func _on_phone_tab_changed(_tab: int) -> void:
+	if tabs == null:
+		return
+	var current: Control = tabs.get_current_tab_control()
+	if current != null and str(current.name) == "Journal":
+		Game.quests.on_profile_seen()
 
 
 func _fill_journal_body(index: int) -> void:
@@ -1053,14 +1066,16 @@ func _ensure_themed_apt_book_button() -> void:
 
 
 func _book_place_for_selected(place_id: String) -> void:
+	if not Game.quests.can_do(&"book_date"):
+		EventBus.toast(Game.quests.gate_hint(&"book_date"), &"warn")
+		return
 	var idx := candidates_list.get_selected_items()
 	if idx.is_empty():
 		EventBus.toast("Выбери кандидатку в списке", &"warn")
 		return
 	var c: Dictionary = _candidate_ids[idx[0]]
-	var id := str(c.get("id", ""))
-	var kind := str(c.get("kind", ""))
-	Game.quests.on_profile_seen()
+	var id: String = str(c.get("id", ""))
+	var kind: String = str(c.get("kind", ""))
 	if kind == "proc" and not Game.girls.unlocked.has(id):
 		Game.girls.add_contact(StringName(id), c)
 	if Game.time == null:

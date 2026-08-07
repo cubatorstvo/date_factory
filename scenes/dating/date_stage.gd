@@ -38,6 +38,7 @@ var _turn_started: bool = false
 var _turn_started_at: float = 0.0
 var _sit_started: bool = false
 var _sit_started_at: float = 0.0
+var _intro_arrival_ready: bool = false
 var _outro_started: bool = false
 var _camera_cue: int = 0
 var _presentation: Node
@@ -126,9 +127,22 @@ func _process(delta: float) -> void:
 			if bool(step.get("sitting", false)):
 				_girl.position = _girl_chair_position
 				_lock_girl_physics()
+				## Kick sit even if near_seat/turn lagged behind pipeline seat snap.
+				if not _sit_started:
+					if not _turn_started:
+						_play_girl_alias(&"turn", &"idle")
+						_turn_started = true
+						_turn_started_at = _sequence_time
+					if _sequence_time - _turn_started_at >= 0.35:
+						_play_girl_alias(&"sit_enter", &"sit")
+						_sit_started = true
+						_sit_started_at = _sequence_time
 			_face_toward_player()
-			if bool(step.get("done", false)) and _sit_started:
-				var sit_length := float(_girl.call("get_alias_length", &"sit_enter")) if _girl.has_method("get_alias_length") else 1.0
+			## ArrivalPipeline.done is one-frame; latch READY so sit-settle can finish after.
+			if bool(step.get("done", false)) or str(step.get("phase", "")) == "ready":
+				_intro_arrival_ready = true
+			if _sit_started and (_intro_arrival_ready or bool(step.get("sitting", false))):
+				var sit_length: float = float(_girl.call("get_alias_length", &"sit_enter")) if _girl.has_method("get_alias_length") else 1.0
 				if _sequence_time - _sit_started_at >= maxf(0.85, minf(sit_length, 1.3)):
 					_finish_intro()
 		&"ready":
@@ -257,6 +271,7 @@ func _on_open(payload: Dictionary) -> void:
 	_turn_started_at = 0.0
 	_sit_started = false
 	_sit_started_at = 0.0
+	_intro_arrival_ready = false
 	_outro_started = false
 	_camera_cue = 0
 
@@ -784,6 +799,7 @@ func _clear() -> void:
 	_turn_started_at = 0.0
 	_sit_started = false
 	_sit_started_at = 0.0
+	_intro_arrival_ready = false
 	_outro_started = false
 	_camera_cue = 0
 	if _presentation and is_instance_valid(_presentation):

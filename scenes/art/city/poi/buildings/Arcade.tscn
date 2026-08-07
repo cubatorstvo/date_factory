@@ -86,6 +86,7 @@ script = ExtResource("1_7j0wa")
 building_id = "arcade"
 district_id = "park_leisure"
 building_mode = "Storefront"
+reserved_lot_size = Vector2(8, 8)
 
 [node name="VisualRoot" type="Node3D" parent="." unique_id=1821632115]
 
