@@ -22,6 +22,7 @@ GodotIQRuntime="*uid://b2otg5noq2igh"
 GameState="*res://game/state/game_state.gd"
 ContentDB="*res://data/catalog/content_db.gd"
 Progression="*res://game/progression/progression.gd"
+GameDay="*res://game/day/game_day.gd"
 RivalEncounters="*res://game/rivals/rival_encounters.gd"
 RivalCompetitionRunner="*res://game/rivals/rival_competition_runner.gd"
 GirlDiscovery="*res://game/girls/girl_discovery.gd"
@@ -29,6 +30,7 @@ DatingCore="*res://game/dating/dating_core.gd"
 Relationships="*res://game/relationships/relationships.gd"
 Story="*res://game/story/story.gd"
 World="*res://world/world.gd"
+SalaryMine="*res://game/salary/salary_mine.gd"
 
 [display]
 

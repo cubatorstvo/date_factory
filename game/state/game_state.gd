@@ -52,6 +52,11 @@ var _money_per_minute: float = 0.0
 var _dates_per_minute: float = 0.0
 var _purchased_perks: Dictionary = {}
 var _defeated_rivals: Dictionary = {}
+var _salary_initialized: bool = false
+var _salary_period_index: int = 0
+var _pending_salary: int = 0
+var _salary_manual_cycle_seen: bool = false
+var _salary_advance_used_period: int = -1
 
 const CHAR_MIN: int = 0
 const CHAR_MAX: int = 10
@@ -95,6 +100,11 @@ func reset_for_new_game() -> void:
 	_dates_per_minute = 0.0
 	_purchased_perks = {}
 	_defeated_rivals = {}
+	_salary_initialized = false
+	_salary_period_index = 0
+	_pending_salary = 0
+	_salary_manual_cycle_seen = false
+	_salary_advance_used_period = -1
 	state_reset.emit()
 
 
@@ -127,6 +137,68 @@ func restore_stage(stage: GameTypes.GameStage) -> void:
 		return
 	_stage = stage
 	stage_changed.emit(_stage, prev)
+
+
+# --- Salary state (MODULE 13) ---
+
+func is_salary_initialized() -> bool:
+	return _salary_initialized
+
+
+## Returns true only the first time.
+func mark_salary_initialized() -> bool:
+	if _salary_initialized:
+		return false
+	_salary_initialized = true
+	return true
+
+
+func get_salary_period_index() -> int:
+	return _salary_period_index
+
+
+func advance_salary_period_index() -> int:
+	_salary_period_index += 1
+	return _salary_period_index
+
+
+func get_pending_salary() -> int:
+	return _pending_salary
+
+
+func add_pending_salary(amount: int) -> void:
+	if amount < 0:
+		push_error("[GameState] add_pending_salary negative amount: %s" % amount)
+		return
+	if amount == 0:
+		return
+	_pending_salary += amount
+
+
+func take_all_pending_salary() -> int:
+	var amount: int = _pending_salary
+	_pending_salary = 0
+	return amount
+
+
+func has_seen_manual_salary_cycle() -> bool:
+	return _salary_manual_cycle_seen
+
+
+## Returns true only the first time.
+func mark_manual_salary_cycle_seen() -> bool:
+	if _salary_manual_cycle_seen:
+		return false
+	_salary_manual_cycle_seen = true
+	return true
+
+
+func get_salary_advance_used_period() -> int:
+	return _salary_advance_used_period
+
+
+func set_salary_advance_used_period(period_index: int) -> void:
+	_salary_advance_used_period = period_index
 
 
 # --- Money ---

@@ -1,6 +1,7 @@
 class_name PhoneJournal
 extends Control
-## Functional phone journal for discovered girls (MODULE 08).
+## Functional phone journal for discovered girls (MODULE 08)
+## + salary section when StoryFeature.SALARY_MINE unlocked (MODULE 13).
 ## No Dating CTA / messaging / scheduling.
 
 signal opened()
@@ -14,12 +15,21 @@ var _player: Node = null
 var _is_open: bool = false
 var _listed_ids: Array[StringName] = []
 
+var _salary_section: VBoxContainer = null
+var _salary_title: Label = null
+var _salary_stats: Label = null
+var _salary_advance_btn: Button = null
+var _salary_pending_hint: Label = null
+var _salary_feedback: Label = null
+var _salary_signals_connected: bool = false
+
 
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
+	_connect_salary_signals()
 
 
 func open(player: Node = null) -> void:
@@ -30,7 +40,8 @@ func open(player: Node = null) -> void:
 			_player = tree.get_first_node_in_group("player")
 	if _player != null and _player.has_method("enter_modal_ui"):
 		_player.call("enter_modal_ui")
-	_refresh_list()
+	_clear_salary_feedback()
+	refresh()
 	visible = true
 	_is_open = true
 	opened.emit()
@@ -74,6 +85,31 @@ func select_girl_by_id(girl_id: StringName) -> bool:
 
 func refresh() -> void:
 	_refresh_list()
+	_refresh_salary_section()
+
+
+func has_salary_section_visible() -> bool:
+	return _salary_section != null and _salary_section.visible
+
+
+func is_salary_advance_controls_visible() -> bool:
+	return _salary_advance_btn != null and _salary_advance_btn.visible
+
+
+func is_salary_advance_enabled() -> bool:
+	return _salary_advance_btn != null and _salary_advance_btn.visible and not _salary_advance_btn.disabled
+
+
+func get_salary_stats_text() -> String:
+	if _salary_stats == null:
+		return ""
+	return String(_salary_stats.text)
+
+
+func get_salary_feedback_text() -> String:
+	if _salary_feedback == null:
+		return ""
+	return String(_salary_feedback.text)
 
 
 func _build_ui() -> void:
@@ -109,10 +145,172 @@ func _build_ui() -> void:
 	_detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail.fit_content = false
 	split.add_child(_detail)
+	_build_salary_section(vbox)
 	_close_btn = Button.new()
 	_close_btn.text = "Закрыть"
 	_close_btn.pressed.connect(close)
 	vbox.add_child(_close_btn)
+
+
+func _build_salary_section(parent: VBoxContainer) -> void:
+	_salary_section = VBoxContainer.new()
+	_salary_section.visible = false
+	_salary_section.add_theme_constant_override("separation", 4)
+	parent.add_child(_salary_section)
+	var sep := HSeparator.new()
+	_salary_section.add_child(sep)
+	_salary_title = Label.new()
+	_salary_title.text = "ЗАРПЛАТА"
+	_salary_title.add_theme_font_size_override("font_size", 18)
+	_salary_section.add_child(_salary_title)
+	_salary_stats = Label.new()
+	_salary_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_salary_section.add_child(_salary_stats)
+	var advance_row := HBoxContainer.new()
+	advance_row.add_theme_constant_override("separation", 12)
+	_salary_section.add_child(advance_row)
+	_salary_advance_btn = Button.new()
+	_salary_advance_btn.text = "Получить зарплату вперёд"
+	_salary_advance_btn.visible = false
+	_salary_advance_btn.pressed.connect(_on_salary_advance_pressed)
+	advance_row.add_child(_salary_advance_btn)
+	_salary_pending_hint = Label.new()
+	_salary_pending_hint.visible = false
+	advance_row.add_child(_salary_pending_hint)
+	_salary_feedback = Label.new()
+	_salary_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_salary_section.add_child(_salary_feedback)
+
+
+func _connect_salary_signals() -> void:
+	if _salary_signals_connected:
+		return
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null:
+		if gs.has_signal("money_changed") and not gs.is_connected("money_changed", _on_money_changed_salary):
+			gs.connect("money_changed", _on_money_changed_salary)
+		if gs.has_signal("authority_changed") and not gs.is_connected("authority_changed", _on_authority_changed_salary):
+			gs.connect("authority_changed", _on_authority_changed_salary)
+	var salary: Node = get_node_or_null("/root/SalaryMine")
+	if salary != null:
+		if salary.has_signal("salary_period_opened") and not salary.is_connected("salary_period_opened", _on_salary_period_opened):
+			salary.connect("salary_period_opened", _on_salary_period_opened)
+		if salary.has_signal("salary_pending_changed") and not salary.is_connected("salary_pending_changed", _on_salary_pending_changed):
+			salary.connect("salary_pending_changed", _on_salary_pending_changed)
+		if salary.has_signal("salary_claimed") and not salary.is_connected("salary_claimed", _on_salary_claimed):
+			salary.connect("salary_claimed", _on_salary_claimed)
+	var prog: Node = get_node_or_null("/root/Progression")
+	if prog != null and prog.has_signal("perk_purchased") and not prog.is_connected("perk_purchased", _on_perk_purchased_salary):
+		prog.connect("perk_purchased", _on_perk_purchased_salary)
+	var story: Node = get_node_or_null("/root/Story")
+	if story != null and story.has_signal("feature_unlocked") and not story.is_connected("feature_unlocked", _on_feature_unlocked_salary):
+		story.connect("feature_unlocked", _on_feature_unlocked_salary)
+	_salary_signals_connected = true
+
+
+func _on_money_changed_salary(_new_value: int, _delta: int) -> void:
+	_request_salary_refresh()
+
+
+func _on_authority_changed_salary(_new_value: int, _delta: int) -> void:
+	_request_salary_refresh()
+
+
+func _on_salary_period_opened(_status: SalaryStatus) -> void:
+	_request_salary_refresh()
+
+
+func _on_salary_pending_changed(_amount: int) -> void:
+	_request_salary_refresh()
+
+
+func _on_salary_claimed(_amount: int, _method: SalaryTypes.ClaimMethod) -> void:
+	_request_salary_refresh()
+
+
+func _on_perk_purchased_salary(_perk_id: StringName, _characteristic: GameTypes.PlayerCharacteristic, _cost: int) -> void:
+	_request_salary_refresh()
+
+
+func _on_feature_unlocked_salary(_feature: StoryTypes.StoryFeature) -> void:
+	_request_salary_refresh()
+
+
+func _request_salary_refresh() -> void:
+	if _is_open:
+		_refresh_salary_section()
+
+
+func _clear_salary_feedback() -> void:
+	if _salary_feedback != null:
+		_salary_feedback.text = ""
+
+
+func _refresh_salary_section() -> void:
+	if _salary_section == null:
+		return
+	var story: Node = get_node_or_null("/root/Story")
+	var unlocked: bool = false
+	if story != null and story.has_method("is_feature_unlocked"):
+		unlocked = bool(story.call("is_feature_unlocked", StoryTypes.StoryFeature.SALARY_MINE))
+	_salary_section.visible = unlocked
+	if not unlocked:
+		return
+	var salary: Node = get_node_or_null("/root/SalaryMine")
+	if salary == null or not salary.has_method("get_status"):
+		return
+	var status: SalaryStatus = salary.call("get_status") as SalaryStatus
+	if status == null:
+		return
+	var day_suffix: String = ""
+	var day_node: Node = get_node_or_null("/root/GameDay")
+	if day_node != null and day_node.has_method("get_current_day"):
+		day_suffix = " · День %d" % int(day_node.call("get_current_day"))
+	_salary_title.text = "ЗАРПЛАТА%s" % day_suffix
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("Авторитет: %d" % status.authority)
+	lines.append("Разряд: %d" % status.salary_level)
+	lines.append("За период: %d" % status.gross_per_period)
+	lines.append("Накоплено: %d" % status.pending_salary)
+	if status.passive_enabled:
+		lines.append("Автоматически: %d / период" % status.passive_per_period)
+	_salary_stats.text = "\n".join(lines)
+	var show_advance: bool = status.salary_advance_owned
+	_salary_advance_btn.visible = show_advance
+	_salary_pending_hint.visible = show_advance
+	if show_advance:
+		_salary_advance_btn.disabled = not status.salary_advance_available
+		_salary_pending_hint.text = "Получить %d" % status.pending_salary
+
+
+func _on_salary_advance_pressed() -> void:
+	var salary: Node = get_node_or_null("/root/SalaryMine")
+	if salary == null or not salary.has_method("claim_salary_advance"):
+		return
+	var result: SalaryClaimResult = salary.call("claim_salary_advance") as SalaryClaimResult
+	if result == null:
+		return
+	if result.ok:
+		_salary_feedback.text = "Получено удалённо: +%d" % result.amount
+	else:
+		_salary_feedback.text = _claim_error_text(result.error)
+	_refresh_salary_section()
+
+
+func _claim_error_text(error: SalaryTypes.ClaimError) -> String:
+	match error:
+		SalaryTypes.ClaimError.NO_PENDING:
+			return "Нет накопленной выплаты"
+		SalaryTypes.ClaimError.ADVANCE_ALREADY_USED:
+			return "Уже использовано в этом периоде"
+		SalaryTypes.ClaimError.PERK_REQUIRED:
+			return "Нужен перк"
+		SalaryTypes.ClaimError.LOCKED:
+			return "Нет накопленной выплаты"
+		SalaryTypes.ClaimError.BUSY:
+			return "Нет накопленной выплаты"
+		_:
+			return "Нет накопленной выплаты"
 
 
 func _refresh_list() -> void:

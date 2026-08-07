@@ -45,9 +45,9 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 | `CAPITAL_REPRESENTATION_EXPENSES` | `perk_capital_representation_expenses` | **Dating (implemented):** first normal paid (`!is_major_expense`) action free; consume on select | MODULE 09 |
 | `CAPITAL_BUY_PROBLEM` | `perk_capital_buy_problem` | **Dating (implemented):** `required_perk_id` gate on authored actions only | MODULE 09 + authored event |
 | `CAPITAL_HOSTILE_ACQUISITION` | `perk_capital_hostile_acquisition` | After MONEY match `PLAYER_WIN` vs rival with `competition_modifier_id=&"money_acquisition"`, Runner emits `hostile_acquisition_requested` once (no world mutation in 07D; ownership later) | MODULE 07D hook; 11/12 Story/World |
-| `CAPITAL_SALARY_ADVANCE` | `perk_capital_salary_advance` | Once per salary period: take nearest available payout without going to payout place | MODULE 13 Salary Mine |
+| `CAPITAL_SALARY_ADVANCE` | `perk_capital_salary_advance` | Salary Mine unlocked only. Once per salary period. Remote claim of ALL currently accumulated pending salary. Does not create future payout. Does not mark manual cycle seen. | MODULE 13 Salary Mine / PhoneJournal |
 | `CAPITAL_DIGNITY_REFUND` | `perk_capital_dignity_refund` | **Dating (implemented):** on execution FAILURE with `money_spent>0`, `GameState.add_money` refund; tags/reaction unchanged. Does **not** refund Money Contest auction spends | MODULE 09 paid resolver |
-| `CAPITAL_FINANCIAL_INERTIA` | `perk_capital_financial_inertia` | After salary joke/manual cycle seen, salary level-up may add small passive money | MODULE 13 |
+| `CAPITAL_FINANCIAL_INERTIA` | `perk_capital_financial_inertia` | After at least one successful manual salary collection, 25% floor of each future gross salary period is deposited automatically; remaining gross stays pending for manual/advance collection. | MODULE 13 Salary Mine |
 | `CAPITAL_NO_LIMIT` | `perk_capital_no_limit` | Once per major story stage: allow authored capital solution regardless of price. **MODULE 09 does NOT implement once/date freebie** | MODULE 11/12 Story; not MODULE 09 session |
 
 ---

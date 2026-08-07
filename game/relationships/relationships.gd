@@ -22,7 +22,21 @@ func _ready() -> void:
 	if gs != null and gs.has_signal("state_reset"):
 		if not gs.is_connected("state_reset", _on_state_reset):
 			gs.connect("state_reset", _on_state_reset)
+	_connect_gameday_signal()
 	DfLog.info("MODULE_10", "Relationships ready")
+
+
+func _connect_gameday_signal() -> void:
+	var day: Node = get_node_or_null("/root/GameDay")
+	if day == null or not day.has_signal("day_advanced"):
+		return
+	if day.is_connected("day_advanced", _on_game_day_advanced):
+		return
+	day.connect("day_advanced", _on_game_day_advanced)
+
+
+func _on_game_day_advanced(_new_day: int) -> void:
+	notify_game_day_advanced()
 
 
 func _on_state_reset() -> void:

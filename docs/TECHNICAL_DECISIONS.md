@@ -655,3 +655,22 @@ Matches compact GDD world, keeps Story as single access source, avoids manager p
 
 Scope:
 `world/**`, `core/main_bootstrap.gd`, location `.tres` `scene_path`, ContentDB path validation, `project.godot`, docs
+
+---
+
+## MODULE 13: GameDay is day-index broadcaster only
+
+Context:
+MODULE 08/10 already use 1–3 day cooldowns; MODULE 13 adds salary period = one game day. Multiple independent day notifiers risk double-decrement bugs.
+
+Decision:
+`GameDay` is explicit day-index broadcaster only.
+No time-of-day.
+Production day progression occurs only via `GameDay.advance_day()`.
+GirlDiscovery/Relationships/SalaryMine subscribe.
+
+Reason:
+One production `advance_day()` keeps cooldown and salary period seams aligned without a full Time System.
+
+Scope:
+`game/day/game_day.gd`, `game/salary/**`, GirlDiscovery/Relationships GameDay subscribe, `ui/phone/phone_journal.gd` salary section, `project.godot` `[autoload]`

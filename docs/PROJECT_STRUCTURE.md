@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 12 — World & Location Framework**.  
+Фактическая структура после **MODULE 13 — Salary Mine & Money Loop**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
 ## Top-level (существует сейчас)
@@ -13,9 +13,9 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → World apartment, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (rel/cooldown/completion); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
-| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / Salary Mine economy |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (girls + salary section); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
+| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / clone economy |
 | `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
 | `icon.svg` | Иконка приложения | — | — |
@@ -86,6 +86,18 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 
 - `progression.gd` — autoload `Progression`: purchase, cost `3^N`, tree prereqs, availability, `perk_purchased`
 - `test/progression_test.tscn` + `progression_self_test.gd` — MODULE 05 headless runner
+
+### `game/day/`
+
+- `game_day.gd` — autoload `GameDay`: integer day index + `advance_day()` + `day_advanced` (no clock/time-of-day)
+- `day_advance_interactable.gd` — apartment Interactable → `GameDay.advance_day()`
+
+### `game/salary/`
+
+- `salary_mine.gd` — autoload `SalaryMine` (after World): periods, pending, manual/advance claim, passive inertia
+- `salary_types.gd` / `salary_status.gd` / `salary_claim_result.gd` — claim enums + read models
+- `salary_station.gd` — mine Interactable manual claim cycle
+- `test/salary_mine_test.tscn` + `salary_mine_self_test.gd` — MODULE 13 headless runner
 
 ### `game/rivals/`
 
@@ -158,16 +170,18 @@ Dependency-safe production order (`project.godot`):
 | Name | Почему |
 |---|---|
 | `GodotIQRuntime` | Editor/runtime bridge addon; не gameplay |
-| `GameState` | Canonical runtime playthrough state (MODULE 02); owns purchased perks |
+| `GameState` | Canonical runtime playthrough state (MODULE 02); owns purchased perks + salary fields |
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
 | `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
-| `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
+| `GameDay` | Explicit day-index broadcaster (MODULE 13); after Progression; no time-of-day |
+| `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after GameDay; uses GameState + ContentDB competitions; no EventBus |
 | `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07D routes SLAP/DANCE/SIGMA/MONEY); Hostile Acquisition hook; after RivalEncounters; Callable seam only |
-| `GirlDiscovery` | Girl discovery / acquaintance (MODULE 08); after ContentDB; uses GameState + ContentDB + Story gates |
+| `GirlDiscovery` | Girl discovery / acquaintance (MODULE 08); after ContentDB; uses GameState + ContentDB + Story gates; GameDay subscriber |
 | `DatingCore` | One-date runtime (MODULE 09); after GirlDiscovery; uses GameState + ContentDB; does **not** apply relationship; assigns monotonic `date_id` |
-| `Relationships` | Apply date results / completion / date cooldown / event history (MODULE 10); after DatingCore |
+| `Relationships` | Apply date results / completion / date cooldown / event history (MODULE 10); after DatingCore; GameDay subscriber |
 | `Story` | Stage completion / StoryFeature / girl-rival gates (MODULE 11); after Relationships |
 | `World` | Location load/travel/access (MODULE 12); after Story; StoryFeature gates; not GameState.unlock_location for the 9 |
+| `SalaryMine` | Salary periods / pending / claim / passive (MODULE 13); after World; StoryFeature.SALARY_MINE gate |
 
 ## Canonical future destinations (ещё не созданы)
 
@@ -183,8 +197,9 @@ audio/
 `game/dating/` реализован (MODULE 09).  
 `game/relationships/` реализован (MODULE 10).  
 `game/story/` реализован (MODULE 11).  
-`world/` каркас 9 локаций реализован (MODULE 12); Salary Mine economy — MODULE 13.  
-`ui/phone/` функциональный журнал (MODULE 08/10/12 physical entry); финальный phone shell — MODULE 22.  
+`world/` каркас 9 локаций реализован (MODULE 12).  
+`game/day/` + `game/salary/` реализова зарплаты (MODULE 13).  
+`ui/phone/` функциональный журнал + salary section (MODULE 08/10/12/13); финальный phone shell — MODULE 22.  
 `ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
 
 ## Donor

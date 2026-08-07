@@ -35,6 +35,7 @@ var _gs_connected: bool = false
 func _ready() -> void:
 	_rng.randomize()
 	_connect_gamestate_signals()
+	_connect_gameday_signal()
 	DfLog.info("MODULE_08", "GirlDiscovery ready")
 
 
@@ -324,6 +325,19 @@ func _connect_gamestate_signals() -> void:
 	if gs.has_signal("primary_trait_revealed") and not gs.is_connected("primary_trait_revealed", _on_gs_trait):
 		gs.connect("primary_trait_revealed", _on_gs_trait)
 	_gs_connected = true
+
+
+func _connect_gameday_signal() -> void:
+	var day: Node = get_node_or_null("/root/GameDay")
+	if day == null or not day.has_signal("day_advanced"):
+		return
+	if day.is_connected("day_advanced", _on_game_day_advanced):
+		return
+	day.connect("day_advanced", _on_game_day_advanced)
+
+
+func _on_game_day_advanced(_new_day: int) -> void:
+	notify_game_day_advanced()
 
 
 func _on_gs_clue(girl_id: StringName, clue_index: int) -> void:
