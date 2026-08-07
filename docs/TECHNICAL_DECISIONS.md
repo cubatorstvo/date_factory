@@ -489,7 +489,7 @@ Slap-only host naming was ambiguous; Dance needs the same launch/submit lifetime
 Decision:
 - Autoload `RivalCompetitionRunner` → `res://game/rivals/rival_competition_runner.gd`, registered **after** `RivalEncounters`.
 - `_ready()` → `RivalEncounters.set_competition_runner(run_competition)`; `competition_requested` is notify-only (no second launch path).
-- Explicit `match competition_type`: SLAP → SlapMinigame, DANCE → DanceMinigame; SIGMA/MONEY → debug error, no fake WIN/LOSS, no encounter completion.
+- Explicit `match competition_type`: SLAP → SlapMinigame, DANCE → DanceMinigame; SIGMA/MONEY originally unsupported (SIGMA added in MODULE 07C).
 - Delete production `SlapCompetitionHost`; MODULE 06 `RivalFakeCompetitionRunner` uses `set_competition_runner` and restores production on teardown.
 - `DanceMatch` headless FSM (OPPONENT_DEMO / PRE_ROLL / PLAYER_REPEAT / OWN_PREVIEW / PLAYER_OWN / ROUND_FEEDBACK); `DanceTiming.evaluate_move`; WASD via existing `move_*` actions (no `dance_*` InputMap).
 - Appearance perks only: `APPEARANCE_STAGED_WALK`, `APPEARANCE_RHYTHM_IN_BODY`; no Authority mutation inside Dance.
@@ -499,3 +499,22 @@ One runner for all four rival contests, one submit boundary, scene-independent l
 
 Scope:
 `game/rivals/rival_competition_runner.gd`, `game/rivals/rival_fake_competition_runner.gd`, `minigames/dance/**`, `minigames/slap/test/**`, `core/main_bootstrap.gd`, `project.godot` `[autoload]`, docs
+
+## MODULE 07C: Sigma Pressure minigame
+
+Context:
+Third rival contest needs continuous mouse-X composure hold under baseline pressure and telegraphed disturbances, routed through the same `RivalCompetitionRunner` without Authority mutation inside the minigame.
+
+Decision:
+- Path `res://minigames/sigma/`: `SigmaMatch` (headless) + `SigmaMinigame` (CanvasLayer UI/input); contract `setup(request, …)` + `signal match_finished(result)`.
+- Runner routes `SIGMA` → `SigmaMinigame`; `MONEY` remains explicit unsupported (debug error, no fake result). No `*CompetitionHost`.
+- Snapshot Aura difference from `RivalCompetitionRequest` only; perk snapshot at match start via `PerkIds` (mid-match purchase ignored).
+- Exact formulas: `half_width = clamp(0.30+diff*0.015, 0.20, 0.40)`, `pressure = clamp(0.32-diff*0.020, 0.18, 0.48)`; section 5.0s / hold 3.0s; target 3/5; mouse `0.0025`/px; error −0.65 once per excursion; perfect = win + 0 errors + perfect_time≥1.80.
+- Six perks only: Pocket Mirror (Q 2.5s), Control Profile, Don't Blink First, Silence Longer (R 2.0s schedule freeze), Reverse Pressure, Atmospheric Influence.
+- Mouse captured; FPS look disabled by existing `ControlMode.MINIGAME`; grade via `SlapTiming.compute_victory_grade`; `debug_score_summary` like `SIGMA 3:1`.
+
+Reason:
+Sigma is a continuous hold fantasy distinct from Slap/Dance timing, while sharing Runner lifetime, typed result, and score-grade matrix.
+
+Scope:
+`minigames/sigma/**`, `game/rivals/rival_competition_runner.gd`, `minigames/dance/test/dance_minigame_self_test.gd` (MONEY unsupported assert), docs

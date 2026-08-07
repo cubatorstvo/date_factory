@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d1b5va6453vmw"]
+
+[ext_resource type="Script" uid="uid://caucfsdedi6u6" path="res://minigames/sigma/sigma_minigame.gd" id="1_x8t18"]
+
+[node name="SigmaMinigame" type="CanvasLayer" unique_id=350515379]
+script = ExtResource("1_x8t18")

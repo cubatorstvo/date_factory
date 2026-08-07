@@ -372,25 +372,25 @@ func _run_integration_tests() -> void:
 	if _runner != null and _runner.has_method("register_as_runner"):
 		_runner.call("register_as_runner")
 
-	# Unsupported types must not fake-complete
+	# Unsupported MONEY must not fake-complete (SIGMA implemented in MODULE 07C)
 	_finish_count = 0
-	var sigma_def: RivalDefinition = RivalDefinition.new()
-	sigma_def.id = &"rival_test_sigma_only"
-	sigma_def.display_name = "SigmaOnly"
-	sigma_def.required_authority = 0
-	sigma_def.authority_reward = 1
-	sigma_def.preferred_competition = GameTypes.CompetitionType.SIGMA
-	sigma_def.allowed_competitions = [
-		GameTypes.CompetitionType.SIGMA,
+	var money_def: RivalDefinition = RivalDefinition.new()
+	money_def.id = &"rival_test_money_only"
+	money_def.display_name = "MoneyOnly"
+	money_def.required_authority = 0
+	money_def.authority_reward = 1
+	money_def.preferred_competition = GameTypes.CompetitionType.MONEY
+	money_def.allowed_competitions = [
+		GameTypes.CompetitionType.MONEY,
 		GameTypes.CompetitionType.SLAP,
 	] as Array[GameTypes.CompetitionType]
-	_gs.call("restore_purchased_perks", [PerkIds.AURA_PRESENCE_REGISTERED])
-	_re.call("register_rival_definition", sigma_def)
-	_re.call("start_encounter", &"rival_test_sigma_only", GameTypes.RivalEncounterInitiator.PLAYER)
-	_re.call("choose_competition", GameTypes.CompetitionType.SIGMA)
-	_ok(_finish_count == 0, "83 unsupported SIGMA no fake result")
+	_gs.call("restore_purchased_perks", [PerkIds.CAPITAL_PAYABLE_INTENT])
+	_re.call("register_rival_definition", money_def)
+	_re.call("start_encounter", &"rival_test_money_only", GameTypes.RivalEncounterInitiator.PLAYER)
+	_re.call("choose_competition", GameTypes.CompetitionType.MONEY)
+	_ok(_finish_count == 0, "83 unsupported MONEY no fake result")
 	_ok(bool(_re.call("has_active_encounter")), "83 encounter still active")
-	_ok(_runner.call("get_active_minigame") == null, "83 no minigame for SIGMA")
+	_ok(_runner.call("get_active_minigame") == null, "83 no minigame for MONEY")
 	_re.call("force_clear_session")
 	_gs.call("reset_for_new_game")
 

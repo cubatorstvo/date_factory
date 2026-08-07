@@ -28,7 +28,7 @@ func register_as_runner() -> void:
 
 func _ready() -> void:
 	register_as_runner()
-	DfLog.info("MODULE_07B", "RivalCompetitionRunner ready")
+	DfLog.info("MODULE_07C", "RivalCompetitionRunner ready")
 
 
 func run_competition(request: RivalCompetitionRequest) -> void:
@@ -43,7 +43,9 @@ func run_competition(request: RivalCompetitionRequest) -> void:
 			_start_slap(request)
 		GameTypes.CompetitionType.DANCE:
 			_start_dance(request)
-		GameTypes.CompetitionType.SIGMA, GameTypes.CompetitionType.MONEY:
+		GameTypes.CompetitionType.SIGMA:
+			_start_sigma(request)
+		GameTypes.CompetitionType.MONEY:
 			push_error(
 				"[RivalCompetitionRunner] unsupported competition_type=%s (no fake result)"
 				% str(request.competition_type)
@@ -90,6 +92,24 @@ func _start_dance(request: RivalCompetitionRequest) -> void:
 		dance.match_finished.connect(_on_match_finished)
 
 
+func _start_sigma(request: RivalCompetitionRequest) -> void:
+	_busy = true
+	_submitted = false
+	var encounters: Node = get_node("/root/RivalEncounters")
+	var is_story: bool = false
+	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
+	if def != null:
+		is_story = def.is_story
+	var perks: Dictionary = _snapshot_sigma_perks()
+	_prepare_player_mode(encounters)
+	var sigma: SigmaMinigame = SigmaMinigame.new()
+	_active = sigma
+	get_tree().root.add_child(sigma)
+	sigma.setup(request, is_story, perks)
+	if not sigma.match_finished.is_connected(_on_match_finished):
+		sigma.match_finished.connect(_on_match_finished)
+
+
 func _prepare_player_mode(encounters: Node) -> void:
 	_return_mode = int(PlayerController.ControlMode.GAMEPLAY)
 	var session: RivalEncounterSession = encounters.call("get_active_session") as RivalEncounterSession
@@ -131,6 +151,27 @@ func _snapshot_dance_perks() -> Dictionary:
 		return out
 	out["staged_walk"] = bool(gs.call("has_perk", PerkIds.APPEARANCE_STAGED_WALK))
 	out["rhythm_in_body"] = bool(gs.call("has_perk", PerkIds.APPEARANCE_RHYTHM_IN_BODY))
+	return out
+
+
+func _snapshot_sigma_perks() -> Dictionary:
+	var gs: Node = get_node_or_null("/root/GameState")
+	var out: Dictionary = {
+		"pocket_mirror": false,
+		"control_profile": false,
+		"dont_blink": false,
+		"silence_longer": false,
+		"reverse_pressure": false,
+		"atmospheric_influence": false,
+	}
+	if gs == null:
+		return out
+	out["pocket_mirror"] = bool(gs.call("has_perk", PerkIds.APPEARANCE_POCKET_MIRROR))
+	out["control_profile"] = bool(gs.call("has_perk", PerkIds.APPEARANCE_CONTROL_PROFILE))
+	out["dont_blink"] = bool(gs.call("has_perk", PerkIds.AURA_DONT_BLINK_FIRST))
+	out["silence_longer"] = bool(gs.call("has_perk", PerkIds.AURA_SILENCE_LONGER))
+	out["reverse_pressure"] = bool(gs.call("has_perk", PerkIds.AURA_REVERSE_PRESSURE))
+	out["atmospheric_influence"] = bool(gs.call("has_perk", PerkIds.AURA_ATMOSPHERIC_INFLUENCE))
 	return out
 
 

@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 07B — Dance Minigame / RivalCompetitionRunner**.  
+Фактическая структура после **MODULE 07C — Sigma Pressure**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -59,7 +59,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 ### `game/rivals/`
 
 - `rival_encounters.gd` — autoload `RivalEncounters`: encounter lifecycle, competition gates, perk hooks, minigame contract
-- `rival_competition_runner.gd` — autoload `RivalCompetitionRunner` (after RivalEncounters): SLAP/DANCE route, Player MINIGAME, exactly-once submit
+- `rival_competition_runner.gd` — autoload `RivalCompetitionRunner` (after RivalEncounters): SLAP/DANCE/SIGMA route; MONEY unsupported; Player MINIGAME; exactly-once submit
 - `rival_encounter_session.gd` / `rival_competition_request.gd` / `rival_competition_result.gd` / `rival_encounter_result.gd` — typed transient objects
 - `rival_fake_competition_runner.gd` — test-only forced WIN/LOSS via `set_competition_runner` seam
 - `rival_actor.gd` — thin Interactable adapter (`[E] Вызвать`)
@@ -78,6 +78,12 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 - `dance_timing.gd` — pure move evaluator + window/error/grade helpers
 - `dance_minigame.tscn` / `dance_minigame.gd` — CanvasLayer overlay; WASD via `move_*` actions
 - `test/dance_minigame_test.tscn` + `dance_minigame_self_test.gd` — MODULE 07B headless runner
+
+### `minigames/sigma/`
+
+- `sigma_match.gd` — headless Sigma composure FSM + Aura formulas + six perk rules (MODULE 07C)
+- `sigma_minigame.tscn` / `sigma_minigame.gd` — CanvasLayer overlay; relative mouse X; Q/R specials
+- `test/sigma_minigame_test.tscn` + `sigma_minigame_self_test.gd` — MODULE 07C headless runner
 
 ### `world/test/`
 
@@ -109,18 +115,18 @@ Interaction ray mask: world + interactable (bits 1+3).
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
 | `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
 | `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
-| `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07B); after RivalEncounters; Callable seam only |
+| `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07C routes SLAP/DANCE/SIGMA); after RivalEncounters; Callable seam only |
 
 ## Canonical future destinations (ещё не созданы)
 
 ```text
 audio/
-minigames/sigma/   # MODULE 07C
 minigames/money/   # MODULE 07D
 ```
 
 `minigames/slap/` реализован (MODULE 07A).  
 `minigames/dance/` реализован (MODULE 07B).  
+`minigames/sigma/` реализован (MODULE 07C).  
 `ui/` существует как папка-заготовка; FPS HUD временно живёт в `player.tscn`.
 
 ## Donor

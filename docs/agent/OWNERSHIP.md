@@ -1,5 +1,5 @@
-﻿# File ownership — MODULE 07B
+﻿# File ownership — MODULE 07C
 
-| Task | Agent | Writable | Read-only | Forbidden | Status |
-|------|-------|----------|-----------|-----------|--------|
-| MODULE_07B_DANCE | df-gameplay-worker | minigames/**, rival_competition_runner, fake runner, tests, bootstrap, project.godot autoload, docs | 02–07A sources | dating, sigma/money, dance_* InputMap, Authority in Dance | done |
+| Task | Agent | Writable | Status |
+|------|-------|----------|--------|
+| MODULE_07C_SIGMA | df-gameplay-worker | minigames/sigma/**, rival_competition_runner, docs | done |

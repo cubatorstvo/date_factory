@@ -28,8 +28,8 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 |---|---|---|---|
 | `APPEARANCE_GOOD_PROFILE` | `perk_appearance_good_profile` | Unlocks appearance actions by level; girl entrance clue detail more readable | MODULE 08 Discovery; MODULE 09 |
 | `APPEARANCE_STAGED_WALK` | `perk_appearance_staged_walk` | Dance: once/match, first ERROR at streak>0 → streak=`max(1,ceil(prev/2))` (error still counts); unused if first error at streak 0 | MODULE 07B Dance |
-| `APPEARANCE_POCKET_MIRROR` | `perk_appearance_pocket_mirror` | Once per sigma contest: short stable/clearer hold zone | MODULE 07C Sigma |
-| `APPEARANCE_CONTROL_PROFILE` | `perk_appearance_control_profile` | Only during pocket mirror; perfect sigma section grants extra point | MODULE 07C |
+| `APPEARANCE_POCKET_MIRROR` | `perk_appearance_pocket_mirror` | Sigma: Q once/match, 2.5s; `zone_center=0`, `normal_half_width*=1.20` clamp≤0.46; pressure/disturbances continue; timer may carry across sections | MODULE 07C Sigma |
+| `APPEARANCE_CONTROL_PROFILE` | `perk_appearance_control_profile` | Sigma: if PERFECT completes while Mirror still active → +1 extra (total +2 with base); stacks with Reverse Pressure (+3 max) | MODULE 07C |
 | `APPEARANCE_SECOND_OUTFIT` | `perk_appearance_second_outfit` | Once per date, after girl arrives, before first scored event: swap prepared accessory set | MODULE 09; character presentation |
 | `APPEARANCE_ENCORE` | `perk_appearance_encore` | Once per date after neutral (0) appearance action: extra visual action; success may replace one tag with ORIGINALITY | MODULE 09 |
 | `APPEARANCE_RHYTHM_IN_BODY` | `perk_appearance_rhythm_in_body` | Dance: `base_window *= 1.20` before streak bonus (final ≤0.30); first complex (`length>=4`) PLAYER_REPEAT shows next-direction clue 0.25s before beats | MODULE 07B |
@@ -57,12 +57,12 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 | PerkId | ID | Contract (summary) | Future owners |
 |---|---|---|---|
 | `AURA_PRESENCE_REGISTERED` | `perk_aura_presence_registered` | Unlocks aura actions by level; unlocks sigma contests | MODULE 06; 07C; 09 |
-| `AURA_DONT_BLINK_FIRST` | `perk_aura_dont_blink_first` | First hold mistake in sigma does not reduce accumulated progress | MODULE 07C |
-| `AURA_SILENCE_LONGER` | `perk_aura_silence_longer` | Once per sigma: opponent briefly stops disturbances | MODULE 07C |
-| `AURA_REVERSE_PRESSURE` | `perk_aura_reverse_pressure` | After handling a disturbance, next perfect sigma section gets +1 point | MODULE 07C |
+| `AURA_DONT_BLINK_FIRST` | `perk_aura_dont_blink_first` | Sigma: first hold error once/match skips −0.65; `total_error_count+=1`; perfect impossible; used even at progress 0 | MODULE 07C |
+| `AURA_SILENCE_LONGER` | `perk_aura_silence_longer` | Sigma: R once/match, 2.0s; freezes disturbance schedule clock only; active disturbance finishes; baseline continues; may carry across sections | MODULE 07C |
+| `AURA_REVERSE_PRESSURE` | `perk_aura_reverse_pressure` | Sigma: survive ACTIVE disturbance +0.75s with zero hold errors → arm; next PERFECT consumes for +1; arm persists across non-perfect sections | MODULE 07C |
 | `AURA_RIGHT_TO_SAY_NOTHING` | `perk_aura_right_to_say_nothing` | Dating: once/date skip greeting, girl starts (diagnostic, no relationship). Rival: once/encounter replace rival-chosen competition if they initiated; **no Authority penalty** for the swap | MODULE 09; MODULE 06 |
 | `AURA_SHE_ALREADY_STARTED` | `perk_aura_she_already_started` | Dating only: after Right to Say Nothing, girl's first initiative gives a clearer primary-trait clue. **No Rival Encounter effect** | MODULE 09 |
-| `AURA_ATMOSPHERIC_INFLUENCE` | `perk_aura_atmospheric_influence` | Crowd no longer hardens aura hold; may only change presentation | MODULE 07C; presentation |
+| `AURA_ATMOSPHERIC_INFLUENCE` | `perk_aura_atmospheric_influence` | Sigma: if observers present → `observer_wobble=0`; does not remove rival wobble/pressure/disturbances | MODULE 07C |
 | `AURA_LOCAL_SIGNIFICANCE` | `perk_aura_local_significance` | Once per normal rival encounter: clearly weaker rival may concede before minigame (not story rivals) | MODULE 06 |
 
 ---
