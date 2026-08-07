@@ -1,7 +1,0 @@
-[gd_resource type="StandardMaterial3D" format=3]
-
-[resource]
-resource_name = "City_Base_Metal"
-albedo_color = Color(0.45, 0.45, 0.48, 1)
-roughness = 0.35
-metallic = 0.7

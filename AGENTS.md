@@ -66,8 +66,10 @@ Project orchestration rules:
 - `.cursor/rules/date-factory-godot.mdc`
 
 Also keep: `.cursor/rules/gdscript-no-infer-from-variant.mdc`
+Also keep: `.cursor/rules/donor-project.mdc` (canonical meaning of «донор» / `../date_factory_legacy`)
 
-Operational docs: `docs/agent/` — start with `docs/agent/RUNBOOK.md` before a substantial milestone.
+Operational docs: `docs/README.md`. Recreate `docs/agent/` only when a new v2 milestone workflow needs it.
+Legacy prototype docs live only in the donor (`../date_factory_legacy`).
 
 Main Cursor Agent chat acts as **Orchestrator** and should use **GPT 5.6 Sol** (selected manually in the model picker).
 

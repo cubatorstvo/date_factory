@@ -1,6 +1,6 @@
-Проведи независимую приёмку текущего DATE FACTORY milestone.
+Проведи независимую приёмку текущего DATE FACTORY v2 milestone.
 
-1. Прочитай `docs/agent/ACCEPTANCE.md`.
+1. Прочитай `docs/README.md` и, если есть, `docs/agent/ACCEPTANCE.md` / `docs/MASTER_GDD.md`.
 2. Получи Git diff.
 3. Определи normal player route.
 4. Вызови `df-qa-worker`.
@@ -11,3 +11,4 @@
 9. Финальный статус только READY или NOT READY.
 
 Не использовать `READY WITH LIMITATIONS` при critical FAIL.
+Не считать наличие legacy-кода в donor доказательством готовности v2.

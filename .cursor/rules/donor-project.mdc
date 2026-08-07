@@ -1,0 +1,170 @@
+---
+description: Rules for using the legacy Date Factory project as a read-only donor
+alwaysApply: true
+---
+
+# Legacy donor project
+
+## Canonical donor
+
+Для этого проекта термин:
+
+* `донор`
+* `старый проект`
+* `legacy`
+* `legacy project`
+* `взять из донора`
+* `возьми из донора`
+
+всегда означает:
+
+```text
+../date_factory_legacy
+```
+
+Git branch donor:
+
+```text
+legacy-v1
+```
+
+Это предыдущая версия Date Factory.
+
+Она используется ТОЛЬКО как read-only источник уже существующих:
+
+* assets;
+* моделей;
+* текстур;
+* материалов;
+* shaders;
+* animations;
+* sounds;
+* music;
+* готовых world scenes;
+* props;
+* UI assets;
+* reusable low-level utilities;
+* FPS/controller code;
+* interaction code;
+* отдельных независимых minigames;
+* других конкретно запрошенных пользователем компонентов.
+
+## Read-only
+
+НИКОГДА не изменять файлы внутри:
+
+```text
+../date_factory_legacy
+```
+
+Donor нельзя рефакторить, исправлять или развивать.
+
+Если donor-код нужно изменить, сначала скопировать его в новый проект и изменять только копию.
+
+## Meaning of "take from donor"
+
+Если пользователь говорит:
+
+> взять из донора X
+
+это означает:
+
+1. Найти X в `../date_factory_legacy`.
+2. Изучить X и определить его реальные зависимости.
+3. Выбрать минимальный набор необходимых файлов.
+4. ФИЗИЧЕСКИ СКОПИРОВАТЬ их внутрь текущего нового проекта.
+5. При необходимости адаптировать уже скопированные файлы к новой архитектуре.
+6. Проверить, что новый проект после этого полностью автономен.
+
+Это НЕ означает:
+
+* ссылаться на файл donor;
+* загружать ресурсы из donor во время выполнения;
+* использовать абсолютный путь до donor;
+* использовать относительный путь `../date_factory_legacy`;
+* создавать symbolic link;
+* junction;
+* filesystem link;
+* Git submodule;
+* shared source directory;
+* внешний Godot resource path;
+* зависимость новой игры от существования donor на диске.
+
+## Dependency rule
+
+Если копируемый `.tscn`, `.tres`, shader, script, model или другой ресурс зависит от других файлов donor:
+
+* определить dependency closure;
+* скопировать необходимые зависимости внутрь нового проекта;
+* сохранить или корректно адаптировать внутренние `res://` пути;
+* не оставлять ни одной runtime-зависимости от donor.
+
+После копирования новая игра должна корректно открываться и запускаться даже если папка:
+
+```text
+../date_factory_legacy
+```
+
+будет полностью недоступна.
+
+## Architecture rule
+
+Donor является источником реализаций, а НЕ источником архитектуры.
+
+Запрещено переносить старую архитектуру только потому, что она уже существует.
+
+Особенно НЕ переносить без прямого запроса пользователя:
+
+* old dating architecture;
+* old girls architecture;
+* old trait system;
+* bond;
+* trait influence;
+* staff;
+* crises;
+* clone QA;
+* clone defects;
+* clone acceptance;
+* dating protocols;
+* old upgrades;
+* old progression;
+* old quests;
+* legacy Game autoload;
+* legacy save model.
+
+Если новая задача может быть реализована проще с нуля, предпочитать новую простую реализацию.
+
+## Assets vs logic
+
+Приоритет переиспользования donor:
+
+1. Assets.
+2. Models/animations/audio.
+3. World geometry and props.
+4. Generic technical helpers.
+5. Isolated reusable gameplay components.
+6. Domain gameplay systems — только после явного решения, что они действительно совпадают с новым GDD.
+
+Наличие готового старого кода само по себе НЕ является причиной использовать его.
+
+## User phrase interpretation
+
+Фраза пользователя:
+
+> «взять из донора»
+
+является достаточной инструкцией.
+
+Не спрашивать:
+
+> «Какой донор?»
+> «Где находится старый проект?»
+> «Из какой ветки брать?»
+
+Ответ уже зафиксирован:
+
+```text
+path: ../date_factory_legacy
+branch: legacy-v1
+mode: READ-ONLY
+```
