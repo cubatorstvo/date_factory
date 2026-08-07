@@ -153,19 +153,21 @@ Interaction ray mask: world + interactable (bits 1+3).
 
 ## Autoload
 
+Dependency-safe production order (`project.godot`):
+
 | Name | Почему |
 |---|---|
 | `GodotIQRuntime` | Editor/runtime bridge addon; не gameplay |
 | `GameState` | Canonical runtime playthrough state (MODULE 02); owns purchased perks |
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
-| `GirlDiscovery` | Girl discovery / acquaintance (MODULE 08); after ContentDB; uses GameState + ContentDB; no Dating |
+| `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
+| `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
+| `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07D routes SLAP/DANCE/SIGMA/MONEY); Hostile Acquisition hook; after RivalEncounters; Callable seam only |
+| `GirlDiscovery` | Girl discovery / acquaintance (MODULE 08); after ContentDB; uses GameState + ContentDB + Story gates |
 | `DatingCore` | One-date runtime (MODULE 09); after GirlDiscovery; uses GameState + ContentDB; does **not** apply relationship; assigns monotonic `date_id` |
 | `Relationships` | Apply date results / completion / date cooldown / event history (MODULE 10); after DatingCore |
 | `Story` | Stage completion / StoryFeature / girl-rival gates (MODULE 11); after Relationships |
 | `World` | Location load/travel/access (MODULE 12); after Story; StoryFeature gates; not GameState.unlock_location for the 9 |
-| `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
-| `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
-| `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07D routes SLAP/DANCE/SIGMA/MONEY); Hostile Acquisition hook; after RivalEncounters; Callable seam only |
 
 ## Canonical future destinations (ещё не созданы)
 

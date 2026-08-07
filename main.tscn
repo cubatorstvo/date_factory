@@ -1,32 +1,6 @@
 [gd_scene format=3 uid="uid://c45edbgp2y177"]
 
-[ext_resource type="Script" path="res://core/main_bootstrap.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://dfgh7yx2is80b" path="res://core/main_bootstrap.gd" id="1_ig7tw"]
 
-[node name="Main" type="Control" unique_id=1330415505]
-layout_mode = 3
-anchors_preset = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
+[node name="Main" type="Node" unique_id=2082551307]
 script = ExtResource("1_ig7tw")
-
-[node name="Background" type="ColorRect" parent="." unique_id=45933782]
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-color = Color(0.12, 0.13, 0.15, 1)
-
-[node name="StatusLabel" type="Label" parent="." unique_id=413208109]
-layout_mode = 0
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -220.0
-offset_top = -20.0
-offset_right = 220.0
-offset_bottom = 20.0
-theme_override_colors/font_color = Color(0.9, 0.9, 0.92, 1)
-theme_override_font_sizes/font_size = 22
-text = "Date Factory — Foundation OK"
-horizontal_alignment = 1
-vertical_alignment = 1
