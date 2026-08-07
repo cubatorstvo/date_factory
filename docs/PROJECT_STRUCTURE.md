@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 10 — Relationships & Girl Completion**.  
+Фактическая структура после **MODULE 11 — Story / Stage Framework**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -13,7 +13,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships | Parallel resource copies / EventBus / effect engines |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
 | `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (rel/cooldown/completion); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
 | `world/` | World / test scenes | FPS test, GameState/ContentDB self-tests | Central game controllers |
 | `main.tscn` | Canonical entry | bootstrap в FPS test | Бог-объект |
@@ -57,9 +57,16 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 - `relationship_date_result.gd` / `relationship_types.gd` — typed apply result + availability/error constants
 - `test/relationships_test.tscn` + `relationships_self_test.gd` — MODULE 10 headless runner
 
+### `game/story/`
+
+- `story.gd` — autoload `Story` (after Relationships): stage completion rules, girl/rival gates, stage-derived `StoryFeature`, STAGE_6 world-expansion seam
+- `story_ids.gd` / `story_types.gd` / `story_stage_progress.gd` — reserved IDs, enums, typed progress read model
+- `test/story_test.tscn` + `story_self_test.gd` — MODULE 11 headless runner
+- Stage catalog remains `data/definitions/story_stage_definition.gd` + `data/content/stages/stage_0..7.tres` (ContentDB)
+
 ### `game/girls/`
 
-- `girl_discovery.gd` — autoload `GirlDiscovery`: discover, begin/select approach, cooldown day seam, Good Profile clue, test content overrides
+- `girl_discovery.gd` — autoload `GirlDiscovery`: discover, begin/select approach, cooldown day seam, Good Profile clue, Story reserved-girl gate (`STORY_WRONG_STAGE` / `STORY_RIVAL_REQUIRED`, not FAILURE), test content overrides
 - `girl_discovery_attempt.gd` — transient attempt session
 - `girl_actor.gd` / `girl_actor.tscn` — Interactable + CharacterActor + 4m seen trigger
 - `test/girl_discovery_test.tscn` + `girl_discovery_self_test.gd` — MODULE 08 headless runner

@@ -22,6 +22,8 @@ const RESULT_REQUIREMENT_UNMET: StringName = &"REQUIREMENT_UNMET"
 const RESULT_NO_ATTEMPT: StringName = &"NO_ATTEMPT"
 const RESULT_ALREADY_FINISHED: StringName = &"ALREADY_FINISHED"
 const RESULT_UNKNOWN_APPROACH: StringName = &"UNKNOWN_APPROACH"
+const RESULT_STORY_WRONG_STAGE: StringName = &"STORY_WRONG_STAGE"
+const RESULT_STORY_RIVAL_REQUIRED: StringName = &"STORY_RIVAL_REQUIRED"
 
 var _girl_overrides: Dictionary = {}
 var _situation_overrides: Dictionary = {}
@@ -160,6 +162,9 @@ func begin_attempt(girl_id: StringName) -> Dictionary:
 		var cool: Dictionary = _result(false, RESULT_COOLDOWN)
 		cool["cooldown_days"] = remaining
 		return cool
+	var story_block: Dictionary = _story_gate_block(girl_id)
+	if not story_block.is_empty():
+		return story_block
 	var exp_now: int = int(gs.call("get_experience"))
 	if exp_now < def.required_experience:
 		var locked: Dictionary = _result(false, RESULT_LOCKED_EXPERIENCE)
@@ -327,6 +332,19 @@ func _on_gs_clue(girl_id: StringName, clue_index: int) -> void:
 
 func _on_gs_trait(girl_id: StringName) -> void:
 	primary_trait_revealed.emit(girl_id)
+
+
+## Story reserved-girl gate. Not FAILURE — no clue/cooldown side effects.
+func _story_gate_block(girl_id: StringName) -> Dictionary:
+	var story: Node = get_node_or_null("/root/Story")
+	if story == null or not story.has_method("get_story_girl_gate"):
+		return {}
+	var gate: int = int(story.call("get_story_girl_gate", girl_id))
+	if gate == int(StoryTypes.StoryGirlGate.WRONG_STAGE):
+		return _result(false, RESULT_STORY_WRONG_STAGE)
+	if gate == int(StoryTypes.StoryGirlGate.RIVAL_REQUIRED):
+		return _result(false, RESULT_STORY_RIVAL_REQUIRED)
+	return {}
 
 
 func _result(ok: bool, reason: StringName) -> Dictionary:

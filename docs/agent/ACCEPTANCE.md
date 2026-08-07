@@ -1,17 +1,15 @@
-# Acceptance — MODULE 10 Relationships & Girl Completion
+# Acceptance — MODULE 11 Story / Stage Framework
 
 ## Player-visible result
-Date ends → relationship clamped [-5,+5] → cooldown 1–3 days → event history → first +5 grants conquered + Experience/UP once → Phone shows relationship/availability/completion.
+Linear stages PROLOGUE→FINALE with rival→girl→+5 advance (earth stages), story gates on reserved girls, stage-derived feature unlocks.
 
-## Product decisions (locked)
-- Autoload `Relationships` after `DatingCore`; auto-apply on `date_finished`
-- Clamp relationship in `set_girl_relationship` / `add_girl_relationship` to [-5,+5]
-- Add `DatingResult.date_id` for exactly-once
-- Date cooldown separate from discovery retry; each has own `notify_game_day_advanced`
-- Secondary reveal API exists; no auto reveal at +5
-- No MODULE 11
+## Locked decisions
+- Autoload `Story` after Relationships (listens girl_completed + encounter_won)
+- Extend existing StoryStageDefinition + 8 stage .tres (no production Girl/Rival defs required)
+- Features derived from stage (≥ thresholds); only new flag FLAG_WORLD_EXPANSION_COMPLETE
+- GirlDiscovery consults Story before Experience; STORY_* ≠ FAILURE
+- RivalEncounters core stays Story-agnostic
+- No MODULE 12
 
-## PASS evidence
-- `MODULE_10_TEST: ALL PASS (138)`
-- Regressions: MODULE 09 (163), 08 (113), 05 (212), 02 (96), 06 (93), 07A (108), 07B (90), 07C (100), 07D (129), FPS exit 0
-- Verdict: **PASS** — MODULE 11 not started
+## PASS
+MODULE_11_TEST ALL PASS + regressions 02–10 + FPS

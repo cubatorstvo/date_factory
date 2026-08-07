@@ -5,21 +5,21 @@ extends Node
 const CATALOG_PATH: String = "res://data/catalog/content_catalog.tres"
 
 const RESERVED_STORY_GIRL_IDS: Array[StringName] = [
-	&"girl_neighbor",
-	&"girl_actress",
-	&"girl_mine_boss",
-	&"girl_magazine_editor",
-	&"girl_scientist",
-	&"girl_president",
-	&"girl_final_target",
+	StoryIds.GIRL_NEIGHBOR,
+	StoryIds.GIRL_ACTRESS,
+	StoryIds.GIRL_MINE_BOSS,
+	StoryIds.GIRL_MAGAZINE_EDITOR,
+	StoryIds.GIRL_SCIENTIST,
+	StoryIds.GIRL_PRESIDENT,
+	StoryIds.GIRL_FINAL_TARGET,
 ]
 
 const RESERVED_STORY_RIVAL_IDS: Array[StringName] = [
-	&"rival_actress",
-	&"rival_mine_boss",
-	&"rival_magazine_editor",
-	&"rival_scientist",
-	&"rival_president",
+	StoryIds.RIVAL_ACTRESS,
+	StoryIds.RIVAL_MINE_BOSS,
+	StoryIds.RIVAL_MAGAZINE_EDITOR,
+	StoryIds.RIVAL_SCIENTIST,
+	StoryIds.RIVAL_PRESIDENT,
 ]
 
 const CANONICAL_LOCATION_IDS: Array[StringName] = [
@@ -787,24 +787,54 @@ static func _validate_stages(catalog: ContentCatalog, errors: Array[String]) -> 
 		if def.display_name.strip_edges() == "":
 			errors.append("stage %s empty display_name" % def.stage)
 	var expected_girl: Dictionary = {
-		GameTypes.GameStage.PROLOGUE: &"girl_neighbor",
-		GameTypes.GameStage.STAGE_1: &"girl_actress",
-		GameTypes.GameStage.STAGE_2: &"girl_mine_boss",
-		GameTypes.GameStage.STAGE_3: &"girl_magazine_editor",
-		GameTypes.GameStage.STAGE_4: &"girl_scientist",
-		GameTypes.GameStage.STAGE_5: &"girl_president",
+		GameTypes.GameStage.PROLOGUE: StoryIds.GIRL_NEIGHBOR,
+		GameTypes.GameStage.STAGE_1: StoryIds.GIRL_ACTRESS,
+		GameTypes.GameStage.STAGE_2: StoryIds.GIRL_MINE_BOSS,
+		GameTypes.GameStage.STAGE_3: StoryIds.GIRL_MAGAZINE_EDITOR,
+		GameTypes.GameStage.STAGE_4: StoryIds.GIRL_SCIENTIST,
+		GameTypes.GameStage.STAGE_5: StoryIds.GIRL_PRESIDENT,
 		GameTypes.GameStage.STAGE_6: &"",
-		GameTypes.GameStage.FINALE: &"girl_final_target",
+		GameTypes.GameStage.FINALE: StoryIds.GIRL_FINAL_TARGET,
 	}
 	var expected_rival: Dictionary = {
 		GameTypes.GameStage.PROLOGUE: &"",
-		GameTypes.GameStage.STAGE_1: &"rival_actress",
-		GameTypes.GameStage.STAGE_2: &"rival_mine_boss",
-		GameTypes.GameStage.STAGE_3: &"rival_magazine_editor",
-		GameTypes.GameStage.STAGE_4: &"rival_scientist",
-		GameTypes.GameStage.STAGE_5: &"rival_president",
+		GameTypes.GameStage.STAGE_1: StoryIds.RIVAL_ACTRESS,
+		GameTypes.GameStage.STAGE_2: StoryIds.RIVAL_MINE_BOSS,
+		GameTypes.GameStage.STAGE_3: StoryIds.RIVAL_MAGAZINE_EDITOR,
+		GameTypes.GameStage.STAGE_4: StoryIds.RIVAL_SCIENTIST,
+		GameTypes.GameStage.STAGE_5: StoryIds.RIVAL_PRESIDENT,
 		GameTypes.GameStage.STAGE_6: &"",
 		GameTypes.GameStage.FINALE: &"",
+	}
+	var expected_requires_rival: Dictionary = {
+		GameTypes.GameStage.PROLOGUE: false,
+		GameTypes.GameStage.STAGE_1: true,
+		GameTypes.GameStage.STAGE_2: true,
+		GameTypes.GameStage.STAGE_3: true,
+		GameTypes.GameStage.STAGE_4: true,
+		GameTypes.GameStage.STAGE_5: true,
+		GameTypes.GameStage.STAGE_6: false,
+		GameTypes.GameStage.FINALE: false,
+	}
+	var expected_mode: Dictionary = {
+		GameTypes.GameStage.PROLOGUE: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
+		GameTypes.GameStage.STAGE_1: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
+		GameTypes.GameStage.STAGE_2: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
+		GameTypes.GameStage.STAGE_3: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
+		GameTypes.GameStage.STAGE_4: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
+		GameTypes.GameStage.STAGE_5: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
+		GameTypes.GameStage.STAGE_6: StoryTypes.StageCompletionMode.EXTERNAL_MILESTONE,
+		GameTypes.GameStage.FINALE: StoryTypes.StageCompletionMode.NONE,
+	}
+	var expected_next: Dictionary = {
+		GameTypes.GameStage.PROLOGUE: GameTypes.GameStage.STAGE_1,
+		GameTypes.GameStage.STAGE_1: GameTypes.GameStage.STAGE_2,
+		GameTypes.GameStage.STAGE_2: GameTypes.GameStage.STAGE_3,
+		GameTypes.GameStage.STAGE_3: GameTypes.GameStage.STAGE_4,
+		GameTypes.GameStage.STAGE_4: GameTypes.GameStage.STAGE_5,
+		GameTypes.GameStage.STAGE_5: GameTypes.GameStage.STAGE_6,
+		GameTypes.GameStage.STAGE_6: GameTypes.GameStage.FINALE,
+		GameTypes.GameStage.FINALE: GameTypes.GameStage.FINALE,
 	}
 	for st in expected_girl.keys():
 		if not by_stage.has(st):
@@ -815,6 +845,12 @@ static func _validate_stages(catalog: ContentCatalog, errors: Array[String]) -> 
 			errors.append("stage %s girl_id expected %s got %s" % [st, String(expected_girl[st]), String(sdef.story_girl_id)])
 		if sdef.story_rival_id != expected_rival[st]:
 			errors.append("stage %s rival_id expected %s got %s" % [st, String(expected_rival[st]), String(sdef.story_rival_id)])
+		if sdef.requires_story_rival != bool(expected_requires_rival[st]):
+			errors.append("stage %s requires_story_rival expected %s" % [st, expected_requires_rival[st]])
+		if sdef.completion_mode != expected_mode[st]:
+			errors.append("stage %s completion_mode expected %s got %s" % [st, expected_mode[st], sdef.completion_mode])
+		if sdef.next_stage != expected_next[st]:
+			errors.append("stage %s next_stage expected %s got %s" % [st, expected_next[st], sdef.next_stage])
 		# Reserved story IDs may lack GirlDefinition/RivalDefinition — do not require existence.
 		var gid: String = String(sdef.story_girl_id)
 		if gid != "" and not gid.begins_with("girl_"):

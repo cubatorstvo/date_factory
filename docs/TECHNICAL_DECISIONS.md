@@ -604,3 +604,27 @@ Keeps DatingCore a pure session scorer; Relationships owns persistent consequenc
 
 Scope:
 `game/relationships/**`, GameState MODULE 10 fields/APIs, DatingResult/DatingCore date_id, PhoneJournal, dating_ui result panel, MODULE 02/09 test seams, `project.godot`, docs
+
+---
+
+## MODULE 11: Story / Stage Framework (no quest engine)
+
+Alternatives considered:
+- Generic QuestDefinition / Requirement DSL / Objective Graph
+- Lightweight linear `Story` service over existing `GameState.stage` + ContentDB stage catalog
+
+Decision:
+- Autoload `Story` → `res://game/story/story.gd`, registered **after Relationships**.
+- Persistent stage remains `GameState`; Story only calls `advance_stage(next)` (never `restore_stage` for gameplay).
+- Exact 8 `StoryStageDefinition` resources with `requires_story_rival`, `completion_mode`, `next_stage`.
+- Features (`StoryFeature`) derived from `stage >= threshold` — no feature bools in GameState.
+- Only new story flag: `StoryIds.FLAG_WORLD_EXPANSION_COMPLETE` for STAGE_6 external milestone.
+- GirlDiscovery consults Story girl gate after contact/cooldown, before Experience; reasons are not FAILURE.
+- RivalEncounters core stays Story-free (MODULE 06 test rivals).
+- Semantic unlocks only — no `unlock_location` / physical world (MODULE 12).
+
+Reason:
+Date Factory has a fixed linear stage map; a quest engine would overbuild without matching GDD.
+
+Scope:
+`game/story/**`, `StoryStageDefinition` + stage `.tres`, ContentDB stage validation, GirlDiscovery gate insert, `project.godot`, docs

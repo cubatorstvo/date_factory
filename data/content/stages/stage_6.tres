@@ -5,7 +5,10 @@
 [resource]
 script = ExtResource("1_script")
 stage = 6
-display_name = "Стадия 6 — Мировое расширение"
+display_name = "Стадия 6"
 story_girl_id = &""
 story_rival_id = &""
-notes = "No required earthly story girl/rival."
+requires_story_rival = false
+completion_mode = 1
+next_stage = 7
+notes = "External world-expansion milestone."

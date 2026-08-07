@@ -5,7 +5,10 @@
 [resource]
 script = ExtResource("1_script")
 stage = 2
-display_name = "Стадия 2 — Начальница шахты"
+display_name = "Стадия 2"
 story_girl_id = &"girl_mine_boss"
 story_rival_id = &"rival_mine_boss"
+requires_story_rival = true
+completion_mode = 0
+next_stage = 3
 notes = "Reserved story IDs only."

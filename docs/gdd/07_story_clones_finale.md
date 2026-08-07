@@ -7,6 +7,8 @@
 
 # 33. Сюжетные девушки и стадийная структура
 
+> **Runtime (MODULE 11):** autoload `Story` owns stage completion / gates / semantic `StoryFeature` thresholds. Persistent stage = `GameState`. No quest engine. Physical world access = MODULE 12 (`GameState.stage` + `Story.is_feature_unlocked`). Only extra story flag: `story_world_expansion_complete` (STAGE_6 → FINALE).
+
 Сюжетный прогресс определяется специальными девушками.
 
 Каждая такая девушка является вручную поставленным крупным эпизодом и после успешной линии меняет правила следующей части игры.
