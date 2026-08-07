@@ -77,3 +77,9 @@ enum PerkSection {
 	BRANCH_B,
 	LATE_COMMON,
 }
+
+
+enum CharacterBodyType {
+	MALE,
+	FEMALE,
+}

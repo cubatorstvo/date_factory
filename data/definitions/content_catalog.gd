@@ -12,3 +12,5 @@ extends Resource
 @export var perks: Array[PerkDefinition] = []
 @export var locations: Array[LocationDefinition] = []
 @export var stages: Array[StoryStageDefinition] = []
+@export var appearance_profiles: Array[AppearanceProfileDefinition] = []
+@export var animation_profiles: Array[AnimationProfileDefinition] = []

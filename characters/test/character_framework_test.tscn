@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://dq3nw05q151cb"]
+
+[ext_resource type="Script" uid="uid://ck1kea3f1vp33" path="res://characters/test/character_framework_self_test.gd" id="1_5bdgh"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rv012"]
+albedo_color = Color(0.35, 0.38, 0.42, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_v7bb8"]
+size = Vector3(12, 0.2, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0ddy7"]
+size = Vector3(12, 0.2, 12)
+
+[sub_resource type="Environment" id="Environment_tkiwt"]
+background_mode = 1
+background_color = Color(0.45, 0.55, 0.65, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.55, 0.6, 1)
+ambient_light_energy = 0.55
+
+[node name="CharacterFrameworkTest" type="Node3D" unique_id=1216317259]
+script = ExtResource("1_5bdgh")
+
+[node name="SpawnRoot" type="Node3D" parent="." unique_id=2109447708]
+
+[node name="Floor" type="MeshInstance3D" parent="." unique_id=308721746]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+material_override = SubResource("StandardMaterial3D_rv012")
+mesh = SubResource("BoxMesh_v7bb8")
+
+[node name="FloorBody" type="StaticBody3D" parent="." unique_id=31928610]
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FloorBody" unique_id=46549150]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("BoxShape3D_0ddy7")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1069676709]
+transform = Transform3D(0.81915206, -0.4055798, 0.4055798, 0, 0.70710677, 0.70710677, -0.57357645, -0.579228, 0.579228, 0, 0, 0)
+light_energy = 1.2
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1971910761]
+environment = SubResource("Environment_tkiwt")
+
+[node name="Camera" type="Camera3D" parent="." unique_id=315386660]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 4.2)
+current = true

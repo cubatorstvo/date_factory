@@ -350,3 +350,46 @@ Enough for MODULE 03 DoD; no DSL, no quest/dialogue/RNG engines.
 
 Scope:
 `data/catalog/content_db.gd`, `data/test/content_data_self_test.gd`, `world/test/content_data_test.tscn`
+
+---
+
+## MODULE 04: CharacterActor + AnimationPlayer aliases
+
+Context:
+Need a reusable humanoid presence layer (male/female) with semantic animation aliases, without dating/AI systems. Donor used a manual per-frame bone sampler (character_anim_controller.gd).
+
+Options:
+- Copy donor manual bone sampler
+- AnimationTree blend graphs per body
+- Standard AnimationPlayer + DF alias AnimationLibrary resources
+
+Decision:
+- CharacterActor (CharacterBody3D) owns collision, VisualRoot, anchors, and appearance application.
+- CharacterAnimationController binds an AnimationPlayer and loads profile libraries under library names df / df_seated.
+- Male base: Superhero_Male_FullBody.gltf via characters/male/male_base_visual.tscn; visual_scale 1.0 on VisualRoot (mesh is already ~1.8m after humanoid retarget).
+- Female base: Casual.gltf via characters/female/female_base_visual.tscn; visual_scale 1.0.
+- Physics layer 4 characters; player collision_mask = world|characters; InteractionTarget Area3D on interactable for ray hits.
+- Static CharacterFactory.create helper (not autoload).
+- Content profiles: appearance_male_base / appearance_female_base, animation_male_base / animation_female_base.
+
+Reason:
+Imported DF alias libraries play correctly through native AnimationPlayer; no need for donor sampler. Visual scale stays on VisualRoot so world/player scale remain meters.
+
+Scope:
+characters/framework/*, characters/male/, characters/female/, characters/test/, data/content/appearances/, data/content/animations/, data/catalog/content_catalog.tres, project.godot layer 4, characters/player/player.tscn mask only.
+
+---
+
+## MODULE 04: SkeletonProfileHumanoid BoneMap on import
+
+Context:
+Male/female donor meshes use non-humanoid bone names; DF alias libraries target Godot Humanoid names (Hips, Chest, ...).
+
+Decision:
+Copy DF_UAL_BoneMap.tres / DF_Women_BoneMap.tres and apply donor .gltf.import retarget settings (rename_bones, rest fixer) so imported skeletons expose Humanoid bone names. When CharacterActor attaches a new AnimationPlayer under the glTF root, root_node is .. so track paths like Armature/Skeleton3D:Hips resolve.
+
+Reason:
+Without BoneMap retarget, male stayed in T-pose (tracks could not bind). Female Casual already had compatible mapping after the same import treatment.
+
+Scope:
+assets/animation/universal_library/retargeted/DF_*_BoneMap.tres, male/female .gltf.import, character_actor.gd

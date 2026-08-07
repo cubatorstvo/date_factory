@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 03 — Content Data Layer**.  
+Фактическая структура после **MODULE 04 — Character Framework**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -8,10 +8,10 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | Path | Назначение | Можно | Нельзя |
 |---|---|---|---|
 | `addons/` | Editor/tool plugins | GodotIQ и будущие tooling plugins | Gameplay systems |
-| `assets/` | Импортируемые визуальные ресурсы | модели, текстуры, материалы, fonts, props | Gameplay scripts / domain logic |
-| `characters/` | Player / будущие character scenes | `player/` FPS controller | Dating/NPC domain systems |
+| `assets/` | Импортируемые визуальные ресурсы | модели, текстуры, материалы, fonts, props, animation libraries | Gameplay scripts / domain logic |
+| `characters/` | Player + Character Framework | `framework/`, `male/`, `female/`, `player/`, `test/` | Dating/Rival/AI domain systems |
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
-| `data/` | Static typed content (MODULE 03) | definitions, catalog, seed `.tres`, test fixtures | Runtime progress / GameState mutation |
+| `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions | Runtime code |
 | `game/` | Canonical gameplay runtime | `state/` GameState | Parallel resource copies / EventBus |
 | `ui/` | зарезервировано (HUD сейчас внутри Player) | общие UI позже | Domain logic |
@@ -20,10 +20,15 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
 | `icon.svg` | Иконка приложения | — | — |
 
-### `characters/player/`
+### `characters/`
 
-- `player.tscn` / `player.gd` — FPS locomotion, look, control modes, pause
-- `player_interaction.gd` — center-screen RayCast interaction query
+- `framework/character_actor.tscn` + `character_actor.gd` — `CharacterActor` (CharacterBody3D presence)
+- `framework/character_animation_controller.gd` — semantic AnimationPlayer presentation
+- `framework/character_factory.gd` — static spawn helper (not autoload)
+- `male/male_base_visual.tscn` — male glTF wrapper (`Superhero_Male_FullBody`)
+- `female/female_base_visual.tscn` — female glTF wrapper (`Casual`)
+- `player/` — FPS controller (invisible first-person; unchanged locomotion)
+- `test/character_framework_test.tscn` — MODULE 04 self-test runner
 
 ### `core/`
 
@@ -33,11 +38,11 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 
 ### `data/`
 
-- `types/game_types.gd` — `class_name GameTypes` shared enums (characteristics, stages, tags, traits, competitions, perk sections)
-- `definitions/*.gd` — typed `Resource` schemas (`PrimaryTraitDefinition`, `GirlDefinition`, `PerkDefinition`, `ContentCatalog`, …)
+- `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
+- `definitions/*.gd` — typed `Resource` schemas (incl. `AppearanceProfileDefinition`, `AnimationProfileDefinition`)
 - `catalog/content_catalog.tres` — explicit production catalog (no FS scan)
 - `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup)
-- `content/` — production seed `.tres` (traits, perks, competitions, locations, stages)
+- `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations)
 - `test/` — fixtures + `content_data_self_test.gd` (not in production catalog)
 
 ### `game/state/`
@@ -59,8 +64,11 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | 1 | `world` | Solid geometry |
 | 2 | `player` | Player body |
 | 3 | `interactable` | Interactable Area3D targets |
+| 4 | `characters` | CharacterActor body collision |
 
-Player: layer 2, mask 1.  
+Player: layer 2, mask world|characters (1|8).  
+CharacterActor: layer characters (8), mask world (1).  
+InteractionTarget Area3D on characters: layer interactable (4).  
 Interaction ray mask: world + interactable (bits 1+3).
 
 ## Autoload

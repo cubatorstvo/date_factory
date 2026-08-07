@@ -80,6 +80,8 @@ var _perks_by_id: Dictionary = {}
 var _competitions_by_type: Dictionary = {}
 var _locations_by_id: Dictionary = {}
 var _stages_by_stage: Dictionary = {}
+var _appearances_by_id: Dictionary = {}
+var _animations_by_id: Dictionary = {}
 var _ready_ok: bool = false
 
 
@@ -180,6 +182,20 @@ func get_stage(stage: GameTypes.GameStage) -> StoryStageDefinition:
 	return _stages_by_stage[stage] as StoryStageDefinition
 
 
+func get_appearance_profile(id: StringName) -> AppearanceProfileDefinition:
+	if not _appearances_by_id.has(id):
+		push_error("[ContentDB] missing appearance profile: %s" % String(id))
+		return null
+	return _appearances_by_id[id] as AppearanceProfileDefinition
+
+
+func get_animation_profile(id: StringName) -> AnimationProfileDefinition:
+	if not _animations_by_id.has(id):
+		push_error("[ContentDB] missing animation profile: %s" % String(id))
+		return null
+	return _animations_by_id[id] as AnimationProfileDefinition
+
+
 func list_primary_traits() -> Array[PrimaryTraitDefinition]:
 	return _catalog.primary_traits if _catalog != null else []
 
@@ -220,6 +236,14 @@ func list_stages() -> Array[StoryStageDefinition]:
 	return _catalog.stages if _catalog != null else []
 
 
+func list_appearance_profiles() -> Array[AppearanceProfileDefinition]:
+	return _catalog.appearance_profiles if _catalog != null else []
+
+
+func list_animation_profiles() -> Array[AnimationProfileDefinition]:
+	return _catalog.animation_profiles if _catalog != null else []
+
+
 func validate_all() -> Dictionary:
 	if _catalog == null:
 		return {"ok": false, "errors": ["catalog not loaded"]}
@@ -240,6 +264,8 @@ static func validate_catalog(catalog: ContentCatalog) -> Dictionary:
 	_validate_rivals(catalog, errors)
 	_validate_dating_events(catalog, errors)
 	_validate_dating_pools(catalog, errors)
+	_validate_animation_profiles(catalog, errors)
+	_validate_appearance_profiles(catalog, errors)
 	return {"ok": errors.is_empty(), "errors": errors}
 
 
@@ -271,6 +297,8 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 	var competitions_by_type: Dictionary = {}
 	var locations_by_id: Dictionary = {}
 	var stages_by_stage: Dictionary = {}
+	var appearances_by_id: Dictionary = {}
+	var animations_by_id: Dictionary = {}
 	var dup_errors: Array[String] = []
 	for def in catalog.primary_traits:
 		if def == null:
@@ -342,6 +370,20 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 			dup_errors.append("duplicate stage enum %s" % def.stage)
 		else:
 			stages_by_stage[def.stage] = def
+	for def in catalog.appearance_profiles:
+		if def == null:
+			continue
+		if appearances_by_id.has(def.id):
+			dup_errors.append("duplicate appearance profile id %s" % String(def.id))
+		else:
+			appearances_by_id[def.id] = def
+	for def in catalog.animation_profiles:
+		if def == null:
+			continue
+		if animations_by_id.has(def.id):
+			dup_errors.append("duplicate animation profile id %s" % String(def.id))
+		else:
+			animations_by_id[def.id] = def
 	return {
 		"primary_by_trait": primary_by_trait,
 		"secondary_by_trait": secondary_by_trait,
@@ -353,6 +395,8 @@ static func build_indexes(catalog: ContentCatalog) -> Dictionary:
 		"competitions_by_type": competitions_by_type,
 		"locations_by_id": locations_by_id,
 		"stages_by_stage": stages_by_stage,
+		"appearances_by_id": appearances_by_id,
+		"animations_by_id": animations_by_id,
 		"dup_errors": dup_errors,
 	}
 
@@ -369,6 +413,8 @@ func _index_catalog(catalog: ContentCatalog) -> void:
 	_competitions_by_type = idx["competitions_by_type"]
 	_locations_by_id = idx["locations_by_id"]
 	_stages_by_stage = idx["stages_by_stage"]
+	_appearances_by_id = idx["appearances_by_id"]
+	_animations_by_id = idx["animations_by_id"]
 
 
 static func _validate_traits(catalog: ContentCatalog, errors: Array[String]) -> void:
@@ -712,3 +758,48 @@ static func _validate_dating_pools(catalog: ContentCatalog, errors: Array[String
 			seen[eid] = true
 			if not event_ids.has(eid):
 				errors.append("pool %s unknown event %s" % [sid, String(eid)])
+
+
+static func _validate_animation_profiles(catalog: ContentCatalog, errors: Array[String]) -> void:
+	# Empty list is valid until animation content is authored.
+	var by_id: Dictionary = {}
+	for def in catalog.animation_profiles:
+		if def == null:
+			errors.append("null animation profile")
+			continue
+		var sid: String = String(def.id)
+		if sid == "":
+			errors.append("animation profile empty id")
+			continue
+		if not sid.begins_with("animation_"):
+			errors.append("animation profile id missing animation_ prefix: %s" % sid)
+		if by_id.has(def.id):
+			errors.append("duplicate animation profile id %s" % sid)
+		by_id[def.id] = def
+
+
+static func _validate_appearance_profiles(catalog: ContentCatalog, errors: Array[String]) -> void:
+	# Empty list is valid until visual PackedScenes exist (MODULE 04).
+	var animation_ids: Dictionary = {}
+	for anim in catalog.animation_profiles:
+		if anim != null and String(anim.id) != "":
+			animation_ids[anim.id] = true
+	var by_id: Dictionary = {}
+	for def in catalog.appearance_profiles:
+		if def == null:
+			errors.append("null appearance profile")
+			continue
+		var sid: String = String(def.id)
+		if sid == "":
+			errors.append("appearance profile empty id")
+			continue
+		if not sid.begins_with("appearance_"):
+			errors.append("appearance profile id missing appearance_ prefix: %s" % sid)
+		if by_id.has(def.id):
+			errors.append("duplicate appearance profile id %s" % sid)
+		by_id[def.id] = def
+		if def.visual_scale <= 0.0:
+			errors.append("appearance %s visual_scale must be > 0" % sid)
+		var anim_id: String = String(def.animation_profile_id)
+		if anim_id != "" and not animation_ids.has(def.animation_profile_id):
+			errors.append("appearance %s unknown animation_profile_id %s" % [sid, anim_id])
