@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_failure_tell"
+label = "Рассказать как было"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([1])
+result_text = "Рассказать как было"
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_failure_stress"
+label = "Объяснить, что это был стресс-тест"
+characteristic = 2
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([4, 9])
+result_text = "Объяснить, что это был стресс-тест"
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_failure_force"
+label = "Сказать, что теперь сделал бы силой"
+characteristic = 0
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([5])
+result_text = "Сказать, что теперь сделал бы силой"
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_failure_pretty"
+label = "Превратить историю в красивую версию"
+characteristic = 1
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "Превратить историю в красивую версию"
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_cafe_failure"
+category = 0
+title = "Последняя неудача"
+setup_text = "Она спрашивает о последней вещи, которая у тебя действительно не получилась."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

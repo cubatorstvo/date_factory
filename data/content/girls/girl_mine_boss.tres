@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GirlDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/girl_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"girl_mine_boss"
+display_name = "Начальница шахты"
+is_story = true
+has_story_stage = true
+story_stage = 2
+primary_trait = 2
+secondary_trait = 1
+required_experience = 2
+discovery_situation_id = &"discovery_situation_mine_boss_gate"
+appearance_profile_id = &"appearance_female_mine_boss"
+dating_pool_ids = Array[StringName]([&"date_pool_cafe_common", &"date_pool_mine_boss"])
+default_date_location_id = &"cafe"
+dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_greeting_attention", &"dating_greeting_immediate_joke", &"dating_greeting_check_comfort"])
+dating_farewell_id = &"dating_farewell_early_common"
+speech_style_note = "Говорит как человек, который привык принимать решения на шумном производстве; скучает от чрезмерно безопасных планов."
+clue_notes = Array[String](["На табличку «Опасно» смотрит скорее как на описание маршрута.", "Медленные и полностью безопасные решения её заметно утомляют.", "Уважает, когда человек выбрал риск и не меняет решение через десять секунд."])

@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_apartment_laminate_hopes"
+label = "Сказать: «Пахнет ламинатом и надеждами.»"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([9, 10])
+result_text = "Сказать: «Пахнет ламинатом и надеждами.»"
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_apartment_laminate_admit"
+label = "Признать, что кусок просто остался"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([1, 2])
+result_text = "Признать, что кусок просто остался"
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_apartment_laminate_sample"
+label = "Объяснить, что это контрольный образец пола"
+characteristic = 2
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([4])
+result_text = "Объяснить, что это контрольный образец пола"
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_apartment_laminate_decor"
+label = "Поставить его вертикально как декор"
+characteristic = 1
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([3, 9])
+result_text = "Поставить его вертикально как декор"
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_apartment_laminate"
+category = 0
+title = "Кусок ламината"
+setup_text = "Она спрашивает, почему возле стены лежит один кусок ламината, который явно никуда не устанавливают."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"apartment"])

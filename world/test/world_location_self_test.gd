@@ -285,7 +285,7 @@ func _test_markers_and_npc() -> void:
 	var loc: WorldLocation = _world.call("get_current_location") as WorldLocation
 	_ok(loc != null and loc.get_player_spawn(&"spawn_default") != null, "141 spawn_default")
 	_ok(loc.get_player_spawn(&"missing_spawn") == null, "141 missing spawn null")
-	_ok(loc.get_npc_spawn(&"npc_city_01") != null, "141 npc marker")
+	_ok(loc.get_npc_spawn(&"girl_city_bicycle") != null, "141 npc marker")
 	_ok(loc.get_story_event_point(&"story_point_city_01") != null, "145 story point")
 	var girls: int = 0
 	var rivals: int = 0
@@ -293,11 +293,12 @@ func _test_markers_and_npc() -> void:
 		girls += 1
 	for n2 in loc.find_children("*", "RivalActor", true, false):
 		rivals += 1
-	_ok(girls == 0 and rivals == 0, "143 no auto NPC spawn")
+	# MODULE 14A: city_hub authors ordinary GirlActor/RivalActor; story StageActorAnchors stay stage-gated.
+	_ok(girls >= 1 and rivals >= 1, "143 production ordinary NPCs present")
 	var actor_scene: PackedScene = load("res://characters/framework/character_actor.tscn") as PackedScene
 	if actor_scene != null:
 		var actor: Node3D = actor_scene.instantiate() as Node3D
-		var marker: NpcSpawnPoint = loc.get_npc_spawn(&"npc_city_01")
+		var marker: NpcSpawnPoint = loc.get_npc_spawn(&"girl_city_bicycle")
 		loc.add_child(actor)
 		if marker != null:
 			actor.global_transform = marker.global_transform

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DiscoveryApproachDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_approach_gym_chalk_grip"
+label = "Предложить определить владельца по хвату"
+has_requirement = true
+required_characteristic = 0
+required_level = 1
+outcome = 1
+result_text = "Спор получается короче, чем она ожидала, и интерес падает."

@@ -873,6 +873,18 @@ static func _validate_girls(catalog: ContentCatalog, errors: Array[String]) -> v
 	for p in catalog.dating_pools:
 		if p != null:
 			pool_ids[p.id] = true
+	var loc_ids: Dictionary = {}
+	for loc in catalog.locations:
+		if loc != null:
+			loc_ids[loc.id] = true
+	var greeting_ids: Dictionary = {}
+	for g in catalog.dating_greetings:
+		if g != null:
+			greeting_ids[g.id] = true
+	var farewell_ids: Dictionary = {}
+	for f in catalog.dating_farewells:
+		if f != null:
+			farewell_ids[f.id] = true
 	for def in catalog.girls:
 		if def == null:
 			errors.append("null girl")
@@ -900,6 +912,32 @@ static func _validate_girls(catalog: ContentCatalog, errors: Array[String]) -> v
 					break
 			if not sit_found:
 				errors.append("girl %s unknown discovery_situation_id %s" % [sid, sit_id])
+		# Production date binding (MODULE 14A): girls with dating pools must bind venue/greetings/farewell.
+		if not def.dating_pool_ids.is_empty() and not sid.begins_with("girl_test_"):
+			var loc_id: String = String(def.default_date_location_id)
+			if loc_id == "":
+				errors.append("girl %s empty default_date_location_id" % sid)
+			elif not loc_ids.is_empty() and not loc_ids.has(def.default_date_location_id):
+				errors.append("girl %s unknown default_date_location_id %s" % [sid, loc_id])
+			if def.dating_greeting_ids.is_empty():
+				errors.append("girl %s dating_greeting_ids empty" % sid)
+			else:
+				var seen_greet: Dictionary = {}
+				for gid in def.dating_greeting_ids:
+					var gs: String = String(gid)
+					if gs == "":
+						errors.append("girl %s empty dating_greeting id" % sid)
+						continue
+					if seen_greet.has(gid):
+						errors.append("girl %s duplicate dating_greeting %s" % [sid, gs])
+					seen_greet[gid] = true
+					if not greeting_ids.is_empty() and not greeting_ids.has(gid):
+						errors.append("girl %s unknown dating_greeting %s" % [sid, gs])
+			var fid: String = String(def.dating_farewell_id)
+			if fid == "":
+				errors.append("girl %s empty dating_farewell_id" % sid)
+			elif not farewell_ids.is_empty() and not farewell_ids.has(def.dating_farewell_id):
+				errors.append("girl %s unknown dating_farewell_id %s" % [sid, fid])
 
 
 static func _validate_rivals(catalog: ContentCatalog, errors: Array[String]) -> void:

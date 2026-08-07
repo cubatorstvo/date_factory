@@ -411,4 +411,17 @@
 
 Для всех земных сюжетных девушек, кроме соседки, стандартный сюжетный шаблон допускает текущего ухажёра, которого необходимо одолеть до знакомства.
 
+### Реализация (MODULE 14A)
+
+Playable through `STAGE_3` / `SALARY_MINE`:
+
+```text
+PROLOGUE: girl_neighbor
+STAGE_1: rival_actress → girl_actress
+STAGE_2: rival_mine_boss → girl_mine_boss
+STAGE_3: Salary Mine unlock
+```
+
+Story rivals in 14A use only `DANCE` / `SLAP`. Editor / Scientist / President / Media remain MODULE 14B+.
+
 ---

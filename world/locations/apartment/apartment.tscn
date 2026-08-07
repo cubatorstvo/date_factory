@@ -3,9 +3,12 @@
 [ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
 [ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
 [ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
+[ext_resource type="Script" uid="uid://diec1fdonvb3i" path="res://world/actors/stage_actor_anchor.gd" id="3_r1sck"]
 [ext_resource type="Script" uid="uid://b7t0jxgbwag8" path="res://game/day/day_advance_interactable.gd" id="5_nwbdb"]
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
 [ext_resource type="Script" uid="uid://dcyha34n8uvfk" path="res://world/phone_interactable.gd" id="6_phone"]
+[ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="7_h50ke"]
+[ext_resource type="Script" uid="uid://cb572kponqf7p" path="res://game/progression/progression_interactable.gd" id="8_pw7ec"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
@@ -77,6 +80,12 @@ roughness = 0.85
 
 [sub_resource type="BoxMesh" id="BoxMesh_yeam2"]
 size = Vector3(0.45, 0.9, 0.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_m8kc2"]
+size = Vector3(1.1, 0.7, 1.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2h5qe"]
+size = Vector3(0.6, 1.6, 0.2)
 
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
@@ -164,6 +173,11 @@ script = ExtResource("3_pspawn")
 
 [node name="NpcSpawns" type="Node3D" parent="." unique_id=2055073326]
 
+[node name="npc_girl_neighbor" type="Marker3D" parent="NpcSpawns" unique_id=1917676318]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -4)
+script = ExtResource("3_r1sck")
+content_id = "girl_neighbor"
+
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=544019242]
 
 [node name="story_point_wardrobe" type="Marker3D" parent="StoryEventPoints" unique_id=74110830]
@@ -207,6 +221,40 @@ mesh = SubResource("BoxMesh_yeam2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
 modulate = Color(0.95, 0.88, 0.75, 1)
 text = "ДЕНЬ"
+
+[node name="DateVenue" type="Area3D" parent="Interactables" unique_id=636659215]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0, 0.3)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_h50ke")
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/DateVenue" unique_id=1209145303]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+mesh = SubResource("BoxMesh_m8kc2")
+
+[node name="Label" type="Label3D" parent="Interactables/DateVenue" unique_id=1519297154]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+billboard = 1
+text = "Стол для свидания"
+font_size = 28
+
+[node name="ProgressionSelfAssessment" type="Area3D" parent="Interactables" unique_id=67378799]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -1.5)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("8_pw7ec")
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/ProgressionSelfAssessment" unique_id=897152027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("BoxMesh_2h5qe")
+
+[node name="Label" type="Label3D" parent="Interactables/ProgressionSelfAssessment" unique_id=1905293907]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+billboard = 1
+text = "Самооценка"
+font_size = 28
 
 [node name="Transitions" type="Node3D" parent="." unique_id=110350777]
 

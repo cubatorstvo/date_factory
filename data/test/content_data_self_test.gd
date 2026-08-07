@@ -258,9 +258,27 @@ func _test_stages() -> void:
 	_ok(prologue != null and prologue.story_girl_id == &"girl_neighbor" and prologue.story_rival_id == &"", "prologue refs")
 	var finale: StoryStageDefinition = db.call("get_stage", GameTypes.GameStage.FINALE) as StoryStageDefinition
 	_ok(finale != null and finale.story_girl_id == &"girl_final_target", "finale girl")
-	# Reserved IDs need not exist as GirlDefinition in production catalog.
+	# MODULE 14A ships early production girls; later reserved IDs may still be absent.
 	var prod_girls: Array = db.call("list_girls") as Array
-	_ok(prod_girls.is_empty(), "no production story GirlDefinitions yet")
+	_ok(prod_girls.size() == 7, "7 production GirlDefinitions in 14A")
+	for gid in [
+		&"girl_neighbor",
+		&"girl_actress",
+		&"girl_mine_boss",
+		&"girl_city_bicycle",
+		&"girl_cafe_laptop",
+		&"girl_gym_chalk",
+		&"girl_appearance_ritual",
+	]:
+		var g: GirlDefinition = db.call("get_girl", gid) as GirlDefinition
+		_ok(g != null and g.id == gid, "production girl %s" % String(gid))
+	var later_present: bool = false
+	for g_entry in prod_girls:
+		var pg: GirlDefinition = g_entry as GirlDefinition
+		if pg != null and pg.id == &"girl_magazine_editor":
+			later_present = true
+			break
+	_ok(not later_present, "14B girl_magazine_editor still absent")
 
 
 func _test_fixture_lookups() -> void:

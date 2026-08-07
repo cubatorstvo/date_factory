@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 13 — Salary Mine & Money Loop**.  
+Фактическая структура после **MODULE 14A — Early Vertical Slice Content**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
 ## Top-level (существует сейчас)
@@ -14,7 +14,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
 | `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (girls + salary section); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
+| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (global/story status + girls + salary); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
 | `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / clone economy |
 | `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
@@ -41,9 +41,9 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 - `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
 - `types/perk_ids.gd` — `class_name PerkIds` 32 canonical perk `StringName` constants
 - `definitions/*.gd` — typed `Resource` schemas (incl. dating action/event/pool/greeting/farewell, discovery, appearance)
-- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); `discovery_situations` / dating greetings/farewells empty until MODULE 14
+- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); MODULE 14A girls/rivals/discovery/dating pools
 - `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; dating greeting/farewell + test overrides)
-- `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations)
+- `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations, girls, rivals, discovery, dating)
 - `test/` — fixtures + MODULE 06–09 test content (`dating_test_fixtures.gd`, discovery/rival fixtures; not in production catalog)
 
 ### `game/state/`
@@ -199,7 +199,9 @@ audio/
 `game/story/` реализован (MODULE 11).  
 `world/` каркас 9 локаций реализован (MODULE 12).  
 `game/day/` + `game/salary/` реализова зарплаты (MODULE 13).  
-`ui/phone/` функциональный журнал + salary section (MODULE 08/10/12/13); финальный phone shell — MODULE 22.  
+`data/content/` early vertical-slice production content (MODULE 14A); inventory `docs/content/MANUAL_CONTENT_14A.md`.
+`game/content/test/module_14a_vertical_test.tscn` — MODULE 14A headless integration runner.
+`ui/phone/` функциональный журнал: global/story status + girls + salary (MODULE 08/10/12/13/14A); финальный phone shell — MODULE 22.  
 `ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
 
 ## Donor

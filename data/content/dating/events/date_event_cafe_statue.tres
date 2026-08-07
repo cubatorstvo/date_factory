@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_statue_yes"
+label = "Согласиться как есть"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([2])
+result_text = "Согласиться как есть"
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_statue_center"
+label = "Поставить статую в центр кадра"
+characteristic = 1
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([9, 10])
+result_text = "Поставить статую в центр кадра"
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_statue_light"
+label = "Оплатить пять минут перестановки света"
+characteristic = 2
+required_characteristic_level = 1
+money_cost = 8
+resolver_id = &"direct"
+direct_tags = Array[int]([3, 4])
+result_text = "Оплатить пять минут перестановки света"
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_statue_stranger"
+label = "Убедить прохожего тоже встать в кадр"
+characteristic = 3
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([8, 7])
+is_public = true
+result_text = "Убедить прохожего тоже встать в кадр"
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_cafe_statue"
+category = 2
+title = "Неудачная статуя"
+setup_text = "Она предлагает сфотографироваться с крайне неудачной декоративной статуей."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

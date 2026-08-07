@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DatingGreetingDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_greeting_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"dating_greeting_check_comfort"
+label = "Спросить, удобно ли место"
+direct_tags = Array[int]([0])
+result_text = "Спросить, удобно ли место"

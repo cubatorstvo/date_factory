@@ -257,4 +257,11 @@ new = clamp(old + date_delta, -5, +5)
 
 Протоколы свиданий не используются в новой концепции.
 
+### Реализация (MODULE 14A)
+
+- Apartment: `date_pool_apartment_common` (+ optional `date_pool_neighbor`).
+- Cafe / story cafe dates: `date_pool_cafe_common` (+ optional `date_pool_actress` / `date_pool_mine_boss`).
+- PhoneJournal shows global status + Story section from `Story.get_current_progress()`; salary section still unlocks with `SALARY_MINE`.
+- Content feasibility: story girls must be able to reach `date_delta = +5`; paid actions are never the only free route.
+
 ---

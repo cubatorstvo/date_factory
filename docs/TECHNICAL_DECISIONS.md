@@ -674,3 +674,19 @@ One production `advance_day()` keeps cooldown and salary period seams aligned wi
 
 Scope:
 `game/day/game_day.gd`, `game/salary/**`, GirlDiscovery/Relationships GameDay subscribe, `ui/phone/phone_journal.gd` salary section, `project.godot` `[autoload]`
+
+## MODULE 14A: date_pool_* IDs + Phone Story progress API
+
+Context:
+MODULE 14A content spec drafts pool IDs as `dating_pool_*`, while ContentDB validation already requires `date_pool_*`. PhoneStory text must not invent a second progress API.
+
+Decision:
+1. Production pool resource IDs use `date_pool_*` (map from spec `dating_pool_*`).
+2. PhoneJournal Story section reads `Story.get_current_progress()` (`StoryStageProgress`), not a non-existent `get_current_stage_progress`.
+3. PhoneJournal adds top status (day/money/authority/experience/upgrade points) without redesigning the phone shell.
+
+Reason:
+Keep catalog validation and runtime APIs stable; 14A is content/integration, not a new framework.
+
+Scope:
+`data/content/dating/pools/**`, girl `dating_pool_ids`, `ui/phone/phone_journal.gd`, `docs/content/MANUAL_CONTENT_14A.md`, `game/content/test/module_14a_vertical_*`

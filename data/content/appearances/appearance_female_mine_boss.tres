@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AppearanceProfileDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/appearance_profile_definition.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://characters/female/female_base_visual.tscn" id="2_visual"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"appearance_female_mine_boss"
+body_type = 1
+visual_scene = ExtResource("2_visual")
+visual_scale = 1.03
+vertical_offset = 0.0
+animation_profile_id = &"animation_female_base"

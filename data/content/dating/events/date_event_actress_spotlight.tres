@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_actress_spotlight_own"
+label = "Сделать вид, что внимание уже учтено в плане"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4, 3])
+result_text = "Сделать вид, что внимание уже учтено в плане"
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_actress_spotlight_ignore"
+label = "Продолжить разговор ровно как было"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4])
+result_text = "Продолжить разговор ровно как было"
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_actress_spotlight_stage"
+label = "Слегка развернуть стул к лучшему ракурсу"
+characteristic = 1
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "Слегка развернуть стул к лучшему ракурсу"
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_actress_spotlight_absurd"
+label = "Поприветствовать зрителей кивком"
+characteristic = 3
+required_characteristic_level = 1
+resolver_id = &"direct"
+direct_tags = Array[int]([5])
+result_text = "Поприветствовать зрителей кивком"
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_actress_spotlight"
+category = 0
+title = "Свет и внимание"
+setup_text = "Она замечает, что соседний стол слишком громко смотрит в вашу сторону, и ждёт, как ты это оформишь."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

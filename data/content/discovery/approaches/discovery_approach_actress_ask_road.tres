@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DiscoveryApproachDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_approach_actress_ask_road"
+label = "Спросить, где должна заканчиваться дорожка"
+has_requirement = false
+required_characteristic = 0
+required_level = 0
+outcome = 0
+result_text = "Она оценивает вопрос как реплику и даёт номер до того, как сцена закончится."

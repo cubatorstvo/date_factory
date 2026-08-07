@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RivalDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/rival_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"rival_mine_boss"
+display_name = "Ухажёр Начальницы шахты"
+is_story = true
+has_story_stage = true
+story_stage = 2
+required_authority = 2
+authority_reward = 2
+muscle = 3
+appearance = 1
+capital = 2
+aura = 1
+preferred_competition = 0
+allowed_competitions = Array[int]([0, 1])
+appearance_profile_id = &"appearance_male_mine_rival"
+competition_modifier_id = &""

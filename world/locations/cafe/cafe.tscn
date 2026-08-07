@@ -1,12 +1,16 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene format=3 uid="uid://bc4evh7p6qk02"]
 
-[ext_resource type="Script" path="res://world/world_location.gd" id="1_loc"]
-[ext_resource type="Script" path="res://world/world_transition.gd" id="2_transition"]
-[ext_resource type="Script" path="res://world/player_spawn_point.gd" id="3_pspawn"]
-[ext_resource type="Script" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
-[ext_resource type="Script" path="res://world/story_event_point.gd" id="5_story"]
-[ext_resource type="Script" path="res://world/phone_interactable.gd" id="6_phone"]
-[ext_resource type="Script" path="res://world/world_feature_gate.gd" id="7_gate"]
+[ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
+[ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
+[ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
+[ext_resource type="PackedScene" path="res://game/girls/girl_actor.tscn" id="4_aplqh"]
+[ext_resource type="Script" uid="uid://bwtavkdcvpoir" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
+[ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
+[ext_resource type="Script" uid="uid://hijvba7yq260" path="res://game/girls/girl_actor.gd" id="5_xlji7"]
+[ext_resource type="PackedScene" uid="uid://craep8snu78fc" path="res://game/rivals/rival_actor.tscn" id="6_sgsvq"]
+[ext_resource type="Script" uid="uid://cm01ma3nlptyj" path="res://game/rivals/rival_actor.gd" id="7_07mk6"]
+[ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="9_n632s"]
+
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
 background_color = Color(0.42, 0.48, 0.55, 1)
@@ -14,212 +18,228 @@ ambient_light_source = 2
 ambient_light_color = Color(0.78, 0.78, 0.82, 1)
 ambient_light_energy = 0.9
 
-[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
-albedo_color = Color(0.45, 0.35, 0.3, 1)
-
 [sub_resource type="BoxMesh" id="BoxMesh_Floor"]
 size = Vector3(12, 0.2, 12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
+albedo_color = Color(0.45, 0.35, 0.3, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_Floor"]
 size = Vector3(12, 0.2, 12)
 
-[sub_resource type="StandardMaterial3D" id="Mat_WallN"]
-albedo_color = Color(0.55, 0.45, 0.4, 1)
-
 [sub_resource type="BoxMesh" id="BoxMesh_WallN"]
 size = Vector3(12, 3, 0.3)
 
+[sub_resource type="StandardMaterial3D" id="Mat_WallN"]
+albedo_color = Color(0.55, 0.45, 0.4, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape_WallN"]
+size = Vector3(12, 3, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallS"]
 size = Vector3(12, 3, 0.3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_WallS"]
 albedo_color = Color(0.55, 0.45, 0.4, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_WallS"]
-size = Vector3(12, 3, 0.3)
-
 [sub_resource type="BoxShape3D" id="BoxShape_WallS"]
 size = Vector3(12, 3, 0.3)
-
-[sub_resource type="StandardMaterial3D" id="Mat_WallE"]
-albedo_color = Color(0.55, 0.45, 0.4, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_WallE"]
 size = Vector3(0.3, 3, 12)
 
+[sub_resource type="StandardMaterial3D" id="Mat_WallE"]
+albedo_color = Color(0.55, 0.45, 0.4, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape_WallE"]
+size = Vector3(0.3, 3, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallW"]
 size = Vector3(0.3, 3, 12)
 
 [sub_resource type="StandardMaterial3D" id="Mat_WallW"]
 albedo_color = Color(0.55, 0.45, 0.4, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_WallW"]
-size = Vector3(0.3, 3, 12)
-
 [sub_resource type="BoxShape3D" id="BoxShape_WallW"]
 size = Vector3(0.3, 3, 12)
 
-[sub_resource type="StandardMaterial3D" id="TransitionMat"]
-albedo_color = Color(0.2, 0.55, 0.75, 1)
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_interact"]
+radius = 0.45
+height = 1.8
 
-[sub_resource type="BoxMesh" id="TransitionMesh"]
-size = Vector3(1.2, 2.2, 0.4)
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_k0wc4"]
+radius = 0.45
+height = 1.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_dp0xu"]
+size = Vector3(1.1, 0.7, 1.1)
 
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
 
-[sub_resource type="StandardMaterial3D" id="PhoneMat"]
-albedo_color = Color(0.15, 0.15, 0.18, 1)
+[sub_resource type="BoxMesh" id="TransitionMesh"]
+size = Vector3(1.2, 2.2, 0.4)
 
-[sub_resource type="BoxMesh" id="PhoneMesh"]
-size = Vector3(0.35, 0.55, 0.2)
+[sub_resource type="StandardMaterial3D" id="TransitionMat"]
+albedo_color = Color(0.2, 0.55, 0.75, 1)
 
-[sub_resource type="BoxShape3D" id="PhoneShape"]
-size = Vector3(0.35, 0.55, 0.2)
-
-[sub_resource type="StandardMaterial3D" id="GateMat"]
-albedo_color = Color(0.65, 0.2, 0.2, 1)
-
-[sub_resource type="BoxMesh" id="GateMesh"]
-size = Vector3(6, 3, 0.35)
-
-[sub_resource type="BoxShape3D" id="GateShape"]
-size = Vector3(6, 3, 0.35)
-
-[sub_resource type="StandardMaterial3D" id="Mat_PublicFloor"]
-albedo_color = Color(0.45, 0.42, 0.38, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_PublicFloor"]
-size = Vector3(8, 0.2, 8)
-
-[sub_resource type="BoxShape3D" id="BoxShape_PublicFloor"]
-size = Vector3(8, 0.2, 8)
-
-[node name="cafe" type="Node3D"]
+[node name="cafe" type="Node3D" unique_id=987500279]
 script = ExtResource("1_loc")
 location_id = &"cafe"
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1704544038]
 environment = SubResource("Env")
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=591518521]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 6, 0)
 light_energy = 0.85
-shadow_enabled = false
 
-[node name="Geometry" type="Node3D" parent="."]
+[node name="Geometry" type="Node3D" parent="." unique_id=1117895103]
 
-[node name="Floor" type="MeshInstance3D" parent="Geometry"]
+[node name="Floor" type="MeshInstance3D" parent="Geometry" unique_id=1034290972]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 mesh = SubResource("BoxMesh_Floor")
 surface_material_override/0 = SubResource("Mat_Floor")
 
-[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor"]
-collision_layer = 1
+[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor" unique_id=2087501811]
 collision_mask = 0
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody" unique_id=793046572]
 shape = SubResource("BoxShape_Floor")
 
-[node name="WallN" type="MeshInstance3D" parent="Geometry"]
+[node name="WallN" type="MeshInstance3D" parent="Geometry" unique_id=1765360439]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6)
 mesh = SubResource("BoxMesh_WallN")
 surface_material_override/0 = SubResource("Mat_WallN")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallN"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallN" unique_id=585647804]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body" unique_id=294183776]
 shape = SubResource("BoxShape_WallN")
 
-[node name="WallS" type="MeshInstance3D" parent="Geometry"]
+[node name="WallS" type="MeshInstance3D" parent="Geometry" unique_id=603140910]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6)
 mesh = SubResource("BoxMesh_WallS")
 surface_material_override/0 = SubResource("Mat_WallS")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallS"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallS" unique_id=812419699]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body" unique_id=249144246]
 shape = SubResource("BoxShape_WallS")
 
-[node name="WallE" type="MeshInstance3D" parent="Geometry"]
+[node name="WallE" type="MeshInstance3D" parent="Geometry" unique_id=853064284]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, 0)
 mesh = SubResource("BoxMesh_WallE")
 surface_material_override/0 = SubResource("Mat_WallE")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallE"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallE" unique_id=1947193226]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body" unique_id=181498326]
 shape = SubResource("BoxShape_WallE")
 
-[node name="WallW" type="MeshInstance3D" parent="Geometry"]
+[node name="WallW" type="MeshInstance3D" parent="Geometry" unique_id=5831169]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 0)
 mesh = SubResource("BoxMesh_WallW")
 surface_material_override/0 = SubResource("Mat_WallW")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallW"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallW" unique_id=1050804178]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body" unique_id=385980425]
 shape = SubResource("BoxShape_WallW")
 
-[node name="Sign" type="Label3D" parent="Geometry"]
+[node name="Sign" type="Label3D" parent="Geometry" unique_id=1436942134]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
 text = "КАФЕ"
 font_size = 64
 
-[node name="PlayerSpawns" type="Node3D" parent="."]
+[node name="PlayerSpawns" type="Node3D" parent="." unique_id=150638794]
 
-[node name="spawn_default" type="Marker3D" parent="PlayerSpawns"]
+[node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=570043663]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, 2.5)
 script = ExtResource("3_pspawn")
-spawn_id = &"spawn_default"
 
-[node name="NpcSpawns" type="Node3D" parent="."]
+[node name="NpcSpawns" type="Node3D" parent="." unique_id=2083090475]
 
-[node name="StoryEventPoints" type="Node3D" parent="."]
+[node name="npc_girl_cafe_laptop" type="Marker3D" parent="NpcSpawns" unique_id=2122251097]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -1)
+script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_laptop"
 
-[node name="FeatureGates" type="Node3D" parent="."]
+[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_laptop" unique_id=80850875 instance=ExtResource("4_aplqh")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_xlji7")
+girl_id = "girl_cafe_laptop"
 
-[node name="Interactables" type="Node3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_laptop/GirlActor" unique_id=2072436705]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_interact")
 
-[node name="Transitions" type="Node3D" parent="."]
+[node name="npc_rival_cafe_receipt" type="Marker3D" parent="NpcSpawns" unique_id=782695364]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -1)
+script = ExtResource("4_nspawn")
+spawn_id = "rival_cafe_receipt"
 
-[node name="ToCity" type="Area3D" parent="Transitions"]
+[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_cafe_receipt" unique_id=515275552 instance=ExtResource("6_sgsvq")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_07mk6")
+rival_id = "rival_cafe_receipt"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_rival_cafe_receipt/RivalActor" unique_id=1049199870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_k0wc4")
+
+[node name="StoryEventPoints" type="Node3D" parent="." unique_id=1911734969]
+
+[node name="story_point_cafe_table" type="Marker3D" parent="StoryEventPoints" unique_id=2049652805]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -2)
+script = ExtResource("5_story")
+event_point_id = &"story_point_cafe_table"
+
+[node name="story_point_cafe_space_event" type="Marker3D" parent="StoryEventPoints" unique_id=584524197]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.05, 1)
+script = ExtResource("5_story")
+event_point_id = &"story_point_cafe_space_event"
+
+[node name="FeatureGates" type="Node3D" parent="." unique_id=407538982]
+
+[node name="Interactables" type="Node3D" parent="." unique_id=773396533]
+
+[node name="DateVenue" type="Area3D" parent="Interactables" unique_id=843446443]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("9_n632s")
+prompt_text = "Столик для свиданий"
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/DateVenue" unique_id=1276062585]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+mesh = SubResource("BoxMesh_dp0xu")
+
+[node name="Label" type="Label3D" parent="Interactables/DateVenue" unique_id=367972488]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+billboard = 1
+text = "Столик для свиданий"
+font_size = 28
+
+[node name="Transitions" type="Node3D" parent="." unique_id=1815322725]
+
+[node name="ToCity" type="Area3D" parent="Transitions" unique_id=1253583821]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 5.2)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("2_transition")
 target_location_id = &"city_hub"
-target_spawn_id = &"spawn_default"
 display_name = "В город"
 
-[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity"]
+[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity" unique_id=1925324057]
 shape = SubResource("TransitionShape")
 
-[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity"]
+[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity" unique_id=2066098955]
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
-
-[node name="npc_cafe_01" type="Marker3D" parent="NpcSpawns"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -1)
-script = ExtResource("4_nspawn")
-spawn_id = &"npc_cafe_01"
-
-[node name="npc_cafe_02" type="Marker3D" parent="NpcSpawns"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -1)
-script = ExtResource("4_nspawn")
-spawn_id = &"npc_cafe_02"
-
-[node name="story_point_cafe_table" type="Marker3D" parent="StoryEventPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -2)
-script = ExtResource("5_story")
-event_point_id = &"story_point_cafe_table"
-
-[node name="story_point_cafe_space_event" type="Marker3D" parent="StoryEventPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.05, 1)
-script = ExtResource("5_story")
-event_point_id = &"story_point_cafe_space_event"

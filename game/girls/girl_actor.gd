@@ -95,6 +95,10 @@ func _on_interact(player: Node) -> void:
 		var reason: StringName = begin.get("reason", &"") as StringName
 		if reason == &"LOCKED_EXPERIENCE":
 			_show_locked_experience(begin, player)
+		elif reason == &"STORY_RIVAL_REQUIRED":
+			_show_story_lock_feedback("Сначала разберись с её текущим ухажёром.", player)
+		elif reason == &"STORY_WRONG_STAGE":
+			_show_story_lock_feedback("Эта линия пока недоступна.", player)
 		return
 	_show_approach_choices(begin, player)
 
@@ -192,17 +196,22 @@ func _on_contact_added(gid: StringName) -> void:
 
 
 func _show_locked_experience(begin: Dictionary, player: Node) -> void:
+	var req: int = int(begin.get("required_experience", 0))
+	var cur: int = int(begin.get("experience", 0))
+	_show_story_lock_feedback("Нужна Опытность: %s\nСейчас: %s" % [req, cur], player)
+
+
+func _show_story_lock_feedback(text: String, player: Node) -> void:
 	_close_choice_ui(player)
 	var layer := CanvasLayer.new()
-	layer.name = "LockedExperienceUI"
+	layer.name = "StoryLockFeedbackUI"
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(360, 120)
 	var vbox := VBoxContainer.new()
 	var label := Label.new()
-	var req: int = int(begin.get("required_experience", 0))
-	var cur: int = int(begin.get("experience", 0))
-	label.text = "Нужна Опытность: %s\nСейчас: %s" % [req, cur]
+	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var btn := Button.new()
 	btn.text = "Закрыть"
 	btn.pressed.connect(func() -> void:

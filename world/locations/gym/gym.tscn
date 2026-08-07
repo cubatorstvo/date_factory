@@ -1,12 +1,15 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene format=3 uid="uid://yggh51ji85gs"]
 
-[ext_resource type="Script" path="res://world/world_location.gd" id="1_loc"]
-[ext_resource type="Script" path="res://world/world_transition.gd" id="2_transition"]
-[ext_resource type="Script" path="res://world/player_spawn_point.gd" id="3_pspawn"]
-[ext_resource type="Script" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
-[ext_resource type="Script" path="res://world/story_event_point.gd" id="5_story"]
-[ext_resource type="Script" path="res://world/phone_interactable.gd" id="6_phone"]
-[ext_resource type="Script" path="res://world/world_feature_gate.gd" id="7_gate"]
+[ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
+[ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
+[ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
+[ext_resource type="PackedScene" uid="uid://craep8snu78fc" path="res://game/rivals/rival_actor.tscn" id="4_6aj8w"]
+[ext_resource type="Script" uid="uid://bwtavkdcvpoir" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
+[ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
+[ext_resource type="Script" uid="uid://cm01ma3nlptyj" path="res://game/rivals/rival_actor.gd" id="5_voiok"]
+[ext_resource type="PackedScene" path="res://game/girls/girl_actor.tscn" id="6_bepj1"]
+[ext_resource type="Script" uid="uid://hijvba7yq260" path="res://game/girls/girl_actor.gd" id="7_g5o7a"]
+
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
 background_color = Color(0.42, 0.48, 0.55, 1)
@@ -14,208 +17,208 @@ ambient_light_source = 2
 ambient_light_color = Color(0.78, 0.78, 0.82, 1)
 ambient_light_energy = 0.9
 
-[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
-albedo_color = Color(0.35, 0.35, 0.38, 1)
-
 [sub_resource type="BoxMesh" id="BoxMesh_Floor"]
 size = Vector3(12, 0.2, 12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
+albedo_color = Color(0.35, 0.35, 0.38, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_Floor"]
 size = Vector3(12, 0.2, 12)
 
-[sub_resource type="StandardMaterial3D" id="Mat_WallN"]
-albedo_color = Color(0.45, 0.45, 0.5, 1)
-
 [sub_resource type="BoxMesh" id="BoxMesh_WallN"]
 size = Vector3(12, 3, 0.3)
 
+[sub_resource type="StandardMaterial3D" id="Mat_WallN"]
+albedo_color = Color(0.45, 0.45, 0.5, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape_WallN"]
+size = Vector3(12, 3, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallS"]
 size = Vector3(12, 3, 0.3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_WallS"]
 albedo_color = Color(0.45, 0.45, 0.5, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_WallS"]
-size = Vector3(12, 3, 0.3)
-
 [sub_resource type="BoxShape3D" id="BoxShape_WallS"]
 size = Vector3(12, 3, 0.3)
-
-[sub_resource type="StandardMaterial3D" id="Mat_WallE"]
-albedo_color = Color(0.45, 0.45, 0.5, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_WallE"]
 size = Vector3(0.3, 3, 12)
 
+[sub_resource type="StandardMaterial3D" id="Mat_WallE"]
+albedo_color = Color(0.45, 0.45, 0.5, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape_WallE"]
+size = Vector3(0.3, 3, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallW"]
 size = Vector3(0.3, 3, 12)
 
 [sub_resource type="StandardMaterial3D" id="Mat_WallW"]
 albedo_color = Color(0.45, 0.45, 0.5, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_WallW"]
-size = Vector3(0.3, 3, 12)
-
 [sub_resource type="BoxShape3D" id="BoxShape_WallW"]
 size = Vector3(0.3, 3, 12)
 
-[sub_resource type="StandardMaterial3D" id="TransitionMat"]
-albedo_color = Color(0.2, 0.55, 0.75, 1)
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_k0wc4"]
+radius = 0.45
+height = 1.8
 
-[sub_resource type="BoxMesh" id="TransitionMesh"]
-size = Vector3(1.2, 2.2, 0.4)
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_interact"]
+radius = 0.45
+height = 1.8
 
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
 
-[sub_resource type="StandardMaterial3D" id="PhoneMat"]
-albedo_color = Color(0.15, 0.15, 0.18, 1)
+[sub_resource type="BoxMesh" id="TransitionMesh"]
+size = Vector3(1.2, 2.2, 0.4)
 
-[sub_resource type="BoxMesh" id="PhoneMesh"]
-size = Vector3(0.35, 0.55, 0.2)
+[sub_resource type="StandardMaterial3D" id="TransitionMat"]
+albedo_color = Color(0.2, 0.55, 0.75, 1)
 
-[sub_resource type="BoxShape3D" id="PhoneShape"]
-size = Vector3(0.35, 0.55, 0.2)
-
-[sub_resource type="StandardMaterial3D" id="GateMat"]
-albedo_color = Color(0.65, 0.2, 0.2, 1)
-
-[sub_resource type="BoxMesh" id="GateMesh"]
-size = Vector3(6, 3, 0.35)
-
-[sub_resource type="BoxShape3D" id="GateShape"]
-size = Vector3(6, 3, 0.35)
-
-[sub_resource type="StandardMaterial3D" id="Mat_PublicFloor"]
-albedo_color = Color(0.45, 0.42, 0.38, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_PublicFloor"]
-size = Vector3(8, 0.2, 8)
-
-[sub_resource type="BoxShape3D" id="BoxShape_PublicFloor"]
-size = Vector3(8, 0.2, 8)
-
-[node name="gym" type="Node3D"]
+[node name="gym" type="Node3D" unique_id=370617519]
 script = ExtResource("1_loc")
 location_id = &"gym"
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=520094537]
 environment = SubResource("Env")
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=300440675]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 6, 0)
 light_energy = 0.85
-shadow_enabled = false
 
-[node name="Geometry" type="Node3D" parent="."]
+[node name="Geometry" type="Node3D" parent="." unique_id=1521733068]
 
-[node name="Floor" type="MeshInstance3D" parent="Geometry"]
+[node name="Floor" type="MeshInstance3D" parent="Geometry" unique_id=1666599345]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 mesh = SubResource("BoxMesh_Floor")
 surface_material_override/0 = SubResource("Mat_Floor")
 
-[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor"]
-collision_layer = 1
+[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor" unique_id=1488757631]
 collision_mask = 0
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody" unique_id=2023279435]
 shape = SubResource("BoxShape_Floor")
 
-[node name="WallN" type="MeshInstance3D" parent="Geometry"]
+[node name="WallN" type="MeshInstance3D" parent="Geometry" unique_id=537573021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6)
 mesh = SubResource("BoxMesh_WallN")
 surface_material_override/0 = SubResource("Mat_WallN")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallN"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallN" unique_id=177110294]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body" unique_id=1985686705]
 shape = SubResource("BoxShape_WallN")
 
-[node name="WallS" type="MeshInstance3D" parent="Geometry"]
+[node name="WallS" type="MeshInstance3D" parent="Geometry" unique_id=2017465467]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6)
 mesh = SubResource("BoxMesh_WallS")
 surface_material_override/0 = SubResource("Mat_WallS")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallS"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallS" unique_id=78325551]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body" unique_id=2079420833]
 shape = SubResource("BoxShape_WallS")
 
-[node name="WallE" type="MeshInstance3D" parent="Geometry"]
+[node name="WallE" type="MeshInstance3D" parent="Geometry" unique_id=1535237462]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, 0)
 mesh = SubResource("BoxMesh_WallE")
 surface_material_override/0 = SubResource("Mat_WallE")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallE"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallE" unique_id=667110087]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body" unique_id=260391876]
 shape = SubResource("BoxShape_WallE")
 
-[node name="WallW" type="MeshInstance3D" parent="Geometry"]
+[node name="WallW" type="MeshInstance3D" parent="Geometry" unique_id=121866727]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 0)
 mesh = SubResource("BoxMesh_WallW")
 surface_material_override/0 = SubResource("Mat_WallW")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallW"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallW" unique_id=1893392943]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body" unique_id=2016660525]
 shape = SubResource("BoxShape_WallW")
 
-[node name="Sign" type="Label3D" parent="Geometry"]
+[node name="Sign" type="Label3D" parent="Geometry" unique_id=1970394150]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
 text = "КАЧАЛКА"
 font_size = 64
 
-[node name="PlayerSpawns" type="Node3D" parent="."]
+[node name="PlayerSpawns" type="Node3D" parent="." unique_id=2033125711]
 
-[node name="spawn_default" type="Marker3D" parent="PlayerSpawns"]
+[node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=1550389931]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, 2.5)
 script = ExtResource("3_pspawn")
-spawn_id = &"spawn_default"
 
-[node name="NpcSpawns" type="Node3D" parent="."]
+[node name="NpcSpawns" type="Node3D" parent="." unique_id=1513024392]
 
-[node name="StoryEventPoints" type="Node3D" parent="."]
+[node name="npc_rival_gym_mirror" type="Marker3D" parent="NpcSpawns" unique_id=484160620]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -2)
+script = ExtResource("4_nspawn")
+spawn_id = "rival_gym_mirror"
+npc_kind = 2
 
-[node name="FeatureGates" type="Node3D" parent="."]
+[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_gym_mirror" unique_id=515275552 instance=ExtResource("4_6aj8w")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_voiok")
+rival_id = "rival_gym_mirror"
 
-[node name="Interactables" type="Node3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_rival_gym_mirror/RivalActor" unique_id=1049199870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_k0wc4")
 
-[node name="Transitions" type="Node3D" parent="."]
+[node name="npc_girl_gym_chalk" type="Marker3D" parent="NpcSpawns" unique_id=1508729009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -2)
+script = ExtResource("4_nspawn")
+spawn_id = "girl_gym_chalk"
 
-[node name="ToCity" type="Area3D" parent="Transitions"]
+[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_gym_chalk" unique_id=1299793875 instance=ExtResource("6_bepj1")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_g5o7a")
+girl_id = "girl_gym_chalk"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_girl_gym_chalk/GirlActor" unique_id=1869636126]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_interact")
+
+[node name="StoryEventPoints" type="Node3D" parent="." unique_id=1487399742]
+
+[node name="story_point_gym_slap" type="Marker3D" parent="StoryEventPoints" unique_id=1672280952]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -2)
+script = ExtResource("5_story")
+event_point_id = &"story_point_gym_slap"
+
+[node name="story_point_gym_activity" type="Marker3D" parent="StoryEventPoints" unique_id=42378048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3)
+script = ExtResource("5_story")
+event_point_id = &"story_point_gym_activity"
+
+[node name="FeatureGates" type="Node3D" parent="." unique_id=727687143]
+
+[node name="Interactables" type="Node3D" parent="." unique_id=1777444064]
+
+[node name="Transitions" type="Node3D" parent="." unique_id=976965251]
+
+[node name="ToCity" type="Area3D" parent="Transitions" unique_id=1676427154]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 5.2)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("2_transition")
 target_location_id = &"city_hub"
-target_spawn_id = &"spawn_default"
 display_name = "В город"
 
-[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity"]
+[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity" unique_id=33210784]
 shape = SubResource("TransitionShape")
 
-[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity"]
+[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity" unique_id=471915360]
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
-
-[node name="npc_gym_rival_01" type="Marker3D" parent="NpcSpawns"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -2)
-script = ExtResource("4_nspawn")
-spawn_id = &"npc_gym_rival_01"
-npc_kind = 2
-
-[node name="story_point_gym_slap" type="Marker3D" parent="StoryEventPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -2)
-script = ExtResource("5_story")
-event_point_id = &"story_point_gym_slap"
-
-[node name="story_point_gym_activity" type="Marker3D" parent="StoryEventPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3)
-script = ExtResource("5_story")
-event_point_id = &"story_point_gym_activity"

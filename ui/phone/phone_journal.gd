@@ -1,7 +1,7 @@
 class_name PhoneJournal
 extends Control
 ## Functional phone journal for discovered girls (MODULE 08)
-## + salary section when StoryFeature.SALARY_MINE unlocked (MODULE 13).
+## + global/story status (MODULE 14A) + salary section (MODULE 13).
 ## No Dating CTA / messaging / scheduling.
 
 signal opened()
@@ -14,6 +14,12 @@ var _close_btn: Button = null
 var _player: Node = null
 var _is_open: bool = false
 var _listed_ids: Array[StringName] = []
+
+var _status_section: VBoxContainer = null
+var _status_label: Label = null
+var _story_section: VBoxContainer = null
+var _story_title: Label = null
+var _story_label: Label = null
 
 var _salary_section: VBoxContainer = null
 var _salary_title: Label = null
@@ -84,8 +90,22 @@ func select_girl_by_id(girl_id: StringName) -> bool:
 
 
 func refresh() -> void:
+	_refresh_status_section()
+	_refresh_story_section()
 	_refresh_list()
 	_refresh_salary_section()
+
+
+func get_status_text() -> String:
+	if _status_label == null:
+		return ""
+	return String(_status_label.text)
+
+
+func get_story_text() -> String:
+	if _story_label == null:
+		return ""
+	return String(_story_label.text)
 
 
 func has_salary_section_visible() -> bool:
@@ -131,6 +151,8 @@ func _build_ui() -> void:
 	_title.text = "Телефон — Журнал"
 	_title.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(_title)
+	_build_status_section(vbox)
+	_build_story_section(vbox)
 	var split := HSplitContainer.new()
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(split)
@@ -150,6 +172,30 @@ func _build_ui() -> void:
 	_close_btn.text = "Закрыть"
 	_close_btn.pressed.connect(close)
 	vbox.add_child(_close_btn)
+
+
+func _build_status_section(parent: VBoxContainer) -> void:
+	_status_section = VBoxContainer.new()
+	_status_section.add_theme_constant_override("separation", 2)
+	parent.add_child(_status_section)
+	_status_label = Label.new()
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status_section.add_child(_status_label)
+
+
+func _build_story_section(parent: VBoxContainer) -> void:
+	_story_section = VBoxContainer.new()
+	_story_section.add_theme_constant_override("separation", 2)
+	parent.add_child(_story_section)
+	var sep := HSeparator.new()
+	_story_section.add_child(sep)
+	_story_title = Label.new()
+	_story_title.text = "СЮЖЕТ"
+	_story_title.add_theme_font_size_override("font_size", 18)
+	_story_section.add_child(_story_title)
+	_story_label = Label.new()
+	_story_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_story_section.add_child(_story_label)
 
 
 func _build_salary_section(parent: VBoxContainer) -> void:
@@ -205,15 +251,133 @@ func _connect_salary_signals() -> void:
 	var story: Node = get_node_or_null("/root/Story")
 	if story != null and story.has_signal("feature_unlocked") and not story.is_connected("feature_unlocked", _on_feature_unlocked_salary):
 		story.connect("feature_unlocked", _on_feature_unlocked_salary)
+	if story != null and story.has_signal("stage_objective_changed") and not story.is_connected("stage_objective_changed", _on_story_objective_changed):
+		story.connect("stage_objective_changed", _on_story_objective_changed)
+	if story != null and story.has_signal("stage_started") and not story.is_connected("stage_started", _on_story_stage_started):
+		story.connect("stage_started", _on_story_stage_started)
+	if gs != null:
+		if gs.has_signal("experience_changed") and not gs.is_connected("experience_changed", _on_experience_changed_status):
+			gs.connect("experience_changed", _on_experience_changed_status)
+		if gs.has_signal("upgrade_points_changed") and not gs.is_connected("upgrade_points_changed", _on_upgrade_points_changed_status):
+			gs.connect("upgrade_points_changed", _on_upgrade_points_changed_status)
+	var day_node: Node = get_node_or_null("/root/GameDay")
+	if day_node != null and day_node.has_signal("day_advanced") and not day_node.is_connected("day_advanced", _on_day_advanced_status):
+		day_node.connect("day_advanced", _on_day_advanced_status)
 	_salary_signals_connected = true
 
 
 func _on_money_changed_salary(_new_value: int, _delta: int) -> void:
+	_request_status_refresh()
 	_request_salary_refresh()
 
 
 func _on_authority_changed_salary(_new_value: int, _delta: int) -> void:
+	_request_status_refresh()
 	_request_salary_refresh()
+
+
+func _on_experience_changed_status(_new_value: int, _delta: int) -> void:
+	_request_status_refresh()
+
+
+func _on_upgrade_points_changed_status(_new_value: int, _delta: int) -> void:
+	_request_status_refresh()
+
+
+func _on_day_advanced_status(_new_day: int) -> void:
+	_request_status_refresh()
+	_request_salary_refresh()
+
+
+func _on_story_objective_changed(_progress: StoryStageProgress) -> void:
+	_request_story_refresh()
+
+
+func _on_story_stage_started(_stage: GameTypes.GameStage) -> void:
+	_request_story_refresh()
+
+
+func _request_status_refresh() -> void:
+	if _is_open:
+		_refresh_status_section()
+
+
+func _request_story_refresh() -> void:
+	if _is_open:
+		_refresh_story_section()
+
+
+func _refresh_status_section() -> void:
+	if _status_label == null:
+		return
+	var day_value: int = 1
+	var day_node: Node = get_node_or_null("/root/GameDay")
+	if day_node != null and day_node.has_method("get_current_day"):
+		day_value = int(day_node.call("get_current_day"))
+	var money_value: int = 0
+	var authority_value: int = 0
+	var experience_value: int = 0
+	var upgrade_points_value: int = 0
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null:
+		money_value = int(gs.call("get_money"))
+		authority_value = int(gs.call("get_authority"))
+		experience_value = int(gs.call("get_experience"))
+		upgrade_points_value = int(gs.call("get_upgrade_points"))
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("День: %d" % day_value)
+	lines.append("Деньги: %d" % money_value)
+	lines.append("Авторитет: %d" % authority_value)
+	lines.append("Опытность: %d" % experience_value)
+	lines.append("Баллы прокачки: %d" % upgrade_points_value)
+	_status_label.text = "\n".join(lines)
+
+
+func _refresh_story_section() -> void:
+	if _story_label == null:
+		return
+	var story: Node = get_node_or_null("/root/Story")
+	if story == null or not story.has_method("get_current_progress"):
+		_story_label.text = "—"
+		return
+	var progress: StoryStageProgress = story.call("get_current_progress") as StoryStageProgress
+	if progress == null:
+		_story_label.text = "—"
+		return
+	var stage_name: String = progress.display_name.strip_edges()
+	if stage_name == "":
+		stage_name = String(GameTypes.GameStage.find_key(int(progress.stage)))
+	var rival_text: String = "—"
+	if String(progress.story_rival_id) != "":
+		rival_text = _actor_display_name(progress.story_rival_id, true)
+		if progress.rival_defeated:
+			rival_text = "%s (побеждён)" % rival_text
+	elif not progress.rival_required:
+		rival_text = "—"
+	var girl_text: String = "—"
+	if String(progress.story_girl_id) != "":
+		girl_text = _actor_display_name(progress.story_girl_id, false)
+		if progress.girl_completed:
+			girl_text = "%s (завершена)" % girl_text
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append(stage_name)
+	lines.append("Ухажёр: %s" % rival_text)
+	lines.append("Девушка: %s" % girl_text)
+	_story_label.text = "\n".join(lines)
+
+
+func _actor_display_name(actor_id: StringName, is_rival: bool) -> String:
+	var db: Node = get_node_or_null("/root/ContentDB")
+	if db != null:
+		if is_rival:
+			var rival: RivalDefinition = db.call("get_rival", actor_id) as RivalDefinition
+			if rival != null and rival.display_name.strip_edges() != "":
+				return rival.display_name
+		else:
+			var girl: GirlDefinition = db.call("get_girl", actor_id) as GirlDefinition
+			if girl != null and girl.display_name.strip_edges() != "":
+				return girl.display_name
+	return String(actor_id)
 
 
 func _on_salary_period_opened(_status: SalaryStatus) -> void:
