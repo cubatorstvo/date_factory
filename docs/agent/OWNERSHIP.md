@@ -1,17 +1,16 @@
-﻿# File ownership — MODULE 14B Editor & Pre-Media
+﻿# File ownership — MODULE 15 Media / Attention
 
 | Task | Agent | Writable | Forbidden | Status |
 |------|-------|----------|-----------|--------|
-| M14B_A_SAFETY_PHONE | df-gameplay-worker | ContentDB try_get_*, Phone STAGE4 handoff | bulk content, scenes, MODULE 15 | done |
-| M14B_B_CONTENT | df-content-worker | data/content + catalog | scenes, Phone APIs, MODULE 15 | done |
-| M14B_C_SCENES | df-scene-worker | appearance_space, city_hub, cafe | catalog, Phone, MODULE 15 | done |
-| M14B_D_TESTS_DOCS | df-gameplay-worker | tests + docs + MANUAL_CONTENT_14B | MODULE 15 | done |
-| M14B_E_QA | df-qa-worker | evidence only | product sources | done |
+| M15_A_CORE | df-gameplay-worker | GameState media, game/media/**, GirlDiscovery helper, project.godot Media, media tests | Phone UI, MODULE 16 | done |
+| M15_B_WORLD | df-scene-worker | PhotoSessionInteractable placement, MediaAttentionVisual, appearance_space + city_hub | Phone, Media formulas, MODULE 16 | done |
+| M15_C_PHONE_DOCS | df-gameplay-worker | phone_journal MEDIA + docs | scenes, MODULE 16 | done |
+| M15_D_QA | df-qa-worker | evidence only | product sources | done |
 
-## Product decisions (Orchestrator)
-
-1. Anchor names: npc_girl_magazine_editor / npc_rival_magazine_editor.
-2. Stage4: try_get_* + Phone media handoff (not Scientist).
-3. story_point_editor_photo_session exists, does not launch.
-4. Public ordinary NPCs behind PUBLIC_CITY_ACCESS gate.
-5. STOP after 14B — no MODULE 15.
+## Product decisions
+1. Media after SalaryMine; no _process.
+2. Shots/poses in media_content.gd constants.
+3. Thresholds 15/30/45/60; overload_ready Att>=45 AND offers>=3 once.
+4. Article +15 no daily quota; photos +10/+15/+20; 1 photo/GameDay.
+5. discover_girl_from_media: clue0 + contact, no Good Profile.
+6. STOP — no MODULE 16.

@@ -10,6 +10,8 @@
 [ext_resource type="Script" uid="uid://diec1fdonvb3i" path="res://world/actors/stage_actor_anchor.gd" id="6_o5ct1"]
 [ext_resource type="PackedScene" uid="uid://craep8snu78fc" path="res://game/rivals/rival_actor.tscn" id="7_o5ct1"]
 [ext_resource type="Script" uid="uid://cm01ma3nlptyj" path="res://game/rivals/rival_actor.gd" id="8_8mlw1"]
+[ext_resource type="Script" uid="uid://dxwoe3tjq01k0" path="res://game/media/photo_session_interactable.gd" id="9_photo"]
+[ext_resource type="Script" uid="uid://bq8m15attvis01" path="res://game/media/media_attention_visual.gd" id="10_mavis"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
@@ -122,6 +124,21 @@ size = Vector3(1.2, 2.2, 0.4)
 
 [sub_resource type="StandardMaterial3D" id="TransitionMat"]
 albedo_color = Color(0.2, 0.55, 0.75, 1)
+
+[sub_resource type="BoxShape3D" id="PhotoSessionShape"]
+size = Vector3(1.4, 2.0, 1.4)
+
+[sub_resource type="BoxMesh" id="PhotoSessionMesh"]
+size = Vector3(0.7, 1.1, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="PhotoSessionMat"]
+albedo_color = Color(0.72, 0.55, 0.35, 1)
+
+[sub_resource type="BoxMesh" id="FameSignMesh"]
+size = Vector3(2.2, 1.2, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="FameSignMat"]
+albedo_color = Color(0.2, 0.18, 0.22, 1)
 
 [node name="appearance_space" type="Node3D" unique_id=1393178555]
 script = ExtResource("1_loc")
@@ -346,6 +363,61 @@ event_point_id = &"story_point_editor_photo_session"
 [node name="FeatureGates" type="Node3D" parent="." unique_id=1565226392]
 
 [node name="Interactables" type="Node3D" parent="." unique_id=1770678893]
+
+[node name="PhotoSessionInteractable" type="Area3D" parent="Interactables" unique_id=815600101]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("9_photo")
+
+[node name="Collision" type="CollisionShape3D" parent="Interactables/PhotoSessionInteractable" unique_id=815600102]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("PhotoSessionShape")
+
+[node name="MarkerMesh" type="MeshInstance3D" parent="Interactables/PhotoSessionInteractable" unique_id=815600103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+material_override = SubResource("PhotoSessionMat")
+mesh = SubResource("PhotoSessionMesh")
+
+[node name="PromptHint" type="Label3D" parent="Interactables/PhotoSessionInteractable" unique_id=815600104]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+billboard = 1
+modulate = Color(0.95, 0.88, 0.72, 1)
+text = "ФОТОСЕССИЯ"
+font_size = 28
+
+[node name="CompletedVisual" type="Node3D" parent="Interactables/PhotoSessionInteractable" unique_id=815600105]
+visible = false
+
+[node name="ArticleCue" type="Label3D" parent="Interactables/PhotoSessionInteractable/CompletedVisual" unique_id=815600106]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)
+billboard = 1
+modulate = Color(0.85, 0.95, 0.7, 1)
+text = "МАТЕРИАЛ ОПУБЛИКОВАН"
+font_size = 26
+
+[node name="MediaAttentionVisuals" type="Node3D" parent="." unique_id=815600200]
+
+[node name="Attention60Studio" type="Node3D" parent="MediaAttentionVisuals" unique_id=815600201]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6.2)
+script = ExtResource("10_mavis")
+min_attention = 60
+
+[node name="Visual" type="Node3D" parent="MediaAttentionVisuals/Attention60Studio" unique_id=815600202]
+visible = false
+
+[node name="Board" type="MeshInstance3D" parent="MediaAttentionVisuals/Attention60Studio/Visual" unique_id=815600203]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+material_override = SubResource("FameSignMat")
+mesh = SubResource("FameSignMesh")
+
+[node name="Label" type="Label3D" parent="MediaAttentionVisuals/Attention60Studio/Visual" unique_id=815600204]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0.06)
+modulate = Color(0.95, 0.9, 0.75, 1)
+text = "ПОВТОРНАЯ СЪЁМКА НЕ ТРЕБУЕТСЯ.
+ОБЩЕСТВЕННОСТЬ УЖЕ СМОТРИТ."
+font_size = 22
 
 [node name="Transitions" type="Node3D" parent="." unique_id=515563296]
 

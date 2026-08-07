@@ -707,3 +707,21 @@ Complete manual story through Editor without implementing MODULE 15 media system
 
 Scope:
 `data/catalog/content_db.gd` (try_get_*), `ui/phone/phone_journal.gd`, `data/content/**` Editor/ordinary packs, `docs/content/MANUAL_CONTENT_14B.md`, `game/content/test/module_14b_vertical_*`
+
+## MODULE 15: Attention meter + Phone MEDIA section
+
+Context:
+After Editor / `MEDIA_ATTENTION`, the game needs a simple fame loop without a social-network simulator or calendar/capacity (MODULE 16).
+
+Decision:
+1. `Attention` is a persistent media meter `0..100`, non-spendable, no decay; owned by GameState, mutated via Media autoload.
+2. Photo session creates exactly 3 fixed photo records; one photo may be published per GameDay (article does not consume the daily slot).
+3. Incoming offers use 4 authored Attention thresholds (15/30/45/60) for deterministic first initiatives; at Attention ≥ 45 and ≥ 3 offers Media emits `overload_ready` once. MODULE15 offers are unscheduled; MODULE16 owns capacity/overlap.
+4. PhoneJournal MEDIA section is additive (status/story/girls/salary preserved). Feed display is newest-first while persistent `media_feed_event_ids` remains chronological oldest→newest.
+5. STAGE_4 Phone story handoff progresses: photo session → publish/incoming text → overload-ready demand text (no Scientist objective yet).
+
+Reason:
+Deliver player-visible fame growth and Phone tools while keeping a clean stop before Dating Overload.
+
+Scope:
+`game/media/**`, GameState media fields, `ui/phone/phone_journal.gd`, `docs/PROJECT_STRUCTURE.md`, GDD implementation notes

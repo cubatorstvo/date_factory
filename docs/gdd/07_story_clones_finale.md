@@ -411,18 +411,23 @@
 
 Для всех земных сюжетных девушек, кроме соседки, стандартный сюжетный шаблон допускает текущего ухажёра, которого необходимо одолеть до знакомства.
 
-### Реализация (MODULE 14A / 14B)
+### Реализация (MODULE 14A / 14B / 15)
 
-Playable through `STAGE_4` / `MEDIA_ATTENTION` (pre-media handoff only):
+Playable through `STAGE_4` / `MEDIA_ATTENTION` media escalation:
 
 ```text
 PROLOGUE: girl_neighbor
 STAGE_1: rival_actress → girl_actress
 STAGE_2: rival_mine_boss → girl_mine_boss
 STAGE_3: Salary Mine unlock → rival_magazine_editor → girl_magazine_editor
-STAGE_4: MEDIA_ATTENTION true; Phone media handoff; photo marker exists; no photoshoot runtime
+STAGE_4: MEDIA_ATTENTION → photo session → Attention + Phone MEDIA → incoming offers → overload_ready
 ```
 
-Editor rival: MONEY+DANCE, Auth4→+3; without Payable Intent MONEY locked, DANCE available. Scientist / President / media runtime remain MODULE 15+.
+Editor rival: MONEY+DANCE, Auth4→+3; without Payable Intent MONEY locked, DANCE available.
+
+Implementation note (MODULE 15, not a product rewrite):
+MODULE15 uses 4 authored Attention thresholds (15/30/45/60) so the first incoming initiatives are deterministic.
+At Attention ≥ 45 and ≥ 3 offers Media becomes `overload_ready`.
+Dating Overload capacity/overlap and Scientist content remain MODULE 16+.
 
 ---

@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 14B — Editor & Pre-Media Manual Content**.  
+Фактическая структура после **MODULE 15 — Media / Attention Escalation**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
 ## Top-level (существует сейчас)
@@ -13,8 +13,8 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → World apartment, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (global/story status + girls + salary); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (status + story + girls + MEDIA + salary); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
 | `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / clone economy |
 | `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
@@ -182,6 +182,15 @@ Dependency-safe production order (`project.godot`):
 | `Story` | Stage completion / StoryFeature / girl-rival gates (MODULE 11); after Relationships |
 | `World` | Location load/travel/access (MODULE 12); after Story; StoryFeature gates; not GameState.unlock_location for the 9 |
 | `SalaryMine` | Salary periods / pending / claim / passive (MODULE 13); after World; StoryFeature.SALARY_MINE gate |
+| `Media` | Attention / photo session / publish / incoming offers / feed (MODULE 15); after SalaryMine; StoryFeature.MEDIA_ATTENTION gate |
+
+### `game/media/`
+
+- `media.gd` — autoload `Media`: Attention API, photo session complete, 1 photo/day publish, threshold incoming offers, `overload_ready`
+- `media_content.gd` — fixed shot/pose/threshold constants (not ContentDB)
+- `media_types.gd` / `media_photo_session.gd` / `media_publish_result.gd` — typed helpers + session + publish result
+- `photo_session_interactable.gd` — world interactable for the one-time Editor shoot
+- `test/media_test.tscn` + `media_self_test.gd` — MODULE 15 headless runner
 
 ## Canonical future destinations (ещё не созданы)
 
@@ -202,8 +211,9 @@ audio/
 `data/content/` production content through Editor/pre-media (MODULE 14A+14B); inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`.
 `game/content/test/module_14a_vertical_test.tscn` — MODULE 14A headless integration runner.
 `game/content/test/module_14b_vertical_test.tscn` — MODULE 14B Editor → STAGE_4 / MEDIA_ATTENTION headless runner.
-`ui/phone/` функциональный журнал: global/story status + girls + salary + STAGE_4 media handoff (MODULE 08/10/12/13/14A/14B); финальный phone shell — MODULE 22.  
+`ui/phone/` функциональный журнал: status + story + girls + MEDIA (Attention / photos / incoming / feed) + salary; STAGE_4 handoff tracks photo session → publish → overload_ready (MODULE 08/10/12/13/14/15); финальный phone shell — MODULE 22.  
 `ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
+`game/media/test/media_test.tscn` — MODULE 15 Media headless runner.
 
 ## Donor
 

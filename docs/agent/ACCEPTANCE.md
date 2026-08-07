@@ -1,16 +1,15 @@
-# ACCEPTANCE — MODULE 14B Editor & Pre-Media
+# ACCEPTANCE — MODULE 15 Media / Attention Escalation
 
 ## Player-visible result
 
-After STAGE_3: defeat rival_magazine_editor (Auth≥4), contact Editor, cafe dates to +5 → STAGE_4 + MEDIA_ATTENTION; photo-session marker present; Phone shows media handoff; no photoshoot/media runtime; no Scientist content.
+STAGE_4 → PhotoSession at Editor studio → article Attention 15 + first incoming → publish photos (1/day) → Attention rises → ≥3 offers → overload_ready; Phone MEDIA section; fame visuals at thresholds. No calendar/capacity/Scientist.
 
 ## PASS
 
-- 11 girls / 10 rivals; Editor STRANGE+SCANDALOUS XP3; rival Auth4 MONEY+DANCE (DANCE without Payable Intent)
-- Editor +5 and ≤-2 date routes; 4 editor events + date_pool_magazine_editor
-- StageActorAnchors in appearance_space + studio blockout + story_point_editor_photo_session
-- 3 ordinary girls + 3 ordinary rivals placed; public trio behind PUBLIC_CITY gate
-- Stage4 safe without Scientist; Phone handoff; ContentDB validate_all; regressions; no MODULE 15
+- Media autoload; Attention 0..100 no decay; session exactly once, 3 shots BASE/STAGED/EDITORIAL (App 0/1/2)
+- Article +15 + first offer; photos once each, 1/GameDay; thresholds 15/30/45/60 deterministic
+- Incoming ordinary girls only; media discovery helper; Phone MEDIA; visuals; overload_ready once; STAGE4 stays
+- MODULE 15 tests + MODULE 02–14 regressions; no MODULE 16
 
 ## Verdict
 

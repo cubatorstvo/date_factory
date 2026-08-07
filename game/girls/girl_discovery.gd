@@ -144,6 +144,24 @@ func discover_girl(girl_id: StringName) -> Dictionary:
 	return _result(true, RESULT_SUCCESS)
 
 
+## Media incoming initiative discovery (MODULE 15).
+## Clue0 + clear cooldown. No Good Profile. No approach evaluation. Idempotent.
+func discover_girl_from_media(girl_id: StringName) -> bool:
+	var def: GirlDefinition = get_girl_definition(girl_id)
+	if def == null:
+		return false
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return false
+	var first: bool = bool(gs.call("mark_girl_discovered", girl_id))
+	if def.clue_notes.size() >= 1 and not bool(gs.call("is_girl_clue_known", girl_id, 0)):
+		gs.call("reveal_girl_clue", girl_id, 0)
+	gs.call("set_girl_retry_days_remaining", girl_id, 0)
+	if first:
+		girl_discovered.emit(girl_id)
+	return true
+
+
 func begin_attempt(girl_id: StringName) -> Dictionary:
 	if has_active_attempt():
 		return _result(false, RESULT_ALREADY_ACTIVE)

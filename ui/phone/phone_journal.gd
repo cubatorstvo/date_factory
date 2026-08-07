@@ -1,8 +1,8 @@
 class_name PhoneJournal
 extends Control
 ## Functional phone journal for discovered girls (MODULE 08)
-## + global/story status (MODULE 14A) + salary section (MODULE 13).
-## No Dating CTA / messaging / scheduling.
+## + global/story status (MODULE 14A) + salary (MODULE 13) + MEDIA (MODULE 15).
+## No Dating CTA / messaging / scheduling / calendar.
 
 signal opened()
 signal closed()
@@ -29,6 +29,21 @@ var _salary_pending_hint: Label = null
 var _salary_feedback: Label = null
 var _salary_signals_connected: bool = false
 
+var _media_section: VBoxContainer = null
+var _media_title: Label = null
+var _media_attention: Label = null
+var _media_pre_session: Label = null
+var _media_photos_block: VBoxContainer = null
+var _media_photos_title: Label = null
+var _media_photo_rows: Dictionary = {}
+var _media_incoming_block: VBoxContainer = null
+var _media_incoming_title: Label = null
+var _media_incoming_list: VBoxContainer = null
+var _media_feed_block: VBoxContainer = null
+var _media_feed_title: Label = null
+var _media_feed_label: Label = null
+var _media_signals_connected: bool = false
+
 
 func _ready() -> void:
 	visible = false
@@ -36,6 +51,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
 	_connect_salary_signals()
+	_connect_media_signals()
 
 
 func open(player: Node = null) -> void:
@@ -93,6 +109,7 @@ func refresh() -> void:
 	_refresh_status_section()
 	_refresh_story_section()
 	_refresh_list()
+	_refresh_media_section()
 	_refresh_salary_section()
 
 
@@ -132,6 +149,28 @@ func get_salary_feedback_text() -> String:
 	return String(_salary_feedback.text)
 
 
+func has_media_section_visible() -> bool:
+	return _media_section != null and _media_section.visible
+
+
+func get_media_attention_text() -> String:
+	if _media_attention == null:
+		return ""
+	return String(_media_attention.text)
+
+
+func get_media_feed_text() -> String:
+	if _media_feed_label == null:
+		return ""
+	return String(_media_feed_label.text)
+
+
+func get_media_pre_session_text() -> String:
+	if _media_pre_session == null:
+		return ""
+	return String(_media_pre_session.text)
+
+
 func _build_ui() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.09, 0.12, 0.92)
@@ -167,6 +206,7 @@ func _build_ui() -> void:
 	_detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail.fit_content = false
 	split.add_child(_detail)
+	_build_media_section(vbox)
 	_build_salary_section(vbox)
 	_close_btn = Button.new()
 	_close_btn.text = "Закрыть"
@@ -196,6 +236,71 @@ func _build_story_section(parent: VBoxContainer) -> void:
 	_story_label = Label.new()
 	_story_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_story_section.add_child(_story_label)
+
+
+func _build_media_section(parent: VBoxContainer) -> void:
+	_media_section = VBoxContainer.new()
+	_media_section.visible = false
+	_media_section.add_theme_constant_override("separation", 4)
+	parent.add_child(_media_section)
+	var sep := HSeparator.new()
+	_media_section.add_child(sep)
+	_media_title = Label.new()
+	_media_title.text = "МЕДИА"
+	_media_title.add_theme_font_size_override("font_size", 18)
+	_media_section.add_child(_media_title)
+	_media_attention = Label.new()
+	_media_attention.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_media_section.add_child(_media_attention)
+	_media_pre_session = Label.new()
+	_media_pre_session.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_media_pre_session.visible = false
+	_media_section.add_child(_media_pre_session)
+	_media_photos_block = VBoxContainer.new()
+	_media_photos_block.visible = false
+	_media_photos_block.add_theme_constant_override("separation", 4)
+	_media_section.add_child(_media_photos_block)
+	_media_photos_title = Label.new()
+	_media_photos_title.text = "ФОТОГРАФИИ"
+	_media_photos_title.add_theme_font_size_override("font_size", 16)
+	_media_photos_block.add_child(_media_photos_title)
+	_media_photo_rows.clear()
+	for photo_id in MediaContent.SHOT_IDS:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		_media_photos_block.add_child(row)
+		var name_lbl := Label.new()
+		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_lbl.text = MediaContent.photo_title(photo_id)
+		row.add_child(name_lbl)
+		var btn := Button.new()
+		btn.text = "Опубликовать"
+		var captured_id: StringName = photo_id
+		btn.pressed.connect(func() -> void: _on_media_publish_pressed(captured_id))
+		row.add_child(btn)
+		_media_photo_rows[photo_id] = {"row": row, "label": name_lbl, "button": btn}
+	_media_incoming_block = VBoxContainer.new()
+	_media_incoming_block.visible = false
+	_media_incoming_block.add_theme_constant_override("separation", 4)
+	_media_section.add_child(_media_incoming_block)
+	_media_incoming_title = Label.new()
+	_media_incoming_title.text = "ВХОДЯЩИЕ"
+	_media_incoming_title.add_theme_font_size_override("font_size", 16)
+	_media_incoming_block.add_child(_media_incoming_title)
+	_media_incoming_list = VBoxContainer.new()
+	_media_incoming_list.add_theme_constant_override("separation", 4)
+	_media_incoming_block.add_child(_media_incoming_list)
+	_media_feed_block = VBoxContainer.new()
+	_media_feed_block.visible = false
+	_media_feed_block.add_theme_constant_override("separation", 2)
+	_media_section.add_child(_media_feed_block)
+	_media_feed_title = Label.new()
+	_media_feed_title.text = "ЛЕНТА"
+	_media_feed_title.add_theme_font_size_override("font_size", 16)
+	_media_feed_block.add_child(_media_feed_title)
+	_media_feed_label = Label.new()
+	_media_feed_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_media_feed_block.add_child(_media_feed_label)
 
 
 func _build_salary_section(parent: VBoxContainer) -> void:
@@ -286,6 +391,7 @@ func _on_upgrade_points_changed_status(_new_value: int, _delta: int) -> void:
 
 func _on_day_advanced_status(_new_day: int) -> void:
 	_request_status_refresh()
+	_request_media_refresh()
 	_request_salary_refresh()
 
 
@@ -344,14 +450,9 @@ func _refresh_story_section() -> void:
 	if progress == null:
 		_story_label.text = "—"
 		return
-	# STAGE_4: reserved Scientist IDs are not authored yet — show media handoff (MODULE 14B).
+	# STAGE_4: reserved Scientist IDs are not authored yet — MODULE 15 media handoff (§91).
 	if progress.stage == GameTypes.GameStage.STAGE_4 and _is_stage4_media_handoff(progress):
-		var handoff: PackedStringArray = PackedStringArray()
-		handoff.append("СТАДИЯ 4")
-		handoff.append("Медийность")
-		handoff.append("Следующий шаг:")
-		handoff.append("Фотосессия у Редактора")
-		_story_label.text = "\n".join(handoff)
+		_story_label.text = _stage4_media_handoff_text()
 		return
 	var stage_name: String = progress.display_name.strip_edges()
 	if stage_name == "":
@@ -394,6 +495,22 @@ func _is_stage4_media_handoff(progress: StoryStageProgress) -> bool:
 	return girl_missing or rival_missing
 
 
+func _stage4_media_handoff_text() -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("СТАДИЯ 4")
+	lines.append("Медийность")
+	var media: Node = get_node_or_null("/root/Media")
+	if media != null and media.has_method("is_overload_ready") and bool(media.call("is_overload_ready")):
+		lines.append("Спрос растёт быстрее обычного.")
+	elif media != null and media.has_method("is_photo_session_completed") and bool(media.call("is_photo_session_completed")):
+		lines.append("Публикуй фотографии.")
+		lines.append("Входящие предложения растут.")
+	else:
+		lines.append("Следующий шаг:")
+		lines.append("Фотосессия у Редактора")
+	return "\n".join(lines)
+
+
 func _actor_display_name(actor_id: StringName, is_rival: bool) -> String:
 	var db: Node = get_node_or_null("/root/ContentDB")
 	if db != null:
@@ -434,6 +551,8 @@ func _on_perk_purchased_salary(_perk_id: StringName, _characteristic: GameTypes.
 
 func _on_feature_unlocked_salary(_feature: StoryTypes.StoryFeature) -> void:
 	_request_salary_refresh()
+	_request_media_refresh()
+	_request_story_refresh()
 
 
 func _request_salary_refresh() -> void:
@@ -511,6 +630,223 @@ func _claim_error_text(error: SalaryTypes.ClaimError) -> String:
 			return "Нет накопленной выплаты"
 		_:
 			return "Нет накопленной выплаты"
+
+
+func _connect_media_signals() -> void:
+	if _media_signals_connected:
+		return
+	var media: Node = get_node_or_null("/root/Media")
+	if media != null:
+		if media.has_signal("attention_changed") and not media.is_connected("attention_changed", _on_media_attention_changed):
+			media.connect("attention_changed", _on_media_attention_changed)
+		if media.has_signal("photo_session_completed") and not media.is_connected("photo_session_completed", _on_media_photo_session_completed):
+			media.connect("photo_session_completed", _on_media_photo_session_completed)
+		if media.has_signal("photo_published") and not media.is_connected("photo_published", _on_media_photo_published):
+			media.connect("photo_published", _on_media_photo_published)
+		if media.has_signal("incoming_offer_added") and not media.is_connected("incoming_offer_added", _on_media_incoming_offer_added):
+			media.connect("incoming_offer_added", _on_media_incoming_offer_added)
+		if media.has_signal("incoming_offer_read") and not media.is_connected("incoming_offer_read", _on_media_incoming_offer_read):
+			media.connect("incoming_offer_read", _on_media_incoming_offer_read)
+		if media.has_signal("feed_changed") and not media.is_connected("feed_changed", _on_media_feed_changed):
+			media.connect("feed_changed", _on_media_feed_changed)
+		if media.has_signal("overload_ready") and not media.is_connected("overload_ready", _on_media_overload_ready):
+			media.connect("overload_ready", _on_media_overload_ready)
+	_media_signals_connected = true
+
+
+func _on_media_attention_changed(_new_value: int, _delta: int) -> void:
+	_request_media_refresh()
+	_request_story_refresh()
+
+
+func _on_media_photo_session_completed() -> void:
+	_request_media_refresh()
+	_request_story_refresh()
+	_request_list_refresh()
+
+
+func _on_media_photo_published(_photo_id: StringName, _attention_gained: int) -> void:
+	_request_media_refresh()
+	_request_story_refresh()
+	_request_list_refresh()
+
+
+func _on_media_incoming_offer_added(_girl_id: StringName) -> void:
+	_request_media_refresh()
+	_request_list_refresh()
+
+
+func _on_media_incoming_offer_read(_girl_id: StringName) -> void:
+	_request_media_refresh()
+
+
+func _on_media_feed_changed() -> void:
+	_request_media_refresh()
+
+
+func _on_media_overload_ready() -> void:
+	_request_media_refresh()
+	_request_story_refresh()
+
+
+func _request_media_refresh() -> void:
+	if _is_open:
+		_refresh_media_section()
+
+
+func _request_list_refresh() -> void:
+	if _is_open:
+		_refresh_list()
+
+
+func _refresh_media_section() -> void:
+	if _media_section == null:
+		return
+	var media: Node = get_node_or_null("/root/Media")
+	var unlocked: bool = false
+	if media != null and media.has_method("is_feature_unlocked"):
+		unlocked = bool(media.call("is_feature_unlocked"))
+	_media_section.visible = unlocked
+	if not unlocked:
+		return
+	var attention: int = 0
+	if media.has_method("get_attention"):
+		attention = int(media.call("get_attention"))
+	_media_attention.text = "Внимание: %d / %d" % [attention, MediaContent.ATTENTION_MAX]
+	var session_done: bool = bool(media.call("is_photo_session_completed"))
+	_media_pre_session.visible = not session_done
+	if not session_done:
+		_media_pre_session.text = "Фотосессия доступна у Редактора."
+	_media_photos_block.visible = session_done
+	_media_incoming_block.visible = session_done
+	_media_feed_block.visible = session_done
+	if not session_done:
+		return
+	_refresh_media_photos(media)
+	_refresh_media_incoming(media)
+	_refresh_media_feed(media)
+
+
+func _refresh_media_photos(media: Node) -> void:
+	var can_today: bool = bool(media.call("can_publish_photo_today"))
+	for photo_id in MediaContent.SHOT_IDS:
+		if not _media_photo_rows.has(photo_id):
+			continue
+		var row_data: Dictionary = _media_photo_rows[photo_id] as Dictionary
+		var row: HBoxContainer = row_data.get("row") as HBoxContainer
+		var btn: Button = row_data.get("button") as Button
+		var name_lbl: Label = row_data.get("label") as Label
+		if row == null or btn == null or name_lbl == null:
+			continue
+		var prepared: bool = bool(media.call("is_photo_prepared", photo_id))
+		if not prepared:
+			row.visible = false
+			continue
+		row.visible = true
+		name_lbl.text = MediaContent.photo_title(photo_id)
+		var published: bool = bool(media.call("is_photo_published", photo_id))
+		if published:
+			btn.text = "Опубликовано"
+			btn.disabled = true
+		elif not can_today:
+			btn.text = "Следующая публикация завтра"
+			btn.disabled = true
+		else:
+			btn.text = "Опубликовать"
+			btn.disabled = false
+
+
+func _refresh_media_incoming(media: Node) -> void:
+	if _media_incoming_list == null:
+		return
+	for child in _media_incoming_list.get_children():
+		_media_incoming_list.remove_child(child)
+		child.queue_free()
+	var offer_ids: Array = media.call("get_incoming_offer_girl_ids") as Array
+	if offer_ids.is_empty():
+		var empty_lbl := Label.new()
+		empty_lbl.text = "Пока нет входящих"
+		_media_incoming_list.add_child(empty_lbl)
+		return
+	for entry in offer_ids:
+		var girl_id: StringName = entry as StringName
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		_media_incoming_list.add_child(row)
+		var status_lbl := Label.new()
+		var is_read: bool = bool(media.call("is_offer_read", girl_id))
+		status_lbl.text = "READ" if is_read else "NEW"
+		row.add_child(status_lbl)
+		var name_lbl := Label.new()
+		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_lbl.text = _actor_display_name(girl_id, false)
+		row.add_child(name_lbl)
+		var open_btn := Button.new()
+		open_btn.text = "Открыть"
+		var captured_id: StringName = girl_id
+		open_btn.pressed.connect(func() -> void: _on_media_open_offer_pressed(captured_id))
+		row.add_child(open_btn)
+
+
+func _refresh_media_feed(media: Node) -> void:
+	if _media_feed_label == null:
+		return
+	var feed_ids: Array = media.call("get_feed_event_ids") as Array
+	var lines: PackedStringArray = PackedStringArray()
+	# Persistent array is oldest→newest; display newest first (§68).
+	var i: int = feed_ids.size() - 1
+	while i >= 0:
+		var event_id: StringName = feed_ids[i] as StringName
+		var line: String = _format_media_feed_event(event_id)
+		if line != "":
+			lines.append("• %s" % line)
+		i -= 1
+	if lines.is_empty():
+		_media_feed_label.text = "Пока пусто"
+	else:
+		_media_feed_label.text = "\n".join(lines)
+
+
+func _format_media_feed_event(event_id: StringName) -> String:
+	if event_id == MediaContent.FEED_ARTICLE_EDITOR:
+		return MediaContent.ARTICLE_HEADLINE
+	var event_str: String = String(event_id)
+	if event_str.begins_with("feed_photo_"):
+		var photo_id: StringName = StringName(event_str.substr("feed_photo_".length()))
+		var title: String = MediaContent.photo_title(photo_id)
+		if title == "":
+			if OS.is_debug_build() or OS.has_feature("editor"):
+				push_warning("[PhoneJournal] unknown media photo feed: %s" % event_str)
+			return ""
+		return "Фото: %s" % title
+	if event_str.begins_with("feed_inbound_"):
+		var girl_id: StringName = StringName(event_str.substr("feed_inbound_".length()))
+		var display: String = _actor_display_name(girl_id, false)
+		return "Новое сообщение: %s" % display
+	if OS.is_debug_build() or OS.has_feature("editor"):
+		push_warning("[PhoneJournal] unknown media feed event: %s" % event_str)
+	return ""
+
+
+func _on_media_publish_pressed(photo_id: StringName) -> void:
+	var media: Node = get_node_or_null("/root/Media")
+	if media == null or not media.has_method("publish_photo"):
+		return
+	var result: MediaPublishResult = media.call("publish_photo", photo_id) as MediaPublishResult
+	if result == null:
+		return
+	_refresh_media_section()
+	_request_story_refresh()
+	if result.ok:
+		_refresh_list()
+
+
+func _on_media_open_offer_pressed(girl_id: StringName) -> void:
+	var media: Node = get_node_or_null("/root/Media")
+	if media != null and media.has_method("mark_offer_read"):
+		media.call("mark_offer_read", girl_id)
+	select_girl_by_id(girl_id)
+	_refresh_media_section()
 
 
 func _refresh_list() -> void:

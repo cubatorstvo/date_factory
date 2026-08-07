@@ -20,6 +20,7 @@ signal story_flag_changed(flag_id: StringName, value: bool)
 signal stage_changed(new_stage: GameTypes.GameStage, previous_stage: GameTypes.GameStage)
 signal clone_counts_changed(total: int, working: int, dating: int, free: int)
 signal late_rates_changed(money_per_minute: float, dates_per_minute: float)
+signal media_attention_changed(new_value: int, delta: int)
 signal state_reset()
 
 var _stage: GameTypes.GameStage = GameTypes.GameStage.PROLOGUE
@@ -57,8 +58,18 @@ var _salary_period_index: int = 0
 var _pending_salary: int = 0
 var _salary_manual_cycle_seen: bool = false
 var _salary_advance_used_period: int = -1
+var _media_photo_session_completed: bool = false
+var _media_attention: int = 0
+var _media_photo_pose_by_shot: Dictionary = {}
+var _media_published_photo_ids: Array[StringName] = []
+var _media_last_photo_publish_day: int = -1
+var _media_incoming_offer_girl_ids: Array[StringName] = []
+var _media_read_offer_girl_ids: Array[StringName] = []
+var _media_feed_event_ids: Array[StringName] = []
 
 const CHAR_MIN: int = 0
+const MEDIA_ATTENTION_MIN: int = 0
+const MEDIA_ATTENTION_MAX: int = 100
 const CHAR_MAX: int = 10
 const RELATIONSHIP_MIN: int = -5
 const RELATIONSHIP_MAX: int = 5
@@ -105,6 +116,14 @@ func reset_for_new_game() -> void:
 	_pending_salary = 0
 	_salary_manual_cycle_seen = false
 	_salary_advance_used_period = -1
+	_media_photo_session_completed = false
+	_media_attention = 0
+	_media_photo_pose_by_shot = {}
+	_media_published_photo_ids = []
+	_media_last_photo_publish_day = -1
+	_media_incoming_offer_girl_ids = []
+	_media_read_offer_girl_ids = []
+	_media_feed_event_ids = []
 	state_reset.emit()
 
 
@@ -199,6 +218,167 @@ func get_salary_advance_used_period() -> int:
 
 func set_salary_advance_used_period(period_index: int) -> void:
 	_salary_advance_used_period = period_index
+
+
+# --- Media / Attention (MODULE 15) ---
+
+func get_media_attention() -> int:
+	return _media_attention
+
+
+func set_media_attention(value: int) -> void:
+	var clamped: int = clampi(value, MEDIA_ATTENTION_MIN, MEDIA_ATTENTION_MAX)
+	var prev: int = _media_attention
+	if prev == clamped:
+		return
+	_media_attention = clamped
+	media_attention_changed.emit(_media_attention, clamped - prev)
+
+
+## Returns attention after clamp. Attention only grows in MODULE 15 gameplay.
+func add_media_attention(amount: int) -> int:
+	if amount < 0:
+		push_error("[GameState] add_media_attention negative amount: %s" % amount)
+		return _media_attention
+	if amount == 0:
+		return _media_attention
+	var prev: int = _media_attention
+	var next: int = clampi(prev + amount, MEDIA_ATTENTION_MIN, MEDIA_ATTENTION_MAX)
+	var delta: int = next - prev
+	if delta == 0:
+		return _media_attention
+	_media_attention = next
+	media_attention_changed.emit(_media_attention, delta)
+	return _media_attention
+
+
+func is_media_photo_session_completed() -> bool:
+	return _media_photo_session_completed
+
+
+## Returns true only the first time.
+func mark_media_photo_session_completed() -> bool:
+	if _media_photo_session_completed:
+		return false
+	_media_photo_session_completed = true
+	return true
+
+
+func set_media_photo_pose(shot_id: StringName, pose_id: StringName) -> bool:
+	if not _is_valid_id(shot_id) or not _is_valid_id(pose_id):
+		push_error("[GameState] set_media_photo_pose empty id")
+		return false
+	if _media_photo_session_completed:
+		push_error("[GameState] set_media_photo_pose rejected after session completion")
+		return false
+	_media_photo_pose_by_shot[shot_id] = pose_id
+	return true
+
+
+func get_media_photo_pose(shot_id: StringName) -> StringName:
+	if not _is_valid_id(shot_id):
+		return &""
+	return _media_photo_pose_by_shot.get(shot_id, &"") as StringName
+
+
+func get_media_photo_pose_map() -> Dictionary:
+	var out: Dictionary = {}
+	for key in _media_photo_pose_by_shot.keys():
+		out[key] = _media_photo_pose_by_shot[key]
+	return out
+
+
+func is_media_photo_published(photo_id: StringName) -> bool:
+	if not _is_valid_id(photo_id):
+		return false
+	return _media_published_photo_ids.has(photo_id)
+
+
+## Ordered unique. Returns true only the first time.
+func mark_media_photo_published(photo_id: StringName) -> bool:
+	if not _is_valid_id(photo_id):
+		push_error("[GameState] mark_media_photo_published empty id")
+		return false
+	if _media_published_photo_ids.has(photo_id):
+		return false
+	_media_published_photo_ids.append(photo_id)
+	return true
+
+
+func get_media_published_photo_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for pid in _media_published_photo_ids:
+		out.append(pid)
+	return out
+
+
+func get_media_last_photo_publish_day() -> int:
+	return _media_last_photo_publish_day
+
+
+func set_media_last_photo_publish_day(day: int) -> void:
+	_media_last_photo_publish_day = day
+
+
+## Ordered unique. Duplicate rejected.
+func append_media_feed_event(event_id: StringName) -> bool:
+	if not _is_valid_id(event_id):
+		push_error("[GameState] append_media_feed_event empty id")
+		return false
+	if _media_feed_event_ids.has(event_id):
+		return false
+	_media_feed_event_ids.append(event_id)
+	return true
+
+
+func get_media_feed_event_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for eid in _media_feed_event_ids:
+		out.append(eid)
+	return out
+
+
+func has_media_incoming_offer(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		return false
+	return _media_incoming_offer_girl_ids.has(girl_id)
+
+
+## Ordered unique. Returns true only the first time.
+func add_media_incoming_offer(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] add_media_incoming_offer empty id")
+		return false
+	if _media_incoming_offer_girl_ids.has(girl_id):
+		return false
+	_media_incoming_offer_girl_ids.append(girl_id)
+	return true
+
+
+func get_media_incoming_offer_girl_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for gid in _media_incoming_offer_girl_ids:
+		out.append(gid)
+	return out
+
+
+func is_media_offer_read(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		return false
+	return _media_read_offer_girl_ids.has(girl_id)
+
+
+## Returns true only the first time.
+func mark_media_offer_read(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] mark_media_offer_read empty id")
+		return false
+	if not _media_incoming_offer_girl_ids.has(girl_id):
+		return false
+	if _media_read_offer_girl_ids.has(girl_id):
+		return false
+	_media_read_offer_girl_ids.append(girl_id)
+	return true
 
 
 # --- Money ---

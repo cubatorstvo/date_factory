@@ -69,8 +69,9 @@
 - Доступ локаций — `StoryFeature` (не `GameState.unlock_location` для канонических девяти).
 - `PUBLIC_CITY_ACCESS` — внутренний gate внутри `city_hub`, не отдельная location.
 - Физический телефон в квартире открывает PhoneJournal; экономика шахты — MODULE 13.
-- PhoneJournal (MODULE 14A/14B): top status (День / Деньги / Авторитет / Опытность / Баллы прокачки) + Story section (`Story.get_current_progress()`); STAGE_4 media handoff when Scientist content is absent.
-- MODULE 14B ordinary public NPCs sit behind existing `PUBLIC_CITY_ACCESS`; Editor pair + photo cue live in `appearance_space`.
+- PhoneJournal (MODULE 14A/14B/15): top status + Story (`Story.get_current_progress()`) + girls + MEDIA (Attention / photos / incoming / feed) + salary; STAGE_4 story handoff tracks photo session → publish → overload_ready when Scientist content is absent.
+- MODULE 14B ordinary public NPCs sit behind existing `PUBLIC_CITY_ACCESS`; Editor pair + photo cue live in `appearance_space`; MODULE 15 photo session uses that cue.
+
 
 ---
 
@@ -108,6 +109,14 @@
 - сознательно увеличивать поток свиданий.
 
 Это не полноценный симулятор социальной сети.
+
+### Реализация (MODULE 15)
+
+- `Attention` = persistent media meter `0..100`, non-spendable.
+- Photo session creates 3 fixed photo records; one photo publish per GameDay.
+- Phone MEDIA section shows Attention, publish buttons, NEW/READ incoming (Open → journal, no schedule), feed newest-first.
+- MODULE15 incoming offers are unscheduled initiatives; MODULE16 owns capacity/overlap.
+- Four authored thresholds (15/30/45/60); overload-ready at Attention ≥ 45 and ≥ 3 offers.
 
 ---
 
