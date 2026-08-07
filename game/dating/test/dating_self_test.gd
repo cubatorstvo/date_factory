@@ -15,6 +15,9 @@ func _ready() -> void:
 	_gs = get_node("/root/GameState")
 	_db = get_node("/root/ContentDB")
 	_dc = get_node("/root/DatingCore")
+	var relationships: Node = get_node_or_null("/root/Relationships")
+	if relationships != null and relationships.has_method("set_auto_apply_enabled"):
+		relationships.call("set_auto_apply_enabled", false)
 	await get_tree().process_frame
 	DatingTestFixtures.register_all(_db)
 	_dc.connect("date_finished", _on_date_finished)
@@ -47,6 +50,9 @@ func _reset() -> void:
 	_gs.call("reset_for_new_game")
 	_dc.call("force_clear_session")
 	_dc.call("clear_external_resolver")
+	var relationships: Node = get_node_or_null("/root/Relationships")
+	if relationships != null and relationships.has_method("set_auto_apply_enabled"):
+		relationships.call("set_auto_apply_enabled", false)
 	_finished_count = 0
 	_last_result = null
 	var rng := RandomNumberGenerator.new()

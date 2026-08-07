@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 09 — Dating Core**.  
+Фактическая структура после **MODULE 10 — Relationships & Girl Completion**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -13,8 +13,8 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn`; `dating/dating_ui.tscn` (MODULE 09 functional) | Final phone/date art |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (rel/cooldown/completion); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
 | `world/` | World / test scenes | FPS test, GameState/ContentDB self-tests | Central game controllers |
 | `main.tscn` | Canonical entry | bootstrap в FPS test | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
@@ -48,8 +48,14 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 
 ### `game/state/`
 
-- `game_state.gd` — autoload `GameState`: currency/XP/characteristics + `purchased_perks` + `defeated_rivals` + `lose_authority` + discovery/contacts/clues/trait reveal/reactions/retry days (MODULE 08)
+- `game_state.gd` — autoload `GameState`: currency/XP/characteristics + `purchased_perks` + `defeated_rivals` + `lose_authority` + discovery/contacts/clues/trait reveal/reactions/retry days (MODULE 08) + relationship clamp `[-5,+5]` + date cooldown / played dating events / last date IDs / secondary reveal (MODULE 10)
 - `game_state_self_test.gd` — reproducible MODULE 02 API/invariant tests
+
+### `game/relationships/`
+
+- `relationships.gd` — autoload `Relationships` (after DatingCore): apply `DatingResult` exactly once, completion XP via `add_experience(1)`, date cooldown day seam, event-history exclusions/cycle reset
+- `relationship_date_result.gd` / `relationship_types.gd` — typed apply result + availability/error constants
+- `test/relationships_test.tscn` + `relationships_self_test.gd` — MODULE 10 headless runner
 
 ### `game/girls/`
 
@@ -138,7 +144,8 @@ Interaction ray mask: world + interactable (bits 1+3).
 | `GameState` | Canonical runtime playthrough state (MODULE 02); owns purchased perks |
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
 | `GirlDiscovery` | Girl discovery / acquaintance (MODULE 08); after ContentDB; uses GameState + ContentDB; no Dating |
-| `DatingCore` | One-date runtime (MODULE 09); after GirlDiscovery; uses GameState + ContentDB; does **not** apply relationship |
+| `DatingCore` | One-date runtime (MODULE 09); after GirlDiscovery; uses GameState + ContentDB; does **not** apply relationship; assigns monotonic `date_id` |
+| `Relationships` | Apply date results / completion / date cooldown / event history (MODULE 10); after DatingCore |
 | `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
 | `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
 | `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07D routes SLAP/DANCE/SIGMA/MONEY); Hostile Acquisition hook; after RivalEncounters; Callable seam only |
@@ -154,9 +161,10 @@ audio/
 `minigames/sigma/` реализован (MODULE 07C).  
 `minigames/money/` реализован (MODULE 07D).  
 `game/girls/` реализован (MODULE 08).  
-`game/dating/` реализован (MODULE 09); relationship apply — MODULE 10.  
-`ui/phone/` функциональный журнал (MODULE 08); финальный phone shell — MODULE 22.  
-`ui/dating/` функциональный dating UI (MODULE 09).
+`game/dating/` реализован (MODULE 09).  
+`game/relationships/` реализован (MODULE 10).  
+`ui/phone/` функциональный журнал (MODULE 08/10); финальный phone shell — MODULE 22.  
+`ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
 
 ## Donor
 

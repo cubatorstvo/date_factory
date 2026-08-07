@@ -2,7 +2,9 @@ class_name DatingResult
 extends RefCounted
 ## Immutable-ish finish payload for one date (MODULE 09).
 ## Does not mutate GameState relationship.
+## date_id assigned by DatingCore for MODULE 10 exactly-once apply.
 
+var date_id: int = 0
 var girl_id: StringName = &""
 var location_id: StringName = &""
 var greeting_id: StringName = &""

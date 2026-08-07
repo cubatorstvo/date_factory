@@ -161,10 +161,25 @@ func _show_detail(girl_id: StringName) -> void:
 	if def != null and def.display_name.strip_edges() != "":
 		name = def.display_name
 	lines.append("[b]%s[/b]" % name)
-	if bool(gs.call("has_girl_contact", girl_id)):
+	var has_contact: bool = bool(gs.call("has_girl_contact", girl_id))
+	if has_contact:
 		lines.append("Статус: Номер получен")
 	else:
 		lines.append("Статус: Номера нет")
+	var rel: int = int(gs.call("get_girl_relationship", girl_id))
+	lines.append("Отношения: %+d / 5" % rel)
+	if bool(gs.call("is_girl_conquered", girl_id)):
+		lines.append("Отношения завершены")
+	if has_contact:
+		var date_cd: int = int(gs.call("get_girl_date_cooldown_days_remaining", girl_id))
+		if date_cd > 0:
+			lines.append("Следующее свидание: через %d дн." % date_cd)
+		else:
+			lines.append("Следующее свидание: доступно")
+	else:
+		var disc_cd: int = int(gs.call("get_girl_retry_days_remaining", girl_id))
+		if disc_cd > 0:
+			lines.append("Повторное знакомство: через %d дн." % disc_cd)
 	lines.append("")
 	lines.append("[b]Наблюдения[/b]")
 	var known: Array = gs.call("get_known_girl_clue_indices", girl_id) as Array
@@ -186,6 +201,17 @@ func _show_detail(girl_id: StringName) -> void:
 			lines.append("Характер: ?")
 	else:
 		lines.append("Характер: ?")
+	lines.append("")
+	if bool(gs.call("is_secondary_trait_revealed", girl_id)) and def != null and db != null:
+		var sec_def: SecondaryTraitDefinition = db.call("get_secondary_trait", def.secondary_trait) as SecondaryTraitDefinition
+		if sec_def != null:
+			lines.append("[b]Доп. черта:[/b] %s" % sec_def.display_name)
+			if sec_def.description.strip_edges() != "":
+				lines.append(sec_def.description)
+		else:
+			lines.append("Доп. черта: ?")
+	else:
+		lines.append("Доп. черта: ?")
 	lines.append("")
 	lines.append("[b]Известные реакции[/b]")
 	var reactions: Dictionary = gs.call("get_girl_known_reactions", girl_id) as Dictionary

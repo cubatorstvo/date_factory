@@ -1,5 +1,5 @@
-﻿# File ownership — MODULE 09
+﻿# File ownership — MODULE 10
 
 | Task | Agent | Writable | Status |
 |------|-------|----------|--------|
-| MODULE_09_DATING_CORE | df-gameplay-worker | game/dating/**, ui/dating/**, dating defs, ContentDB, phone labels, docs | done |
+| MODULE_10_RELATIONSHIPS | df-gameplay-worker | game/relationships/**, GameState clamp/history/cooldown, DatingResult.date_id, Phone/UI, docs | done |

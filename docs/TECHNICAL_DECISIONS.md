@@ -581,3 +581,26 @@ Keeps Dating Core as a pure session calculator so Relationships can own persiste
 
 Scope:
 `game/dating/**`, `ui/dating/**`, `data/definitions/dating_*`, ContentDB greeting/farewell indexes + overrides, `ui/phone/phone_journal.gd` labels, `data/test/dating_test_fixtures.gd`, `project.godot`, docs
+
+## MODULE 10: Relationships autoload — apply DatingResult + completion
+
+Context:
+MODULE 09 returns `DatingResult.date_delta` but must not mutate persistent girl relationship / XP / conquered. Need clamp `[-5,+5]`, repeat cooldown, central-event history cycle, first-+5 reward, Phone display.
+
+Decision:
+- Autoload `Relationships` → `res://game/relationships/relationships.gd`, registered **after DatingCore**.
+- `_ready` connects `DatingCore.date_finished` → `apply_date_result` (guard `is_connected`) and optional `GameState.state_reset`.
+- `GameState.set/add_girl_relationship` clamp to `[-5,+5]`.
+- `DatingResult.date_id` (monotonic int from DatingCore) + transient `applied_date_ids` for exactly-once.
+- Date cooldown `_girl_date_cooldown_days_remaining` separate from discovery retry; after each apply `rng.randi_range(1,3)`.
+- `Relationships.notify_game_day_advanced()` decrements date cooldowns only; emit `girl_date_available_again` on 1→0 once. No TimeManager.
+- Event history: ordered unique central IDs + last date's 3; `begin_new_event_cycle` on planner INSUFFICIENT (clear history, exclude last 3).
+- First `relationship == +5` and not conquered → `mark_girl_conquered` then `add_experience(1)` (atomic UP). No auto primary/secondary reveal.
+- Phone: signed relationship, completion label, date availability, secondary `?`/revealed. No invite CTA.
+- `set_auto_apply_enabled(false)` seam for MODULE 09 purity tests.
+
+Reason:
+Keeps DatingCore a pure session scorer; Relationships owns persistent consequences and MODULE 11 `girl_completed` hook without Story/Time systems.
+
+Scope:
+`game/relationships/**`, GameState MODULE 10 fields/APIs, DatingResult/DatingCore date_id, PhoneJournal, dating_ui result panel, MODULE 02/09 test seams, `project.godot`, docs

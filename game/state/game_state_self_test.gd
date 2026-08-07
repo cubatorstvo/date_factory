@@ -185,6 +185,12 @@ func _test_relationships() -> void:
 	_ok(int(_gs.call("get_girl_relationship", gid)) == -3, "rel can be negative")
 	_gs.call("add_girl_relationship", gid, 8)
 	_ok(int(_gs.call("get_girl_relationship", gid)) == 5, "rel + to 5")
+	_gs.call("set_girl_relationship", gid, 12)
+	_ok(int(_gs.call("get_girl_relationship", gid)) == 5, "set clamps to +5")
+	_gs.call("set_girl_relationship", gid, -20)
+	_ok(int(_gs.call("get_girl_relationship", gid)) == -5, "set clamps to -5")
+	_gs.call("add_girl_relationship", gid, -10)
+	_ok(int(_gs.call("get_girl_relationship", gid)) == -5, "add clamps at floor")
 	_ok(not bool(_gs.call("is_girl_conquered", gid)), "rel +5 does not auto-conquer")
 
 

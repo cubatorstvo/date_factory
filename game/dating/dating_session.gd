@@ -2,6 +2,7 @@ class_name DatingSession
 extends RefCounted
 ## Transient one-date session state — not saved (MODULE 09).
 
+var date_id: int = 0
 var girl_id: StringName = &""
 var location_id: StringName = &""
 var phase: DatingTypes.Phase = DatingTypes.Phase.ARRIVAL

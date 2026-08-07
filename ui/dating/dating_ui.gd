@@ -8,15 +8,21 @@ extends CanvasLayer
 @onready var _choices: VBoxContainer = $Root/Panel/Margin/VBox/Choices
 
 var _core: Node = null
+var _relationships: Node = null
+var _last_rel_result: RelationshipDateResult = null
 
 
 func _ready() -> void:
 	_core = get_node_or_null("/root/DatingCore")
+	_relationships = get_node_or_null("/root/Relationships")
 	visible = false
 	if _core != null:
 		_core.connect("phase_changed", _on_phase_changed)
 		_core.connect("reaction_presented", _on_reaction)
 		_core.connect("date_finished", _on_finished)
+	if _relationships != null and _relationships.has_signal("date_result_applied"):
+		if not _relationships.is_connected("date_result_applied", _on_date_result_applied):
+			_relationships.connect("date_result_applied", _on_date_result_applied)
 
 
 func open_for_active_date() -> void:
@@ -39,9 +45,23 @@ func _on_reaction(reaction: int, result_text: String) -> void:
 		_reaction.text += " — %s" % result_text
 
 
+func _on_date_result_applied(rel_result: RelationshipDateResult) -> void:
+	_last_rel_result = rel_result
+
+
 func _on_finished(result: DatingResult) -> void:
 	_title.text = "Итог свидания"
-	_body.text = "Итог свидания: %+d" % result.date_delta
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("Свидание: %+d" % result.date_delta)
+	var rel: RelationshipDateResult = _last_rel_result
+	if rel == null and _relationships != null:
+		rel = _relationships.call("get_last_applied_result") as RelationshipDateResult
+	if rel != null and rel.ok and rel.girl_id == result.girl_id:
+		lines.append("Отношения: %d → %d" % [rel.relationship_before, rel.relationship_after])
+		if rel.newly_conquered:
+			lines.append("Опытность +%d" % rel.experience_gained)
+			lines.append("Балл прокачки +%d" % rel.upgrade_points_gained)
+	_body.text = "\n".join(lines)
 	_reaction.text = "Вечер: %+d" % result.secondary_reaction if result.secondary_reaction != 0 else "Вечер: 0"
 	_clear_choices()
 	var btn := Button.new()
@@ -49,6 +69,7 @@ func _on_finished(result: DatingResult) -> void:
 	btn.pressed.connect(_on_close_finished)
 	_choices.add_child(btn)
 	visible = true
+	_last_rel_result = null
 
 
 func _on_close_finished() -> void:

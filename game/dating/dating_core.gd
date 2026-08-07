@@ -15,6 +15,7 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _external_resolver: Callable = Callable()
 var _control_owner: Node = null
 var _control_restore_mode: int = -1
+var _next_date_id: int = 1
 
 
 func _ready() -> void:
@@ -87,6 +88,8 @@ func start_date(request: DatingStartRequest) -> Dictionary:
 	if not bool(plan.get("ok", false)):
 		return _fail(DatingTypes.ERR_INSUFFICIENT_DATE_CONTENT)
 	var session := DatingSession.new()
+	session.date_id = _next_date_id
+	_next_date_id += 1
 	session.girl_id = request.girl_id
 	session.location_id = request.location_id
 	session.greeting_ids = request.greeting_ids.duplicate()
@@ -549,6 +552,7 @@ func _finish_secondary_and_close() -> Dictionary:
 	_session.secondary_reaction = secondary
 	_session.date_delta = delta
 	var result := DatingResult.new()
+	result.date_id = _session.date_id
 	result.girl_id = _session.girl_id
 	result.location_id = _session.location_id
 	result.greeting_id = _session.selected_greeting_id

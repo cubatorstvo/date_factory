@@ -14,6 +14,7 @@ signal girl_discovered(girl_id: StringName)
 signal girl_contact_added(girl_id: StringName)
 signal girl_clue_revealed(girl_id: StringName, clue_index: int)
 signal primary_trait_revealed(girl_id: StringName)
+signal secondary_trait_revealed(girl_id: StringName)
 signal location_unlocked(location_id: StringName)
 signal story_flag_changed(flag_id: StringName, value: bool)
 signal stage_changed(new_stage: GameTypes.GameStage, previous_stage: GameTypes.GameStage)
@@ -38,6 +39,10 @@ var _known_girl_clues: Dictionary = {}
 var _revealed_primary_traits: Dictionary = {}
 var _known_girl_reactions: Dictionary = {}
 var _girl_retry_days_remaining: Dictionary = {}
+var _girl_date_cooldown_days_remaining: Dictionary = {}
+var _girl_played_dating_event_ids: Dictionary = {}
+var _girl_last_date_event_ids: Dictionary = {}
+var _revealed_secondary_traits: Dictionary = {}
 var _unlocked_locations: Dictionary = {}
 var _story_flags: Dictionary = {}
 var _total_clones: int = 0
@@ -50,6 +55,8 @@ var _defeated_rivals: Dictionary = {}
 
 const CHAR_MIN: int = 0
 const CHAR_MAX: int = 10
+const RELATIONSHIP_MIN: int = -5
+const RELATIONSHIP_MAX: int = 5
 
 
 func _ready() -> void:
@@ -75,6 +82,10 @@ func reset_for_new_game() -> void:
 	_revealed_primary_traits = {}
 	_known_girl_reactions = {}
 	_girl_retry_days_remaining = {}
+	_girl_date_cooldown_days_remaining = {}
+	_girl_played_dating_event_ids = {}
+	_girl_last_date_event_ids = {}
+	_revealed_secondary_traits = {}
 	_unlocked_locations = {}
 	_story_flags = {}
 	_total_clones = 0
@@ -398,11 +409,12 @@ func set_girl_relationship(girl_id: StringName, value: int) -> void:
 	if not _is_valid_id(girl_id):
 		push_error("[GameState] set_girl_relationship empty id")
 		return
+	var clamped: int = clampi(value, RELATIONSHIP_MIN, RELATIONSHIP_MAX)
 	var prev: int = get_girl_relationship(girl_id)
-	if prev == value:
+	if prev == clamped:
 		return
-	_girl_relationships[girl_id] = value
-	girl_relationship_changed.emit(girl_id, value, value - prev)
+	_girl_relationships[girl_id] = clamped
+	girl_relationship_changed.emit(girl_id, clamped, clamped - prev)
 
 
 func add_girl_relationship(girl_id: StringName, delta: int) -> void:
@@ -411,9 +423,12 @@ func add_girl_relationship(girl_id: StringName, delta: int) -> void:
 		return
 	if delta == 0:
 		return
-	var next: int = get_girl_relationship(girl_id) + delta
+	var prev: int = get_girl_relationship(girl_id)
+	var next: int = clampi(prev + delta, RELATIONSHIP_MIN, RELATIONSHIP_MAX)
+	if next == prev:
+		return
 	_girl_relationships[girl_id] = next
-	girl_relationship_changed.emit(girl_id, next, delta)
+	girl_relationship_changed.emit(girl_id, next, next - prev)
 
 
 # --- Conquered girls ---
@@ -593,6 +608,100 @@ func is_girl_available_for_discovery(girl_id: StringName) -> bool:
 	if not _is_valid_id(girl_id):
 		return false
 	return get_girl_retry_days_remaining(girl_id) <= 0
+
+
+# --- Date cooldown / event history / secondary reveal (MODULE 10) ---
+
+func get_girl_date_cooldown_days_remaining(girl_id: StringName) -> int:
+	if not _is_valid_id(girl_id):
+		return 0
+	return int(_girl_date_cooldown_days_remaining.get(girl_id, 0))
+
+
+func set_girl_date_cooldown_days_remaining(girl_id: StringName, days: int) -> void:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] set_girl_date_cooldown_days_remaining empty id")
+		return
+	if days <= 0:
+		_girl_date_cooldown_days_remaining.erase(girl_id)
+	else:
+		_girl_date_cooldown_days_remaining[girl_id] = days
+
+
+func is_girl_available_for_date(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		return false
+	return get_girl_date_cooldown_days_remaining(girl_id) <= 0
+
+
+func get_girl_ids_with_date_cooldown() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for key in _girl_date_cooldown_days_remaining.keys():
+		var gid: StringName = key as StringName
+		if get_girl_date_cooldown_days_remaining(gid) > 0:
+			out.append(gid)
+	return out
+
+
+func get_girl_played_dating_event_ids(girl_id: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	if not _is_valid_id(girl_id) or not _girl_played_dating_event_ids.has(girl_id):
+		return out
+	var stored: Array = _girl_played_dating_event_ids[girl_id] as Array
+	for eid in stored:
+		out.append(eid as StringName)
+	return out
+
+
+func record_girl_played_dating_events(girl_id: StringName, event_ids: Array[StringName]) -> void:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] record_girl_played_dating_events empty id")
+		return
+	var hist: Array[StringName] = get_girl_played_dating_event_ids(girl_id)
+	for eid in event_ids:
+		if String(eid) == "":
+			continue
+		if not hist.has(eid):
+			hist.append(eid)
+	_girl_played_dating_event_ids[girl_id] = hist
+	var last: Array[StringName] = []
+	for eid2 in event_ids:
+		last.append(eid2)
+	_girl_last_date_event_ids[girl_id] = last
+
+
+func clear_girl_played_dating_event_history(girl_id: StringName) -> void:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] clear_girl_played_dating_event_history empty id")
+		return
+	_girl_played_dating_event_ids.erase(girl_id)
+
+
+func get_girl_last_date_event_ids(girl_id: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	if not _is_valid_id(girl_id) or not _girl_last_date_event_ids.has(girl_id):
+		return out
+	var stored: Array = _girl_last_date_event_ids[girl_id] as Array
+	for eid in stored:
+		out.append(eid as StringName)
+	return out
+
+
+func is_secondary_trait_revealed(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		return false
+	return _revealed_secondary_traits.has(girl_id)
+
+
+func reveal_secondary_trait(girl_id: StringName) -> bool:
+	if not _is_valid_id(girl_id):
+		push_error("[GameState] reveal_secondary_trait empty id")
+		return false
+	if _revealed_secondary_traits.has(girl_id):
+		return false
+	_revealed_secondary_traits[girl_id] = true
+	secondary_trait_revealed.emit(girl_id)
+	return true
 
 
 # --- Locations ---
