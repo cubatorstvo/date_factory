@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 GodotIQRuntime="*uid://b2otg5noq2igh"
+GameState="*res://game/state/game_state.gd"
 
 [display]
 

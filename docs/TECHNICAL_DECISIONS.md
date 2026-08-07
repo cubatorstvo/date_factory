@@ -183,3 +183,86 @@ Ray can hit interactables and be blocked by world; player collides only with wor
 
 Scope:
 `project.godot` layer names; player/test scenes
+
+---
+
+## MODULE 02: GameState as small dedicated autoload
+
+Context:
+Нужен один canonical runtime Game State, доступный всем будущим gameplay-модулям без поиска Node по SceneTree.
+
+Options:
+- Autoload `GameState`
+- Scene-owned singleton node
+- Resource + holder service
+- Legacy-style `Game` facade
+
+Decision:
+Один маленький autoload `GameState` → `res://game/state/game_state.gd`. Без `class_name` (имя = autoload). Без EventBus, SaveManager, UI ownership, ticker/`_process`, salary/perk formulas, content DB.
+
+Reason:
+Для текущего маленького Godot-проекта autoload — самый прямой ownership; спека это явно допускает. Donor `Game` не переносится: он смешивал state, systems и UI coupling.
+
+Scope:
+`game/state/game_state.gd`, `project.godot` `[autoload]`, tests under `world/test/game_state_test.tscn`
+
+---
+
+## MODULE 02: experience → upgrade_points atomic grant
+
+Context:
+Продуктовое правило: опыт даёт баллы прокачки один-в-один, но баллы можно тратить независимо.
+
+Options:
+- Отдельные `add_experience` / `add_upgrade_points`
+- Только atomic `add_experience(N)` → `+N` к обоим; spend только через `spend_upgrade_points`
+
+Decision:
+Gameplay grant path только `add_experience`. Публичного `add_upgrade_points` нет. `restore_upgrade_points` — только future save path. Authority не имеет spend API.
+
+Reason:
+Защищает инвариант «опытность и баллы не расходятся при наградах», не превращая state в perk system.
+
+Scope:
+`game/state/game_state.gd`
+
+---
+
+## MODULE 02: strict stage advance + restore path
+
+Context:
+Стадии сюжетно монотонны в gameplay, но save/load позже должен уметь восстановить произвольное значение.
+
+Options:
+- Свободный `set_stage`
+- Только `advance_stage(+1)`
+- `advance_stage` + отдельный `restore_stage`
+
+Decision:
+Gameplay: `advance_stage(next)` только если `next == current + 1`. Save/restore: `restore_stage`.
+
+Reason:
+Закрывает skip/regress в обычном API без блокировки будущего save.
+
+Scope:
+`game/state/game_state.gd`
+
+---
+
+## MODULE 01 pre-flight feel fixes (with MODULE 02)
+
+Context:
+Перед Game State спека требует починить air control и step-up safety.
+
+Options:
+- Отложить
+- Исправить в том же milestone commit
+
+Decision:
+`air_acceleration = 8.0` (воздух ускоряет только при input, без air braking). Step-up применяет подъём только после `test_move` на полный collider.
+
+Reason:
+Закрывает MODULE 01 debt до появления state consumers.
+
+Scope:
+`characters/player/player.gd`

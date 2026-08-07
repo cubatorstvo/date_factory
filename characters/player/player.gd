@@ -15,6 +15,7 @@ signal interaction_target_changed(target: Area3D)
 @export var move_speed: float = 4.5
 @export var acceleration: float = 30.0
 @export var deceleration: float = 37.5
+@export var air_acceleration: float = 8.0
 @export var jump_height: float = 1.0
 @export var mouse_sensitivity_degrees: float = 0.12
 @export var camera_fov: float = 75.0
@@ -84,17 +85,24 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		return
 	var gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity"))
-	if not is_on_floor():
+	var on_floor: bool = is_on_floor()
+	if not on_floor:
 		velocity.y -= gravity * delta
 	var input_dir: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var wish: Vector3 = (transform.basis * Vector3(input_dir.x, 0.0, input_dir.y)).normalized()
 	var target_h: Vector3 = wish * move_speed
 	var horizontal: Vector3 = Vector3(velocity.x, 0.0, velocity.z)
-	var rate: float = acceleration if wish != Vector3.ZERO else deceleration
-	horizontal = horizontal.move_toward(target_h, rate * delta)
+	var rate: float = 0.0
+	if on_floor:
+		rate = acceleration if wish != Vector3.ZERO else deceleration
+	elif wish != Vector3.ZERO:
+		rate = air_acceleration
+		# No artificial air braking when input is released.
+	if rate > 0.0:
+		horizontal = horizontal.move_toward(target_h, rate * delta)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
-	if Input.is_action_just_pressed("jump") and is_on_floor():
+	if Input.is_action_just_pressed("jump") and on_floor:
 		velocity.y = sqrt(2.0 * gravity * jump_height)
 	_try_step_up()
 	move_and_slide()
@@ -226,7 +234,16 @@ func _try_step_up() -> void:
 	var lift: float = landing.y - global_position.y
 	if lift <= 0.05 or lift > max_step_height:
 		return
-	global_position.y = landing.y + 0.02
+	# Ensure full capsule can occupy the stepped pose before teleporting Y.
+	var target: Vector3 = Vector3(
+		global_position.x + dir.x * 0.2,
+		landing.y + 0.02,
+		global_position.z + dir.z * 0.2
+	)
+	var motion: Vector3 = target - global_position
+	if test_move(global_transform, motion):
+		return
+	global_position = target
 
 
 func _update_debug_label() -> void:
