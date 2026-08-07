@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DiscoverySituationDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_situation_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_approach"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_appearance_flash_keep_passers.tres" id="a0"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_appearance_flash_clear_crowd.tres" id="a1"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_appearance_flash_pay_space.tres" id="a2"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_situation_appearance_flash"
+location_id = &"appearance_space"
+setup_text = "Она настраивает вспышку так, чтобы случайные прохожие каждый раз выглядели важнее основного объекта."
+approaches = Array[ExtResource("1_approach")]([ExtResource("a0"), ExtResource("a1"), ExtResource("a2")])

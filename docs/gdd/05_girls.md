@@ -332,20 +332,24 @@
 
 ---
 
-## Реализация (MODULE 14A)
+## Реализация (MODULE 14A / 14B)
 
-Playable early slice:
+Playable slice through Editor:
 
 | ID | Role | Location | XP |
 |---|---|---|---|
 | `girl_neighbor` | story | apartment | 0 |
 | `girl_actress` | story | appearance_space | 1 |
 | `girl_mine_boss` | story | city mine entrance | 2 |
+| `girl_magazine_editor` | story | appearance_space studio | 3 |
 | `girl_city_bicycle` | ordinary | city_hub | 0 |
 | `girl_cafe_laptop` | ordinary | cafe | 1 |
 | `girl_gym_chalk` | ordinary | gym | 1 |
 | `girl_appearance_ritual` | ordinary | appearance_space | 2 |
+| `girl_public_sculpture` | ordinary | city public | 2 |
+| `girl_cafe_receipt_notes` | ordinary | cafe | 2 |
+| `girl_appearance_flash` | ordinary | appearance_space | 3 |
 
-Dating pools use ContentDB IDs `date_pool_*` (not draft `dating_pool_*`). Full inventory: `docs/content/MANUAL_CONTENT_14A.md`.
+Dating pools use ContentDB IDs `date_pool_*` (not draft `dating_pool_*`). Inventories: `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`. Scientist remains MODULE 15+.
 
 ---

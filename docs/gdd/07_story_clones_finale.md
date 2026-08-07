@@ -411,17 +411,18 @@
 
 Для всех земных сюжетных девушек, кроме соседки, стандартный сюжетный шаблон допускает текущего ухажёра, которого необходимо одолеть до знакомства.
 
-### Реализация (MODULE 14A)
+### Реализация (MODULE 14A / 14B)
 
-Playable through `STAGE_3` / `SALARY_MINE`:
+Playable through `STAGE_4` / `MEDIA_ATTENTION` (pre-media handoff only):
 
 ```text
 PROLOGUE: girl_neighbor
 STAGE_1: rival_actress → girl_actress
 STAGE_2: rival_mine_boss → girl_mine_boss
-STAGE_3: Salary Mine unlock
+STAGE_3: Salary Mine unlock → rival_magazine_editor → girl_magazine_editor
+STAGE_4: MEDIA_ATTENTION true; Phone media handoff; photo marker exists; no photoshoot runtime
 ```
 
-Story rivals in 14A use only `DANCE` / `SLAP`. Editor / Scientist / President / Media remain MODULE 14B+.
+Editor rival: MONEY+DANCE, Auth4→+3; without Payable Intent MONEY locked, DANCE available. Scientist / President / media runtime remain MODULE 15+.
 
 ---

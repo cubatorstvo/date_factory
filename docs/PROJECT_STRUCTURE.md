@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 14A — Early Vertical Slice Content**.  
+Фактическая структура после **MODULE 14B — Editor & Pre-Media Manual Content**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
 ## Top-level (существует сейчас)
@@ -41,8 +41,8 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 - `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
 - `types/perk_ids.gd` — `class_name PerkIds` 32 canonical perk `StringName` constants
 - `definitions/*.gd` — typed `Resource` schemas (incl. dating action/event/pool/greeting/farewell, discovery, appearance)
-- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); MODULE 14A girls/rivals/discovery/dating pools
-- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; dating greeting/farewell + test overrides)
+- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); MODULE 14A+14B girls/rivals/discovery/dating pools (11/10)
+- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; `try_get_girl`/`try_get_rival` for missing STAGE_4 Scientist IDs)
 - `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations, girls, rivals, discovery, dating)
 - `test/` — fixtures + MODULE 06–09 test content (`dating_test_fixtures.gd`, discovery/rival fixtures; not in production catalog)
 
@@ -199,9 +199,10 @@ audio/
 `game/story/` реализован (MODULE 11).  
 `world/` каркас 9 локаций реализован (MODULE 12).  
 `game/day/` + `game/salary/` реализова зарплаты (MODULE 13).  
-`data/content/` early vertical-slice production content (MODULE 14A); inventory `docs/content/MANUAL_CONTENT_14A.md`.
+`data/content/` production content through Editor/pre-media (MODULE 14A+14B); inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`.
 `game/content/test/module_14a_vertical_test.tscn` — MODULE 14A headless integration runner.
-`ui/phone/` функциональный журнал: global/story status + girls + salary (MODULE 08/10/12/13/14A); финальный phone shell — MODULE 22.  
+`game/content/test/module_14b_vertical_test.tscn` — MODULE 14B Editor → STAGE_4 / MEDIA_ATTENTION headless runner.
+`ui/phone/` функциональный журнал: global/story status + girls + salary + STAGE_4 media handoff (MODULE 08/10/12/13/14A/14B); финальный phone shell — MODULE 22.  
 `ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
 
 ## Donor

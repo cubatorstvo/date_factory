@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DiscoveryApproachDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_approach_appearance_flash_clear_crowd"
+label = "Попросить всех разойтись"
+has_requirement = true
+required_characteristic = 0
+required_level = 1
+outcome = 1
+result_text = "Пустое пространство выглядит правильно и мёртво. Ей это не нужно."

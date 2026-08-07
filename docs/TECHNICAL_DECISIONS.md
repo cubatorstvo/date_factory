@@ -690,3 +690,20 @@ Keep catalog validation and runtime APIs stable; 14A is content/integration, not
 
 Scope:
 `data/content/dating/pools/**`, girl `dating_pool_ids`, `ui/phone/phone_journal.gd`, `docs/content/MANUAL_CONTENT_14A.md`, `game/content/test/module_14a_vertical_*`
+
+## MODULE 14B: try_get_* + STAGE_4 media handoff (no Scientist content)
+
+Context:
+STAGE_4 catalog still points at reserved `girl_scientist` / `rival_scientist`, but MODULE 14B must not ship Scientist production content. Editor +5 unlocks `MEDIA_ATTENTION` and must leave Phone/World playable.
+
+Decision:
+1. `ContentDB.try_get_girl` / `try_get_rival` return null for missing reserved IDs (no hard fail).
+2. PhoneJournal STAGE_4 story section shows media handoff (`Медийность` / `Фотосессия у Редактора`) when Scientist actors are absent.
+3. Photo marker `story_point_editor_photo_session` may exist in `appearance_space` but does not launch media runtime.
+4. Editor rival allows MONEY+DANCE; without Payable Intent MONEY stays locked and DANCE remains the no-grind path.
+
+Reason:
+Complete manual story through Editor without implementing MODULE 15 media systems or Scientist content.
+
+Scope:
+`data/catalog/content_db.gd` (try_get_*), `ui/phone/phone_journal.gd`, `data/content/**` Editor/ordinary packs, `docs/content/MANUAL_CONTENT_14B.md`, `game/content/test/module_14b_vertical_*`

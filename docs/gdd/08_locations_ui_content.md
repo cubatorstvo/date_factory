@@ -69,7 +69,8 @@
 - Доступ локаций — `StoryFeature` (не `GameState.unlock_location` для канонических девяти).
 - `PUBLIC_CITY_ACCESS` — внутренний gate внутри `city_hub`, не отдельная location.
 - Физический телефон в квартире открывает PhoneJournal; экономика шахты — MODULE 13.
-- PhoneJournal (MODULE 14A): top status (День / Деньги / Авторитет / Опытность / Баллы прокачки) + Story section (`Story.get_current_progress()`).
+- PhoneJournal (MODULE 14A/14B): top status (День / Деньги / Авторитет / Опытность / Баллы прокачки) + Story section (`Story.get_current_progress()`); STAGE_4 media handoff when Scientist content is absent.
+- MODULE 14B ordinary public NPCs sit behind existing `PUBLIC_CITY_ACCESS`; Editor pair + photo cue live in `appearance_space`.
 
 ---
 

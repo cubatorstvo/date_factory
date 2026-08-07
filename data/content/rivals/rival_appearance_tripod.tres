@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RivalDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/rival_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"rival_appearance_tripod"
+display_name = "Самец с моноподом"
+is_story = false
+has_story_stage = false
+story_stage = 0
+required_authority = 4
+authority_reward = 1
+muscle = 1
+appearance = 3
+capital = 1
+aura = 3
+preferred_competition = 3
+allowed_competitions = Array[int]([3, 0])
+appearance_profile_id = &"appearance_male_appearance_tripod"
+competition_modifier_id = &""

@@ -344,6 +344,15 @@ func _refresh_story_section() -> void:
 	if progress == null:
 		_story_label.text = "—"
 		return
+	# STAGE_4: reserved Scientist IDs are not authored yet — show media handoff (MODULE 14B).
+	if progress.stage == GameTypes.GameStage.STAGE_4 and _is_stage4_media_handoff(progress):
+		var handoff: PackedStringArray = PackedStringArray()
+		handoff.append("СТАДИЯ 4")
+		handoff.append("Медийность")
+		handoff.append("Следующий шаг:")
+		handoff.append("Фотосессия у Редактора")
+		_story_label.text = "\n".join(handoff)
+		return
 	var stage_name: String = progress.display_name.strip_edges()
 	if stage_name == "":
 		stage_name = String(GameTypes.GameStage.find_key(int(progress.stage)))
@@ -366,15 +375,42 @@ func _refresh_story_section() -> void:
 	_story_label.text = "\n".join(lines)
 
 
+func _is_stage4_media_handoff(progress: StoryStageProgress) -> bool:
+	var db: Node = get_node_or_null("/root/ContentDB")
+	if db == null:
+		return true
+	var girl_missing: bool = false
+	if String(progress.story_girl_id) != "":
+		if db.has_method("try_get_girl"):
+			girl_missing = db.call("try_get_girl", progress.story_girl_id) == null
+		else:
+			girl_missing = true
+	var rival_missing: bool = false
+	if progress.rival_required and String(progress.story_rival_id) != "":
+		if db.has_method("try_get_rival"):
+			rival_missing = db.call("try_get_rival", progress.story_rival_id) == null
+		else:
+			rival_missing = true
+	return girl_missing or rival_missing
+
+
 func _actor_display_name(actor_id: StringName, is_rival: bool) -> String:
 	var db: Node = get_node_or_null("/root/ContentDB")
 	if db != null:
 		if is_rival:
-			var rival: RivalDefinition = db.call("get_rival", actor_id) as RivalDefinition
+			var rival: RivalDefinition = null
+			if db.has_method("try_get_rival"):
+				rival = db.call("try_get_rival", actor_id) as RivalDefinition
+			elif db.has_method("get_rival"):
+				rival = db.call("get_rival", actor_id) as RivalDefinition
 			if rival != null and rival.display_name.strip_edges() != "":
 				return rival.display_name
 		else:
-			var girl: GirlDefinition = db.call("get_girl", actor_id) as GirlDefinition
+			var girl: GirlDefinition = null
+			if db.has_method("try_get_girl"):
+				girl = db.call("try_get_girl", actor_id) as GirlDefinition
+			elif db.has_method("get_girl"):
+				girl = db.call("get_girl", actor_id) as GirlDefinition
 			if girl != null and girl.display_name.strip_edges() != "":
 				return girl.display_name
 	return String(actor_id)

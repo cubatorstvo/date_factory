@@ -258,9 +258,9 @@ func _test_stages() -> void:
 	_ok(prologue != null and prologue.story_girl_id == &"girl_neighbor" and prologue.story_rival_id == &"", "prologue refs")
 	var finale: StoryStageDefinition = db.call("get_stage", GameTypes.GameStage.FINALE) as StoryStageDefinition
 	_ok(finale != null and finale.story_girl_id == &"girl_final_target", "finale girl")
-	# MODULE 14A ships early production girls; later reserved IDs may still be absent.
+	# MODULE 14B ships Editor + ordinary public girls (11 total).
 	var prod_girls: Array = db.call("list_girls") as Array
-	_ok(prod_girls.size() == 7, "7 production GirlDefinitions in 14A")
+	_ok(prod_girls.size() == 11, "11 production GirlDefinitions in 14B")
 	for gid in [
 		&"girl_neighbor",
 		&"girl_actress",
@@ -269,16 +269,21 @@ func _test_stages() -> void:
 		&"girl_cafe_laptop",
 		&"girl_gym_chalk",
 		&"girl_appearance_ritual",
+		&"girl_magazine_editor",
+		&"girl_public_sculpture",
+		&"girl_cafe_receipt_notes",
+		&"girl_appearance_flash",
 	]:
 		var g: GirlDefinition = db.call("get_girl", gid) as GirlDefinition
 		_ok(g != null and g.id == gid, "production girl %s" % String(gid))
-	var later_present: bool = false
-	for g_entry in prod_girls:
-		var pg: GirlDefinition = g_entry as GirlDefinition
-		if pg != null and pg.id == &"girl_magazine_editor":
-			later_present = true
-			break
-	_ok(not later_present, "14B girl_magazine_editor still absent")
+	var editor: GirlDefinition = db.call("get_girl", &"girl_magazine_editor") as GirlDefinition
+	_ok(editor != null and editor.is_story and editor.story_stage == GameTypes.GameStage.STAGE_3, "14B girl_magazine_editor present STAGE_3")
+	var scientist_missing: GirlDefinition = null
+	if db.has_method("try_get_girl"):
+		scientist_missing = db.call("try_get_girl", StoryIds.GIRL_SCIENTIST) as GirlDefinition
+	else:
+		scientist_missing = db.call("get_girl", StoryIds.GIRL_SCIENTIST) as GirlDefinition
+	_ok(scientist_missing == null, "14B girl_scientist still absent")
 
 
 func _test_fixture_lookups() -> void:

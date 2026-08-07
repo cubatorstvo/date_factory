@@ -1,21 +1,17 @@
-# ACCEPTANCE — MODULE 14A Early Vertical Slice
+# ACCEPTANCE — MODULE 14B Editor & Pre-Media
 
 ## Player-visible result
 
-Clean F5 (no debug setters): apartment Neighbor → contact → apartment date → +5 → STAGE_1 → Appearance Space rival_actress win → Actress contact → cafe date → +5 → STAGE_2 → city mine entrance rival_mine_boss → Mine Boss → cafe date → +5 → STAGE_3 → Salary Mine → claim first salary.
+After STAGE_3: defeat rival_magazine_editor (Auth≥4), contact Editor, cafe dates to +5 → STAGE_4 + MEDIA_ATTENTION; photo-session marker present; Phone shows media handoff; no photoshoot/media runtime; no Scientist content.
 
-## PASS criteria
+## PASS
 
-- 7 girls, 6 rivals, appearances, 7 discovery situations, apartment≥6 + cafe≥12 dating events, 4 greetings, 1 farewell
-- RivalActor shows CharacterActor; defeated leave and stay gone
-- StageActorAnchor stage-gated, no `_process`
-- Story lock / low Authority feedback visible
-- GirlDefinition date binding validated
-- DateVenue in apartment + cafe; ProgressionInteractable in apartment; Phone day/money/authority/XP/UP + Story section
-- ContentDB.validate_all() PASS
-- Story +5 routes feasible; Money=0 softlock-safe
-- MODULE 02–13 regressions PASS; no 14B/15 ahead
+- 11 girls / 10 rivals; Editor STRANGE+SCANDALOUS XP3; rival Auth4 MONEY+DANCE (DANCE without Payable Intent)
+- Editor +5 and ≤-2 date routes; 4 editor events + date_pool_magazine_editor
+- StageActorAnchors in appearance_space + studio blockout + story_point_editor_photo_session
+- 3 ordinary girls + 3 ordinary rivals placed; public trio behind PUBLIC_CITY gate
+- Stage4 safe without Scientist; Phone handoff; ContentDB validate_all; regressions; no MODULE 15
 
 ## Verdict
 
-`READY` or `NOT READY` only.
+READY or NOT READY only.

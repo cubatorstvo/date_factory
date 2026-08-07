@@ -135,20 +135,32 @@ func get_secondary_trait(secondary_trait: GameTypes.SecondaryGirlTrait) -> Secon
 	return _secondary_by_trait[secondary_trait] as SecondaryTraitDefinition
 
 
-func get_girl(id: StringName) -> GirlDefinition:
+func try_get_girl(id: StringName) -> GirlDefinition:
 	if _girl_overrides.has(id):
 		return _girl_overrides[id] as GirlDefinition
 	if not _girls_by_id.has(id):
-		push_error("[ContentDB] missing girl: %s" % String(id))
 		return null
 	return _girls_by_id[id] as GirlDefinition
 
 
-func get_rival(id: StringName) -> RivalDefinition:
+func get_girl(id: StringName) -> GirlDefinition:
+	var found: GirlDefinition = try_get_girl(id)
+	if found == null:
+		push_error("[ContentDB] missing girl: %s" % String(id))
+	return found
+
+
+func try_get_rival(id: StringName) -> RivalDefinition:
 	if not _rivals_by_id.has(id):
-		push_error("[ContentDB] missing rival: %s" % String(id))
 		return null
 	return _rivals_by_id[id] as RivalDefinition
+
+
+func get_rival(id: StringName) -> RivalDefinition:
+	var found: RivalDefinition = try_get_rival(id)
+	if found == null:
+		push_error("[ContentDB] missing rival: %s" % String(id))
+	return found
 
 
 func get_dating_event(id: StringName) -> DatingEventDefinition:

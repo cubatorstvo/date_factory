@@ -8,7 +8,6 @@
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
 [ext_resource type="Script" uid="uid://hijvba7yq260" path="res://game/girls/girl_actor.gd" id="5_xlji7"]
 [ext_resource type="PackedScene" uid="uid://craep8snu78fc" path="res://game/rivals/rival_actor.tscn" id="6_sgsvq"]
-[ext_resource type="Script" uid="uid://cm01ma3nlptyj" path="res://game/rivals/rival_actor.gd" id="7_07mk6"]
 [ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="9_n632s"]
 
 [sub_resource type="Environment" id="Env"]
@@ -68,6 +67,10 @@ radius = 0.45
 height = 1.8
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_k0wc4"]
+radius = 0.45
+height = 1.8
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_kokhl"]
 radius = 0.45
 height = 1.8
 
@@ -165,14 +168,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -1)
 script = ExtResource("4_nspawn")
 spawn_id = "girl_cafe_laptop"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_laptop" unique_id=80850875 instance=ExtResource("4_aplqh")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_xlji7")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_laptop" unique_id=80850875 instance=ExtResource("4_aplqh")]
 girl_id = "girl_cafe_laptop"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_laptop/GirlActor" unique_id=2072436705]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_laptop/GirlActor" unique_id=2072436705]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_interact")
 
@@ -181,16 +180,28 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -1)
 script = ExtResource("4_nspawn")
 spawn_id = "rival_cafe_receipt"
 
-[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_cafe_receipt" unique_id=515275552 instance=ExtResource("6_sgsvq")]
+[node name="RivalActor" parent="NpcSpawns/npc_rival_cafe_receipt" unique_id=515275552 instance=ExtResource("6_sgsvq")]
+rival_id = "rival_cafe_receipt"
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_cafe_receipt/RivalActor" unique_id=1049199870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_k0wc4")
+
+[node name="npc_girl_cafe_receipt_notes" type="Marker3D" parent="NpcSpawns" unique_id=1100067813]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 2.5)
+script = ExtResource("4_nspawn")
+spawn_id = &"girl_cafe_receipt_notes"
+
+[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_receipt_notes" unique_id=395611070 instance=ExtResource("4_aplqh")]
 collision_layer = 4
 collision_mask = 0
 monitoring = false
-script = ExtResource("7_07mk6")
-rival_id = "rival_cafe_receipt"
+script = ExtResource("5_xlji7")
+girl_id = &"girl_cafe_receipt_notes"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_rival_cafe_receipt/RivalActor" unique_id=1049199870]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_receipt_notes/GirlActor" unique_id=1141777158]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-shape = SubResource("CapsuleShape3D_k0wc4")
+shape = SubResource("CapsuleShape3D_kokhl")
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1911734969]
 

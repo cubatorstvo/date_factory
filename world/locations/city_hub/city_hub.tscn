@@ -81,6 +81,14 @@ height = 1.8
 radius = 0.45
 height = 1.8
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xiq57"]
+radius = 0.45
+height = 1.8
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7mim2"]
+radius = 0.45
+height = 1.8
+
 [sub_resource type="BoxMesh" id="GateMesh"]
 size = Vector3(6, 3, 0.35)
 
@@ -198,14 +206,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 0)
 script = ExtResource("4_nspawn")
 spawn_id = "girl_city_bicycle"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_city_bicycle" unique_id=724896720 instance=ExtResource("4_xiq57")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_7mim2")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_city_bicycle" unique_id=724896720 instance=ExtResource("4_xiq57")]
 girl_id = "girl_city_bicycle"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_girl_city_bicycle/GirlActor" unique_id=1457993634]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_city_bicycle/GirlActor" unique_id=1457993634]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_interact")
 
@@ -214,14 +218,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -3.8)
 script = ExtResource("4_nspawn")
 spawn_id = "rival_city_silent"
 
-[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_city_silent" unique_id=515275552 instance=ExtResource("6_50pgf")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_c5lr1")
+[node name="RivalActor" parent="NpcSpawns/npc_rival_city_silent" unique_id=515275552 instance=ExtResource("6_50pgf")]
 rival_id = "rival_city_silent"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_rival_city_silent/RivalActor" unique_id=1049199870]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_city_silent/RivalActor" unique_id=1049199870]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_k0wc4")
 
@@ -230,14 +230,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, 0)
 script = ExtResource("4_nspawn")
 spawn_id = "rival_city_tracksuit"
 
-[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_city_tracksuit" unique_id=340487650 instance=ExtResource("6_50pgf")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_c5lr1")
+[node name="RivalActor" parent="NpcSpawns/npc_rival_city_tracksuit" unique_id=340487650 instance=ExtResource("6_50pgf")]
 rival_id = "rival_city_tracksuit"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_rival_city_tracksuit/RivalActor" unique_id=1547616077]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_city_tracksuit/RivalActor" unique_id=1547616077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_k0wc4")
 
@@ -253,6 +249,54 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.05, -2.8)
 script = ExtResource("8_w30d6")
 content_id = "girl_mine_boss"
 story_stage = 2
+
+[node name="npc_girl_public_sculpture" type="Marker3D" parent="NpcSpawns" unique_id=1187463068]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.05, -3.4)
+script = ExtResource("4_nspawn")
+spawn_id = &"girl_public_sculpture"
+
+[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_public_sculpture" unique_id=576915202 instance=ExtResource("4_xiq57")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_7mim2")
+girl_id = &"girl_public_sculpture"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_girl_public_sculpture/GirlActor" unique_id=316912497]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_xiq57")
+
+[node name="npc_rival_public_coat" type="Marker3D" parent="NpcSpawns" unique_id=1765296058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0.05, -3.4)
+script = ExtResource("4_nspawn")
+spawn_id = &"rival_public_coat"
+
+[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_public_coat" unique_id=140957104 instance=ExtResource("6_50pgf")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_c5lr1")
+rival_id = &"rival_public_coat"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_rival_public_coat/RivalActor" unique_id=1400862467]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_7mim2")
+
+[node name="npc_rival_public_watch" type="Marker3D" parent="NpcSpawns" unique_id=1911835569]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.05, -5.6)
+script = ExtResource("4_nspawn")
+spawn_id = &"rival_public_watch"
+
+[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_public_watch" unique_id=62301346 instance=ExtResource("6_50pgf")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_c5lr1")
+rival_id = &"rival_public_watch"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_rival_public_watch/RivalActor" unique_id=904540338]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_7mim2")
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1615612912]
 

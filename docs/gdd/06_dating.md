@@ -257,11 +257,12 @@ new = clamp(old + date_delta, -5, +5)
 
 Протоколы свиданий не используются в новой концепции.
 
-### Реализация (MODULE 14A)
+### Реализация (MODULE 14A / 14B)
 
 - Apartment: `date_pool_apartment_common` (+ optional `date_pool_neighbor`).
-- Cafe / story cafe dates: `date_pool_cafe_common` (+ optional `date_pool_actress` / `date_pool_mine_boss`).
-- PhoneJournal shows global status + Story section from `Story.get_current_progress()`; salary section still unlocks with `SALARY_MINE`.
+- Cafe / story cafe dates: `date_pool_cafe_common` (+ optional `date_pool_actress` / `date_pool_mine_boss` / `date_pool_magazine_editor`).
+- Editor pool includes public CONFLICT route (`date_event_editor_public_argument`) for STRANGE+SCANDALOUS +5 and a feasible ≤-2 path.
+- PhoneJournal shows global status + Story section from `Story.get_current_progress()`; salary section still unlocks with `SALARY_MINE`; STAGE_4 shows media handoff text.
 - Content feasibility: story girls must be able to reach `date_delta = +5`; paid actions are never the only free route.
 
 ---
