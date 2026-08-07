@@ -27,12 +27,12 @@ Source: `docs/modules/MODULE_05_PROGRESSION_PERKS.md` §§35–75.
 | PerkId | ID | Contract (summary) | Future owners |
 |---|---|---|---|
 | `APPEARANCE_GOOD_PROFILE` | `perk_appearance_good_profile` | Unlocks appearance actions by level; girl entrance clue detail more readable | MODULE 08 Discovery; MODULE 09 |
-| `APPEARANCE_STAGED_WALK` | `perk_appearance_staged_walk` | First dance/model mistake does not fully wipe streak | MODULE 07B Dance |
+| `APPEARANCE_STAGED_WALK` | `perk_appearance_staged_walk` | Dance: once/match, first ERROR at streak>0 → streak=`max(1,ceil(prev/2))` (error still counts); unused if first error at streak 0 | MODULE 07B Dance |
 | `APPEARANCE_POCKET_MIRROR` | `perk_appearance_pocket_mirror` | Once per sigma contest: short stable/clearer hold zone | MODULE 07C Sigma |
 | `APPEARANCE_CONTROL_PROFILE` | `perk_appearance_control_profile` | Only during pocket mirror; perfect sigma section grants extra point | MODULE 07C |
 | `APPEARANCE_SECOND_OUTFIT` | `perk_appearance_second_outfit` | Once per date, after girl arrives, before first scored event: swap prepared accessory set | MODULE 09; character presentation |
 | `APPEARANCE_ENCORE` | `perk_appearance_encore` | Once per date after neutral (0) appearance action: extra visual action; success may replace one tag with ORIGINALITY | MODULE 09 |
-| `APPEARANCE_RHYTHM_IN_BODY` | `perk_appearance_rhythm_in_body` | Dance rhythm windows slightly wider; first hard combo gets a visual clue | MODULE 07B |
+| `APPEARANCE_RHYTHM_IN_BODY` | `perk_appearance_rhythm_in_body` | Dance: `base_window *= 1.20` before streak bonus (final ≤0.30); first complex (`length>=4`) PLAYER_REPEAT shows next-direction clue 0.25s before beats | MODULE 07B |
 | `APPEARANCE_PUBLIC_SIGNIFICANCE` | `perk_appearance_public_significance` | Once per date: choose appearance option requiring appearance+1; activity still must be played | MODULE 09 |
 
 ---

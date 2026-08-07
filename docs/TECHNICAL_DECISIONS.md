@@ -450,7 +450,7 @@ Decision:
 - Persistent state only in GameState: `defeated_rivals` set + `lose_authority(amount) -> int` (never `< 0`; never `add_authority(-1)`).
 - Competition characteristic mapping via ContentDB `CompetitionDefinition` (SLAP→MUSCLE etc.).
 - Presentation signals live on RivalEncounters (no EventBus). Test rivals load via ResourceLoader overrides — not production catalog.
-- MODULE 07 gameplay plugs in via `competition_requested` signal + typed result submit; fake runner remains test-only.
+- MODULE 07 gameplay plugs in via `set_competition_runner(Callable)` execution seam + typed result submit; `competition_requested` is notification/presentation only; fake runner remains test-only.
 
 Reason:
 Matches existing autoload ownership, keeps GameState free of ContentDB, and lets world/date hosts start encounters without a second global manager.
@@ -460,15 +460,15 @@ Scope:
 
 ---
 
-## MODULE 07A: Slap minigame host + headless match
+## MODULE 07A: Slap minigame + headless match
 
 Context:
-MODULE 06 emits `competition_requested` for SLAP; production needs a real timing match that returns one `RivalCompetitionResult` without rewriting Authority/defeat.
+MODULE 06 begins competitions; production needs a real SLAP timing match that returns one `RivalCompetitionResult` without rewriting Authority/defeat.
 
 Decision:
 - Pure `SlapMatch` (RefCounted) owns FSM, formulas, streak, perks; injectable RNG; headless-testable.
 - `SlapMinigame` CanvasLayer overlay ticks/input; world stays visible; player enters `ControlMode.MINIGAME`.
-- `SlapCompetitionHost` Node on `/root` (spawned from `main_bootstrap`), `enabled` flag; ignores non-SLAP; MODULE 06 tests omit host or disable it so `RivalFakeCompetitionRunner` alone submits.
+- Production launch originally used a slap-only host; MODULE 07B replaces it with unified `RivalCompetitionRunner` (see below).
 - Input map: `minigame_primary` (Space+LMB), `minigame_special_1` (Q), `minigame_special_2` (R).
 - Pause from MINIGAME restores prior mode; SceneTree pause stops pointer (`PROCESS_MODE_PAUSABLE`).
 - No hidden hit RNG; difficulty only via width/speed from request level snapshot.
@@ -477,4 +477,25 @@ Reason:
 Keeps RivalEncounters ownership of Authority/defeat, allows deterministic tests, and avoids a second global competition manager.
 
 Scope:
-`minigames/slap/**`, `core/main_bootstrap.gd`, `characters/player/player.gd` (pause), `project.godot` `[input]`, perk contract docs
+`minigames/slap/**`, `characters/player/player.gd` (pause), `project.godot` `[input]`, perk contract docs
+
+---
+
+## MODULE 07B: RivalCompetitionRunner + Dance minigame
+
+Context:
+Slap-only host naming was ambiguous; Dance needs the same launch/submit lifetime as Slap across scene changes, without a plugin registry.
+
+Decision:
+- Autoload `RivalCompetitionRunner` → `res://game/rivals/rival_competition_runner.gd`, registered **after** `RivalEncounters`.
+- `_ready()` → `RivalEncounters.set_competition_runner(run_competition)`; `competition_requested` is notify-only (no second launch path).
+- Explicit `match competition_type`: SLAP → SlapMinigame, DANCE → DanceMinigame; SIGMA/MONEY → debug error, no fake WIN/LOSS, no encounter completion.
+- Delete production `SlapCompetitionHost`; MODULE 06 `RivalFakeCompetitionRunner` uses `set_competition_runner` and restores production on teardown.
+- `DanceMatch` headless FSM (OPPONENT_DEMO / PRE_ROLL / PLAYER_REPEAT / OWN_PREVIEW / PLAYER_OWN / ROUND_FEEDBACK); `DanceTiming.evaluate_move`; WASD via existing `move_*` actions (no `dance_*` InputMap).
+- Appearance perks only: `APPEARANCE_STAGED_WALK`, `APPEARANCE_RHYTHM_IN_BODY`; no Authority mutation inside Dance.
+
+Reason:
+One runner for all four rival contests, one submit boundary, scene-independent lifetime, MODULE 06 tests stay independent.
+
+Scope:
+`game/rivals/rival_competition_runner.gd`, `game/rivals/rival_fake_competition_runner.gd`, `minigames/dance/**`, `minigames/slap/test/**`, `core/main_bootstrap.gd`, `project.godot` `[autoload]`, docs

@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 06 — Rival Encounter Framework**.  
+Фактическая структура после **MODULE 07B — Dance Minigame / RivalCompetitionRunner**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/player_fps_test.tscn`
 
 ## Top-level (существует сейчас)
@@ -33,7 +33,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 ### `core/`
 
 - `df_log.gd` — `DfLog`
-- `main_bootstrap.gd` — entry → FPS test world; attaches root `SlapCompetitionHost` (MODULE 07A)
+- `main_bootstrap.gd` — entry → FPS test world (RivalCompetitionRunner is autoload; not attached here)
 - `interactable.gd` — `Interactable` contract (`can_interact` / `get_interaction_prompt` / `interact`)
 
 ### `data/`
@@ -59,8 +59,9 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 ### `game/rivals/`
 
 - `rival_encounters.gd` — autoload `RivalEncounters`: encounter lifecycle, competition gates, perk hooks, minigame contract
+- `rival_competition_runner.gd` — autoload `RivalCompetitionRunner` (after RivalEncounters): SLAP/DANCE route, Player MINIGAME, exactly-once submit
 - `rival_encounter_session.gd` / `rival_competition_request.gd` / `rival_competition_result.gd` / `rival_encounter_result.gd` — typed transient objects
-- `rival_fake_competition_runner.gd` — test-only forced WIN/LOSS CLOSE/CRUSHING
+- `rival_fake_competition_runner.gd` — test-only forced WIN/LOSS via `set_competition_runner` seam
 - `rival_actor.gd` — thin Interactable adapter (`[E] Вызвать`)
 - `test/rival_encounter_test.tscn` + `rival_encounter_self_test.gd` — MODULE 06 headless runner
 
@@ -69,8 +70,14 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → `world/test/playe
 - `slap_match.gd` — headless Slap FSM + formulas + perk rules (MODULE 07A)
 - `slap_timing.gd` — pure timing/grade helpers
 - `slap_minigame.tscn` / `slap_minigame.gd` — CanvasLayer overlay UI over current 3D world
-- `slap_competition_host.gd` — production host for `CompetitionType.SLAP` (`enabled` flag; coexist with MODULE 06 fake runner)
-- `test/slap_minigame_test.tscn` + `slap_minigame_self_test.gd` — MODULE 07A headless runner
+- `test/slap_minigame_test.tscn` + `slap_minigame_self_test.gd` — MODULE 07A headless runner (uses RivalCompetitionRunner)
+
+### `minigames/dance/`
+
+- `dance_match.gd` — headless Dance FSM (demo/repeat/own), generation, streak, Appearance perks
+- `dance_timing.gd` — pure move evaluator + window/error/grade helpers
+- `dance_minigame.tscn` / `dance_minigame.gd` — CanvasLayer overlay; WASD via `move_*` actions
+- `test/dance_minigame_test.tscn` + `dance_minigame_self_test.gd` — MODULE 07B headless runner
 
 ### `world/test/`
 
@@ -102,17 +109,18 @@ Interaction ray mask: world + interactable (bits 1+3).
 | `ContentDB` | Read-only static content lookup/validation (MODULE 03); after GameState; no GameState dependency |
 | `Progression` | Perk purchase / tree / cost API (MODULE 05); after ContentDB; uses GameState + ContentDB |
 | `RivalEncounters` | Rival encounter session/lifecycle (MODULE 06); after Progression; uses GameState + ContentDB competitions; no EventBus |
+| `RivalCompetitionRunner` | Production minigame launch/submit (MODULE 07B); after RivalEncounters; Callable seam only |
 
 ## Canonical future destinations (ещё не созданы)
 
 ```text
 audio/
-minigames/dance/   # MODULE 07B
 minigames/sigma/   # MODULE 07C
 minigames/money/   # MODULE 07D
 ```
 
 `minigames/slap/` реализован (MODULE 07A).  
+`minigames/dance/` реализован (MODULE 07B).  
 `ui/` существует как папка-заготовка; FPS HUD временно живёт в `player.tscn`.
 
 ## Donor

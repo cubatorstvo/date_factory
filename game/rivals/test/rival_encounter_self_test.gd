@@ -151,6 +151,8 @@ func _run_all() -> void:
 	_test_no_relationship_contamination()
 	_gs.call("reset_for_new_game")
 	_re.call("force_clear_session")
+	if _runner != null:
+		_runner.restore_production_runner()
 
 
 func _test_player_initiates() -> void:

@@ -1,6 +1,7 @@
 class_name RivalFakeCompetitionRunner
 extends RefCounted
 ## Test-only competition runner. Forces WIN/LOSS CLOSE/CRUSHING without MODULE 07 gameplay.
+## Uses RivalEncounters.set_competition_runner (not competition_requested) so production Runner is not double-fired.
 
 var forced_outcome: GameTypes.RivalCompetitionOutcome = GameTypes.RivalCompetitionOutcome.PLAYER_WIN
 var forced_grade: GameTypes.VictoryGrade = GameTypes.VictoryGrade.CLOSE
@@ -12,14 +13,28 @@ var _encounters: Node = null
 
 func attach(encounters: Node) -> void:
 	_encounters = encounters
-	if _encounters != null and not _encounters.competition_requested.is_connected(_on_competition_requested):
-		_encounters.competition_requested.connect(_on_competition_requested)
+	if _encounters == null:
+		return
+	_encounters.call("set_competition_runner", run_competition)
 
 
 func detach() -> void:
-	if _encounters != null and _encounters.competition_requested.is_connected(_on_competition_requested):
-		_encounters.competition_requested.disconnect(_on_competition_requested)
+	if _encounters != null:
+		_encounters.call("clear_competition_runner")
 	_encounters = null
+
+
+func restore_production_runner() -> void:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var production: Node = tree.root.get_node_or_null("/root/RivalCompetitionRunner")
+	if production == null or _encounters == null:
+		return
+	if production.has_method("register_as_runner"):
+		production.call("register_as_runner")
+	else:
+		_encounters.call("set_competition_runner", production.run_competition)
 
 
 func set_forced(
@@ -35,7 +50,7 @@ func reset_counts() -> void:
 	last_request = null
 
 
-func _on_competition_requested(request: RivalCompetitionRequest) -> void:
+func run_competition(request: RivalCompetitionRequest) -> void:
 	last_request = request
 	request_count += 1
 	if not auto_submit:

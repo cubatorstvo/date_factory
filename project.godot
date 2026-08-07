@@ -23,6 +23,7 @@ GameState="*res://game/state/game_state.gd"
 ContentDB="*res://data/catalog/content_db.gd"
 Progression="*res://game/progression/progression.gd"
 RivalEncounters="*res://game/rivals/rival_encounters.gd"
+RivalCompetitionRunner="*res://game/rivals/rival_competition_runner.gd"
 
 [display]
 

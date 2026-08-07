@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cyatehhl4b5ao"]
+
+[ext_resource type="Script" uid="uid://dyitnxacxlhja" path="res://minigames/dance/dance_minigame.gd" id="1_rt42h"]
+
+[node name="DanceMinigame" type="CanvasLayer" unique_id=1107397069]
+script = ExtResource("1_rt42h")

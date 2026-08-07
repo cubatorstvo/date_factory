@@ -1,5 +1,5 @@
 extends Node
-## MODULE 07A Slap Minigame self-test (formulas, FSM, perks, host integration).
+## MODULE 07A Slap Minigame self-test (formulas, FSM, perks, RivalCompetitionRunner integration).
 ## Run: res://minigames/slap/test/slap_minigame_test.tscn --quit-after 8000
 
 
@@ -7,7 +7,7 @@ var _failed: int = 0
 var _passed: int = 0
 var _gs: Node = null
 var _re: Node = null
-var _host: SlapCompetitionHost = null
+var _runner: Node = null
 var _finish_count: int = 0
 var _last_encounter: RivalEncounterResult = null
 
@@ -16,7 +16,7 @@ func _ready() -> void:
 	_gs = get_node("/root/GameState")
 	_re = get_node("/root/RivalEncounters")
 	await get_tree().process_frame
-	_ensure_host()
+	_ensure_runner()
 	if not _re.encounter_finished.is_connected(_on_finished):
 		_re.encounter_finished.connect(_on_finished)
 	_run_sync_tests()
@@ -45,15 +45,11 @@ func _ok(cond: bool, label: String) -> void:
 		print("MODULE_07A_TEST FAIL: %s" % label)
 
 
-func _ensure_host() -> void:
-	var existing: Node = get_tree().root.get_node_or_null("SlapCompetitionHost")
-	if existing != null:
-		_host = existing as SlapCompetitionHost
-	else:
-		_host = SlapCompetitionHost.new()
-		_host.name = "SlapCompetitionHost"
-		get_tree().root.add_child(_host)
-	_host.enabled = true
+func _ensure_runner() -> void:
+	_runner = get_node_or_null("/root/RivalCompetitionRunner")
+	_ok(_runner != null, "79 RivalCompetitionRunner autoload present")
+	if _runner != null and _runner.has_method("register_as_runner"):
+		_runner.call("register_as_runner")
 
 
 func _new_match(
@@ -377,7 +373,8 @@ func _run_integration_tests() -> void:
 	_re.call("clear_rival_overrides")
 	_load_rival_fixture("res://data/test/rival_test_low.tres")
 	_load_rival_fixture("res://data/test/rival_test_story.tres")
-	_host.enabled = true
+	if _runner != null and _runner.has_method("register_as_runner"):
+		_runner.call("register_as_runner")
 
 	_finish_count = 0
 	_last_encounter = null
@@ -391,12 +388,12 @@ func _run_integration_tests() -> void:
 	# choose_competition() already begins competition (MODULE 06).
 	var choose: Dictionary = _re.call("choose_competition", GameTypes.CompetitionType.SLAP) as Dictionary
 	_ok(bool(choose.get("ok", false)), "112 choose+begin SLAP")
-	var mg: SlapMinigame = _host.get_active_minigame()
+	var mg: SlapMinigame = _runner.call("get_active_minigame") as SlapMinigame
 	if mg != null:
 		mg.auto_tick = false
 		mg.accept_input = false
 	await get_tree().process_frame
-	mg = _host.get_active_minigame()
+	mg = _runner.call("get_active_minigame") as SlapMinigame
 	_ok(mg != null and mg.match_state != null, "112 slap minigame active")
 	if mg == null or mg.match_state == null:
 		return
@@ -422,8 +419,9 @@ func _run_integration_tests() -> void:
 	var before: int = _finish_count
 	if is_instance_valid(mg):
 		mg.force_finish_emit()
-	_ok(_finish_count == before, "111 host single submit")
-	_ok(_host.get_active_minigame() == null, "112 cleanup")
+	_ok(_finish_count == before, "111 runner single submit")
+	_ok(_runner.call("get_active_minigame") == null, "112 cleanup")
+	_ok(not bool(_runner.call("is_busy")), "116 runner not busy")
 
 	# Loss path on story rival
 	_re.call("force_clear_session")
@@ -437,12 +435,12 @@ func _run_integration_tests() -> void:
 	) as Dictionary
 	_ok(bool(start2.get("ok", false)), "112b start story")
 	_re.call("choose_competition", GameTypes.CompetitionType.SLAP)
-	mg = _host.get_active_minigame()
+	mg = _runner.call("get_active_minigame") as SlapMinigame
 	if mg != null:
 		mg.auto_tick = false
 		mg.accept_input = false
 	await get_tree().process_frame
-	mg = _host.get_active_minigame()
+	mg = _runner.call("get_active_minigame") as SlapMinigame
 	_ok(mg != null, "112b minigame")
 	if mg == null:
 		return
