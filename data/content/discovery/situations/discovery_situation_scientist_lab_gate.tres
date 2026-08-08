@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DiscoverySituationDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_situation_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_approach"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_scientist_body_count.tres" id="a0"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_scientist_buy_body.tres" id="a1"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_scientist_ethics_later.tres" id="a2"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_situation_scientist_lab_gate"
+location_id = &"laboratory"
+setup_text = "Учёная стоит у закрытой лаборатории и перечитывает табличку «ДОПУСК ОДНОГО ЧЕЛОВЕКА». Рядом её ухажёр объясняет, что одного человека обычно достаточно."
+approaches = Array[ExtResource("1_approach")]([ExtResource("a0"), ExtResource("a1"), ExtResource("a2")])

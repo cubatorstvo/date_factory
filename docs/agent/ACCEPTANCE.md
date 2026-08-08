@@ -1,17 +1,11 @@
-# ACCEPTANCE — MODULE 16 Dating Overload
+# ACCEPTANCE — MODULE 17 First Clone Sequence
 
 ## Player-visible result
 
-After Media overload_ready: 3 overlapping requests (19:00/19:00/20:00), body capacity 1 date/GameDay, +2 demand/day, backlog grows, Feed Boost optional, after conditions → realization «Проблема в количестве меня» + clone_solution_needed. Stage stays 4. No Scientist/Lab/clones.
+After overload recognition: Scientist pair at lab gate → rival → contact/date +5 → STAGE_5 / LABORATORY → lab machine → 3-pass calibration → physical clone → WORK or DATING → total_clones=1. Rates remain 0. No President/MODULE 18.
 
 ## PASS
-
-- DatingOverload autoload; activation idempotent from Media.overload_ready at STAGE_4
-- Cap 1 completed date/day after activation; pre-overload unlimited
-- Demand math: 3 then +2/day; WAITING→OVERDUE; fulfill oldest matching girl
-- Phone overload + DateVenue annotations; Feed Boost +5 Att / next wave 3 once/day
-- Recognition exact; no penalties; regressions MODULE 02–15; no MODULE 17
+Scientist KIND+DEMANDING XP4; rival Auth7 SIGMA+SLAP; recognition gate; Stage5+Lab; FirstClone once; calibration constants exact; WORK/DATING commit; Phone counts; ContentDB + MODULE 02–16 regressions; no MODULE 18.
 
 ## Verdict
-
-READY or NOT READY only.
+READY

@@ -33,6 +33,7 @@ World="*res://world/world.gd"
 SalaryMine="*res://game/salary/salary_mine.gd"
 Media="*res://game/media/media.gd"
 DatingOverload="*res://game/dating_overload/dating_overload.gd"
+FirstClone="*res://game/first_clone/first_clone.gd"
 
 [display]
 

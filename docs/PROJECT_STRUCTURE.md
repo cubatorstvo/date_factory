@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 16 — Dating Overload**.  
+Фактическая структура после **MODULE 17 — First Clone Sequence**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
 ## Top-level (существует сейчас)
@@ -13,9 +13,9 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → World apartment, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (status + story + girls + MEDIA + ПЕРЕГРУЗКА + salary); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
-| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / clone economy |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ + salary); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
+| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / clone economy (MODULE 18+) |
 | `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
 | `icon.svg` | Иконка приложения | — | — |
@@ -41,8 +41,8 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 - `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
 - `types/perk_ids.gd` — `class_name PerkIds` 32 canonical perk `StringName` constants
 - `definitions/*.gd` — typed `Resource` schemas (incl. dating action/event/pool/greeting/farewell, discovery, appearance)
-- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); MODULE 14A+14B girls/rivals/discovery/dating pools (11/10)
-- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; `try_get_girl`/`try_get_rival` for missing STAGE_4 Scientist IDs)
+- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); through MODULE 17: 12 girls / 11 rivals / 12 discovery situations
+- `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; `try_get_girl`/`try_get_rival` for safe missing-content presentation)
 - `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations, girls, rivals, discovery, dating)
 - `test/` — fixtures + MODULE 06–09 test content (`dating_test_fixtures.gd`, discovery/rival fixtures; not in production catalog)
 
@@ -184,6 +184,7 @@ Dependency-safe production order (`project.godot`):
 | `SalaryMine` | Salary periods / pending / claim / passive (MODULE 13); after World; StoryFeature.SALARY_MINE gate |
 | `Media` | Attention / photo session / publish / incoming offers / feed (MODULE 15); after SalaryMine; StoryFeature.MEDIA_ATTENTION gate |
 | `DatingOverload` | Personal date capacity / demand backlog / feed boost / problem recognition (MODULE 16); after Media; activates from Media `overload_ready` at STAGE_4 |
+| `FirstClone` | One-off first clone sequence (MODULE 17); after DatingOverload; eligibility → calibration → physical representative → WORK/DATING aggregate counts; no rates |
 
 ### `game/media/`
 
@@ -198,6 +199,12 @@ Dependency-safe production order (`project.godot`):
 - `dating_overload.gd` — autoload `DatingOverload`: activation, daily body capacity, demand waves, backlog, feed boost, recognition handoff
 - `dating_overload_types.gd` / `dating_demand_entry.gd` / `dating_overload_status.gd` — enums/constants, demand row, status snapshot
 - `test/dating_overload_test.tscn` + `dating_overload_self_test.gd` — MODULE 16 headless runner
+
+### `game/first_clone/`
+
+- `first_clone.gd` — autoload `FirstClone`: eligibility, one-off calibration sequence, preview spawn, WORK/DATING assignment into `GameState` aggregate counts
+- `first_clone_types.gd` / `first_clone_status.gd` / `first_clone_actor.gd` / `first_clone_machine_interactable.gd` / `clone_calibration_minigame.gd` — types, status snapshot, physical representative, machine interactable, 3-pass minigame
+- `test/first_clone_test.tscn` + `first_clone_self_test.gd` — MODULE 17 headless runner
 
 ## Canonical future destinations (ещё не созданы)
 
@@ -215,13 +222,14 @@ audio/
 `game/story/` реализован (MODULE 11).  
 `world/` каркас 9 локаций реализован (MODULE 12).  
 `game/day/` + `game/salary/` реализова зарплаты (MODULE 13).  
-`data/content/` production content through Editor/pre-media (MODULE 14A+14B); inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`.
+`data/content/` production content through Scientist / first clone (MODULE 14A+14B+17); inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`, `docs/content/MANUAL_CONTENT_17.md`.
 `game/content/test/module_14a_vertical_test.tscn` — MODULE 14A headless integration runner.
 `game/content/test/module_14b_vertical_test.tscn` — MODULE 14B Editor → STAGE_4 / MEDIA_ATTENTION headless runner.
-`ui/phone/` функциональный журнал: status + story + girls + MEDIA + ПЕРЕГРУЗКА (capacity / backlog / feed boost / realization) + salary; STAGE_4 handoff tracks photo session → publish → overload → recognition (MODULE 08/10/12/13/14/15/16); финальный phone shell — MODULE 22.  
+`ui/phone/` функциональный журнал: status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1) + salary; STAGE_4: media → overload → Scientist hunt; STAGE_5: first-clone handoff without President (MODULE 08/10/12/13/14/15/16/17); финальный phone shell — MODULE 22.  
 `ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
 `game/media/test/media_test.tscn` — MODULE 15 Media headless runner.
 `game/dating_overload/test/dating_overload_test.tscn` — MODULE 16 Dating Overload headless runner.
+`game/first_clone/test/first_clone_test.tscn` — MODULE 17 First Clone headless runner.
 
 ## Donor
 

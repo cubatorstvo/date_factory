@@ -258,9 +258,9 @@ func _test_stages() -> void:
 	_ok(prologue != null and prologue.story_girl_id == &"girl_neighbor" and prologue.story_rival_id == &"", "prologue refs")
 	var finale: StoryStageDefinition = db.call("get_stage", GameTypes.GameStage.FINALE) as StoryStageDefinition
 	_ok(finale != null and finale.story_girl_id == &"girl_final_target", "finale girl")
-	# MODULE 14B ships Editor + ordinary public girls (11 total).
+	# MODULE 17 ships Scientist + prior production girls (12 total).
 	var prod_girls: Array = db.call("list_girls") as Array
-	_ok(prod_girls.size() == 11, "11 production GirlDefinitions in 14B")
+	_ok(prod_girls.size() == 12, "12 production GirlDefinitions with scientist")
 	for gid in [
 		&"girl_neighbor",
 		&"girl_actress",
@@ -273,17 +273,20 @@ func _test_stages() -> void:
 		&"girl_public_sculpture",
 		&"girl_cafe_receipt_notes",
 		&"girl_appearance_flash",
+		&"girl_scientist",
 	]:
 		var g: GirlDefinition = db.call("get_girl", gid) as GirlDefinition
 		_ok(g != null and g.id == gid, "production girl %s" % String(gid))
 	var editor: GirlDefinition = db.call("get_girl", &"girl_magazine_editor") as GirlDefinition
 	_ok(editor != null and editor.is_story and editor.story_stage == GameTypes.GameStage.STAGE_3, "14B girl_magazine_editor present STAGE_3")
-	var scientist_missing: GirlDefinition = null
+	var scientist: GirlDefinition = null
 	if db.has_method("try_get_girl"):
-		scientist_missing = db.call("try_get_girl", StoryIds.GIRL_SCIENTIST) as GirlDefinition
+		scientist = db.call("try_get_girl", StoryIds.GIRL_SCIENTIST) as GirlDefinition
 	else:
-		scientist_missing = db.call("get_girl", StoryIds.GIRL_SCIENTIST) as GirlDefinition
-	_ok(scientist_missing == null, "14B girl_scientist still absent")
+		scientist = db.call("get_girl", StoryIds.GIRL_SCIENTIST) as GirlDefinition
+	_ok(scientist != null and scientist.is_story and scientist.story_stage == GameTypes.GameStage.STAGE_4, "17 girl_scientist present STAGE_4")
+	var rival_scientist: RivalDefinition = db.call("get_rival", &"rival_scientist") as RivalDefinition
+	_ok(rival_scientist != null and rival_scientist.is_story and rival_scientist.story_stage == GameTypes.GameStage.STAGE_4, "17 rival_scientist present STAGE_4")
 
 
 func _test_fixture_lookups() -> void:

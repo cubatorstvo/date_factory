@@ -2,7 +2,7 @@ class_name PhoneJournal
 extends Control
 ## Functional phone journal for discovered girls (MODULE 08)
 ## + global/story status (MODULE 14A) + salary (MODULE 13) + MEDIA (MODULE 15)
-## + Dating Overload section (MODULE 16).
+## + Dating Overload section (MODULE 16) + First Clone counts / Stage5 handoff (MODULE 17).
 ## No Dating CTA / messaging / scheduling / calendar.
 
 signal opened()
@@ -57,6 +57,11 @@ var _realization_presented: bool = false
 var _realization_dialog: AcceptDialog = null
 var _player_mode_connected: bool = false
 
+var _clone_section: VBoxContainer = null
+var _clone_title: Label = null
+var _clone_stats: Label = null
+var _clone_signals_connected: bool = false
+
 
 func _ready() -> void:
 	visible = false
@@ -66,6 +71,7 @@ func _ready() -> void:
 	_connect_salary_signals()
 	_connect_media_signals()
 	_connect_overload_signals()
+	_connect_clone_signals()
 
 
 func open(player: Node = null) -> void:
@@ -128,6 +134,7 @@ func refresh() -> void:
 	_refresh_list()
 	_refresh_media_section()
 	_refresh_overload_section()
+	_refresh_clone_section()
 	_refresh_salary_section()
 
 
@@ -227,6 +234,16 @@ func was_realization_presented() -> bool:
 	return _realization_presented
 
 
+func has_clone_section_visible() -> bool:
+	return _clone_section != null and _clone_section.visible
+
+
+func get_clone_stats_text() -> String:
+	if _clone_stats == null:
+		return ""
+	return String(_clone_stats.text)
+
+
 func _build_ui() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.09, 0.12, 0.92)
@@ -264,6 +281,7 @@ func _build_ui() -> void:
 	split.add_child(_detail)
 	_build_media_section(vbox)
 	_build_overload_section(vbox)
+	_build_clone_section(vbox)
 	_build_salary_section(vbox)
 	_close_btn = Button.new()
 	_close_btn.text = "Закрыть"
@@ -396,6 +414,22 @@ func _build_overload_section(parent: VBoxContainer) -> void:
 	add_child(_realization_dialog)
 
 
+func _build_clone_section(parent: VBoxContainer) -> void:
+	_clone_section = VBoxContainer.new()
+	_clone_section.visible = false
+	_clone_section.add_theme_constant_override("separation", 4)
+	parent.add_child(_clone_section)
+	var sep := HSeparator.new()
+	_clone_section.add_child(sep)
+	_clone_title = Label.new()
+	_clone_title.text = "КЛОНЫ"
+	_clone_title.add_theme_font_size_override("font_size", 18)
+	_clone_section.add_child(_clone_title)
+	_clone_stats = Label.new()
+	_clone_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_clone_section.add_child(_clone_stats)
+
+
 func _build_salary_section(parent: VBoxContainer) -> void:
 	_salary_section = VBoxContainer.new()
 	_salary_section.visible = false
@@ -486,6 +520,7 @@ func _on_day_advanced_status(_new_day: int) -> void:
 	_request_status_refresh()
 	_request_media_refresh()
 	_request_overload_refresh()
+	_request_clone_refresh()
 	_request_salary_refresh()
 	_request_story_refresh()
 
@@ -496,6 +531,7 @@ func _on_story_objective_changed(_progress: StoryStageProgress) -> void:
 
 func _on_story_stage_started(_stage: GameTypes.GameStage) -> void:
 	_request_story_refresh()
+	_request_clone_refresh()
 
 
 func _request_status_refresh() -> void:
@@ -545,9 +581,13 @@ func _refresh_story_section() -> void:
 	if progress == null:
 		_story_label.text = "—"
 		return
-	# STAGE_4: reserved Scientist IDs are not authored yet — MODULE 15 media handoff (§91).
-	if progress.stage == GameTypes.GameStage.STAGE_4 and _is_stage4_media_handoff(progress):
-		_story_label.text = _stage4_media_handoff_text()
+	# STAGE_4: media → overload → Scientist hunt (MODULE 15/16/17).
+	if progress.stage == GameTypes.GameStage.STAGE_4:
+		_story_label.text = _stage4_story_text(progress)
+		return
+	# STAGE_5: first-clone handoff; President content intentionally absent (MODULE 17 §24).
+	if progress.stage == GameTypes.GameStage.STAGE_5:
+		_story_label.text = _stage5_story_text()
 		return
 	var stage_name: String = progress.display_name.strip_edges()
 	if stage_name == "":
@@ -571,37 +611,47 @@ func _refresh_story_section() -> void:
 	_story_label.text = "\n".join(lines)
 
 
-func _is_stage4_media_handoff(progress: StoryStageProgress) -> bool:
-	var db: Node = get_node_or_null("/root/ContentDB")
-	if db == null:
-		return true
-	var girl_missing: bool = false
-	if String(progress.story_girl_id) != "":
-		if db.has_method("try_get_girl"):
-			girl_missing = db.call("try_get_girl", progress.story_girl_id) == null
-		else:
-			girl_missing = true
-	var rival_missing: bool = false
-	if progress.rival_required and String(progress.story_rival_id) != "":
-		if db.has_method("try_get_rival"):
-			rival_missing = db.call("try_get_rival", progress.story_rival_id) == null
-		else:
-			rival_missing = true
-	return girl_missing or rival_missing
-
-
-func _stage4_media_handoff_text() -> String:
+func _stage4_story_text(progress: StoryStageProgress) -> String:
 	var overload: Node = get_node_or_null("/root/DatingOverload")
-	if overload != null and overload.has_method("is_problem_recognized") and bool(overload.call("is_problem_recognized")):
-		var after: PackedStringArray = PackedStringArray()
-		after.append("СТАДИЯ 4")
-		after.append("")
-		after.append(DatingOverloadTypes.REALIZATION_LINE_1)
-		after.append(DatingOverloadTypes.REALIZATION_LINE_2)
-		after.append("")
-		after.append("Следующий шаг:")
-		after.append("Найти способ быть в нескольких местах одновременно.")
-		return "\n".join(after)
+	var recognized: bool = (
+		overload != null
+		and overload.has_method("is_problem_recognized")
+		and bool(overload.call("is_problem_recognized"))
+	)
+	# MODULE 17 §5: after recognition, before Scientist completion.
+	if recognized and not progress.girl_completed:
+		var hunt: PackedStringArray = PackedStringArray()
+		hunt.append("СТАДИЯ 4")
+		hunt.append("Учёная")
+		hunt.append("")
+		hunt.append(DatingOverloadTypes.REALIZATION_LINE_1)
+		hunt.append(DatingOverloadTypes.REALIZATION_LINE_2)
+		hunt.append("")
+		hunt.append("Следующий шаг:")
+		hunt.append("Найти Учёную у закрытой лаборатории.")
+		return "\n".join(hunt)
+	return _stage4_media_overload_text(overload)
+
+
+func _stage5_story_text() -> String:
+	var total: int = 0
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and gs.has_method("get_total_clones"):
+		total = int(gs.call("get_total_clones"))
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("СТАДИЯ 5")
+	lines.append("Лаборатория")
+	lines.append("")
+	if total < 1:
+		# MODULE 17 §24 — first clone handoff; no missing President objective.
+		lines.append("Лаборатория открыта.")
+		lines.append("Создай первого клона.")
+	else:
+		lines.append("Первый клон создан.")
+	return "\n".join(lines)
+
+
+func _stage4_media_overload_text(overload: Node) -> String:
 	if overload != null and overload.has_method("is_started") and bool(overload.call("is_started")):
 		var during: PackedStringArray = PackedStringArray()
 		during.append("СТАДИЯ 4")
@@ -830,6 +880,56 @@ func _connect_overload_signals() -> void:
 		if overload.has_method("is_problem_recognized") and bool(overload.call("is_problem_recognized")):
 			_realization_pending = true
 	_overload_signals_connected = true
+
+
+func _connect_clone_signals() -> void:
+	if _clone_signals_connected:
+		return
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and gs.has_signal("clone_counts_changed") and not gs.is_connected("clone_counts_changed", _on_clone_counts_changed):
+		gs.connect("clone_counts_changed", _on_clone_counts_changed)
+	_clone_signals_connected = true
+
+
+func _on_clone_counts_changed(_total: int, _working: int, _dating: int, _free: int) -> void:
+	_request_clone_refresh()
+	_request_story_refresh()
+
+
+func _request_clone_refresh() -> void:
+	if _is_open:
+		_refresh_clone_section()
+
+
+func _refresh_clone_section() -> void:
+	if _clone_section == null:
+		return
+	var total: int = 0
+	var working: int = 0
+	var dating: int = 0
+	var free: int = 0
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null:
+		if gs.has_method("get_total_clones"):
+			total = int(gs.call("get_total_clones"))
+		if gs.has_method("get_clones_working"):
+			working = int(gs.call("get_clones_working"))
+		if gs.has_method("get_clones_dating"):
+			dating = int(gs.call("get_clones_dating"))
+		if gs.has_method("get_free_clones"):
+			free = int(gs.call("get_free_clones"))
+	# MODULE 17 §52 — hidden until first clone; no money/min or dates/min.
+	_clone_section.visible = total >= 1
+	if total < 1:
+		if _clone_stats != null:
+			_clone_stats.text = ""
+		return
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("Всего: %d" % total)
+	lines.append("На работе: %d" % working)
+	lines.append("На свиданиях: %d" % dating)
+	lines.append("Свободных: %d" % free)
+	_clone_stats.text = "\n".join(lines)
 
 
 func _on_overload_started() -> void:

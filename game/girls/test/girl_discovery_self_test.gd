@@ -576,9 +576,9 @@ func _test_contentdb_validation() -> void:
 	var result: Dictionary = db.call("validate_all") as Dictionary
 	_ok(bool(result.get("ok", false)), "140 ContentDB validate_all")
 	var girls: Array = db.call("list_girls") as Array
-	_ok(girls.size() == 11, "140 production girls 11 in 14B")
+	_ok(girls.size() == 12, "140 production girls 12 with scientist")
 	var sits: Array = db.call("list_discovery_situations") as Array
-	_ok(sits.size() == 11, "140 production discovery 11 in 14B")
+	_ok(sits.size() == 12, "140 production discovery 12 with scientist")
 	# Index fixture catalog
 	var cat: ContentCatalog = ContentCatalog.new()
 	var girl: GirlDefinition = load("res://data/test/girl_test_discovery.tres") as GirlDefinition

@@ -86,15 +86,23 @@
 
 На фоне перегрузки герой ищет решение физического ограничения собственного тела.
 
-Учёная имеет собственного сюжетного ухажёра.
+Учёная появляется у закрытой лаборатории **только после** recognition перегрузки (`DatingOverload.is_problem_recognized`). До этого Phone Story не выдаёт её как цель.
 
-После победы над ним и успешного свидания она открывает доступ к лаборатории.
+Учёная имеет собственного сюжетного ухажёра (XP 4 / Authority 7).
+
+После победы над ним и успешного свидания (+5) Story переводит игру в STAGE_5 и открывает `StoryFeature.LABORATORY` — без ручного `advance_stage`.
 
 Результат:
 
 - появляется клонирование;
 - создаётся первый клон;
-- запускается переход от ручной романтической игры к простой инкрементальной системе.
+- запускается переход от ручной романтической игры к простой инкрементальной системе (MODULE 18+).
+
+### Реализация (MODULE 17)
+
+- Scientist KIND+DEMANDING, discovery at laboratory gate, rival SIGMA+SLAP.
+- Phone after recognition: «Найти Учёную у закрытой лаборатории.»
+- Completion → Stage5 / Laboratory unlock via existing Story framework.
 
 ## 33.6. Стадия 5 — Президент
 
@@ -209,7 +217,7 @@ Problem recognition after >=2 days, >=7 generated, >=4 backlog, >=1 completed pe
 Implementation clarification (not a product rewrite):
 The overlap is represented by authored slot labels 19:00/20:00, not a real clock.
 The system is intentionally not a calendar manager.
-Scientist / Lab / first clone remain MODULE 17.
+Scientist / Lab / first clone are MODULE 17 (implemented).
 
 ---
 
@@ -227,6 +235,14 @@ Scientist / Lab / first clone remain MODULE 17.
 Мини-игра нужна как единоразовая постановка и может позже повторяться в ускоренном виде для отдельных улучшений.
 
 Системы качества клона, памяти, индивидуальных дефектов и ручной проверки каждого экземпляра не существует.
+
+### Реализация (MODULE 17)
+
+- One-off FirstClone sequence: 3-pass calibration → physical representative → WORK or DATING once.
+- Source of truth: `GameState` aggregate counts (`total` / `working` / `dating` / free); no individual persistent clone object.
+- Rates (`money/min`, `dates/min`) remain 0 until MODULE 18.
+- Phone STAGE_5 before clone: «Лаборатория открыта. / Создай первого клона.» (no President objective).
+- Phone КЛОНЫ section after `total_clones >= 1`: Всего / На работе / На свиданиях / Свободных.
 
 ---
 

@@ -580,6 +580,7 @@ func _test_no_story_advance() -> void:
 
 
 func _test_no_scientist() -> void:
+	# MODULE 17 ships scientist content; Media Attention must still keep LABORATORY locked.
 	_reset()
 	var girl: Variant = null
 	var rival: Variant = null
@@ -589,8 +590,8 @@ func _test_no_scientist() -> void:
 		girl = _content.call("get_girl", &"girl_scientist")
 	if _content.has_method("try_get_rival"):
 		rival = _content.call("try_get_rival", &"rival_scientist")
-	_ok(girl == null, "138 no girl_scientist")
-	_ok(rival == null, "138 no rival_scientist")
+	_ok(girl != null, "138 girl_scientist present")
+	_ok(rival != null, "138 rival_scientist present")
 	_ok(not bool(_story.call("is_feature_unlocked", StoryTypes.StoryFeature.LABORATORY)), "138 no lab")
 
 

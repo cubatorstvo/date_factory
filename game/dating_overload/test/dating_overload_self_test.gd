@@ -441,14 +441,11 @@ func _test_stage_unchanged() -> void:
 
 
 func _test_no_scientist() -> void:
+	# MODULE 17 ships girl_scientist; MODULE 16 boundary is that overload alone does not unlock Lab/clones.
 	_reset()
-	var girl: Variant = null
-	if _content.has_method("try_get_girl"):
-		girl = _content.call("try_get_girl", &"girl_scientist")
-	elif _content.has_method("get_girl"):
-		girl = _content.call("get_girl", &"girl_scientist")
-	_ok(girl == null, "136 no scientist")
-	_ok(not bool(_story.call("is_feature_unlocked", StoryTypes.StoryFeature.LABORATORY)), "137 no lab")
+	_ok(not bool(_story.call("is_feature_unlocked", StoryTypes.StoryFeature.LABORATORY)), "137 no lab without Scientist completion")
+	_ok(int(_gs.call("get_total_clones")) == 0, "137 no clones from overload alone")
+	_ok(int(_gs.call("get_stage")) != int(GameTypes.GameStage.STAGE_5), "137 stage not advanced by overload")
 
 
 func _test_status_snapshot() -> void:

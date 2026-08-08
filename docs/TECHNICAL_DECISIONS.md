@@ -743,3 +743,21 @@ Stage the clone premise as a felt capacity shortage without calendar optimizatio
 
 Scope:
 `game/dating_overload/**`, GameState overload fields, Relationships/DateVenue capacity gates, `ui/phone/phone_journal.gd`, docs structure/GDD notes
+
+## MODULE 17: First Clone Sequence (Scientist → Lab → one-off clone)
+
+Context:
+After overload recognition, the player needs a causal Scientist route into Laboratory and a single physical first clone without starting MODULE 18 production/rates.
+
+Decision:
+1. Scientist + rival appear only after `DatingOverload.is_problem_recognized()` (StageActorAnchor `requires_overload_recognized`); XP4 / rival Authority7; Story owns STAGE_4→STAGE_5 and `StoryFeature.LABORATORY` (no manual `advance_stage`).
+2. FirstClone is a one-off calibrated scene (3 deterministic SPACE passes); abort leaves clone counts at 0; assignment commits exactly WORK `1/1/0` or DATING `1/0/1` into `GameState.set_clone_counts`.
+3. Aggregate clone counts on GameState are the source of truth; no individual persistent clone object / defects / QA / memories; money/min and dates/min stay 0 until MODULE 18.
+4. Phone STAGE_4 after recognition shows Scientist hunt («Найти Учёную у закрытой лаборатории»); STAGE_5 before clone shows lab handoff without President; КЛОНЫ section appears only when `total_clones >= 1` (total/working/dating/free, no rates).
+5. STOP before MODULE 18: no second clone, no passive ticking, no mass terminal, no President content.
+
+Reason:
+Prove the first physical double as the capacity solution while keeping Story, GameState aggregates, and Phone presentation coherent.
+
+Scope:
+`game/first_clone/**`, Scientist content, StageActorAnchor flag, lab/city markers, `ui/phone/phone_journal.gd`, docs §70

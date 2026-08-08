@@ -69,8 +69,11 @@
 - Доступ локаций — `StoryFeature` (не `GameState.unlock_location` для канонических девяти).
 - `PUBLIC_CITY_ACCESS` — внутренний gate внутри `city_hub`, не отдельная location.
 - Физический телефон в квартире открывает PhoneJournal; экономика шахты — MODULE 13.
-- PhoneJournal (MODULE 14A/14B/15/16): top status + Story (`Story.get_current_progress()`) + girls + MEDIA (Attention / photos / incoming / feed) + ПЕРЕГРУЗКА (capacity / backlog / Feed Boost) + salary; STAGE_4 story handoff tracks photo session → publish → overload → recognition when Scientist content is absent.
+- PhoneJournal (MODULE 14A/14B/15/16/17): top status + Story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1) + salary.
+- STAGE_4 Story: photo session → publish → overload → recognition → Scientist hunt at closed laboratory gate.
+- STAGE_5 Story: first-clone handoff («Создай первого клона») without President content; after first clone, safe lab presentation.
 - MODULE 14B ordinary public NPCs sit behind existing `PUBLIC_CITY_ACCESS`; Editor pair + photo cue live in `appearance_space`; MODULE 15 photo session uses that cue.
+- MODULE 17: Scientist/rival anchors at city_hub laboratory gate (`requires_overload_recognized`); laboratory hosts one-off clone machine + physical representative.
 
 
 ---
@@ -110,7 +113,7 @@
 
 Это не полноценный симулятор социальной сети.
 
-### Реализация (MODULE 15 / 16)
+### Реализация (MODULE 15 / 16 / 17)
 
 - `Attention` = persistent media meter `0..100`, non-spendable.
 - Photo session creates 3 fixed photo records; one photo publish per GameDay.
@@ -120,6 +123,7 @@
 - Phone ПЕРЕГРУЗКА (after MEDIA): daily personal capacity, backlog rows (OVERDUE then WAITING with 19:00/20:00 labels), Feed Boost «Поднять волну» until recognition.
 - Realization modal uses exact «Проблема не в графике / Проблема в количестве меня» on next Phone open or safe GAMEPLAY; mechanical recognition does not wait for the modal.
 - Overlap is authored slot labels, not a real clock; intentionally not a calendar manager.
+- MODULE17 Phone: after recognition → «Найти Учёную у закрытой лаборатории»; STAGE_5 → «Создай первого клона»; КЛОНЫ shows aggregate counts only (no money/min / dates/min).
 
 ---
 

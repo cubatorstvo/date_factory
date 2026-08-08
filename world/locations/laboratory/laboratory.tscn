@@ -1,12 +1,11 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene format=3 uid="uid://vus8d7aomfk"]
 
-[ext_resource type="Script" path="res://world/world_location.gd" id="1_loc"]
-[ext_resource type="Script" path="res://world/world_transition.gd" id="2_transition"]
-[ext_resource type="Script" path="res://world/player_spawn_point.gd" id="3_pspawn"]
-[ext_resource type="Script" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
-[ext_resource type="Script" path="res://world/story_event_point.gd" id="5_story"]
-[ext_resource type="Script" path="res://world/phone_interactable.gd" id="6_phone"]
-[ext_resource type="Script" path="res://world/world_feature_gate.gd" id="7_gate"]
+[ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
+[ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
+[ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
+[ext_resource type="Script" uid="uid://47ida632vn2m" path="res://game/first_clone/first_clone_machine_interactable.gd" id="4_m87cs"]
+[ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
+
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
 background_color = Color(0.42, 0.48, 0.55, 1)
@@ -14,207 +13,280 @@ ambient_light_source = 2
 ambient_light_color = Color(0.78, 0.78, 0.82, 1)
 ambient_light_energy = 0.9
 
-[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
-albedo_color = Color(0.3, 0.35, 0.4, 1)
-
 [sub_resource type="BoxMesh" id="BoxMesh_Floor"]
 size = Vector3(12, 0.2, 12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
+albedo_color = Color(0.3, 0.35, 0.4, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_Floor"]
 size = Vector3(12, 0.2, 12)
 
-[sub_resource type="StandardMaterial3D" id="Mat_WallN"]
-albedo_color = Color(0.4, 0.45, 0.5, 1)
-
 [sub_resource type="BoxMesh" id="BoxMesh_WallN"]
 size = Vector3(12, 3, 0.3)
 
+[sub_resource type="StandardMaterial3D" id="Mat_WallN"]
+albedo_color = Color(0.4, 0.45, 0.5, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape_WallN"]
+size = Vector3(12, 3, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallS"]
 size = Vector3(12, 3, 0.3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_WallS"]
 albedo_color = Color(0.4, 0.45, 0.5, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_WallS"]
-size = Vector3(12, 3, 0.3)
-
 [sub_resource type="BoxShape3D" id="BoxShape_WallS"]
 size = Vector3(12, 3, 0.3)
-
-[sub_resource type="StandardMaterial3D" id="Mat_WallE"]
-albedo_color = Color(0.4, 0.45, 0.5, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_WallE"]
 size = Vector3(0.3, 3, 12)
 
+[sub_resource type="StandardMaterial3D" id="Mat_WallE"]
+albedo_color = Color(0.4, 0.45, 0.5, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape_WallE"]
+size = Vector3(0.3, 3, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallW"]
 size = Vector3(0.3, 3, 12)
 
 [sub_resource type="StandardMaterial3D" id="Mat_WallW"]
 albedo_color = Color(0.4, 0.45, 0.5, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_WallW"]
-size = Vector3(0.3, 3, 12)
-
 [sub_resource type="BoxShape3D" id="BoxShape_WallW"]
 size = Vector3(0.3, 3, 12)
 
-[sub_resource type="StandardMaterial3D" id="TransitionMat"]
-albedo_color = Color(0.2, 0.55, 0.75, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tpvxc"]
+transparency = 1
+albedo_color = Color(0.35, 0.55, 0.7, 0.35)
+roughness = 0.5
 
-[sub_resource type="BoxMesh" id="TransitionMesh"]
-size = Vector3(1.2, 2.2, 0.4)
+[sub_resource type="BoxMesh" id="BoxMesh_xc2ut"]
+size = Vector3(2.4, 2.4, 2.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vyv86"]
+albedo_color = Color(0.25, 0.28, 0.34, 1)
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_q4qec"]
+size = Vector3(0.9, 0.9, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jdboj"]
+albedo_color = Color(0.45, 0.55, 0.35, 1)
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_1reew"]
+size = Vector3(1.4, 0.08, 1.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_73jk0"]
+albedo_color = Color(0.55, 0.4, 0.45, 1)
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_rsglh"]
+size = Vector3(1.4, 0.08, 1.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a74n1"]
+albedo_color = Color(0.3, 0.45, 0.55, 1)
+metallic = 0.25
+roughness = 0.35
+
+[sub_resource type="BoxMesh" id="BoxMesh_c4qwf"]
+size = Vector3(1.2, 1.8, 1.2)
 
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
 
-[sub_resource type="StandardMaterial3D" id="PhoneMat"]
-albedo_color = Color(0.15, 0.15, 0.18, 1)
+[sub_resource type="BoxMesh" id="TransitionMesh"]
+size = Vector3(1.2, 2.2, 0.4)
 
-[sub_resource type="BoxMesh" id="PhoneMesh"]
-size = Vector3(0.35, 0.55, 0.2)
+[sub_resource type="StandardMaterial3D" id="TransitionMat"]
+albedo_color = Color(0.2, 0.55, 0.75, 1)
 
-[sub_resource type="BoxShape3D" id="PhoneShape"]
-size = Vector3(0.35, 0.55, 0.2)
-
-[sub_resource type="StandardMaterial3D" id="GateMat"]
-albedo_color = Color(0.65, 0.2, 0.2, 1)
-
-[sub_resource type="BoxMesh" id="GateMesh"]
-size = Vector3(6, 3, 0.35)
-
-[sub_resource type="BoxShape3D" id="GateShape"]
-size = Vector3(6, 3, 0.35)
-
-[sub_resource type="StandardMaterial3D" id="Mat_PublicFloor"]
-albedo_color = Color(0.45, 0.42, 0.38, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_PublicFloor"]
-size = Vector3(8, 0.2, 8)
-
-[sub_resource type="BoxShape3D" id="BoxShape_PublicFloor"]
-size = Vector3(8, 0.2, 8)
-
-[node name="laboratory" type="Node3D"]
+[node name="laboratory" type="Node3D" unique_id=1871787512]
 script = ExtResource("1_loc")
 location_id = &"laboratory"
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=363379584]
 environment = SubResource("Env")
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=585324308]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 6, 0)
 light_energy = 0.85
-shadow_enabled = false
 
-[node name="Geometry" type="Node3D" parent="."]
+[node name="Geometry" type="Node3D" parent="." unique_id=1257819457]
 
-[node name="Floor" type="MeshInstance3D" parent="Geometry"]
+[node name="Floor" type="MeshInstance3D" parent="Geometry" unique_id=291237059]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 mesh = SubResource("BoxMesh_Floor")
 surface_material_override/0 = SubResource("Mat_Floor")
 
-[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor"]
-collision_layer = 1
+[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor" unique_id=967392907]
 collision_mask = 0
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody" unique_id=844115197]
 shape = SubResource("BoxShape_Floor")
 
-[node name="WallN" type="MeshInstance3D" parent="Geometry"]
+[node name="WallN" type="MeshInstance3D" parent="Geometry" unique_id=485716117]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6)
 mesh = SubResource("BoxMesh_WallN")
 surface_material_override/0 = SubResource("Mat_WallN")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallN"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallN" unique_id=593634069]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body" unique_id=421939142]
 shape = SubResource("BoxShape_WallN")
 
-[node name="WallS" type="MeshInstance3D" parent="Geometry"]
+[node name="WallS" type="MeshInstance3D" parent="Geometry" unique_id=330884524]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6)
 mesh = SubResource("BoxMesh_WallS")
 surface_material_override/0 = SubResource("Mat_WallS")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallS"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallS" unique_id=2047068662]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body" unique_id=447777460]
 shape = SubResource("BoxShape_WallS")
 
-[node name="WallE" type="MeshInstance3D" parent="Geometry"]
+[node name="WallE" type="MeshInstance3D" parent="Geometry" unique_id=791308739]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, 0)
 mesh = SubResource("BoxMesh_WallE")
 surface_material_override/0 = SubResource("Mat_WallE")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallE"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallE" unique_id=1237190901]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body" unique_id=1004417935]
 shape = SubResource("BoxShape_WallE")
 
-[node name="WallW" type="MeshInstance3D" parent="Geometry"]
+[node name="WallW" type="MeshInstance3D" parent="Geometry" unique_id=943147067]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 0)
 mesh = SubResource("BoxMesh_WallW")
 surface_material_override/0 = SubResource("Mat_WallW")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallW"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallW" unique_id=193079727]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body" unique_id=1875958929]
 shape = SubResource("BoxShape_WallW")
 
-[node name="Sign" type="Label3D" parent="Geometry"]
+[node name="Sign" type="Label3D" parent="Geometry" unique_id=692281120]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
 text = "ЛАБОРАТОРИЯ"
 font_size = 64
 
-[node name="PlayerSpawns" type="Node3D" parent="."]
+[node name="CloneChamber" type="MeshInstance3D" parent="Geometry" unique_id=902198064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.2, -2)
+material_override = SubResource("StandardMaterial3D_tpvxc")
+mesh = SubResource("BoxMesh_xc2ut")
 
-[node name="spawn_default" type="Marker3D" parent="PlayerSpawns"]
+[node name="ControlPedestal" type="MeshInstance3D" parent="Geometry" unique_id=448611643]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.45, -3.35)
+material_override = SubResource("StandardMaterial3D_vyv86")
+mesh = SubResource("BoxMesh_q4qec")
+
+[node name="WorkStationPad" type="MeshInstance3D" parent="Geometry" unique_id=1612837691]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 1.8)
+material_override = SubResource("StandardMaterial3D_jdboj")
+mesh = SubResource("BoxMesh_1reew")
+
+[node name="DateStationPad" type="MeshInstance3D" parent="Geometry" unique_id=589871654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, -1.5)
+material_override = SubResource("StandardMaterial3D_73jk0")
+mesh = SubResource("BoxMesh_rsglh")
+
+[node name="LabelCalibration" type="Label3D" parent="Geometry" unique_id=503180063]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 2.35, -2)
+billboard = 1
+text = "КАЛИБРОВКА"
+font_size = 36
+
+[node name="LabelWork" type="Label3D" parent="Geometry" unique_id=1747744662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.6, 1.8)
+billboard = 1
+text = "РАБОТА"
+font_size = 28
+
+[node name="LabelDating" type="Label3D" parent="Geometry" unique_id=2082829969]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.6, -1.5)
+billboard = 1
+text = "СВИДАНИЯ"
+font_size = 28
+
+[node name="PlayerSpawns" type="Node3D" parent="." unique_id=840350958]
+
+[node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=1757178449]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, 2.5)
 script = ExtResource("3_pspawn")
-spawn_id = &"spawn_default"
 
-[node name="NpcSpawns" type="Node3D" parent="."]
+[node name="NpcSpawns" type="Node3D" parent="." unique_id=745719485]
 
-[node name="StoryEventPoints" type="Node3D" parent="."]
+[node name="StoryEventPoints" type="Node3D" parent="." unique_id=1202904413]
 
-[node name="FeatureGates" type="Node3D" parent="."]
+[node name="story_point_clone_machine" type="Marker3D" parent="StoryEventPoints" unique_id=1911856243]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, -2)
+script = ExtResource("5_story")
+event_point_id = &"story_point_clone_machine"
 
-[node name="Interactables" type="Node3D" parent="."]
+[node name="story_point_clone_terminal" type="Marker3D" parent="StoryEventPoints" unique_id=633204675]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3)
+script = ExtResource("5_story")
+event_point_id = &"story_point_clone_terminal"
 
-[node name="Transitions" type="Node3D" parent="."]
+[node name="story_point_lab_date_room" type="Marker3D" parent="StoryEventPoints" unique_id=1918217694]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, -2)
+script = ExtResource("5_story")
+event_point_id = &"story_point_lab_date_room"
 
-[node name="ToCity" type="Area3D" parent="Transitions"]
+[node name="story_point_clone_output" type="Marker3D" parent="StoryEventPoints" unique_id=1228928971]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -2)
+script = ExtResource("5_story")
+event_point_id = &"story_point_clone_output"
+
+[node name="story_point_clone_work_station" type="Marker3D" parent="StoryEventPoints" unique_id=225975200]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 1.8)
+script = ExtResource("5_story")
+event_point_id = &"story_point_clone_work_station"
+
+[node name="story_point_clone_date_station" type="Marker3D" parent="StoryEventPoints" unique_id=295136398]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, -1.5)
+script = ExtResource("5_story")
+event_point_id = &"story_point_clone_date_station"
+
+[node name="FeatureGates" type="Node3D" parent="." unique_id=399461776]
+
+[node name="Interactables" type="Node3D" parent="." unique_id=587791410]
+
+[node name="FirstCloneMachineInteractable" type="Area3D" parent="Interactables" unique_id=1303325895]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, -2)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_m87cs")
+
+[node name="MachineMesh" type="MeshInstance3D" parent="Interactables/FirstCloneMachineInteractable" unique_id=2070451630]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+material_override = SubResource("StandardMaterial3D_a74n1")
+mesh = SubResource("BoxMesh_c4qwf")
+
+[node name="MachineLabel" type="Label3D" parent="Interactables/FirstCloneMachineInteractable" unique_id=917028448]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+billboard = 1
+text = "УСТАНОВКА"
+font_size = 26
+
+[node name="Transitions" type="Node3D" parent="." unique_id=22607033]
+
+[node name="ToCity" type="Area3D" parent="Transitions" unique_id=1892320415]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 5.2)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("2_transition")
 target_location_id = &"city_hub"
-target_spawn_id = &"spawn_default"
 display_name = "В город"
 
-[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity"]
+[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity" unique_id=364320822]
 shape = SubResource("TransitionShape")
 
-[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity"]
+[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity" unique_id=687989393]
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
-
-[node name="story_point_clone_machine" type="Marker3D" parent="StoryEventPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, -2)
-script = ExtResource("5_story")
-event_point_id = &"story_point_clone_machine"
-
-[node name="story_point_clone_terminal" type="Marker3D" parent="StoryEventPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3)
-script = ExtResource("5_story")
-event_point_id = &"story_point_clone_terminal"
-
-[node name="story_point_lab_date_room" type="Marker3D" parent="StoryEventPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, -2)
-script = ExtResource("5_story")
-event_point_id = &"story_point_lab_date_room"

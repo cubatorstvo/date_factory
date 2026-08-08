@@ -14,6 +14,7 @@ const RIVAL_ACTOR_SCENE: String = "res://game/rivals/rival_actor.tscn"
 @export var actor_kind: ActorKind = ActorKind.GIRL
 @export var content_id: StringName = &""
 @export var story_stage: GameTypes.GameStage = GameTypes.GameStage.PROLOGUE
+@export var requires_overload_recognized: bool = false
 
 var _spawned: Node3D = null
 
@@ -31,6 +32,14 @@ func _ready() -> void:
 	if encounters != null and encounters.has_signal("encounter_won"):
 		if not encounters.is_connected("encounter_won", _on_encounter_won):
 			encounters.connect("encounter_won", _on_encounter_won)
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	if overload != null and overload.has_signal("problem_recognized"):
+		if not overload.is_connected("problem_recognized", _on_problem_recognized):
+			overload.connect("problem_recognized", _on_problem_recognized)
+	_refresh_spawn()
+
+
+func _on_problem_recognized() -> void:
 	_refresh_spawn()
 
 
@@ -79,6 +88,12 @@ func _should_spawn() -> bool:
 		return false
 	if actor_kind == ActorKind.RIVAL:
 		if bool(gs.call("is_rival_defeated", content_id)):
+			return false
+	if requires_overload_recognized:
+		var overload: Node = get_node_or_null("/root/DatingOverload")
+		if overload == null or not overload.has_method("is_problem_recognized"):
+			return false
+		if not bool(overload.call("is_problem_recognized")):
 			return false
 	return true
 

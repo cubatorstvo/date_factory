@@ -86,7 +86,7 @@ func _run_all() -> void:
 	_test_editor_rival_money_and_win()
 	await _test_editor_completion_stage4()
 	await _test_stage4_scientist_safety_and_phone()
-	_test_try_get_scientist_null()
+	_test_try_get_scientist_present()
 	_test_reset_cleanliness()
 	_test_repeat_date_new_girls()
 	_reset()
@@ -102,9 +102,9 @@ func _test_validate_and_counts() -> void:
 	var rivals: Array = _db.call("list_rivals") as Array
 	var situations: Array = _db.call("list_discovery_situations") as Array
 	var pools: Array = _db.call("list_dating_pools") as Array
-	_ok(girls.size() == 11, "11 girls")
-	_ok(rivals.size() == 10, "10 rivals")
-	_ok(situations.size() == 11, "11 discovery situations")
+	_ok(girls.size() == 12, "12 girls")
+	_ok(rivals.size() == 11, "11 rivals")
+	_ok(situations.size() == 12, "12 discovery situations")
 	var editor_pool: DatingEventPoolDefinition = _db.call("get_dating_pool", &"date_pool_magazine_editor") as DatingEventPoolDefinition
 	_ok(editor_pool != null, "date_pool_magazine_editor exists")
 	_ok(pools.size() >= 6, "dating pools >= 6")
@@ -506,11 +506,13 @@ func _test_stage4_scientist_safety_and_phone() -> void:
 	_ok(progress != null, "Stage4 progress object")
 	if progress != null:
 		_ok(progress.stage == GameTypes.GameStage.STAGE_4, "progress STAGE_4")
-		# Missing Scientist must not crash lookups.
+		# MODULE 17 ships Scientist; Stage4 lookups must resolve without crash.
 		var try_girl: GirlDefinition = _db.call("try_get_girl", progress.story_girl_id) as GirlDefinition
 		var try_rival: RivalDefinition = _db.call("try_get_rival", progress.story_rival_id) as RivalDefinition
-		_ok(try_girl == null, "Stage4 story girl missing safely")
-		_ok(try_rival == null, "Stage4 story rival missing safely")
+		_ok(try_girl != null, "Stage4 story girl present safely")
+		_ok(try_rival != null, "Stage4 story rival present safely")
+		_ok(progress.story_girl_id == StoryIds.GIRL_SCIENTIST, "Stage4 story girl id scientist")
+		_ok(progress.story_rival_id == StoryIds.RIVAL_SCIENTIST, "Stage4 story rival id scientist")
 	var journal_script: Script = load("res://ui/phone/phone_journal.gd") as Script
 	var journal: PhoneJournal = journal_script.new() as PhoneJournal
 	add_child(journal)
@@ -523,11 +525,11 @@ func _test_stage4_scientist_safety_and_phone() -> void:
 	journal.queue_free()
 
 
-func _test_try_get_scientist_null() -> void:
+func _test_try_get_scientist_present() -> void:
 	var g: GirlDefinition = _db.call("try_get_girl", StoryIds.GIRL_SCIENTIST) as GirlDefinition
 	var r: RivalDefinition = _db.call("try_get_rival", StoryIds.RIVAL_SCIENTIST) as RivalDefinition
-	_ok(g == null, "try_get_girl(scientist) null")
-	_ok(r == null, "try_get_rival(scientist) null")
+	_ok(g != null, "try_get_girl(scientist) present")
+	_ok(r != null, "try_get_rival(scientist) present")
 
 
 func _test_reset_cleanliness() -> void:

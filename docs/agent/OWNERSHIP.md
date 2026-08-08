@@ -1,15 +1,17 @@
-﻿# File ownership — MODULE 16 Dating Overload
+﻿# File ownership — MODULE 17 First Clone Sequence
 
 | Task | Agent | Writable | Forbidden | Status |
 |------|-------|----------|-----------|--------|
-| M16_A_CORE | gameplay-worker | GameState overload, dating_overload/**, Relationships gate, DateVenue, project.godot, tests | Phone, MODULE 17 | done |
-| M16_B_PHONE_DOCS | gameplay-worker | phone_journal Overload + docs | DatingOverload math, MODULE 17 | done |
-| M16_C_QA | qa-worker | evidence only | product sources | done |
+| M17_A_CORE | gameplay | `world/actors/stage_actor_anchor.gd`, `game/girls/girl_discovery.gd` (STORY_PREREQUISITE for scientist), `game/first_clone/**`, `project.godot` (FirstClone after DatingOverload), `game/first_clone/test/**` | Phone UI, city_hub/lab .tscn, bulk content, MODULE 18 | done |
+| M17_B_CONTENT | content | `data/content/girls/girl_scientist*`, rivals, appearances, discovery, dating scientist pool/events, `content_catalog.tres` | FirstClone formulas, scenes, MODULE 18/President | done |
+| M17_C_SCENES | scene | `city_hub.tscn` (scientist anchors), `laboratory.tscn` (machine + markers + blockout) | catalog, Phone, MODULE 18 | done |
+| M17_D_PHONE_DOCS | gameplay | `phone_journal.gd`, docs §70 | FirstClone math, MODULE 18 | done |
+| M17_E_QA | qa | evidence only | product sources | done |
 
 ## Product decisions
-1. DatingOverload after Media; no _process.
-2. Capacity gate in Relationships.start_date_with_history.
-3. Consume on completed date only.
-4. Demand from Media offers cycle; 19:00/20:00 presentation only.
-5. Recognition: day>=start+2, generated>=7, backlog>=4, personal_dates>=1.
-6. STOP — no MODULE 17.
+1. Scientist anchors: `requires_overload_recognized=true`, STAGE_4, city_hub at laboratory gate.
+2. No manual `advance_stage` — Story owns STAGE_4→5.
+3. Clone truth = `GameState.set_clone_counts`; no first_clone_created bool; rates stay 0.
+4. Calibration: 3 deterministic SPACE passes; miss retries; abort → 0 clones.
+5. Assignment WORK 1/1/0 or DATING 1/0/1 exactly once.
+6. STOP — no MODULE 18 production/rates.

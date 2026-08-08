@@ -24,6 +24,7 @@ const RESULT_ALREADY_FINISHED: StringName = &"ALREADY_FINISHED"
 const RESULT_UNKNOWN_APPROACH: StringName = &"UNKNOWN_APPROACH"
 const RESULT_STORY_WRONG_STAGE: StringName = &"STORY_WRONG_STAGE"
 const RESULT_STORY_RIVAL_REQUIRED: StringName = &"STORY_RIVAL_REQUIRED"
+const RESULT_STORY_PREREQUISITE: StringName = &"STORY_PREREQUISITE"
 
 var _girl_overrides: Dictionary = {}
 var _situation_overrides: Dictionary = {}
@@ -131,6 +132,9 @@ func discover_girl(girl_id: StringName) -> Dictionary:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:
 		return _result(false, RESULT_UNKNOWN_GIRL)
+	var prereq: Dictionary = _story_prerequisite_block(girl_id)
+	if not prereq.is_empty():
+		return prereq
 	var first: bool = bool(gs.call("mark_girl_discovered", girl_id))
 	if not first:
 		return _result(true, RESULT_SUCCESS)
@@ -171,6 +175,9 @@ func begin_attempt(girl_id: StringName) -> Dictionary:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:
 		return _result(false, RESULT_UNKNOWN_GIRL)
+	var prereq: Dictionary = _story_prerequisite_block(girl_id)
+	if not prereq.is_empty():
+		return prereq
 	if not bool(gs.call("is_girl_discovered", girl_id)):
 		# Auto-discover if interact somehow skipped proximity.
 		discover_girl(girl_id)
@@ -377,6 +384,23 @@ func _story_gate_block(girl_id: StringName) -> Dictionary:
 	if gate == int(StoryTypes.StoryGirlGate.RIVAL_REQUIRED):
 		return _result(false, RESULT_STORY_RIVAL_REQUIRED)
 	return {}
+
+
+## Scientist MODULE17 gate. Not FAILURE — no clue/cooldown side effects.
+func _story_prerequisite_block(girl_id: StringName) -> Dictionary:
+	if girl_id != &"girl_scientist":
+		return {}
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return {}
+	var stage: GameTypes.GameStage = gs.call("get_stage") as GameTypes.GameStage
+	if stage != GameTypes.GameStage.STAGE_4:
+		return {}
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	if overload != null and overload.has_method("is_problem_recognized"):
+		if bool(overload.call("is_problem_recognized")):
+			return {}
+	return _result(false, RESULT_STORY_PREREQUISITE)
 
 
 func _result(ok: bool, reason: StringName) -> Dictionary:
