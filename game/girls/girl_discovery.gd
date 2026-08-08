@@ -175,9 +175,6 @@ func begin_attempt(girl_id: StringName) -> Dictionary:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:
 		return _result(false, RESULT_UNKNOWN_GIRL)
-	var prereq: Dictionary = _story_prerequisite_block(girl_id)
-	if not prereq.is_empty():
-		return prereq
 	if not bool(gs.call("is_girl_discovered", girl_id)):
 		# Auto-discover if interact somehow skipped proximity.
 		discover_girl(girl_id)
@@ -188,6 +185,7 @@ func begin_attempt(girl_id: StringName) -> Dictionary:
 		var cool: Dictionary = _result(false, RESULT_COOLDOWN)
 		cool["cooldown_days"] = remaining
 		return cool
+	# Includes Scientist overload prerequisite before Story rival/stage gates.
 	var story_block: Dictionary = _story_gate_block(girl_id)
 	if not story_block.is_empty():
 		return story_block
@@ -374,7 +372,11 @@ func _on_gs_trait(girl_id: StringName) -> void:
 
 
 ## Story reserved-girl gate. Not FAILURE — no clue/cooldown side effects.
+## Scientist overload prerequisite runs before Story.get_story_girl_gate.
 func _story_gate_block(girl_id: StringName) -> Dictionary:
+	var prereq: Dictionary = _story_prerequisite_block(girl_id)
+	if not prereq.is_empty():
+		return prereq
 	var story: Node = get_node_or_null("/root/Story")
 	if story == null or not story.has_method("get_story_girl_gate"):
 		return {}
@@ -387,20 +389,21 @@ func _story_gate_block(girl_id: StringName) -> Dictionary:
 
 
 ## Scientist MODULE17 gate. Not FAILURE — no clue/cooldown side effects.
+## Used by discover_girl (proximity) and by _story_gate_block (begin_attempt).
 func _story_prerequisite_block(girl_id: StringName) -> Dictionary:
-	if girl_id != &"girl_scientist":
+	if girl_id != StoryIds.GIRL_SCIENTIST:
 		return {}
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:
 		return {}
-	var stage: GameTypes.GameStage = gs.call("get_stage") as GameTypes.GameStage
-	if stage != GameTypes.GameStage.STAGE_4:
+	if int(gs.call("get_stage")) != int(GameTypes.GameStage.STAGE_4):
 		return {}
 	var overload: Node = get_node_or_null("/root/DatingOverload")
-	if overload != null and overload.has_method("is_problem_recognized"):
-		if bool(overload.call("is_problem_recognized")):
-			return {}
-	return _result(false, RESULT_STORY_PREREQUISITE)
+	if overload == null or not overload.has_method("is_problem_recognized"):
+		return _result(false, RESULT_STORY_PREREQUISITE)
+	if not bool(overload.call("is_problem_recognized")):
+		return _result(false, RESULT_STORY_PREREQUISITE)
+	return {}
 
 
 func _result(ok: bool, reason: StringName) -> Dictionary:

@@ -130,6 +130,19 @@ func _test_autoload_order_and_no_process() -> void:
 		girl_actor_src.contains("Сначала нужно понять, зачем тебе вообще второй ты."),
 		"GirlActor prerequisite feedback text",
 	)
+	var discovery_src: String = FileAccess.get_file_as_string("res://game/girls/girl_discovery.gd")
+	var gate_idx: int = discovery_src.find("func _story_gate_block")
+	var prereq_in_gate: int = discovery_src.find("_story_prerequisite_block", gate_idx)
+	var story_gate_call: int = discovery_src.find("get_story_girl_gate", gate_idx)
+	_ok(gate_idx >= 0 and prereq_in_gate >= 0 and story_gate_call >= 0, "FIX2 gate helpers present")
+	_ok(prereq_in_gate < story_gate_call, "FIX2 prerequisite before get_story_girl_gate")
+	var begin_idx: int = discovery_src.find("func begin_attempt")
+	var begin_end: int = discovery_src.find("\nfunc ", begin_idx + 1)
+	if begin_end < 0:
+		begin_end = discovery_src.length()
+	var begin_body: String = discovery_src.substr(begin_idx, begin_end - begin_idx)
+	_ok(begin_body.contains("_story_gate_block"), "FIX2 begin_attempt uses _story_gate_block")
+	_ok(not begin_body.contains("_story_prerequisite_block"), "FIX2 begin_attempt no early prerequisite")
 
 
 func _test_calibration_constants() -> void:
@@ -378,32 +391,31 @@ func _drive_live_overload_recognition() -> void:
 
 
 func _test_story_prerequisite() -> void:
+	# FIX2 mandatory: STAGE4 + problem=false + rival defeated → STORY_PREREQUISITE via story gate.
 	_reset()
 	_register_scientist_stub()
 	_gs.call("restore_stage", GameTypes.GameStage.STAGE_4)
-	# D — unrecognized, even with rival already defeated.
+	_ok(not bool(_overload.call("is_problem_recognized")), "D problem unrecognized")
 	_gs.call("mark_rival_defeated", StoryIds.RIVAL_SCIENTIST)
-	var disc: Dictionary = _gd.call("discover_girl", &"girl_scientist") as Dictionary
+	var disc: Dictionary = _gd.call("discover_girl", StoryIds.GIRL_SCIENTIST) as Dictionary
 	_ok(not bool(disc.get("ok", true)), "D discover blocked")
 	_ok(disc.get("reason", &"") == &"STORY_PREREQUISITE", "D discover STORY_PREREQUISITE")
-	_ok(not bool(_gs.call("is_girl_discovered", &"girl_scientist")), "D no discovery side effect")
-	var begin: Dictionary = _gd.call("begin_attempt", &"girl_scientist") as Dictionary
+	_ok(not bool(_gs.call("is_girl_discovered", StoryIds.GIRL_SCIENTIST)), "D no discovery side effect")
+	var begin: Dictionary = _gd.call("begin_attempt", StoryIds.GIRL_SCIENTIST) as Dictionary
 	_ok(not bool(begin.get("ok", true)), "D begin blocked")
 	_ok(begin.get("reason", &"") == &"STORY_PREREQUISITE", "D begin STORY_PREREQUISITE")
-	_ok(int(_gs.call("get_girl_retry_days_remaining", &"girl_scientist")) == 0, "D no cooldown")
-	_ok(not bool(_gs.call("has_girl_contact", &"girl_scientist")), "D no contact")
-	# E — recognition then rival gate.
-	_gs.call("mark_dating_overload_problem_recognized")
-	# Clear defeated mark via full reset of rival state is not available; re-seed stage path.
+	_ok(int(_gs.call("get_girl_retry_days_remaining", StoryIds.GIRL_SCIENTIST)) == 0, "D no cooldown")
+	_ok(not bool(_gs.call("has_girl_contact", StoryIds.GIRL_SCIENTIST)), "D no contact")
+	_ok(not bool(_gd.call("has_active_attempt")), "D no active attempt")
+	# E — recognition then rival gate (STORY_RIVAL_REQUIRED, not prerequisite).
 	_reset()
 	_register_scientist_stub()
 	_gs.call("restore_stage", GameTypes.GameStage.STAGE_4)
 	_gs.call("mark_dating_overload_problem_recognized")
-	var begin_e: Dictionary = _gd.call("begin_attempt", &"girl_scientist") as Dictionary
+	var begin_e: Dictionary = _gd.call("begin_attempt", StoryIds.GIRL_SCIENTIST) as Dictionary
 	_ok(not bool(begin_e.get("ok", true)), "E begin blocked")
 	_ok(begin_e.get("reason", &"") == &"STORY_RIVAL_REQUIRED", "E STORY_RIVAL_REQUIRED")
-	# F — recognized + rival defeated + XP → not prerequisite/rival gates.
-	# Use real ContentDB scientist (not stub) so discovery content can open.
+	# F — recognized + rival defeated + XP4 → successful attempt start (past story gates).
 	_gd.call("clear_content_overrides")
 	_gs.call("mark_rival_defeated", StoryIds.RIVAL_SCIENTIST)
 	if int(_gs.call("get_experience")) < 4:
@@ -413,10 +425,8 @@ func _test_story_prerequisite() -> void:
 	var reason_f: StringName = begin_f.get("reason", &"") as StringName
 	_ok(reason_f != &"STORY_PREREQUISITE", "F not STORY_PREREQUISITE")
 	_ok(reason_f != &"STORY_RIVAL_REQUIRED", "F not STORY_RIVAL_REQUIRED")
-	_ok(
-		bool(begin_f.get("ok", false)) or reason_f == &"LOCKED_EXPERIENCE",
-		"F attempt proceeds past story gates",
-	)
+	_ok(reason_f != &"STORY_WRONG_STAGE", "F not STORY_WRONG_STAGE")
+	_ok(bool(begin_f.get("ok", false)) and reason_f == &"SUCCESS", "F successful attempt start")
 	_gd.call("force_clear_attempt")
 
 
