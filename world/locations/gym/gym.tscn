@@ -293,9 +293,11 @@ script = ExtResource("3_pspawn")
 [node name="npc_rival_gym_mirror" type="Marker3D" parent="NpcSpawns" unique_id=484160620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -2)
 script = ExtResource("4_nspawn")
+spawn_id = "rival_gym_mirror"
 npc_kind = 2
 
 [node name="RivalActor" parent="NpcSpawns/npc_rival_gym_mirror" unique_id=515275552 instance=ExtResource("4_6aj8w")]
+rival_id = "rival_gym_mirror"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_gym_mirror/RivalActor" unique_id=1049199870]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -304,8 +306,10 @@ shape = SubResource("CapsuleShape3D_k0wc4")
 [node name="npc_girl_gym_chalk" type="Marker3D" parent="NpcSpawns" unique_id=1508729009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -2)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_gym_chalk"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_gym_chalk" unique_id=1299793875 instance=ExtResource("6_bepj1")]
+girl_id = "girl_gym_chalk"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_gym_chalk/GirlActor" unique_id=1869636126]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)

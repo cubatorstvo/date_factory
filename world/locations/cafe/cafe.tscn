@@ -283,8 +283,10 @@ script = ExtResource("3_pspawn")
 [node name="npc_girl_cafe_laptop" type="Marker3D" parent="NpcSpawns" unique_id=2122251097]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -1)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_laptop"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_laptop" unique_id=80850875 instance=ExtResource("4_aplqh")]
+girl_id = "girl_cafe_laptop"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_laptop/GirlActor" unique_id=2072436705]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -293,8 +295,10 @@ shape = SubResource("CapsuleShape3D_interact")
 [node name="npc_rival_cafe_receipt" type="Marker3D" parent="NpcSpawns" unique_id=782695364]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -1)
 script = ExtResource("4_nspawn")
+spawn_id = "rival_cafe_receipt"
 
 [node name="RivalActor" parent="NpcSpawns/npc_rival_cafe_receipt" unique_id=515275552 instance=ExtResource("6_sgsvq")]
+rival_id = "rival_cafe_receipt"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_cafe_receipt/RivalActor" unique_id=1049199870]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)

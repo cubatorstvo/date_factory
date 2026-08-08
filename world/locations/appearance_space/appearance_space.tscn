@@ -390,8 +390,10 @@ script = ExtResource("3_pspawn")
 [node name="npc_girl_appearance_ritual" type="Marker3D" parent="NpcSpawns" unique_id=1849967178]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, 0)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_appearance_ritual"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_appearance_ritual" unique_id=1472690006 instance=ExtResource("4_s1om5")]
+girl_id = "girl_appearance_ritual"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_appearance_ritual/GirlActor" unique_id=1302109285]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)

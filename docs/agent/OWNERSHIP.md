@@ -1,7 +1,9 @@
-﻿# File ownership — MODULE 26 Balance / Anti-Grind
+﻿# File ownership — MODULE 27 Full Game QA
 
 **Status:** complete / READY  
-**Spec:** `docs/modules/MODULE_26_BALANCE_ANTI_GRIND.md`
+**Spec:** `docs/modules/MODULE_27_FULL_GAME_QA.md`
 
-Sole production delta: `rival_encounters.gd` + `rival_encounter_ui.gd` story loss Auth 0.  
-Harness: `game/balance/test/`. Report: `docs/balance/BALANCE_REPORT.md`.
+Tooling: `qa/test_manifest.json`, `tools/qa/run_all_tests.py`  
+Integration: `game/qa/test/`  
+Docs: `docs/qa/`  
+Fixes: catalog asserts, dance Auth expect, spawn_ids, world_location settle.

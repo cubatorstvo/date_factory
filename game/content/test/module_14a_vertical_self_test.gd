@@ -91,13 +91,13 @@ func _test_validate_all() -> void:
 	var greetings: Array = _db.call("list_dating_greetings") as Array
 	var farewells: Array = _db.call("list_dating_farewells") as Array
 	var situations: Array = _db.call("list_discovery_situations") as Array
-	_ok(girls.size() == 14, "14 girls")
-	_ok(rivals.size() == 14, "14 rivals")
+	_ok(girls.size() == 23, "23 girls")
+	_ok(rivals.size() == 19, "19 rivals")
 	_ok(events.size() >= 22, "dating events >= 22")
 	_ok(pools.size() >= 6, "dating pools >= 6")
 	_ok(greetings.size() >= 4, "greetings >= 4")
 	_ok(farewells.size() >= 1, "farewells >= 1")
-	_ok(situations.size() == 13, "13 discovery situations")
+	_ok(situations.size() == 22, "22 discovery situations")
 	for pool_id in [
 		&"date_pool_apartment_common",
 		&"date_pool_neighbor",

@@ -1,6 +1,10 @@
 extends Node
 ## MODULE 12 World & Location Framework self-test (spec §§117–155).
 ## Run: res://world/test/world_location_test.tscn --quit-after 20000
+##
+## Headless note: World swaps locations with immediate Node.free(). Rapid
+## validate/travel sequences can SIGSEGV on the next process frame; this suite
+## settles one frame after each destructive free/travel.
 
 var _failed: int = 0
 var _passed: int = 0
@@ -64,6 +68,22 @@ func _travel(id: StringName, spawn: StringName = &"spawn_default") -> int:
 	return int(_world.call("request_travel", id, spawn))
 
 
+func _settle() -> void:
+	await get_tree().process_frame
+
+
+func _travel_settled(id: StringName, spawn: StringName = &"spawn_default") -> int:
+	var result: int = _travel(id, spawn)
+	await _settle()
+	return result
+
+
+func _boot_settled() -> int:
+	var result: int = int(_world.call("reset_to_start"))
+	await _settle()
+	return result
+
+
 func _access(id: StringName) -> WorldAccessResult:
 	return _world.call("get_location_access", id) as WorldAccessResult
 
@@ -83,7 +103,7 @@ func _reset_state() -> void:
 
 
 func _run_all() -> void:
-	_test_contentdb_paths()
+	await _test_contentdb_paths()
 	await _test_start_apartment()
 	await _test_prologue_access()
 	await _test_stage1_access()
@@ -110,9 +130,12 @@ func _test_contentdb_paths() -> void:
 		var def: LocationDefinition = _db.call("get_location", lid) as LocationDefinition
 		_ok(def != null and def.scene_path != "", "118 path non-empty %s" % String(lid))
 		var errors: Array = _world.call("validate_location_scene", lid) as Array
+		# validate_location_scene instantiate()+free(); settle before next heavy scene.
+		await _settle()
 		_ok(errors.is_empty(), "118/119 validate %s (%s)" % [String(lid), ",".join(errors)])
 	var catalog_result: Dictionary = _db.call("validate_all") as Dictionary
 	_ok(bool(catalog_result.get("ok", false)), "ContentDB validate_all ok")
+	await _settle()
 
 
 func _test_start_apartment() -> void:
@@ -121,7 +144,7 @@ func _test_start_apartment() -> void:
 	_world.call("clear_scene_path_overrides_for_test")
 	_world.call("clear_access_provider_for_test")
 	_world.call("set_spawn_fallback_enabled_for_test", true)
-	var boot: int = int(_world.call("reset_to_start"))
+	var boot: int = await _boot_settled()
 	_ok(boot == int(WorldTypes.WorldTravelResult.SUCCESS), "120 reset_to_start SUCCESS")
 	_ok(String(_world.get("current_location_id")) == "apartment", "120 current apartment")
 	var player: PlayerController = _world.call("get_player") as PlayerController
@@ -160,7 +183,7 @@ func _test_stage1_access() -> void:
 
 func _test_public_gate() -> void:
 	await _restore(GameTypes.GameStage.STAGE_1)
-	_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "123 travel city")
+	_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "123 travel city")
 	var loc: WorldLocation = _world.call("get_current_location") as WorldLocation
 	_ok(loc != null, "123 location")
 	var gate: WorldFeatureGate = null
@@ -208,30 +231,30 @@ func _test_gamestate_unlock_not_bypass() -> void:
 
 func _test_travel_roundtrips() -> void:
 	await _restore(GameTypes.GameStage.STAGE_1)
-	_ok(int(_world.call("reset_to_start")) == int(WorldTypes.WorldTravelResult.SUCCESS), "131 reset apt")
+	_ok(await _boot_settled() == int(WorldTypes.WorldTravelResult.SUCCESS), "131 reset apt")
 	var player: PlayerController = _world.call("get_player") as PlayerController
 	if player != null:
 		player.velocity = Vector3(3, 0, 3)
 	_changed_pairs.clear()
-	_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "131 apt->city")
+	_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "131 apt->city")
 	_ok(String(_world.get("current_location_id")) == "city_hub", "131 current city")
 	if player != null:
 		_ok(player.velocity == Vector3.ZERO, "131 velocity zero")
 	_ok(_changed_pairs.size() >= 1, "140 location_changed emitted")
-	_ok(_travel(&"apartment") == int(WorldTypes.WorldTravelResult.SUCCESS), "132 city->apt")
-	_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "133 back city")
+	_ok(await _travel_settled(&"apartment") == int(WorldTypes.WorldTravelResult.SUCCESS), "132 city->apt")
+	_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "133 back city")
 	for spoke in [&"cafe", &"gym", &"appearance_space"]:
-		_ok(_travel(spoke) == int(WorldTypes.WorldTravelResult.SUCCESS), "133 to %s" % String(spoke))
-		_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "133 from %s" % String(spoke))
+		_ok(await _travel_settled(spoke) == int(WorldTypes.WorldTravelResult.SUCCESS), "133 to %s" % String(spoke))
+		_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "133 from %s" % String(spoke))
 	await _restore(GameTypes.GameStage.FINALE)
 	for spoke2 in [&"salary_mine", &"laboratory", &"production_area", &"final_location"]:
-		_ok(_travel(spoke2) == int(WorldTypes.WorldTravelResult.SUCCESS), "133 late to %s" % String(spoke2))
-		_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "133 late from %s" % String(spoke2))
+		_ok(await _travel_settled(spoke2) == int(WorldTypes.WorldTravelResult.SUCCESS), "133 late to %s" % String(spoke2))
+		_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "133 late from %s" % String(spoke2))
 
 
 func _test_locked_unknown_busy() -> void:
 	await _restore(GameTypes.GameStage.STAGE_1)
-	_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "134 setup city")
+	_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "134 setup city")
 	var before: String = String(_world.get("current_location_id"))
 	var pos_before: Vector3 = Vector3.ZERO
 	var player: PlayerController = _world.call("get_player") as PlayerController
@@ -246,17 +269,20 @@ func _test_locked_unknown_busy() -> void:
 	_ok(_travel(&"moon_base") == int(WorldTypes.WorldTravelResult.UNKNOWN_LOCATION), "135 UNKNOWN")
 	_nested_busy_armed = true
 	_busy_from_loading = -1
+	# Nested BUSY probe must stay synchronous inside location_loading; settle after.
 	var ok_travel: int = _travel(&"cafe")
+	await _settle()
 	_ok(ok_travel == int(WorldTypes.WorldTravelResult.SUCCESS), "139 primary travel ok")
 	_ok(_busy_from_loading == int(WorldTypes.WorldTravelResult.BUSY), "139 nested BUSY")
 
 
 func _test_scene_spawn_errors() -> void:
 	await _restore(GameTypes.GameStage.STAGE_1)
-	_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "136 setup")
+	_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "136 setup")
 	var before: String = String(_world.get("current_location_id"))
 	_world.call("set_scene_path_override_for_test", &"cafe", "res://world/test/fixtures/does_not_exist.tscn")
 	var missing: int = _travel(&"cafe")
+	await _settle()
 	_ok(
 		missing == int(WorldTypes.WorldTravelResult.SCENE_MISSING)
 		or missing == int(WorldTypes.WorldTravelResult.LOAD_FAILED),
@@ -266,22 +292,24 @@ func _test_scene_spawn_errors() -> void:
 	_world.call("set_scene_path_override_for_test", &"gym", "res://world/test/fixtures/spawn_missing_location.tscn")
 	_world.call("set_spawn_fallback_enabled_for_test", false)
 	var spawn_miss: int = _travel(&"gym", &"spawn_nope")
+	await _settle()
 	_ok(spawn_miss == int(WorldTypes.WorldTravelResult.SPAWN_MISSING), "137 SPAWN_MISSING")
 	_ok(String(_world.get("current_location_id")) == before, "137 intact after spawn miss")
 	_world.call("clear_scene_path_overrides_for_test")
 	_world.call("set_spawn_fallback_enabled_for_test", true)
-	_ok(_travel(&"cafe", &"spawn_does_not_exist") == int(WorldTypes.WorldTravelResult.SUCCESS), "138 spawn fallback")
+	_ok(await _travel_settled(&"cafe", &"spawn_does_not_exist") == int(WorldTypes.WorldTravelResult.SUCCESS), "138 spawn fallback")
 	_ok(String(_world.get("current_location_id")) == "cafe", "138 fallback arrived cafe")
 	var dup_packed: PackedScene = load("res://world/test/fixtures/duplicate_spawn_location.tscn") as PackedScene
 	var dup: WorldLocation = dup_packed.instantiate() as WorldLocation
 	var dup_errors: Array[String] = dup.validate_markers()
 	_ok(not dup_errors.is_empty(), "142 duplicate marker validation")
 	dup.free()
+	await _settle()
 
 
 func _test_markers_and_npc() -> void:
 	await _restore(GameTypes.GameStage.STAGE_1)
-	_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "143 city load")
+	_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "143 city load")
 	var loc: WorldLocation = _world.call("get_current_location") as WorldLocation
 	_ok(loc != null and loc.get_player_spawn(&"spawn_default") != null, "141 spawn_default")
 	_ok(loc.get_player_spawn(&"missing_spawn") == null, "141 missing spawn null")
@@ -304,13 +332,14 @@ func _test_markers_and_npc() -> void:
 			actor.global_transform = marker.global_transform
 			_ok(actor.global_transform.origin.is_equal_approx(marker.global_transform.origin), "144 character place")
 		actor.queue_free()
+		await _settle()
 	else:
 		_ok(false, "144 character_actor scene")
 
 
 func _test_phone() -> void:
 	await _restore(GameTypes.GameStage.PROLOGUE)
-	_ok(int(_world.call("reset_to_start")) == int(WorldTypes.WorldTravelResult.SUCCESS), "146 apt")
+	_ok(await _boot_settled() == int(WorldTypes.WorldTravelResult.SUCCESS), "146 apt")
 	var loc: WorldLocation = _world.call("get_current_location") as WorldLocation
 	var phone_node: PhoneInteractable = null
 	if loc != null:
@@ -335,13 +364,13 @@ func _test_phone() -> void:
 
 func _test_downgrade_and_reset() -> void:
 	await _restore(GameTypes.GameStage.STAGE_5)
-	_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "151 setup city")
-	_ok(_travel(&"laboratory") == int(WorldTypes.WorldTravelResult.SUCCESS), "151 enter lab")
+	_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "151 setup city")
+	_ok(await _travel_settled(&"laboratory") == int(WorldTypes.WorldTravelResult.SUCCESS), "151 enter lab")
 	await _restore(GameTypes.GameStage.STAGE_1)
 	_ok(String(_world.get("current_location_id")) == "laboratory", "151 stay in lab")
-	_ok(_travel(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "151 leave to city")
+	_ok(await _travel_settled(&"city_hub") == int(WorldTypes.WorldTravelResult.SUCCESS), "151 leave to city")
 	_ok(_travel(&"laboratory") == int(WorldTypes.WorldTravelResult.LOCKED), "151 re-enter blocked")
-	_ok(int(_world.call("reset_to_start")) == int(WorldTypes.WorldTravelResult.SUCCESS), "152 reset")
+	_ok(await _boot_settled() == int(WorldTypes.WorldTravelResult.SUCCESS), "152 reset")
 	_ok(String(_world.get("current_location_id")) == "apartment", "152 apartment")
 
 
@@ -351,7 +380,7 @@ func _test_no_mutations() -> void:
 	var money_before: int = int(_gs.call("get_money"))
 	var flag_before: bool = bool(_gs.call("get_story_flag", &"module12_probe"))
 	for lid in [&"city_hub", &"salary_mine", &"laboratory", &"production_area", &"final_location", &"apartment"]:
-		_ok(_travel(lid) == int(WorldTypes.WorldTravelResult.SUCCESS), "153/154 travel %s" % String(lid))
+		_ok(await _travel_settled(lid) == int(WorldTypes.WorldTravelResult.SUCCESS), "153/154 travel %s" % String(lid))
 	_ok(_stage() == stage_before, "153 no stage mutation")
 	_ok(int(_gs.call("get_money")) == money_before, "154 no money mutation")
 	_ok(bool(_gs.call("get_story_flag", &"module12_probe")) == flag_before, "155 no story flag")

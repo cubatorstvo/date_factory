@@ -1,12 +1,13 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 26 — Balance / Anti-Grind** (balance locked).  
+Фактическая структура после **MODULE 27 — Full Game QA** (RC QA gate in progress; balance/content locked).  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → title menu → World after New/Continue/Load
 
 UI architecture: `docs/ui/UI_ARCHITECTURE.md`.  
 Presentation (audio/camera/VFX): `docs/presentation/PRESENTATION_ARCHITECTURE.md`.  
 Persistence: `docs/persistence/SAVE_ARCHITECTURE.md`.  
 Balance report: `docs/balance/BALANCE_REPORT.md`.  
+Full Game QA: `docs/qa/FULL_GAME_QA_REPORT.md`, `docs/qa/REGRESSION_MATRIX.md`, `docs/qa/KNOWN_ISSUES.md`.  
 Licenses: `docs/ASSET_LICENSES.md`.
 
 ## Top-level (существует сейчас)
@@ -19,8 +20,10 @@ Licenses: `docs/ASSET_LICENSES.md`.
 | `characters/` | Player + Character Framework | `framework/` (+ semantic animation aliases); `male/`; `female/`; `player/` (+ `camera_feedback.gd`, pose export); `test/` | Dating/Rival/AI domain systems |
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → title then World, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
-| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, `ui/`, `presentation/`, `persistence/SAVE_ARCHITECTURE.md`, `balance/BALANCE_REPORT.md`, `ASSET_LICENSES.md` | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState (+ save export/restore); `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental (+ fractions runtime save); `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion (+ Global Terminal UI); `final_date/` scene-local FinalDateController + FinalDateUI; `progression/` Progression; `rivals/` RivalEncounters + exhibition seam; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story; `balance/test/` MODULE 26 test-only projection (no runtime BalanceManager) | Parallel resource copies / EventBus / effect engines |
+| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, `ui/`, `presentation/`, `persistence/SAVE_ARCHITECTURE.md`, `balance/BALANCE_REPORT.md`, `qa/` Full Game QA, `ASSET_LICENSES.md` | Runtime code |
+| `game/` | Canonical gameplay runtime | `state/` GameState (+ save export/restore); `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental (+ fractions runtime save); `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion (+ Global Terminal UI); `final_date/` scene-local FinalDateController + FinalDateUI; `progression/` Progression; `rivals/` RivalEncounters + exhibition seam; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story; `balance/test/` MODULE 26 test-only projection (no runtime BalanceManager); `qa/test/` MODULE 27 full_game_integration harness | Parallel resource copies / EventBus / effect engines |
+| `qa/` | MODULE 27 test manifest | `test_manifest.json` required_for_rc suite list | Gameplay systems |
+| `tools/qa/` | MODULE 27 one-command runner | `run_all_tests.py` (+ timeouts / nonzero fail exit) | Product content |
 | `persistence/` | MODULE 24 SaveSystem | `save_system.gd` autoload; `save_types.gd`; `save_result.gd`; `save_slot_metadata.gd`; `test/` | Gameplay formulas / second save service |
 | `presentation/` | Soft VFX / camera helpers (MODULE 23) | `vfx/` ScreenFlash, UiAccentPulse, MeshEmissivePulse, BeaconPulse, PresentationCamera | VFX framework / gameplay mutation |
 | `ui/` | Presentation shell (MODULE 22–24) | Theme; GameHUD; Phone; Progression; Dating; RivalEncounterUI; format/scale/tutorial; `frontend/` Title/Pause/Settings; `AudioDirector` via `AudioIds` | UIManager / gameplay formulas |
@@ -276,7 +279,7 @@ Dependency-safe production order (`project.godot`):
 
 ## Canonical status / next destinations
 
-Persistence through MODULE 24 remains complete: SaveSystem (**schema v1** unchanged through MODULE 26; 3+autosave, atomic+backup, settings.cfg, title/pause).
+Persistence through MODULE 24 remains complete: SaveSystem (**schema v1** unchanged through MODULE 27; 3+autosave, atomic+backup, settings.cfg, title/pause).
 
 After **MODULE 25 — Content Completion** (content locked):
 
@@ -292,17 +295,27 @@ After **MODULE 26 — Balance / Anti-Grind** (balance locked):
 - Test-only harness: `game/balance/test/`. Report: `docs/balance/BALANCE_REPORT.md`.
 - Evidence: `tmp/m26_a_rival_encounter_test.log`, `tmp/m26_balance_self_test.log`.
 
+After **MODULE 27 — Full Game QA** (RC QA; docs draft Wave G):
+
+- Manifest + runner: `qa/test_manifest.json`, `tools/qa/run_all_tests.py`; evidence under `tmp/qa/`.
+- Scripted full-game integration: `game/qa/test/full_game_integration_test.tscn` — Wave C **ALL PASS (157)** (Route A/B + save).
+- QA docs: `docs/qa/FULL_GAME_QA_REPORT.md`, `REGRESSION_MATRIX.md`, `KNOWN_ISSUES.md` (BLOCKER/MAJOR open = 0 at draft; verdict **PENDING** Orchestrator).
+- Static scans: `tmp/qa/scans/` (placeholders / donor / absolute paths / schema v1).
+- Manual F5 routes A–F: **NOT EXECUTABLE IN ENVIRONMENT** in Wave G — do not invent completion.
+- Known non-blocking: headless SIGSEGV after ALL PASS; `world_location` engine crash pending recheck disposition.
+- No MODULE 28 features; schema remains **v1**.
+
 Remaining:
 
-- MODULE 27 — Full Game QA (F5 routes A–F / natural 5–8 h assessment; regressions).
-- MODULE 28 — Release Integration.
+- Orchestrator RC close (recheck pending suites; set READY / NOT READY).
+- MODULE 28 — Release Integration (only after MODULE 27 PASS).
 
 Gameplay headless runners remain under each `game/**/test/` and `minigames/**/test/`.  
+Full-game integration: `game/qa/test/`.  
 Balance runner: `game/balance/test/`.  
 UI presentation runners: `ui/hud/test/`, `ui/progression/test/`.  
 Audio runner: `audio/test/`.  
-Save runner: `persistence/test/`.  
-STOP before MODULE 27 Full Game QA.
+Save runner: `persistence/test/`.
 
 ## Donor
 

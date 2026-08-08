@@ -1,19 +1,25 @@
-# ACCEPTANCE — MODULE 26 Balance / Anti-Grind
+# ACCEPTANCE — MODULE 27 Full Game QA
 
-## Player-visible result
-Story rival loss no longer drains Authority (no ordinary-rival farm to retry). Clean ladder 0→2→4→7→10→15. RC balance constants locked.
-
-## Production changes
-Only: Earth story rival loss Authority **−1 → 0** (+ UI stakes copy). No Types retune.
+## Question
+Can a normal player finish the game with save/load without broken state?
 
 ## Evidence
-- rival_encounter ALL PASS (183)
-- balance_test ALL PASS (30): Pres 269/359/329; Stage6 436/344; Combined 795
-- SAVE_SCHEMA v1
-- Independent QA: `docs/agent/qa/M26_QA.md` PASS
-- Report: `docs/balance/BALANCE_REPORT.md`
+- RC runner: **33/33 PASS** (`py -3 tools/qa/run_all_tests.py --only-rc`)
+- Scripted Route A/B/save: **ALL PASS (157)**
+- Title / New Game smoke: PASS (GodotIQ)
+- Manual A–F: NOT EXECUTABLE IN ENVIRONMENT (honest; scripted covers mainline/recovery)
+- BLOCKER=0, MAJOR=0
+- Schema v1
+- Docs: `docs/qa/FULL_GAME_QA_REPORT.md`, REGRESSION_MATRIX, KNOWN_ISSUES
+- Independent QA: `docs/agent/qa/M27_QA.md`
+
+## Production fixes (defect-linked)
+1. Stale catalog count asserts (M25) in girl_discovery / 14a / 14b
+2. Dance E2E story loss Auth expect 0 (M26)
+3. Empty pre-M25 NpcSpawnPoint spawn_ids
+4. world_location headless free-crash settle frames
 
 ## Verdict
 **READY**
 
-STOP — do not begin MODULE 27.
+STOP — do not begin MODULE 28.

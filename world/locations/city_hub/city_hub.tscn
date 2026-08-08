@@ -409,8 +409,10 @@ script = ExtResource("3_pspawn")
 [node name="npc_girl_city_bicycle" type="Marker3D" parent="NpcSpawns" unique_id=580185440]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 0)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_city_bicycle"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_city_bicycle" unique_id=724896720 instance=ExtResource("4_xiq57")]
+girl_id = "girl_city_bicycle"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_city_bicycle/GirlActor" unique_id=1457993634]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -419,8 +421,10 @@ shape = SubResource("CapsuleShape3D_interact")
 [node name="npc_rival_city_silent" type="Marker3D" parent="NpcSpawns" unique_id=1815574643]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -3.8)
 script = ExtResource("4_nspawn")
+spawn_id = "rival_city_silent"
 
 [node name="RivalActor" parent="NpcSpawns/npc_rival_city_silent" unique_id=515275552 instance=ExtResource("6_50pgf")]
+rival_id = "rival_city_silent"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_city_silent/RivalActor" unique_id=1049199870]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -429,8 +433,10 @@ shape = SubResource("CapsuleShape3D_k0wc4")
 [node name="npc_rival_city_tracksuit" type="Marker3D" parent="NpcSpawns" unique_id=638973735]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, 0)
 script = ExtResource("4_nspawn")
+spawn_id = "rival_city_tracksuit"
 
 [node name="RivalActor" parent="NpcSpawns/npc_rival_city_tracksuit" unique_id=340487650 instance=ExtResource("6_50pgf")]
+rival_id = "rival_city_tracksuit"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_city_tracksuit/RivalActor" unique_id=1547616077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)

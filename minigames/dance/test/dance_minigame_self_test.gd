@@ -441,4 +441,5 @@ func _run_integration_tests() -> void:
 			_last_encounter.outcome == GameTypes.RivalCompetitionOutcome.PLAYER_LOSS,
 			"114 PLAYER_LOSS",
 		)
-	_ok(int(_gs.call("get_authority")) == maxi(auth_before - 1, 0), "114 authority -1 via Rival")
+	# MODULE 26: story rival PLAYER_LOSS leaves Authority unchanged (0 delta).
+	_ok(int(_gs.call("get_authority")) == auth_before, "114 story loss authority unchanged")

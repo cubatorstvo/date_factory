@@ -302,8 +302,8 @@ Clone / Stage6 / President / salary / perk / Media / Overload / cooldown budgets
 - [x] Clone / Stage6 / President bridge simulations  
 - [x] Anti-grind: story loss no farm (rule + harness)  
 - [x] Schema v1  
-- [ ] Full F5 manual routes A–F — deferred to MODULE 27 (see §9)  
-- [ ] MODULE02–25 full regression re-run — MODULE 27 ownership  
+- [ ] Full F5 manual routes A–F — MODULE 27 Wave G: **NOT EXECUTABLE IN ENVIRONMENT** (see §8; no invented F5 PASS)  
+- [ ] MODULE02–25 full regression re-run — MODULE 27 ownership (matrix draft in `docs/qa/REGRESSION_MATRIX.md`; full recheck pending)  
 
 ### Measured harness results (Wave B)
 
@@ -390,14 +390,14 @@ Spec targets remain: ordinary 20–60 s; story / final exhibition 30–90 s (inc
 
 | Route | Spec | Status |
 |---|---|---|
-| A Clean (zero ordinary / zero perk / free story) | §113 | **Balance-harness covered** for economy / Auth / XP / Money0 / clone budgets |
-| B Imperfect (story losses / discovery fails) | §114 | **Harness-covered** for story loss Auth=0; full F5 recovery deferred |
-| C Optional ordinary | §115 | Content optional; not required by harness |
-| D Broke / Capital-less | §116 | **Harness-covered** (story Money0 static + Stage6 Money0 / no global) |
-| E Specialized build | §117 | Deferred to MODULE 27 F5 |
-| F No clone upgrades | §118 | **Harness-covered** (President A/B/C + Stage6 no-upgrade) |
+| A Clean (zero ordinary / zero perk / free story) | §113 | **Balance-harness covered** for economy / Auth / XP / Money0 / clone budgets. MODULE 27 F5: **NOT EXECUTABLE IN ENVIRONMENT**. Scripted mainline: Wave C `full_game_integration` **PASS (157)**. |
+| B Imperfect (story losses / discovery fails) | §114 | **Harness-covered** for story loss Auth=0. MODULE 27 F5: **NOT EXECUTABLE IN ENVIRONMENT**. Scripted imperfect/recovery: Wave C integration **PASS**. |
+| C Optional ordinary | §115 | Content optional; not required by harness. MODULE 27 F5: **NOT EXECUTABLE IN ENVIRONMENT**. |
+| D Broke / Capital-less | §116 | **Harness-covered** (story Money0 static + Stage6 Money0 / no global). MODULE 27 F5: **NOT EXECUTABLE IN ENVIRONMENT**. |
+| E Specialized build | §117 | MODULE 27 F5: **NOT EXECUTABLE IN ENVIRONMENT** (no invented PASS). |
+| F No clone upgrades | §118 | **Harness-covered** (President A/B/C + Stage6 no-upgrade). MODULE 27 F5: **NOT EXECUTABLE IN ENVIRONMENT**. |
 
-**Assessment vs natural run 5–8 h:** economy / clone-era budgets fit mainline pacing (combined required incremental **795 s** sim-only). Full F5 manual timing of routes A–F against the 5–8 h natural-run goal is **deferred to MODULE 27 — Full Game QA**.
+**Assessment vs natural run 5–8 h:** economy / clone-era budgets fit mainline pacing (combined required incremental **795 s** sim-only). Full F5 manual timing of routes A–F against the 5–8 h natural-run goal was **not executed** in MODULE 27 Wave G agent environment — status remains honest **NOT EXECUTABLE / PARTIAL (scripted only)**. See `docs/qa/FULL_GAME_QA_REPORT.md` and `docs/qa/KNOWN_ISSUES.md`.
 
 ---
 
@@ -410,7 +410,8 @@ Spec targets remain: ordinary 20–60 s; story / final exhibition 30–90 s (inc
 | Canonical male loss (§126) | Spec §126 · GDD [`04_male_status_system.md`](../gdd/04_male_status_system.md) §13.1 |
 | Project status after MODULE26 (§127) | Spec §127 · [`PROJECT_STRUCTURE.md`](../PROJECT_STRUCTURE.md) |
 | Cursor final report shape (§130) | Spec §130 |
-| Next module | MODULE 27 — Full Game QA |
+| MODULE 27 Full Game QA | [`docs/qa/FULL_GAME_QA_REPORT.md`](../qa/FULL_GAME_QA_REPORT.md) · matrix / known issues under `docs/qa/` |
+| Next module | MODULE 28 — Release Integration (only after MODULE 27 Orchestrator PASS) |
 
 ### Audited source files
 
