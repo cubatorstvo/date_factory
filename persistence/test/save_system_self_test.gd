@@ -42,6 +42,8 @@ func _run_all() -> void:
 	_test_can_save_now_gates()
 	_test_delete_slot()
 	_test_metadata_without_gameplay()
+	_test_normalize_runtime_rejects_non_finite()
+	_test_corrupt_runtime_no_mutation()
 
 
 func _ok(cond: bool, label: String) -> void:
@@ -300,3 +302,126 @@ func _test_metadata_without_gameplay() -> void:
 func _ensure_saves_dir() -> void:
 	if not DirAccess.dir_exists_absolute(SaveTypes.SAVES_DIR):
 		DirAccess.make_dir_recursive_absolute(SaveTypes.SAVES_DIR)
+
+
+func _test_normalize_runtime_rejects_non_finite() -> void:
+	var cases: Array[Dictionary] = [
+		{"production_elapsed_seconds": NAN, "money_fraction": 0.0, "date_fraction": 0.0},
+		{"production_elapsed_seconds": INF, "money_fraction": 0.0, "date_fraction": 0.0},
+		{"production_elapsed_seconds": -INF, "money_fraction": 0.0, "date_fraction": 0.0},
+		{"production_elapsed_seconds": 0.0, "money_fraction": NAN, "date_fraction": 0.0},
+	]
+	for payload in cases:
+		var normalized: Dictionary = _ci.call("normalize_runtime_state", payload) as Dictionary
+		_ok(not bool(normalized.get("ok", true)), "normalize rejects non-finite %s" % str(payload))
+	var good: Dictionary = _ci.call(
+		"normalize_runtime_state",
+		{"production_elapsed_seconds": 1.5, "money_fraction": 1.25, "date_fraction": 2.0},
+	) as Dictionary
+	_ok(bool(good.get("ok", false)), "normalize accepts finite")
+	_ok(is_equal_approx(float(good.get("money_fraction", -1.0)), 0.25), "money_fraction wrapped")
+	_ok(is_equal_approx(float(good.get("date_fraction", -1.0)), 0.0), "date_fraction wrapped")
+
+
+func _corrupt_slot_runtime_field(slot: SaveTypes.Slot, field: String, value: float) -> bool:
+	var path: String = SaveTypes.slot_path(slot)
+	var f: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return false
+	var text: String = f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(text) != OK or not (json.data is Dictionary):
+		return false
+	var root: Dictionary = json.data as Dictionary
+	var runtime: Dictionary = root.get("runtime", {}) as Dictionary
+	var ci: Dictionary = runtime.get("clone_incremental", {}) as Dictionary
+	ci[field] = value
+	runtime["clone_incremental"] = ci
+	root["runtime"] = runtime
+	var w: FileAccess = FileAccess.open(path, FileAccess.WRITE)
+	if w == null:
+		return false
+	w.store_string(JSON.stringify(root))
+	w.close()
+	return true
+
+
+func _assert_live_untouched(
+	expected_money: int,
+	expected_stage: int,
+	expected_day: int,
+	expected_runtime: Dictionary,
+	label: String,
+) -> void:
+	_ok(int(_gs.call("get_money")) == expected_money, "%s money untouched" % label)
+	_ok(int(_gs.call("get_stage")) == expected_stage, "%s stage untouched" % label)
+	_ok(int(_day.call("get_current_day")) == expected_day, "%s day untouched" % label)
+	var live: Dictionary = _ci.call("export_runtime_state") as Dictionary
+	_ok(
+		is_equal_approx(float(live.get("production_elapsed_seconds", -1.0)), float(expected_runtime.get("production_elapsed_seconds", -2.0))),
+		"%s production_elapsed untouched" % label,
+	)
+	_ok(
+		is_equal_approx(float(live.get("money_fraction", -1.0)), float(expected_runtime.get("money_fraction", -2.0))),
+		"%s money_fraction untouched" % label,
+	)
+	_ok(
+		is_equal_approx(float(live.get("date_fraction", -1.0)), float(expected_runtime.get("date_fraction", -2.0))),
+		"%s date_fraction untouched" % label,
+	)
+
+
+func _test_corrupt_runtime_no_mutation() -> void:
+	_ensure_saveable_world()
+	var corrupt_cases: Array[Dictionary] = [
+		{"field": "money_fraction", "value": -1.0, "label": "money_fraction=-1"},
+		{"field": "production_elapsed_seconds", "value": -0.1, "label": "elapsed=-0.1"},
+		{"field": "date_fraction", "value": -0.1, "label": "date_fraction=-0.1"},
+	]
+	for case in corrupt_cases:
+		_gs.call("reset_for_new_game")
+		_day.call("restore_day", 9)
+		_gs.call("restore_stage", GameTypes.GameStage.STAGE_3)
+		_gs.call("add_money", 1234)
+		_ci.call(
+			"restore_runtime_state",
+			{"production_elapsed_seconds": 1.0, "money_fraction": 0.25, "date_fraction": 0.5},
+		)
+		var save_r: SaveResult = _ss.call("save_slot", SaveTypes.Slot.MANUAL_1) as SaveResult
+		_ok(save_r != null and save_r.ok, "save valid A (%s)" % str(case["label"]))
+		_ok(
+			_corrupt_slot_runtime_field(
+				SaveTypes.Slot.MANUAL_1,
+				str(case["field"]),
+				float(case["value"]),
+			),
+			"corrupt field written (%s)" % str(case["label"]),
+		)
+		# Prevent backup recovery from masking semantic validation failure.
+		var bak_path: String = SaveTypes.backup_path(SaveTypes.Slot.MANUAL_1)
+		if FileAccess.file_exists(bak_path):
+			DirAccess.remove_absolute(bak_path)
+		_gs.call("reset_for_new_game")
+		_day.call("restore_day", 4)
+		_gs.call("restore_stage", GameTypes.GameStage.STAGE_1)
+		_gs.call("add_money", 77777)
+		var live_runtime: Dictionary = {
+			"production_elapsed_seconds": 2.5,
+			"money_fraction": 0.33,
+			"date_fraction": 0.44,
+		}
+		_ci.call("restore_runtime_state", live_runtime)
+		var load_r: SaveResult = _ss.call("load_slot", SaveTypes.Slot.MANUAL_1) as SaveResult
+		_ok(load_r != null and not load_r.ok, "load rejected (%s)" % str(case["label"]))
+		_ok(
+			load_r != null and load_r.error == SaveTypes.ErrorCode.VALIDATION_FAILED,
+			"VALIDATION_FAILED (%s)" % str(case["label"]),
+		)
+		_assert_live_untouched(
+			77777,
+			int(GameTypes.GameStage.STAGE_1),
+			4,
+			live_runtime,
+			str(case["label"]),
+		)

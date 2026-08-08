@@ -622,6 +622,12 @@ func _read_validate_payload(path: String) -> Dictionary:
 	for key in ["production_elapsed_seconds", "money_fraction", "date_fraction"]:
 		if not ci.has(key):
 			return {"ok": false, "error": SaveTypes.ErrorCode.VALIDATION_FAILED, "message": "ci missing %s" % key}
+	var ci_node: Node = get_node_or_null("/root/CloneIncremental")
+	if ci_node == null or not ci_node.has_method("normalize_runtime_state"):
+		return {"ok": false, "error": SaveTypes.ErrorCode.VALIDATION_FAILED, "message": "clone incremental unavailable"}
+	var ci_normalized: Dictionary = ci_node.call("normalize_runtime_state", ci) as Dictionary
+	if not bool(ci_normalized.get("ok", false)):
+		return {"ok": false, "error": SaveTypes.ErrorCode.VALIDATION_FAILED, "message": "clone incremental runtime invalid"}
 	if not (root["world"] is Dictionary):
 		return {"ok": false, "error": SaveTypes.ErrorCode.VALIDATION_FAILED, "message": "world not dict"}
 	# Domain validation without mutating current GameState: use a throwaway check via export shape.

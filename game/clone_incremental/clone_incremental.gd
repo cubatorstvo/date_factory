@@ -170,31 +170,44 @@ func export_runtime_state() -> Dictionary:
 	}
 
 
-func restore_runtime_state(data: Dictionary) -> bool:
+func normalize_runtime_state(data: Dictionary) -> Dictionary:
+	## Pure validation/normalization. No mutation of live runtime.
 	if data == null:
-		return false
+		return {"ok": false}
 	if (
 		not data.has("production_elapsed_seconds")
 		or not data.has("money_fraction")
 		or not data.has("date_fraction")
 	):
-		push_error("[CloneIncremental] restore_runtime_state missing keys")
-		return false
+		return {"ok": false}
 	var elapsed: float = float(data["production_elapsed_seconds"])
 	var money_f: float = float(data["money_fraction"])
 	var date_f: float = float(data["date_fraction"])
+	if not is_finite(elapsed) or not is_finite(money_f) or not is_finite(date_f):
+		return {"ok": false}
 	if elapsed < 0.0 or money_f < 0.0 or date_f < 0.0:
-		push_error("[CloneIncremental] restore_runtime_state negative values")
-		return false
+		return {"ok": false}
 	# Normalize fractions into [0, 1).
 	money_f = money_f - floorf(money_f)
 	date_f = date_f - floorf(date_f)
 	if money_f < 0.0 or money_f >= 1.0 or date_f < 0.0 or date_f >= 1.0:
-		push_error("[CloneIncremental] restore_runtime_state fraction out of range")
+		return {"ok": false}
+	return {
+		"ok": true,
+		"production_elapsed_seconds": elapsed,
+		"money_fraction": money_f,
+		"date_fraction": date_f,
+	}
+
+
+func restore_runtime_state(data: Dictionary) -> bool:
+	var normalized: Dictionary = normalize_runtime_state(data)
+	if not bool(normalized.get("ok", false)):
+		push_error("[CloneIncremental] restore_runtime_state rejected")
 		return false
-	_production_elapsed_seconds = elapsed
-	_money_fraction = money_f
-	_date_fraction = date_f
+	_production_elapsed_seconds = float(normalized["production_elapsed_seconds"])
+	_money_fraction = float(normalized["money_fraction"])
+	_date_fraction = float(normalized["date_fraction"])
 	recalculate_rates()
 	_resolve_production_spawns()
 	return true
@@ -231,8 +244,11 @@ func _resolve_production_spawns() -> void:
 		return
 	if int(gs.call("get_total_clones")) < 1:
 		return
+	if not is_finite(_production_elapsed_seconds) or _production_elapsed_seconds < 0.0:
+		_production_elapsed_seconds = 0.0
+		return
 	var interval: float = get_production_interval()
-	if interval <= 0.0:
+	if not is_finite(interval) or interval <= 0.0:
 		return
 	while _production_elapsed_seconds >= interval:
 		_production_elapsed_seconds -= interval

@@ -20,7 +20,7 @@ Presentation seams: `docs/presentation/PRESENTATION_ARCHITECTURE.md`.
 | Slot list cards | `SaveSlotMetadata` | `persistence/save_slot_metadata.gd` |
 | Domain blob | `GameState.export_save_state` / `restore_save_state` | `game/state/game_state.gd` |
 | Day index | `GameDay.restore_day` | `game/day/game_day.gd` |
-| Clone fractions | `CloneIncremental.export_runtime_state` / `restore_runtime_state` | `game/clone_incremental/clone_incremental.gd` |
+| Clone fractions | `CloneIncremental.export_runtime_state` / `normalize_runtime_state` / `restore_runtime_state` | `game/clone_incremental/clone_incremental.gd` |
 | Location + pose | `World.export_world_save_state` / `restore_saved_location` | `world/world.gd` |
 | Title / Pause / Settings UI | presentation only | `ui/frontend/*` |
 
@@ -100,7 +100,9 @@ Runtime-only progress **not** in GameState aggregates:
 - `production_elapsed_seconds` — free-clone timer;
 - `money_fraction` / `date_fraction` — sub-unit accrual in `[0, 1)` after normalize.
 
-Restored before world travel; then rates recalculated.
+Pure seam: `CloneIncremental.normalize_runtime_state(data)` — finite, non-negative, fraction wrap; **no live mutation**.  
+`SaveSystem._read_validate_payload` calls it before returning `ok`; invalid runtime → `VALIDATION_FAILED` (load never reaches GameState restore).  
+`restore_runtime_state` reuses the same normalizer, then applies + `recalculate_rates` + resolve production.
 
 ### World pose
 
@@ -126,7 +128,7 @@ Load: prefer primary JSON; if corrupt/missing → try `.bak.json` and set `recov
 |---|---|
 | `save_slot(slot)` | Manual requires `can_save_now()`; autosave blocked only while restoring |
 | `autosave()` / `request_autosave()` | Debounce `0.75 s`; retries while unsafe |
-| `load_slot(slot)` | Validate → restore GameState → GameDay → CloneIncremental → sync services → World |
+| `load_slot(slot)` | Full validate (incl. CloneIncremental normalize) → restore GameState → GameDay → CloneIncremental → sync → World |
 | `continue_latest()` | Newest valid among 3 manual + autosave by `saved_at_unix` |
 | `start_new_game()` | Fresh domain state + apartment; does **not** wipe existing slot files |
 | `delete_slot(slot)` | Removes primary + bak |

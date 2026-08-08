@@ -1,12 +1,16 @@
-# ACCEPTANCE — MODULE 24 Save / Load / Settings
+# ACCEPTANCE — MODULE 24 FIX prevalidate runtime
 
 ## Player-visible result
-Title Continue/New/Load/Settings; pause Save/Load/Settings; full state + fractions + pose roundtrip; independent settings persistence; autosave on stable milestones.
+Corrupt CloneIncremental runtime in a save is rejected before load mutates the live game.
 
-## PASS
-SaveSystem schema v1; atomic+backup; GameState exhaustive; GameDay; CloneIncremental fractions; world pose; settings; title/pause; MODULE02–23 regressions; no MODULE25.
+## PASS checklist
+- [x] Pure `normalize_runtime_state`
+- [x] `restore_runtime_state` reuses it
+- [x] SaveSystem validates before GameState restore
+- [x] Negative/non-finite → `VALIDATION_FAILED`, live state untouched
+- [x] Regression in `save_system_self_test`
+- [x] MODULE24 IO/domain/world + MODULE18 PASS
+- [x] Independent QA PASS (`docs/agent/qa/M24_FIX_QA.md`)
 
 ## Verdict
 **READY**
-
-Evidence: `docs/agent/qa/M24_QA.md`, `tmp/m24_qa/` (indep `passed=51 failed=0`; SaveSystem 57; domain 88; world 28).
