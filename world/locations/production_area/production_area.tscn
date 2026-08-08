@@ -139,15 +139,6 @@ albedo_color = Color(0.35, 0.4, 0.45, 1)
 [sub_resource type="BoxMesh" id="BoxMesh_EventPost"]
 size = Vector3(0.7, 1.2, 0.7)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_irctf"]
-size = Vector3(0.7, 1.2, 0.7)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_msbmx"]
-albedo_color = Color(0.72, 0.68, 0.62, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_iejgs"]
-size = Vector3(0.45, 0.9, 0.45)
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3gkpe"]
 albedo_color = Color(0.22, 0.24, 0.28, 1)
 
@@ -571,19 +562,6 @@ text = "КАРТА ЗЕМЛИ
 Свободное место постепенно перестаёт быть географическим понятием."
 prompt = "Осмотреть"
 prompt_action = "Осмотреть"
-
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorWorldMap" unique_id=374407289]
-shape = SubResource("BoxShape3D_irctf")
-
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorWorldMap" unique_id=1246067171]
-material_override = SubResource("StandardMaterial3D_msbmx")
-mesh = SubResource("BoxMesh_iejgs")
-
-[node name="Label" type="Label3D" parent="Interactables/FlavorWorldMap" unique_id=931679821]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-billboard = 1
-text = "Карта Земли"
-font_size = 22
 
 [node name="ScenicGags" type="Node3D" parent="Interactables" unique_id=523012873]
 

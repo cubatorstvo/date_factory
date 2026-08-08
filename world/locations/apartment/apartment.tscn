@@ -89,15 +89,6 @@ size = Vector3(1.1, 0.7, 1.1)
 [sub_resource type="BoxMesh" id="BoxMesh_2h5qe"]
 size = Vector3(0.6, 1.6, 0.2)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_irctf"]
-size = Vector3(0.7, 1.2, 0.7)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_msbmx"]
-albedo_color = Color(0.72, 0.68, 0.62, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_iejgs"]
-size = Vector3(0.45, 0.9, 0.45)
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2h5qe"]
 albedo_color = Color(0.93, 0.91, 0.84, 1)
 
@@ -205,7 +196,6 @@ script = ExtResource("3_pspawn")
 [node name="npc_girl_neighbor" type="Marker3D" parent="NpcSpawns" unique_id=1917676318]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -4)
 script = ExtResource("3_r1sck")
-content_id = "girl_neighbor"
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=544019242]
 
@@ -295,20 +285,7 @@ text = "ОТРАЖЕНИЕ
 Статус: пока оригинал."
 prompt_action = "Осмотреть"
 
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorMirror" unique_id=374407289]
-shape = SubResource("BoxShape3D_irctf")
-
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorMirror" unique_id=1246067171]
-material_override = SubResource("StandardMaterial3D_msbmx")
-mesh = SubResource("BoxMesh_iejgs")
-
-[node name="Label" type="Label3D" parent="Interactables/FlavorMirror" unique_id=931679821]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-billboard = 1
-text = "Зеркало"
-font_size = 22
-
-[node name="FlavorWardrobe" type="Area3D" parent="Interactables" unique_id=868502092 instance=ExtResource("9_pw7ec")]
+[node name="FlavorWardrobe" type="Area3D" parent="Interactables" unique_id=420890977 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 1, -3.5)
 collision_layer = 4
 collision_mask = 0
@@ -318,20 +295,7 @@ text = "ГАРДЕРОБ
 Некоторые вещи уже выглядят как решение."
 prompt_action = "Осмотреть"
 
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorWardrobe" unique_id=1396755198]
-shape = SubResource("BoxShape3D_irctf")
-
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorWardrobe" unique_id=1718680655]
-material_override = SubResource("StandardMaterial3D_msbmx")
-mesh = SubResource("BoxMesh_iejgs")
-
-[node name="Label" type="Label3D" parent="Interactables/FlavorWardrobe" unique_id=154702303]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-billboard = 1
-text = "Гардероб"
-font_size = 22
-
-[node name="FlavorFridge" type="Area3D" parent="Interactables" unique_id=1736883199 instance=ExtResource("9_pw7ec")]
+[node name="FlavorFridge" type="Area3D" parent="Interactables" unique_id=695661774 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 1, 3.2)
 collision_layer = 4
 collision_mask = 0
@@ -341,20 +305,7 @@ text = "ХОЛОДИЛЬНИК
 Внутри находится еда и ни одного социального обязательства."
 prompt_action = "Осмотреть"
 
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorFridge" unique_id=106670279]
-shape = SubResource("BoxShape3D_irctf")
-
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorFridge" unique_id=487325082]
-material_override = SubResource("StandardMaterial3D_msbmx")
-mesh = SubResource("BoxMesh_iejgs")
-
-[node name="Label" type="Label3D" parent="Interactables/FlavorFridge" unique_id=1880287531]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-billboard = 1
-text = "Холодильник"
-font_size = 22
-
-[node name="FlavorWindow" type="Area3D" parent="Interactables" unique_id=1689088990 instance=ExtResource("9_pw7ec")]
+[node name="FlavorWindow" type="Area3D" parent="Interactables" unique_id=2011150761 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 1.4, -5.4)
 collision_layer = 4
 collision_mask = 0
@@ -364,20 +315,7 @@ text = "ОКНО
 Город пока не подозревает о производственном плане."
 prompt_action = "Осмотреть"
 
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorWindow" unique_id=189542424]
-shape = SubResource("BoxShape3D_irctf")
-
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorWindow" unique_id=317352602]
-material_override = SubResource("StandardMaterial3D_msbmx")
-mesh = SubResource("BoxMesh_iejgs")
-
-[node name="Label" type="Label3D" parent="Interactables/FlavorWindow" unique_id=1502359198]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-billboard = 1
-text = "Окно"
-font_size = 22
-
-[node name="FlavorChair" type="Area3D" parent="Interactables" unique_id=573221848 instance=ExtResource("9_pw7ec")]
+[node name="FlavorChair" type="Area3D" parent="Interactables" unique_id=1483552862 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0.55, 2)
 collision_layer = 4
 collision_mask = 0
@@ -386,19 +324,6 @@ script = ExtResource("10_m8kc2")
 text = "СТУЛ
 Пахнет ламинатом и надеждами."
 prompt_action = "Осмотреть"
-
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorChair" unique_id=374126566]
-shape = SubResource("BoxShape3D_irctf")
-
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorChair" unique_id=672860617]
-material_override = SubResource("StandardMaterial3D_msbmx")
-mesh = SubResource("BoxMesh_iejgs")
-
-[node name="Label" type="Label3D" parent="Interactables/FlavorChair" unique_id=1473066645]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-billboard = 1
-text = "Стул"
-font_size = 22
 
 [node name="ScenicGags" type="Node3D" parent="Interactables" unique_id=1814693174]
 

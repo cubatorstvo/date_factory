@@ -135,15 +135,6 @@ emission_energy_multiplier = 0.45
 [sub_resource type="BoxMesh" id="BoxMesh_jdboj"]
 size = Vector3(0.85, 0.55, 0.06)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_irctf"]
-size = Vector3(0.7, 1.2, 0.7)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_msbmx"]
-albedo_color = Color(0.72, 0.68, 0.62, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_iejgs"]
-size = Vector3(0.45, 0.9, 0.45)
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rsglh"]
 albedo_color = Color(0.85, 0.55, 0.2, 1)
 
@@ -649,20 +640,7 @@ text = "КАМЕРА КЛОНИРОВАНИЯ
 prompt = "Осмотреть"
 prompt_action = "Осмотреть"
 
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorCloneChamber" unique_id=374407289]
-shape = SubResource("BoxShape3D_irctf")
-
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorCloneChamber" unique_id=1246067171]
-material_override = SubResource("StandardMaterial3D_msbmx")
-mesh = SubResource("BoxMesh_iejgs")
-
-[node name="Label" type="Label3D" parent="Interactables/FlavorCloneChamber" unique_id=931679821]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-billboard = 1
-text = "Камера клонирования"
-font_size = 22
-
-[node name="FlavorDateCorridor" type="Area3D" parent="Interactables" unique_id=384386330 instance=ExtResource("6_jdboj")]
+[node name="FlavorDateCorridor" type="Area3D" parent="Interactables" unique_id=288809734 instance=ExtResource("6_jdboj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1.8)
 collision_layer = 4
 collision_mask = 0
@@ -672,19 +650,6 @@ text = "РОМАНТИЧЕСКИЙ СЕКТОР
 Индивидуальный учёт прекращается после десятой комнаты."
 prompt = "Осмотреть"
 prompt_action = "Осмотреть"
-
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorDateCorridor" unique_id=1619999283]
-shape = SubResource("BoxShape3D_irctf")
-
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorDateCorridor" unique_id=1141523595]
-material_override = SubResource("StandardMaterial3D_msbmx")
-mesh = SubResource("BoxMesh_iejgs")
-
-[node name="Label" type="Label3D" parent="Interactables/FlavorDateCorridor" unique_id=828548493]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-billboard = 1
-text = "Романтический сектор"
-font_size = 22
 
 [node name="ScenicGags" type="Node3D" parent="Interactables" unique_id=807221774]
 
