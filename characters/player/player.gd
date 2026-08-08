@@ -19,6 +19,10 @@ signal interaction_target_changed(target: Area3D)
 @export var jump_height: float = 1.0
 @export var mouse_sensitivity_degrees: float = 0.12
 @export var camera_fov: float = 75.0
+const MOUSE_SENS_MIN: float = 0.04
+const MOUSE_SENS_MAX: float = 0.30
+const FOV_MIN: float = 60.0
+const FOV_MAX: float = 100.0
 @export var interaction_distance: float = 2.5
 @export var max_step_height: float = 0.35
 @export var max_slope_degrees: float = 45.0
@@ -156,11 +160,88 @@ func get_interaction_target() -> Area3D:
 	return null
 
 
+func get_pose_dict() -> Dictionary:
+	var pos: Vector3 = global_position
+	return {
+		"position": [pos.x, pos.y, pos.z],
+		"yaw": rotation.y,
+		"pitch": _pitch,
+	}
+
+
+func apply_pose_dict(pose: Dictionary) -> bool:
+	if pose.is_empty():
+		return false
+	var pos_v: Variant = pose.get("position", null)
+	var parsed: Vector3 = _parse_pose_position(pos_v)
+	if not is_finite(parsed.x) or not is_finite(parsed.y) or not is_finite(parsed.z):
+		return false
+	var yaw: float = float(pose.get("yaw", 0.0))
+	var pitch: float = float(pose.get("pitch", 0.0))
+	if not is_finite(yaw) or not is_finite(pitch):
+		return false
+	pitch = clampf(pitch, -deg_to_rad(pitch_limit_degrees), deg_to_rad(pitch_limit_degrees))
+	velocity = Vector3.ZERO
+	global_transform = Transform3D(Basis.from_euler(Vector3(0.0, yaw, 0.0)), parsed)
+	_pitch = pitch
+	if _camera_pivot != null:
+		_camera_pivot.rotation.x = _pitch
+	enter_gameplay()
+	return true
+
+
+func get_camera_fov() -> float:
+	return camera_fov
+
+
+func set_camera_fov(value: float) -> void:
+	camera_fov = clampf(value, FOV_MIN, FOV_MAX)
+	if _camera != null:
+		_camera.fov = camera_fov
+	_ensure_camera_feedback()
+	if _camera_feedback != null:
+		_camera_feedback.set_baseline_fov(camera_fov)
+
+
+func get_mouse_sensitivity_degrees() -> float:
+	return mouse_sensitivity_degrees
+
+
+func set_mouse_sensitivity_degrees(value: float) -> void:
+	mouse_sensitivity_degrees = clampf(value, MOUSE_SENS_MIN, MOUSE_SENS_MAX)
+
+
+func _parse_pose_position(pos_v: Variant) -> Vector3:
+	if pos_v is Vector3:
+		return pos_v as Vector3
+	if pos_v is Array:
+		var arr: Array = pos_v as Array
+		if arr.size() < 3:
+			return Vector3(NAN, NAN, NAN)
+		return Vector3(float(arr[0]), float(arr[1]), float(arr[2]))
+	if pos_v is PackedFloat32Array:
+		var pf32: PackedFloat32Array = pos_v as PackedFloat32Array
+		if pf32.size() < 3:
+			return Vector3(NAN, NAN, NAN)
+		return Vector3(pf32[0], pf32[1], pf32[2])
+	if pos_v is PackedFloat64Array:
+		var pf64: PackedFloat64Array = pos_v as PackedFloat64Array
+		if pf64.size() < 3:
+			return Vector3(NAN, NAN, NAN)
+		return Vector3(float(pf64[0]), float(pf64[1]), float(pf64[2]))
+	return Vector3(NAN, NAN, NAN)
+
+
 func _handle_pause_action() -> void:
+	var pause_menu: Node = get_tree().get_first_node_in_group("pause_menu") if get_tree() != null else null
+	if pause_menu != null and pause_menu.has_method("handle_pause_action"):
+		if bool(pause_menu.call("handle_pause_action")):
+			return
 	match _mode:
 		ControlMode.GAMEPLAY, ControlMode.MINIGAME:
 			_mode_before_pause = _mode
 			enter_paused()
+			_ensure_pause_menu_open()
 		ControlMode.PAUSED:
 			set_control_mode(_mode_before_pause)
 		_:
@@ -174,7 +255,8 @@ func _apply_mode_side_effects() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS if paused else Node.PROCESS_MODE_INHERIT
 	if _interaction.has_method("set_query_enabled"):
 		_interaction.call("set_query_enabled", gameplay)
-	_pause_overlay.visible = paused
+	# MODULE24: PauseMenu owns pause UI; keep prototype overlay hidden.
+	_pause_overlay.visible = false
 	# MODULE 22: GameHUD owns the gameplay crosshair; FpsHud keeps [E] prompt only.
 	_crosshair.visible = false
 	if not gameplay:
@@ -271,6 +353,20 @@ func _update_debug_label() -> void:
 func _on_resume_pressed() -> void:
 	if _mode == ControlMode.PAUSED:
 		set_control_mode(_mode_before_pause)
+
+
+func _ensure_pause_menu_open() -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var pause_menu: Node = tree.get_first_node_in_group("pause_menu")
+	if pause_menu == null:
+		var script_res: Resource = load("res://ui/frontend/pause_menu.gd")
+		if script_res is GDScript:
+			pause_menu = (script_res as GDScript).new()
+			tree.root.add_child(pause_menu)
+	if pause_menu != null and pause_menu.has_method("open_from_pause"):
+		pause_menu.call("open_from_pause")
 
 
 func _ensure_camera_feedback() -> void:

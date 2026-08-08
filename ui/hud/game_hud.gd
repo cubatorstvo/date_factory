@@ -46,6 +46,7 @@ var _pending_group_lines: PackedStringArray = PackedStringArray()
 var _group_flush_scheduled: bool = false
 var _reach_milestones_fired: Dictionary = {}
 var _movement_armed: bool = false
+var _title_suppressed: bool = false
 
 
 func _ready() -> void:
@@ -56,6 +57,12 @@ func _ready() -> void:
 	_refresh_resources()
 	_hook_signals()
 	call_deferred("_bind_player")
+	_update_visibility()
+
+
+func set_title_suppressed(suppressed: bool) -> void:
+	## MODULE24: hide gameplay HUD while title menu is active.
+	_title_suppressed = suppressed
 	_update_visibility()
 
 
@@ -332,7 +339,10 @@ func _on_control_mode_changed(mode: PlayerController.ControlMode) -> void:
 
 
 func _update_visibility() -> void:
-	var gameplay: bool = _control_mode == PlayerController.ControlMode.GAMEPLAY
+	var gameplay: bool = (
+		(not _title_suppressed)
+		and _control_mode == PlayerController.ControlMode.GAMEPLAY
+	)
 	_gameplay_root.visible = gameplay
 	if not gameplay:
 		# Stage/notify rails must not ghost under modal/minigame owners.

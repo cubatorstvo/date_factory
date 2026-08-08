@@ -145,6 +145,19 @@ func get_baseline_fov() -> float:
 	return _baseline_fov
 
 
+## Update FOV baseline when settings change. Pulses restore to this value.
+func set_baseline_fov(fov: float) -> void:
+	_baseline_fov = fov
+	if _camera == null:
+		_baseline_captured = false
+		return
+	_baseline_captured = true
+	if _fov_remaining > 0.0:
+		_apply_offsets()
+	else:
+		_camera.fov = _baseline_fov
+
+
 ## Synchronous self-test: caps, exact baseline restore, scale0 zero motion.
 static func run_self_test() -> bool:
 	var passed: int = 0

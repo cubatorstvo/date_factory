@@ -1,12 +1,12 @@
-# ACCEPTANCE — MODULE 23 Audio / Animation / Feedback
+# ACCEPTANCE — MODULE 24 Save / Load / Settings
 
 ## Player-visible result
-Stage music, semantic SFX, Slap camera feedback, NPC reaction animations (where assets allow), light VFX, local ambience — without changing gameplay.
+Title Continue/New/Load/Settings; pause Save/Load/Settings; full state + fractions + pose roundtrip; independent settings persistence; autosave on stable milestones.
 
 ## PASS
-Asset audit + licenses; AudioDirector + 5 buses; 4 music states + crossfade + duck; SFX coverage; CameraFeedback; animation fallbacks; VFX/ambience; no spam; MODULE 02–22 regressions; no MODULE24 ahead.
+SaveSystem schema v1; atomic+backup; GameState exhaustive; GameDay; CloneIncremental fractions; world pose; settings; title/pause; MODULE02–23 regressions; no MODULE25.
 
 ## Verdict
 **READY**
 
-Evidence: `docs/agent/qa/M23_QA.md`, `tmp/m23_qa/` (indep `passed=45 failed=0`; audio 31; camera 7).
+Evidence: `docs/agent/qa/M24_QA.md`, `tmp/m24_qa/` (indep `passed=51 failed=0`; SaveSystem 57; domain 88; world 28).

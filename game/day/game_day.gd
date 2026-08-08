@@ -25,5 +25,14 @@ func advance_day() -> int:
 	return current_day
 
 
+## Save/Load restore — does not emit day_advanced.
+func restore_day(day: int) -> bool:
+	if day < 1:
+		push_error("[GameDay] restore_day rejected day=%s" % day)
+		return false
+	current_day = day
+	return true
+
+
 func _on_state_reset() -> void:
 	current_day = 1

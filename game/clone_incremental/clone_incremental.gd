@@ -162,6 +162,44 @@ func refresh_external_modifiers() -> void:
 	_resolve_production_spawns()
 
 
+func export_runtime_state() -> Dictionary:
+	return {
+		"production_elapsed_seconds": _production_elapsed_seconds,
+		"money_fraction": _money_fraction,
+		"date_fraction": _date_fraction,
+	}
+
+
+func restore_runtime_state(data: Dictionary) -> bool:
+	if data == null:
+		return false
+	if (
+		not data.has("production_elapsed_seconds")
+		or not data.has("money_fraction")
+		or not data.has("date_fraction")
+	):
+		push_error("[CloneIncremental] restore_runtime_state missing keys")
+		return false
+	var elapsed: float = float(data["production_elapsed_seconds"])
+	var money_f: float = float(data["money_fraction"])
+	var date_f: float = float(data["date_fraction"])
+	if elapsed < 0.0 or money_f < 0.0 or date_f < 0.0:
+		push_error("[CloneIncremental] restore_runtime_state negative values")
+		return false
+	# Normalize fractions into [0, 1).
+	money_f = money_f - floorf(money_f)
+	date_f = date_f - floorf(date_f)
+	if money_f < 0.0 or money_f >= 1.0 or date_f < 0.0 or date_f >= 1.0:
+		push_error("[CloneIncremental] restore_runtime_state fraction out of range")
+		return false
+	_production_elapsed_seconds = elapsed
+	_money_fraction = money_f
+	_date_fraction = date_f
+	recalculate_rates()
+	_resolve_production_spawns()
+	return true
+
+
 func advance_simulation_for_test(seconds: float) -> void:
 	if seconds <= 0.0:
 		return

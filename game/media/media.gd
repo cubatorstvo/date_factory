@@ -43,6 +43,15 @@ func _on_state_reset() -> void:
 	_active_session = null
 
 
+## Save/Load: suppress one-shot overload_ready replay; clear transient session.
+func sync_after_load() -> void:
+	_last_new_offer_girl_ids.clear()
+	if _active_session != null and is_instance_valid(_active_session):
+		_active_session.queue_free()
+	_active_session = null
+	_overload_ready_emitted = is_overload_ready()
+
+
 func _on_gs_attention_changed(new_value: int, delta: int) -> void:
 	attention_changed.emit(new_value, delta)
 	_last_new_offer_girl_ids = _sync_threshold_offers()

@@ -1,12 +1,13 @@
-# UI Architecture — MODULE 22 (+ MODULE 23 audio seams)
+# UI Architecture — MODULE 22 (+ MODULE 23 audio + MODULE 24 title/pause/settings)
 
-**Статус:** реализованная UI presentation architecture после MODULE 22; audio call-sites wired in MODULE 23.  
-**Граница:** UI показывает уже существующее состояние и действия. Gameplay / balance / Story / economy остаются source of truth.  
-**STOP:** без MODULE 24 settings / persistence; без UIManager / ScreenManager / reactive store.
+**Статус:** реализованная UI presentation architecture после MODULE 22; audio in MODULE 23; title/pause/settings in MODULE 24.  
+**Граница:** UI показывает уже существующее состояние и действия. Gameplay / balance / Story / economy / SaveSystem остаются source of truth.  
+**STOP:** без MODULE 25 content packs; без UIManager / ScreenManager / reactive store.
 
 Product truth: `docs/gdd/08_locations_ui_content.md` §47.  
-Spec: `docs/modules/MODULE_22_UI_UX_INTEGRATION.md`.  
-Audio / camera / VFX truth: `docs/presentation/PRESENTATION_ARCHITECTURE.md`.
+Spec: `docs/modules/MODULE_22_UI_UX_INTEGRATION.md` (+ MODULE 24 front-end).  
+Audio / camera / VFX: `docs/presentation/PRESENTATION_ARCHITECTURE.md`.  
+Persistence: `docs/persistence/SAVE_ARCHITECTURE.md`.
 
 ---
 
@@ -27,6 +28,10 @@ Audio / camera / VFX truth: `docs/presentation/PRESENTATION_ARCHITECTURE.md`.
 | Clone Terminal | lab Interactable | `game/clone_incremental/clone_terminal_ui.gd` |
 | Global Terminal | Production Area Interactable | `game/late_game/global_expansion_terminal_ui.gd` |
 | Final date UI | scene-local FinalDateController | `game/final_date/final_date_ui.gd` |
+| Title menu | bootstrap-spawned CanvasLayer | `ui/frontend/title_menu.tscn` + `.gd` |
+| Pause menu | player pause → CanvasLayer | `ui/frontend/pause_menu.tscn` + `.gd` |
+| Settings panel | title/pause child panel | `ui/frontend/settings_panel.tscn` + `.gd` |
+| Front-end → SaveSystem | static helper | `ui/frontend/frontend_save_api.gd` (`FrontendSaveApi`) |
 
 Не создаются: `UIManager`, `ScreenManager`, widget framework, global modal engine.
 
@@ -185,11 +190,11 @@ Gameplay controllers remain owners of outcomes; UI is presentation.
 
 ---
 
-## 9. Tutorials (runtime-only)
+## 9. Tutorials
 
-`TutorialPrompt` inside GameHUD — **not** an autoload, **not** GameState fields (MODULE 24 may persist).
+`TutorialPrompt` inside GameHUD — **not** an autoload, **not** GameState fields.
 
-Seven `PromptId`s, once per runtime:
+Seven `PromptId`s:
 
 1. `FIRST_MOVEMENT`
 2. `FIRST_PHONE`
@@ -199,21 +204,37 @@ Seven `PromptId`s, once per runtime:
 6. `FIRST_CLONE`
 7. `FIRST_STAGE6`
 
-Queued until `GAMEPLAY`; does not interrupt MODAL_UI / MINIGAME / FinalDate dialogue; ~4–6 s, dismissible.
+`TutorialPrompt.export_seen_ids` / `restore_seen_ids` + `SaveSystem` `[tutorial] seen` in `user://settings.cfg` (reset from Settings). Queued until `GAMEPLAY`; does not interrupt MODAL_UI / MINIGAME / FinalDate dialogue; ~4–6 s, dismissible.
 
 ---
 
-## 10. UI scale (runtime-only)
+## 10. UI scale
 
 `UiScaleHelper` presets: **100% / 125% / 150%**.
 
 - Applied to HUD scale root and other themed roots via `apply_to_control` / `apply_to_canvas_item`;
 - `GameHUD.set_ui_scale_percent` / `get_ui_scale_percent`;
-- not persisted (MODULE 24 Settings).
+- persisted as `display/ui_scale` (1.0 / 1.25 / 1.5) through `SaveSystem` Settings.
 
 ---
 
-## 11. Modal ownership
+## 11. Title / Pause / Settings (MODULE 24)
+
+Presentation-only; all I/O through `FrontendSaveApi` → `SaveSystem`.
+
+| Surface | Entry | Actions |
+|---|---|---|
+| `TitleMenu` | `main_bootstrap` after `World.prepare_for_title` | Continue (latest valid), New Game, Load slot, Settings |
+| `PauseMenu` | pause → `ControlMode.PAUSED` | Resume, Save slot, Load slot, Settings, Return to title |
+| `SettingsPanel` | from title or pause | audio sliders, sensitivity, camera feedback, FOV, UI scale, fullscreen, vsync; Apply writes `settings.cfg` |
+
+- Manual save from pause is allowed (`can_save_now` accepts `PAUSED`).
+- Load/New Game from title starts World travel; return-to-title calls `SaveSystem.return_to_title`.
+- No second persistence layer inside UI scripts.
+
+---
+
+## 12. Modal ownership
 
 Source of truth for input focus: `PlayerController.ControlMode`:
 
@@ -233,7 +254,7 @@ Rules:
 
 ---
 
-## 12. Audio seams (MODULE 23)
+## 13. Audio seams (MODULE 23)
 
 UI does **not** own `AudioDirector`. Call sites resolve `/root/AudioDirector` and use `AudioIds` only (no raw paths).
 
@@ -246,20 +267,20 @@ UI does **not** own `AudioDirector`. Call sites resolve `/root/AudioDirector` an
 | Phone media actions | `media_publish`, `media_incoming`, `media_feed_boost` |
 
 **Silent:** resource number refresh, passive Money tick, countdown refresh, disabled hover.  
-Volumes / camera scale persistence → MODULE 24 (`AudioDirector` / `CameraFeedback` seams already exist).
+Volumes / camera feedback / FOV / UI scale persistence → `SaveSystem` (`settings.cfg`).
 
 ---
 
-## 13. Non-goals / STOP
+## 14. Non-goals / STOP
 
-- No MODULE 24 settings menu or save fields for tutorials / UI scale / audio volumes / camera scale;
-- No new gameplay mechanics, balance, Story rules, or content packs from UI work;
+- No UIManager / ScreenManager / reactive store;
+- No new gameplay mechanics, balance, Story rules, or MODULE 25 content packs from UI work;
 - Terminals and FinalDateUI stay under `game/**` (not moved into `ui/` for folder purity);
-- No UIManager / ScreenManager / reactive store.
+- UI never writes save JSON directly — only via `SaveSystem` / `FrontendSaveApi`.
 
 ---
 
-## 14. Tests (presentation)
+## 15. Tests (presentation)
 
 | Runner | Path |
 |---|---|

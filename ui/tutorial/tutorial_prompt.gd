@@ -30,9 +30,39 @@ var _active_id: int = -1
 
 
 func reset_runtime() -> void:
+	reset_seen()
+
+
+## Clears seen flags and any pending/active prompt (settings "Reset Tutorials").
+func reset_seen() -> void:
 	_seen.clear()
 	_queue.clear()
 	_active_id = -1
+
+
+## JSON-safe PromptId names for settings persistence.
+func export_seen_ids() -> Array[String]:
+	var out: Array[String] = []
+	for key in _seen.keys():
+		if not bool(_seen[key]):
+			continue
+		var id: int = int(key)
+		var key_name: Variant = PromptId.find_key(id)
+		if key_name == null:
+			continue
+		out.append(String(key_name))
+	out.sort()
+	return out
+
+
+## Restores seen flags from settings. Accepts String names or int ordinals.
+func restore_seen_ids(ids: Array) -> void:
+	_seen.clear()
+	for item in ids:
+		var id: int = _parse_seen_id(item)
+		if id < 0:
+			continue
+		_seen[id] = true
 
 
 func request(prompt_id: PromptId) -> void:
@@ -79,3 +109,28 @@ func dismiss_active() -> void:
 
 func mark_seen(prompt_id: PromptId) -> void:
 	_seen[int(prompt_id)] = true
+
+
+func _parse_seen_id(item: Variant) -> int:
+	if item is int:
+		var as_int: int = int(item)
+		if PromptId.find_key(as_int) == null:
+			return -1
+		return as_int
+	if item is float:
+		var as_float_int: int = int(item)
+		if PromptId.find_key(as_float_int) == null:
+			return -1
+		return as_float_int
+	var text: String = str(item).strip_edges()
+	if text.is_empty():
+		return -1
+	if text.is_valid_int():
+		var parsed: int = int(text)
+		if PromptId.find_key(parsed) == null:
+			return -1
+		return parsed
+	for i in range(PromptId.size()):
+		if String(PromptId.find_key(i)) == text:
+			return i
+	return -1

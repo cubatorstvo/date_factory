@@ -48,6 +48,11 @@ func _on_state_reset() -> void:
 	_recognition_emitted = false
 
 
+## Save/Load: suppress problem_recognized / clone_solution_needed replay.
+func sync_after_load() -> void:
+	_recognition_emitted = is_problem_recognized()
+
+
 func _on_media_overload_ready() -> void:
 	_ensure_started_from_media()
 

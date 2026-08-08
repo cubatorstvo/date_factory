@@ -1,21 +1,21 @@
-﻿# File ownership — MODULE 23 Audio / Animation / Feedback
+﻿# File ownership — MODULE 24 Save / Load / Settings
 
 | Task | Agent | Writable | Forbidden | Status |
 |------|-------|----------|-----------|--------|
-| M23_A_AUDIT | researcher | none | product writes | done |
-| M23_B_ASSETS | asset | `assets/audio/**`, draft ASSET_LICENSES | donor mutation | done |
-| M23_B_AUDIO_CORE | gameplay | `audio/**`, `default_bus_layout.tres`, project.godot autoload/buses | formulas | done |
-| M23_C_SFX_WIRE | gameplay | presentation play_* wires across UI/game/minigames | scoring | done |
-| M23_D_CAMERA | gameplay | CameraFeedback + Slap impulses | other minigame camera | done |
-| M23_E_ANIM | gameplay | CharacterAnimationController aliases + reaction wires | face rig | done |
-| M23_F_VFX_AMBIENCE | gameplay | ambience + presentation/vfx + FOV pulses | cutscenes | done |
-| M23_G_DOCS | content | docs listed in ACCEPTANCE | runtime | done |
-| M23_H_QA | qa | `tmp/m23_qa/**`, `docs/agent/qa/M23_QA.md` | product | done |
+| M24_A_AUDIT | researcher | none | product | done |
+| M24_B_DOMAIN | gameplay | GameState/GameDay/CloneIncremental + sync_after_load | SaveSystem UI | done |
+| M24_C_WORLD | gameplay | world.gd + player pose | GameState bulk | done |
+| M24_D_SETTINGS_SEAMS | gameplay | tutorial + FOV/sensitivity seams | SaveSystem ConfigFile | done |
+| M24_E_SAVE_IO | gameplay | persistence/**, project.godot autoload | frontend scenes | done |
+| M24_F_FRONTEND | scene | ui/frontend/**, main_bootstrap, pause wire | GameState formulas | done |
+| M24_G_DOCS | content | SAVE_ARCHITECTURE + structure/decisions/UI notes | runtime | done |
+| M24_H_QA | qa | tmp/m24_qa/**, docs/agent/qa/M24_QA.md | product | done |
 
 ## Product decisions
-1. Presentation only — no gameplay mutation.
-2. Five buses + AudioDirector autoload; 4 music states; bounded pools.
-3. CameraFeedback player-local with caps; scale 0..1 for MODULE24.
-4. Animation aliases remap to existing clips; no facial.
-5. Local industrial ambience; Godot-only VFX.
-6. STOP — no MODULE24 settings/persistence.
+1. One SaveSystem before AudioDirector; schema v1 JSON; 3+autosave.
+2. Silent GameState bulk restore; DatingDemandEntry uses appointment_day.
+3. CloneIncremental fractions persisted; no offline catch-up.
+4. can_save_now allows GAMEPLAY and PAUSED; blocks modal/minigame/sessions/FinalDate.
+5. Settings in user://settings.cfg; tutorials in settings.
+6. Title before World boot; New Game does not delete slots.
+7. STOP — no MODULE25; no legacy migration.

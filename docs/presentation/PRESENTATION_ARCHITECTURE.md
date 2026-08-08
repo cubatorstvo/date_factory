@@ -1,11 +1,12 @@
-# Presentation Architecture — MODULE 23
+# Presentation Architecture — MODULE 23 (+ MODULE 24 settings seams)
 
-**Статус:** реализованная presentation architecture после MODULE 23.  
-**Граница:** audio / animation / camera / VFX усиливают уже работающий F5→ending gameplay. Не владеют scoring, Story, economy, balance.  
-**STOP:** без MODULE 24 settings menu / save-load persistence (volume + camera scale seams уже exposed).
+**Статус:** реализованная presentation architecture после MODULE 23; volumes / camera scale / FOV wired from SaveSystem in MODULE 24.  
+**Граница:** audio / animation / camera / VFX усиливают уже работающий F5→ending gameplay. Не владеют scoring, Story, economy, balance, save schema.  
+**STOP:** без MODULE 25 content completion; SaveSystem owns persistence (this layer only exposes apply seams).
 
 Spec: `docs/modules/MODULE_23_AUDIO_ANIMATION_FEEDBACK.md`.  
 UI shell: `docs/ui/UI_ARCHITECTURE.md`.  
+Persistence: `docs/persistence/SAVE_ARCHITECTURE.md`.  
 Licenses: `docs/ASSET_LICENSES.md`.
 
 ---
@@ -23,7 +24,7 @@ Licenses: `docs/ASSET_LICENSES.md`.
 | NPC animation | existing `CharacterAnimationController` | `characters/framework/character_animation_controller.gd` |
 | Soft VFX helpers | static `RefCounted` helpers | `presentation/vfx/*.gd` |
 
-Не создаются: VFX framework, ambience autoload state machine, voice/TTS, combat music track, settings UI.
+Не создаются: VFX framework, ambience autoload state machine, voice/TTS, combat music track. Settings UI lives under `ui/frontend/` (SaveSystem-owned persistence).
 
 ---
 
@@ -45,7 +46,7 @@ Exact layout (`res://default_bus_layout.tres` → all send Master):
 
 ## 3. AudioDirector
 
-Autoload (after `LateGameExpansion`): music A/B crossfade, bounded one-shot pools, volume seams, minigame duck.
+Autoload (after `SaveSystem`): music A/B crossfade, bounded one-shot pools, volume seams, minigame duck. Boot volumes come from `SaveSystem` → `set_*_volume` (deferred after both ready).
 
 ### API (presentation)
 
@@ -142,7 +143,7 @@ Player-local child of FPS camera (not autoload). Caps:
 
 Primary usage: Slap hit/perfect/incoming; First Clone reveal FOV +2°/0.18s; Final signal FOV +1.5°/0.18s (`PresentationCamera`). Dance / Sigma / Money / stage cards: no camera motion.
 
-MODULE 24 may persist `feedback_scale`; MODULE 23 does not.
+Persisted as `controls/camera_feedback` in `user://settings.cfg` via `SaveSystem` (applied on boot / settings apply / after load).
 
 ---
 
@@ -187,14 +188,18 @@ Presentation **follows** commits. Do not delay XP / Authority / Story / clone co
 
 ---
 
-## 11. MODULE 24 seams (not implemented here)
+## 11. MODULE 24 settings seams (owned by SaveSystem)
 
-Already callable, runtime-only:
+Presentation does **not** read/write `settings.cfg`. `SaveSystem` applies:
 
-- `AudioDirector` five linear volumes 0..1
-- `CameraFeedback.set_feedback_scale(0..1)`
+| Setting | Target |
+|---|---|
+| `master` / `music` / `sfx` / `ui` / `ambience` | `AudioDirector.set_*_volume(0..1)` |
+| `camera_feedback` | `CameraFeedback.set_feedback_scale(0..1)` |
+| `fov` | player `set_camera_fov` |
+| `mouse_sensitivity` | player look sensitivity |
 
-No settings menu, no ConfigFile / save schema for audio or camera in MODULE 23.
+Game JSON saves do **not** embed audio/camera settings — only `user://settings.cfg`.
 
 ---
 

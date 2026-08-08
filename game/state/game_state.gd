@@ -25,6 +25,7 @@ signal world_reach_changed(new_value: int, delta: int)
 signal global_upgrade_changed(upgrade_type: int, new_level: int, previous_level: int)
 signal media_attention_changed(new_value: int, delta: int)
 signal state_reset()
+signal state_restored()
 
 var _stage: GameTypes.GameStage = GameTypes.GameStage.PROLOGUE
 var _money: int = 0
@@ -1353,6 +1354,765 @@ func _set_clone_upgrade_level(upgrade_type: int, level: int) -> bool:
 			return false
 	clone_upgrade_changed.emit(upgrade_type, level, prev)
 	return true
+
+
+# --- MODULE 24 Save / Load domain API ---
+
+func encode_dating_demand_entry(entry: DatingDemandEntry) -> Dictionary:
+	if entry == null:
+		return {}
+	return {
+		"request_id": entry.request_id,
+		"girl_id": String(entry.girl_id),
+		"created_day": entry.created_day,
+		"appointment_day": entry.appointment_day,
+		"slot": int(entry.slot),
+		"status": int(entry.status),
+		"fulfilled_day": entry.fulfilled_day,
+	}
+
+
+func decode_dating_demand_entry(data: Dictionary) -> DatingDemandEntry:
+	if data == null or data.is_empty():
+		return null
+	if not data.has("request_id") or not data.has("girl_id"):
+		return null
+	if not data.has("created_day") or not data.has("appointment_day"):
+		return null
+	if not data.has("slot") or not data.has("status") or not data.has("fulfilled_day"):
+		return null
+	var request_id: int = int(data["request_id"])
+	var girl_id: StringName = StringName(str(data["girl_id"]))
+	var created_day: int = int(data["created_day"])
+	var appointment_day: int = int(data["appointment_day"])
+	var slot_i: int = int(data["slot"])
+	var status_i: int = int(data["status"])
+	var fulfilled_day: int = int(data["fulfilled_day"])
+	if request_id <= 0 or String(girl_id) == "":
+		return null
+	if (
+		slot_i != int(DatingOverloadTypes.DatingDemandSlot.EARLY_EVENING)
+		and slot_i != int(DatingOverloadTypes.DatingDemandSlot.LATE_EVENING)
+	):
+		return null
+	if (
+		status_i != int(DatingOverloadTypes.DatingDemandStatus.WAITING)
+		and status_i != int(DatingOverloadTypes.DatingDemandStatus.OVERDUE)
+		and status_i != int(DatingOverloadTypes.DatingDemandStatus.FULFILLED)
+	):
+		return null
+	var entry: DatingDemandEntry = DatingDemandEntry.new()
+	entry.request_id = request_id
+	entry.girl_id = girl_id
+	entry.created_day = created_day
+	entry.appointment_day = appointment_day
+	entry.slot = slot_i as DatingOverloadTypes.DatingDemandSlot
+	entry.status = status_i as DatingOverloadTypes.DatingDemandStatus
+	entry.fulfilled_day = fulfilled_day
+	return entry
+
+
+func export_save_state() -> Dictionary:
+	var characteristics: Dictionary = {
+		"muscle": _muscle,
+		"appearance": _appearance,
+		"capital": _capital,
+		"aura": _aura,
+	}
+	var girls: Dictionary = {
+		"relationships": _export_string_int_map(_girl_relationships),
+		"conquered": _export_id_set_array(_conquered_girls),
+		"discovered": _export_string_name_array(_discovered_girls),
+		"contacts": _export_id_set_array(_girl_contacts),
+		"known_clues": _export_known_clues(_known_girl_clues),
+		"revealed_primary_traits": _export_id_set_array(_revealed_primary_traits),
+		"known_reactions": _export_known_reactions(_known_girl_reactions),
+		"retry_days_remaining": _export_string_int_map(_girl_retry_days_remaining),
+		"date_cooldown_days_remaining": _export_string_int_map(_girl_date_cooldown_days_remaining),
+		"played_dating_event_ids": _export_girl_event_history(_girl_played_dating_event_ids),
+		"last_date_event_ids": _export_girl_event_history(_girl_last_date_event_ids),
+		"revealed_secondary_traits": _export_id_set_array(_revealed_secondary_traits),
+	}
+	var salary: Dictionary = {
+		"initialized": _salary_initialized,
+		"period_index": _salary_period_index,
+		"pending_salary": _pending_salary,
+		"manual_cycle_seen": _salary_manual_cycle_seen,
+		"advance_used_period": _salary_advance_used_period,
+	}
+	var media: Dictionary = {
+		"photo_session_completed": _media_photo_session_completed,
+		"attention": _media_attention,
+		"photo_pose_by_shot": _export_string_string_map(_media_photo_pose_by_shot),
+		"published_photo_ids": _export_string_name_array(_media_published_photo_ids),
+		"last_photo_publish_day": _media_last_photo_publish_day,
+		"incoming_offer_girl_ids": _export_string_name_array(_media_incoming_offer_girl_ids),
+		"read_offer_girl_ids": _export_string_name_array(_media_read_offer_girl_ids),
+		"feed_event_ids": _export_string_name_array(_media_feed_event_ids),
+	}
+	var requests: Array = []
+	for existing in _dating_overload_requests:
+		var e: DatingDemandEntry = existing as DatingDemandEntry
+		if e != null:
+			requests.append(encode_dating_demand_entry(e))
+	var dating_overload: Dictionary = {
+		"started": _dating_overload_started,
+		"start_day": _dating_overload_start_day,
+		"next_request_id": _dating_overload_next_request_id,
+		"requests": requests,
+		"candidate_cursor": _dating_overload_candidate_cursor,
+		"last_personal_date_day": _dating_overload_last_personal_date_day,
+		"personal_dates_completed": _dating_overload_personal_dates_completed,
+		"last_feed_boost_day": _dating_overload_last_feed_boost_day,
+		"boost_pending": _dating_overload_boost_pending,
+		"problem_recognized": _dating_overload_problem_recognized,
+	}
+	var clones: Dictionary = {
+		"total": _total_clones,
+		"working": _clones_working,
+		"dating": _clones_dating,
+		"local_upgrade_production": _clone_production_upgrade_level,
+		"local_upgrade_work": _clone_work_upgrade_level,
+		"local_upgrade_dating": _clone_dating_upgrade_level,
+	}
+	var late_game: Dictionary = {
+		"world_reach": _world_reach,
+		"global_upgrade_production": _global_production_upgrade_level,
+		"global_upgrade_work": _global_work_upgrade_level,
+		"global_upgrade_dating": _global_dating_upgrade_level,
+	}
+	return {
+		"stage": int(_stage),
+		"money": _money,
+		"authority": _authority,
+		"experience": _experience,
+		"upgrade_points": _upgrade_points,
+		"characteristics": characteristics,
+		"purchased_perks": _export_id_set_array(_purchased_perks),
+		"defeated_rivals": _export_id_set_array(_defeated_rivals),
+		"girls": girls,
+		"unlocked_locations": _export_id_set_array(_unlocked_locations),
+		"story_flags": _export_story_flags(_story_flags),
+		"salary": salary,
+		"media": media,
+		"dating_overload": dating_overload,
+		"clones": clones,
+		"late_game": late_game,
+	}
+
+
+func restore_save_state(data: Dictionary) -> bool:
+	var decoded: Dictionary = _validate_save_state(data)
+	if decoded.is_empty():
+		push_error("[GameState] restore_save_state validation failed")
+		return false
+	_apply_validated_save_state(decoded)
+	state_restored.emit()
+	return true
+
+
+func _validate_save_state(data: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	if data == null or data.is_empty():
+		return {}
+	var required_top: Array[String] = [
+		"stage", "money", "authority", "experience", "upgrade_points",
+		"characteristics", "purchased_perks", "defeated_rivals", "girls",
+		"unlocked_locations", "story_flags", "salary", "media",
+		"dating_overload", "clones", "late_game",
+	]
+	for key in required_top:
+		if not data.has(key):
+			push_error("[GameState] restore missing key: %s" % key)
+			return {}
+	var stage_i: int = int(data["stage"])
+	if stage_i < int(GameTypes.GameStage.PROLOGUE) or stage_i > int(GameTypes.GameStage.FINALE):
+		push_error("[GameState] restore invalid stage: %s" % stage_i)
+		return {}
+	var money: int = int(data["money"])
+	var authority: int = int(data["authority"])
+	var experience: int = int(data["experience"])
+	var upgrade_points: int = int(data["upgrade_points"])
+	if money < 0 or authority < 0 or experience < 0 or upgrade_points < 0:
+		push_error("[GameState] restore negative economy")
+		return {}
+	var chars_raw: Variant = data["characteristics"]
+	if typeof(chars_raw) != TYPE_DICTIONARY:
+		return {}
+	var chars: Dictionary = chars_raw as Dictionary
+	for ck in ["muscle", "appearance", "capital", "aura"]:
+		if not chars.has(ck):
+			return {}
+	var muscle: int = int(chars["muscle"])
+	var appearance: int = int(chars["appearance"])
+	var capital: int = int(chars["capital"])
+	var aura: int = int(chars["aura"])
+	if (
+		muscle < CHAR_MIN or muscle > CHAR_MAX
+		or appearance < CHAR_MIN or appearance > CHAR_MAX
+		or capital < CHAR_MIN or capital > CHAR_MAX
+		or aura < CHAR_MIN or aura > CHAR_MAX
+	):
+		push_error("[GameState] restore characteristic out of range")
+		return {}
+	var perks_v: Variant = _decode_string_array(data["purchased_perks"])
+	var rivals_v: Variant = _decode_string_array(data["defeated_rivals"])
+	var locations_v: Variant = _decode_string_array(data["unlocked_locations"])
+	if perks_v == null or rivals_v == null or locations_v == null:
+		return {}
+	var perks: Array = perks_v as Array
+	var rivals: Array = rivals_v as Array
+	var locations: Array = locations_v as Array
+	var girls_raw: Variant = data["girls"]
+	if typeof(girls_raw) != TYPE_DICTIONARY:
+		return {}
+	var girls_decoded: Dictionary = _validate_girls_block(girls_raw as Dictionary)
+	if girls_decoded.is_empty():
+		return {}
+	var flags_raw: Variant = data["story_flags"]
+	if typeof(flags_raw) != TYPE_DICTIONARY:
+		return {}
+	var story_flags: Dictionary = _decode_story_flags(flags_raw as Dictionary)
+	var salary_raw: Variant = data["salary"]
+	if typeof(salary_raw) != TYPE_DICTIONARY:
+		return {}
+	var salary: Dictionary = _validate_salary_block(salary_raw as Dictionary)
+	if salary.is_empty():
+		return {}
+	var media_raw: Variant = data["media"]
+	if typeof(media_raw) != TYPE_DICTIONARY:
+		return {}
+	var media: Dictionary = _validate_media_block(media_raw as Dictionary)
+	if media.is_empty():
+		return {}
+	var overload_raw: Variant = data["dating_overload"]
+	if typeof(overload_raw) != TYPE_DICTIONARY:
+		return {}
+	var overload: Dictionary = _validate_dating_overload_block(overload_raw as Dictionary)
+	if overload.is_empty():
+		return {}
+	var clones_raw: Variant = data["clones"]
+	if typeof(clones_raw) != TYPE_DICTIONARY:
+		return {}
+	var clones: Dictionary = _validate_clones_block(clones_raw as Dictionary)
+	if clones.is_empty():
+		return {}
+	var late_raw: Variant = data["late_game"]
+	if typeof(late_raw) != TYPE_DICTIONARY:
+		return {}
+	var late_game: Dictionary = _validate_late_game_block(late_raw as Dictionary)
+	if late_game.is_empty():
+		return {}
+	out["stage"] = stage_i
+	out["money"] = money
+	out["authority"] = authority
+	out["experience"] = experience
+	out["upgrade_points"] = upgrade_points
+	out["muscle"] = muscle
+	out["appearance"] = appearance
+	out["capital"] = capital
+	out["aura"] = aura
+	out["purchased_perks"] = perks
+	out["defeated_rivals"] = rivals
+	out["unlocked_locations"] = locations
+	out["girls"] = girls_decoded
+	out["story_flags"] = story_flags
+	out["salary"] = salary
+	out["media"] = media
+	out["dating_overload"] = overload
+	out["clones"] = clones
+	out["late_game"] = late_game
+	return out
+
+
+func _apply_validated_save_state(decoded: Dictionary) -> void:
+	# Silent atomic replacement — no grant/reward gameplay APIs or signals.
+	_stage = decoded["stage"] as GameTypes.GameStage
+	_money = int(decoded["money"])
+	_authority = int(decoded["authority"])
+	_experience = int(decoded["experience"])
+	_upgrade_points = int(decoded["upgrade_points"])
+	_muscle = int(decoded["muscle"])
+	_appearance = int(decoded["appearance"])
+	_capital = int(decoded["capital"])
+	_aura = int(decoded["aura"])
+	_purchased_perks = _ids_to_set(decoded["purchased_perks"] as Array)
+	_defeated_rivals = _ids_to_set(decoded["defeated_rivals"] as Array)
+	_unlocked_locations = _ids_to_set(decoded["unlocked_locations"] as Array)
+	var girls: Dictionary = decoded["girls"] as Dictionary
+	_girl_relationships = girls["relationships"] as Dictionary
+	_conquered_girls = _ids_to_set(girls["conquered"] as Array)
+	_discovered_girls = _to_string_name_array(girls["discovered"] as Array)
+	_girl_contacts = _ids_to_set(girls["contacts"] as Array)
+	_known_girl_clues = girls["known_clues"] as Dictionary
+	_revealed_primary_traits = _ids_to_set(girls["revealed_primary_traits"] as Array)
+	_known_girl_reactions = girls["known_reactions"] as Dictionary
+	_girl_retry_days_remaining = girls["retry_days_remaining"] as Dictionary
+	_girl_date_cooldown_days_remaining = girls["date_cooldown_days_remaining"] as Dictionary
+	_girl_played_dating_event_ids = girls["played_dating_event_ids"] as Dictionary
+	_girl_last_date_event_ids = girls["last_date_event_ids"] as Dictionary
+	_revealed_secondary_traits = _ids_to_set(girls["revealed_secondary_traits"] as Array)
+	_story_flags = decoded["story_flags"] as Dictionary
+	var salary: Dictionary = decoded["salary"] as Dictionary
+	_salary_initialized = bool(salary["initialized"])
+	_salary_period_index = int(salary["period_index"])
+	_pending_salary = int(salary["pending_salary"])
+	_salary_manual_cycle_seen = bool(salary["manual_cycle_seen"])
+	_salary_advance_used_period = int(salary["advance_used_period"])
+	var media: Dictionary = decoded["media"] as Dictionary
+	_media_photo_session_completed = bool(media["photo_session_completed"])
+	_media_attention = int(media["attention"])
+	_media_photo_pose_by_shot = media["photo_pose_by_shot"] as Dictionary
+	_media_published_photo_ids = _to_string_name_array(media["published_photo_ids"] as Array)
+	_media_last_photo_publish_day = int(media["last_photo_publish_day"])
+	_media_incoming_offer_girl_ids = _to_string_name_array(media["incoming_offer_girl_ids"] as Array)
+	_media_read_offer_girl_ids = _to_string_name_array(media["read_offer_girl_ids"] as Array)
+	_media_feed_event_ids = _to_string_name_array(media["feed_event_ids"] as Array)
+	var overload: Dictionary = decoded["dating_overload"] as Dictionary
+	_dating_overload_started = bool(overload["started"])
+	_dating_overload_start_day = int(overload["start_day"])
+	_dating_overload_next_request_id = int(overload["next_request_id"])
+	_dating_overload_requests = overload["requests"] as Array
+	_dating_overload_candidate_cursor = int(overload["candidate_cursor"])
+	_dating_overload_last_personal_date_day = int(overload["last_personal_date_day"])
+	_dating_overload_personal_dates_completed = int(overload["personal_dates_completed"])
+	_dating_overload_last_feed_boost_day = int(overload["last_feed_boost_day"])
+	_dating_overload_boost_pending = bool(overload["boost_pending"])
+	_dating_overload_problem_recognized = bool(overload["problem_recognized"])
+	var clones: Dictionary = decoded["clones"] as Dictionary
+	_total_clones = int(clones["total"])
+	_clones_working = int(clones["working"])
+	_clones_dating = int(clones["dating"])
+	_clone_production_upgrade_level = int(clones["local_upgrade_production"])
+	_clone_work_upgrade_level = int(clones["local_upgrade_work"])
+	_clone_dating_upgrade_level = int(clones["local_upgrade_dating"])
+	var late_game: Dictionary = decoded["late_game"] as Dictionary
+	_world_reach = int(late_game["world_reach"])
+	_global_production_upgrade_level = int(late_game["global_upgrade_production"])
+	_global_work_upgrade_level = int(late_game["global_upgrade_work"])
+	_global_dating_upgrade_level = int(late_game["global_upgrade_dating"])
+	# Derived rates are not authoritative; leave until CloneIncremental recalculates.
+
+
+func _validate_girls_block(girls: Dictionary) -> Dictionary:
+	var required: Array[String] = [
+		"relationships", "conquered", "discovered", "contacts", "known_clues",
+		"revealed_primary_traits", "known_reactions", "retry_days_remaining",
+		"date_cooldown_days_remaining", "played_dating_event_ids",
+		"last_date_event_ids", "revealed_secondary_traits",
+	]
+	for key in required:
+		if not girls.has(key):
+			push_error("[GameState] restore girls missing: %s" % key)
+			return {}
+	var relationships_v: Variant = _decode_string_int_map(girls["relationships"], RELATIONSHIP_MIN, RELATIONSHIP_MAX)
+	if relationships_v == null:
+		return {}
+	var relationships: Dictionary = relationships_v as Dictionary
+	var conquered_v: Variant = _decode_string_array(girls["conquered"])
+	var discovered_v: Variant = _decode_string_array(girls["discovered"])
+	var contacts_v: Variant = _decode_string_array(girls["contacts"])
+	var primary_v: Variant = _decode_string_array(girls["revealed_primary_traits"])
+	var secondary_v: Variant = _decode_string_array(girls["revealed_secondary_traits"])
+	if conquered_v == null or discovered_v == null or contacts_v == null or primary_v == null or secondary_v == null:
+		return {}
+	var conquered: Array = conquered_v as Array
+	var discovered: Array = discovered_v as Array
+	var contacts: Array = contacts_v as Array
+	var primary: Array = primary_v as Array
+	var secondary: Array = secondary_v as Array
+	var known_clues_v: Variant = _decode_known_clues(girls["known_clues"])
+	if known_clues_v == null:
+		return {}
+	var known_clues: Dictionary = known_clues_v as Dictionary
+	var known_reactions_v: Variant = _decode_known_reactions(girls["known_reactions"])
+	if known_reactions_v == null:
+		return {}
+	var known_reactions: Dictionary = known_reactions_v as Dictionary
+	var retry_v: Variant = _decode_string_int_map(girls["retry_days_remaining"], 0, 999999)
+	var cooldown_v: Variant = _decode_string_int_map(girls["date_cooldown_days_remaining"], 0, 999999)
+	if retry_v == null or cooldown_v == null:
+		return {}
+	var retry: Dictionary = retry_v as Dictionary
+	var cooldown: Dictionary = cooldown_v as Dictionary
+	var played_v: Variant = _decode_girl_event_history(girls["played_dating_event_ids"])
+	var last_v: Variant = _decode_girl_event_history(girls["last_date_event_ids"])
+	if played_v == null or last_v == null:
+		return {}
+	var played: Dictionary = played_v as Dictionary
+	var last: Dictionary = last_v as Dictionary
+	return {
+		"relationships": relationships,
+		"conquered": conquered,
+		"discovered": discovered,
+		"contacts": contacts,
+		"known_clues": known_clues,
+		"revealed_primary_traits": primary,
+		"known_reactions": known_reactions,
+		"retry_days_remaining": retry,
+		"date_cooldown_days_remaining": cooldown,
+		"played_dating_event_ids": played,
+		"last_date_event_ids": last,
+		"revealed_secondary_traits": secondary,
+	}
+
+
+func _validate_salary_block(salary: Dictionary) -> Dictionary:
+	for key in ["initialized", "period_index", "pending_salary", "manual_cycle_seen", "advance_used_period"]:
+		if not salary.has(key):
+			return {}
+	var period_index: int = int(salary["period_index"])
+	var pending_salary: int = int(salary["pending_salary"])
+	var advance_used_period: int = int(salary["advance_used_period"])
+	if period_index < 0 or pending_salary < 0:
+		return {}
+	return {
+		"initialized": bool(salary["initialized"]),
+		"period_index": period_index,
+		"pending_salary": pending_salary,
+		"manual_cycle_seen": bool(salary["manual_cycle_seen"]),
+		"advance_used_period": advance_used_period,
+	}
+
+
+func _validate_media_block(media: Dictionary) -> Dictionary:
+	for key in [
+		"photo_session_completed", "attention", "photo_pose_by_shot", "published_photo_ids",
+		"last_photo_publish_day", "incoming_offer_girl_ids", "read_offer_girl_ids", "feed_event_ids",
+	]:
+		if not media.has(key):
+			return {}
+	var attention: int = int(media["attention"])
+	if attention < MEDIA_ATTENTION_MIN or attention > MEDIA_ATTENTION_MAX:
+		return {}
+	var poses_v: Variant = _decode_string_string_map(media["photo_pose_by_shot"])
+	if poses_v == null:
+		return {}
+	var poses: Dictionary = poses_v as Dictionary
+	var published_v: Variant = _decode_string_array(media["published_photo_ids"])
+	var incoming_v: Variant = _decode_string_array(media["incoming_offer_girl_ids"])
+	var read_offers_v: Variant = _decode_string_array(media["read_offer_girl_ids"])
+	var feed_v: Variant = _decode_string_array(media["feed_event_ids"])
+	if published_v == null or incoming_v == null or read_offers_v == null or feed_v == null:
+		return {}
+	var published: Array = published_v as Array
+	var incoming: Array = incoming_v as Array
+	var read_offers: Array = read_offers_v as Array
+	var feed: Array = feed_v as Array
+	return {
+		"photo_session_completed": bool(media["photo_session_completed"]),
+		"attention": attention,
+		"photo_pose_by_shot": poses,
+		"published_photo_ids": published,
+		"last_photo_publish_day": int(media["last_photo_publish_day"]),
+		"incoming_offer_girl_ids": incoming,
+		"read_offer_girl_ids": read_offers,
+		"feed_event_ids": feed,
+	}
+
+
+func _validate_dating_overload_block(block: Dictionary) -> Dictionary:
+	for key in [
+		"started", "start_day", "next_request_id", "requests", "candidate_cursor",
+		"last_personal_date_day", "personal_dates_completed", "last_feed_boost_day",
+		"boost_pending", "problem_recognized",
+	]:
+		if not block.has(key):
+			return {}
+	var next_request_id: int = int(block["next_request_id"])
+	var candidate_cursor: int = int(block["candidate_cursor"])
+	var personal_dates_completed: int = int(block["personal_dates_completed"])
+	if next_request_id < 1 or candidate_cursor < 0 or personal_dates_completed < 0:
+		return {}
+	var requests_raw: Variant = block["requests"]
+	if typeof(requests_raw) != TYPE_ARRAY:
+		return {}
+	var requests: Array = []
+	var seen_ids: Dictionary = {}
+	for item in requests_raw as Array:
+		if typeof(item) != TYPE_DICTIONARY:
+			return {}
+		var entry: DatingDemandEntry = decode_dating_demand_entry(item as Dictionary)
+		if entry == null:
+			return {}
+		if seen_ids.has(entry.request_id):
+			return {}
+		seen_ids[entry.request_id] = true
+		requests.append(entry)
+	return {
+		"started": bool(block["started"]),
+		"start_day": int(block["start_day"]),
+		"next_request_id": next_request_id,
+		"requests": requests,
+		"candidate_cursor": candidate_cursor,
+		"last_personal_date_day": int(block["last_personal_date_day"]),
+		"personal_dates_completed": personal_dates_completed,
+		"last_feed_boost_day": int(block["last_feed_boost_day"]),
+		"boost_pending": bool(block["boost_pending"]),
+		"problem_recognized": bool(block["problem_recognized"]),
+	}
+
+
+func _validate_clones_block(clones: Dictionary) -> Dictionary:
+	for key in [
+		"total", "working", "dating",
+		"local_upgrade_production", "local_upgrade_work", "local_upgrade_dating",
+	]:
+		if not clones.has(key):
+			return {}
+	var total: int = int(clones["total"])
+	var working: int = int(clones["working"])
+	var dating: int = int(clones["dating"])
+	var up_prod: int = int(clones["local_upgrade_production"])
+	var up_work: int = int(clones["local_upgrade_work"])
+	var up_dating: int = int(clones["local_upgrade_dating"])
+	if total < 0 or working < 0 or dating < 0:
+		return {}
+	if working + dating > total:
+		return {}
+	if (
+		up_prod < 0 or up_prod > CLONE_UPGRADE_MAX_LEVEL
+		or up_work < 0 or up_work > CLONE_UPGRADE_MAX_LEVEL
+		or up_dating < 0 or up_dating > CLONE_UPGRADE_MAX_LEVEL
+	):
+		return {}
+	return {
+		"total": total,
+		"working": working,
+		"dating": dating,
+		"local_upgrade_production": up_prod,
+		"local_upgrade_work": up_work,
+		"local_upgrade_dating": up_dating,
+	}
+
+
+func _validate_late_game_block(late_game: Dictionary) -> Dictionary:
+	for key in [
+		"world_reach", "global_upgrade_production", "global_upgrade_work", "global_upgrade_dating",
+	]:
+		if not late_game.has(key):
+			return {}
+	var world_reach: int = int(late_game["world_reach"])
+	var g_prod: int = int(late_game["global_upgrade_production"])
+	var g_work: int = int(late_game["global_upgrade_work"])
+	var g_dating: int = int(late_game["global_upgrade_dating"])
+	if world_reach < WORLD_REACH_MIN or world_reach > WORLD_REACH_MAX:
+		return {}
+	if (
+		g_prod < 0 or g_prod > GLOBAL_UPGRADE_MAX_LEVEL
+		or g_work < 0 or g_work > GLOBAL_UPGRADE_MAX_LEVEL
+		or g_dating < 0 or g_dating > GLOBAL_UPGRADE_MAX_LEVEL
+	):
+		return {}
+	return {
+		"world_reach": world_reach,
+		"global_upgrade_production": g_prod,
+		"global_upgrade_work": g_work,
+		"global_upgrade_dating": g_dating,
+	}
+
+
+func _export_id_set_array(set_dict: Dictionary) -> Array:
+	var out: Array = []
+	for key in set_dict.keys():
+		out.append(String(key))
+	out.sort()
+	return out
+
+
+func _export_string_name_array(values: Array) -> Array:
+	var out: Array = []
+	for value in values:
+		out.append(String(value))
+	return out
+
+
+func _export_string_int_map(src: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for key in src.keys():
+		out[String(key)] = int(src[key])
+	return out
+
+
+func _export_string_string_map(src: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for key in src.keys():
+		out[String(key)] = String(src[key])
+	return out
+
+
+func _export_story_flags(src: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for key in src.keys():
+		out[String(key)] = bool(src[key])
+	return out
+
+
+func _export_known_clues(src: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for girl_key in src.keys():
+		var known: Dictionary = src[girl_key] as Dictionary
+		var indices: Array = []
+		for idx in known.keys():
+			indices.append(int(idx))
+		indices.sort()
+		out[String(girl_key)] = indices
+	return out
+
+
+func _export_known_reactions(src: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for girl_key in src.keys():
+		var by_source: Dictionary = src[girl_key] as Dictionary
+		var mapped: Dictionary = {}
+		for source_key in by_source.keys():
+			mapped[String(source_key)] = int(by_source[source_key])
+		out[String(girl_key)] = mapped
+	return out
+
+
+func _export_girl_event_history(src: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for girl_key in src.keys():
+		var stored: Array = src[girl_key] as Array
+		var ids: Array = []
+		for eid in stored:
+			ids.append(String(eid))
+		out[String(girl_key)] = ids
+	return out
+
+
+func _decode_string_array(raw: Variant) -> Variant:
+	if typeof(raw) != TYPE_ARRAY:
+		return null
+	var out: Array = []
+	for item in raw as Array:
+		var s: String = str(item)
+		if s == "":
+			return null
+		out.append(s)
+	return out
+
+
+func _decode_string_int_map(raw: Variant, min_v: int, max_v: int) -> Variant:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return null
+	var out: Dictionary = {}
+	for key in (raw as Dictionary).keys():
+		var sid: String = str(key)
+		if sid == "":
+			return null
+		var value: int = int((raw as Dictionary)[key])
+		if value < min_v or value > max_v:
+			return null
+		out[StringName(sid)] = value
+	return out
+
+
+func _decode_string_string_map(raw: Variant) -> Variant:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return null
+	var out: Dictionary = {}
+	for key in (raw as Dictionary).keys():
+		var sk: String = str(key)
+		var sv: String = str((raw as Dictionary)[key])
+		if sk == "" or sv == "":
+			return null
+		out[StringName(sk)] = StringName(sv)
+	return out
+
+
+func _decode_story_flags(raw: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for key in raw.keys():
+		var sid: String = str(key)
+		if sid == "":
+			continue
+		if bool(raw[key]):
+			out[StringName(sid)] = true
+	return out
+
+
+func _decode_known_clues(raw: Variant) -> Variant:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return null
+	var out: Dictionary = {}
+	for girl_key in (raw as Dictionary).keys():
+		var gid: String = str(girl_key)
+		if gid == "":
+			return null
+		var indices_raw: Variant = (raw as Dictionary)[girl_key]
+		if typeof(indices_raw) != TYPE_ARRAY:
+			return null
+		var known: Dictionary = {}
+		for idx in indices_raw as Array:
+			var clue_index: int = int(idx)
+			if clue_index < 0:
+				return null
+			known[clue_index] = true
+		out[StringName(gid)] = known
+	return out
+
+
+func _decode_known_reactions(raw: Variant) -> Variant:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return null
+	var out: Dictionary = {}
+	for girl_key in (raw as Dictionary).keys():
+		var gid: String = str(girl_key)
+		if gid == "":
+			return null
+		var by_source_raw: Variant = (raw as Dictionary)[girl_key]
+		if typeof(by_source_raw) != TYPE_DICTIONARY:
+			return null
+		var by_source: Dictionary = {}
+		for source_key in (by_source_raw as Dictionary).keys():
+			var sid: String = str(source_key)
+			if sid == "":
+				return null
+			var reaction: int = int((by_source_raw as Dictionary)[source_key])
+			if reaction != -1 and reaction != 0 and reaction != 1:
+				return null
+			by_source[StringName(sid)] = reaction
+		out[StringName(gid)] = by_source
+	return out
+
+
+func _decode_girl_event_history(raw: Variant) -> Variant:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return null
+	var out: Dictionary = {}
+	for girl_key in (raw as Dictionary).keys():
+		var gid: String = str(girl_key)
+		if gid == "":
+			return null
+		var ids_raw: Variant = (raw as Dictionary)[girl_key]
+		if typeof(ids_raw) != TYPE_ARRAY:
+			return null
+		var ids: Array[StringName] = []
+		for eid in ids_raw as Array:
+			var s: String = str(eid)
+			if s == "":
+				return null
+			ids.append(StringName(s))
+		out[StringName(gid)] = ids
+	return out
+
+
+func _ids_to_set(ids: Array) -> Dictionary:
+	var out: Dictionary = {}
+	for item in ids:
+		var sid: StringName = StringName(str(item))
+		if String(sid) != "":
+			out[sid] = true
+	return out
+
+
+func _to_string_name_array(ids: Array) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for item in ids:
+		out.append(StringName(str(item)))
+	return out
 
 
 ## Debug-only snapshot string.

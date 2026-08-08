@@ -12,6 +12,7 @@ const HUD_SCENE_PATH := "res://ui/hud/game_hud.tscn"
 const HOST_NAME := "WorldHost"
 const START_LOCATION := &"apartment"
 const DEFAULT_SPAWN := &"spawn_default"
+const MAX_POSE_WORLD_BOUND := 10000.0
 
 const CANONICAL_IDS: Array[StringName] = [
 	&"apartment",
@@ -40,6 +41,7 @@ var _scene_path_overrides: Dictionary = {}
 var _spawn_fallback_enabled: bool = true
 var _signals_hooked: bool = false
 var _auto_reset_on_state_reset: bool = false
+var _defer_boot_travel: bool = false
 
 
 func _ready() -> void:
@@ -64,9 +66,30 @@ func _hook_global_signals() -> void:
 
 
 func boot_from_main() -> WorldTypes.WorldTravelResult:
+	## F5 / current main boot. SaveSystem may call prepare_for_title() first to defer travel.
+	ensure_host()
+	if _defer_boot_travel:
+		return WorldTypes.WorldTravelResult.SUCCESS
+	_auto_reset_on_state_reset = true
+	return reset_to_start()
+
+
+func prepare_for_title() -> void:
+	## Title menu path: host may exist, but do not auto-travel on GameState reset.
+	_auto_reset_on_state_reset = false
+	_defer_boot_travel = true
+
+
+func begin_new_game_boot() -> WorldTypes.WorldTravelResult:
+	## New Game from SaveSystem/title: apartment start + enable reset travel.
+	_defer_boot_travel = false
 	_auto_reset_on_state_reset = true
 	ensure_host()
 	return reset_to_start()
+
+
+func suppress_auto_reset_on_state_reset(suppress: bool) -> void:
+	_auto_reset_on_state_reset = not suppress
 
 
 func set_auto_reset_on_state_reset_for_test(enabled: bool) -> void:
@@ -440,6 +463,119 @@ func reset_to_start() -> WorldTypes.WorldTravelResult:
 	if result != WorldTypes.WorldTravelResult.SUCCESS:
 		travel_rejected.emit(START_LOCATION, result)
 	return result
+
+
+func export_world_save_state() -> Dictionary:
+	var player_pose: Dictionary = {
+		"position": [0.0, 0.0, 0.0],
+		"yaw": 0.0,
+		"pitch": 0.0,
+	}
+	if _player != null and is_instance_valid(_player) and _player.has_method("get_pose_dict"):
+		player_pose = _player.get_pose_dict()
+	return {
+		"location_id": String(current_location_id),
+		"player": player_pose,
+	}
+
+
+func restore_saved_location(location_id: StringName, player_pose: Dictionary) -> bool:
+	## Call after GameState/Story restored. Access gates use restored story state.
+	ensure_host()
+	_defer_boot_travel = false
+	_auto_reset_on_state_reset = true
+	var target_id: StringName = location_id
+	if String(target_id).strip_edges() == "":
+		target_id = START_LOCATION
+	var used_location_fallback: bool = false
+	var travel: WorldTypes.WorldTravelResult = request_travel(target_id, DEFAULT_SPAWN)
+	if travel != WorldTypes.WorldTravelResult.SUCCESS:
+		used_location_fallback = true
+		push_warning(
+			"[World] restore location '%s' failed (%s); fallback apartment"
+			% [String(target_id), WorldTypes.WorldTravelResult.find_key(travel)]
+		)
+		travel = request_travel(START_LOCATION, DEFAULT_SPAWN)
+		if travel != WorldTypes.WorldTravelResult.SUCCESS:
+			push_warning(
+				"[World] apartment fallback also failed (%s)"
+				% WorldTypes.WorldTravelResult.find_key(travel)
+			)
+			return false
+	# Travel places at spawn; apply saved pose only when location matched and pose is safe.
+	if not used_location_fallback and not player_pose.is_empty():
+		if _is_saved_pose_safe(player_pose):
+			if _player != null and is_instance_valid(_player) and _player.has_method("apply_pose_dict"):
+				_player.apply_pose_dict(player_pose)
+		else:
+			push_warning("[World] saved player pose invalid; keeping spawn_default")
+	notify_post_load_visuals()
+	return true
+
+
+func notify_post_load_visuals() -> void:
+	## FirstClone/MODULE19 reconstruct-not-save: call after load when clones exist.
+	var gs: Node = get_node_or_null("/root/GameState")
+	var total_clones: int = 0
+	if gs != null and gs.has_method("get_total_clones"):
+		total_clones = int(gs.call("get_total_clones"))
+	if total_clones < 1:
+		return
+	var fc: Node = get_node_or_null("/root/FirstClone")
+	if fc != null and fc.has_method("reconstruct_representative"):
+		fc.call("reconstruct_representative")
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	for node in tree.get_nodes_in_group("clone_visualization_controller"):
+		if node != null and is_instance_valid(node) and node.has_method("refresh_from_counts"):
+			node.call("refresh_from_counts")
+
+
+func _is_saved_pose_safe(pose: Dictionary) -> bool:
+	if _player == null or not is_instance_valid(_player):
+		return false
+	var pos_v: Variant = pose.get("position", null)
+	var pos: Vector3 = Vector3.ZERO
+	if pos_v is Vector3:
+		pos = pos_v as Vector3
+	elif pos_v is Array:
+		var arr: Array = pos_v as Array
+		if arr.size() < 3:
+			return false
+		pos = Vector3(float(arr[0]), float(arr[1]), float(arr[2]))
+	else:
+		return false
+	if not is_finite(pos.x) or not is_finite(pos.y) or not is_finite(pos.z):
+		return false
+	if pos.length() >= MAX_POSE_WORLD_BOUND:
+		return false
+	var yaw: float = float(pose.get("yaw", 0.0))
+	var pitch: float = float(pose.get("pitch", 0.0))
+	if not is_finite(yaw) or not is_finite(pitch):
+		return false
+	# Soft ground probe: reject void poses with no nearby floor; floor contact is OK.
+	var world_3d: World3D = _player.get_world_3d()
+	if world_3d == null:
+		return true
+	var space: PhysicsDirectSpaceState3D = world_3d.direct_space_state
+	if space == null:
+		return true
+	var from: Vector3 = pos + Vector3(0.0, 0.5, 0.0)
+	var to: Vector3 = pos + Vector3(0.0, -8.0, 0.0)
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, to)
+	query.collision_mask = _player.collision_mask
+	query.exclude = [_player.get_rid()]
+	var hit: Dictionary = space.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	# Capsule embed probe: reject when both up and side micro-motions collide (inside geometry).
+	var xform: Transform3D = Transform3D(Basis.from_euler(Vector3(0.0, yaw, 0.0)), pos)
+	var embed_up: bool = _player.test_move(xform, Vector3(0.0, 0.05, 0.0))
+	var embed_side: bool = _player.test_move(xform, Vector3(0.05, 0.0, 0.0))
+	if embed_up and embed_side:
+		return false
+	return true
 
 
 func refresh_current_gates() -> void:

@@ -36,11 +36,8 @@ DatingOverload="*res://game/dating_overload/dating_overload.gd"
 FirstClone="*res://game/first_clone/first_clone.gd"
 CloneIncremental="*res://game/clone_incremental/clone_incremental.gd"
 LateGameExpansion="*res://game/late_game/late_game_expansion.gd"
+SaveSystem="*res://persistence/save_system.gd"
 AudioDirector="*res://audio/audio_director.gd"
-
-[audio]
-
-buses/default_bus_layout="res://default_bus_layout.tres"
 
 [display]
 

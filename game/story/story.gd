@@ -78,6 +78,11 @@ func reconcile_current_stage() -> bool:
 	return _try_complete_current_stage()
 
 
+## Save/Load: refresh presentation without stage advance / feature unlock replay.
+func sync_after_load() -> void:
+	stage_objective_changed.emit(get_current_progress())
+
+
 func complete_world_expansion() -> bool:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:

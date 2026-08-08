@@ -879,3 +879,24 @@ Give the finished route a coherent presentation layer with bounded pools and har
 
 Scope:
 `audio/**`, `assets/audio/**`, `default_bus_layout.tres`, `characters/player/camera_feedback.gd`, `characters/framework/character_animation_controller.gd` (aliases), `world/local_ambience_player.gd` + location attach, `presentation/vfx/**`, thin call-site seams in UI/minigames/game controllers, docs (`PROJECT_STRUCTURE`, this file, `UI_ARCHITECTURE` audio seams, `ASSET_LICENSES`, `PRESENTATION_ARCHITECTURE`)
+
+## MODULE 24: Save / Load / Settings (STOP before MODULE 25)
+
+Context:
+F5→ending gameplay and presentation were complete, but there was no versioned playthrough persistence, no durable settings, and no title/pause front-end — players could not Continue / Load or keep volumes / camera / UI scale across sessions.
+
+Decision:
+1. One autoload `SaveSystem` after `LateGameExpansion` and **before** `AudioDirector` — no SaveManager / SettingsManager / ProfileManager.
+2. Schema **v1** JSON under `user://saves/` — `slot_1..3.json` + `autosave.json`; atomic write via `*.tmp` + previous good `*.bak.json`. `schema_version != 1` → `UNSUPPORTED_SCHEMA` (no legacy/donor migration).
+3. Payload: `game.game_state` via `GameState.export_save_state` / `restore_save_state`; `game.game_day.current_day`; `world.location_id` + player pose; `runtime.clone_incremental` fractions (`production_elapsed_seconds`, `money_fraction`, `date_fraction` in `[0,1)`).
+4. Manual save allowed in `GAMEPLAY` or `PAUSED`; blocked during MODAL_UI / MINIGAME / active date / rival / discovery / first-clone sequence / photo session / FinalDate attempt / World busy.
+5. Autosave on stable milestones (stage / girl conquest / day / location / first clone) with **0.75 s** debounce; suppressed while restoring; no per-clone spam.
+6. Settings in separate `user://settings.cfg` (audio 0..1 → AudioDirector; mouse sensitivity; camera_feedback → CameraFeedback; fullscreen/vsync/fov/ui_scale; tutorial seen ids).
+7. Title / Pause / Settings UI under `ui/frontend/` via `FrontendSaveApi`; `main_bootstrap` shows title first (`World.prepare_for_title`).
+8. Architecture: `docs/persistence/SAVE_ARCHITECTURE.md`. STOP before MODULE 25 content completion.
+
+Reason:
+Persist the full production state safely with one service and a strict schema, keep gameplay controllers as owners of domain data, and leave content polish for MODULE 25.
+
+Scope:
+`persistence/**`, GameState/GameDay/CloneIncremental/World save seams, `ui/frontend/**`, `core/main_bootstrap.gd`, `project.godot` autoload order, docs (`PROJECT_STRUCTURE`, this file, `SAVE_ARCHITECTURE`, `UI_ARCHITECTURE` title/pause, `PRESENTATION_ARCHITECTURE` settings seams)

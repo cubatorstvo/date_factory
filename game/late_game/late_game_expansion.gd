@@ -39,6 +39,26 @@ func _on_state_reset() -> void:
 	_notify_clone_incremental()
 
 
+## Save/Load: mark completion one-shots already done when canonical state says so.
+func sync_after_load() -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return
+	var reach: int = int(gs.call("get_world_reach"))
+	var complete: bool = bool(gs.call("get_story_flag", StoryIds.FLAG_WORLD_EXPANSION_COMPLETE))
+	var stage_i: int = int(gs.call("get_stage"))
+	if (
+		reach >= LateGameTypes.WORLD_REACH_MAX
+		or complete
+		or stage_i >= int(GameTypes.GameStage.FINALE)
+	):
+		_completion_emitted = true
+	else:
+		_completion_emitted = false
+	global_modifiers_changed.emit()
+	_notify_clone_incremental()
+
+
 func _on_late_experience_granted(amount: int) -> void:
 	if amount <= 0:
 		return
