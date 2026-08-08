@@ -1,5 +1,5 @@
 extends Node
-## VC-CHARS presentation self-test: modular slots, materials, deterministic profiles.
+## VC-CHARS presentation self-test: modular slots, materials, bone attach heights.
 
 var _failed: int = 0
 var _passed: int = 0
@@ -13,7 +13,7 @@ func _ready() -> void:
 		_spawn_root = Node3D.new()
 		_spawn_root.name = "SpawnRoot"
 		add_child(_spawn_root)
-	_run_all()
+	await _run_all()
 	if _failed == 0:
 		print("VC_CHARS_PRESENTATION_TEST: ALL PASS (%s)" % _passed)
 	else:
@@ -33,6 +33,7 @@ func _ok(cond: bool, label: String) -> void:
 
 func _run_all() -> void:
 	_test_idle_walk_bind()
+	await _test_slot_bone_heights()
 	var ids: PackedStringArray = _list_appearance_ids()
 	_ok(ids.size() == 45, "appearance count == 45 (got %s)" % ids.size())
 	var snapshots: Dictionary = {}
@@ -46,6 +47,7 @@ func _run_all() -> void:
 		_ok(controller != null, "%s has CharacterVariantController" % appearance_id)
 		if controller == null:
 			continue
+		_ok(controller.ensure_slot_bindings(), "%s slot bindings" % appearance_id)
 		_ok(_body_is_expected_pack(controller, appearance_id), "%s PACK_021 body" % appearance_id)
 		_ok(controller.count_visible_slot_children("HairRoot") == 1, "%s exactly one Hair" % appearance_id)
 		_ok(controller.count_visible_slot_children("TopRoot") <= 1, "%s <=1 Top" % appearance_id)
@@ -55,6 +57,8 @@ func _run_all() -> void:
 		_ok(controller.count_visible_slot_children("NeckAccessoryRoot") <= 1, "%s <=1 NeckAcc" % appearance_id)
 		_ok(controller.count_visible_slot_children("HandAccessoryRoot") <= 1, "%s <=1 HandAcc" % appearance_id)
 		_ok(_materials_valid(controller), "%s materials valid" % appearance_id)
+		await get_tree().process_frame
+		_ok(_slot_heights_sane(controller, appearance_id), "%s slot heights on body" % appearance_id)
 		snapshots[appearance_id] = _snapshot(controller)
 		actor.queue_free()
 	# Determinism: recreate and compare snapshots (no RNG / save-load randomization).
@@ -93,6 +97,169 @@ func _test_idle_walk_bind() -> void:
 		_ok(anim.get_current_animation_alias() == &"walk", "%s current walk" % String(typed.content_id))
 	male.queue_free()
 	female.queue_free()
+
+
+func _test_slot_bone_heights() -> void:
+	## Spawn bases + 5 male + 5 female profiles; assert hair/top/bottom above feet.
+	var sample_ids: PackedStringArray = PackedStringArray([
+		"appearance_male_base",
+		"appearance_female_base",
+		"appearance_male_city_thermos",
+		"appearance_male_city_headphones",
+		"appearance_male_gym_mirror",
+		"appearance_male_first_clone",
+		"appearance_male_public_watch",
+		"appearance_female_neighbor",
+		"appearance_female_cafe_laptop",
+		"appearance_female_gym_timer",
+		"appearance_female_city_umbrella",
+		"appearance_female_actress",
+	])
+	var hair_ys: Array[float] = []
+	var top_colors: Array[Color] = []
+	var kept: Array[CharacterActor] = []
+	for i in sample_ids.size():
+		var appearance_id: String = sample_ids[i]
+		var actor: CharacterActor = CharacterFactory.create(
+			StringName(appearance_id), StringName(appearance_id), _spawn_root
+		)
+		_ok(actor != null, "height sample create %s" % appearance_id)
+		if actor == null:
+			continue
+		actor.global_position = Vector3(float(i) * 1.2, 0.0, 0.0)
+		var controller: CharacterVariantController = _find_controller(actor)
+		_ok(controller != null, "height sample controller %s" % appearance_id)
+		if controller == null:
+			actor.queue_free()
+			continue
+		controller.ensure_slot_bindings()
+		await get_tree().process_frame
+		var skel: Skeleton3D = controller.get_body_skeleton()
+		_ok(skel != null, "%s has Skeleton3D" % appearance_id)
+		var hair_att: BoneAttachment3D = controller.get_node_or_null("HairRoot") as BoneAttachment3D
+		_ok(hair_att != null and hair_att.use_external_skeleton, "%s HairRoot external" % appearance_id)
+		if hair_att != null and skel != null:
+			var resolved: Node = hair_att.get_node_or_null(hair_att.external_skeleton)
+			_ok(resolved == skel, "%s HairRoot external resolves" % appearance_id)
+			_ok(hair_att.bone_idx >= 0, "%s HairRoot bone_idx>=0 (got %s)" % [appearance_id, hair_att.bone_idx])
+		var hair_y: float = controller.get_visible_slot_mesh_global_y("HairRoot")
+		var top_y: float = controller.get_visible_slot_mesh_global_y("TopRoot")
+		var bottom_y: float = controller.get_visible_slot_mesh_global_y("BottomRoot")
+		_ok(hair_y > 1.2, "%s hair Y>1.2 (got %s)" % [appearance_id, snappedf(hair_y, 0.001)])
+		_ok(top_y > 0.9, "%s top Y>0.9 (got %s)" % [appearance_id, snappedf(top_y, 0.001)])
+		_ok(bottom_y > 0.4, "%s bottom Y>0.4 (got %s)" % [appearance_id, snappedf(bottom_y, 0.001)])
+		_ok(hair_y > top_y and top_y > bottom_y, "%s hair>top>bottom" % appearance_id)
+		hair_ys.append(hair_y)
+		var top_root: Node = controller.get_node_or_null("TopRoot")
+		if top_root != null:
+			for child in top_root.get_children():
+				var n3: Node3D = child as Node3D
+				if n3 == null or not n3.visible:
+					continue
+				var mi: MeshInstance3D = n3.get_node_or_null("Mesh") as MeshInstance3D
+				if mi != null and mi.material_override is StandardMaterial3D:
+					top_colors.append((mi.material_override as StandardMaterial3D).albedo_color)
+		kept.append(actor)
+	await _capture_lineup_evidence(kept)
+	for actor_free in kept:
+		if is_instance_valid(actor_free):
+			actor_free.queue_free()
+	await get_tree().process_frame
+	# Distinctness: at least some hair heights or top colors differ across sample.
+	var distinct_hair: bool = false
+	for i in hair_ys.size():
+		for j in range(i + 1, hair_ys.size()):
+			if absf(hair_ys[i] - hair_ys[j]) > 0.05:
+				distinct_hair = true
+				break
+	var distinct_color: bool = false
+	for i in top_colors.size():
+		for j in range(i + 1, top_colors.size()):
+			if top_colors[i].is_equal_approx(top_colors[j]) == false:
+				distinct_color = true
+				break
+	_ok(distinct_hair or distinct_color, "sample profiles look distinct (hair height or top color)")
+
+
+func _capture_lineup_evidence(actors: Array[CharacterActor]) -> void:
+	if actors.is_empty():
+		return
+	var dir_path: String = "res://docs/agent/qa/evidence/vc_chars_fix"
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
+	# Metrics from LIVE actors (source of truth for attach heights).
+	var metrics: Array = []
+	for actor in actors:
+		if actor == null or not is_instance_valid(actor):
+			continue
+		var controller: CharacterVariantController = _find_controller(actor)
+		if controller == null:
+			continue
+		var hair_att: BoneAttachment3D = controller.get_node_or_null("HairRoot") as BoneAttachment3D
+		metrics.append({
+			"id": String(actor.content_id),
+			"hair_y": snappedf(controller.get_visible_slot_mesh_global_y("HairRoot"), 0.001),
+			"top_y": snappedf(controller.get_visible_slot_mesh_global_y("TopRoot"), 0.001),
+			"bottom_y": snappedf(controller.get_visible_slot_mesh_global_y("BottomRoot"), 0.001),
+			"shoes_y": snappedf(controller.get_visible_slot_mesh_global_y("ShoesRoot"), 0.001),
+			"hair_child": String(controller.get_visible_slot_child_name("HairRoot")),
+			"top_child": String(controller.get_visible_slot_child_name("TopRoot")),
+			"bottom_child": String(controller.get_visible_slot_child_name("BottomRoot")),
+			"hair_bone_idx": hair_att.bone_idx if hair_att != null else -1,
+			"hair_ext": str(hair_att.external_skeleton) if hair_att != null else "",
+		})
+	var metrics_path: String = "%s/after_slot_heights.json" % dir_path
+	var metrics_file: FileAccess = FileAccess.open(metrics_path, FileAccess.WRITE)
+	if metrics_file != null:
+		metrics_file.store_string(JSON.stringify(metrics, "\t"))
+		metrics_file.close()
+		print("VC_CHARS_PRESENTATION_TEST metrics path=%s count=%s" % [metrics_path, metrics.size()])
+	# Capture LIVE lineup via a temporary current camera (no duplicate / SubViewport).
+	var light := DirectionalLight3D.new()
+	light.name = "EvidenceLight"
+	light.rotation_degrees = Vector3(-35.0, 35.0, 0.0)
+	light.light_energy = 1.25
+	_spawn_root.add_child(light)
+	var env_node := WorldEnvironment.new()
+	env_node.name = "EvidenceEnv"
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.16, 0.17, 0.2)
+	env_node.environment = env
+	_spawn_root.add_child(env_node)
+	var cam := Camera3D.new()
+	cam.name = "EvidenceCam"
+	_spawn_root.add_child(cam)
+	var mid_x: float = maxf(0.0, float(actors.size() - 1) * 0.6)
+	cam.global_position = Vector3(mid_x, 1.4, 7.4)
+	cam.look_at(Vector3(mid_x, 1.0, 0.0), Vector3.UP)
+	cam.current = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var img: Image = get_viewport().get_texture().get_image()
+	if img != null:
+		var out_path: String = "%s/after_lineup_variants.png" % dir_path
+		var err: Error = img.save_png(out_path)
+		print("VC_CHARS_PRESENTATION_TEST evidence save=%s path=%s" % [str(err), out_path])
+	cam.queue_free()
+	light.queue_free()
+	env_node.queue_free()
+	await get_tree().process_frame
+
+
+func _slot_heights_sane(controller: CharacterVariantController, appearance_id: String) -> bool:
+	var hair_y: float = controller.get_visible_slot_mesh_global_y("HairRoot")
+	var top_y: float = controller.get_visible_slot_mesh_global_y("TopRoot")
+	var bottom_y: float = controller.get_visible_slot_mesh_global_y("BottomRoot")
+	if hair_y <= 1.2:
+		push_error("%s hair Y=%s" % [appearance_id, hair_y])
+		return false
+	if top_y <= 0.9:
+		push_error("%s top Y=%s" % [appearance_id, top_y])
+		return false
+	if bottom_y <= 0.4:
+		push_error("%s bottom Y=%s" % [appearance_id, bottom_y])
+		return false
+	return hair_y > top_y and top_y > bottom_y
 
 
 func _list_appearance_ids() -> PackedStringArray:

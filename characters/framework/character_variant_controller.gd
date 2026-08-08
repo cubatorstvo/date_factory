@@ -2,6 +2,7 @@ class_name CharacterVariantController
 extends Node3D
 ## Presentation-only modular outfit/hair controller for PACK_021 bases.
 ## Shows exactly one child per slot and applies material color overrides.
+## Binds BoneAttachment3D slots to Body's Skeleton3D (external skeleton path).
 
 const HAIR_COLOR_MAP: Dictionary = {
 	&"black": Color(0.08, 0.07, 0.07),
@@ -24,6 +25,33 @@ const CLOTH_COLOR_MAP: Dictionary = {
 	&"orange": Color(0.72, 0.38, 0.14),
 }
 
+## Slot root name -> preferred bone name (PACK_021 Superhero_*_FullBody).
+const SLOT_BONE_MAP: Dictionary = {
+	"HairRoot": &"Head",
+	"TopRoot": &"UpperChest",
+	"BottomRoot": &"Hips",
+	"ShoesRoot": &"LeftFoot",
+	"HeadAccessoryRoot": &"Head",
+	"NeckAccessoryRoot": &"Neck",
+	"HandAccessoryRoot": &"LeftHand",
+}
+
+## Fallbacks if a preferred bone is missing on a future rig.
+const BONE_FALLBACKS: Dictionary = {
+	&"Head": [&"Head", &"head", &"Neck", &"Chest"],
+	&"UpperChest": [&"UpperChest", &"Chest", &"Spine", &"Hips"],
+	&"Hips": [&"Hips", &"hips", &"Spine", &"Root"],
+	&"LeftFoot": [&"LeftFoot", &"LeftToes", &"LeftLowerLeg", &"Hips"],
+	&"Neck": [&"Neck", &"Head", &"UpperChest", &"Chest"],
+	&"LeftHand": [&"LeftHand", &"LeftLowerArm", &"LeftUpperArm", &"UpperChest"],
+}
+
+var _slots_bound: bool = false
+
+
+func _ready() -> void:
+	_ensure_slot_bindings()
+
 
 func apply_variants(
 	hair_variant: StringName = &"01",
@@ -37,6 +65,7 @@ func apply_variants(
 	neck_accessory: StringName = &"none",
 	hand_accessory: StringName = &"none"
 ) -> void:
+	_ensure_slot_bindings()
 	_select_slot_child("HairRoot", _hair_node_name(hair_variant))
 	_select_slot_child("TopRoot", _numbered_node_name("Top", top_variant, 4))
 	_select_slot_child("BottomRoot", _numbered_node_name("Bottom", bottom_variant, 3))
@@ -67,6 +96,14 @@ func apply_from_profile(profile: AppearanceProfileDefinition) -> void:
 	)
 
 
+func ensure_slot_bindings() -> bool:
+	return _ensure_slot_bindings()
+
+
+func get_body_skeleton() -> Skeleton3D:
+	return _find_body_skeleton()
+
+
 func get_visible_slot_child_name(slot_root_name: String) -> StringName:
 	var root: Node = get_node_or_null(slot_root_name)
 	if root == null:
@@ -93,6 +130,91 @@ func count_visible_slot_children(slot_root_name: String) -> int:
 		if _is_node_visible(child):
 			count += 1
 	return count
+
+
+func get_visible_slot_mesh_global_y(slot_root_name: String) -> float:
+	var root: Node = get_node_or_null(slot_root_name)
+	if root == null:
+		return -INF
+	for child in root.get_children():
+		var n3: Node3D = child as Node3D
+		if n3 == null or not n3.visible:
+			continue
+		if String(n3.name).ends_with("_None"):
+			continue
+		var mi: MeshInstance3D = n3.get_node_or_null("Mesh") as MeshInstance3D
+		if mi != null:
+			return mi.global_position.y
+		return n3.global_position.y
+	return -INF
+
+
+func _ensure_slot_bindings() -> bool:
+	var skel: Skeleton3D = _find_body_skeleton()
+	if skel == null:
+		if not _slots_bound:
+			push_warning("[CharacterVariantController] Body Skeleton3D not found")
+		return false
+	var all_ok: bool = true
+	for slot_name in SLOT_BONE_MAP.keys():
+		var att: BoneAttachment3D = get_node_or_null(String(slot_name)) as BoneAttachment3D
+		if att == null:
+			push_warning("[CharacterVariantController] missing slot root: %s" % String(slot_name))
+			all_ok = false
+			continue
+		var preferred: StringName = SLOT_BONE_MAP[slot_name] as StringName
+		var bone_name: String = _resolve_bone_name(skel, preferred)
+		if bone_name == "":
+			push_warning(
+				"[CharacterVariantController] no bone for slot %s (wanted %s)"
+				% [String(slot_name), String(preferred)]
+			)
+			all_ok = false
+			continue
+		att.use_external_skeleton = true
+		# Path is relative to the BoneAttachment3D, not the scene root.
+		att.external_skeleton = att.get_path_to(skel)
+		att.bone_name = bone_name
+	_slots_bound = all_ok
+	return all_ok
+
+
+func _find_body_skeleton() -> Skeleton3D:
+	var body: Node = get_node_or_null("Body")
+	if body == null:
+		return _find_skeleton_recursive(self)
+	var under_body: Skeleton3D = _find_skeleton_recursive(body)
+	if under_body != null:
+		return under_body
+	return _find_skeleton_recursive(self)
+
+
+func _find_skeleton_recursive(node: Node) -> Skeleton3D:
+	if node == null:
+		return null
+	var as_skel: Skeleton3D = node as Skeleton3D
+	if as_skel != null:
+		return as_skel
+	for child in node.get_children():
+		var found: Skeleton3D = _find_skeleton_recursive(child)
+		if found != null:
+			return found
+	return null
+
+
+func _resolve_bone_name(skel: Skeleton3D, preferred: StringName) -> String:
+	var candidates: Array = BONE_FALLBACKS.get(preferred, [preferred]) as Array
+	for candidate in candidates:
+		var name: String = String(candidate)
+		if skel.find_bone(name) >= 0:
+			return name
+	# Last resort: case-insensitive scan.
+	var want: String = String(preferred).to_lower()
+	for i in skel.get_bone_count():
+		var bn: String = skel.get_bone_name(i)
+		if bn.to_lower() == want:
+			return bn
+	return ""
 
 
 func _select_slot_child(slot_root_name: String, child_name: StringName) -> void:
