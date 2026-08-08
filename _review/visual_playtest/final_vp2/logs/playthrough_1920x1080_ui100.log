@@ -1,0 +1,165 @@
+Godot Engine v4.7.1.stable.official.a13da4feb - https://godotengine.org
+Vulkan 1.4.303 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 4060 Laptop GPU
+
+[DF][MODULE_02] GameState ready
+[DF][MODULE_03] ContentDB ready
+[DF][MODULE_05] Progression ready
+[DF][MODULE_13] GameDay ready
+[DF][MODULE_06] RivalEncounters ready
+[DF][MODULE_07D] RivalCompetitionRunner ready
+[DF][MODULE_08] GirlDiscovery ready
+[DF][MODULE_09] DatingCore ready
+[DF][MODULE_10] Relationships ready
+[DF][MODULE_11] Story ready
+[DF][MODULE_12] World ready
+[DF][MODULE_13] SalaryMine ready
+[DF][MODULE_15] Media ready
+[DF][MODULE_16] DatingOverload ready
+[DF][MODULE_17] FirstClone ready
+[DF][MODULE_18] CloneIncremental ready
+[DF][MODULE_20] LateGameExpansion ready
+[DF][MODULE_24] SaveSystem ready
+[SteamBridge] no AppID configured: Steam init skipped (unavailable)
+DATE FACTORY
+version=1.0.0
+save_schema=1
+Godot=4.7.1-stable (official)
+OS=Windows
+renderer=forward_plus
+Steam=unavailable
+[GodotIQ] Runtime _ready() — debugger active: false
+[GodotIQ] Debugger not active, freeing runtime
+[VisualPlaytest] mode=playthrough run_id=final_vp2 out=C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2 res=1920x1080 ui=100
+[PlaythroughDriver] P00_BOOT ok=true (runner boot)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/000_main_menu.png
+[PlaythroughDriver] P01_TITLE ok=true (main menu capture)
+[DF][MODULE_01] Player ready
+[PlaythroughDriver] P02_NEW_GAME ok=true (FrontendSaveApi.start_new_game)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/100_apartment_spawn.png
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/101_apartment_forward.png
+[PlaythroughDriver] P03_APARTMENT ok=true (apartment spawn)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/110_hud.png
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/900_phone_status.png
+[PlaythroughDriver] P04_HUD_PHONE ok=true (hud/phone captures)
+[GalleryFixtures] helper ok: discover SUCCESS girl_neighbor
+[GalleryFixtures] helper ok: conquer neighbor via Relationships
+[GalleryFixtures] helper ok: rival neg_actress_loss outcome=1
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n01_rival_loss.png
+[GalleryFixtures] helper ok: rival neg_actress_retry outcome=0
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n02_rival_retry_win.png
+[GalleryFixtures] helper ok: discover FAILURE girl_actress
+[GalleryFixtures] helper ok: no contact after failure girl_actress
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n03_discovery_fail.png
+[GalleryFixtures] helper ok: discover SUCCESS girl_actress
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n04_discovery_success.png
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n05_date_partial.png
+[GalleryFixtures] helper ok: conquer actress_recovery via Relationships
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n06_date_recovery_conquer.png
+[PlaythroughDriver] negative path complete stage=2
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/200_city.png
+[PlaythroughDriver] P05_CITY ok=true (city_hub travel)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/300_cafe.png
+[PlaythroughDriver] P06_CAFE ok=true (cafe)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/400_gym.png
+[PlaythroughDriver] P07_GYM ok=true (gym)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/410_appearance.png
+[PlaythroughDriver] P08_APPEARANCE ok=true (appearance_space)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/420_rival_choose.png
+[PlaythroughDriver] P09_RIVAL ok=true (rival checkpoint)
+[GalleryFixtures] helper ok: rival mine_rival outcome=0
+[GalleryFixtures] helper ok: discover SUCCESS girl_mine_boss
+[GalleryFixtures] helper ok: conquer mine_boss via Relationships
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/500_mine.png
+[PlaythroughDriver] P10_MINE ok=true (salary_mine)
+[GalleryFixtures] helper ok: rival editor_rival outcome=0
+[GalleryFixtures] helper ok: discover SUCCESS girl_magazine_editor
+[GalleryFixtures] helper ok: conquer editor via Relationships
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/510_media_studio.png
+[PlaythroughDriver] P11_MEDIA ok=true (media/appearance)
+[GalleryFixtures] helper ok: MEDIA_ATTENTION unlocked
+[GalleryFixtures] helper ok: photo session complete
+[GalleryFixtures] helper ok: article attention 15
+[GalleryFixtures] helper ok: publish media_photo_profile
+[GalleryFixtures] helper ok: publish media_photo_chair
+[GalleryFixtures] helper ok: publish media_photo_cover
+[GalleryFixtures] helper ok: DatingOverload started
+[GalleryFixtures] helper ok: attention>=45
+[GalleryFixtures] helper ok: offers>=3
+[GalleryFixtures] helper ok: overload problem_recognized
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/511_phone_media_overload.png
+[PlaythroughDriver] P12_OVERLOAD ok=true (media→overload→recognition)
+[GalleryFixtures] helper ok: rival scientist_rival outcome=0
+[GalleryFixtures] helper ok: discover SUCCESS girl_scientist
+[GalleryFixtures] helper ok: conquer scientist via Relationships
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/600_lab.png
+[PlaythroughDriver] P13_LAB_GATE ok=true (lab + STAGE_5)
+[GalleryFixtures] helper ok: FirstClone machine available
+[GalleryFixtures] helper ok: FirstClone calibration
+[GalleryFixtures] helper ok: FirstClone assign_work
+[GalleryFixtures] helper ok: clone count >= 1
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/610_first_clone.png
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/611_clone_terminal.png
+[PlaythroughDriver] P14_FIRST_CLONE ok=true (first clone)
+[GalleryFixtures] helper ok: president XP bridge xp=10 in 205s
+[PlaythroughDriver] P15_INCREMENTAL ok=true (president XP bridge)
+[GalleryFixtures] helper ok: rival president_rival outcome=0
+[GalleryFixtures] helper ok: discover SUCCESS girl_president
+[GalleryFixtures] helper ok: conquer president via Relationships
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/700_production.png
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/710_global_terminal.png
+[PlaythroughDriver] P16_PRODUCTION ok=true (STAGE_6 production)
+[GalleryFixtures] helper ok: Reach100 got=100 in 347s
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/720_reach100.png
+[PlaythroughDriver] P17_LATE_GAME ok=true (Reach100 → FINALE)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/800_final.png
+[PlaythroughDriver] P18_FINAL_PREP ok=true (final prep)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/811_final_date_choice.png
+[PlaythroughDriver] P19_FINAL_DATE ok=true (final date progress)
+[ScreenshotCapture] wrote C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/820_ending.png
+[PlaythroughDriver] P20_ENDING ok=true (ending)
+[PlaythroughDriver] P21_DONE ok=true (playthrough finished)
+[VisualPlaytest] DONE shots=28 defects=7
+ERROR: 4 RID allocations of type 'N10RendererRD11MeshStorage4MeshE' were leaked at exit.
+ERROR: 7 RID allocations of type 'N10RendererRD15MaterialStorage8MaterialE' were leaked at exit.
+ERROR: 1 RID allocations of type 'N10RendererRD15MaterialStorage6ShaderE' were leaked at exit.
+ERROR: 112 RID allocations of type 'N17RendererSceneCull8InstanceE' were leaked at exit.
+ERROR: Pages in use exist at exit in PagedAllocator: N33RendererSceneRenderImplementation22RenderForwardClustered32GeometryInstanceSurfaceDataCacheE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:170)
+ERROR: Pages in use exist at exit in PagedAllocator: N33RendererSceneRenderImplementation22RenderForwardClustered32GeometryInstanceForwardClusteredE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:170)
+ERROR: 1 shaders of type SceneForwardClusteredShaderRD were never freed
+   at: ~ShaderRD (servers/rendering/renderer_rd/shader_rd.cpp:1236)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: Leaked instance dependency: Bug - did not call instance_notify_deleted when freeing.
+   at: ~Dependency (servers/rendering/storage/utilities.cpp:56)
+WARNING: 7 RIDs of type "UniformBuffer" were leaked.
+   at: _free_rids (servers/rendering/rendering_device.cpp:8686)
+WARNING: 20 RIDs of type "IndexArray" were leaked.
+   at: _free_rids (servers/rendering/rendering_device.cpp:8686)
+WARNING: 20 RIDs of type "IndexBuffer" were leaked.
+   at: _free_rids (servers/rendering/rendering_device.cpp:8686)
+WARNING: 27 RIDs of type "VertexBuffer" were leaked.
+   at: _free_rids (servers/rendering/rendering_device.cpp:8686)
+WARNING: 254 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 58 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

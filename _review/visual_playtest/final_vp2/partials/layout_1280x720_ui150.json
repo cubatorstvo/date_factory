@@ -1,0 +1,1395 @@
+{
+	"controls": [
+		{
+			"anchors": {
+				"bottom": 1.0,
+				"left": 0.0,
+				"right": 1.0,
+				"top": 0.0
+			},
+			"class": "Control",
+			"global_rect": {
+				"h": 1080.0,
+				"w": 1920.0,
+				"x": -320.0,
+				"y": -180.0
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 1.0,
+				"left": 0.0,
+				"right": 1.0,
+				"top": 0.0
+			},
+			"class": "ColorRect",
+			"global_rect": {
+				"h": 1080.0,
+				"w": 1920.0,
+				"x": -320.0,
+				"y": -180.0
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@ColorRect@2",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 1.0,
+				"left": 0.0,
+				"right": 1.0,
+				"top": 0.0
+			},
+			"class": "ColorRect",
+			"global_rect": {
+				"h": 450.0,
+				"w": 1920.0,
+				"x": -320.0,
+				"y": -180.0
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@ColorRect@3",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 1.0,
+				"left": 0.0,
+				"right": 1.0,
+				"top": 0.0
+			},
+			"class": "CenterContainer",
+			"global_rect": {
+				"h": 1080.0,
+				"w": 1920.0,
+				"x": -320.0,
+				"y": -180.0
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "PanelContainer",
+			"global_rect": {
+				"h": 721.5,
+				"w": 630.0,
+				"x": 325.0,
+				"y": -1.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "MarginContainer",
+			"global_rect": {
+				"h": 691.5,
+				"w": 600.0,
+				"x": 340.0,
+				"y": 13.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "VBoxContainer",
+			"global_rect": {
+				"h": 619.5,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 49.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "Label",
+			"global_rect": {
+				"h": 87.0,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 49.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7/@Label@8",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "Label",
+			"global_rect": {
+				"h": 42.0,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 154.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7/@Label@9",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "Button",
+			"global_rect": {
+				"h": 66.0,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 214.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7/@Button@10",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "Button",
+			"global_rect": {
+				"h": 66.0,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 298.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7/@Button@11",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "Button",
+			"global_rect": {
+				"h": 66.0,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 382.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7/@Button@12",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "Button",
+			"global_rect": {
+				"h": 66.0,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 466.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7/@Button@13",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "Button",
+			"global_rect": {
+				"h": 66.0,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 550.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7/@Button@14",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 0.0,
+				"left": 0.0,
+				"right": 0.0,
+				"top": 0.0
+			},
+			"class": "Label",
+			"global_rect": {
+				"h": 34.5,
+				"w": 516.0,
+				"x": 382.0,
+				"y": 634.5
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/Root/@CenterContainer@4/@PanelContainer@5/@MarginContainer@6/@VBoxContainer@7/@Label@15",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		},
+		{
+			"anchors": {
+				"bottom": 1.0,
+				"left": 0.0,
+				"right": 1.0,
+				"top": 1.0
+			},
+			"class": "Label",
+			"global_rect": {
+				"h": 22.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 688.0
+			},
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@Label@16",
+			"viewport": {
+				"h": 720.0,
+				"w": 1280.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"visible": true
+		}
+	],
+	"defects": [
+		{
+			"details": {
+				"global_rect": {
+					"h": 1080.0,
+					"w": 1920.0,
+					"x": -320.0,
+					"y": -180.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 1080.0,
+					"w": 1920.0,
+					"x": -320.0,
+					"y": -180.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@ColorRect@19",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 1080.0,
+					"w": 1920.0,
+					"x": -320.0,
+					"y": -180.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 930.0,
+					"w": 960.0,
+					"x": 160.0,
+					"y": -105.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 900.0,
+					"w": 930.0,
+					"x": 175.0,
+					"y": -90.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 852.0,
+					"w": 876.0,
+					"x": 202.0,
+					"y": -66.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 54.0,
+					"w": 876.0,
+					"x": 202.0,
+					"y": -66.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@Label@23",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 987.0,
+					"w": 864.0,
+					"x": 202.0,
+					"y": 0.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 105.0,
+					"w": 864.0,
+					"x": 202.0,
+					"y": 648.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27/@VBoxContainer@60",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 864.0,
+					"x": 202.0,
+					"y": 690.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27/@VBoxContainer@60/@HBoxContainer@62",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 279.0,
+					"x": 202.0,
+					"y": 690.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27/@VBoxContainer@60/@HBoxContainer@62/@Button@63",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 280.5,
+					"x": 493.0,
+					"y": 690.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27/@VBoxContainer@60/@HBoxContainer@62/@Button@64",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 280.5,
+					"x": 785.5,
+					"y": 690.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27/@VBoxContainer@60/@HBoxContainer@62/@Button@65",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 864.0,
+					"x": 202.0,
+					"y": 768.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27/@CheckButton@66",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 864.0,
+					"x": 202.0,
+					"y": 846.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27/@CheckButton@67",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 864.0,
+					"x": 202.0,
+					"y": 924.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@ScrollContainer@26/@VBoxContainer@27/@Button@68",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 876.0,
+					"x": 202.0,
+					"y": 723.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@HBoxContainer@70",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 282.0,
+					"x": 202.0,
+					"y": 723.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@HBoxContainer@70/@Button@71",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 282.0,
+					"x": 499.0,
+					"y": 723.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@HBoxContainer@70/@Button@72",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 282.0,
+					"x": 796.0,
+					"y": 723.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@18/Root/@CenterContainer@20/Panel/@MarginContainer@21/@VBoxContainer@22/@HBoxContainer@70/@Button@73",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 1080.0,
+					"w": 1920.0,
+					"x": -320.0,
+					"y": -180.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 1080.0,
+					"w": 1920.0,
+					"x": -320.0,
+					"y": -180.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@ColorRect@75",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 1080.0,
+					"w": 1920.0,
+					"x": -320.0,
+					"y": -180.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 840.0,
+					"w": 840.0,
+					"x": 220.0,
+					"y": -60.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 810.0,
+					"w": 810.0,
+					"x": 235.0,
+					"y": -45.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 768.0,
+					"w": 762.0,
+					"x": 259.0,
+					"y": -24.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 54.0,
+					"w": 762.0,
+					"x": 259.0,
+					"y": -24.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@Label@80",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 1503.0,
+					"w": 750.0,
+					"x": 259.0,
+					"y": 45.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 321.0,
+					"w": 750.0,
+					"x": 259.0,
+					"y": 468.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@105",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 291.0,
+					"w": 720.0,
+					"x": 274.0,
+					"y": 483.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@105/@MarginContainer@97",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 261.0,
+					"w": 684.0,
+					"x": 292.0,
+					"y": 498.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@105/@MarginContainer@97/@HBoxContainer@98",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 261.0,
+					"w": 490.5,
+					"x": 292.0,
+					"y": 498.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@105/@MarginContainer@97/@HBoxContainer@98/@VBoxContainer@99",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 213.0,
+					"w": 490.5,
+					"x": 292.0,
+					"y": 546.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@105/@MarginContainer@97/@HBoxContainer@98/@VBoxContainer@99/@Label@101",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 261.0,
+					"w": 175.5,
+					"x": 800.5,
+					"y": 498.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@105/@MarginContainer@97/@HBoxContainer@98/@VBoxContainer@102",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 321.0,
+					"w": 750.0,
+					"x": 259.0,
+					"y": 804.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 291.0,
+					"w": 720.0,
+					"x": 274.0,
+					"y": 819.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114/@MarginContainer@106",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 261.0,
+					"w": 684.0,
+					"x": 292.0,
+					"y": 834.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114/@MarginContainer@106/@HBoxContainer@107",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 261.0,
+					"w": 490.5,
+					"x": 292.0,
+					"y": 834.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114/@MarginContainer@106/@HBoxContainer@107/@VBoxContainer@108",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 42.0,
+					"w": 490.5,
+					"x": 292.0,
+					"y": 834.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114/@MarginContainer@106/@HBoxContainer@107/@VBoxContainer@108/@Label@109",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 213.0,
+					"w": 490.5,
+					"x": 292.0,
+					"y": 882.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114/@MarginContainer@106/@HBoxContainer@107/@VBoxContainer@108/@Label@110",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 261.0,
+					"w": 175.5,
+					"x": 800.5,
+					"y": 834.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114/@MarginContainer@106/@HBoxContainer@107/@VBoxContainer@111",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 175.5,
+					"x": 800.5,
+					"y": 834.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114/@MarginContainer@106/@HBoxContainer@107/@VBoxContainer@111/@Button@112",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 175.5,
+					"x": 800.5,
+					"y": 906.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@114/@MarginContainer@106/@HBoxContainer@107/@VBoxContainer@111/@Button@113",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 408.0,
+					"w": 750.0,
+					"x": 259.0,
+					"y": 1140.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 378.0,
+					"w": 720.0,
+					"x": 274.0,
+					"y": 1155.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123/@MarginContainer@115",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 348.0,
+					"w": 684.0,
+					"x": 292.0,
+					"y": 1170.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123/@MarginContainer@115/@HBoxContainer@116",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 348.0,
+					"w": 490.5,
+					"x": 292.0,
+					"y": 1170.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123/@MarginContainer@115/@HBoxContainer@116/@VBoxContainer@117",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 42.0,
+					"w": 490.5,
+					"x": 292.0,
+					"y": 1170.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123/@MarginContainer@115/@HBoxContainer@116/@VBoxContainer@117/@Label@118",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 300.0,
+					"w": 490.5,
+					"x": 292.0,
+					"y": 1218.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123/@MarginContainer@115/@HBoxContainer@116/@VBoxContainer@117/@Label@119",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 348.0,
+					"w": 175.5,
+					"x": 800.5,
+					"y": 1170.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123/@MarginContainer@115/@HBoxContainer@116/@VBoxContainer@120",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 175.5,
+					"x": 800.5,
+					"y": 1170.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123/@MarginContainer@115/@HBoxContainer@116/@VBoxContainer@120/@Button@121",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 175.5,
+					"x": 800.5,
+					"y": 1242.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@ScrollContainer@83/@VBoxContainer@84/@PanelContainer@123/@MarginContainer@115/@HBoxContainer@116/@VBoxContainer@120/@Button@122",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 63.0,
+					"w": 762.0,
+					"x": 259.0,
+					"y": 681.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/TitleMenu/@CanvasLayer@74/Root/@CenterContainer@76/@PanelContainer@77/@MarginContainer@78/@VBoxContainer@79/@Button@86",
+			"severity": "WARNING"
+		}
+	],
+	"mode": "layout",
+	"notes": [],
+	"out_dir": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2",
+	"playthrough": {},
+	"resolution": "1280x720",
+	"run_id": "final_vp2",
+	"shot_count": 3,
+	"shots": [
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/layout/1280x720/000_main_menu_ui150.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/layout/1280x720/010_settings_ui150.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/layout/1280x720/030_save_ui150.png"
+	],
+	"stubs": [],
+	"ui_scale": 150
+}

@@ -1,0 +1,553 @@
+{
+	"controls": [],
+	"defects": [
+		{
+			"details": {
+				"global_rect": {
+					"h": 447.0,
+					"w": 520.0,
+					"x": 640.0,
+					"y": 360.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/RivalEncounterUI/Root/Panel",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 427.0,
+					"w": 500.0,
+					"x": 650.0,
+					"y": 370.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/RivalEncounterUI/Root/Panel/@MarginContainer@182",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 395.0,
+					"w": 464.0,
+					"x": 668.0,
+					"y": 386.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/RivalEncounterUI/Root/Panel/@MarginContainer@182/@VBoxContainer@183",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 200.0,
+					"w": 464.0,
+					"x": 668.0,
+					"y": 531.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/RivalEncounterUI/Root/Panel/@MarginContainer@182/@VBoxContainer@183/List",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 96.0,
+					"w": 464.0,
+					"x": 668.0,
+					"y": 635.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/RivalEncounterUI/Root/Panel/@MarginContainer@182/@VBoxContainer@183/List/@VBoxContainer@195",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 40.0,
+					"w": 464.0,
+					"x": 668.0,
+					"y": 691.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/RivalEncounterUI/Root/Panel/@MarginContainer@182/@VBoxContainer@183/List/@VBoxContainer@195/@Button@194",
+			"severity": "WARNING"
+		},
+		{
+			"details": {
+				"global_rect": {
+					"h": 40.0,
+					"w": 464.0,
+					"x": 668.0,
+					"y": 741.0
+				},
+				"viewport": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"message": "control outside viewport by >2px",
+			"path": "/root/VisualPlaytestRunner/RivalEncounterUI/Root/Panel/@MarginContainer@182/@VBoxContainer@183/@Button@187",
+			"severity": "WARNING"
+		}
+	],
+	"mode": "playthrough",
+	"notes": [],
+	"out_dir": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2",
+	"playthrough": {
+		"completed": [
+			"P00_BOOT",
+			"P01_TITLE",
+			"P02_NEW_GAME",
+			"P03_APARTMENT",
+			"P04_HUD_PHONE",
+			"P05_CITY",
+			"P06_CAFE",
+			"P07_GYM",
+			"P08_APPEARANCE",
+			"P09_RIVAL",
+			"P10_MINE",
+			"P11_MEDIA",
+			"P12_OVERLOAD",
+			"P13_LAB_GATE",
+			"P14_FIRST_CLONE",
+			"P15_INCREMENTAL",
+			"P16_PRODUCTION",
+			"P17_LATE_GAME",
+			"P18_FINAL_PREP",
+			"P19_FINAL_DATE",
+			"P20_ENDING",
+			"P21_DONE"
+		],
+		"snapshots": [
+			{
+				"authority": 0,
+				"checkpoint": "P01_TITLE",
+				"clones": 0,
+				"data": {
+					"shot": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/000_main_menu.png"
+				},
+				"day": 1,
+				"experience": 0,
+				"location": "",
+				"money": 0,
+				"reach": 0,
+				"stage": 0,
+				"upgrade_points": 0
+			},
+			{
+				"authority": 0,
+				"checkpoint": "P02_NEW_GAME",
+				"clones": 0,
+				"data": {
+					"ok": true
+				},
+				"day": 1,
+				"experience": 0,
+				"location": "apartment",
+				"money": 0,
+				"reach": 0,
+				"stage": 0,
+				"upgrade_points": 0
+			},
+			{
+				"authority": 0,
+				"checkpoint": "P03_APARTMENT",
+				"clones": 0,
+				"data": {
+					"location": "apartment",
+					"shot": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/100_apartment_spawn.png"
+				},
+				"day": 1,
+				"experience": 0,
+				"location": "apartment",
+				"money": 0,
+				"reach": 0,
+				"stage": 0,
+				"upgrade_points": 0
+			},
+			{
+				"authority": 0,
+				"checkpoint": "P04_HUD_PHONE",
+				"clones": 0,
+				"data": {
+					"hud": true,
+					"phone": true
+				},
+				"day": 1,
+				"experience": 0,
+				"location": "apartment",
+				"money": 0,
+				"reach": 0,
+				"stage": 0,
+				"upgrade_points": 0
+			},
+			{
+				"authority": 0,
+				"checkpoint": "NEG_RIVAL_LOSS",
+				"clones": 0,
+				"data": {
+					"auth": 0,
+					"auth0": 0,
+					"defeated": false
+				},
+				"day": 1,
+				"experience": 1,
+				"location": "apartment",
+				"money": 0,
+				"reach": 0,
+				"stage": 1,
+				"upgrade_points": 1
+			},
+			{
+				"authority": 2,
+				"checkpoint": "NEG_PATH",
+				"clones": 0,
+				"data": {
+					"partial_ok": true,
+					"stage": 2
+				},
+				"day": 3,
+				"experience": 2,
+				"location": "apartment",
+				"money": 0,
+				"reach": 0,
+				"stage": 2,
+				"upgrade_points": 2
+			},
+			{
+				"authority": 2,
+				"checkpoint": "P05_CITY",
+				"clones": 0,
+				"data": {
+					"shot": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/200_city.png"
+				},
+				"day": 3,
+				"experience": 2,
+				"location": "city_hub",
+				"money": 0,
+				"reach": 0,
+				"stage": 2,
+				"upgrade_points": 2
+			},
+			{
+				"authority": 2,
+				"checkpoint": "P06_CAFE",
+				"clones": 0,
+				"data": {
+					"shot": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/300_cafe.png"
+				},
+				"day": 3,
+				"experience": 2,
+				"location": "cafe",
+				"money": 0,
+				"reach": 0,
+				"stage": 2,
+				"upgrade_points": 2
+			},
+			{
+				"authority": 2,
+				"checkpoint": "P07_GYM",
+				"clones": 0,
+				"data": {
+					"shot": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/400_gym.png"
+				},
+				"day": 3,
+				"experience": 2,
+				"location": "gym",
+				"money": 0,
+				"reach": 0,
+				"stage": 2,
+				"upgrade_points": 2
+			},
+			{
+				"authority": 2,
+				"checkpoint": "P08_APPEARANCE",
+				"clones": 0,
+				"data": {
+					"shot": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/410_appearance.png"
+				},
+				"day": 3,
+				"experience": 2,
+				"location": "appearance_space",
+				"money": 0,
+				"reach": 0,
+				"stage": 2,
+				"upgrade_points": 2
+			},
+			{
+				"authority": 2,
+				"checkpoint": "P09_RIVAL",
+				"clones": 0,
+				"data": {
+					"stage": 2,
+					"ui": true
+				},
+				"day": 3,
+				"experience": 2,
+				"location": "appearance_space",
+				"money": 0,
+				"reach": 0,
+				"stage": 2,
+				"upgrade_points": 2
+			},
+			{
+				"authority": 4,
+				"checkpoint": "P10_MINE",
+				"clones": 0,
+				"data": {
+					"shot": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/500_mine.png",
+					"stage": 3
+				},
+				"day": 3,
+				"experience": 3,
+				"location": "salary_mine",
+				"money": 0,
+				"reach": 0,
+				"stage": 3,
+				"upgrade_points": 3
+			},
+			{
+				"authority": 7,
+				"checkpoint": "P11_MEDIA",
+				"clones": 0,
+				"data": {
+					"stage": 4
+				},
+				"day": 3,
+				"experience": 4,
+				"location": "appearance_space",
+				"money": 0,
+				"reach": 0,
+				"stage": 4,
+				"upgrade_points": 4
+			},
+			{
+				"authority": 7,
+				"checkpoint": "P12_OVERLOAD",
+				"clones": 0,
+				"data": {
+					"overload": true,
+					"stage": 4
+				},
+				"day": 7,
+				"experience": 4,
+				"location": "appearance_space",
+				"money": 0,
+				"reach": 0,
+				"stage": 4,
+				"upgrade_points": 4
+			},
+			{
+				"authority": 10,
+				"checkpoint": "P13_LAB_GATE",
+				"clones": 0,
+				"data": {
+					"shot": "C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/600_lab.png",
+					"stage": 5
+				},
+				"day": 7,
+				"experience": 5,
+				"location": "laboratory",
+				"money": 0,
+				"reach": 0,
+				"stage": 5,
+				"upgrade_points": 5
+			},
+			{
+				"authority": 10,
+				"checkpoint": "P14_FIRST_CLONE",
+				"clones": 1,
+				"data": {
+					"clones": 1,
+					"ok": true
+				},
+				"day": 7,
+				"experience": 5,
+				"location": "laboratory",
+				"money": 0,
+				"reach": 0,
+				"stage": 5,
+				"upgrade_points": 5
+			},
+			{
+				"authority": 10,
+				"checkpoint": "P15_INCREMENTAL",
+				"clones": 7,
+				"data": {
+					"ok": true,
+					"xp": 10
+				},
+				"day": 7,
+				"experience": 10,
+				"location": "laboratory",
+				"money": 68,
+				"reach": 0,
+				"stage": 5,
+				"upgrade_points": 10
+			},
+			{
+				"authority": 15,
+				"checkpoint": "P16_PRODUCTION",
+				"clones": 7,
+				"data": {
+					"stage": 6,
+					"travel": true
+				},
+				"day": 7,
+				"experience": 11,
+				"location": "production_area",
+				"money": 68,
+				"reach": 0,
+				"stage": 6,
+				"upgrade_points": 11
+			},
+			{
+				"authority": 15,
+				"checkpoint": "P17_LATE_GAME",
+				"clones": 19,
+				"data": {
+					"ok": true,
+					"reach": 100,
+					"stage": 7
+				},
+				"day": 7,
+				"experience": 46,
+				"location": "production_area",
+				"money": 184,
+				"reach": 100,
+				"stage": 7,
+				"upgrade_points": 46
+			},
+			{
+				"authority": 15,
+				"checkpoint": "P18_FINAL_PREP",
+				"clones": 19,
+				"data": {
+					"stage": 7,
+					"travel": true
+				},
+				"day": 7,
+				"experience": 46,
+				"location": "final_location",
+				"money": 184,
+				"reach": 100,
+				"stage": 7,
+				"upgrade_points": 46
+			},
+			{
+				"authority": 15,
+				"checkpoint": "P19_FINAL_DATE",
+				"clones": 19,
+				"data": {
+					"conquered": true,
+					"phase_success": true
+				},
+				"day": 7,
+				"experience": 47,
+				"location": "final_location",
+				"money": 184,
+				"reach": 100,
+				"stage": 7,
+				"upgrade_points": 47
+			},
+			{
+				"authority": 15,
+				"checkpoint": "P20_ENDING",
+				"clones": 19,
+				"data": {
+					"active": true,
+					"conquered": true,
+					"ending_ui": false
+				},
+				"day": 7,
+				"experience": 47,
+				"location": "final_location",
+				"money": 184,
+				"reach": 100,
+				"stage": 7,
+				"upgrade_points": 47
+			}
+		],
+		"unmet": []
+	},
+	"resolution": "1920x1080",
+	"run_id": "final_vp2",
+	"shot_count": 28,
+	"shots": [
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/000_main_menu.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/100_apartment_spawn.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/101_apartment_forward.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/110_hud.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/900_phone_status.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n01_rival_loss.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n02_rival_retry_win.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n03_discovery_fail.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n04_discovery_success.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n05_date_partial.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/n06_date_recovery_conquer.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/200_city.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/300_cafe.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/400_gym.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/410_appearance.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/420_rival_choose.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/500_mine.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/510_media_studio.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/511_phone_media_overload.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/600_lab.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/610_first_clone.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/611_clone_terminal.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/700_production.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/710_global_terminal.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/720_reach100.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/800_final.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/811_final_date_choice.png",
+		"C:/Users/User/Documents/GodotProjects/date_factory/_review/visual_playtest/final_vp2/playthrough/1920x1080/820_ending.png"
+	],
+	"stubs": [],
+	"ui_scale": 100
+}
