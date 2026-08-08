@@ -1,7 +1,7 @@
 extends Node
 ## First Clone one-off sequence owner (MODULE 17).
 ## Autoload name: FirstClone. Aggregate GameState clone counts are source of truth.
-## No _process. No late rates. No MODULE 18 production.
+## No _process. Late rates / production owned by CloneIncremental (MODULE 18).
 
 signal sequence_started()
 signal calibration_completed()
@@ -226,10 +226,19 @@ func _connect_signals() -> void:
 		if not world.is_connected("location_changed", _on_location_changed):
 			world.connect("location_changed", _on_location_changed)
 	var gs: Node = get_node_or_null("/root/GameState")
-	if gs != null and gs.has_signal("state_reset"):
-		if not gs.is_connected("state_reset", _on_state_reset):
+	if gs != null:
+		if gs.has_signal("state_reset") and not gs.is_connected("state_reset", _on_state_reset):
 			gs.connect("state_reset", _on_state_reset)
+		if gs.has_signal("clone_counts_changed") and not gs.is_connected("clone_counts_changed", _on_clone_counts_changed):
+			gs.connect("clone_counts_changed", _on_clone_counts_changed)
 	_signals_connected = true
+
+
+func _on_clone_counts_changed(_total: int, _working: int, _dating: int, _free: int) -> void:
+	# Skip during first-assignment commit so preview placement owns the representative.
+	if _awaiting_assignment or _sequence_active:
+		return
+	reconstruct_representative()
 
 
 func _on_location_changed(new_location_id: StringName, _previous_location_id: StringName) -> void:
@@ -335,7 +344,7 @@ func _commit_assignment(kind: FirstCloneTypes.Assignment) -> bool:
 	var total: int = 1
 	var working: int = 1 if kind == FirstCloneTypes.Assignment.WORK else 0
 	var dating: int = 1 if kind == FirstCloneTypes.Assignment.DATING else 0
-	# Atomic commit — money/dates rates remain 0 (MODULE18 owns rates).
+	# Atomic commit — CloneIncremental owns late rates via clone_counts_changed.
 	var ok: bool = bool(gs.call("set_clone_counts", total, working, dating))
 	if not ok:
 		return false

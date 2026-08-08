@@ -28,6 +28,9 @@ func _ready() -> void:
 	_story = get_node("/root/Story")
 	_content = get_node("/root/ContentDB")
 	await get_tree().process_frame
+	var ci: Node = get_node_or_null("/root/CloneIncremental")
+	if ci != null and ci.has_method("set_realtime_simulation"):
+		ci.call("set_realtime_simulation", false)
 	if _overload.has_signal("overload_started") and not _overload.is_connected("overload_started", _on_started):
 		_overload.connect("overload_started", _on_started)
 	if _overload.has_signal("clone_solution_needed") and not _overload.is_connected("clone_solution_needed", _on_clone_needed):
@@ -134,6 +137,7 @@ func _run_all() -> void:
 	_test_capacity_next_day()
 	_test_fulfill_matching()
 	_test_fulfill_one_of_multiple()
+	_test_fulfill_oldest_by_clone()
 	_test_unrelated_consumes()
 	_test_bad_date_fulfills()
 	_test_aging_and_wave()
@@ -250,6 +254,21 @@ func _test_fulfill_matching() -> void:
 	_ok(a2 != null and a2.status == DatingOverloadTypes.DatingDemandStatus.FULFILLED, "118 A fulfilled")
 	_ok(b2 != null and b2.is_backlog(), "118 B active")
 	_ok(int(_overload.call("get_backlog_count")) == 2, "118 backlog2")
+
+
+func _test_fulfill_oldest_by_clone() -> void:
+	_seed_stage4_media_ready(45, 3)
+	var backlog0: int = int(_overload.call("get_backlog_count"))
+	var last0: int = int(_gs.call("get_dating_overload_last_personal_date_day"))
+	var personal0: int = int(_gs.call("get_dating_overload_personal_dates_completed"))
+	var rel0: int = int(_gs.call("get_girl_relationship", &"girl_appearance_flash"))
+	_ok(bool(_overload.call("can_start_personal_date")), "M18 can personal before clone fulfill")
+	_ok(bool(_overload.call("fulfill_oldest_demand_by_clone")), "M18 fulfill_oldest_demand_by_clone")
+	_ok(int(_overload.call("get_backlog_count")) == backlog0 - 1, "M18 backlog -1")
+	_ok(bool(_overload.call("can_start_personal_date")), "M18 can personal after")
+	_ok(int(_gs.call("get_dating_overload_last_personal_date_day")) == last0, "M18 last day untouched")
+	_ok(int(_gs.call("get_dating_overload_personal_dates_completed")) == personal0, "M18 personal count untouched")
+	_ok(int(_gs.call("get_girl_relationship", &"girl_appearance_flash")) == rel0, "M18 relationship untouched")
 
 
 func _test_fulfill_one_of_multiple() -> void:

@@ -246,6 +246,45 @@ func use_feed_boost() -> bool:
 	return true
 
 
+## Clone auto-date fulfillment (MODULE 18). Does NOT touch hero capacity / relationships.
+func fulfill_oldest_demand_by_clone() -> bool:
+	var gs: Node = get_node_or_null("/root/GameState")
+	var day: Node = get_node_or_null("/root/GameDay")
+	if gs == null or day == null:
+		return false
+	if not bool(gs.call("is_dating_overload_started")):
+		return false
+	var overdue: Array[DatingDemandEntry] = []
+	var waiting: Array[DatingDemandEntry] = []
+	for entry in get_demand_entries():
+		var e: DatingDemandEntry = entry as DatingDemandEntry
+		if e == null:
+			continue
+		if e.status == DatingOverloadTypes.DatingDemandStatus.OVERDUE:
+			overdue.append(e)
+		elif e.status == DatingOverloadTypes.DatingDemandStatus.WAITING:
+			waiting.append(e)
+	overdue.sort_custom(func(a: DatingDemandEntry, b: DatingDemandEntry) -> bool:
+		return a.request_id < b.request_id
+	)
+	waiting.sort_custom(func(a: DatingDemandEntry, b: DatingDemandEntry) -> bool:
+		return a.request_id < b.request_id
+	)
+	var target: DatingDemandEntry = null
+	if not overdue.is_empty():
+		target = overdue[0]
+	elif not waiting.is_empty():
+		target = waiting[0]
+	if target == null:
+		return false
+	var current_day: int = int(day.call("get_current_day"))
+	if not bool(gs.call("mark_dating_demand_fulfilled", target.request_id, current_day)):
+		return false
+	demand_fulfilled.emit(target.request_id)
+	backlog_changed.emit(get_backlog_count())
+	return true
+
+
 func get_status() -> DatingOverloadStatus:
 	var status: DatingOverloadStatus = DatingOverloadStatus.new()
 	var gs: Node = get_node_or_null("/root/GameState")

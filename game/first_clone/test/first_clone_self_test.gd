@@ -27,6 +27,9 @@ func _ready() -> void:
 	_day = get_node("/root/GameDay")
 	_rel = get_node("/root/Relationships")
 	await get_tree().process_frame
+	var ci: Node = get_node_or_null("/root/CloneIncremental")
+	if ci != null and ci.has_method("set_realtime_simulation"):
+		ci.call("set_realtime_simulation", false)
 	await _run_all()
 	if _failed == 0:
 		DfLog.info("MODULE_17_TEST", "ALL PASS (%s)" % _passed)
@@ -261,7 +264,7 @@ func _test_work_commit() -> void:
 	_ok(int(_gs.call("get_clones_working")) == 1, "66 WORK working1")
 	_ok(int(_gs.call("get_clones_dating")) == 0, "66 WORK dating0")
 	_ok(int(_gs.call("get_free_clones")) == 0, "66 WORK free0")
-	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 0.0), "66 WORK mpm0")
+	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 20.0), "66 WORK mpm20")
 	_ok(is_equal_approx(float(_gs.call("get_dates_per_minute")), 0.0), "66 WORK dpm0")
 
 
@@ -274,7 +277,7 @@ func _test_dating_commit() -> void:
 	_ok(int(_gs.call("get_clones_dating")) == 1, "66 DATING dating1")
 	_ok(int(_gs.call("get_free_clones")) == 0, "66 DATING free0")
 	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 0.0), "66 DATING mpm0")
-	_ok(is_equal_approx(float(_gs.call("get_dates_per_minute")), 0.0), "66 DATING dpm0")
+	_ok(is_equal_approx(float(_gs.call("get_dates_per_minute")), 0.50), "66 DATING dpm0.5")
 
 
 func _test_double_assign_blocked() -> void:
@@ -293,8 +296,8 @@ func _test_no_late_rates() -> void:
 	_seed_lab_ready()
 	_fc.call("complete_calibration_for_test")
 	_fc.call("assign_work")
-	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 0.0), "68 mpm0 after clone")
-	_ok(is_equal_approx(float(_gs.call("get_dates_per_minute")), 0.0), "68 dpm0 after clone")
+	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 20.0), "68 mpm20 via CloneIncremental")
+	_ok(is_equal_approx(float(_gs.call("get_dates_per_minute")), 0.0), "68 dpm0 after WORK")
 	var src: String = FileAccess.get_file_as_string("res://game/first_clone/first_clone.gd")
 	_ok(not src.contains("set_late_rates(") and not src.contains("\"set_late_rates\""), "68 no set_late_rates call")
 
@@ -508,18 +511,20 @@ func _test_phone_story_and_clone_section() -> void:
 	_ok(story_lab.contains("Создай первого клона."), "phone §24 create clone")
 	_ok(not phone.has_clone_section_visible(), "phone clone still hidden")
 	phone.close()
-	# §52: after total_clones>=1 → counts visible, no rates.
+	# MODULE 18: after total_clones>=1 → counts + read-only rates.
 	_ok(bool(_gs.call("set_clone_counts", 1, 1, 0)), "phone seed WORK counts")
 	phone.open(null)
 	_ok(phone.has_clone_section_visible(), "phone clone section visible")
 	var stats: String = phone.get_clone_stats_text()
 	_ok(stats.contains("Всего: 1"), "phone clone total1")
-	_ok(stats.contains("На работе: 1"), "phone clone working1")
+	_ok(stats.contains("Работают: 1"), "phone clone working1")
 	_ok(stats.contains("На свиданиях: 0"), "phone clone dating0")
-	_ok(stats.contains("Свободных: 0"), "phone clone free0")
-	_ok(not stats.contains("мин"), "phone no rate emphasis")
+	_ok(stats.contains("Свободно: 0"), "phone clone free0")
+	_ok(stats.contains("Денег/мин:"), "phone money rate label")
+	_ok(stats.contains("Свиданий/мин:"), "phone dates rate label")
 	var story_done: String = phone.get_story_text()
-	_ok(story_done.contains("Первый клон создан."), "phone story after clone")
+	_ok(story_done.contains("Автоматизация запущена."), "phone story after clone")
+	_ok(story_done.contains("Наращивай производство клонов."), "phone story grow production")
 	_ok(not story_done.contains("Президент"), "phone no President objective")
 	phone.close()
 	phone.queue_free()

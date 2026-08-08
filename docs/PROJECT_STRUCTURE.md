@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 17 — First Clone Sequence**.  
+Фактическая структура после **MODULE 18 — Clone Incremental Core**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
 ## Top-level (существует сейчас)
@@ -13,9 +13,9 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → World apartment, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ + salary); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
-| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / clone economy (MODULE 18+) |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ counts/rates + salary); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
+| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations, markers, transitions, MODULE 12 test | Open-world streaming / MODULE 19 physical slots |
 | `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
 | `icon.svg` | Иконка приложения | — | — |
@@ -184,7 +184,8 @@ Dependency-safe production order (`project.godot`):
 | `SalaryMine` | Salary periods / pending / claim / passive (MODULE 13); after World; StoryFeature.SALARY_MINE gate |
 | `Media` | Attention / photo session / publish / incoming offers / feed (MODULE 15); after SalaryMine; StoryFeature.MEDIA_ATTENTION gate |
 | `DatingOverload` | Personal date capacity / demand backlog / feed boost / problem recognition (MODULE 16); after Media; activates from Media `overload_ready` at STAGE_4 |
-| `FirstClone` | One-off first clone sequence (MODULE 17); after DatingOverload; eligibility → calibration → physical representative → WORK/DATING aggregate counts; no rates |
+| `FirstClone` | One-off first clone sequence (MODULE 17); after DatingOverload; eligibility → calibration → physical representative → WORK/DATING aggregate counts |
+| `CloneIncremental` | Late clone economy (MODULE 18); after FirstClone; owns production/work/dating formulas → `GameState.set_late_rates`; lab terminal assign/upgrades; Phone read-only rates; no MODULE 19 slots |
 
 ### `game/media/`
 
@@ -206,6 +207,13 @@ Dependency-safe production order (`project.godot`):
 - `first_clone_types.gd` / `first_clone_status.gd` / `first_clone_actor.gd` / `first_clone_machine_interactable.gd` / `clone_calibration_minigame.gd` — types, status snapshot, physical representative, machine interactable, 3-pass minigame
 - `test/first_clone_test.tscn` + `first_clone_self_test.gd` — MODULE 17 headless runner
 
+### `game/clone_incremental/`
+
+- `clone_incremental.gd` — autoload `CloneIncremental`: real-time free-clone production, rate recompute into `GameState.set_late_rates`, work/dating assignment, 3 Money upgrade lines (`cost = 30×3^level`), backlog-first auto dates then XP/UP; no individual clone entities / MODULE 19 slots
+- `clone_incremental_types.gd` / `clone_incremental_status.gd` / `clone_upgrade_purchase_result.gd` — formulas (production 30→5 s, work 20→70 Money/min/clone, dating 0.50→1.75 dates/min/clone), status snapshot, purchase result
+- `clone_terminal_interactable.gd` / `clone_terminal_ui.gd` — physical lab terminal (assign Work/Dating + buy upgrades); Phone stays read-only
+- `test/clone_incremental_test.tscn` + `clone_incremental_self_test.gd` — MODULE 18 headless runner
+
 ## Canonical future destinations (ещё не созданы)
 
 ```text
@@ -225,11 +233,12 @@ audio/
 `data/content/` production content through Scientist / first clone (MODULE 14A+14B+17); inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`, `docs/content/MANUAL_CONTENT_17.md`.
 `game/content/test/module_14a_vertical_test.tscn` — MODULE 14A headless integration runner.
 `game/content/test/module_14b_vertical_test.tscn` — MODULE 14B Editor → STAGE_4 / MEDIA_ATTENTION headless runner.
-`ui/phone/` функциональный журнал: status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1) + salary; STAGE_4: media → overload → Scientist hunt; STAGE_5: first-clone handoff without President (MODULE 08/10/12/13/14/15/16/17); финальный phone shell — MODULE 22.  
+`ui/phone/` функциональный журнал: status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1, read-only counts + Money/min + Dates/min) + salary; STAGE_4: media → overload → Scientist hunt; STAGE_5: before clone lab handoff / after clone automation handoff without President (MODULE 08/10/12/13/14/15/16/17/18); финальный phone shell — MODULE 22.  
 `ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
 `game/media/test/media_test.tscn` — MODULE 15 Media headless runner.
 `game/dating_overload/test/dating_overload_test.tscn` — MODULE 16 Dating Overload headless runner.
 `game/first_clone/test/first_clone_test.tscn` — MODULE 17 First Clone headless runner.
+`game/clone_incremental/test/clone_incremental_test.tscn` — MODULE 18 Clone Incremental headless runner.
 
 ## Donor
 

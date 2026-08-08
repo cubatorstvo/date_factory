@@ -20,6 +20,7 @@ signal story_flag_changed(flag_id: StringName, value: bool)
 signal stage_changed(new_stage: GameTypes.GameStage, previous_stage: GameTypes.GameStage)
 signal clone_counts_changed(total: int, working: int, dating: int, free: int)
 signal late_rates_changed(money_per_minute: float, dates_per_minute: float)
+signal clone_upgrade_changed(upgrade_type: int, new_level: int, previous_level: int)
 signal media_attention_changed(new_value: int, delta: int)
 signal state_reset()
 
@@ -51,6 +52,9 @@ var _clones_working: int = 0
 var _clones_dating: int = 0
 var _money_per_minute: float = 0.0
 var _dates_per_minute: float = 0.0
+var _clone_production_upgrade_level: int = 0
+var _clone_work_upgrade_level: int = 0
+var _clone_dating_upgrade_level: int = 0
 var _purchased_perks: Dictionary = {}
 var _defeated_rivals: Dictionary = {}
 var _salary_initialized: bool = false
@@ -119,6 +123,9 @@ func reset_for_new_game() -> void:
 	_clones_dating = 0
 	_money_per_minute = 0.0
 	_dates_per_minute = 0.0
+	_clone_production_upgrade_level = 0
+	_clone_work_upgrade_level = 0
+	_clone_dating_upgrade_level = 0
 	_purchased_perks = {}
 	_defeated_rivals = {}
 	_salary_initialized = false
@@ -1202,6 +1209,63 @@ func set_late_rates(money_per_minute: float, dates_per_minute: float) -> bool:
 	_money_per_minute = money_per_minute
 	_dates_per_minute = dates_per_minute
 	late_rates_changed.emit(_money_per_minute, _dates_per_minute)
+	return true
+
+
+# --- Clone upgrades (MODULE 18) ---
+
+const CLONE_UPGRADE_MAX_LEVEL: int = 5
+
+
+func get_clone_production_upgrade_level() -> int:
+	return _clone_production_upgrade_level
+
+
+func get_clone_work_upgrade_level() -> int:
+	return _clone_work_upgrade_level
+
+
+func get_clone_dating_upgrade_level() -> int:
+	return _clone_dating_upgrade_level
+
+
+func set_clone_production_upgrade_level(level: int) -> bool:
+	return _set_clone_upgrade_level(CloneIncrementalTypes.UpgradeType.PRODUCTION_SPEED, level)
+
+
+func set_clone_work_upgrade_level(level: int) -> bool:
+	return _set_clone_upgrade_level(CloneIncrementalTypes.UpgradeType.WORK_EFFICIENCY, level)
+
+
+func set_clone_dating_upgrade_level(level: int) -> bool:
+	return _set_clone_upgrade_level(CloneIncrementalTypes.UpgradeType.DATING_EFFICIENCY, level)
+
+
+func _set_clone_upgrade_level(upgrade_type: int, level: int) -> bool:
+	if level < 0 or level > CLONE_UPGRADE_MAX_LEVEL:
+		push_error("[GameState] clone upgrade level out of range: %s" % level)
+		return false
+	var prev: int = 0
+	match upgrade_type:
+		int(CloneIncrementalTypes.UpgradeType.PRODUCTION_SPEED):
+			prev = _clone_production_upgrade_level
+			if prev == level:
+				return true
+			_clone_production_upgrade_level = level
+		int(CloneIncrementalTypes.UpgradeType.WORK_EFFICIENCY):
+			prev = _clone_work_upgrade_level
+			if prev == level:
+				return true
+			_clone_work_upgrade_level = level
+		int(CloneIncrementalTypes.UpgradeType.DATING_EFFICIENCY):
+			prev = _clone_dating_upgrade_level
+			if prev == level:
+				return true
+			_clone_dating_upgrade_level = level
+		_:
+			push_error("[GameState] unknown clone upgrade type: %s" % upgrade_type)
+			return false
+	clone_upgrade_changed.emit(upgrade_type, level, prev)
 	return true
 
 

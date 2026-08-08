@@ -16,6 +16,9 @@ var _gs: Node = null
 func _ready() -> void:
 	_gs = get_node("/root/GameState")
 	await get_tree().process_frame
+	var ci: Node = get_node_or_null("/root/CloneIncremental")
+	if ci != null and ci.has_method("set_realtime_simulation"):
+		ci.call("set_realtime_simulation", false)
 	_run_all()
 	if _failed == 0:
 		DfLog.info("MODULE_02_TEST", "ALL PASS (%s)" % _passed)
@@ -41,6 +44,7 @@ func _run_all() -> void:
 	_test_stages()
 	_test_clones()
 	_test_late_rates()
+	_test_clone_upgrades()
 	_test_signals()
 	_gs.call("reset_for_new_game")
 
@@ -99,6 +103,9 @@ func _test_reset_defaults() -> void:
 	_ok(int(_gs.call("get_total_clones")) == 0, "reset total clones 0")
 	_ok(int(_gs.call("get_free_clones")) == 0, "reset free clones 0")
 	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 0.0), "reset mpm 0")
+	_ok(int(_gs.call("get_clone_production_upgrade_level")) == 0, "reset clone production level 0")
+	_ok(int(_gs.call("get_clone_work_upgrade_level")) == 0, "reset clone work level 0")
+	_ok(int(_gs.call("get_clone_dating_upgrade_level")) == 0, "reset clone dating level 0")
 	_ok(_reset_signal_count == before_reset + 1, "reset emits state_reset")
 
 
@@ -255,6 +262,22 @@ func _test_late_rates() -> void:
 	_ok(is_equal_approx(float(_gs.call("get_dates_per_minute")), 0.25), "dpm")
 	_ok(not bool(_gs.call("set_late_rates", -1.0, 0.0)), "negative rate rejected")
 	_ok(is_equal_approx(float(_gs.call("get_money_per_minute")), 1.5), "mpm unchanged")
+
+
+func _test_clone_upgrades() -> void:
+	_gs.call("reset_for_new_game")
+	_ok(bool(_gs.call("set_clone_production_upgrade_level", 3)), "set production 3")
+	_ok(int(_gs.call("get_clone_production_upgrade_level")) == 3, "get production 3")
+	_ok(bool(_gs.call("set_clone_work_upgrade_level", 5)), "set work 5")
+	_ok(int(_gs.call("get_clone_work_upgrade_level")) == 5, "get work 5")
+	_ok(bool(_gs.call("set_clone_dating_upgrade_level", 1)), "set dating 1")
+	_ok(int(_gs.call("get_clone_dating_upgrade_level")) == 1, "get dating 1")
+	_ok(not bool(_gs.call("set_clone_production_upgrade_level", 6)), "reject production 6")
+	_ok(not bool(_gs.call("set_clone_work_upgrade_level", -1)), "reject work -1")
+	_gs.call("reset_for_new_game")
+	_ok(int(_gs.call("get_clone_production_upgrade_level")) == 0, "reset clears production")
+	_ok(int(_gs.call("get_clone_work_upgrade_level")) == 0, "reset clears work")
+	_ok(int(_gs.call("get_clone_dating_upgrade_level")) == 0, "reset clears dating")
 
 
 func _test_signals() -> void:

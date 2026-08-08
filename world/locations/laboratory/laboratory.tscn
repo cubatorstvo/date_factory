@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
 [ext_resource type="Script" uid="uid://47ida632vn2m" path="res://game/first_clone/first_clone_machine_interactable.gd" id="4_m87cs"]
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
+[ext_resource type="Script" uid="uid://b8djw7ivxedsg" path="res://game/clone_incremental/clone_terminal_interactable.gd" id="5_tpvxc"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
@@ -94,6 +95,25 @@ roughness = 0.35
 
 [sub_resource type="BoxMesh" id="BoxMesh_c4qwf"]
 size = Vector3(1.2, 1.8, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xc2ut"]
+albedo_color = Color(0.25, 0.28, 0.34, 1)
+metallic = 0.15
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_vyv86"]
+size = Vector3(1, 1, 0.75)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q4qec"]
+albedo_color = Color(0.3, 0.48, 0.55, 1)
+metallic = 0.2
+roughness = 0.35
+emission_enabled = true
+emission = Color(0.15, 0.28, 0.35, 1)
+emission_energy_multiplier = 0.45
+
+[sub_resource type="BoxMesh" id="BoxMesh_jdboj"]
+size = Vector3(0.85, 0.55, 0.06)
 
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
@@ -271,6 +291,29 @@ mesh = SubResource("BoxMesh_c4qwf")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
 billboard = 1
 text = "УСТАНОВКА"
+font_size = 26
+
+[node name="CloneTerminalInteractable" type="Area3D" parent="Interactables" unique_id=471438388]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -3)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_tpvxc")
+
+[node name="TerminalBody" type="MeshInstance3D" parent="Interactables/CloneTerminalInteractable" unique_id=512972423]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+material_override = SubResource("StandardMaterial3D_xc2ut")
+mesh = SubResource("BoxMesh_vyv86")
+
+[node name="TerminalScreen" type="MeshInstance3D" parent="Interactables/CloneTerminalInteractable" unique_id=938035519]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0.32)
+material_override = SubResource("StandardMaterial3D_q4qec")
+mesh = SubResource("BoxMesh_jdboj")
+
+[node name="TerminalLabel" type="Label3D" parent="Interactables/CloneTerminalInteractable" unique_id=1405589083]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0)
+billboard = 1
+text = "ТЕРМИНАЛ"
 font_size = 26
 
 [node name="Transitions" type="Node3D" parent="." unique_id=22607033]

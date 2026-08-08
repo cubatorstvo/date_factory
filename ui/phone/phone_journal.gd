@@ -2,7 +2,8 @@ class_name PhoneJournal
 extends Control
 ## Functional phone journal for discovered girls (MODULE 08)
 ## + global/story status (MODULE 14A) + salary (MODULE 13) + MEDIA (MODULE 15)
-## + Dating Overload section (MODULE 16) + First Clone counts / Stage5 handoff (MODULE 17).
+## + Dating Overload section (MODULE 16) + First Clone counts / Stage5 handoff (MODULE 17)
+## + Clone Incremental read-only rates (MODULE 18).
 ## No Dating CTA / messaging / scheduling / calendar.
 
 signal opened()
@@ -647,7 +648,9 @@ func _stage5_story_text() -> String:
 		lines.append("Лаборатория открыта.")
 		lines.append("Создай первого клона.")
 	else:
-		lines.append("Первый клон создан.")
+		# MODULE 18 §60 — automation handoff; no President objective yet.
+		lines.append("Автоматизация запущена.")
+		lines.append("Наращивай производство клонов.")
 	return "\n".join(lines)
 
 
@@ -888,12 +891,18 @@ func _connect_clone_signals() -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs != null and gs.has_signal("clone_counts_changed") and not gs.is_connected("clone_counts_changed", _on_clone_counts_changed):
 		gs.connect("clone_counts_changed", _on_clone_counts_changed)
+	if gs != null and gs.has_signal("late_rates_changed") and not gs.is_connected("late_rates_changed", _on_late_rates_changed):
+		gs.connect("late_rates_changed", _on_late_rates_changed)
 	_clone_signals_connected = true
 
 
 func _on_clone_counts_changed(_total: int, _working: int, _dating: int, _free: int) -> void:
 	_request_clone_refresh()
 	_request_story_refresh()
+
+
+func _on_late_rates_changed(_money_per_minute: float, _dates_per_minute: float) -> void:
+	_request_clone_refresh()
 
 
 func _request_clone_refresh() -> void:
@@ -918,18 +927,42 @@ func _refresh_clone_section() -> void:
 			dating = int(gs.call("get_clones_dating"))
 		if gs.has_method("get_free_clones"):
 			free = int(gs.call("get_free_clones"))
-	# MODULE 17 §52 — hidden until first clone; no money/min or dates/min.
+	# MODULE 18 §47 — hidden until first clone; read-only counts + rates (no assign/upgrade).
 	_clone_section.visible = total >= 1
 	if total < 1:
 		if _clone_stats != null:
 			_clone_stats.text = ""
 		return
+	var money_rate: float = 0.0
+	var dating_rate: float = 0.0
+	if gs != null:
+		if gs.has_method("get_money_per_minute"):
+			money_rate = float(gs.call("get_money_per_minute"))
+		if gs.has_method("get_dates_per_minute"):
+			dating_rate = float(gs.call("get_dates_per_minute"))
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("Всего: %d" % total)
-	lines.append("На работе: %d" % working)
+	lines.append("Свободно: %d" % free)
+	lines.append("Работают: %d" % working)
+	lines.append("Денег/мин: %s" % _format_clone_money_rate(money_rate))
 	lines.append("На свиданиях: %d" % dating)
-	lines.append("Свободных: %d" % free)
+	lines.append("Свиданий/мин: %s" % _format_clone_date_rate(dating_rate))
 	_clone_stats.text = "\n".join(lines)
+
+
+func _format_clone_money_rate(value: float) -> String:
+	if is_equal_approx(value, roundf(value)):
+		return "%d" % int(roundf(value))
+	return "%.1f" % value
+
+
+func _format_clone_date_rate(value: float) -> String:
+	if is_equal_approx(value, roundf(value)):
+		return "%d" % int(roundf(value))
+	var one_decimal: float = snappedf(value, 0.1)
+	if is_equal_approx(value, one_decimal):
+		return "%.1f" % value
+	return "%.2f" % value
 
 
 func _on_overload_started() -> void:

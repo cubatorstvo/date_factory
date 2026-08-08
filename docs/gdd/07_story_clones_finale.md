@@ -240,9 +240,15 @@ Scientist / Lab / first clone are MODULE 17 (implemented).
 
 - One-off FirstClone sequence: 3-pass calibration → physical representative → WORK or DATING once.
 - Source of truth: `GameState` aggregate counts (`total` / `working` / `dating` / free); no individual persistent clone object.
-- Rates (`money/min`, `dates/min`) remain 0 until MODULE 18.
 - Phone STAGE_5 before clone: «Лаборатория открыта. / Создай первого клона.» (no President objective).
-- Phone КЛОНЫ section after `total_clones >= 1`: Всего / На работе / На свиданиях / Свободных.
+
+### Реализация (MODULE 18)
+
+- `CloneIncremental` owns late rates → `GameState.set_late_rates`; production / work / dating formulas; lab terminal management; upgrade cost `30×3^level`.
+- Balance: production 30→5 s; work 20→70 Money/min/clone; dating 0.50→1.75 dates/min/clone.
+- Auto dates clear overload backlog first; then grant Experience / Upgrade Points. No DatingCore per auto date. No MODULE 19 physical slots yet.
+- Phone STAGE_5 after clone: «Автоматизация запущена. / Наращивай производство клонов.»
+- Phone КЛОНЫ (read-only) after `total_clones >= 1`: Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин.
 
 ---
 

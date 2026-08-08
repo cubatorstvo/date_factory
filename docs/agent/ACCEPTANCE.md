@@ -1,15 +1,10 @@
-# ACCEPTANCE — MODULE 17 FIX2 GirlDiscovery Scientist prerequisite
+# ACCEPTANCE — MODULE 18 Clone Incremental Core
 
 ## Player-visible result
-Direct `GirlDiscovery.begin_attempt(girl_scientist)` on STAGE_4 before overload recognition returns STORY_PREREQUISITE (even if rival marked defeated). GirlActor shows the prerequisite line. After recognition, rival gate then normal attempt.
+After first clone: auto free clones on a timer; lab Clone Terminal assigns Work/Dating and buys 3 Money upgrades; live Money/min and Dates/min; dating clones clear overload backlog then grant XP/UP; Phone shows read-only counts+rates. Story stays Stage 5. No President / MODULE 19 slots.
 
 ## PASS
-- RESULT_STORY_PREREQUISITE exists
-- Gate runs before Story rival/wrong-stage gates
-- No side effects on block
-- GirlActor feedback string
-- Tests: before / after recognition+rival / after rival+XP
-- No MODULE 18
+CloneIncremental autoload; formulas exact; rates on GameState; backlog-first auto dates; terminal physical; Phone rates; GameDay exploit blocked; FirstClone mpm=0 tests updated; MODULE 02–17 regressions; no MODULE 19.
 
 ## Verdict
 READY

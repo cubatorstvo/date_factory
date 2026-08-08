@@ -761,3 +761,21 @@ Prove the first physical double as the capacity solution while keeping Story, Ga
 
 Scope:
 `game/first_clone/**`, Scientist content, StageActorAnchor flag, lab/city markers, `ui/phone/phone_journal.gd`, docs §70
+
+## MODULE 18: Clone Incremental Core (late rates + lab terminal)
+
+Context:
+After the first clone exists, the player needs automatic free-clone production, aggregate Work/Dating assignment, live Money/min and Dates/min, backlog-first auto dates, and three Money upgrade lines — without MODULE 19 physical slots or President content.
+
+Decision:
+1. `CloneIncremental` (autoload after FirstClone) is the canonical owner of late-rate computation; it writes only through `GameState.set_late_rates` / `set_clone_counts`. No individual clone records.
+2. Exact MODULE 18 balance: production interval 30→5 s; work 20→70 Money/min/clone; dating 0.50→1.75 dates/min/clone; upgrade cost `30×3^level` (levels 0..5). Tunable later in MODULE 26.
+3. Automated dates do not invoke DatingCore; overload backlog is fulfilled first; after backlog is empty each whole auto date grants `GameState.add_experience(1)` (+ UP seam as implemented). Rates use real gameplay seconds; GameDay does not simulate incremental output; no offline gains.
+4. Management stays physical at the lab Clone Terminal (assign Work/Dating + buy upgrades). Phone КЛОНЫ is read-only: Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин; listens to `clone_counts_changed` and `late_rates_changed`.
+5. STAGE_5 after first clone: «Автоматизация запущена. / Наращивай производство клонов.» Story never advances from clone numbers; no President / MODULE 19 slots / Stage 6.
+
+Reason:
+Turn the first clone into a small incremental factory while keeping GameState aggregates, DatingOverload backlog, and Phone presentation coherent — and STOP before physical crowd visualization.
+
+Scope:
+`game/clone_incremental/**`, GameState late rates / upgrade levels, DatingOverload backlog consume, lab terminal UI, `ui/phone/phone_journal.gd`, docs §82
