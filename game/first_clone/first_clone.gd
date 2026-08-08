@@ -328,6 +328,9 @@ func _spawn_preview_and_open_assignment() -> void:
 		_preview_actor.transform = Transform3D.IDENTITY
 	_preview_actor.ensure_character()
 	_preview_actor.set_visible_presence(true)
+	_audio_play_sfx(AudioIds.CLONE_COMPLETE)
+	PresentationCamera.first_clone_reveal(self, _player)
+	ScreenFlash.play_clone_reveal(self)
 	clone_preview_spawned.emit()
 	_awaiting_assignment = true
 	_open_assignment_ui()
@@ -355,6 +358,7 @@ func _commit_assignment(kind: FirstCloneTypes.Assignment) -> bool:
 	_assignment_committed = true
 	_committed_assignment = kind
 	_awaiting_assignment = false
+	_audio_play_sfx(AudioIds.CLONE_ASSIGN)
 	_close_assignment_ui()
 	_place_assigned_actor(kind)
 	first_clone_assigned.emit(kind)
@@ -442,6 +446,12 @@ func _open_assignment_ui() -> void:
 	if _player != null and is_instance_valid(_player):
 		if _player.has_method("enter_modal_ui"):
 			_player.call("enter_modal_ui")
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _close_assignment_ui() -> void:

@@ -1,12 +1,12 @@
-# ACCEPTANCE — MODULE 22 UI / UX Integration
+# ACCEPTANCE — MODULE 23 Audio / Animation / Feedback
 
 ## Player-visible result
-Shared Theme + permanent GameHUD (Money/Auth/XP/UP) + notification/stage toasts + tabbed Phone + Progression screen + readable Dating/Minigames/Rival/Terminals/FinalDate/Ending + tutorials + UI scale. Player can play via UI alone. No gameplay formula changes.
+Stage music, semantic SFX, Slap camera feedback, NPC reaction animations (where assets allow), light VFX, local ambience — without changing gameplay.
 
 ## PASS
-Theme, formatter, GameHUD, Phone tabs, Progression 32, Dating/Minigames/Rival/Terminals/FinalDate presentation, tutorials, regressions MODULE 02–21, no MODULE 23.
+Asset audit + licenses; AudioDirector + 5 buses; 4 music states + crossfade + duck; SFX coverage; CameraFeedback; animation fallbacks; VFX/ambience; no spam; MODULE 02–22 regressions; no MODULE24 ahead.
 
 ## Verdict
 **READY**
 
-Evidence: `docs/agent/qa/M22_QA.md`, `tmp/m22_qa/` (indep `passed=73 failed=0`; headless suites green). Post-QA polish: stage/notify hide under modals; terminal WORK/DATING → РАБОТА/СВИДАНИЯ.
+Evidence: `docs/agent/qa/M23_QA.md`, `tmp/m23_qa/` (indep `passed=45 failed=0`; audio 31; camera 7).

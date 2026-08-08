@@ -99,15 +99,15 @@ func apply_scene(scene_index: int) -> void:
 		label.text = CloneVisualizationTypes.date_scene_label(_scene_index)
 	match _scene_index:
 		int(CloneVisualizationTypes.DateScene.CALM):
-			_play_both(&"idle", &"idle")
+			_play_both(&"sit_idle", &"sit_idle")
 		int(CloneVisualizationTypes.DateScene.OVER_EXPLAINING):
-			_play_both(&"talk", &"idle")
+			_play_both(&"seated_gesture", &"gesture_short")
 		int(CloneVisualizationTypes.DateScene.SILENT_SUCCESS):
-			_play_both(&"idle", &"idle")
+			_play_both(&"sit_idle", &"sit_idle")
 		int(CloneVisualizationTypes.DateScene.MUTUAL_CONFUSION):
-			_play_both(&"react", &"react")
+			_play_both(&"react_confused", &"react_confused")
 		_:
-			_play_both(&"idle", &"idle")
+			_play_both(&"sit_idle", &"sit_idle")
 
 
 func clear_actors() -> void:

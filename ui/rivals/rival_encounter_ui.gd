@@ -156,6 +156,8 @@ func dismiss_for_transition() -> void:
 
 
 func close() -> void:
+	if visible:
+		_audio_play_ui(AudioIds.UI_BACK)
 	var p: Node = _player
 	var restore: bool = _restore_gameplay_on_close
 	var was_mode: Mode = _mode
@@ -363,6 +365,7 @@ func _make_competition_row(
 
 
 func _on_choose(ctype: GameTypes.CompetitionType) -> void:
+	_audio_play_ui(AudioIds.UI_CLICK)
 	if _pending_choice or _mode != Mode.CHOOSE:
 		return
 	var encounters: Node = _service("/root/RivalEncounters")
@@ -372,6 +375,7 @@ func _on_choose(ctype: GameTypes.CompetitionType) -> void:
 	var out: Dictionary = encounters.call("choose_competition", ctype) as Dictionary
 	if not bool(out.get("ok", false)):
 		_pending_choice = false
+		_audio_play_ui(AudioIds.UI_DENIED)
 		var reason: StringName = out.get("reason", &"") as StringName
 		_stakes_label.text = "Не удалось начать: %s" % String(reason)
 		_stakes_label.add_theme_color_override("font_color", WARNING)
@@ -408,6 +412,7 @@ func _build_result_from_encounter(result: RivalEncounterResult) -> void:
 
 
 func _build_result_simple(won: bool, authority_delta: int, heroic: bool) -> void:
+	_audio_play_sfx(AudioIds.RIVAL_WIN if won else AudioIds.RIVAL_LOSS)
 	_clear_list()
 	_title.text = "ПОБЕДА" if won else "ПОРАЖЕНИЕ"
 	_title.add_theme_color_override("font_color", ACCENT if won else WARNING)
@@ -437,6 +442,18 @@ func _stakes_text(def: RivalDefinition) -> String:
 	if gs != null and bool(gs.call("has_perk", PerkIds.MUSCLE_HEROIC_DEFEAT)):
 		loss_line = "Поражение: обычно -1"
 	return "%s\n%s" % [win_line, loss_line]
+
+
+func _audio_play_ui(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_ui"):
+		ad.call("play_ui", sound_id)
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _competition_short_name(ctype: GameTypes.CompetitionType) -> String:

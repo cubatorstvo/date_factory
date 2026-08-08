@@ -412,6 +412,10 @@ func _on_world_reach_changed(new_value: int, _delta: int) -> void:
 		if new_value >= milestone and not bool(_reach_milestones_fired.get(milestone, false)):
 			_reach_milestones_fired[milestone] = true
 			_enqueue_notification("Охват Земли: %d%%" % milestone)
+			if milestone >= 100:
+				_audio_play_sfx(AudioIds.FINAL_SIGNAL)
+			else:
+				_audio_play_sfx(AudioIds.REWARD_MAJOR)
 
 
 func _on_feature_unlocked(feature: StoryTypes.StoryFeature) -> void:
@@ -462,6 +466,7 @@ func _flush_grouped_notifications() -> void:
 		return
 	var text: String = "\n".join(_pending_group_lines)
 	_pending_group_lines = PackedStringArray()
+	_audio_play_sfx(AudioIds.REWARD_SMALL)
 	_enqueue_notification(text)
 
 
@@ -504,6 +509,7 @@ func _show_stage_card(stage: GameTypes.GameStage) -> void:
 		_stage_subtitle.visible = name.strip_edges() != ""
 	_stage_panel.visible = _control_mode == PlayerController.ControlMode.GAMEPLAY
 	_stage_timer.start(STAGE_SECONDS)
+	_audio_play_sfx(AudioIds.STAGE_ADVANCE)
 
 
 func _stage_display_name(stage: GameTypes.GameStage) -> String:
@@ -556,3 +562,9 @@ func _on_tutorial_gui_input(event: InputEvent) -> void:
 		_dismiss_tutorial()
 		_try_show_next_tutorial()
 		_tutorial_panel.accept_event()
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)

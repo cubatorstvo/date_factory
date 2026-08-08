@@ -97,8 +97,11 @@ func select_pose(pose_id: StringName) -> bool:
 	if appearance < MediaContent.pose_required_appearance(pose_id):
 		return false
 	_transient_poses[shot_id] = pose_id
+	_audio_play_sfx(AudioIds.MEDIA_POSE_CONFIRM)
+	_audio_play_sfx(AudioIds.CAMERA_SHUTTER)
 	var tier: MediaTypes.PoseTier = MediaContent.pose_tier(pose_id)
 	_last_feedback = str(MediaContent.EDITOR_FEEDBACK.get(tier, ""))
+	_play_shutter_presentation()
 	_advance_after_shot()
 	_refresh_ui()
 	return true
@@ -176,6 +179,8 @@ func _commit_and_finish() -> bool:
 		return false
 	_committed = true
 	var ok: bool = bool(media.call("complete_photo_session", _transient_poses))
+	if ok:
+		_audio_play_sfx(AudioIds.MEDIA_PUBLISH)
 	if not ok:
 		_committed = false
 		return false
@@ -352,7 +357,29 @@ func _on_abort_pressed() -> void:
 
 
 func _on_pose_pressed(pose_id: StringName) -> void:
+	if not is_pose_available(pose_id):
+		_audio_play_ui(AudioIds.UI_DENIED)
+		return
 	select_pose(pose_id)
+
+
+func _audio_play_ui(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_ui"):
+		ad.call("play_ui", sound_id)
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
+
+
+func _play_shutter_presentation() -> void:
+	ScreenFlash.play_media_shutter(self)
+	var audio: Node = get_node_or_null("/root/AudioDirector")
+	if audio != null and audio.has_method("play_sfx"):
+		audio.call("play_sfx", AudioIds.CAMERA_SHUTTER)
 
 
 func _apply_theme(root: Control) -> void:

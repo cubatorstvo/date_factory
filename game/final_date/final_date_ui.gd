@@ -112,6 +112,7 @@ func show_event_choices(prompt: String, choices: Array[Dictionary]) -> void:
 
 
 func show_failure_rival() -> void:
+	_audio_play_sfx(AudioIds.FINAL_FAILURE)
 	_mode = "failure_rival"
 	_clear_options()
 	_title.text = "СВИДАНИЕ ПРЕРВАНО"
@@ -124,6 +125,7 @@ func show_failure_rival() -> void:
 
 
 func show_failure_connection() -> void:
+	_audio_play_sfx(AudioIds.FINAL_FAILURE)
 	_mode = "failure_connection"
 	_clear_options()
 	_title.text = "СВИДАНИЕ ПРЕРВАНО"
@@ -150,6 +152,7 @@ func show_success_dialogue() -> void:
 
 
 func show_ending(summary: String) -> void:
+	_audio_play_sfx(AudioIds.FINAL_ENDING)
 	_mode = "ending"
 	_clear_options()
 	_title.text = "DATE FACTORY"
@@ -306,6 +309,12 @@ func _on_return() -> void:
 
 func _on_ending_continue() -> void:
 	ending_continue_pressed.emit()
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _load_theme() -> Theme:

@@ -33,6 +33,7 @@ var _normal_zone: ColorRect = null
 var _perfect_zone: ColorRect = null
 var _indicator: ColorRect = null
 var _track_width: float = TRACK_DESIGNED
+var _was_in_zone: bool = false
 
 
 func _ready() -> void:
@@ -124,8 +125,13 @@ func _process(delta: float) -> void:
 	var prev_feedback: SigmaMatch.Feedback = match_state.last_feedback
 	if auto_tick:
 		match_state.tick(delta)
+	var in_zone: bool = absf(match_state.composure - match_state.zone_center) <= match_state.effective_half_width
+	if in_zone and not _was_in_zone and match_state.phase == SigmaMatch.Phase.HOLDING:
+		_audio_play_sfx(AudioIds.SIGMA_ZONE_ENTER)
+	_was_in_zone = in_zone
 	if match_state.telegraph_direction != 0 and prev_telegraph == 0:
 		_present_rival(&"gesture")
+		_audio_play_sfx(AudioIds.SIGMA_DISTURBANCE)
 	elif (
 		match_state.last_feedback != prev_feedback
 		and match_state.phase == SigmaMatch.Phase.SECTION_FEEDBACK
@@ -135,6 +141,7 @@ func _process(delta: float) -> void:
 			or match_state.last_feedback == SigmaMatch.Feedback.PERFECT
 		):
 			_present_rival(&"react")
+			_audio_play_sfx(AudioIds.SIGMA_SUCCESS)
 		else:
 			_present_rival(&"gesture")
 	_refresh_ui()
@@ -409,3 +416,9 @@ func _feedback_text(fb: SigmaMatch.Feedback) -> String:
 			return "СОРВАЛСЯ"
 		_:
 			return ""
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)

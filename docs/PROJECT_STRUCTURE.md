@@ -1,37 +1,57 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 22 — UI / UX Integration**.  
+Фактическая структура после **MODULE 23 — Audio / Animation / Feedback**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
-UI architecture truth: `docs/ui/UI_ARCHITECTURE.md`.
+UI architecture: `docs/ui/UI_ARCHITECTURE.md`.  
+Presentation (audio/camera/VFX): `docs/presentation/PRESENTATION_ARCHITECTURE.md`.  
+Licenses: `docs/ASSET_LICENSES.md`.
 
 ## Top-level (существует сейчас)
 
 | Path | Назначение | Можно | Нельзя |
 |---|---|---|---|
 | `addons/` | Editor/tool plugins | GodotIQ и будущие tooling plugins | Gameplay systems |
-| `assets/` | Импортируемые визуальные ресурсы | модели, текстуры, материалы, fonts, props, animation libraries | Gameplay scripts / domain logic |
-| `characters/` | Player + Character Framework | `framework/`, `male/`, `female/`, `player/`, `test/` | Dating/Rival/AI domain systems |
+| `assets/` | Импортируемые визуальные + audio ресурсы | модели, текстуры, материалы, fonts, props, animation libraries, `audio/` music/SFX/ambience + license texts | Gameplay scripts / domain logic |
+| `audio/` | MODULE 23 AudioDirector + semantic IDs | `audio_director.gd` autoload; `audio_ids.gd`; `test/` | Gameplay authority / settings persistence |
+| `characters/` | Player + Character Framework | `framework/` (+ semantic animation aliases); `male/`; `female/`; `player/` (+ `camera_feedback.gd`); `test/` | Dating/Rival/AI domain systems |
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → World apartment, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
-| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts, `ui/UI_ARCHITECTURE.md` | Runtime code |
+| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, `ui/UI_ARCHITECTURE.md`, `presentation/PRESENTATION_ARCHITECTURE.md`, `ASSET_LICENSES.md` | Runtime code |
 | `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental (+ terminal UI); `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion (+ Global Terminal UI); `final_date/` scene-local FinalDateController + FinalDateUI; `progression/` Progression; `rivals/` RivalEncounters + exhibition seam; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Presentation shell (MODULE 22) | Theme; GameHUD; Phone five tabs; Progression UI; DatingUI; RivalEncounterUI; `UiNumberFormat`; `UiScaleHelper`; TutorialPrompt | UIManager / gameplay formulas / MODULE 23 audio-VFX |
-| `minigames/` | Rival competition overlays | `slap/`, `dance/`, `sigma/`, `money/` + shared `common/minigame_shell.gd` | Domain encounter formulas (stay in RivalEncounters) |
-| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations (lab MODULE 19; production_area MODULE 20; `final_location` MODULE 21 staged finale), markers, transitions; PersistentUI hosts Phone + GameHUD | Open-world streaming / country simulation |
+| `presentation/` | Soft VFX / camera helpers (MODULE 23) | `vfx/` ScreenFlash, UiAccentPulse, MeshEmissivePulse, BeaconPulse, PresentationCamera | VFX framework / gameplay mutation |
+| `ui/` | Presentation shell (MODULE 22) + audio seams | Theme; GameHUD; Phone; Progression; Dating; RivalEncounterUI; format/scale/tutorial; calls `AudioDirector` via `AudioIds` | UIManager / gameplay formulas / MODULE 24 settings UI |
+| `minigames/` | Rival competition overlays | `slap/`, `dance/`, `sigma/`, `money/` + shell; semantic SFX + Slap→CameraFeedback | Domain encounter formulas (stay in RivalEncounters) |
+| `world/` | World service + 9 location blockouts + tests | `World` autoload; locations; `local_ambience_player.gd`; PersistentUI hosts Phone + GameHUD | Open-world streaming / ambience autoload SM |
+| `default_bus_layout.tres` | Five audio buses | Master / Music / SFX / UI / Ambience | Extra bus frameworks |
 | `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
-| `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
+| `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads / bus layout | Legacy `Game` singleton |
 | `icon.svg` | Иконка приложения | — | — |
 
 ### `characters/`
 
 - `framework/character_actor.tscn` + `character_actor.gd` — `CharacterActor` (CharacterBody3D presence)
-- `framework/character_animation_controller.gd` — semantic AnimationPlayer presentation
+- `framework/character_animation_controller.gd` — semantic AnimationPlayer presentation (MODULE 23 aliases + fallback; never gates gameplay)
 - `framework/character_factory.gd` — static spawn helper (not autoload)
 - `male/male_base_visual.tscn` — male glTF wrapper (`Superhero_Male_FullBody`)
 - `female/female_base_visual.tscn` — female glTF wrapper (`Casual`)
-- `player/` — FPS controller (invisible first-person; unchanged locomotion)
+- `player/` — FPS controller (invisible first-person); `camera_feedback.gd` player-local impulses (not autoload)
 - `test/character_framework_test.tscn` — MODULE 04 self-test runner
+
+### `audio/` (MODULE 23)
+
+- `audio_director.gd` — autoload `AudioDirector`: 4 music states, 1s A/B crossfade, SFX pool 8 + UI pool 4, volume seams 0..1, minigame duck −4 dB
+- `audio_ids.gd` — `class_name AudioIds`: semantic IDs, path maps, `music_state_for_stage`
+- `test/audio_director_self_test.gd` — buses / music / pools / duck smoke
+- Assets live under `assets/audio/` (music / sfx / ambience / licenses) — see `docs/ASSET_LICENSES.md`
+
+### `presentation/` (MODULE 23)
+
+- `vfx/screen_flash.gd` — `ScreenFlash` canvas flashes (media / slap / clone reveal)
+- `vfx/ui_accent_pulse.gd` — `UiAccentPulse` dating/badge pulses
+- `vfx/mesh_emissive_pulse.gd` — `MeshEmissivePulse`
+- `vfx/beacon_pulse.gd` — `BeaconPulse` final signal
+- `vfx/presentation_camera.gd` — `PresentationCamera` FOV helpers → player `CameraFeedback`
 
 ### `core/`
 
@@ -81,19 +101,19 @@ UI architecture truth: `docs/ui/UI_ARCHITECTURE.md`.
 - `primary_trait_evaluator.gd` / `secondary_trait_evaluator.gd` / `dating_event_planner.gd` — pure helpers
 - `test/dating_test.tscn` + `dating_self_test.gd` — MODULE 09 headless runner
 
-### `ui/` (MODULE 22)
+### `ui/` (MODULE 22 + MODULE 23 audio seams)
 
 - `theme/date_factory_theme.tres` + `date_factory_theme_builder.gd` — shared Theme
 - `theme/ui_scale_helper.gd` — `UiScaleHelper` runtime presets 100/125/150% (not persisted)
 - `ui_number_format.gd` — `UiNumberFormat` grouped / K·M·B / money / signed / rate
-- `hud/game_hud.tscn` + `game_hud.gd` — persistent `GameHUD` under `WorldHost/PersistentUI`; Money/Auth/XP/UP; event-driven; hide strip on MODAL_UI/MINIGAME/PAUSED; notification rail + stage/feature toasts
+- `hud/game_hud.tscn` + `game_hud.gd` — persistent `GameHUD`; Money/Auth/XP/UP; event-driven; hide strip on MODAL_UI/MINIGAME/PAUSED; notification rail + stage/feature toasts; grouped reward SFX only (no passive Money spam)
 - `tutorial/tutorial_prompt.gd` — seven first-use prompts, runtime-only, HUD-owned (no autoload)
-- `phone/phone_journal.tscn` + `phone_journal.gd` — five tabs STATUS/STORY/GIRLS/MEDIA/CLONES; MEDIA/CLONES gated; salary under STATUS; overload under MEDIA
-- `progression/progression_ui.tscn` + `progression_ui.gd` — full 32-perk modal; `progression_modal_ui.gd` shim
-- `dating/dating_ui.tscn` + `dating_ui.gd` — themed MODAL_UI date choices / reactions / result
-- `rivals/rival_encounter_ui.tscn` + `rival_encounter_ui.gd` — choose / result / exhibition stakes presentation
+- `phone/phone_journal.tscn` + `phone_journal.gd` — five tabs; UI click/back/denied/purchase + media SFX via `AudioDirector`
+- `progression/progression_ui.tscn` + `progression_ui.gd` — full 32-perk modal; purchase/denied/click SFX
+- `dating/dating_ui.tscn` + `dating_ui.gd` — themed date UI + relationship SFX / accent pulse
+- `rivals/rival_encounter_ui.tscn` + `rival_encounter_ui.gd` — choose/result + rival win/loss SFX
 - `hud/test/`, `progression/test/` — presentation self-tests
-- Architecture note: `docs/ui/UI_ARCHITECTURE.md`
+- Architecture: `docs/ui/UI_ARCHITECTURE.md`
 
 ### `game/progression/`
 
@@ -135,7 +155,8 @@ UI architecture truth: `docs/ui/UI_ARCHITECTURE.md`.
 
 - `world.gd` — autoload `World` (after Story): access/travel/load/unload; persistent Player + `PersistentUI` (`PhoneJournal` + `GameHUD`) under `WorldHost`; `get_game_hud()`
 - `world_types.gd` / `world_access_result.gd` — travel/access enums + typed access result
-- `world_location.gd` — scene-root contract + local marker lookup / gate refresh
+- `world_location.gd` — scene-root contract + marker lookup / gate refresh; attaches `LocalAmbiencePlayer` when location id allows
+- `local_ambience_player.gd` — scene-local Ambience-bus loop (`factory_hum`); salary_mine / laboratory / production_area / final_location only; freed on travel
 - `world_transition.gd` — E-only travel Interactable (never body_entered)
 - `world_feature_gate.gd` — StoryFeature barrier (city public segment)
 - `player_spawn_point.gd` / `npc_spawn_point.gd` / `story_event_point.gd` — Marker3D slots (NPC does not auto-spawn)
@@ -184,6 +205,7 @@ Dependency-safe production order (`project.godot`):
 | `FirstClone` | One-off first clone sequence (MODULE 17); after DatingOverload; eligibility → calibration → physical representative → WORK/DATING aggregate counts; lab representative suppressed when `CloneVisualizationController` owns lab |
 | `CloneIncremental` | Late clone economy (MODULE 18); after FirstClone; owns production/work/dating formulas → `GameState.set_late_rates`; lab terminal assign/upgrades; Phone read-only rates; economy owner; queries LateGameExpansion global ×2^n seams |
 | `LateGameExpansion` | Earth Reach + global upgrades (MODULE 20); after CloneIncremental; STAGE_6 Reach 0..100; multipliers for CloneIncremental; Production Area Global Terminal; Reach100 → `Story.complete_world_expansion()` → FINALE / `FINAL_DATE` |
+| `AudioDirector` | Presentation audio (MODULE 23); after LateGameExpansion; music states / pools / volumes / duck; **no** gameplay authority |
 
 ### `game/media/`
 
@@ -237,21 +259,17 @@ Dependency-safe production order (`project.godot`):
 - Success once: relationship +5 / conquered / `add_experience(1)`; fail → full retry, zero permanent penalties
 - `test/final_date_test.tscn` + `final_date_self_test.gd` — MODULE 21 headless runner
 
-## Canonical future destinations (ещё не созданы)
+## Canonical future destinations
 
-```text
-audio/
-```
+Production presentation through MODULE 23 is complete for F5→ending (audio / animation / camera / soft VFX). Remaining:
 
-Production path through MODULE 22 is presentation-complete for F5→ending UI. Remaining systems:
-
-- MODULE 23 — audio / animation / feedback (not started);
-- MODULE 24 — save/load + settings persistence (tutorials / UI scale currently runtime-only).
+- MODULE 24 — save/load + settings persistence (audio volumes, camera `feedback_scale`, tutorials / UI scale currently runtime-only).
 
 Catalog **14/14** girls/rivals; inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`, `docs/content/MANUAL_CONTENT_17.md`.  
 Gameplay headless runners remain under each `game/**/test/` and `minigames/**/test/`.  
 UI presentation runners: `ui/hud/test/`, `ui/progression/test/`.  
-STOP before MODULE 23.
+Audio runner: `audio/test/`.  
+STOP before MODULE 24 settings/persistence.
 
 ## Donor
 

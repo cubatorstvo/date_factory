@@ -130,12 +130,16 @@ func _on_phase_or_feedback_changed(
 	match match_state.last_feedback:
 		MoneyMatch.Feedback.RIVAL_RAISED:
 			_present_rival(&"gesture")
+			_audio_play_sfx(AudioIds.MONEY_RIVAL_RAISE)
 		MoneyMatch.Feedback.RIVAL_FOLDED:
 			_present_rival(&"react")
+			_audio_play_sfx(AudioIds.MONEY_WIN)
 		MoneyMatch.Feedback.PLAYER_STOPPED:
 			_present_rival(&"gesture")
+			_audio_play_sfx(AudioIds.MONEY_LOSS)
 		MoneyMatch.Feedback.BROKE:
 			_present_rival(&"gesture")
+			_audio_play_sfx(AudioIds.MONEY_LOSS)
 		_:
 			pass
 
@@ -185,12 +189,16 @@ func _attempt_action(action: MoneyMatch.Action) -> void:
 	var outcome: Dictionary = match_state.try_player_action(action, money)
 	if not bool(outcome.get("ok", false)):
 		return
+	if action == MoneyMatch.Action.RAISE or action == MoneyMatch.Action.OUTBID:
+		_audio_play_sfx(AudioIds.MONEY_STAKE_RAISE)
 	if bool(outcome.get("awaiting_spend_confirm", false)):
 		var amount: int = int(outcome.get("needs_spend", 0))
 		_awaiting_spend = true
 		var ok: bool = false
 		if amount > 0 and _can_afford(amount):
 			ok = _spend(amount)
+			if ok:
+				_audio_play_sfx(AudioIds.MONEY_SPENT)
 		match_state.confirm_player_win_spend(ok)
 		_awaiting_spend = false
 	_refresh_ui()
@@ -400,6 +408,12 @@ func _tell_text(tell: MoneyMatch.Tell) -> String:
 			return "ПОСЛЕДНЯЯ ПОЗИЦИЯ"
 		_:
 			return ""
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _feedback_text() -> String:

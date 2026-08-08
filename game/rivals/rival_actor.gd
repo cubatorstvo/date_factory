@@ -40,6 +40,24 @@ func _ready() -> void:
 	_refresh_interaction()
 
 
+func has_animation(alias: StringName) -> bool:
+	if _character == null or not is_instance_valid(_character):
+		return false
+	var anim: CharacterAnimationController = _character.get_animation_controller()
+	if anim == null:
+		return false
+	return anim.has_animation(alias)
+
+
+func play_semantic(alias: StringName) -> bool:
+	if _character == null or not is_instance_valid(_character):
+		return false
+	var anim: CharacterAnimationController = _character.get_animation_controller()
+	if anim == null:
+		return false
+	return anim.play_semantic(alias)
+
+
 func can_interact(player: Node) -> bool:
 	if _absent or _departing:
 		return false
@@ -97,8 +115,19 @@ func _on_encounter_finished(result: RivalEncounterResult) -> void:
 	if not _awaiting_result:
 		return
 	_awaiting_result = false
+	_play_result_reaction(result)
 	var player: Node = get_tree().get_first_node_in_group("player")
 	_open_result_ui(player, result)
+
+
+func _play_result_reaction(result: RivalEncounterResult) -> void:
+	if result == null:
+		return
+	# Player win → rival defeat; player loss → rival victory. Never await clip.
+	if result.outcome == GameTypes.RivalCompetitionOutcome.PLAYER_WIN:
+		play_semantic(&"defeat")
+	else:
+		play_semantic(&"victory")
 
 
 func _depart_after_defeat() -> void:
@@ -106,6 +135,7 @@ func _depart_after_defeat() -> void:
 	interaction_enabled = false
 	if _collision != null:
 		_collision.disabled = true
+	play_semantic(&"defeat")
 	# Optional short react: slight turn / hide silhouette after delay.
 	if _character != null and is_instance_valid(_character):
 		_character.rotate_y(deg_to_rad(25.0))

@@ -62,6 +62,7 @@ func _on_interact(player: Node) -> void:
 	_busy = true
 	_cycle_player = player
 	_cycle_snapshot = pending
+	_audio_play_sfx(AudioIds.SALARY_HOLD_START)
 	call_deferred("_run_manual_cycle")
 
 
@@ -102,10 +103,13 @@ func _run_manual_cycle() -> void:
 	if result_label != null:
 		if ok and claimed > 0:
 			result_label.text = "ЗАРПЛАТА ПОЛУЧЕНА: +$%s" % UiNumberFormat.format_compact(claimed)
+			_audio_play_sfx(AudioIds.SALARY_PAYOUT)
 		elif ok:
 			result_label.text = "ЗАРПЛАТА ПОЛУЧЕНА: +$0"
+			_audio_play_sfx(AudioIds.SALARY_PAYOUT)
 		else:
 			result_label.text = "Выплата недоступна"
+			_audio_play_ui(AudioIds.UI_DENIED)
 		result_label.visible = true
 	if bar != null and is_instance_valid(bar):
 		bar.visible = false
@@ -241,3 +245,15 @@ func _apply_theme(root: Control) -> void:
 		var theme_res: Resource = load(THEME_PATH)
 		if theme_res is Theme:
 			root.theme = theme_res as Theme
+
+
+func _audio_play_ui(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_ui"):
+		ad.call("play_ui", sound_id)
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)

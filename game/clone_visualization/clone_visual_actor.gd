@@ -106,11 +106,10 @@ func try_play_alias(alias: StringName) -> void:
 	var anim: CharacterAnimationController = _character.get_animation_controller()
 	if anim == null:
 		return
-	# Prefer requested alias when present; otherwise idle without noisy warnings.
-	if alias != &"idle" and anim.has_animation(alias):
-		anim.play_loop(alias)
+	# Semantic remap + quiet fallback inside controller; never spam or block.
+	if anim.play_semantic(alias):
 		return
-	anim.play_loop(&"idle")
+	anim.play_semantic(&"idle")
 
 
 func _apply_presentation_collision() -> void:

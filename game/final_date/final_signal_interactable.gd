@@ -49,6 +49,11 @@ func _on_interact(player: Node) -> void:
 	var controller: FinalDateController = _ensure_controller()
 	if controller == null:
 		return
+	_audio_play_sfx(AudioIds.FINAL_SIGNAL)
+	PresentationCamera.final_signal(self, player)
+	var loc: Node = _find_location_root()
+	if loc != null:
+		BeaconPulse.play_on_location(loc)
 	controller.start_final_date(player)
 
 
@@ -96,6 +101,12 @@ func _refresh_prompt() -> void:
 		prompt_action = "Финал завершён"
 	else:
 		prompt_action = "Ответить на внеземной сигнал"
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _ensure_collision() -> void:

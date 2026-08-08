@@ -27,6 +27,7 @@ signal interaction_target_changed(target: Area3D)
 @onready var _camera_pivot: Node3D = $CameraPivot
 @onready var _camera: Camera3D = $CameraPivot/Camera
 @onready var _interaction: RayCast3D = $CameraPivot/Camera/InteractionQuery
+var _camera_feedback: CameraFeedback = null
 @onready var _hud: CanvasLayer = $FpsHud
 @onready var _prompt_label: Label = $FpsHud/PromptLabel
 @onready var _crosshair: ColorRect = $FpsHud/Crosshair
@@ -47,6 +48,7 @@ func _ready() -> void:
 	up_direction = Vector3.UP
 	_camera.fov = camera_fov
 	_camera.current = true
+	_ensure_camera_feedback()
 	if _interaction.has_method("setup"):
 		_interaction.call("setup", self, interaction_distance)
 	if _interaction.has_signal("target_changed"):
@@ -142,6 +144,10 @@ func enter_paused() -> void:
 
 func get_camera() -> Camera3D:
 	return _camera
+
+
+func get_camera_feedback() -> CameraFeedback:
+	return _camera_feedback
 
 
 func get_interaction_target() -> Area3D:
@@ -265,3 +271,17 @@ func _update_debug_label() -> void:
 func _on_resume_pressed() -> void:
 	if _mode == ControlMode.PAUSED:
 		set_control_mode(_mode_before_pause)
+
+
+func _ensure_camera_feedback() -> void:
+	if _camera == null:
+		_camera_feedback = null
+		return
+	_camera_feedback = _camera.get_node_or_null("CameraFeedback") as CameraFeedback
+	if _camera_feedback != null:
+		_camera_feedback.bind_camera(_camera)
+		return
+	_camera_feedback = CameraFeedback.new()
+	_camera_feedback.name = "CameraFeedback"
+	_camera.add_child(_camera_feedback)
+	_camera_feedback.bind_camera(_camera)

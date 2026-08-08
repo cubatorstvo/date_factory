@@ -118,6 +118,7 @@ func open(player: Node = null) -> void:
 func close() -> void:
 	if not _is_open and not visible:
 		return
+	_audio_play_ui(AudioIds.UI_BACK)
 	visible = false
 	_is_open = false
 	if _player != null and _player.has_method("enter_gameplay"):
@@ -393,10 +394,15 @@ func _add_tab_button(tab: PhoneTab, caption: String) -> void:
 
 
 func _set_active_tab(tab: PhoneTab) -> void:
+	var requested: PhoneTab = tab
+	var denied: bool = false
 	if tab == PhoneTab.MEDIA and not _is_media_unlocked():
 		tab = PhoneTab.STATUS
+		denied = requested == PhoneTab.MEDIA
 	if tab == PhoneTab.CLONES and not _is_clones_unlocked():
 		tab = PhoneTab.STATUS
+		denied = denied or requested == PhoneTab.CLONES
+	var changed: bool = tab != _active_tab
 	_active_tab = tab
 	for key in _tab_buttons.keys():
 		var t: PhoneTab = key as PhoneTab
@@ -405,6 +411,10 @@ func _set_active_tab(tab: PhoneTab) -> void:
 			continue
 		btn.set_pressed_no_signal(t == _active_tab)
 	_show_active_tab()
+	if denied and _is_open:
+		_audio_play_ui(AudioIds.UI_DENIED)
+	elif changed and _is_open:
+		_audio_play_ui(AudioIds.UI_CLICK)
 
 
 func _show_active_tab() -> void:
@@ -1139,8 +1149,10 @@ func _on_salary_advance_pressed() -> void:
 	if result == null:
 		return
 	if result.ok:
+		_audio_play_ui(AudioIds.UI_PURCHASE)
 		_salary_feedback.text = "Получено удалённо: +%d" % result.amount
 	else:
+		_audio_play_ui(AudioIds.UI_DENIED)
 		_salary_feedback.text = _claim_error_text(result.error)
 	_refresh_salary_section()
 
@@ -1481,6 +1493,10 @@ func _on_overload_feed_boost_pressed() -> void:
 	var overload: Node = get_node_or_null("/root/DatingOverload")
 	if overload == null or not overload.has_method("use_feed_boost"):
 		return
+	if _overload_boost_btn != null and _overload_boost_btn.disabled:
+		_audio_play_ui(AudioIds.UI_DENIED)
+		return
+	_audio_play_sfx(AudioIds.MEDIA_FEED_BOOST)
 	overload.call("use_feed_boost")
 	_refresh_overload_section()
 	_request_media_refresh()
@@ -1699,6 +1715,10 @@ func _on_media_publish_pressed(photo_id: StringName) -> void:
 	var result: MediaPublishResult = media.call("publish_photo", photo_id) as MediaPublishResult
 	if result == null:
 		return
+	if result.ok:
+		_audio_play_sfx(AudioIds.MEDIA_PUBLISH)
+	else:
+		_audio_play_ui(AudioIds.UI_DENIED)
 	_refresh_media_section()
 	_request_story_refresh()
 	if result.ok:
@@ -1709,8 +1729,22 @@ func _on_media_open_offer_pressed(girl_id: StringName) -> void:
 	var media: Node = get_node_or_null("/root/Media")
 	if media != null and media.has_method("mark_offer_read"):
 		media.call("mark_offer_read", girl_id)
+	_audio_play_ui(AudioIds.UI_CLICK)
+	_audio_play_sfx(AudioIds.MEDIA_INCOMING)
 	select_girl_by_id(girl_id)
 	_refresh_media_section()
+
+
+func _audio_play_ui(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_ui"):
+		ad.call("play_ui", sound_id)
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _refresh_list() -> void:

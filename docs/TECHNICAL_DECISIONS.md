@@ -857,3 +857,25 @@ Unify presentation and readability for the full F5→ending route without invent
 
 Scope:
 `ui/**` (Theme, HUD, Phone tabs, Progression, Dating, RivalEncounterUI, format/scale/tutorial helpers), `minigames/common/minigame_shell.gd` + minigame presentation glue, terminal/FinalDateUI Theme apply under `game/**`, narrow `world.gd` HUD attach, docs (`PROJECT_STRUCTURE`, this file, GDD §47, `docs/ui/UI_ARCHITECTURE.md`)
+
+## MODULE 23: Audio / Animation / Feedback (presentation only; STOP before MODULE 24)
+
+Context:
+Gameplay and MODULE 22 UI are complete through Final Date, but the route lacked a shared sound language, music beds by stage, restrained camera impulses, semantic NPC reactions, and soft VFX — without inventing gameplay systems or a settings/save layer.
+
+Decision:
+1. Exact five buses in `default_bus_layout.tres`: Master 0 / Music −8 / SFX −3 / UI −5 / Ambience −10 dB. One compact autoload `AudioDirector` (after `LateGameExpansion`): MusicA/B 1s crossfade, SFX pool 8 + UI pool 4, volume seams 0..1, minigame duck −4 dB / restore 0.4 s.
+2. Exactly four music states `MANUAL` / `MEDIA` / `CLONE` / `FINAL` via `AudioIds.music_state_for_stage`: PROLOGUE–STAGE_3→MANUAL, STAGE_4→MEDIA, STAGE_5–6→CLONE, FINALE→FINAL. Same-state travel does not restart. Semantic `AudioIds` → `play_ui`/`play_sfx` only (no raw paths in callers).
+3. Ambience is **scene-local** `LocalAmbiencePlayer` on Ambience bus (`factory_hum` for salary_mine / laboratory / production_area / final_location); no ambience autoload SM; apartment/cafe/city skipped when no asset.
+4. Player-local `CameraFeedback` (not autoload): caps rotation ≤2°, shake ≤0.025 m, FOV ≤3°, duration ≤0.20 s; `feedback_scale` 0..1 (scale 0 zeroes motion). Slap + First Clone / Final signal FOV helpers; Dance/Sigma/Money get no camera motion.
+5. Preserve `CharacterAnimationController`; add semantic aliases (`react_*` / `victory` / `defeat` / `gesture_short`) with ordered clip fallbacks; never gate gameplay or `[Далее]`.
+6. Soft VFX as static helpers under `presentation/vfx/` (`ScreenFlash`, `UiAccentPulse`, `MeshEmissivePulse`, `BeaconPulse`, `PresentationCamera`) — no framework; no blood; no per-clone audio/VFX storm.
+7. Presentation never owns gameplay commits (XP / Authority / Story / Money / clones). No voice/TTS.
+8. Licenses recorded in `docs/ASSET_LICENSES.md` (Kenney + Abstraction CC0; `final_sparse.wav` project-generated CC0). Architecture: `docs/presentation/PRESENTATION_ARCHITECTURE.md`.
+9. STOP before MODULE 24: no settings menu, no persistence of volumes / camera scale / tutorials / UI scale.
+
+Reason:
+Give the finished route a coherent presentation layer with bounded pools and hard caps, while keeping gameplay controllers as source of truth and leaving settings/save for MODULE 24.
+
+Scope:
+`audio/**`, `assets/audio/**`, `default_bus_layout.tres`, `characters/player/camera_feedback.gd`, `characters/framework/character_animation_controller.gd` (aliases), `world/local_ambience_player.gd` + location attach, `presentation/vfx/**`, thin call-site seams in UI/minigames/game controllers, docs (`PROJECT_STRUCTURE`, this file, `UI_ARCHITECTURE` audio seams, `ASSET_LICENSES`, `PRESENTATION_ARCHITECTURE`)

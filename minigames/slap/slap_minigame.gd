@@ -116,11 +116,24 @@ func _process(delta: float) -> void:
 	if auto_tick:
 		var before_feedback: SlapMatch.Feedback = match_state.last_feedback
 		var before_ended: bool = match_state.ended
+		var before_phase: SlapMatch.Phase = match_state.phase
+		var before_player_score: int = match_state.player_score
+		var before_rival_score: int = match_state.rival_score
 		match_state.tick(delta)
 		if match_state.last_feedback != before_feedback and match_state.last_feedback != SlapMatch.Feedback.NONE:
 			_feedback_timer = FEEDBACK_HOLD
+			_present_feedback_sfx(match_state.last_feedback)
 		if match_state.ended and not before_ended:
 			_feedback_timer = FEEDBACK_HOLD
+		var resolved_by_tick: bool = (
+			match_state.player_score != before_player_score
+			or match_state.rival_score != before_rival_score
+			or match_state.phase != before_phase
+			or (match_state.ended and not before_ended)
+		)
+		if resolved_by_tick:
+			# Timeout resolution is always a miss / incoming (defense miss).
+			_present_camera_impulse(before_phase, SlapTiming.Result.MISS)
 	_refresh_ui()
 	_try_emit_finished(false)
 
@@ -142,9 +155,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("minigame_primary"):
 		var before: SlapMatch.Feedback = match_state.last_feedback
+		var phase_before: SlapMatch.Phase = match_state.phase
+		var timing_before: SlapTiming.Result = SlapTiming.evaluate_timing(
+			match_state.pointer_position,
+			match_state.target_start,
+			match_state.target_end,
+			match_state.perfect_start,
+			match_state.perfect_end,
+		)
 		if match_state.press_primary():
 			if match_state.last_feedback != before and match_state.last_feedback != SlapMatch.Feedback.NONE:
 				_feedback_timer = FEEDBACK_HOLD
+				_present_feedback_sfx(match_state.last_feedback)
+			_present_camera_impulse(phase_before, timing_before)
 			_refresh_ui()
 			_try_emit_finished(false)
 		get_viewport().set_input_as_handled()
@@ -337,3 +360,58 @@ func _feedback_text(fb: SlapMatch.Feedback) -> String:
 			return "ИДЕАЛЬНЫЙ БЛОК"
 		_:
 			return ""
+
+
+func _present_camera_impulse(phase: SlapMatch.Phase, timing: SlapTiming.Result) -> void:
+	var cam_fb: CameraFeedback = _resolve_camera_feedback()
+	if phase == SlapMatch.Phase.ATTACK:
+		match timing:
+			SlapTiming.Result.HIT:
+				if cam_fb != null:
+					cam_fb.impulse_rotation(1.2, 0.10)
+				ScreenFlash.play_slap_impact(self, false)
+			SlapTiming.Result.PERFECT:
+				if cam_fb != null:
+					cam_fb.impulse_rotation(1.8, 0.10)
+					cam_fb.shake(0.015, 0.10)
+				ScreenFlash.play_slap_impact(self, true)
+			_:
+				pass
+		return
+	# Defense: only failed block = incoming impact. Miss attack already handled above.
+	if timing == SlapTiming.Result.MISS and cam_fb != null:
+		cam_fb.impulse_rotation(1.5, 0.10)
+
+
+func _resolve_camera_feedback() -> CameraFeedback:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	var player: Node = tree.get_first_node_in_group("player")
+	if player == null:
+		return null
+	if player.has_method("get_camera_feedback"):
+		return player.call("get_camera_feedback") as CameraFeedback
+	return null
+
+
+func _present_feedback_sfx(fb: SlapMatch.Feedback) -> void:
+	match fb:
+		SlapMatch.Feedback.HIT:
+			_audio_play_sfx(AudioIds.SLAP_HIT)
+		SlapMatch.Feedback.PERFECT:
+			_audio_play_sfx(AudioIds.SLAP_PERFECT)
+		SlapMatch.Feedback.BLOCK:
+			_audio_play_sfx(AudioIds.SLAP_BLOCK)
+		SlapMatch.Feedback.PERFECT_BLOCK:
+			_audio_play_sfx(AudioIds.SLAP_PERFECT_BLOCK)
+		SlapMatch.Feedback.MISS:
+			_audio_play_sfx(AudioIds.SLAP_MISS)
+		_:
+			pass
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)

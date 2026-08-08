@@ -1,0 +1,5 @@
+﻿DATE FACTORY — final_sparse.wav
+================================
+Original short quiet sparse bed generated for Module 23 FINAL scene placeholder.
+Not from Kenney or Abstraction packs.
+License: CC0 (project-generated stub). Replace with authored loop when available.

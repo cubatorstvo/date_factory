@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bcob6wb14b24t" path="res://characters/player/player.gd" id="1_xxgcw"]
 [ext_resource type="Script" uid="uid://cfno4k7qekdfi" path="res://characters/player/player_interaction.gd" id="2_exd8k"]
+[ext_resource type="Script" uid="uid://b4afes6p1gmg5" path="res://characters/player/camera_feedback.gd" id="3_camfb"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5dc8e"]
 radius = 0.32
@@ -20,6 +21,9 @@ shape = SubResource("CapsuleShape3D_5dc8e")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
 
 [node name="Camera" type="Camera3D" parent="CameraPivot" unique_id=557549660]
+
+[node name="CameraFeedback" type="Node" parent="CameraPivot/Camera"]
+script = ExtResource("3_camfb")
 
 [node name="InteractionQuery" type="RayCast3D" parent="CameraPivot/Camera" unique_id=458480546]
 target_position = Vector3(0, 0, -2.5)

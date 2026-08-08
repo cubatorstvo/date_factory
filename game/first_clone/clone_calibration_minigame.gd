@@ -223,6 +223,7 @@ func _begin_pass(pass_index: int) -> void:
 
 
 func _on_pass_success() -> void:
+	_audio_play_sfx(AudioIds.CLONE_CALIBRATE_ACCEPT)
 	_last_feedback = FirstCloneTypes.pass_success_feedback(_pass_index)
 	_set_phase(FirstCloneTypes.CalibrationPhase.PASS_FEEDBACK)
 	_feedback_timer = 0.7
@@ -231,6 +232,7 @@ func _on_pass_success() -> void:
 
 
 func _on_pass_miss() -> void:
+	_audio_play_sfx(AudioIds.CLONE_CALIBRATE_REJECT)
 	_in_miss_feedback = true
 	_miss_timer = FirstCloneTypes.MISS_FEEDBACK_SEC
 	_last_feedback = FirstCloneTypes.FEEDBACK_MISS
@@ -243,6 +245,7 @@ func _advance_after_pass_feedback() -> bool:
 	_awaiting_feedback_advance = false
 	if _pass_index >= 2:
 		_last_feedback = FirstCloneTypes.FEEDBACK_COMPLETE
+		_audio_play_sfx(AudioIds.CLONE_MACHINE_CHARGE)
 		_set_phase(FirstCloneTypes.CalibrationPhase.COMPLETE)
 		_refresh_ui()
 		return true
@@ -456,6 +459,12 @@ func _refresh_ui() -> void:
 				abort_btn.visible = false
 		_:
 			pass
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _refresh_track_ui() -> void:

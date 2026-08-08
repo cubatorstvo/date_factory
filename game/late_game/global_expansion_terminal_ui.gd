@@ -49,6 +49,7 @@ func open(player: Node, on_closed: Callable = Callable()) -> void:
 
 
 func close() -> void:
+	_audio_play_ui(AudioIds.UI_BACK)
 	var p: Node = _player
 	var cb: Callable = _on_closed
 	_disconnect_game_signals()
@@ -296,7 +297,19 @@ func _ci_call(method: String) -> void:
 func _buy(upgrade_type: int) -> void:
 	var lge: Node = get_node_or_null("/root/LateGameExpansion")
 	if lge != null and lge.has_method("buy_global_upgrade"):
-		lge.call("buy_global_upgrade", upgrade_type)
+		var result: Variant = lge.call("buy_global_upgrade", upgrade_type)
+		var ok: bool = false
+		if result != null and typeof(result) == TYPE_OBJECT and "ok" in result:
+			ok = bool(result.ok)
+		elif typeof(result) == TYPE_DICTIONARY:
+			ok = bool((result as Dictionary).get("ok", false))
+		if ok:
+			_audio_play_sfx(AudioIds.LATE_UPGRADE)
+			_audio_play_ui(AudioIds.UI_PURCHASE)
+		else:
+			_audio_play_ui(AudioIds.UI_DENIED)
+	else:
+		_audio_play_ui(AudioIds.UI_DENIED)
 	_refresh()
 
 
@@ -462,6 +475,18 @@ func _refresh_upgrade_block(
 	var can: bool = gs != null and cost > 0 and bool(gs.call("can_afford", cost))
 	var unlocked: bool = lge != null and bool(lge.call("is_purchases_unlocked"))
 	button.disabled = not can or not unlocked
+
+
+func _audio_play_ui(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_ui"):
+		ad.call("play_ui", sound_id)
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _format_rate_value(value: float) -> String:

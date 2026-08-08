@@ -47,6 +47,24 @@ func get_character_actor() -> CharacterActor:
 	return _character
 
 
+func has_animation(alias: StringName) -> bool:
+	if _character == null or not is_instance_valid(_character):
+		return false
+	var anim: CharacterAnimationController = _character.get_animation_controller()
+	if anim == null:
+		return false
+	return anim.has_animation(alias)
+
+
+func play_semantic(alias: StringName) -> bool:
+	if _character == null or not is_instance_valid(_character):
+		return false
+	var anim: CharacterAnimationController = _character.get_animation_controller()
+	if anim == null:
+		return false
+	return anim.play_semantic(alias)
+
+
 func refresh_presence() -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	var remaining: int = 0
@@ -96,12 +114,16 @@ func _on_interact(player: Node) -> void:
 	if not bool(begin.get("ok", false)):
 		var reason: StringName = begin.get("reason", &"") as StringName
 		if reason == &"LOCKED_EXPERIENCE":
+			play_semantic(&"react_confused")
 			_show_locked_experience(begin, player)
 		elif reason == &"STORY_RIVAL_REQUIRED":
+			play_semantic(&"react_confused")
 			_show_story_lock_feedback("Сначала разберись с её текущим ухажёром.", player)
 		elif reason == &"STORY_WRONG_STAGE":
+			play_semantic(&"react_confused")
 			_show_story_lock_feedback("Эта линия пока недоступна.", player)
 		elif reason == &"STORY_PREREQUISITE":
+			play_semantic(&"react_confused")
 			var prereq_text: String = "Сначала нужно понять, зачем тебе вообще второй ты."
 			if girl_id == StoryIds.GIRL_PRESIDENT:
 				prereq_text = "Сначала лаборатория должна доказать, что умеет производить больше одного тебя."
@@ -333,8 +355,12 @@ func _show_result_banner(result: Dictionary, player: Node) -> void:
 	var reason: StringName = result.get("reason", &"") as StringName
 	var text: String = ""
 	if reason == &"SUCCESS":
+		play_semantic(&"react_positive")
+		_audio_play_sfx(AudioIds.RELATIONSHIP_POSITIVE)
 		text = "НОМЕР ПОЛУЧЕН\n%s" % str(result.get("result_text", ""))
 	elif reason == &"FAILURE":
+		play_semantic(&"react_negative")
+		_audio_play_sfx(AudioIds.RELATIONSHIP_NEGATIVE)
 		text = "НЕ СРАБОТАЛО\n%s" % str(result.get("result_text", ""))
 		if result.has("new_clue_index"):
 			var gd: Node = get_node_or_null("/root/GirlDiscovery")
@@ -418,6 +444,18 @@ func _apply_theme(root: Control) -> void:
 		var theme_res: Resource = load(THEME_PATH)
 		if theme_res is Theme:
 			root.theme = theme_res as Theme
+
+
+func _audio_play_ui(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_ui"):
+		ad.call("play_ui", sound_id)
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _char_label(characteristic: Variant) -> String:

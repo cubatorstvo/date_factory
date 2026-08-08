@@ -97,6 +97,12 @@ func _on_finished(result: DatingResult) -> void:
 
 func _show_reaction(reaction: int, result_text: String) -> void:
 	_reaction_hold = true
+	if reaction > 0:
+		_audio_play_sfx(AudioIds.RELATIONSHIP_POSITIVE)
+	elif reaction < 0:
+		_audio_play_sfx(AudioIds.RELATIONSHIP_NEGATIVE)
+	else:
+		_audio_play_sfx(AudioIds.RELATIONSHIP_NEUTRAL)
 	_showing_finish = false
 	_update_header()
 	_phase_label.text = "РЕАКЦИЯ"
@@ -108,11 +114,14 @@ func _show_reaction(reaction: int, result_text: String) -> void:
 	_reaction_text.visible = true
 	var authored: String = result_text.strip_edges()
 	_reaction_text.text = authored
+	UiAccentPulse.play_dating_reaction(_reaction_score, reaction)
+	_try_play_date_reaction(reaction)
 	_clear_choices()
 	_add_btn("Далее", _on_continue_after_reaction)
 
 
 func _on_continue_after_reaction() -> void:
+	_audio_play_ui(AudioIds.UI_CLICK)
 	_reaction_hold = false
 	_reaction_score.visible = false
 	_reaction_text.visible = false
@@ -149,6 +158,9 @@ func _show_finish(result: DatingResult) -> void:
 			lines.append("Опытность +%d" % rel.experience_gained)
 		if rel.upgrade_points_gained > 0:
 			lines.append("Балл прокачки +%d" % rel.upgrade_points_gained)
+		var rel_delta: int = int(rel.relationship_after) - int(rel.relationship_before)
+		if rel_delta >= 5:
+			UiAccentPulse.play_badge(_relationship_label)
 	_body.text = "\n".join(lines)
 	_clear_choices()
 	_add_btn("Закрыть", _on_close_finished)
@@ -382,6 +394,37 @@ func _char_label(raw: Variant) -> String:
 	return "Характеристика"
 
 
+func _try_play_date_reaction(reaction: int) -> void:
+	# Presentation only: play if a GirlActor for this date is in the tree. Never gate [Далее].
+	var session: DatingSession = null
+	if _core != null:
+		session = _core.call("get_session") as DatingSession
+	if session == null or session.girl_id == &"":
+		return
+	var alias: StringName = &"gesture_short"
+	if reaction > 0:
+		alias = &"react_positive"
+	elif reaction < 0:
+		alias = &"react_negative"
+	var actor: GirlActor = _find_girl_actor(session.girl_id)
+	if actor == null:
+		return
+	if actor.has_method("play_semantic"):
+		actor.call("play_semantic", alias)
+
+
+func _find_girl_actor(girl_id: StringName) -> GirlActor:
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.root == null:
+		return null
+	var found: Array[Node] = tree.root.find_children("*", "GirlActor", true, false)
+	for node in found:
+		var actor: GirlActor = node as GirlActor
+		if actor != null and actor.girl_id == girl_id:
+			return actor
+	return null
+
+
 func _format_signed(value: int) -> String:
 	if _ui_number_format != null and _ui_number_format.has_method("format_signed"):
 		return str(_ui_number_format.call("format_signed", value))
@@ -407,6 +450,18 @@ func _apply_theme() -> void:
 		if theme_res is Theme:
 			_root.theme = theme_res as Theme
 			_panel.theme = theme_res as Theme
+
+
+func _audio_play_ui(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_ui"):
+		ad.call("play_ui", sound_id)
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)
 
 
 func _apply_local_style() -> void:

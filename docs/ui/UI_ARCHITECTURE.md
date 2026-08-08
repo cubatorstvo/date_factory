@@ -1,11 +1,12 @@
-# UI Architecture — MODULE 22
+# UI Architecture — MODULE 22 (+ MODULE 23 audio seams)
 
-**Статус:** реализованная presentation architecture после MODULE 22.  
+**Статус:** реализованная UI presentation architecture после MODULE 22; audio call-sites wired in MODULE 23.  
 **Граница:** UI показывает уже существующее состояние и действия. Gameplay / balance / Story / economy остаются source of truth.  
-**STOP:** без MODULE 23 audio / animation / VFX; без UIManager / ScreenManager / reactive store.
+**STOP:** без MODULE 24 settings / persistence; без UIManager / ScreenManager / reactive store.
 
 Product truth: `docs/gdd/08_locations_ui_content.md` §47.  
-Spec: `docs/modules/MODULE_22_UI_UX_INTEGRATION.md`.
+Spec: `docs/modules/MODULE_22_UI_UX_INTEGRATION.md`.  
+Audio / camera / VFX truth: `docs/presentation/PRESENTATION_ARCHITECTURE.md`.
 
 ---
 
@@ -232,19 +233,37 @@ Rules:
 
 ---
 
-## 12. Non-goals / STOP
+## 12. Audio seams (MODULE 23)
 
-- No MODULE 23 audio, animation polish, or VFX ahead of schedule;
-- No new gameplay mechanics, balance, Story rules, or content packs from UI work;
-- No save fields solely for tutorials / UI scale until MODULE 24;
-- Terminals and FinalDateUI stay under `game/**` (not moved into `ui/` for folder purity).
+UI does **not** own `AudioDirector`. Call sites resolve `/root/AudioDirector` and use `AudioIds` only (no raw paths).
+
+| Surface | Typical IDs |
+|---|---|
+| Phone / Progression / Rival choose | `ui_click`, `ui_back`, `ui_denied`, `ui_purchase` |
+| GameHUD grouped cards | `reward_small`, `reward_major`, `stage_advance`, `final_signal` |
+| DatingUI | `relationship_positive` / `neutral` / `negative` (+ `UiAccentPulse`) |
+| RivalEncounterUI result | `rival_win` / `rival_loss` |
+| Phone media actions | `media_publish`, `media_incoming`, `media_feed_boost` |
+
+**Silent:** resource number refresh, passive Money tick, countdown refresh, disabled hover.  
+Volumes / camera scale persistence → MODULE 24 (`AudioDirector` / `CameraFeedback` seams already exist).
 
 ---
 
-## 13. Tests (presentation)
+## 13. Non-goals / STOP
+
+- No MODULE 24 settings menu or save fields for tutorials / UI scale / audio volumes / camera scale;
+- No new gameplay mechanics, balance, Story rules, or content packs from UI work;
+- Terminals and FinalDateUI stay under `game/**` (not moved into `ui/` for folder purity);
+- No UIManager / ScreenManager / reactive store.
+
+---
+
+## 14. Tests (presentation)
 
 | Runner | Path |
 |---|---|
 | GameHUD smoke | `ui/hud/test/game_hud_smoke_test.tscn` |
 | Number format | `ui/hud/test/ui_number_format_test.tscn` |
 | Progression UI | `ui/progression/test/progression_ui_self_test.tscn` |
+| AudioDirector | `audio/test/audio_director_self_test.gd` |

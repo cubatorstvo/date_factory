@@ -16,6 +16,7 @@ func _ready() -> void:
 	if world != null and world.has_method("register_location"):
 		world.call("register_location", self)
 	refresh_feature_gates()
+	LocalAmbiencePlayer.ensure_on_location(self)
 
 
 func _rebuild_marker_index() -> void:

@@ -369,6 +369,8 @@ func _show_production_feedback() -> void:
 		_production_label.visible = true
 	if _machine_pulse != null:
 		_machine_pulse.visible = true
+		MeshEmissivePulse.play(_machine_pulse, 2.6, CloneVisualizationTypes.PRODUCTION_PULSE_SEC)
+	ScreenFlash.play_clone_reveal(self)
 	var token: int = Time.get_ticks_msec()
 	if _machine_pulse != null:
 		_machine_pulse.set_meta("pulse_token", token)

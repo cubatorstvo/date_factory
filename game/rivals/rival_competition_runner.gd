@@ -133,6 +133,7 @@ func _start_slap(request: RivalCompetitionRequest) -> void:
 	_active = SlapMinigame.new()
 	get_tree().root.add_child(_active)
 	(_active as SlapMinigame).setup(request, is_story, perks)
+	_set_minigame_duck(true)
 	if not _active.match_finished.is_connected(_on_match_finished):
 		_active.match_finished.connect(_on_match_finished)
 
@@ -153,6 +154,7 @@ func _start_dance(request: RivalCompetitionRequest) -> void:
 	_active = dance
 	get_tree().root.add_child(dance)
 	dance.setup(request, is_story, perks)
+	_set_minigame_duck(true)
 	if not dance.match_finished.is_connected(_on_match_finished):
 		dance.match_finished.connect(_on_match_finished)
 
@@ -173,6 +175,7 @@ func _start_sigma(request: RivalCompetitionRequest) -> void:
 	_active = sigma
 	get_tree().root.add_child(sigma)
 	sigma.setup(request, is_story, perks)
+	_set_minigame_duck(true)
 	if not sigma.match_finished.is_connected(_on_match_finished):
 		sigma.match_finished.connect(_on_match_finished)
 
@@ -192,6 +195,7 @@ func _start_money(request: RivalCompetitionRequest) -> void:
 	_active = money
 	get_tree().root.add_child(money)
 	money.setup(request, is_story)
+	_set_minigame_duck(true)
 	if not money.match_finished.is_connected(_on_match_finished):
 		money.match_finished.connect(_on_match_finished)
 
@@ -336,8 +340,15 @@ func _restore_player() -> void:
 
 
 func _cleanup_active() -> void:
+	_set_minigame_duck(false)
 	if _active != null and is_instance_valid(_active):
 		if _active.match_finished.is_connected(_on_match_finished):
 			_active.match_finished.disconnect(_on_match_finished)
 		_active.queue_free()
 	_active = null
+
+
+func _set_minigame_duck(active: bool) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("duck_for_minigame"):
+		ad.call("duck_for_minigame", active)

@@ -1,7 +1,8 @@
 class_name CharacterAnimationController
 extends Node
-## Semantic animation presentation for CharacterActor (MODULE 04).
+## Semantic animation presentation for CharacterActor (MODULE 04 / 23).
 ## Uses AnimationPlayer + AnimationLibrary aliases from AnimationProfileDefinition.
+## Optional semantic aliases remap to existing clips; never blocks gameplay.
 
 signal animation_finished(alias: StringName)
 
@@ -18,11 +19,22 @@ const LOOP_ALIASES: Array[StringName] = [
 	&"seated_gesture",
 ]
 
+## MODULE 23 semantic presentation aliases → concrete library clips (in order).
+const SEMANTIC_FALLBACKS: Dictionary = {
+	&"react_positive": [&"gesture", &"idle"],
+	&"react_negative": [&"react", &"idle"],
+	&"react_confused": [&"seated_gesture", &"gesture", &"idle"],
+	&"victory": [&"gesture", &"idle"],
+	&"defeat": [&"react", &"idle"],
+	&"gesture_short": [&"gesture", &"idle"],
+}
+
 var _player: AnimationPlayer = null
 var _current_alias: StringName = &""
 var _oneshot_alias: StringName = &""
 var _locomotion_speed: float = 0.0
 var _bound: bool = false
+var _missing_warned: Dictionary = {}
 
 
 func _ready() -> void:
@@ -56,13 +68,17 @@ func apply_animation_profile(profile: AnimationProfileDefinition) -> void:
 
 
 func has_animation(alias: StringName) -> bool:
-	return _resolve_animation_name(alias) != &""
+	return _resolve_playable_alias(alias) != &""
 
 
 func play_loop(alias: StringName) -> bool:
-	var anim_name: StringName = _resolve_animation_name(alias)
+	var resolved: StringName = _resolve_playable_alias(alias)
+	if resolved == &"":
+		_warn_missing_once(alias, "loop")
+		return false
+	var anim_name: StringName = _library_path_for(resolved)
 	if anim_name == &"":
-		push_warning("[CharacterAnimationController] missing loop alias: %s" % String(alias))
+		_warn_missing_once(alias, "loop")
 		return false
 	_oneshot_alias = &""
 	_current_alias = alias
@@ -71,14 +87,28 @@ func play_loop(alias: StringName) -> bool:
 
 
 func play_once(alias: StringName) -> bool:
-	var anim_name: StringName = _resolve_animation_name(alias)
+	var resolved: StringName = _resolve_playable_alias(alias)
+	if resolved == &"":
+		_warn_missing_once(alias, "oneshot")
+		return false
+	var anim_name: StringName = _library_path_for(resolved)
 	if anim_name == &"":
-		push_warning("[CharacterAnimationController] missing oneshot alias: %s" % String(alias))
+		_warn_missing_once(alias, "oneshot")
 		return false
 	_oneshot_alias = alias
 	_current_alias = alias
 	_player.play(anim_name)
 	return true
+
+
+## Play loop or oneshot based on resolved concrete alias. Safe no-op when missing.
+func play_semantic(alias: StringName) -> bool:
+	var resolved: StringName = _resolve_playable_alias(alias)
+	if resolved == &"":
+		return false
+	if LOOP_ALIASES.has(resolved):
+		return play_loop(alias)
+	return play_once(alias)
 
 
 func stop_or_return_to_idle() -> void:
@@ -111,7 +141,27 @@ func set_locomotion_speed(speed: float) -> void:
 		play_loop(target)
 
 
-func _resolve_animation_name(alias: StringName) -> StringName:
+func _resolve_playable_alias(alias: StringName) -> StringName:
+	if _player == null or alias == &"":
+		return &""
+	if _library_path_for(alias) != &"":
+		return alias
+	var chain: Variant = SEMANTIC_FALLBACKS.get(alias, null)
+	if chain is Array:
+		for candidate_variant in chain as Array:
+			var candidate: StringName = candidate_variant as StringName
+			if candidate == &"":
+				continue
+			if _library_path_for(candidate) != &"":
+				return candidate
+		# Known semantic alias with no clips: soft-idle if available.
+		if _library_path_for(ALIAS_IDLE) != &"":
+			return ALIAS_IDLE
+		return &""
+	return &""
+
+
+func _library_path_for(alias: StringName) -> StringName:
 	if _player == null or alias == &"":
 		return &""
 	var primary: StringName = StringName("%s/%s" % [String(LIB_PRIMARY), String(alias)])
@@ -121,6 +171,24 @@ func _resolve_animation_name(alias: StringName) -> StringName:
 	if _player.has_animation(seated):
 		return seated
 	return &""
+
+
+func _resolve_animation_name(alias: StringName) -> StringName:
+	var resolved: StringName = _resolve_playable_alias(alias)
+	if resolved == &"":
+		return &""
+	return _library_path_for(resolved)
+
+
+func _warn_missing_once(alias: StringName, kind: String) -> void:
+	var key: String = "%s:%s" % [kind, String(alias)]
+	if _missing_warned.has(key):
+		return
+	_missing_warned[key] = true
+	# Optional semantic aliases stay quiet; unknown concrete aliases warn once.
+	if SEMANTIC_FALLBACKS.has(alias):
+		return
+	push_warning("[CharacterAnimationController] missing %s alias: %s" % [kind, String(alias)])
 
 
 func _on_animation_finished(anim_name: StringName) -> void:

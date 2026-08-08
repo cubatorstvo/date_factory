@@ -99,6 +99,7 @@ func _process(delta: float) -> void:
 		return
 	var prev_phase: DanceMatch.Phase = match_state.phase
 	var prev_demo: int = match_state.demo_index
+	var prev_fb: DanceMatch.Feedback = match_state.last_feedback
 	if auto_tick:
 		match_state.tick(delta)
 	if (
@@ -106,8 +107,12 @@ func _process(delta: float) -> void:
 		and match_state.demo_index != prev_demo
 	):
 		_present_rival_move(match_state.demo_move)
+		_audio_play_sfx(AudioIds.DANCE_PROMPT)
 	elif prev_phase != DanceMatch.Phase.OPPONENT_DEMO and match_state.phase == DanceMatch.Phase.OPPONENT_DEMO:
 		_present_rival_move(match_state.demo_move)
+		_audio_play_sfx(AudioIds.DANCE_PROMPT)
+	if match_state.last_feedback != prev_fb and match_state.last_feedback != DanceMatch.Feedback.NONE:
+		_present_feedback_sfx(match_state.last_feedback)
 	_refresh_ui()
 	_try_emit_finished(false)
 
@@ -134,7 +139,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		move = int(DanceTiming.DanceMove.RIGHT)
 	if move < 0:
 		return
+	var before_fb: DanceMatch.Feedback = match_state.last_feedback
 	if match_state.press_move(move as DanceTiming.DanceMove):
+		if match_state.last_feedback != before_fb and match_state.last_feedback != DanceMatch.Feedback.NONE:
+			_present_feedback_sfx(match_state.last_feedback)
 		_refresh_ui()
 		_try_emit_finished(false)
 	get_viewport().set_input_as_handled()
@@ -382,3 +390,21 @@ func _feedback_text(fb: DanceMatch.Feedback) -> String:
 			return "ПРОВАЛ"
 		_:
 			return ""
+
+
+func _present_feedback_sfx(fb: DanceMatch.Feedback) -> void:
+	match fb:
+		DanceMatch.Feedback.HIT, DanceMatch.Feedback.PERFECT:
+			_audio_play_sfx(AudioIds.DANCE_CORRECT)
+		DanceMatch.Feedback.MISS, DanceMatch.Feedback.FAIL:
+			_audio_play_sfx(AudioIds.DANCE_WRONG)
+		DanceMatch.Feedback.SUCCESS:
+			_audio_play_sfx(AudioIds.DANCE_SEQUENCE_SUCCESS)
+		_:
+			pass
+
+
+func _audio_play_sfx(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_sfx"):
+		ad.call("play_sfx", sound_id)

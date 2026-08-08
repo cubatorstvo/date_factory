@@ -1,0 +1,48 @@
+PASS: AudioDirector autoload present
+PASS: bus Master exists
+PASS: bus Music exists
+PASS: bus SFX exists
+PASS: bus UI exists
+PASS: bus Ambience exists
+PASS: AudioServer Master index
+PASS: AudioServer Music index
+PASS: AudioServer SFX index
+PASS: AudioServer UI index
+PASS: AudioServer Ambience index
+PASS: stage PROLOGUE→MANUAL
+PASS: stage STAGE_1→MANUAL
+PASS: stage STAGE_2→MANUAL
+PASS: stage STAGE_3→MANUAL
+PASS: stage STAGE_4→MEDIA
+PASS: stage STAGE_5→CLONE
+PASS: stage STAGE_6→CLONE
+PASS: stage FINALE→FINAL
+PASS: music asset exists for MANUAL (res://assets/audio/music/manual_apartment_chill.ogg)
+PASS: music asset exists for MEDIA (res://assets/audio/music/media_street_night.ogg)
+PASS: music asset exists for CLONE (res://assets/audio/music/clone_restaurant_warm.ogg)
+PASS: music asset exists for FINAL (res://assets/audio/music/final_sparse.wav)
+PASS: reset_to_start SUCCESS
+PASS: same-state travel no music restart (before=5 after=5)
+PASS: music bus for duck
+PASS: duck lowers Music bus (base=-8.00 ducked=-12.00)
+PASS: duck restore no drift (base=-8.00 restored=-8.00)
+PASS: oneshot detector sanity (pool=1 api=1)
+PASS: oneshot pools silenced before money ticks
+PASS: 100 money ticks → 0 unintended SFX (pool=0 api=0)
+PASS: CameraFeedback scale seam 0
+PASS: CameraFeedback scale0 → zero motion
+PASS: CameraFeedback.run_self_test()
+PASS: no runtime donor path in audio catalog (bad=)
+PASS: no MODULE24 settings/save product files (found=)
+PASS: volume seam set_master_volume exposed
+PASS: volume seam set_music_volume exposed
+PASS: volume seam set_sfx_volume exposed
+PASS: volume seam set_ui_volume exposed
+PASS: volume seam set_ambience_volume exposed
+INFO: shot res://tmp/m23_qa/01_apartment_hud.png err=0 size=1280x720
+PASS: shot context apartment
+PASS: LABORATORY unlocked for lab shot
+INFO: shot res://tmp/m23_qa/02_lab.png err=0 size=1280x720
+PASS: shot context laboratory
+INFO: shot res://tmp/m23_qa/03_final_location_beacon.png err=0 size=1280x720
+PASS: shot context final_location

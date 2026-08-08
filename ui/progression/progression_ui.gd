@@ -87,6 +87,7 @@ func open(
 
 
 func close() -> void:
+	_audio_play_ui(AudioIds.UI_BACK)
 	var p: Node = _player
 	var cb: Callable = _on_closed
 	_player = null
@@ -302,6 +303,8 @@ func _apply_detail_style(panel: PanelContainer) -> void:
 
 
 func _select_tab(ch: GameTypes.PlayerCharacteristic) -> void:
+	if ch != _selected_char:
+		_audio_play_ui(AudioIds.UI_CLICK)
 	_selected_char = ch
 	_selected_perk_id = &""
 	_refresh()
@@ -422,6 +425,7 @@ func _make_perk_node_button(def: PerkDefinition, prog: Node) -> Button:
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	var perk_id: StringName = def.id
 	btn.pressed.connect(func() -> void:
+		_audio_play_ui(AudioIds.UI_CLICK)
 		_selected_perk_id = perk_id
 		_refresh_detail(prog)
 		_highlight_selected()
@@ -522,9 +526,12 @@ func _on_buy_pressed() -> void:
 	var cost_before: int = int(prog.call("get_perk_purchase_cost", _selected_perk_id))
 	var result: int = int(prog.call("purchase_perk", _selected_perk_id))
 	if result == int(Progression.PerkPurchaseResult.SUCCESS):
+		_audio_play_ui(AudioIds.UI_PURCHASE)
 		var msg: String = "Куплен перк за %d" % cost_before
 		purchase_notified.emit(msg)
 		_try_hud_notify(msg)
+	else:
+		_audio_play_ui(AudioIds.UI_DENIED)
 	_refresh()
 
 
@@ -599,3 +606,9 @@ func _char_note_name(ch: GameTypes.PlayerCharacteristic) -> String:
 		GameTypes.PlayerCharacteristic.AURA:
 			return "Аура"
 	return "характеристика"
+
+
+func _audio_play_ui(sound_id: StringName) -> void:
+	var ad: Node = get_node_or_null("/root/AudioDirector")
+	if ad != null and ad.has_method("play_ui"):
+		ad.call("play_ui", sound_id)
