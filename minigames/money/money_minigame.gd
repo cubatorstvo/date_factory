@@ -1,19 +1,25 @@
 class_name MoneyMinigame
 extends CanvasLayer
-## Money Contest overlay UI + GameState money spend seam (MODULE 07D).
+## Money Contest overlay UI + GameState money spend seam (MODULE 07D / MODULE 22).
 ## Does NOT mutate Authority / defeated / XP / UP / relationships.
 
 
 signal match_finished(result: RivalCompetitionResult)
 
+const TITLE_TEXT: String = "Денежное противостояние"
+
 var match_state: MoneyMatch = null
 var accept_input: bool = true
 var auto_tick: bool = true
 var _finished_emitted: bool = false
+var _result_hold: float = 0.0
+var _pending_result: RivalCompetitionResult = null
 var _request: RivalCompetitionRequest = null
 var _rival_actor: Node3D = null
 var _awaiting_spend: bool = false
 
+var _root: Control = null
+var _title_label: Label = null
 var _score_label: Label = null
 var _lot_label: Label = null
 var _bid_label: Label = null
@@ -50,21 +56,26 @@ func setup(
 	match_state = MoneyMatch.new()
 	match_state.setup(player_cap, rival_cap, is_story, starting, rng_seed)
 	_finished_emitted = false
+	_result_hold = 0.0
+	_pending_result = null
 	_awaiting_spend = false
 	_present_rival(&"idle")
 	_refresh_ui()
-	_try_emit_finished()
+	_try_emit_finished(false)
 
 
 func setup_match(state: MoneyMatch) -> void:
 	match_state = state
 	_finished_emitted = false
+	_result_hold = 0.0
+	_pending_result = null
 	_awaiting_spend = false
 	_refresh_ui()
 
 
 func force_finish_emit() -> void:
-	_try_emit_finished()
+	_result_hold = 0.0
+	_try_emit_finished(true)
 
 
 func _read_money() -> int:
@@ -89,10 +100,15 @@ func _spend(amount: int) -> bool:
 
 
 func _process(delta: float) -> void:
+	if _result_hold > 0.0:
+		_result_hold = maxf(0.0, _result_hold - delta)
+		if _result_hold <= 0.0:
+			_try_emit_finished(false)
+		return
 	if match_state == null:
 		return
 	if match_state.ended:
-		_try_emit_finished()
+		_try_emit_finished(false)
 		return
 	var prev_phase: MoneyMatch.Phase = match_state.phase
 	var prev_fb: MoneyMatch.Feedback = match_state.last_feedback
@@ -104,7 +120,7 @@ func _process(delta: float) -> void:
 	):
 		_on_phase_or_feedback_changed(prev_phase, prev_fb)
 	_refresh_ui()
-	_try_emit_finished()
+	_try_emit_finished(false)
 
 
 func _on_phase_or_feedback_changed(
@@ -126,6 +142,8 @@ func _on_phase_or_feedback_changed(
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not accept_input or match_state == null or match_state.ended:
+		return
+	if _result_hold > 0.0:
 		return
 	if match_state.phase != MoneyMatch.Phase.PLAYER_DECISION:
 		return
@@ -176,17 +194,27 @@ func _attempt_action(action: MoneyMatch.Action) -> void:
 		match_state.confirm_player_win_spend(ok)
 		_awaiting_spend = false
 	_refresh_ui()
-	_try_emit_finished()
+	_try_emit_finished(false)
 
 
-func _try_emit_finished() -> void:
+func _try_emit_finished(force: bool) -> void:
 	if _finished_emitted or match_state == null or not match_state.ended:
+		return
+	if _pending_result == null:
+		_pending_result = match_state.build_result_once()
+		if _pending_result == null:
+			return
+		if not force:
+			MinigameShell.build_result_overlay(_root, _pending_result)
+			_result_hold = MinigameShell.RESULT_HOLD_SEC
+			accept_input = false
+			_refresh_ui()
+			return
+	if not force and _result_hold > 0.0:
 		return
 	_finished_emitted = true
 	accept_input = false
-	var res: RivalCompetitionResult = match_state.build_result_once()
-	if res != null:
-		match_finished.emit(res)
+	match_finished.emit(_pending_result)
 
 
 func _present_rival(alias: StringName) -> void:
@@ -201,25 +229,45 @@ func _present_rival(alias: StringName) -> void:
 
 
 func _build_ui() -> void:
-	var root: Control = Control.new()
-	root.name = "Root"
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(root)
+	_root = Control.new()
+	_root.name = "Root"
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_root)
+	MinigameShell.apply_theme(_root)
+
+	_title_label = Label.new()
+	_title_label.name = "Title"
+	_title_label.text = TITLE_TEXT
+	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_title_label.offset_left = -360.0
+	_title_label.offset_right = 360.0
+	_title_label.offset_top = 28.0
+	_title_label.offset_bottom = 64.0
+	_title_label.add_theme_font_size_override("font_size", 26)
+	_root.add_child(_title_label)
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.name = "Panel"
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	panel.offset_left = -360.0
-	panel.offset_right = 360.0
-	panel.offset_top = -320.0
+	panel.offset_left = -380.0
+	panel.offset_right = 380.0
+	panel.offset_top = -340.0
 	panel.offset_bottom = -20.0
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.add_child(panel)
+	_root.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(margin)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 6)
-	panel.add_child(vbox)
+	margin.add_child(vbox)
 
 	_score_label = Label.new()
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -231,16 +279,19 @@ func _build_ui() -> void:
 	_lot_label.add_theme_font_size_override("font_size", 24)
 	vbox.add_child(_lot_label)
 
-	_bid_label = Label.new()
-	_bid_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(_bid_label)
-
 	_money_label = Label.new()
 	_money_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_money_label.add_theme_font_size_override("font_size", 18)
 	vbox.add_child(_money_label)
+
+	_bid_label = Label.new()
+	_bid_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bid_label.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(_bid_label)
 
 	_tell_label = Label.new()
 	_tell_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_tell_label.add_theme_font_size_override("font_size", 15)
 	vbox.add_child(_tell_label)
 
 	_timer_label = Label.new()
@@ -258,7 +309,7 @@ func _build_ui() -> void:
 	vbox.add_child(row)
 
 	_btn_stop = Button.new()
-	_btn_stop.text = "ОСТАНОВИТЬСЯ"
+	_btn_stop.text = "ОТСТУПИТЬ"
 	_btn_stop.pressed.connect(func() -> void: _attempt_action(MoneyMatch.Action.STOP))
 	row.add_child(_btn_stop)
 
@@ -281,15 +332,15 @@ func _refresh_ui() -> void:
 	if _score_label == null:
 		return
 	var money: int = _read_money()
-	_score_label.text = "Ты %d : %d Соперник   цель %d" % [
+	_score_label.text = MinigameShell.format_score(
 		match_state.player_score,
 		match_state.rival_score,
 		match_state.target_score,
-	]
+	)
 	_lot_label.text = "Лот: %s" % match_state.lot_name
 	var bid_amount: int = match_state.amount_for_level(match_state.current_bid_level)
-	_bid_label.text = "Текущая ставка: %d" % bid_amount
-	_money_label.text = "Твои Деньги: %d" % money
+	_money_label.text = "Твои деньги: %s" % UiNumberFormat.format_money(money)
+	_bid_label.text = "Текущая ставка: %s" % UiNumberFormat.format_money(bid_amount)
 	_tell_label.text = "Соперник: %s" % _tell_text(match_state.get_tell())
 	_feedback_label.text = _feedback_text()
 	if match_state.phase == MoneyMatch.Phase.PLAYER_DECISION and not match_state.action_locked:
@@ -312,9 +363,9 @@ func _update_buttons(money: int) -> void:
 	var raise_amt: int = match_state.amount_for_level(match_state.current_bid_level + 1)
 	var outbid_amt: int = match_state.amount_for_level(match_state.current_bid_level + 2)
 	var buyout_amt: int = match_state.amount_for_level(match_state.current_bid_level + 3)
-	_btn_raise.text = "ПОВЫСИТЬ — %d" % raise_amt
-	_btn_outbid.text = "ПЕРЕБИТЬ — %d" % outbid_amt
-	_btn_buyout.text = "ВЫКУПИТЬ — %d" % buyout_amt
+	_btn_raise.text = "ПОДНЯТЬ — %s" % UiNumberFormat.format_money(raise_amt)
+	_btn_outbid.text = "ПЕРЕБИТЬ — %s" % UiNumberFormat.format_money(outbid_amt)
+	_btn_buyout.text = "ВЫКУПИТЬ — %s" % UiNumberFormat.format_money(buyout_amt)
 	var raise_ok: bool = deciding and match_state.is_action_affordable(MoneyMatch.Action.RAISE, money)
 	var outbid_unlocked: bool = match_state.is_action_unlocked(MoneyMatch.Action.OUTBID)
 	var buyout_unlocked: bool = match_state.is_action_unlocked(MoneyMatch.Action.BUYOUT)
@@ -330,10 +381,10 @@ func _update_buttons(money: int) -> void:
 	_btn_outbid.disabled = not outbid_ok
 	_btn_buyout.disabled = not buyout_ok
 	if not outbid_unlocked:
-		_btn_outbid.text = "ПЕРЕБИТЬ (Капитал 3)"
+		_btn_outbid.text = "ПЕРЕБИТЬ (ЗАБЛОКИРОВАНО — Капитал 3)"
 		_btn_outbid.disabled = true
 	if not buyout_unlocked:
-		_btn_buyout.text = "ВЫКУПИТЬ (Капитал 6)"
+		_btn_buyout.text = "ВЫКУПИТЬ (ЗАБЛОКИРОВАНО — Капитал 6)"
 		_btn_buyout.disabled = true
 
 
@@ -356,9 +407,13 @@ func _feedback_text() -> String:
 		return "ФИНИШ"
 	match match_state.last_feedback:
 		MoneyMatch.Feedback.RIVAL_RAISED:
-			return "СОПЕРНИК ПОВЫСИЛ ДО %d" % match_state.last_feedback_amount
+			return "СОПЕРНИК ПОВЫСИЛ ДО %s" % UiNumberFormat.format_money(
+				match_state.last_feedback_amount
+			)
 		MoneyMatch.Feedback.RIVAL_FOLDED:
-			return "СОПЕРНИК ОТКАЗАЛСЯ ПЛАТИТЬ\nКУПЛЕНО ЗА %d" % match_state.last_feedback_amount
+			return "СОПЕРНИК ОТКАЗАЛСЯ ПЛАТИТЬ\nКУПЛЕНО ЗА %s" % UiNumberFormat.format_money(
+				match_state.last_feedback_amount
+			)
 		MoneyMatch.Feedback.PLAYER_STOPPED:
 			return "ТЫ РЕШИЛ СОХРАНИТЬ ДЕНЬГИ"
 		MoneyMatch.Feedback.BROKE:

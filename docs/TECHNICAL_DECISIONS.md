@@ -836,3 +836,24 @@ Close the F5→ending main path with one deterministic staged finale while reusi
 
 Scope:
 `game/final_date/**`, `RivalCompetitionRunner` exhibition seam, final content `.tres` + catalog 14/14, `world/locations/final_location/`, docs §43–44 / locations finale notes
+
+## MODULE 22: UI / UX Integration (presentation only; STOP before MODULE 23)
+
+Context:
+Gameplay through Final Date is complete, but player-facing UI was still a functional prototype scatter: no permanent HUD, Phone was a long scroll, Progression was thin, Theme/number format/scale/tutorials were inconsistent, and modal ownership needed a clear presentation rule without a UI framework.
+
+Decision:
+1. One shared Theme `ui/theme/date_factory_theme.tres` (+ builder). No UIManager / ScreenManager / reactive store.
+2. Exactly one persistent `GameHUD` under `WorldHost/PersistentUI` beside `PhoneJournal` (`World._ensure_game_hud` / `get_game_hud`). Shows only Money / Authority / Experience / Upgrade Points; event-driven; gameplay strip hidden on `MODAL_UI` / `MINIGAME` / `PAUSED`.
+3. Notification rail + stage/feature toasts on GameHUD (queue max 3, ~2.2 s; no passive clone Money spam). Seven `TutorialPrompt` ids are runtime-only inside HUD — not GameState, not an autoload.
+4. `UiNumberFormat` (K/M/B + money/signed/rate) and `UiScaleHelper` presets 100/125/150% — runtime-only; MODULE 24 may persist scale/tutorials.
+5. PhoneJournal five tabs STATUS/STORY/GIRLS/MEDIA/CLONES; MEDIA gated by `StoryFeature.MEDIA_ATTENTION`; CLONES by `total_clones >= 1`; salary under STATUS; overload under MEDIA. Action APIs unchanged.
+6. Full Progression UI (`ui/progression/progression_ui.*`) for all 32 perks via existing `Progression` purchase API; apartment Interactable open seam only.
+7. DatingUI / RivalEncounterUI / `MinigameShell` / Clone+Global terminal UIs / FinalDateUI adopt Theme + readable presentation; gameplay controllers remain source of truth. Modal ownership = at most one owner via `PlayerController.ControlMode`.
+8. STOP before MODULE 23: no audio/animation/VFX polish ahead.
+
+Reason:
+Unify presentation and readability for the full F5→ending route without inventing a UI framework or mutating balance/Story/economy.
+
+Scope:
+`ui/**` (Theme, HUD, Phone tabs, Progression, Dating, RivalEncounterUI, format/scale/tutorial helpers), `minigames/common/minigame_shell.gd` + minigame presentation glue, terminal/FinalDateUI Theme apply under `game/**`, narrow `world.gd` HUD attach, docs (`PROJECT_STRUCTURE`, this file, GDD §47, `docs/ui/UI_ARCHITECTURE.md`)

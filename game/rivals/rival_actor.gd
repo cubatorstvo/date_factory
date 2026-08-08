@@ -13,8 +13,10 @@ signal challenge_result(ok: bool, reason: StringName)
 var _character: CharacterActor = null
 var _collision: CollisionShape3D = null
 var _feedback_ui: CanvasLayer = null
+var _encounter_ui: RivalEncounterUI = null
 var _departing: bool = false
 var _absent: bool = false
+var _awaiting_result: bool = false
 
 
 func _ready() -> void:
@@ -30,9 +32,11 @@ func _ready() -> void:
 		return
 	_ensure_character()
 	var encounters: Node = get_node_or_null("/root/RivalEncounters")
-	if encounters != null and encounters.has_signal("encounter_won"):
-		if not encounters.is_connected("encounter_won", _on_encounter_won):
+	if encounters != null:
+		if encounters.has_signal("encounter_won") and not encounters.is_connected("encounter_won", _on_encounter_won):
 			encounters.connect("encounter_won", _on_encounter_won)
+		if encounters.has_signal("encounter_finished") and not encounters.is_connected("encounter_finished", _on_encounter_finished):
+			encounters.connect("encounter_finished", _on_encounter_finished)
 	_refresh_interaction()
 
 
@@ -55,16 +59,23 @@ func _on_interact(player: Node) -> void:
 		challenge_result.emit(false, &"NO_SERVICE")
 		_show_feedback("Сервис соперников недоступен.", player)
 		return
+	var return_mode: int = int(PlayerController.ControlMode.MODAL_UI)
 	var start: Dictionary = encounters.call(
 		"start_encounter",
 		rival_id,
 		GameTypes.RivalEncounterInitiator.PLAYER,
+		GameTypes.RivalEncounterContext.WORLD,
+		return_mode,
 	) as Dictionary
 	var ok: bool = bool(start.get("ok", false))
 	var reason: StringName = start.get("reason", &"") as StringName
 	challenge_result.emit(ok, reason)
 	if not ok:
 		_show_start_failure(reason, player)
+		_refresh_interaction()
+		return
+	_awaiting_result = true
+	_open_choose_ui(player)
 	_refresh_interaction()
 
 
@@ -76,6 +87,18 @@ func _on_encounter_won(result: RivalEncounterResult) -> void:
 	if _absent or _departing:
 		return
 	_depart_after_defeat()
+
+
+func _on_encounter_finished(result: RivalEncounterResult) -> void:
+	if result == null:
+		return
+	if result.rival_id != rival_id:
+		return
+	if not _awaiting_result:
+		return
+	_awaiting_result = false
+	var player: Node = get_tree().get_first_node_in_group("player")
+	_open_result_ui(player, result)
 
 
 func _depart_after_defeat() -> void:
@@ -185,6 +208,42 @@ func _reason_text(reason: StringName) -> String:
 			return "Встреча уже завершена."
 		_:
 			return "Не удалось начать встречу: %s" % String(reason)
+
+
+func _open_choose_ui(player: Node) -> void:
+	_close_encounter_ui()
+	var ui: RivalEncounterUI = RivalEncounterUI.create()
+	_encounter_ui = ui
+	if not ui.choose_closed.is_connected(_on_choose_ui_closed):
+		ui.choose_closed.connect(_on_choose_ui_closed)
+	ui.open_choose(player, false)
+
+
+func _open_result_ui(player: Node, result: RivalEncounterResult) -> void:
+	_close_encounter_ui()
+	var ui: RivalEncounterUI = RivalEncounterUI.create()
+	_encounter_ui = ui
+	if not ui.result_closed.is_connected(_on_result_ui_closed):
+		ui.result_closed.connect(_on_result_ui_closed)
+	# Final exhibition uses open_exhibition_result / exhibition flag; world challenges show Authority.
+	ui.open_result(player, result, false)
+
+
+func _on_choose_ui_closed() -> void:
+	_encounter_ui = null
+	var encounters: Node = get_node_or_null("/root/RivalEncounters")
+	if encounters == null or not bool(encounters.call("has_active_encounter")):
+		_awaiting_result = false
+
+
+func _on_result_ui_closed() -> void:
+	_encounter_ui = null
+
+
+func _close_encounter_ui() -> void:
+	if _encounter_ui != null and is_instance_valid(_encounter_ui):
+		_encounter_ui.dismiss_for_transition()
+	_encounter_ui = null
 
 
 func _show_feedback(text: String, player: Node) -> void:

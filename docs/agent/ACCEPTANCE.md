@@ -1,12 +1,12 @@
-# ACCEPTANCE — MODULE 21 Final Date Sequence
+# ACCEPTANCE — MODULE 22 UI / UX Integration
 
 ## Player-visible result
-FINALE: answer signal in final_location → staged date with «Последняя» → DANCE then SLAP exhibitions → success ending screen and continue playing; fail → full retry. Clean F5 path complete.
+Shared Theme + permanent GameHUD (Money/Auth/XP/UP) + notification/stage toasts + tabbed Phone + Progression screen + readable Dating/Minigames/Rival/Terminals/FinalDate/Ending + tutorials + UI scale. Player can play via UI alone. No gameplay formula changes.
 
 ## PASS
-girl_final_target + 2 exhibition rivals; no ordinary dating path; 3 zones; scoring threshold; exhibition seam; ending + Continue; Phone completed; MODULE 02–20 regressions; no MODULE 22+.
+Theme, formatter, GameHUD, Phone tabs, Progression 32, Dating/Minigames/Rival/Terminals/FinalDate presentation, tutorials, regressions MODULE 02–21, no MODULE 23.
 
 ## Verdict
 **READY**
 
-Evidence: `docs/agent/qa/M21_QA.md`, `tmp/m21_qa/` (headless 78/139/120/101; indep `passed=101 failed=0`; screenshots apartment / final_location / phone / INTRO).
+Evidence: `docs/agent/qa/M22_QA.md`, `tmp/m22_qa/` (indep `passed=73 failed=0`; headless suites green). Post-QA polish: stage/notify hide under modals; terminal WORK/DATING → РАБОТА/СВИДАНИЯ.

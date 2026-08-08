@@ -1,7 +1,9 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 21 — Final Date Sequence**.  
+Фактическая структура после **MODULE 22 — UI / UX Integration**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
+
+UI architecture truth: `docs/ui/UI_ARCHITECTURE.md`.
 
 ## Top-level (существует сейчас)
 
@@ -12,10 +14,11 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 | `characters/` | Player + Character Framework | `framework/`, `male/`, `female/`, `player/`, `test/` | Dating/Rival/AI domain systems |
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → World apartment, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
-| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental; `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion; `final_date/` scene-local FinalDateController; `progression/` Progression; `rivals/` RivalEncounters + exhibition seam; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ counts/rates + salary); `dating/dating_ui.tscn` (result panel); final date UI lives under `game/final_date/` | Final phone/date art (MODULE 22) |
-| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations (lab MODULE 19; production_area MODULE 20; `final_location` MODULE 21 staged finale), markers, transitions, MODULE 12 test | Open-world streaming / country simulation |
+| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts, `ui/UI_ARCHITECTURE.md` | Runtime code |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental (+ terminal UI); `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion (+ Global Terminal UI); `final_date/` scene-local FinalDateController + FinalDateUI; `progression/` Progression; `rivals/` RivalEncounters + exhibition seam; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Presentation shell (MODULE 22) | Theme; GameHUD; Phone five tabs; Progression UI; DatingUI; RivalEncounterUI; `UiNumberFormat`; `UiScaleHelper`; TutorialPrompt | UIManager / gameplay formulas / MODULE 23 audio-VFX |
+| `minigames/` | Rival competition overlays | `slap/`, `dance/`, `sigma/`, `money/` + shared `common/minigame_shell.gd` | Domain encounter formulas (stay in RivalEncounters) |
+| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations (lab MODULE 19; production_area MODULE 20; `final_location` MODULE 21 staged finale), markers, transitions; PersistentUI hosts Phone + GameHUD | Open-world streaming / country simulation |
 | `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
 | `icon.svg` | Иконка приложения | — | — |
@@ -78,13 +81,24 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 - `primary_trait_evaluator.gd` / `secondary_trait_evaluator.gd` / `dating_event_planner.gd` — pure helpers
 - `test/dating_test.tscn` + `dating_self_test.gd` — MODULE 09 headless runner
 
-### `ui/dating/`
+### `ui/` (MODULE 22)
 
-- `dating_ui.tscn` + `dating_ui.gd` — functional MODAL_UI date choices (not final art)
+- `theme/date_factory_theme.tres` + `date_factory_theme_builder.gd` — shared Theme
+- `theme/ui_scale_helper.gd` — `UiScaleHelper` runtime presets 100/125/150% (not persisted)
+- `ui_number_format.gd` — `UiNumberFormat` grouped / K·M·B / money / signed / rate
+- `hud/game_hud.tscn` + `game_hud.gd` — persistent `GameHUD` under `WorldHost/PersistentUI`; Money/Auth/XP/UP; event-driven; hide strip on MODAL_UI/MINIGAME/PAUSED; notification rail + stage/feature toasts
+- `tutorial/tutorial_prompt.gd` — seven first-use prompts, runtime-only, HUD-owned (no autoload)
+- `phone/phone_journal.tscn` + `phone_journal.gd` — five tabs STATUS/STORY/GIRLS/MEDIA/CLONES; MEDIA/CLONES gated; salary under STATUS; overload under MEDIA
+- `progression/progression_ui.tscn` + `progression_ui.gd` — full 32-perk modal; `progression_modal_ui.gd` shim
+- `dating/dating_ui.tscn` + `dating_ui.gd` — themed MODAL_UI date choices / reactions / result
+- `rivals/rival_encounter_ui.tscn` + `rival_encounter_ui.gd` — choose / result / exhibition stakes presentation
+- `hud/test/`, `progression/test/` — presentation self-tests
+- Architecture note: `docs/ui/UI_ARCHITECTURE.md`
 
 ### `game/progression/`
 
 - `progression.gd` — autoload `Progression`: purchase, cost `3^N`, tree prereqs, availability, `perk_purchased`
+- `progression_interactable.gd` — apartment entry → spawns Progression UI modal
 - `test/progression_test.tscn` + `progression_self_test.gd` — MODULE 05 headless runner
 
 ### `game/day/`
@@ -108,35 +122,18 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 - `rival_actor.gd` — thin Interactable adapter (`[E] Вызвать`)
 - `test/rival_encounter_test.tscn` + `rival_encounter_self_test.gd` — MODULE 06 headless runner
 
-### `minigames/slap/`
+### `minigames/`
 
-- `slap_match.gd` — headless Slap FSM + formulas + perk rules (MODULE 07A)
-- `slap_timing.gd` — pure timing/grade helpers
-- `slap_minigame.tscn` / `slap_minigame.gd` — CanvasLayer overlay UI over current 3D world
-- `test/slap_minigame_test.tscn` + `slap_minigame_self_test.gd` — MODULE 07A headless runner (uses RivalCompetitionRunner)
-
-### `minigames/dance/`
-
-- `dance_match.gd` — headless Dance FSM (demo/repeat/own), generation, streak, Appearance perks
-- `dance_timing.gd` — pure move evaluator + window/error/grade helpers
-- `dance_minigame.tscn` / `dance_minigame.gd` — CanvasLayer overlay; WASD via `move_*` actions
-- `test/dance_minigame_test.tscn` + `dance_minigame_self_test.gd` — MODULE 07B headless runner
-
-### `minigames/sigma/`
-
-- `sigma_match.gd` — headless Sigma composure FSM + Aura formulas + six perk rules (MODULE 07C)
-- `sigma_minigame.tscn` / `sigma_minigame.gd` — CanvasLayer overlay; relative mouse X; Q/R specials
-- `test/sigma_minigame_test.tscn` + `sigma_minigame_self_test.gd` — MODULE 07C headless runner
-
-### `minigames/money/`
-
-- `money_match.gd` — headless Money auction FSM + stake/ceiling formulas (MODULE 07D)
-- `money_minigame.tscn` / `money_minigame.gd` — CanvasLayer overlay; spends `GameState.money` on won rounds; mouse UI
-- `test/money_minigame_test.tscn` + `money_minigame_self_test.gd` — MODULE 07D headless runner
+- `common/minigame_shell.gd` — `MinigameShell`: shared Theme apply, score/result presentation helpers (MODULE 22)
+- `slap/` — Slap FSM + CanvasLayer overlay (MODULE 07A; Theme via shell)
+- `dance/` — Dance FSM + overlay (MODULE 07B)
+- `sigma/` — Sigma FSM + overlay (MODULE 07C)
+- `money/` — Money auction FSM + overlay (MODULE 07D)
+- Each family keeps `*_match.gd` formulas + `test/*_minigame_test.tscn` headless runners
 
 ### `world/`
 
-- `world.gd` — autoload `World` (after Story): access/travel/load/unload, persistent Player + PhoneJournal under `WorldHost`
+- `world.gd` — autoload `World` (after Story): access/travel/load/unload; persistent Player + `PersistentUI` (`PhoneJournal` + `GameHUD`) under `WorldHost`; `get_game_hud()`
 - `world_types.gd` / `world_access_result.gd` — travel/access enums + typed access result
 - `world_location.gd` — scene-root contract + local marker lookup / gate refresh
 - `world_transition.gd` — E-only travel Interactable (never body_entered)
@@ -212,7 +209,7 @@ Dependency-safe production order (`project.godot`):
 
 - `clone_incremental.gd` — autoload `CloneIncremental`: real-time free-clone production, rate recompute into `GameState.set_late_rates`, work/dating assignment, 3 Money upgrade lines (`cost = 30×3^level`), backlog-first auto dates then XP/UP; no individual clone entities; remains economy owner under MODULE 19
 - `clone_incremental_types.gd` / `clone_incremental_status.gd` / `clone_upgrade_purchase_result.gd` — formulas (production 30→5 s, work 20→70 Money/min/clone, dating 0.50→1.75 dates/min/clone), status snapshot, purchase result
-- `clone_terminal_interactable.gd` / `clone_terminal_ui.gd` — physical lab terminal (assign Work/Dating + buy upgrades); Phone stays read-only
+- `clone_terminal_interactable.gd` / `clone_terminal_ui.gd` — physical lab terminal modal (assign Work/Dating + buy upgrades; MODULE 22 Theme); Phone stays read-only
 - `test/clone_incremental_test.tscn` + `clone_incremental_self_test.gd` — MODULE 18 headless runner
 
 ### `game/clone_visualization/`
@@ -226,7 +223,7 @@ Dependency-safe production order (`project.godot`):
 
 - `late_game_expansion.gd` — autoload `LateGameExpansion`: STAGE_6 Earth Reach (`world_reach` 0..100), three global upgrade tracks (`GLOBAL_PRODUCTION` / `GLOBAL_WORK` / `GLOBAL_DATING`, levels 0..3 → ×1/×2/×4/×8, costs 1000/5000/25000), Reach from `late_experience_granted` (+2 each), Reach100 → `Story.complete_world_expansion()` + extraterrestrial signal; no country/logistics sim
 - `late_game_types.gd` / `late_game_status.gd` / `global_upgrade_purchase_result.gd` — enums, status snapshot, typed purchase result
-- `global_expansion_terminal_interactable.gd` / `global_expansion_terminal_ui.gd` — Production Area Global Terminal (Reach, rates, assign, global upgrades)
+- `global_expansion_terminal_interactable.gd` / `global_expansion_terminal_ui.gd` — Production Area Global Terminal modal (Reach, rates, assign, global upgrades; MODULE 22 Theme)
 - `global_expansion_event_interactable.gd` — three optional one-time FPS events (+10 Reach each)
 - `world_reach_visual.gd` — presentation thresholds 0/25/50/75/100
 - `test/late_game_test.tscn` + `late_game_self_test.gd` — MODULE 20 headless runner
@@ -234,12 +231,11 @@ Dependency-safe production order (`project.godot`):
 ### `game/final_date/`
 
 - `final_date_controller.gd` — **scene-local** (not autoload) inside `final_location.tscn`: staged FINALE sequence (intro → events → DANCE exhibition → walk → SLAP exhibition → assessment); own connection score; no DatingCore
-- `final_date_types.gd` / `final_date_ui.gd` — phases/failure reasons/event copy; functional CanvasLayer (choices, fail retry, success ending + `[Продолжить]`)
+- `final_date_types.gd` / `final_date_ui.gd` — phases/failure reasons/event copy; themed CanvasLayer (choices, fail retry, success ending + `[Продолжить]`; MODULE 22 Theme/`UiNumberFormat`)
 - `final_checkpoint_interactable.gd` / `final_signal_interactable.gd` — FPS checkpoints + answer-signal entry
 - Content: `girl_final_target` («Последняя»), `rival_final_ceremonial` (DANCE), `rival_final_gravity` (SLAP) — exhibition-only
 - Success once: relationship +5 / conquered / `add_experience(1)`; fail → full retry, zero permanent penalties
 - `test/final_date_test.tscn` + `final_date_self_test.gd` — MODULE 21 headless runner
-- STOP before MODULE 22 polish (art/credits/phone shell)
 
 ## Canonical future destinations (ещё не созданы)
 
@@ -247,31 +243,15 @@ Dependency-safe production order (`project.godot`):
 audio/
 ```
 
-`minigames/slap/` реализован (MODULE 07A).  
-`minigames/dance/` реализован (MODULE 07B).  
-`minigames/sigma/` реализован (MODULE 07C).  
-`minigames/money/` реализован (MODULE 07D).  
-`game/girls/` реализован (MODULE 08).  
-`game/dating/` реализован (MODULE 09).  
-`game/relationships/` реализован (MODULE 10).  
-`game/story/` реализован (MODULE 11).  
-`world/` каркас 9 локаций реализован (MODULE 12).  
-`game/day/` + `game/salary/` реализова зарплаты (MODULE 13).  
-`data/content/` production content through final pack (MODULE 14A+14B+17+20+21); catalog **14/14** girls/rivals; inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`, `docs/content/MANUAL_CONTENT_17.md`.
-`game/content/test/module_14a_vertical_test.tscn` — MODULE 14A headless integration runner.
-`game/content/test/module_14b_vertical_test.tscn` — MODULE 14B Editor → STAGE_4 / MEDIA_ATTENTION headless runner.
-`ui/phone/` функциональный журнал: status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ + salary; STAGE_4→6 as MODULE 08–20; FINALE: final target completed via `GameState.is_girl_conquered(girl_final_target)`; финальный phone/art polish — MODULE 22.  
-`ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
-`game/media/test/media_test.tscn` — MODULE 15 Media headless runner.
-`game/dating_overload/test/dating_overload_test.tscn` — MODULE 16 Dating Overload headless runner.
-`game/first_clone/test/first_clone_test.tscn` — MODULE 17 First Clone headless runner.
-`game/clone_incremental/test/clone_incremental_test.tscn` — MODULE 18 Clone Incremental headless runner.
-`game/clone_visualization/test/clone_visualization_test.tscn` — MODULE 19 Physical Clone Visualization headless runner.
-`game/late_game/test/late_game_test.tscn` — MODULE 20 Late Game Expansion headless runner.
-`game/final_date/test/final_date_test.tscn` — MODULE 21 Final Date Sequence headless runner.
-Laboratory (`world/locations/laboratory/`): MODULE 19 local→mass visuals.
-Production Area (`world/locations/production_area/`): MODULE 20 Global Terminal + Reach visuals + optional events.
-Final location (`world/locations/final_location/`): MODULE 21 staged finale; STOP before MODULE 22 polish.
+Production path through MODULE 22 is presentation-complete for F5→ending UI. Remaining systems:
+
+- MODULE 23 — audio / animation / feedback (not started);
+- MODULE 24 — save/load + settings persistence (tutorials / UI scale currently runtime-only).
+
+Catalog **14/14** girls/rivals; inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`, `docs/content/MANUAL_CONTENT_17.md`.  
+Gameplay headless runners remain under each `game/**/test/` and `minigames/**/test/`.  
+UI presentation runners: `ui/hud/test/`, `ui/progression/test/`.  
+STOP before MODULE 23.
 
 ## Donor
 

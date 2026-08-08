@@ -108,6 +108,10 @@ func is_input_phase() -> bool:
 	return phase == Phase.PLAYER_REPEAT or phase == Phase.PLAYER_OWN
 
 
+func is_pre_roll_for_own() -> bool:
+	return _pre_roll_target_own
+
+
 func should_show_rhythm_clue() -> bool:
 	if not rhythm_clue_active_for_phase or not is_input_phase():
 		return false

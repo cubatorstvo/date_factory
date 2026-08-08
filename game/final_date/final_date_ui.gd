@@ -1,7 +1,12 @@
 class_name FinalDateUI
 extends CanvasLayer
 ## Functional modals for MODULE 21 final date (events, failure, ending).
+## MODULE 22: theme + readability only — behavior unchanged.
 
+
+const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
+const COLOR_NEUTRAL: Color = Color(0.72, 0.76, 0.70, 1.0)
+const COLOR_LOCKED: Color = Color(0.78, 0.62, 0.52, 1.0)
 
 signal option_selected(option_id: StringName)
 signal continue_pressed()
@@ -9,11 +14,13 @@ signal retry_pressed()
 signal return_pressed()
 signal ending_continue_pressed()
 
+var _root: Control = null
 var _panel: PanelContainer = null
 var _title: Label = null
 var _body: RichTextLabel = null
 var _options: VBoxContainer = null
-var _footer: HBoxContainer = null
+var _footer: VBoxContainer = null
+var _theme: Theme = null
 var _mode: String = ""
 var _option_ids: Array[StringName] = []
 
@@ -21,8 +28,18 @@ var _option_ids: Array[StringName] = []
 func _ready() -> void:
 	layer = 80
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	set_process_unhandled_input(true)
+	_theme = _load_theme()
 	_build()
 	hide_ui()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not is_open():
+		return
+	# ESC must not silently abort the final-date attempt (MODULE 21).
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
 
 
 func is_open() -> bool:
@@ -52,7 +69,7 @@ func show_plain(title: String, body: String, continue_label: String = "Дале�
 	_mode = "plain"
 	_clear_options()
 	_title.text = title
-	_body.text = body
+	_set_body_plain(body)
 	_add_footer_button(continue_label, _on_continue)
 	_open()
 
@@ -61,18 +78,34 @@ func show_event_choices(prompt: String, choices: Array[Dictionary]) -> void:
 	_mode = "event"
 	_clear_options()
 	_title.text = "Финальное свидание"
-	_body.text = prompt
+	_set_body_plain(prompt)
+	var inserted_neutral_sep: bool = false
 	for choice in choices:
 		var oid: StringName = choice.get("id", &"") as StringName
 		var label: String = String(choice.get("label", ""))
 		var enabled: bool = bool(choice.get("enabled", true))
 		var reason: String = String(choice.get("reason", ""))
+		var kind: int = int(choice.get("kind", -1))
+		var is_neutral: bool = _is_neutral_choice(label, kind)
+		if is_neutral and not inserted_neutral_sep:
+			_options.add_child(_make_neutral_separator())
+			inserted_neutral_sep = true
 		var btn := Button.new()
-		btn.text = label if reason == "" else "%s  (%s)" % [label, reason]
+		btn.text = _present_choice_label(label, reason, enabled, kind)
 		btn.disabled = not enabled
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		btn.custom_minimum_size = Vector2(0, 44)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.add_theme_font_size_override("font_size", 15)
+		if is_neutral:
+			btn.add_theme_color_override("font_color", COLOR_NEUTRAL)
+			btn.modulate = Color(0.92, 0.95, 0.90, 1.0)
+		elif not enabled:
+			btn.modulate = Color(0.78, 0.72, 0.68, 1.0)
+			btn.add_theme_color_override("font_disabled_color", COLOR_LOCKED)
 		var captured: StringName = oid
-		btn.pressed.connect(func() -> void: _emit_option(captured))
+		if enabled:
+			btn.pressed.connect(func() -> void: _emit_option(captured))
 		_options.add_child(btn)
 		_option_ids.append(oid)
 	_open()
@@ -82,9 +115,8 @@ func show_failure_rival() -> void:
 	_mode = "failure_rival"
 	_clear_options()
 	_title.text = "СВИДАНИЕ ПРЕРВАНО"
-	_body.text = (
-		"Последняя:\n«У нас принято завершать встречу после первого локального свержения.»\n\n"
-		+ "Попытка не засчитана."
+	_set_body_failure(
+		"Последняя:\n«У нас принято завершать встречу после первого локального свержения.»"
 	)
 	_add_footer_button("Повторить свидание целиком", _on_retry)
 	_add_footer_button("Вернуться", _on_return)
@@ -94,11 +126,10 @@ func show_failure_rival() -> void:
 func show_failure_connection() -> void:
 	_mode = "failure_connection"
 	_clear_options()
-	_title.text = "СВИДАНИЕ НЕ СЛОЖИЛОСЬ"
-	_body.text = (
+	_title.text = "СВИДАНИЕ ПРЕРВАНО"
+	_set_body_failure(
 		"Последняя:\n«Ты очень хорошо масштабируешься.\n"
-		+ "Я пока не поняла, с кем именно разговариваю.»\n\n"
-		+ "Попытка не засчитана."
+		+ "Я пока не поняла, с кем именно разговариваю.»"
 	)
 	_add_footer_button("Повторить свидание целиком", _on_retry)
 	_add_footer_button("Вернуться", _on_return)
@@ -109,7 +140,7 @@ func show_success_dialogue() -> void:
 	_mode = "success_dialogue"
 	_clear_options()
 	_title.text = "ЦЕЛЬ ДОСТИГНУТА"
-	_body.text = (
+	_set_body_plain(
 		"Последняя:\n«Значит, вся эта система была нужна, чтобы в конце дойти сюда лично?»\n\n"
 		+ "Герой:\n«Да. Делегировать финал было бы странно.»\n\n"
 		+ "Последняя:\n«Это первый разумный предел, который ты назвал сегодня.»"
@@ -121,11 +152,16 @@ func show_success_dialogue() -> void:
 func show_ending(summary: String) -> void:
 	_mode = "ending"
 	_clear_options()
-	_title.text = "ПЛАНЕТАРНЫЙ ПРОЕКТ:\nЗАВЕРШЁН"
-	var text: String = "ПРИЧИНА:\nЦЕЛЬ ДОСТИГНУТА\n\nDATE FACTORY"
-	if summary.strip_edges() != "":
-		text += "\n\n" + summary
-	_body.text = text
+	_title.text = "DATE FACTORY"
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("ЦЕЛЬ ДОСТИГНУТА")
+	lines.append("")
+	var stats: PackedStringArray = _format_ending_stats(summary)
+	for line in stats:
+		lines.append(line)
+	_set_body_plain("\n".join(lines))
+	_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_add_footer_button("Продолжить", _on_ending_continue)
 	_open()
 
@@ -164,47 +200,60 @@ func press_return() -> bool:
 
 
 func _build() -> void:
-	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(root)
+	_root = Control.new()
+	_root.name = "Root"
+	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.mouse_filter = Control.MOUSE_FILTER_STOP
+	if _theme != null:
+		_root.theme = _theme
+	add_child(_root)
 	var dim := ColorRect.new()
+	dim.name = "Dim"
 	dim.color = Color(0.02, 0.03, 0.05, 0.72)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_child(dim)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_root.add_child(dim)
 	_panel = PanelContainer.new()
+	_panel.name = "Panel"
 	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.custom_minimum_size = Vector2(720, 420)
 	_panel.offset_left = -360
 	_panel.offset_top = -210
 	_panel.offset_right = 360
 	_panel.offset_bottom = 210
-	root.add_child(_panel)
+	if _theme != null:
+		_panel.theme = _theme
+	_root.add_child(_panel)
 	var margin := MarginContainer.new()
+	margin.name = "Margin"
 	margin.add_theme_constant_override("margin_left", 24)
 	margin.add_theme_constant_override("margin_right", 24)
 	margin.add_theme_constant_override("margin_top", 20)
 	margin.add_theme_constant_override("margin_bottom", 20)
 	_panel.add_child(margin)
 	var vbox := VBoxContainer.new()
+	vbox.name = "VBox"
 	vbox.add_theme_constant_override("separation", 12)
 	margin.add_child(vbox)
 	_title = Label.new()
+	_title.name = "Title"
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_title.add_theme_font_size_override("font_size", 22)
+	_title.add_theme_font_size_override("font_size", 24)
 	vbox.add_child(_title)
 	_body = RichTextLabel.new()
-	_body.bbcode_enabled = false
+	_body.name = "Body"
+	_body.bbcode_enabled = true
 	_body.fit_content = true
 	_body.scroll_active = true
 	_body.custom_minimum_size = Vector2(0, 160)
 	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_body)
 	_options = VBoxContainer.new()
+	_options.name = "Options"
 	_options.add_theme_constant_override("separation", 8)
 	vbox.add_child(_options)
-	_footer = HBoxContainer.new()
-	_footer.alignment = BoxContainer.ALIGNMENT_END
+	_footer = VBoxContainer.new()
+	_footer.name = "Footer"
 	_footer.add_theme_constant_override("separation", 10)
 	vbox.add_child(_footer)
 
@@ -218,6 +267,10 @@ func _open() -> void:
 
 func _clear_options() -> void:
 	_option_ids.clear()
+	if _title != null:
+		_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	if _body != null:
+		_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	if _options != null:
 		for child in _options.get_children():
 			child.queue_free()
@@ -229,6 +282,8 @@ func _clear_options() -> void:
 func _add_footer_button(text: String, cb: Callable) -> void:
 	var btn := Button.new()
 	btn.text = text
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.custom_minimum_size = Vector2(0, 40)
 	btn.pressed.connect(cb)
 	_footer.add_child(btn)
 
@@ -251,3 +306,109 @@ func _on_return() -> void:
 
 func _on_ending_continue() -> void:
 	ending_continue_pressed.emit()
+
+
+func _load_theme() -> Theme:
+	if ResourceLoader.exists(THEME_PATH):
+		var theme_res: Resource = load(THEME_PATH)
+		if theme_res is Theme:
+			return theme_res as Theme
+	return null
+
+
+func _set_body_plain(text: String) -> void:
+	_body.bbcode_enabled = false
+	_body.text = text
+
+
+func _set_body_failure(dialogue: String) -> void:
+	_body.bbcode_enabled = true
+	_body.text = (
+		"%s\n\n[color=#f2e6b8][b]Попытка не засчитана[/b][/color]"
+		% dialogue
+	)
+
+
+func _is_neutral_choice(label: String, kind: int) -> bool:
+	if kind == int(FinalDateTypes.EventOptionKind.NEUTRAL):
+		return true
+	return label.begins_with("[Нейтрально]")
+
+
+func _make_neutral_separator() -> Control:
+	var wrap := VBoxContainer.new()
+	wrap.add_theme_constant_override("separation", 4)
+	var sep := HSeparator.new()
+	wrap.add_child(sep)
+	var hint := Label.new()
+	hint.text = "[Нейтрально]"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 13)
+	hint.add_theme_color_override("font_color", COLOR_NEUTRAL)
+	wrap.add_child(hint)
+	return wrap
+
+
+func _present_choice_label(label: String, reason: String, enabled: bool, kind: int) -> String:
+	if _is_neutral_choice(label, kind):
+		return label
+	var char_name: String = ""
+	var body: String = label.strip_edges()
+	if body.begins_with("[") and "]" in body:
+		var end_bracket: int = body.find("]")
+		char_name = body.substr(1, end_bracket - 1).strip_edges()
+		body = body.substr(end_bracket + 1).strip_edges()
+	var level: int = FinalDateTypes.CHAR_LEVEL_REQUIRED
+	var reason_clean: String = reason.strip_edges()
+	if reason_clean != "":
+		var parts: PackedStringArray = reason_clean.split(" ")
+		if parts.size() >= 2:
+			var maybe_level: int = int(parts[parts.size() - 1])
+			if maybe_level > 0:
+				level = maybe_level
+			if char_name == "":
+				var name_parts: PackedStringArray = PackedStringArray()
+				for i in range(parts.size() - 1):
+					name_parts.append(parts[i])
+				char_name = " ".join(name_parts)
+	elif char_name == "":
+		char_name = FinalDateTypes.char_label(kind as FinalDateTypes.EventOptionKind)
+	var badge: String = "[%s %d]" % [char_name, level]
+	var text: String = "%s %s" % [badge, body]
+	if not enabled:
+		var req: String = ""
+		if reason_clean.begins_with("Требуется"):
+			req = reason_clean
+		elif reason_clean != "":
+			req = "Требуется %s" % reason_clean
+		else:
+			req = "Требуется %s %d" % [char_name, level]
+		text = "%s     %s" % [text, req]
+	return text
+
+
+func _format_ending_stats(summary: String) -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	var raw: String = summary.strip_edges()
+	if raw == "":
+		return out
+	for line in raw.split("\n"):
+		var row: String = String(line).strip_edges()
+		if row == "":
+			continue
+		var parts: PackedStringArray = row.split(":", true, 1)
+		if parts.size() != 2:
+			out.append(row)
+			continue
+		var key: String = parts[0].strip_edges()
+		var value_raw: String = parts[1].strip_edges()
+		var value_num: int = int(value_raw)
+		var display_key: String = key
+		if key == "Клонов" or key == "Клоны":
+			display_key = "Клоны"
+			out.append("%s: %s" % [display_key, UiNumberFormat.format_compact(value_num)])
+		elif key.to_lower().contains("money") or key.contains("Деньги"):
+			out.append("%s: %s" % [display_key, UiNumberFormat.format_money(value_num)])
+		else:
+			out.append("%s: %s" % [display_key, UiNumberFormat.format_grouped(value_num)])
+	return out

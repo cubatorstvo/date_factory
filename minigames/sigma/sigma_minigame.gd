@@ -1,18 +1,25 @@
 class_name SigmaMinigame
 extends CanvasLayer
-## Sigma Pressure overlay UI + mouse input (MODULE 07C). World stays visible behind.
+## Sigma Pressure overlay UI + mouse input (MODULE 07C / MODULE 22 presentation).
 
 
 signal match_finished(result: RivalCompetitionResult)
+
+const TITLE_TEXT: String = "Сигма-давление"
+const TRACK_DESIGNED: float = 520.0
 
 var match_state: SigmaMatch = null
 var accept_input: bool = true
 var auto_tick: bool = true
 var _finished_emitted: bool = false
+var _result_hold: float = 0.0
+var _pending_result: RivalCompetitionResult = null
 var _request: RivalCompetitionRequest = null
 var _rival_actor: Node3D = null
 var _ignore_first_mouse: bool = true
 
+var _root: Control = null
+var _title_label: Label = null
 var _score_label: Label = null
 var _phase_label: Label = null
 var _hint_label: Label = null
@@ -20,11 +27,12 @@ var _special_label: Label = null
 var _feedback_label: Label = null
 var _progress_label: Label = null
 var _pressure_label: Label = null
+var _track_wrap: Control = null
 var _track: ColorRect = null
 var _normal_zone: ColorRect = null
 var _perfect_zone: ColorRect = null
 var _indicator: ColorRect = null
-var _track_width: float = 520.0
+var _track_width: float = TRACK_DESIGNED
 
 
 func _ready() -> void:
@@ -59,6 +67,8 @@ func setup(
 		observers,
 	)
 	_finished_emitted = false
+	_result_hold = 0.0
+	_pending_result = null
 	_ignore_first_mouse = true
 	_present_rival(&"idle")
 	_refresh_ui()
@@ -67,12 +77,15 @@ func setup(
 func setup_match(state: SigmaMatch) -> void:
 	match_state = state
 	_finished_emitted = false
+	_result_hold = 0.0
+	_pending_result = null
 	_ignore_first_mouse = true
 	_refresh_ui()
 
 
 func force_finish_emit() -> void:
-	_try_emit_finished()
+	_result_hold = 0.0
+	_try_emit_finished(true)
 
 
 func _read_perks_from_game_state() -> Dictionary:
@@ -97,10 +110,15 @@ func _read_perks_from_game_state() -> Dictionary:
 
 
 func _process(delta: float) -> void:
+	if _result_hold > 0.0:
+		_result_hold = maxf(0.0, _result_hold - delta)
+		if _result_hold <= 0.0:
+			_try_emit_finished(false)
+		return
 	if match_state == null:
 		return
 	if match_state.ended:
-		_try_emit_finished()
+		_try_emit_finished(false)
 		return
 	var prev_telegraph: int = match_state.telegraph_direction
 	var prev_feedback: SigmaMatch.Feedback = match_state.last_feedback
@@ -120,11 +138,13 @@ func _process(delta: float) -> void:
 		else:
 			_present_rival(&"gesture")
 	_refresh_ui()
-	_try_emit_finished()
+	_try_emit_finished(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not accept_input or match_state == null or match_state.ended:
+		return
+	if _result_hold > 0.0:
 		return
 	if match_state.phase != SigmaMatch.Phase.HOLDING:
 		return
@@ -150,14 +170,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _try_emit_finished() -> void:
+func _try_emit_finished(force: bool) -> void:
 	if _finished_emitted or match_state == null or not match_state.ended:
+		return
+	if _pending_result == null:
+		_pending_result = match_state.build_result_once()
+		if _pending_result == null:
+			return
+		if not force:
+			MinigameShell.build_result_overlay(_root, _pending_result)
+			_result_hold = MinigameShell.RESULT_HOLD_SEC
+			accept_input = false
+			_refresh_ui()
+			return
+	if not force and _result_hold > 0.0:
 		return
 	_finished_emitted = true
 	accept_input = false
-	var res: RivalCompetitionResult = match_state.build_result_once()
-	if res != null:
-		match_finished.emit(res)
+	match_finished.emit(_pending_result)
 
 
 func _present_rival(alias: StringName) -> void:
@@ -172,25 +202,45 @@ func _present_rival(alias: StringName) -> void:
 
 
 func _build_ui() -> void:
-	var root: Control = Control.new()
-	root.name = "Root"
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(root)
+	_root = Control.new()
+	_root.name = "Root"
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_root)
+	MinigameShell.apply_theme(_root)
+
+	_title_label = Label.new()
+	_title_label.name = "Title"
+	_title_label.text = TITLE_TEXT
+	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_title_label.offset_left = -320.0
+	_title_label.offset_right = 320.0
+	_title_label.offset_top = 28.0
+	_title_label.offset_bottom = 64.0
+	_title_label.add_theme_font_size_override("font_size", 26)
+	_root.add_child(_title_label)
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.name = "Panel"
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	panel.offset_left = -340.0
 	panel.offset_right = 340.0
-	panel.offset_top = -280.0
+	panel.offset_top = -300.0
 	panel.offset_bottom = -20.0
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(panel)
+	_root.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(margin)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 6)
-	panel.add_child(vbox)
+	margin.add_child(vbox)
 
 	_score_label = Label.new()
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -199,18 +249,18 @@ func _build_ui() -> void:
 
 	_phase_label = Label.new()
 	_phase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_phase_label.add_theme_font_size_override("font_size", 26)
+	_phase_label.add_theme_font_size_override("font_size", 24)
 	vbox.add_child(_phase_label)
 
-	var track_wrap: Control = Control.new()
-	track_wrap.custom_minimum_size = Vector2(_track_width, 48.0)
-	vbox.add_child(track_wrap)
+	_track_wrap = Control.new()
+	_track_wrap.custom_minimum_size = Vector2(_track_width, 48.0)
+	vbox.add_child(_track_wrap)
 
 	_track = ColorRect.new()
 	_track.color = Color(0.12, 0.12, 0.14, 0.92)
 	_track.position = Vector2.ZERO
 	_track.size = Vector2(_track_width, 40.0)
-	track_wrap.add_child(_track)
+	_track_wrap.add_child(_track)
 
 	_normal_zone = ColorRect.new()
 	_normal_zone.color = Color(0.35, 0.55, 0.75, 0.55)
@@ -227,19 +277,24 @@ func _build_ui() -> void:
 
 	_pressure_label = Label.new()
 	_pressure_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pressure_label.add_theme_font_size_override("font_size", 15)
 	vbox.add_child(_pressure_label)
 
 	_progress_label = Label.new()
 	_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_progress_label.add_theme_font_size_override("font_size", 15)
 	vbox.add_child(_progress_label)
 
 	_hint_label = Label.new()
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_label.text = "Мышь влево/вправо — держи лицо"
+	_hint_label.add_theme_font_size_override("font_size", 16)
+	_hint_label.text = "Мышь — удерживать давление"
 	vbox.add_child(_hint_label)
 
 	_special_label = Label.new()
 	_special_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_special_label.add_theme_font_size_override("font_size", 15)
+	_special_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_special_label)
 
 	_feedback_label = Label.new()
@@ -251,22 +306,33 @@ func _build_ui() -> void:
 func _refresh_ui() -> void:
 	if match_state == null:
 		return
-	_score_label.text = "Ты %d : %d Соперник   цель %d" % [
+	_update_track_width()
+	_score_label.text = MinigameShell.format_score(
 		match_state.player_score,
 		match_state.rival_score,
 		match_state.target_score,
-	]
+	)
 	_phase_label.text = _phase_text()
-	_progress_label.text = "Удержание %.1f / %.1f   время %.1f / %.1f" % [
+	_progress_label.text = "В зоне: %.1f / %.1f" % [
 		match_state.hold_progress,
 		SigmaMatch.REQUIRED_HOLD,
-		match_state.section_time,
-		SigmaMatch.SECTION_MAX,
 	]
 	_pressure_label.text = _pressure_text()
 	_feedback_label.text = _feedback_text(match_state.last_feedback)
 	_special_label.text = _special_text()
 	_layout_meter()
+
+
+func _update_track_width() -> void:
+	var next_w: float = MinigameShell.responsive_track_width(get_viewport(), TRACK_DESIGNED)
+	if is_equal_approx(next_w, _track_width):
+		_track.size = Vector2(_track_width, 40.0)
+		return
+	_track_width = next_w
+	if _track_wrap != null:
+		_track_wrap.custom_minimum_size = Vector2(_track_width, 48.0)
+	if _track != null:
+		_track.size = Vector2(_track_width, 40.0)
 
 
 func _layout_meter() -> void:
@@ -304,7 +370,7 @@ func _phase_text() -> String:
 			var d: Dictionary = match_state.disturbances[match_state.active_disturbance_index]
 			active = int(d.get("state", 0)) == int(SigmaMatch.DistState.ACTIVE)
 		return "ДАВЛЕНИЕ" if active else "ДАВЛЕНИЕ →"
-	return "ДЕРЖИ ЛИЦО"
+	return "СОХРАНЯЙ ПАРАМЕТР В ЗОНЕ"
 
 
 func _pressure_text() -> String:

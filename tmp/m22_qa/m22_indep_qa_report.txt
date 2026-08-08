@@ -1,0 +1,89 @@
+INFO: window_size=1280x720 (prefer 1280x720)
+PASS: reset_to_start SUCCESS
+PASS: boot location apartment
+PASS: get_game_hud non-null
+PASS: exactly one GameHUD after boot (got 1)
+PASS: PhoneJournal persistent present
+PASS: exactly one PhoneJournal
+PASS: HUD money compact got=$ 12.4K
+PASS: HUD authority
+PASS: HUD experience
+PASS: HUD points
+PASS: HUD visible GAMEPLAY
+INFO: SHOT res://tmp/m22_qa/01_apartment_hud.png err=0 size=1280x720
+PASS: format_compact 12400
+PASS: format_compact 1.25M
+PASS: format_compact 1B
+PASS: format_money 120
+PASS: format_signed +1
+PASS: player present
+PASS: HUD hidden MODAL_UI
+PASS: HUD returns GAMEPLAY
+PASS: control mode GAMEPLAY
+PASS: travel apartment no-dupe
+PASS: exactly one GameHUD after travel
+PASS: same GameHUD instance
+PASS: phone open prologue
+PASS: HUD hidden while phone open
+PASS: prologue STATUS visible
+PASS: prologue STORY visible
+PASS: prologue GIRLS visible
+PASS: prologue MEDIA hidden
+PASS: prologue CLONES hidden
+INFO: SHOT res://tmp/m22_qa/02_phone_status.png err=0 size=1280x720
+INFO: SHOT res://tmp/m22_qa/03_phone_story.png err=0 size=1280x720
+INFO: SHOT res://tmp/m22_qa/04_phone_girls.png err=0 size=1280x720
+PASS: status text no STAGE_ id
+PASS: story text no MEDIA_ATTENTION
+PASS: phone closed
+PASS: HUD visible after phone close
+PASS: ProgressionSelfAssessment present
+PASS: Progression UI open
+PASS: HUD hidden during Progression
+INFO: SHOT res://tmp/m22_qa/05_progression_ui.png err=0 size=1280x720
+PASS: HUD after Progression close
+PASS: money seeded before reset
+PASS: reset_for_new_game clears money
+PASS: restore_stage PROLOGUE
+PASS: reset_to_start after restore
+PASS: HUD single after reset cycle
+INFO: ASSISTED: STAGE_4 media unlock
+PASS: MEDIA feature unlocked STAGE_4
+PASS: STAGE_4 MEDIA visible
+PASS: STAGE_4 CLONES still hidden
+PASS: media attention text no MEDIA_ATTENTION got=Внимание: 0 / 100
+INFO: ASSISTED: dating UI via girl_neighbor contact
+PASS: girl_neighbor def
+PASS: start_date ok err=OK
+PASS: DatingUI visible
+PASS: HUD hidden during DatingUI
+INFO: SHOT res://tmp/m22_qa/06_dating_ui.png err=0 size=1280x720
+INFO: ASSISTED: rival choose UI
+PASS: rival start_encounter ok reason=OK
+PASS: RivalEncounterUI choose visible
+INFO: SHOT res://tmp/m22_qa/07_rival_choose.png err=0 size=1280x720
+INFO: ASSISTED: STAGE_5 + first clone + Clone Terminal
+PASS: LABORATORY unlocked
+PASS: travel laboratory
+PASS: first clone start_sequence
+PASS: complete_calibration_for_test
+PASS: assign_work
+PASS: total_clones>=1
+PASS: CLONES tab visible after first clone
+PASS: CloneTerminalInteractable present
+PASS: CloneTerminalUI open
+PASS: HUD hidden Clone Terminal
+INFO: SHOT res://tmp/m22_qa/08_clone_terminal.png err=0 size=1280x720
+INFO: ASSISTED: STAGE_6 global terminal
+PASS: travel production_area/lab STAGE_6
+PASS: GlobalExpansionTerminalInteractable present loc=production_area
+PASS: GlobalExpansionTerminalUI open
+INFO: SHOT res://tmp/m22_qa/09_global_terminal.png err=0 size=1280x720
+PASS: final exactly one GameHUD
+PASS: final exactly one PhoneJournal
+PASS: no technical IDs in scanned UI labels hits=
+PASS: no res://audio (M23)
+PASS: no res://sfx (M23)
+PASS: no res://vfx (M23)
+PASS: no MODULE_23 doc file as product audio start
+INFO: summary passed=73 failed=0 tech_hits=0

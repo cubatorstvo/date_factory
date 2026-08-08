@@ -13,6 +13,17 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 0
+
+[node name="Dim" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.04, 0.04, 0.05, 0.55)
 
 [node name="Panel" type="PanelContainer" parent="Root"]
 layout_mode = 1
@@ -21,38 +32,79 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -280.0
-offset_top = -220.0
-offset_right = 280.0
-offset_bottom = 220.0
+offset_left = -320.0
+offset_top = -260.0
+offset_right = 320.0
+offset_bottom = 260.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Margin" type="MarginContainer" parent="Root/Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 16
+theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
+theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="Root/Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Root/Panel/Margin/VBox"]
+[node name="Header" type="VBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="GirlName" type="Label" parent="Root/Panel/Margin/VBox/Header"]
 layout_mode = 2
 text = "Свидание"
 horizontal_alignment = 1
 
-[node name="Body" type="Label" parent="Root/Panel/Margin/VBox"]
+[node name="PhaseLabel" type="Label" parent="Root/Panel/Margin/VBox/Header"]
 layout_mode = 2
-autowrap_mode = 3
 text = ""
+horizontal_alignment = 1
 
-[node name="Reaction" type="Label" parent="Root/Panel/Margin/VBox"]
+[node name="RelationshipLabel" type="Label" parent="Root/Panel/Margin/VBox/Header"]
 layout_mode = 2
 text = ""
+horizontal_alignment = 1
+
+[node name="GreetingNote" type="Label" parent="Root/Panel/Margin/VBox/Header"]
+visible = false
+layout_mode = 2
+text = "Не влияет на отношения"
+horizontal_alignment = 1
+
+[node name="Center" type="VBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="EventTitle" type="Label" parent="Root/Panel/Margin/VBox/Center"]
+layout_mode = 2
+text = "Свидание"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="SetupText" type="Label" parent="Root/Panel/Margin/VBox/Center"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="ReactionScore" type="Label" parent="Root/Panel/Margin/VBox/Center"]
+visible = false
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+
+[node name="ReactionText" type="Label" parent="Root/Panel/Margin/VBox/Center"]
+visible = false
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="Choices" type="VBoxContainer" parent="Root/Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8

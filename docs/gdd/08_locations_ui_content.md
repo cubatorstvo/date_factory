@@ -86,7 +86,7 @@
 - Доступ локаций — `StoryFeature` (не `GameState.unlock_location` для канонических девяти).
 - `PUBLIC_CITY_ACCESS` — внутренний gate внутри `city_hub`, не отдельная location.
 - Физический телефон в квартире открывает PhoneJournal; экономика шахты — MODULE 13.
-- PhoneJournal (MODULE 14A–21): top status + Story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1, read-only counts + rates) + salary; final completion via conquered `girl_final_target`.
+- PhoneJournal (MODULE 22 tabs): STATUS / STORY / GIRLS / MEDIA / CLONES; salary under STATUS; ПЕРЕГРУЗКА under MEDIA; CLONES after total≥1 (read-only counts + rates); final completion via conquered `girl_final_target`.
 - STAGE_4 Story: photo session → publish → overload → recognition → Scientist hunt at closed laboratory gate.
 - STAGE_5 Story: before clone «Создай первого клона»; after clone → automation → President (requires first clone); clone management via lab terminal.
 - STAGE_6 Story: «Мировое расширение», Reach XX/100; Production Area open via `WORLD_EXPANSION`.
@@ -94,7 +94,8 @@
 - MODULE 17: Scientist/rival anchors at city_hub laboratory gate (`requires_overload_recognized`); laboratory hosts one-off clone machine + FirstClone representative (suppressed when MODULE 19 controller owns lab).
 - MODULE 19: lab-local `CloneVisualizationController` — 10 date rooms / 3 work / 2 free / 2 mass-flow; overflow labels + `ВНЕШНИЕ ПЛОЩАДКИ` (Работа / Свидания / Ожидают).
 - MODULE 20: President/rival near city `ToProduction` after first clone; `production_area` Global Terminal + Reach visuals + 3 optional events; Reach100 → FINALE signal.
-- MODULE 21: `final_location` + scene-local `FinalDateController`; catalog **14/14**; exhibition rivals; success ending + Continue; fail full retry. STOP before MODULE 22 polish.
+- MODULE 21: `final_location` + scene-local `FinalDateController`; catalog **14/14**; exhibition rivals; success ending + Continue; fail full retry.
+- MODULE 22: persistent GameHUD + shared Theme + five Phone tabs + Progression 32 + unified modal presentation. STOP before MODULE 23 audio/animation.
 
 
 ---
@@ -110,7 +111,7 @@
 - Опытность;
 - доступные Баллы прокачки.
 
-В поздней лаборатории дополнительно показываются производственные числа.
+В поздней лаборатории дополнительно показываются производственные числа (Phone КЛОНЫ / терминалы — не на постоянном HUD).
 
 ## 47.2. Требования
 
@@ -119,7 +120,7 @@
 - результат мини-игры понятен;
 - реакция девушки показывает `+1`, `0` или `-1`;
 - причины реакций можно восстановить логически;
-- большие поздние числа читаются мгновенно.
+- большие поздние числа читаются мгновенно (K/M/B).
 
 ## 47.3. Телефон после медийной стадии
 
@@ -134,21 +135,21 @@
 
 Это не полноценный симулятор социальной сети.
 
-### Реализация (MODULE 15 / 16 / 17 / 18 / 20 / 21)
+### Реализация (MODULE 15–22)
 
+Architecture: `docs/ui/UI_ARCHITECTURE.md`.
+
+- Persistent `GameHUD` under `WorldHost/PersistentUI`: Money / Auth / XP / UP only; event-driven; hidden during modal/minigame/pause; notification rail + stage/feature toasts.
+- Shared Theme `ui/theme/date_factory_theme.tres`; `UiNumberFormat` K/M/B; UI scale 100/125/150 runtime-only; seven tutorials runtime-only.
+- Phone five tabs: STATUS / STORY / GIRLS / MEDIA (`MEDIA_ATTENTION`) / CLONES (`total_clones >= 1`). Salary on STATUS; ПЕРЕГРУЗКА on MEDIA.
 - `Attention` = persistent media meter `0..100`, non-spendable.
 - Photo session creates 3 fixed photo records; one photo publish per GameDay.
-- Phone MEDIA section shows Attention, publish buttons, NEW/READ incoming (Open → journal, no schedule), feed newest-first.
-- MODULE15 incoming offers are unscheduled initiatives; MODULE16 owns capacity/overlap.
-- Four authored thresholds (15/30/45/60); overload-ready at Attention ≥ 45 and ≥ 3 offers.
-- Phone ПЕРЕГРУЗКА (after MEDIA): daily personal capacity, backlog rows (OVERDUE then WAITING with 19:00/20:00 labels), Feed Boost «Поднять волну» until recognition.
-- Realization modal uses exact «Проблема не в графике / Проблема в количестве меня» on next Phone open or safe GAMEPLAY; mechanical recognition does not wait for the modal.
-- Overlap is authored slot labels, not a real clock; intentionally not a calendar manager.
-- MODULE17 Phone: after recognition → «Найти Учёную у закрытой лаборатории»; STAGE_5 before clone → «Лаборатория открыта. / Создай первого клона.»
-- MODULE18 Phone: STAGE_5 after clone → automation / clone growth; КЛОНЫ shows Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин (read-only; local assign/upgrades stay on lab terminal).
-- MODULE19: physical caps only in laboratory visualization (10/3/2/2 + mass corridor).
-- MODULE20 Phone: STAGE_5 President copy (XP / rival / meet at Production); STAGE_6 Reach XX/100 + rates; FINALE handoff → extraterrestrial goal. Global upgrades at Production Area terminal.
-- MODULE21 UI: functional `FinalDateUI` (event choices, fail→retry, success dialogue, ending + `[Продолжить]`). Phone marks final girl completed when conquered. STOP before MODULE 22 phone/art polish.
+- MEDIA: Attention, publish, NEW/READ incoming (Open → journal, no schedule), feed newest-first; overload capacity/backlog/Feed Boost when active.
+- Realization modal exact «Проблема не в графике / Проблема в количестве меня» on next Phone open or safe GAMEPLAY; mechanical recognition does not wait for the modal.
+- CLONES read-only rates; assign/upgrades on lab / Global terminals.
+- Progression UI: all 32 perks via apartment Самооценка; no Phone perk purchase.
+- Dating / RivalEncounterUI / minigames (`MinigameShell`) / terminals / FinalDateUI: themed presentation; gameplay remains source of truth; at most one modal owner.
+- STOP before MODULE 23 audio/animation/VFX.
 
 ---
 

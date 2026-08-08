@@ -1,29 +1,36 @@
 class_name SlapMinigame
 extends CanvasLayer
-## Slap timing overlay UI (MODULE 07A). World stays visible behind.
+## Slap timing overlay UI (MODULE 07A / MODULE 22 presentation). World stays visible behind.
 
 
 signal match_finished(result: RivalCompetitionResult)
 
 const FEEDBACK_HOLD: float = 0.2
+const TITLE_TEXT: String = "Пощёчинный бой"
+const TRACK_DESIGNED: float = 640.0
 
 var match_state: SlapMatch = null
 var accept_input: bool = true
 var auto_tick: bool = true
 var _feedback_timer: float = 0.0
+var _result_hold: float = 0.0
 var _finished_emitted: bool = false
+var _pending_result: RivalCompetitionResult = null
 var _request: RivalCompetitionRequest = null
 
+var _root: Control = null
+var _title_label: Label = null
 var _score_label: Label = null
 var _phase_label: Label = null
 var _hint_label: Label = null
 var _special_label: Label = null
 var _feedback_label: Label = null
+var _track_wrap: Control = null
 var _track: ColorRect = null
 var _zone: ColorRect = null
 var _perfect: ColorRect = null
 var _pointer: ColorRect = null
-var _track_width: float = 640.0
+var _track_width: float = TRACK_DESIGNED
 
 
 func _ready() -> void:
@@ -52,6 +59,8 @@ func setup(
 	)
 	_finished_emitted = false
 	_feedback_timer = 0.0
+	_result_hold = 0.0
+	_pending_result = null
 	_refresh_ui()
 
 
@@ -78,19 +87,27 @@ func _read_perks_from_game_state() -> Dictionary:
 
 func force_finish_emit() -> void:
 	_feedback_timer = 0.0
-	_try_emit_finished()
+	_result_hold = 0.0
+	_try_emit_finished(true)
 
 
 func setup_match(state: SlapMatch) -> void:
 	match_state = state
 	_finished_emitted = false
 	_feedback_timer = 0.0
+	_result_hold = 0.0
+	_pending_result = null
 	_refresh_ui()
 
 
 func _process(delta: float) -> void:
+	if _result_hold > 0.0:
+		_result_hold = maxf(0.0, _result_hold - delta)
+		if _result_hold <= 0.0:
+			_try_emit_finished(false)
+		return
 	if match_state == null or match_state.ended:
-		_try_emit_finished()
+		_try_emit_finished(false)
 		return
 	if _feedback_timer > 0.0:
 		_feedback_timer = maxf(0.0, _feedback_timer - delta)
@@ -105,13 +122,13 @@ func _process(delta: float) -> void:
 		if match_state.ended and not before_ended:
 			_feedback_timer = FEEDBACK_HOLD
 	_refresh_ui()
-	_try_emit_finished()
+	_try_emit_finished(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not accept_input or match_state == null or match_state.ended:
 		return
-	if _feedback_timer > 0.0:
+	if _feedback_timer > 0.0 or _result_hold > 0.0:
 		return
 	if event.is_action_pressed("minigame_special_1"):
 		if match_state.arm_double_slap():
@@ -129,42 +146,72 @@ func _unhandled_input(event: InputEvent) -> void:
 			if match_state.last_feedback != before and match_state.last_feedback != SlapMatch.Feedback.NONE:
 				_feedback_timer = FEEDBACK_HOLD
 			_refresh_ui()
-			_try_emit_finished()
+			_try_emit_finished(false)
 		get_viewport().set_input_as_handled()
 
 
-func _try_emit_finished() -> void:
+func _try_emit_finished(force: bool) -> void:
 	if _finished_emitted or match_state == null or not match_state.ended:
 		return
-	if _feedback_timer > 0.0:
+	if not force and _feedback_timer > 0.0:
+		return
+	if _pending_result == null:
+		_pending_result = match_state.build_result_once()
+		if _pending_result == null:
+			return
+		if not force:
+			MinigameShell.build_result_overlay(_root, _pending_result)
+			_result_hold = MinigameShell.RESULT_HOLD_SEC
+			accept_input = false
+			_refresh_ui()
+			return
+	if not force and _result_hold > 0.0:
 		return
 	_finished_emitted = true
 	accept_input = false
-	var res: RivalCompetitionResult = match_state.build_result_once()
-	if res != null:
-		match_finished.emit(res)
+	match_finished.emit(_pending_result)
 
 
 func _build_ui() -> void:
-	var root: Control = Control.new()
-	root.name = "Root"
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(root)
+	_root = Control.new()
+	_root.name = "Root"
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_root)
+	MinigameShell.apply_theme(_root)
+
+	_title_label = Label.new()
+	_title_label.name = "Title"
+	_title_label.text = TITLE_TEXT
+	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_title_label.offset_left = -320.0
+	_title_label.offset_right = 320.0
+	_title_label.offset_top = 28.0
+	_title_label.offset_bottom = 64.0
+	_title_label.add_theme_font_size_override("font_size", 26)
+	_root.add_child(_title_label)
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.name = "Panel"
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	panel.offset_left = -360.0
 	panel.offset_right = 360.0
-	panel.offset_top = -220.0
+	panel.offset_top = -240.0
 	panel.offset_bottom = -24.0
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(panel)
+	_root.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(margin)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 8)
-	panel.add_child(vbox)
+	margin.add_child(vbox)
 
 	_score_label = Label.new()
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -176,53 +223,57 @@ func _build_ui() -> void:
 	_phase_label.add_theme_font_size_override("font_size", 28)
 	vbox.add_child(_phase_label)
 
-	var track_wrap: Control = Control.new()
-	track_wrap.custom_minimum_size = Vector2(_track_width, 36.0)
-	vbox.add_child(track_wrap)
+	_track_wrap = Control.new()
+	_track_wrap.custom_minimum_size = Vector2(_track_width, 36.0)
+	vbox.add_child(_track_wrap)
 
 	_track = ColorRect.new()
 	_track.color = Color(0.12, 0.12, 0.14, 0.92)
 	_track.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	track_wrap.add_child(_track)
+	_track_wrap.add_child(_track)
 
 	_zone = ColorRect.new()
 	_zone.color = Color(0.35, 0.55, 0.85, 0.75)
 	_zone.size = Vector2(80, 36)
-	track_wrap.add_child(_zone)
+	_track_wrap.add_child(_zone)
 
 	_perfect = ColorRect.new()
 	_perfect.color = Color(0.95, 0.85, 0.25, 0.95)
 	_perfect.size = Vector2(30, 36)
-	track_wrap.add_child(_perfect)
+	_track_wrap.add_child(_perfect)
 
 	_pointer = ColorRect.new()
 	_pointer.color = Color(1.0, 1.0, 1.0, 1.0)
 	_pointer.size = Vector2(4, 40)
-	track_wrap.add_child(_pointer)
+	_track_wrap.add_child(_pointer)
 
 	_hint_label = Label.new()
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_label.text = "SPACE — попасть в область"
+	_hint_label.add_theme_font_size_override("font_size", 16)
+	_hint_label.text = "SPACE — удар / блок"
 	vbox.add_child(_hint_label)
 
 	_special_label = Label.new()
 	_special_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_special_label.add_theme_font_size_override("font_size", 15)
+	_special_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_special_label)
 
 	_feedback_label = Label.new()
 	_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_feedback_label.add_theme_font_size_override("font_size", 20)
+	_feedback_label.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(_feedback_label)
 
 
 func _refresh_ui() -> void:
 	if match_state == null:
 		return
-	_score_label.text = "Ты %d : %d Соперник   цель %d" % [
+	_update_track_width()
+	_score_label.text = MinigameShell.format_score(
 		match_state.player_score,
 		match_state.rival_score,
 		match_state.target_score,
-	]
+	)
 	if match_state.phase == SlapMatch.Phase.ATTACK:
 		_phase_label.text = "ПОЩЁЧИНА"
 	else:
@@ -238,6 +289,15 @@ func _refresh_ui() -> void:
 	_pointer.position = Vector2(match_state.pointer_position * _track_width - 2.0, -2.0)
 	_special_label.text = _special_text()
 	_feedback_label.text = _feedback_text(match_state.last_feedback)
+
+
+func _update_track_width() -> void:
+	var next_w: float = MinigameShell.responsive_track_width(get_viewport(), TRACK_DESIGNED)
+	if is_equal_approx(next_w, _track_width):
+		return
+	_track_width = next_w
+	if _track_wrap != null:
+		_track_wrap.custom_minimum_size = Vector2(_track_width, 36.0)
 
 
 func _special_text() -> String:
@@ -258,20 +318,22 @@ func _special_text() -> String:
 			parts.append("R — Двуручный довод")
 	if match_state.counter_armed:
 		parts.append("Ответный аргумент готов")
+	if parts.is_empty():
+		return ""
 	return "  |  ".join(parts)
 
 
 func _feedback_text(fb: SlapMatch.Feedback) -> String:
 	match fb:
 		SlapMatch.Feedback.MISS:
-			return "MISS"
+			return "МИМО"
 		SlapMatch.Feedback.HIT:
-			return "HIT"
+			return "ПОПАЛ"
 		SlapMatch.Feedback.PERFECT:
-			return "PERFECT"
+			return "ИДЕАЛЬНО"
 		SlapMatch.Feedback.BLOCK:
-			return "BLOCK"
+			return "БЛОК"
 		SlapMatch.Feedback.PERFECT_BLOCK:
-			return "PERFECT BLOCK"
+			return "ИДЕАЛЬНЫЙ БЛОК"
 		_:
 			return ""

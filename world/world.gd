@@ -8,6 +8,7 @@ signal travel_rejected(target_location_id: StringName, reason: WorldTypes.WorldT
 
 const PLAYER_SCENE_PATH := "res://characters/player/player.tscn"
 const PHONE_SCENE_PATH := "res://ui/phone/phone_journal.tscn"
+const HUD_SCENE_PATH := "res://ui/hud/game_hud.tscn"
 const HOST_NAME := "WorldHost"
 const START_LOCATION := &"apartment"
 const DEFAULT_SPAWN := &"spawn_default"
@@ -32,6 +33,7 @@ var _location_root: Node3D = null
 var _persistent_ui: CanvasLayer = null
 var _player: PlayerController = null
 var _phone: PhoneJournal = null
+var _game_hud: GameHUD = null
 var _current_location: WorldLocation = null
 var _access_provider: Callable = Callable()
 var _scene_path_overrides: Dictionary = {}
@@ -98,6 +100,7 @@ func ensure_host() -> void:
 		_host.add_child(_persistent_ui)
 	_ensure_player()
 	_ensure_phone()
+	_ensure_game_hud()
 
 
 func _ensure_player() -> void:
@@ -141,6 +144,33 @@ func _ensure_phone() -> void:
 	_phone.name = "PhoneJournal"
 	_phone.add_to_group("phone_journal")
 	_persistent_ui.add_child(_phone)
+
+
+func _ensure_game_hud() -> void:
+	if _persistent_ui == null:
+		return
+	if _game_hud != null and is_instance_valid(_game_hud):
+		return
+	var existing: Node = _persistent_ui.get_node_or_null("GameHUD")
+	if existing is GameHUD:
+		_game_hud = existing as GameHUD
+		return
+	var packed: PackedScene = load(HUD_SCENE_PATH) as PackedScene
+	if packed == null:
+		push_warning("[World] GameHUD scene missing")
+		return
+	var inst: Node = packed.instantiate()
+	if not (inst is GameHUD):
+		push_warning("[World] GameHUD instantiate type mismatch")
+		inst.free()
+		return
+	_game_hud = inst as GameHUD
+	_game_hud.name = "GameHUD"
+	_persistent_ui.add_child(_game_hud)
+
+
+func get_game_hud() -> GameHUD:
+	return _game_hud
 
 
 func get_player() -> PlayerController:

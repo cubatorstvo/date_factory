@@ -3,6 +3,8 @@ extends Interactable
 ## Physical salary claim station in the mine (MODULE 13).
 ## Manual cycle: 1.5s MODAL_UI progress, then SalaryMine.claim_manual_pending().
 
+const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
+const BODY_FONT_SIZE: int = 16
 const _CYCLE_SEC: float = 1.50
 const _RESULT_SEC: float = 0.85
 const _EMPTY_FEEDBACK_SEC: float = 0.7
@@ -15,7 +17,7 @@ var _cycle_snapshot: int = 0
 
 
 func _ready() -> void:
-	prompt_action = "Добыть зарплату"
+	prompt_action = "Получить зарплату"
 	monitoring = false
 	monitorable = true
 	collision_layer = 4
@@ -39,9 +41,9 @@ func get_interaction_prompt(_player: Node) -> String:
 		return "[E] %s" % _feedback_text
 	var pending: int = _get_pending()
 	if pending > 0:
-		return "[E] Добыть зарплату — %d" % pending
+		return "[E] Получить зарплату — $%s" % UiNumberFormat.format_compact(pending)
 	if _has_seen_manual_cycle():
-		return "[E] Выплата уже добыта"
+		return "[E] Выплата уже получена"
 	return "[E] Зарплата ещё не выросла"
 
 
@@ -53,7 +55,7 @@ func _on_interact(player: Node) -> void:
 	var pending: int = _get_pending()
 	if pending <= 0:
 		if _has_seen_manual_cycle():
-			_show_empty_feedback("Выплата уже добыта")
+			_show_empty_feedback("Выплата уже получена")
 		else:
 			_show_empty_feedback("Зарплата ещё не выросла")
 		return
@@ -99,9 +101,9 @@ func _run_manual_cycle() -> void:
 	var result_label: Label = overlay.get_node_or_null("Root/Result") as Label if overlay != null and is_instance_valid(overlay) else null
 	if result_label != null:
 		if ok and claimed > 0:
-			result_label.text = "ЗАРПЛАТА ДОБЫТА: +%d" % claimed
+			result_label.text = "ЗАРПЛАТА ПОЛУЧЕНА: +$%s" % UiNumberFormat.format_compact(claimed)
 		elif ok:
-			result_label.text = "ЗАРПЛАТА ДОБЫТА: +0"
+			result_label.text = "ЗАРПЛАТА ПОЛУЧЕНА: +$0"
 		else:
 			result_label.text = "Выплата недоступна"
 		result_label.visible = true
@@ -184,6 +186,7 @@ func _make_cycle_overlay(snapshot_amount: int) -> CanvasLayer:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.process_mode = Node.PROCESS_MODE_ALWAYS
+	_apply_theme(root)
 	layer.add_child(root)
 	var dim: ColorRect = ColorRect.new()
 	dim.name = "Dim"
@@ -193,23 +196,21 @@ func _make_cycle_overlay(snapshot_amount: int) -> CanvasLayer:
 	root.add_child(dim)
 	var title: Label = Label.new()
 	title.name = "Title"
-	title.text = "ДОБЫЧА ЗАРПЛАТЫ"
+	title.text = "ПОЛУЧЕНИЕ ЗАРПЛАТЫ"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.set_anchors_preset(Control.PRESET_CENTER)
 	title.position = Vector2(-220, -60)
 	title.size = Vector2(440, 40)
-	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color(0.95, 0.88, 0.7, 1.0))
+	title.add_theme_font_size_override("font_size", 22)
 	root.add_child(title)
 	var amount: Label = Label.new()
 	amount.name = "AmountHint"
-	amount.text = str(snapshot_amount)
+	amount.text = "$%s" % UiNumberFormat.format_compact(snapshot_amount)
 	amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	amount.set_anchors_preset(Control.PRESET_CENTER)
-	amount.position = Vector2(-80, -20)
-	amount.size = Vector2(160, 28)
-	amount.add_theme_font_size_override("font_size", 18)
-	amount.add_theme_color_override("font_color", Color(0.8, 0.75, 0.65, 0.9))
+	amount.position = Vector2(-120, -20)
+	amount.size = Vector2(240, 28)
+	amount.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	root.add_child(amount)
 	var bar: ProgressBar = ProgressBar.new()
 	bar.name = "Progress"
@@ -228,7 +229,15 @@ func _make_cycle_overlay(snapshot_amount: int) -> CanvasLayer:
 	result_label.set_anchors_preset(Control.PRESET_CENTER)
 	result_label.position = Vector2(-220, 50)
 	result_label.size = Vector2(440, 36)
-	result_label.add_theme_font_size_override("font_size", 24)
-	result_label.add_theme_color_override("font_color", Color(0.75, 0.92, 0.65, 1.0))
+	result_label.add_theme_font_size_override("font_size", 18)
 	root.add_child(result_label)
 	return layer
+
+
+func _apply_theme(root: Control) -> void:
+	if root == null:
+		return
+	if ResourceLoader.exists(THEME_PATH):
+		var theme_res: Resource = load(THEME_PATH)
+		if theme_res is Theme:
+			root.theme = theme_res as Theme

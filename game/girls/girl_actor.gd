@@ -7,6 +7,8 @@ const SEEN_RADIUS: float = 4.0
 const LAYER_WORLD: int = 1
 const LAYER_INTERACTABLE: int = 4
 const LAYER_CHARACTERS: int = 8
+const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
+const BODY_FONT_SIZE: int = 16
 
 @export var girl_id: StringName = &""
 
@@ -210,22 +212,43 @@ func _show_story_lock_feedback(text: String, player: Node) -> void:
 	_close_choice_ui(player)
 	var layer := CanvasLayer.new()
 	layer.name = "StoryLockFeedbackUI"
+	var root := Control.new()
+	root.name = "Root"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	_apply_theme(root)
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(360, 120)
+	panel.custom_minimum_size = Vector2(420, 160)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
 	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	var title := Label.new()
+	title.text = "ПОКА НЕДОСТУПНО"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 18)
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	var btn := Button.new()
 	btn.text = "Закрыть"
+	btn.custom_minimum_size = Vector2(0, 34)
+	btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	btn.pressed.connect(func() -> void:
 		_close_locked_ui(player)
 	)
+	vbox.add_child(title)
 	vbox.add_child(label)
 	vbox.add_child(btn)
-	panel.add_child(vbox)
-	layer.add_child(panel)
+	margin.add_child(vbox)
+	panel.add_child(margin)
+	root.add_child(panel)
+	layer.add_child(root)
 	add_child(layer)
 	_locked_ui = layer
 	_enter_modal(player)
@@ -235,24 +258,41 @@ func _show_approach_choices(begin: Dictionary, player: Node) -> void:
 	_close_choice_ui(player)
 	var layer := CanvasLayer.new()
 	layer.name = "DiscoveryChoiceUI"
+	var root := Control.new()
+	root.name = "Root"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	_apply_theme(root)
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(420, 280)
+	panel.custom_minimum_size = Vector2(480, 320)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
 	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
 	var setup := Label.new()
 	setup.text = str(begin.get("setup_text", ""))
 	setup.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	setup.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	vbox.add_child(setup)
 	var approaches: Array = begin.get("approaches", []) as Array
 	for entry in approaches:
 		var info: Dictionary = entry as Dictionary
 		var btn := Button.new()
-		var label_text: String = str(info.get("label", ""))
+		var approach_text: String = str(info.get("label", ""))
+		var available: bool = bool(info.get("available", false))
+		var req_line: String = "Требование: нет"
 		if bool(info.get("has_requirement", false)):
 			var char_name: String = _char_label(info.get("required_characteristic", 0))
-			label_text += " (%s %s)" % [char_name, int(info.get("required_level", 0))]
-		btn.text = label_text
-		btn.disabled = not bool(info.get("available", false))
+			req_line = "Требование: %s %d" % [char_name, int(info.get("required_level", 0))]
+		var avail_line: String = "Доступно" if available else "Недоступно"
+		btn.text = "%s\n%s\n%s" % [approach_text, req_line, avail_line]
+		btn.disabled = not available
+		btn.custom_minimum_size = Vector2(0, 64)
+		btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		var aid: StringName = info.get("id", &"") as StringName
 		btn.pressed.connect(func() -> void:
 			_resolve_choice(aid, player)
@@ -260,6 +300,8 @@ func _show_approach_choices(begin: Dictionary, player: Node) -> void:
 		vbox.add_child(btn)
 	var cancel := Button.new()
 	cancel.text = "Отмена"
+	cancel.custom_minimum_size = Vector2(0, 34)
+	cancel.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	cancel.pressed.connect(func() -> void:
 		var gd: Node = get_node_or_null("/root/GirlDiscovery")
 		if gd != null:
@@ -267,8 +309,10 @@ func _show_approach_choices(begin: Dictionary, player: Node) -> void:
 		_close_choice_ui(player)
 	)
 	vbox.add_child(cancel)
-	panel.add_child(vbox)
-	layer.add_child(panel)
+	margin.add_child(vbox)
+	panel.add_child(margin)
+	root.add_child(panel)
+	layer.add_child(root)
 	add_child(layer)
 	_choice_ui = layer
 	_enter_modal(player)
@@ -291,7 +335,7 @@ func _show_result_banner(result: Dictionary, player: Node) -> void:
 	if reason == &"SUCCESS":
 		text = "НОМЕР ПОЛУЧЕН\n%s" % str(result.get("result_text", ""))
 	elif reason == &"FAILURE":
-		text = "НЕ ВЫШЛО\n%s" % str(result.get("result_text", ""))
+		text = "НЕ СРАБОТАЛО\n%s" % str(result.get("result_text", ""))
 		if result.has("new_clue_index"):
 			var gd: Node = get_node_or_null("/root/GirlDiscovery")
 			var def: GirlDefinition = null
@@ -301,18 +345,33 @@ func _show_result_banner(result: Dictionary, player: Node) -> void:
 			if def != null and idx >= 0 and idx < def.clue_notes.size():
 				text += "\n\nНовая заметка:\n%s" % def.clue_notes[idx]
 		var days: int = int(result.get("cooldown_days", 0))
-		text += "\n\nПовторная попытка через %s дн." % days
+		text += "\n\nПовтор: через %d дн." % days
 	else:
 		return
 	var layer := CanvasLayer.new()
+	var root := Control.new()
+	root.name = "Root"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	_apply_theme(root)
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(420, 180)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
 	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	var btn := Button.new()
 	btn.text = "OK"
+	btn.custom_minimum_size = Vector2(0, 34)
+	btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	btn.pressed.connect(func() -> void:
 		if is_instance_valid(layer):
 			layer.queue_free()
@@ -320,8 +379,10 @@ func _show_result_banner(result: Dictionary, player: Node) -> void:
 	)
 	vbox.add_child(label)
 	vbox.add_child(btn)
-	panel.add_child(vbox)
-	layer.add_child(panel)
+	margin.add_child(vbox)
+	panel.add_child(margin)
+	root.add_child(panel)
+	layer.add_child(root)
 	add_child(layer)
 	_enter_modal(player)
 
@@ -348,6 +409,15 @@ func _enter_modal(player: Node) -> void:
 func _exit_modal(player: Node) -> void:
 	if player != null and player.has_method("enter_gameplay"):
 		player.call("enter_gameplay")
+
+
+func _apply_theme(root: Control) -> void:
+	if root == null:
+		return
+	if ResourceLoader.exists(THEME_PATH):
+		var theme_res: Resource = load(THEME_PATH)
+		if theme_res is Theme:
+			root.theme = theme_res as Theme
 
 
 func _char_label(characteristic: Variant) -> String:

@@ -169,7 +169,8 @@ func _apply_mode_side_effects() -> void:
 	if _interaction.has_method("set_query_enabled"):
 		_interaction.call("set_query_enabled", gameplay)
 	_pause_overlay.visible = paused
-	_crosshair.visible = gameplay
+	# MODULE 22: GameHUD owns the gameplay crosshair; FpsHud keeps [E] prompt only.
+	_crosshair.visible = false
 	if not gameplay:
 		_prompt_label.visible = false
 	match _mode:

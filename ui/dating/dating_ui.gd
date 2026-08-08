@@ -1,21 +1,39 @@
 extends CanvasLayer
-## Functional dating choice UI (MODULE 09) — not final art.
+## Dating choice UI presentation (MODULE 22) — DatingCore scoring unchanged.
 
+const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
+const FREE_REP_REASON: String = "Представительские расходы"
+const PUBLIC_SIG_NOTE: String = "Внешность общественного значения"
+
+@onready var _root: Control = $Root
 @onready var _panel: PanelContainer = $Root/Panel
-@onready var _title: Label = $Root/Panel/Margin/VBox/Title
-@onready var _body: Label = $Root/Panel/Margin/VBox/Body
-@onready var _reaction: Label = $Root/Panel/Margin/VBox/Reaction
+@onready var _girl_name: Label = $Root/Panel/Margin/VBox/Header/GirlName
+@onready var _phase_label: Label = $Root/Panel/Margin/VBox/Header/PhaseLabel
+@onready var _relationship_label: Label = $Root/Panel/Margin/VBox/Header/RelationshipLabel
+@onready var _greeting_note: Label = $Root/Panel/Margin/VBox/Header/GreetingNote
+@onready var _title: Label = $Root/Panel/Margin/VBox/Center/EventTitle
+@onready var _body: Label = $Root/Panel/Margin/VBox/Center/SetupText
+@onready var _reaction_score: Label = $Root/Panel/Margin/VBox/Center/ReactionScore
+@onready var _reaction_text: Label = $Root/Panel/Margin/VBox/Center/ReactionText
 @onready var _choices: VBoxContainer = $Root/Panel/Margin/VBox/Choices
 
 var _core: Node = null
 var _relationships: Node = null
 var _last_rel_result: RelationshipDateResult = null
+var _reaction_hold: bool = false
+var _pending_finish: DatingResult = null
+var _showing_finish: bool = false
+var _ui_number_format: GDScript = null
 
 
 func _ready() -> void:
 	_core = get_node_or_null("/root/DatingCore")
 	_relationships = get_node_or_null("/root/Relationships")
+	_ui_number_format = _try_load_number_format()
+	_apply_theme()
+	_apply_local_style()
 	visible = false
+	set_process_unhandled_input(true)
 	if _core != null:
 		_core.connect("phase_changed", _on_phase_changed)
 		_core.connect("reaction_presented", _on_reaction)
@@ -25,24 +43,45 @@ func _ready() -> void:
 			_relationships.connect("date_result_applied", _on_date_result_applied)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		# Active date must not be aborted by ESC.
+		if _core != null and bool(_core.call("is_date_active")):
+			get_viewport().set_input_as_handled()
+			return
+		if _showing_finish:
+			get_viewport().set_input_as_handled()
+
+
 func open_for_active_date() -> void:
+	_reaction_hold = false
+	_pending_finish = null
+	_showing_finish = false
 	visible = true
 	_refresh()
 
 
 func close_ui() -> void:
+	_reaction_hold = false
+	_pending_finish = null
+	_showing_finish = false
 	visible = false
 
 
 func _on_phase_changed(_phase: DatingTypes.Phase) -> void:
-	if visible:
-		_refresh()
+	if not visible:
+		return
+	if _reaction_hold or _showing_finish:
+		return
+	_refresh()
 
 
 func _on_reaction(reaction: int, result_text: String) -> void:
-	_reaction.text = "Реакция: %+d" % reaction if reaction != 0 else "Реакция: 0"
-	if result_text.strip_edges() != "":
-		_reaction.text += " — %s" % result_text
+	if not visible and _pending_finish == null:
+		visible = true
+	_show_reaction(reaction, result_text)
 
 
 func _on_date_result_applied(rel_result: RelationshipDateResult) -> void:
@@ -50,24 +89,69 @@ func _on_date_result_applied(rel_result: RelationshipDateResult) -> void:
 
 
 func _on_finished(result: DatingResult) -> void:
-	_title.text = "Итог свидания"
+	if _reaction_hold:
+		_pending_finish = result
+		return
+	_show_finish(result)
+
+
+func _show_reaction(reaction: int, result_text: String) -> void:
+	_reaction_hold = true
+	_showing_finish = false
+	_update_header()
+	_phase_label.text = "РЕАКЦИЯ"
+	_greeting_note.visible = false
+	_title.text = ""
+	_body.text = ""
+	_reaction_score.visible = true
+	_reaction_score.text = _format_signed(reaction)
+	_reaction_text.visible = true
+	var authored: String = result_text.strip_edges()
+	_reaction_text.text = authored
+	_clear_choices()
+	_add_btn("Далее", _on_continue_after_reaction)
+
+
+func _on_continue_after_reaction() -> void:
+	_reaction_hold = false
+	_reaction_score.visible = false
+	_reaction_text.visible = false
+	_reaction_score.text = ""
+	_reaction_text.text = ""
+	if _pending_finish != null:
+		var finish: DatingResult = _pending_finish
+		_pending_finish = null
+		_show_finish(finish)
+		return
+	_refresh()
+
+
+func _show_finish(result: DatingResult) -> void:
+	_showing_finish = true
+	_reaction_hold = false
+	_update_header_for_finish(result.girl_id)
+	_title.text = "ИТОГ СВИДАНИЯ"
+	_reaction_score.visible = false
+	_reaction_text.visible = false
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("Свидание: %+d" % result.date_delta)
+	lines.append("Свидание: %s" % _format_signed(result.primary_total))
+	lines.append("Вечер: %s" % _format_signed(result.secondary_reaction))
+	lines.append("Итого: %s" % _format_signed(result.date_delta))
 	var rel: RelationshipDateResult = _last_rel_result
 	if rel == null and _relationships != null:
 		rel = _relationships.call("get_last_applied_result") as RelationshipDateResult
 	if rel != null and rel.ok and rel.girl_id == result.girl_id:
-		lines.append("Отношения: %d → %d" % [rel.relationship_before, rel.relationship_after])
-		if rel.newly_conquered:
+		lines.append(
+			"Отношения: %s → %s"
+			% [_format_signed(rel.relationship_before), _format_signed(rel.relationship_after)]
+		)
+		if rel.experience_gained > 0:
 			lines.append("Опытность +%d" % rel.experience_gained)
+		if rel.upgrade_points_gained > 0:
 			lines.append("Балл прокачки +%d" % rel.upgrade_points_gained)
 	_body.text = "\n".join(lines)
-	_reaction.text = "Вечер: %+d" % result.secondary_reaction if result.secondary_reaction != 0 else "Вечер: 0"
 	_clear_choices()
-	var btn := Button.new()
-	btn.text = "Закрыть"
-	btn.pressed.connect(_on_close_finished)
-	_choices.add_child(btn)
+	_add_btn("Закрыть", _on_close_finished)
 	visible = true
 	_last_rel_result = null
 
@@ -85,7 +169,13 @@ func _refresh() -> void:
 	if session == null:
 		close_ui()
 		return
+	_showing_finish = false
+	_reaction_score.visible = false
+	_reaction_text.visible = false
+	_reaction_score.text = ""
+	_reaction_text.text = ""
 	_clear_choices()
+	_update_header()
 	match session.phase:
 		DatingTypes.Phase.ARRIVAL:
 			_title.text = "Она пришла"
@@ -93,18 +183,15 @@ func _refresh() -> void:
 			_add_btn("Продолжить", func() -> void: _core.call("continue_arrival"))
 			_maybe_second_outfit()
 		DatingTypes.Phase.GREETING:
-			_title.text = "Приветствие"
+			_title.text = "ПРИВЕТСТВИЕ"
 			_body.text = "Выберите, как начать."
+			_greeting_note.visible = true
+			_greeting_note.text = "Не влияет на отношения"
 			_maybe_second_outfit()
 			var choices: Array = _core.call("list_greeting_choices") as Array
 			for c in choices:
 				var d: Dictionary = c as Dictionary
-				var label: String = String(d.get("label", ""))
-				var available: bool = bool(d.get("available", false))
-				var reason: String = String(d.get("reason", ""))
-				var gid: StringName = d.get("id", &"") as StringName
-				var text: String = label if available else "%s (%s)" % [label, reason]
-				_add_btn(text, func() -> void: _core.call("select_greeting", gid), available)
+				_add_choice_card(d, true)
 		DatingTypes.Phase.CENTRAL_EVENT:
 			var ev: DatingEventDefinition = _core.call("get_current_event") as DatingEventDefinition
 			_title.text = ev.title if ev != null else "Событие"
@@ -123,6 +210,9 @@ func _refresh() -> void:
 		DatingTypes.Phase.RESOLVING_ACTION:
 			_title.text = "Действие"
 			_body.text = "Ожидание внешнего резолвера…"
+		DatingTypes.Phase.SECONDARY_EVALUATION:
+			_title.text = "Итог"
+			_body.text = "Подсчёт вечера…"
 		DatingTypes.Phase.FINISHED:
 			pass
 		_:
@@ -133,19 +223,57 @@ func _fill_actions() -> void:
 	var choices: Array = _core.call("list_action_choices") as Array
 	for c in choices:
 		var d: Dictionary = c as Dictionary
-		var label: String = String(d.get("label", ""))
-		var available: bool = bool(d.get("available", false))
-		var reason: String = String(d.get("reason", ""))
-		var aid: StringName = d.get("id", &"") as StringName
-		if bool(d.get("free_via_representation", false)):
-			label += " — Бесплатно — Представительские расходы"
-		if bool(d.get("uses_public_significance", false)):
-			label += " — Внешность общественного значения"
-		var cost: int = int(d.get("money_cost", 0))
-		if cost > 0 and not bool(d.get("free_via_representation", false)):
-			label += " ($%s)" % cost
-		var text: String = label if available else "%s (%s)" % [label, reason]
+		_add_choice_card(d, false)
+
+
+func _add_choice_card(d: Dictionary, is_greeting: bool) -> void:
+	var label: String = String(d.get("label", ""))
+	var available: bool = bool(d.get("available", false))
+	var reason: String = String(d.get("reason", "")).strip_edges()
+	var aid: StringName = d.get("id", &"") as StringName
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append(label)
+	var req_badge: String = _requirement_badge(d, is_greeting)
+	if req_badge != "":
+		lines.append(req_badge)
+	var free_via_rep: bool = bool(d.get("free_via_representation", false))
+	var cost: int = int(d.get("money_cost", 0))
+	if free_via_rep:
+		lines.append("Бесплатно — %s" % FREE_REP_REASON)
+	elif cost > 0 and not is_greeting:
+		lines.append("$%d" % cost)
+	if bool(d.get("uses_public_significance", false)):
+		lines.append(PUBLIC_SIG_NOTE)
+	if not available and reason != "":
+		lines.append(_format_unavailable_reason(reason))
+	var text: String = "\n".join(lines)
+	if is_greeting:
+		_add_btn(text, func() -> void: _core.call("select_greeting", aid), available)
+	else:
 		_add_btn(text, func() -> void: _core.call("select_action", aid), available)
+
+
+func _requirement_badge(d: Dictionary, is_greeting: bool) -> String:
+	if is_greeting:
+		var reason: String = String(d.get("reason", "")).strip_edges()
+		if reason != "" and not bool(d.get("available", false)):
+			# Greeting API exposes requirement only when locked; show as badge too.
+			if not reason.begins_with("Нужен") and not reason.begins_with("Деньги"):
+				return "[%s]" % reason
+		return ""
+	var need: int = int(d.get("required_level", 0))
+	if need <= 0:
+		return ""
+	var ch_label: String = _char_label(d.get("characteristic", 0))
+	return "[%s %d]" % [ch_label, need]
+
+
+func _format_unavailable_reason(reason: String) -> String:
+	if reason.begins_with("Требуется") or reason.begins_with("Нужен"):
+		return reason
+	if reason.begins_with("Деньги"):
+		return reason
+	return "Требуется %s" % reason
 
 
 func _maybe_second_outfit() -> void:
@@ -162,6 +290,151 @@ func _add_btn(text: String, cb: Callable, enabled: bool = true) -> void:
 	var btn := Button.new()
 	btn.text = text
 	btn.disabled = not enabled
+	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	btn.custom_minimum_size = Vector2(0, 44)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.add_theme_font_size_override("font_size", 15)
 	if enabled:
 		btn.pressed.connect(cb)
+	else:
+		btn.modulate = Color(0.75, 0.72, 0.7, 1.0)
 	_choices.add_child(btn)
+
+
+func _update_header() -> void:
+	var session: DatingSession = null
+	if _core != null:
+		session = _core.call("get_session") as DatingSession
+	if session == null:
+		_girl_name.text = "Свидание"
+		_phase_label.text = ""
+		_relationship_label.text = ""
+		_greeting_note.visible = false
+		return
+	_girl_name.text = _resolve_girl_name(session.girl_id)
+	_phase_label.text = _phase_title(session.phase)
+	_relationship_label.text = _relationship_line(session.girl_id)
+	var is_greeting: bool = session.phase == DatingTypes.Phase.GREETING
+	_greeting_note.visible = is_greeting and not _reaction_hold
+	if is_greeting and not _reaction_hold:
+		_greeting_note.text = "Не влияет на отношения"
+
+
+func _update_header_for_finish(girl_id: StringName) -> void:
+	if girl_id != &"":
+		_girl_name.text = _resolve_girl_name(girl_id)
+		_relationship_label.text = _relationship_line(girl_id)
+	_phase_label.text = "ИТОГ"
+	_greeting_note.visible = false
+
+
+func _resolve_girl_name(girl_id: StringName) -> String:
+	var db: Node = get_node_or_null("/root/ContentDB")
+	if db != null and db.has_method("get_girl"):
+		var girl: GirlDefinition = db.call("get_girl", girl_id) as GirlDefinition
+		if girl != null and girl.display_name.strip_edges() != "":
+			return girl.display_name
+	return "Свидание"
+
+
+func _relationship_line(girl_id: StringName) -> String:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null or not gs.has_method("get_girl_relationship"):
+		return ""
+	if gs.has_method("has_girl_contact") and not bool(gs.call("has_girl_contact", girl_id)):
+		return ""
+	var rel: int = int(gs.call("get_girl_relationship", girl_id))
+	return "Отношения: %s" % _format_signed(rel)
+
+
+func _phase_title(phase: DatingTypes.Phase) -> String:
+	match phase:
+		DatingTypes.Phase.ARRIVAL:
+			return "ПРИБЫТИЕ"
+		DatingTypes.Phase.GREETING:
+			return "ПРИВЕТСТВИЕ"
+		DatingTypes.Phase.CENTRAL_EVENT:
+			return "СОБЫТИЕ"
+		DatingTypes.Phase.RESOLVING_ACTION:
+			return "ДЕЙСТВИЕ"
+		DatingTypes.Phase.ENCORE_DECISION:
+			return "БИС"
+		DatingTypes.Phase.FAREWELL:
+			return "ПРОЩАНИЕ"
+		DatingTypes.Phase.SECONDARY_EVALUATION:
+			return "ВЕЧЕР"
+		DatingTypes.Phase.FINISHED:
+			return "ИТОГ"
+	return ""
+
+
+func _char_label(raw: Variant) -> String:
+	var c: int = int(raw)
+	match c:
+		int(GameTypes.PlayerCharacteristic.MUSCLE):
+			return "Мышца"
+		int(GameTypes.PlayerCharacteristic.APPEARANCE):
+			return "Внешность"
+		int(GameTypes.PlayerCharacteristic.CAPITAL):
+			return "Капитал"
+		int(GameTypes.PlayerCharacteristic.AURA):
+			return "Аура"
+	return "Характеристика"
+
+
+func _format_signed(value: int) -> String:
+	if _ui_number_format != null and _ui_number_format.has_method("format_signed"):
+		return str(_ui_number_format.call("format_signed", value))
+	if value > 0:
+		return "+%d" % value
+	if value < 0:
+		return "%d" % value
+	return "0"
+
+
+func _try_load_number_format() -> GDScript:
+	var path: String = "res://ui/ui_number_format.gd"
+	if ResourceLoader.exists(path):
+		var script: Resource = load(path)
+		if script is GDScript:
+			return script as GDScript
+	return null
+
+
+func _apply_theme() -> void:
+	if ResourceLoader.exists(THEME_PATH):
+		var theme_res: Resource = load(THEME_PATH)
+		if theme_res is Theme:
+			_root.theme = theme_res as Theme
+			_panel.theme = theme_res as Theme
+
+
+func _apply_local_style() -> void:
+	if _root.theme != null:
+		return
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.10, 0.11, 0.13, 0.94)
+	sb.border_color = Color(0.42, 0.44, 0.48, 0.85)
+	sb.set_border_width_all(1)
+	sb.set_corner_radius_all(4)
+	sb.content_margin_left = 4
+	sb.content_margin_right = 4
+	sb.content_margin_top = 4
+	sb.content_margin_bottom = 4
+	_panel.add_theme_stylebox_override("panel", sb)
+	_girl_name.add_theme_font_size_override("font_size", 20)
+	_girl_name.add_theme_color_override("font_color", Color(0.95, 0.95, 0.93))
+	_phase_label.add_theme_font_size_override("font_size", 14)
+	_phase_label.add_theme_color_override("font_color", Color(0.78, 0.80, 0.72))
+	_relationship_label.add_theme_font_size_override("font_size", 14)
+	_relationship_label.add_theme_color_override("font_color", Color(0.82, 0.84, 0.88))
+	_greeting_note.add_theme_font_size_override("font_size", 13)
+	_greeting_note.add_theme_color_override("font_color", Color(0.70, 0.74, 0.68))
+	_title.add_theme_font_size_override("font_size", 18)
+	_title.add_theme_color_override("font_color", Color(0.96, 0.96, 0.94))
+	_body.add_theme_font_size_override("font_size", 15)
+	_body.add_theme_color_override("font_color", Color(0.88, 0.88, 0.86))
+	_reaction_score.add_theme_font_size_override("font_size", 48)
+	_reaction_score.add_theme_color_override("font_color", Color(0.95, 0.93, 0.75))
+	_reaction_text.add_theme_font_size_override("font_size", 15)
+	_reaction_text.add_theme_color_override("font_color", Color(0.90, 0.90, 0.88))

@@ -1,13 +1,22 @@
 class_name PhoneJournal
 extends Control
-## Functional phone journal for discovered girls (MODULE 08)
-## + global/story status (MODULE 14A) + salary (MODULE 13) + MEDIA (MODULE 15)
-## + Dating Overload section (MODULE 16) + First Clone counts / Stage5 handoff (MODULE 17)
-## + Clone Incremental read-only rates (MODULE 18).
-## No Dating CTA / messaging / scheduling / calendar.
+## Phone journal presentation shell (MODULE 08–21 logic, MODULE 22 five-tab UI).
+## No Dating CTA / messaging / scheduling / calendar. No gameplay formula changes.
 
 signal opened()
 signal closed()
+
+const THEME_PATH := "res://ui/theme/date_factory_theme.tres"
+const FONT_SIZE: int = 18
+const FONT_SIZE_TITLE: int = 22
+
+enum PhoneTab {
+	STATUS,
+	STORY,
+	GIRLS,
+	MEDIA,
+	CLONES,
+}
 
 var _list: ItemList = null
 var _detail: RichTextLabel = null
@@ -16,12 +25,20 @@ var _close_btn: Button = null
 var _player: Node = null
 var _is_open: bool = false
 var _listed_ids: Array[StringName] = []
+var _active_tab: PhoneTab = PhoneTab.STATUS
+
+var _top_bar_label: Label = null
+var _status_api_text: String = ""
+var _tab_bar: HBoxContainer = null
+var _tab_buttons: Dictionary = {}
+var _tab_pages: Dictionary = {}
 
 var _status_section: VBoxContainer = null
 var _status_label: Label = null
 var _story_section: VBoxContainer = null
 var _story_title: Label = null
 var _story_label: Label = null
+var _girls_section: HSplitContainer = null
 
 var _salary_section: VBoxContainer = null
 var _salary_title: Label = null
@@ -30,10 +47,14 @@ var _salary_advance_btn: Button = null
 var _salary_pending_hint: Label = null
 var _salary_feedback: Label = null
 var _salary_signals_connected: bool = false
+var _late_rates_label: Label = null
 
 var _media_section: VBoxContainer = null
 var _media_title: Label = null
+var _media_attention_block: VBoxContainer = null
 var _media_attention: Label = null
+var _media_attention_bar: ProgressBar = null
+var _media_attention_markers: Label = null
 var _media_pre_session: Label = null
 var _media_photos_block: VBoxContainer = null
 var _media_photos_title: Label = null
@@ -61,6 +82,7 @@ var _player_mode_connected: bool = false
 var _clone_section: VBoxContainer = null
 var _clone_title: Label = null
 var _clone_stats: Label = null
+var _clone_footer: Label = null
 var _clone_signals_connected: bool = false
 
 
@@ -68,6 +90,7 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	_apply_theme()
 	_build_ui()
 	_connect_salary_signals()
 	_connect_media_signals()
@@ -123,6 +146,7 @@ func get_detail_text() -> String:
 func select_girl_by_id(girl_id: StringName) -> bool:
 	for i in range(_listed_ids.size()):
 		if _listed_ids[i] == girl_id:
+			_set_active_tab(PhoneTab.GIRLS)
 			_list.select(i)
 			_show_detail(girl_id)
 			return true
@@ -130,6 +154,8 @@ func select_girl_by_id(girl_id: StringName) -> bool:
 
 
 func refresh() -> void:
+	_refresh_tab_visibility()
+	_refresh_top_bar()
 	_refresh_status_section()
 	_refresh_story_section()
 	_refresh_list()
@@ -137,12 +163,17 @@ func refresh() -> void:
 	_refresh_overload_section()
 	_refresh_clone_section()
 	_refresh_salary_section()
+	_show_active_tab()
 
 
 func get_status_text() -> String:
-	if _status_label == null:
-		return ""
-	return String(_status_label.text)
+	# Regression API: MODULE14 resource lines + STATUS characteristics body.
+	var parts: PackedStringArray = PackedStringArray()
+	if _status_api_text.strip_edges() != "":
+		parts.append(_status_api_text)
+	if _status_label != null and String(_status_label.text).strip_edges() != "":
+		parts.append(String(_status_label.text))
+	return "\n".join(parts)
 
 
 func get_story_text() -> String:
@@ -176,7 +207,7 @@ func get_salary_feedback_text() -> String:
 
 
 func has_media_section_visible() -> bool:
-	return _media_section != null and _media_section.visible
+	return _is_media_unlocked()
 
 
 func get_media_attention_text() -> String:
@@ -236,13 +267,28 @@ func was_realization_presented() -> bool:
 
 
 func has_clone_section_visible() -> bool:
-	return _clone_section != null and _clone_section.visible
+	return _is_clones_unlocked()
 
 
 func get_clone_stats_text() -> String:
 	if _clone_stats == null:
 		return ""
 	return String(_clone_stats.text)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _is_open:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		close()
+		get_viewport().set_input_as_handled()
+
+
+func _apply_theme() -> void:
+	if ResourceLoader.exists(THEME_PATH):
+		var theme_res: Resource = load(THEME_PATH)
+		if theme_res is Theme:
+			theme = theme_res as Theme
 
 
 func _build_ui() -> void:
@@ -255,180 +301,328 @@ func _build_ui() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("margin_left", 40)
 	root.add_theme_constant_override("margin_right", 40)
-	root.add_theme_constant_override("margin_top", 30)
-	root.add_theme_constant_override("margin_bottom", 30)
+	root.add_theme_constant_override("margin_top", 24)
+	root.add_theme_constant_override("margin_bottom", 24)
 	add_child(root)
 	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
 	root.add_child(vbox)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 12)
+	vbox.add_child(header)
 	_title = Label.new()
-	_title.text = "Телефон — Журнал"
-	_title.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(_title)
-	_build_status_section(vbox)
-	_build_story_section(vbox)
-	var split := HSplitContainer.new()
-	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(split)
-	_list = ItemList.new()
-	_list.custom_minimum_size = Vector2(220, 0)
-	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_list.item_selected.connect(_on_item_selected)
-	split.add_child(_list)
-	_detail = RichTextLabel.new()
-	_detail.bbcode_enabled = true
-	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail.fit_content = false
-	split.add_child(_detail)
-	_build_media_section(vbox)
-	_build_overload_section(vbox)
-	_build_clone_section(vbox)
-	_build_salary_section(vbox)
+	_title.text = "Телефон"
+	_title.add_theme_font_size_override("font_size", FONT_SIZE_TITLE)
+	header.add_child(_title)
+	_top_bar_label = Label.new()
+	_top_bar_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_top_bar_label.add_theme_font_size_override("font_size", FONT_SIZE)
+	header.add_child(_top_bar_label)
 	_close_btn = Button.new()
-	_close_btn.text = "Закрыть"
+	_close_btn.text = "X"
+	_close_btn.custom_minimum_size = Vector2(44, 36)
 	_close_btn.pressed.connect(close)
-	vbox.add_child(_close_btn)
+	header.add_child(_close_btn)
 
+	_tab_bar = HBoxContainer.new()
+	_tab_bar.add_theme_constant_override("separation", 6)
+	vbox.add_child(_tab_bar)
+	_add_tab_button(PhoneTab.STATUS, "СТАТУС")
+	_add_tab_button(PhoneTab.STORY, "СЮЖЕТ")
+	_add_tab_button(PhoneTab.GIRLS, "ДЕВУШКИ")
+	_add_tab_button(PhoneTab.MEDIA, "МЕДИА")
+	_add_tab_button(PhoneTab.CLONES, "КЛОНЫ")
 
-func _build_status_section(parent: VBoxContainer) -> void:
+	var pages := Control.new()
+	pages.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pages.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_child(pages)
+
 	_status_section = VBoxContainer.new()
-	_status_section.add_theme_constant_override("separation", 2)
-	parent.add_child(_status_section)
-	_status_label = Label.new()
-	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_status_section.add_child(_status_label)
+	_status_section.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_status_section.add_theme_constant_override("separation", 8)
+	pages.add_child(_status_section)
+	_tab_pages[PhoneTab.STATUS] = _status_section
+	_build_status_page()
 
-
-func _build_story_section(parent: VBoxContainer) -> void:
 	_story_section = VBoxContainer.new()
-	_story_section.add_theme_constant_override("separation", 2)
-	parent.add_child(_story_section)
-	var sep := HSeparator.new()
-	_story_section.add_child(sep)
-	_story_title = Label.new()
-	_story_title.text = "СЮЖЕТ"
-	_story_title.add_theme_font_size_override("font_size", 18)
-	_story_section.add_child(_story_title)
-	_story_label = Label.new()
-	_story_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_story_section.add_child(_story_label)
+	_story_section.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_story_section.add_theme_constant_override("separation", 6)
+	pages.add_child(_story_section)
+	_tab_pages[PhoneTab.STORY] = _story_section
+	_build_story_page()
 
+	_girls_section = HSplitContainer.new()
+	_girls_section.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pages.add_child(_girls_section)
+	_tab_pages[PhoneTab.GIRLS] = _girls_section
+	_build_girls_page()
 
-func _build_media_section(parent: VBoxContainer) -> void:
 	_media_section = VBoxContainer.new()
+	_media_section.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_media_section.visible = false
-	_media_section.add_theme_constant_override("separation", 4)
-	parent.add_child(_media_section)
-	var sep := HSeparator.new()
-	_media_section.add_child(sep)
-	_media_title = Label.new()
-	_media_title.text = "МЕДИА"
-	_media_title.add_theme_font_size_override("font_size", 18)
-	_media_section.add_child(_media_title)
-	_media_attention = Label.new()
-	_media_attention.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_media_section.add_child(_media_attention)
-	_media_pre_session = Label.new()
-	_media_pre_session.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_media_pre_session.visible = false
-	_media_section.add_child(_media_pre_session)
-	_media_photos_block = VBoxContainer.new()
-	_media_photos_block.visible = false
-	_media_photos_block.add_theme_constant_override("separation", 4)
-	_media_section.add_child(_media_photos_block)
-	_media_photos_title = Label.new()
-	_media_photos_title.text = "ФОТОГРАФИИ"
-	_media_photos_title.add_theme_font_size_override("font_size", 16)
-	_media_photos_block.add_child(_media_photos_title)
-	_media_photo_rows.clear()
-	for photo_id in MediaContent.SHOT_IDS:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		_media_photos_block.add_child(row)
-		var name_lbl := Label.new()
-		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_lbl.text = MediaContent.photo_title(photo_id)
-		row.add_child(name_lbl)
-		var btn := Button.new()
-		btn.text = "Опубликовать"
-		var captured_id: StringName = photo_id
-		btn.pressed.connect(func() -> void: _on_media_publish_pressed(captured_id))
-		row.add_child(btn)
-		_media_photo_rows[photo_id] = {"row": row, "label": name_lbl, "button": btn}
-	_media_incoming_block = VBoxContainer.new()
-	_media_incoming_block.visible = false
-	_media_incoming_block.add_theme_constant_override("separation", 4)
-	_media_section.add_child(_media_incoming_block)
-	_media_incoming_title = Label.new()
-	_media_incoming_title.text = "ВХОДЯЩИЕ"
-	_media_incoming_title.add_theme_font_size_override("font_size", 16)
-	_media_incoming_block.add_child(_media_incoming_title)
-	_media_incoming_list = VBoxContainer.new()
-	_media_incoming_list.add_theme_constant_override("separation", 4)
-	_media_incoming_block.add_child(_media_incoming_list)
-	_media_feed_block = VBoxContainer.new()
-	_media_feed_block.visible = false
-	_media_feed_block.add_theme_constant_override("separation", 2)
-	_media_section.add_child(_media_feed_block)
-	_media_feed_title = Label.new()
-	_media_feed_title.text = "ЛЕНТА"
-	_media_feed_title.add_theme_font_size_override("font_size", 16)
-	_media_feed_block.add_child(_media_feed_title)
-	_media_feed_label = Label.new()
-	_media_feed_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_media_feed_block.add_child(_media_feed_label)
+	pages.add_child(_media_section)
+	_tab_pages[PhoneTab.MEDIA] = _media_section
+	_build_media_page()
 
+	_clone_section = VBoxContainer.new()
+	_clone_section.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_clone_section.visible = false
+	pages.add_child(_clone_section)
+	_tab_pages[PhoneTab.CLONES] = _clone_section
+	_build_clone_page()
 
-func _build_overload_section(parent: VBoxContainer) -> void:
-	_overload_section = VBoxContainer.new()
-	_overload_section.visible = false
-	_overload_section.add_theme_constant_override("separation", 4)
-	parent.add_child(_overload_section)
-	var sep := HSeparator.new()
-	_overload_section.add_child(sep)
-	_overload_title = Label.new()
-	_overload_title.text = "ПЕРЕГРУЗКА"
-	_overload_title.add_theme_font_size_override("font_size", 18)
-	_overload_section.add_child(_overload_title)
-	_overload_summary = Label.new()
-	_overload_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_overload_section.add_child(_overload_summary)
-	_overload_demand_list = VBoxContainer.new()
-	_overload_demand_list.add_theme_constant_override("separation", 6)
-	_overload_section.add_child(_overload_demand_list)
-	var boost_row := HBoxContainer.new()
-	boost_row.add_theme_constant_override("separation", 12)
-	_overload_section.add_child(boost_row)
-	_overload_boost_btn = Button.new()
-	_overload_boost_btn.text = "Поднять волну"
-	_overload_boost_btn.visible = false
-	_overload_boost_btn.pressed.connect(_on_overload_feed_boost_pressed)
-	boost_row.add_child(_overload_boost_btn)
-	_overload_boost_hint = Label.new()
-	_overload_boost_hint.visible = false
-	_overload_boost_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	boost_row.add_child(_overload_boost_hint)
 	_realization_dialog = AcceptDialog.new()
 	_realization_dialog.title = ""
 	_realization_dialog.dialog_text = ""
 	_realization_dialog.ok_button_text = "ОК"
 	add_child(_realization_dialog)
 
+	_set_active_tab(PhoneTab.STATUS)
 
-func _build_clone_section(parent: VBoxContainer) -> void:
-	_clone_section = VBoxContainer.new()
-	_clone_section.visible = false
-	_clone_section.add_theme_constant_override("separation", 4)
-	parent.add_child(_clone_section)
-	var sep := HSeparator.new()
-	_clone_section.add_child(sep)
-	_clone_title = Label.new()
-	_clone_title.text = "КЛОНЫ"
-	_clone_title.add_theme_font_size_override("font_size", 18)
+
+func _add_tab_button(tab: PhoneTab, caption: String) -> void:
+	var btn := Button.new()
+	btn.text = caption
+	btn.toggle_mode = true
+	btn.add_theme_font_size_override("font_size", FONT_SIZE)
+	btn.pressed.connect(func() -> void: _set_active_tab(tab))
+	_tab_bar.add_child(btn)
+	_tab_buttons[tab] = btn
+
+
+func _set_active_tab(tab: PhoneTab) -> void:
+	if tab == PhoneTab.MEDIA and not _is_media_unlocked():
+		tab = PhoneTab.STATUS
+	if tab == PhoneTab.CLONES and not _is_clones_unlocked():
+		tab = PhoneTab.STATUS
+	_active_tab = tab
+	for key in _tab_buttons.keys():
+		var t: PhoneTab = key as PhoneTab
+		var btn: Button = _tab_buttons[key] as Button
+		if btn == null:
+			continue
+		btn.set_pressed_no_signal(t == _active_tab)
+	_show_active_tab()
+
+
+func _show_active_tab() -> void:
+	for key in _tab_pages.keys():
+		var page: Control = _tab_pages[key] as Control
+		if page == null:
+			continue
+		page.visible = (key as PhoneTab) == _active_tab
+
+
+func _refresh_tab_visibility() -> void:
+	var media_on: bool = _is_media_unlocked()
+	var clones_on: bool = _is_clones_unlocked()
+	var media_btn: Button = _tab_buttons.get(PhoneTab.MEDIA) as Button
+	var clones_btn: Button = _tab_buttons.get(PhoneTab.CLONES) as Button
+	if media_btn != null:
+		media_btn.visible = media_on
+	if clones_btn != null:
+		clones_btn.visible = clones_on
+	if _active_tab == PhoneTab.MEDIA and not media_on:
+		_active_tab = PhoneTab.STATUS
+	if _active_tab == PhoneTab.CLONES and not clones_on:
+		_active_tab = PhoneTab.STATUS
+	for key in _tab_buttons.keys():
+		var btn: Button = _tab_buttons[key] as Button
+		if btn != null:
+			btn.set_pressed_no_signal((key as PhoneTab) == _active_tab)
+
+
+func _is_media_unlocked() -> bool:
+	var media: Node = get_node_or_null("/root/Media")
+	if media != null and media.has_method("is_feature_unlocked"):
+		return bool(media.call("is_feature_unlocked"))
+	var story: Node = get_node_or_null("/root/Story")
+	if story != null and story.has_method("is_feature_unlocked"):
+		return bool(story.call("is_feature_unlocked", StoryTypes.StoryFeature.MEDIA_ATTENTION))
+	return false
+
+
+func _is_clones_unlocked() -> bool:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and gs.has_method("get_total_clones"):
+		return int(gs.call("get_total_clones")) >= 1
+	return false
+
+
+func _make_label(text: String = "", size: int = FONT_SIZE) -> Label:
+	var lab := Label.new()
+	lab.text = text
+	lab.add_theme_font_size_override("font_size", size)
+	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return lab
+
+
+func _build_status_page() -> void:
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_status_section.add_child(scroll)
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 8)
+	scroll.add_child(body)
+	body.add_child(_make_label("ХАРАКТЕРИСТИКИ", FONT_SIZE))
+	_status_label = _make_label()
+	body.add_child(_status_label)
+	_late_rates_label = _make_label()
+	_late_rates_label.visible = false
+	body.add_child(_late_rates_label)
+	_build_salary_section(body)
+
+
+func _build_story_page() -> void:
+	_story_title = _make_label("СЮЖЕТ", FONT_SIZE)
+	_story_section.add_child(_story_title)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_story_section.add_child(scroll)
+	_story_label = _make_label()
+	_story_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_story_label)
+
+
+func _build_girls_page() -> void:
+	_list = ItemList.new()
+	_list.custom_minimum_size = Vector2(280, 0)
+	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_list.add_theme_font_size_override("font_size", FONT_SIZE)
+	_list.item_selected.connect(_on_item_selected)
+	_girls_section.add_child(_list)
+	_detail = RichTextLabel.new()
+	_detail.bbcode_enabled = true
+	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_detail.fit_content = false
+	_detail.scroll_active = true
+	_detail.add_theme_font_size_override("normal_font_size", FONT_SIZE)
+	_detail.add_theme_font_size_override("bold_font_size", FONT_SIZE)
+	_girls_section.add_child(_detail)
+
+
+func _build_media_page() -> void:
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_media_section.add_child(scroll)
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 10)
+	scroll.add_child(body)
+	_media_title = _make_label("МЕДИА", FONT_SIZE)
+	_media_title.visible = false
+	body.add_child(_media_title)
+
+	_media_attention_block = VBoxContainer.new()
+	_media_attention_block.add_theme_constant_override("separation", 4)
+	body.add_child(_media_attention_block)
+	_media_attention_block.add_child(_make_label("ВНИМАНИЕ", FONT_SIZE))
+	_media_attention = _make_label()
+	_media_attention_block.add_child(_media_attention)
+	_media_attention_bar = ProgressBar.new()
+	_media_attention_bar.min_value = 0
+	_media_attention_bar.max_value = float(MediaContent.ATTENTION_MAX)
+	_media_attention_bar.show_percentage = false
+	_media_attention_bar.custom_minimum_size = Vector2(0, 22)
+	_media_attention_block.add_child(_media_attention_bar)
+	_media_attention_markers = _make_label("15 · 30 · 45 · 60")
+	_media_attention_block.add_child(_media_attention_markers)
+	_media_pre_session = _make_label()
+	_media_pre_session.visible = false
+	_media_attention_block.add_child(_media_pre_session)
+
+	_media_photos_block = VBoxContainer.new()
+	_media_photos_block.visible = false
+	_media_photos_block.add_theme_constant_override("separation", 4)
+	body.add_child(_media_photos_block)
+	_media_photos_title = _make_label("ФОТОГРАФИИ", FONT_SIZE)
+	_media_photos_block.add_child(_media_photos_title)
+	_media_photo_rows.clear()
+	for photo_id in MediaContent.SHOT_IDS:
+		var card := VBoxContainer.new()
+		card.add_theme_constant_override("separation", 2)
+		_media_photos_block.add_child(card)
+		var name_lbl := _make_label(MediaContent.photo_title(photo_id))
+		card.add_child(name_lbl)
+		var gain_lbl := _make_label("")
+		card.add_child(gain_lbl)
+		var btn := Button.new()
+		btn.text = "Опубликовать"
+		btn.add_theme_font_size_override("font_size", FONT_SIZE)
+		var captured_id: StringName = photo_id
+		btn.pressed.connect(func() -> void: _on_media_publish_pressed(captured_id))
+		card.add_child(btn)
+		_media_photo_rows[photo_id] = {
+			"row": card,
+			"label": name_lbl,
+			"gain": gain_lbl,
+			"button": btn,
+		}
+
+	_media_incoming_block = VBoxContainer.new()
+	_media_incoming_block.visible = false
+	_media_incoming_block.add_theme_constant_override("separation", 4)
+	body.add_child(_media_incoming_block)
+	_media_incoming_title = _make_label("ВХОДЯЩИЕ", FONT_SIZE)
+	_media_incoming_block.add_child(_media_incoming_title)
+	_media_incoming_list = VBoxContainer.new()
+	_media_incoming_list.add_theme_constant_override("separation", 4)
+	_media_incoming_block.add_child(_media_incoming_list)
+
+	_overload_section = VBoxContainer.new()
+	_overload_section.visible = false
+	_overload_section.add_theme_constant_override("separation", 4)
+	body.add_child(_overload_section)
+	_overload_title = _make_label("ПЕРЕГРУЗКА", FONT_SIZE)
+	_overload_section.add_child(_overload_title)
+	_overload_summary = _make_label()
+	_overload_section.add_child(_overload_summary)
+	_overload_demand_list = VBoxContainer.new()
+	_overload_demand_list.add_theme_constant_override("separation", 6)
+	_overload_section.add_child(_overload_demand_list)
+
+	_media_feed_block = VBoxContainer.new()
+	_media_feed_block.visible = false
+	_media_feed_block.add_theme_constant_override("separation", 4)
+	body.add_child(_media_feed_block)
+	_media_feed_title = _make_label("ЛЕНТА", FONT_SIZE)
+	_media_feed_block.add_child(_media_feed_title)
+	var boost_row := HBoxContainer.new()
+	boost_row.add_theme_constant_override("separation", 12)
+	_media_feed_block.add_child(boost_row)
+	_overload_boost_btn = Button.new()
+	_overload_boost_btn.text = "Поднять волну"
+	_overload_boost_btn.visible = false
+	_overload_boost_btn.add_theme_font_size_override("font_size", FONT_SIZE)
+	_overload_boost_btn.pressed.connect(_on_overload_feed_boost_pressed)
+	boost_row.add_child(_overload_boost_btn)
+	_overload_boost_hint = _make_label()
+	_overload_boost_hint.visible = false
+	boost_row.add_child(_overload_boost_hint)
+	_media_feed_label = _make_label()
+	_media_feed_block.add_child(_media_feed_label)
+
+
+func _build_clone_page() -> void:
+	_clone_title = _make_label("КЛОНЫ", FONT_SIZE)
 	_clone_section.add_child(_clone_title)
-	_clone_stats = Label.new()
-	_clone_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_clone_section.add_child(_clone_stats)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_clone_section.add_child(scroll)
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 8)
+	scroll.add_child(body)
+	_clone_stats = _make_label()
+	body.add_child(_clone_stats)
+	_clone_footer = _make_label()
+	body.add_child(_clone_footer)
 
 
 func _build_salary_section(parent: VBoxContainer) -> void:
@@ -436,14 +630,9 @@ func _build_salary_section(parent: VBoxContainer) -> void:
 	_salary_section.visible = false
 	_salary_section.add_theme_constant_override("separation", 4)
 	parent.add_child(_salary_section)
-	var sep := HSeparator.new()
-	_salary_section.add_child(sep)
-	_salary_title = Label.new()
-	_salary_title.text = "ЗАРПЛАТА"
-	_salary_title.add_theme_font_size_override("font_size", 18)
+	_salary_title = _make_label("ЗАРПЛАТА", FONT_SIZE)
 	_salary_section.add_child(_salary_title)
-	_salary_stats = Label.new()
-	_salary_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_salary_stats = _make_label()
 	_salary_section.add_child(_salary_stats)
 	var advance_row := HBoxContainer.new()
 	advance_row.add_theme_constant_override("separation", 12)
@@ -451,13 +640,13 @@ func _build_salary_section(parent: VBoxContainer) -> void:
 	_salary_advance_btn = Button.new()
 	_salary_advance_btn.text = "Получить зарплату вперёд"
 	_salary_advance_btn.visible = false
+	_salary_advance_btn.add_theme_font_size_override("font_size", FONT_SIZE)
 	_salary_advance_btn.pressed.connect(_on_salary_advance_pressed)
 	advance_row.add_child(_salary_advance_btn)
-	_salary_pending_hint = Label.new()
+	_salary_pending_hint = _make_label()
 	_salary_pending_hint.visible = false
 	advance_row.add_child(_salary_pending_hint)
-	_salary_feedback = Label.new()
-	_salary_feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_salary_feedback = _make_label()
 	_salary_section.add_child(_salary_feedback)
 
 
@@ -493,6 +682,8 @@ func _connect_salary_signals() -> void:
 			gs.connect("experience_changed", _on_experience_changed_status)
 		if gs.has_signal("upgrade_points_changed") and not gs.is_connected("upgrade_points_changed", _on_upgrade_points_changed_status):
 			gs.connect("upgrade_points_changed", _on_upgrade_points_changed_status)
+		if gs.has_signal("characteristic_changed") and not gs.is_connected("characteristic_changed", _on_characteristic_changed_status):
+			gs.connect("characteristic_changed", _on_characteristic_changed_status)
 	var day_node: Node = get_node_or_null("/root/GameDay")
 	if day_node != null and day_node.has_signal("day_advanced") and not day_node.is_connected("day_advanced", _on_day_advanced_status):
 		day_node.connect("day_advanced", _on_day_advanced_status)
@@ -518,6 +709,14 @@ func _on_upgrade_points_changed_status(_new_value: int, _delta: int) -> void:
 	_request_status_refresh()
 
 
+func _on_characteristic_changed_status(
+	_characteristic: GameTypes.PlayerCharacteristic,
+	_new_value: int,
+	_previous_value: int
+) -> void:
+	_request_status_refresh()
+
+
 func _on_day_advanced_status(_new_day: int) -> void:
 	_request_status_refresh()
 	_request_media_refresh()
@@ -529,15 +728,19 @@ func _on_day_advanced_status(_new_day: int) -> void:
 
 func _on_story_objective_changed(_progress: StoryStageProgress) -> void:
 	_request_story_refresh()
+	_request_list_refresh()
 
 
 func _on_story_stage_started(_stage: GameTypes.GameStage) -> void:
 	_request_story_refresh()
 	_request_clone_refresh()
+	_refresh_tab_visibility()
+	_show_active_tab()
 
 
 func _request_status_refresh() -> void:
 	if _is_open:
+		_refresh_top_bar()
 		_refresh_status_section()
 
 
@@ -546,9 +749,7 @@ func _request_story_refresh() -> void:
 		_refresh_story_section()
 
 
-func _refresh_status_section() -> void:
-	if _status_label == null:
-		return
+func _refresh_top_bar() -> void:
 	var day_value: int = 1
 	var day_node: Node = get_node_or_null("/root/GameDay")
 	if day_node != null and day_node.has_method("get_current_day"):
@@ -563,13 +764,66 @@ func _refresh_status_section() -> void:
 		authority_value = int(gs.call("get_authority"))
 		experience_value = int(gs.call("get_experience"))
 		upgrade_points_value = int(gs.call("get_upgrade_points"))
+	if _top_bar_label != null:
+		_top_bar_label.text = "День %d · %s · Авторитет %d · Опытность %d · Баллы %d" % [
+			day_value,
+			UiNumberFormat.format_money(money_value),
+			authority_value,
+			experience_value,
+			upgrade_points_value,
+		]
+	var api_lines: PackedStringArray = PackedStringArray()
+	api_lines.append("День: %d" % day_value)
+	api_lines.append("Деньги: %d" % money_value)
+	api_lines.append("Авторитет: %d" % authority_value)
+	api_lines.append("Опытность: %d" % experience_value)
+	api_lines.append("Баллы прокачки: %d" % upgrade_points_value)
+	_status_api_text = "\n".join(api_lines)
+
+
+func _refresh_status_section() -> void:
+	if _status_label == null:
+		return
+	var muscle: int = 0
+	var appearance: int = 0
+	var capital: int = 0
+	var aura: int = 0
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null:
+		if gs.has_method("get_muscle"):
+			muscle = int(gs.call("get_muscle"))
+		if gs.has_method("get_appearance"):
+			appearance = int(gs.call("get_appearance"))
+		if gs.has_method("get_capital"):
+			capital = int(gs.call("get_capital"))
+		if gs.has_method("get_aura"):
+			aura = int(gs.call("get_aura"))
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("День: %d" % day_value)
-	lines.append("Деньги: %d" % money_value)
-	lines.append("Авторитет: %d" % authority_value)
-	lines.append("Опытность: %d" % experience_value)
-	lines.append("Баллы прокачки: %d" % upgrade_points_value)
+	lines.append("Мышца %d" % muscle)
+	lines.append("Внешность %d" % appearance)
+	lines.append("Капитал %d" % capital)
+	lines.append("Аура %d" % aura)
 	_status_label.text = "\n".join(lines)
+	_refresh_late_rates_on_status(gs)
+
+
+func _refresh_late_rates_on_status(gs: Node) -> void:
+	if _late_rates_label == null:
+		return
+	var money_rate: float = 0.0
+	var dating_rate: float = 0.0
+	if gs != null:
+		if gs.has_method("get_money_per_minute"):
+			money_rate = float(gs.call("get_money_per_minute"))
+		if gs.has_method("get_dates_per_minute"):
+			dating_rate = float(gs.call("get_dates_per_minute"))
+	var show_rates: bool = money_rate > 0.0 or dating_rate > 0.0
+	_late_rates_label.visible = show_rates
+	if show_rates:
+		_late_rates_label.text = "Денег/мин: %s\nСвиданий/мин: %s" % [
+			_format_clone_money_rate(money_rate),
+			_format_clone_date_rate(dating_rate),
+		]
 
 
 func _refresh_story_section() -> void:
@@ -583,11 +837,9 @@ func _refresh_story_section() -> void:
 	if progress == null:
 		_story_label.text = "—"
 		return
-	# STAGE_4: media → overload → Scientist hunt (MODULE 15/16/17).
 	if progress.stage == GameTypes.GameStage.STAGE_4:
 		_story_label.text = _stage4_story_text(progress)
 		return
-	# STAGE_5: lab handoff → President hunt (MODULE 20 §§56–59).
 	if progress.stage == GameTypes.GameStage.STAGE_5:
 		_story_label.text = _stage5_story_text()
 		return
@@ -599,7 +851,7 @@ func _refresh_story_section() -> void:
 		return
 	var stage_name: String = progress.display_name.strip_edges()
 	if stage_name == "":
-		stage_name = String(GameTypes.GameStage.find_key(int(progress.stage)))
+		stage_name = _stage_header_fallback(progress.stage)
 	var rival_text: String = "—"
 	if String(progress.story_rival_id) != "":
 		rival_text = _actor_display_name(progress.story_rival_id, true)
@@ -619,6 +871,28 @@ func _refresh_story_section() -> void:
 	_story_label.text = "\n".join(lines)
 
 
+func _stage_header_fallback(stage: GameTypes.GameStage) -> String:
+	match stage:
+		GameTypes.GameStage.PROLOGUE:
+			return "Пролог"
+		GameTypes.GameStage.STAGE_1:
+			return "Стадия 1"
+		GameTypes.GameStage.STAGE_2:
+			return "Стадия 2"
+		GameTypes.GameStage.STAGE_3:
+			return "Стадия 3"
+		GameTypes.GameStage.STAGE_4:
+			return "Стадия 4"
+		GameTypes.GameStage.STAGE_5:
+			return "Стадия 5"
+		GameTypes.GameStage.STAGE_6:
+			return "Стадия 6"
+		GameTypes.GameStage.FINALE:
+			return "Финал"
+		_:
+			return "Сюжет"
+
+
 func _stage4_story_text(progress: StoryStageProgress) -> String:
 	var overload: Node = get_node_or_null("/root/DatingOverload")
 	var recognized: bool = (
@@ -626,7 +900,6 @@ func _stage4_story_text(progress: StoryStageProgress) -> String:
 		and overload.has_method("is_problem_recognized")
 		and bool(overload.call("is_problem_recognized"))
 	)
-	# MODULE 17 §5: after recognition, before Scientist completion.
 	if recognized and not progress.girl_completed:
 		var hunt: PackedStringArray = PackedStringArray()
 		hunt.append("СТАДИЯ 4")
@@ -656,7 +929,6 @@ func _stage5_story_text() -> String:
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("СТАДИЯ 5")
 	if total < 1:
-		# MODULE 20 §56 — before first clone.
 		lines.append("Лаборатория")
 		lines.append("")
 		lines.append("Лаборатория открыта.")
@@ -665,16 +937,13 @@ func _stage5_story_text() -> String:
 	lines.append("Президент")
 	lines.append("")
 	if experience < 10:
-		# MODULE 20 §57 — clone exists, XP < 10.
 		lines.append("Опытность: %d / 10" % experience)
 		lines.append("")
 		lines.append("Автоматические свидания расширяют твой земной статус.")
 	elif not rival_defeated:
-		# MODULE 20 §58 — XP10, rival alive.
 		lines.append("Президент инспектирует вход в производственную зону.")
 		lines.append("Сначала разберись с её официальным ухажёром.")
 	else:
-		# MODULE 20 §59 — rival defeated.
 		lines.append("Следующий шаг:")
 		lines.append("Познакомиться с Президентом у производственной зоны.")
 	return "\n".join(lines)
@@ -710,8 +979,6 @@ func _stage6_story_text() -> String:
 
 
 func _finale_story_text() -> String:
-	# MODULE 21 §113 — before contact / in progress / completed.
-	# Keeps MODULE 20 §61 handoff lines before contact for phone continuity.
 	var gs_finale: Node = get_node_or_null("/root/GameState")
 	var finale_lines: PackedStringArray = PackedStringArray()
 	if gs_finale != null and bool(gs_finale.call("is_girl_conquered", StoryIds.GIRL_FINAL_TARGET)):
@@ -737,6 +1004,7 @@ func _finale_story_text() -> String:
 	finale_lines.append("")
 	finale_lines.append("Финальная локация открыта.")
 	return "\n".join(finale_lines)
+
 
 func _stage4_media_overload_text(overload: Node) -> String:
 	if overload != null and overload.has_method("is_started") and bool(overload.call("is_started")):
@@ -810,6 +1078,8 @@ func _on_feature_unlocked_salary(_feature: StoryTypes.StoryFeature) -> void:
 	_request_salary_refresh()
 	_request_media_refresh()
 	_request_story_refresh()
+	_refresh_tab_visibility()
+	_show_active_tab()
 
 
 func _request_salary_refresh() -> void:
@@ -846,8 +1116,10 @@ func _refresh_salary_section() -> void:
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("Авторитет: %d" % status.authority)
 	lines.append("Разряд: %d" % status.salary_level)
+	lines.append("Уровень: %d" % status.salary_level)
 	lines.append("За период: %d" % status.gross_per_period)
 	lines.append("Накоплено: %d" % status.pending_salary)
+	lines.append("Доступно: %s" % UiNumberFormat.format_money(status.pending_salary))
 	if status.passive_enabled:
 		lines.append("Автоматически: %d / период" % status.passive_per_period)
 	_salary_stats.text = "\n".join(lines)
@@ -985,20 +1257,26 @@ func _connect_clone_signals() -> void:
 func _on_clone_counts_changed(_total: int, _working: int, _dating: int, _free: int) -> void:
 	_request_clone_refresh()
 	_request_story_refresh()
+	_refresh_tab_visibility()
+	_show_active_tab()
 
 
 func _on_late_rates_changed(_money_per_minute: float, _dates_per_minute: float) -> void:
 	_request_clone_refresh()
+	_request_status_refresh()
 	_request_story_refresh()
 
 
 func _on_world_reach_changed(_new_value: int, _delta: int) -> void:
 	_request_story_refresh()
+	_request_clone_refresh()
 
 
 func _request_clone_refresh() -> void:
 	if _is_open:
 		_refresh_clone_section()
+		_refresh_tab_visibility()
+		_show_active_tab()
 
 
 func _refresh_clone_section() -> void:
@@ -1018,42 +1296,49 @@ func _refresh_clone_section() -> void:
 			dating = int(gs.call("get_clones_dating"))
 		if gs.has_method("get_free_clones"):
 			free = int(gs.call("get_free_clones"))
-	# MODULE 18 §47 — hidden until first clone; read-only counts + rates (no assign/upgrade).
-	_clone_section.visible = total >= 1
 	if total < 1:
 		if _clone_stats != null:
 			_clone_stats.text = ""
+		if _clone_footer != null:
+			_clone_footer.text = ""
 		return
 	var money_rate: float = 0.0
 	var dating_rate: float = 0.0
+	var reach: int = 0
+	var stage: int = 0
 	if gs != null:
 		if gs.has_method("get_money_per_minute"):
 			money_rate = float(gs.call("get_money_per_minute"))
 		if gs.has_method("get_dates_per_minute"):
 			dating_rate = float(gs.call("get_dates_per_minute"))
+		if gs.has_method("get_world_reach"):
+			reach = int(gs.call("get_world_reach"))
+		if gs.has_method("get_stage"):
+			stage = int(gs.call("get_stage"))
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("Всего: %d" % total)
 	lines.append("Свободно: %d" % free)
 	lines.append("Работают: %d" % working)
-	lines.append("Денег/мин: %s" % _format_clone_money_rate(money_rate))
 	lines.append("На свиданиях: %d" % dating)
+	lines.append("Денег/мин: %s" % _format_clone_money_rate(money_rate))
 	lines.append("Свиданий/мин: %s" % _format_clone_date_rate(dating_rate))
+	if stage >= int(GameTypes.GameStage.STAGE_6):
+		lines.append("Охват Земли %d / 100" % reach)
 	_clone_stats.text = "\n".join(lines)
+	if _clone_footer != null:
+		var footer: PackedStringArray = PackedStringArray()
+		footer.append("Управление клонами — через терминал лаборатории.")
+		if stage >= int(GameTypes.GameStage.STAGE_6):
+			footer.append("Глобальные улучшения — в производственной зоне.")
+		_clone_footer.text = "\n".join(footer)
 
 
 func _format_clone_money_rate(value: float) -> String:
-	if is_equal_approx(value, roundf(value)):
-		return "%d" % int(roundf(value))
-	return "%.1f" % value
+	return UiNumberFormat.format_rate(value, 1)
 
 
 func _format_clone_date_rate(value: float) -> String:
-	if is_equal_approx(value, roundf(value)):
-		return "%d" % int(roundf(value))
-	var one_decimal: float = snappedf(value, 0.1)
-	if is_equal_approx(value, one_decimal):
-		return "%.1f" % value
-	return "%.2f" % value
+	return UiNumberFormat.format_rate(value, 2)
 
 
 func _on_overload_started() -> void:
@@ -1082,7 +1367,6 @@ func _on_overload_problem_recognized() -> void:
 	_realization_pending = true
 	_request_overload_refresh()
 	_request_story_refresh()
-	# Do not interrupt an open Phone / dating / rival flow (§107).
 	if not _is_open:
 		_try_present_realization(false)
 
@@ -1101,6 +1385,10 @@ func _refresh_overload_section() -> void:
 		active = bool(overload.call("is_started"))
 	_overload_section.visible = active
 	if not active:
+		if _overload_boost_btn != null:
+			_overload_boost_btn.visible = false
+		if _overload_boost_hint != null:
+			_overload_boost_hint.visible = false
 		return
 	var status: DatingOverloadStatus = null
 	if overload.has_method("get_status"):
@@ -1108,6 +1396,8 @@ func _refresh_overload_section() -> void:
 	if status == null:
 		return
 	var lines: PackedStringArray = PackedStringArray()
+	lines.append("Личная пропускная способность:")
+	lines.append("%d / %d сегодня" % [status.capacity_used_today, status.capacity_per_day])
 	lines.append("Сегодня можно лично посетить: %d" % status.capacity_per_day)
 	lines.append("Сегодня уже посещено: %d/%d" % [status.capacity_used_today, status.capacity_per_day])
 	lines.append("")
@@ -1125,7 +1415,7 @@ func _refresh_overload_section() -> void:
 		if status.feed_boost_available:
 			_overload_boost_btn.text = "Поднять волну"
 			_overload_boost_btn.disabled = false
-			_overload_boost_hint.text = "+5 Внимания\nСледующий день: +1 входящий запрос"
+			_overload_boost_hint.text = "+5 внимания\nСледующий день: +1 входящий запрос"
 		else:
 			_overload_boost_btn.text = "Волна поднята"
 			_overload_boost_btn.disabled = true
@@ -1142,8 +1432,7 @@ func _refresh_overload_demand_rows(overload: Node) -> void:
 	if overload.has_method("get_backlog_entries_sorted"):
 		sorted = overload.call("get_backlog_entries_sorted") as Array[DatingDemandEntry]
 	if sorted.is_empty():
-		var empty := Label.new()
-		empty.text = "Нет активных запросов"
+		var empty := _make_label("Нет активных запросов")
 		_overload_demand_list.add_child(empty)
 		return
 	var day_node: Node = get_node_or_null("/root/GameDay")
@@ -1157,32 +1446,32 @@ func _refresh_overload_demand_rows(overload: Node) -> void:
 		var row := VBoxContainer.new()
 		row.add_theme_constant_override("separation", 1)
 		_overload_demand_list.add_child(row)
-		var status_lbl := Label.new()
+		var status_lbl := _make_label()
 		if e.status == DatingOverloadTypes.DatingDemandStatus.OVERDUE:
-			status_lbl.text = "OVERDUE"
+			status_lbl.text = "ПРОСРОЧЕНО"
 		else:
-			status_lbl.text = "WAITING"
+			status_lbl.text = "СЕГОДНЯ"
 		row.add_child(status_lbl)
-		var time_lbl := Label.new()
+		var time_lbl := _make_label()
 		var slot_time: String = DatingOverloadTypes.slot_display_time(e.slot)
 		if e.status == DatingOverloadTypes.DatingDemandStatus.OVERDUE:
 			var day_delta: int = current_day - e.appointment_day
 			if day_delta <= 1:
-				time_lbl.text = "Вчера, %s" % slot_time
+				time_lbl.text = "Вчера · %s" % slot_time
 			else:
-				time_lbl.text = "%d дн. назад, %s" % [day_delta, slot_time]
+				time_lbl.text = "%d дн. назад · %s" % [day_delta, slot_time]
 		else:
 			time_lbl.text = slot_time
 		row.add_child(time_lbl)
 		var name_row := HBoxContainer.new()
 		name_row.add_theme_constant_override("separation", 8)
 		row.add_child(name_row)
-		var name_lbl := Label.new()
+		var name_lbl := _make_label(_actor_display_name(e.girl_id, false))
 		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_lbl.text = _actor_display_name(e.girl_id, false)
 		name_row.add_child(name_lbl)
 		var open_btn := Button.new()
-		open_btn.text = "Открыть контакт"
+		open_btn.text = "Открыть"
+		open_btn.add_theme_font_size_override("font_size", FONT_SIZE)
 		var captured_id: StringName = e.girl_id
 		open_btn.pressed.connect(func() -> void: select_girl_by_id(captured_id))
 		name_row.add_child(open_btn)
@@ -1227,7 +1516,6 @@ func _try_present_realization(from_phone_open: bool) -> void:
 		return
 	_realization_pending = true
 	if not from_phone_open:
-		# Safe world GAMEPLAY only — never interrupt Phone / dating / rival (§107).
 		if _is_open:
 			return
 		if _player != null and _player.has_method("get_control_mode"):
@@ -1258,6 +1546,8 @@ func _show_realization_dialog() -> void:
 func _request_media_refresh() -> void:
 	if _is_open:
 		_refresh_media_section()
+		_refresh_tab_visibility()
+		_show_active_tab()
 
 
 func _request_list_refresh() -> void:
@@ -1268,17 +1558,18 @@ func _request_list_refresh() -> void:
 func _refresh_media_section() -> void:
 	if _media_section == null:
 		return
-	var media: Node = get_node_or_null("/root/Media")
-	var unlocked: bool = false
-	if media != null and media.has_method("is_feature_unlocked"):
-		unlocked = bool(media.call("is_feature_unlocked"))
-	_media_section.visible = unlocked
+	var unlocked: bool = _is_media_unlocked()
 	if not unlocked:
+		return
+	var media: Node = get_node_or_null("/root/Media")
+	if media == null:
 		return
 	var attention: int = 0
 	if media.has_method("get_attention"):
 		attention = int(media.call("get_attention"))
 	_media_attention.text = "Внимание: %d / %d" % [attention, MediaContent.ATTENTION_MAX]
+	if _media_attention_bar != null:
+		_media_attention_bar.value = float(attention)
 	var session_done: bool = bool(media.call("is_photo_session_completed"))
 	_media_pre_session.visible = not session_done
 	if not session_done:
@@ -1299,9 +1590,10 @@ func _refresh_media_photos(media: Node) -> void:
 		if not _media_photo_rows.has(photo_id):
 			continue
 		var row_data: Dictionary = _media_photo_rows[photo_id] as Dictionary
-		var row: HBoxContainer = row_data.get("row") as HBoxContainer
+		var row: VBoxContainer = row_data.get("row") as VBoxContainer
 		var btn: Button = row_data.get("button") as Button
 		var name_lbl: Label = row_data.get("label") as Label
+		var gain_lbl: Label = row_data.get("gain") as Label
 		if row == null or btn == null or name_lbl == null:
 			continue
 		var prepared: bool = bool(media.call("is_photo_prepared", photo_id))
@@ -1311,11 +1603,20 @@ func _refresh_media_photos(media: Node) -> void:
 		row.visible = true
 		name_lbl.text = MediaContent.photo_title(photo_id)
 		var published: bool = bool(media.call("is_photo_published", photo_id))
+		var gain: int = 0
+		if media.has_method("get_photo_attention_value"):
+			gain = int(media.call("get_photo_attention_value", photo_id))
+		if gain_lbl != null:
+			if gain > 0 and not published:
+				gain_lbl.text = "%s внимания" % UiNumberFormat.format_signed(gain)
+				gain_lbl.visible = true
+			else:
+				gain_lbl.visible = false
 		if published:
 			btn.text = "Опубликовано"
 			btn.disabled = true
 		elif not can_today:
-			btn.text = "Следующая публикация завтра"
+			btn.text = "Сегодня публикация уже была."
 			btn.disabled = true
 		else:
 			btn.text = "Опубликовать"
@@ -1330,25 +1631,23 @@ func _refresh_media_incoming(media: Node) -> void:
 		child.queue_free()
 	var offer_ids: Array = media.call("get_incoming_offer_girl_ids") as Array
 	if offer_ids.is_empty():
-		var empty_lbl := Label.new()
-		empty_lbl.text = "Пока нет входящих"
-		_media_incoming_list.add_child(empty_lbl)
+		_media_incoming_list.add_child(_make_label("Пока нет входящих"))
 		return
 	for entry in offer_ids:
 		var girl_id: StringName = entry as StringName
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		_media_incoming_list.add_child(row)
-		var status_lbl := Label.new()
+		var status_lbl := _make_label()
 		var is_read: bool = bool(media.call("is_offer_read", girl_id))
 		status_lbl.text = "READ" if is_read else "NEW"
 		row.add_child(status_lbl)
-		var name_lbl := Label.new()
+		var name_lbl := _make_label(_actor_display_name(girl_id, false))
 		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_lbl.text = _actor_display_name(girl_id, false)
 		row.add_child(name_lbl)
 		var open_btn := Button.new()
 		open_btn.text = "Открыть"
+		open_btn.add_theme_font_size_override("font_size", FONT_SIZE)
 		var captured_id: StringName = girl_id
 		open_btn.pressed.connect(func() -> void: _on_media_open_offer_pressed(captured_id))
 		row.add_child(open_btn)
@@ -1359,7 +1658,6 @@ func _refresh_media_feed(media: Node) -> void:
 		return
 	var feed_ids: Array = media.call("get_feed_event_ids") as Array
 	var lines: PackedStringArray = PackedStringArray()
-	# Persistent array is oldest→newest; display newest first (§68).
 	var i: int = feed_ids.size() - 1
 	while i >= 0:
 		var event_id: StringName = feed_ids[i] as StringName
@@ -1422,24 +1720,88 @@ func _refresh_list() -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:
 		return
-	var ids: Array = gs.call("get_discovered_girl_ids") as Array
+	var discovered: Array = gs.call("get_discovered_girl_ids") as Array
+	if discovered.is_empty():
+		_detail.text = "Пока нет записей."
+		return
+	var ordered: Array[StringName] = _sorted_girl_ids(discovered, gs)
 	var gd: Node = get_node_or_null("/root/GirlDiscovery")
-	for entry in ids:
-		var gid: StringName = entry as StringName
+	for gid in ordered:
 		_listed_ids.append(gid)
-		var display: String = String(gid)
-		if gd != null:
+		var display: String = _actor_display_name(gid, false)
+		if display == String(gid) and gd != null:
 			var def: GirlDefinition = gd.call("get_girl_definition", gid) as GirlDefinition
 			if def != null and def.display_name.strip_edges() != "":
 				display = def.display_name
-		var has_contact: bool = bool(gs.call("has_girl_contact", gid))
-		var status: String = "Номер получен" if has_contact else "Номера нет"
+		var status: String = _girl_list_status(gs, gid)
 		_list.add_item("%s — %s" % [display, status])
-	if _listed_ids.is_empty():
-		_detail.text = "Пока нет записей."
-	elif _list.get_selected_items().is_empty():
+	if _list.get_selected_items().is_empty():
 		_list.select(0)
 		_show_detail(_listed_ids[0])
+
+
+func _sorted_girl_ids(discovered: Array, gs: Node) -> Array[StringName]:
+	var catalog: Array[StringName] = []
+	var db: Node = get_node_or_null("/root/ContentDB")
+	if db != null and db.has_method("list_girls"):
+		var girls: Array = db.call("list_girls") as Array
+		for g in girls:
+			var def: GirlDefinition = g as GirlDefinition
+			if def != null:
+				catalog.append(def.id)
+	var discovered_set: Dictionary = {}
+	for entry in discovered:
+		discovered_set[entry as StringName] = true
+	var story_girl: StringName = &""
+	var story: Node = get_node_or_null("/root/Story")
+	if story != null and story.has_method("get_current_progress"):
+		var progress: StoryStageProgress = story.call("get_current_progress") as StoryStageProgress
+		if progress != null:
+			story_girl = progress.story_girl_id
+	var out: Array[StringName] = []
+	var seen: Dictionary = {}
+	if story_girl != &"" and bool(discovered_set.get(story_girl, false)):
+		out.append(story_girl)
+		seen[story_girl] = true
+	# Contacted in catalog order.
+	for gid in catalog:
+		if seen.has(gid):
+			continue
+		if not bool(discovered_set.get(gid, false)):
+			continue
+		if bool(gs.call("has_girl_contact", gid)):
+			out.append(gid)
+			seen[gid] = true
+	# Discovered without contact in catalog order.
+	for gid in catalog:
+		if seen.has(gid):
+			continue
+		if bool(discovered_set.get(gid, false)):
+			out.append(gid)
+			seen[gid] = true
+	# Any discovered ids missing from catalog (tests / extras), preserve discovery order.
+	for entry in discovered:
+		var gid2: StringName = entry as StringName
+		if seen.has(gid2):
+			continue
+		out.append(gid2)
+		seen[gid2] = true
+	return out
+
+
+func _girl_list_status(gs: Node, girl_id: StringName) -> String:
+	if girl_id == StoryIds.GIRL_FINAL_TARGET:
+		if bool(gs.call("is_girl_conquered", girl_id)):
+			return "+5"
+		if bool(gs.call("has_girl_contact", girl_id)):
+			return "Контакт"
+		return "Сигнал"
+	if bool(gs.call("has_girl_contact", girl_id)):
+		var rel: int = int(gs.call("get_girl_relationship", girl_id))
+		if rel != 0 or bool(gs.call("is_girl_conquered", girl_id)):
+			return UiNumberFormat.format_signed(rel)
+		return "Номер получен"
+	return "Номера нет"
 
 
 func _on_item_selected(index: int) -> void:
@@ -1535,26 +1897,56 @@ func _show_detail(girl_id: StringName) -> void:
 			var label: String = _resolve_reaction_source_label(source_id)
 			if label == "":
 				continue
-			lines.append("- %s: %s" % [label, _reaction_text(reaction)])
+			lines.append("%s %s" % [_reaction_text(reaction), label])
 	_detail.text = "\n".join(lines)
 
 
 func _format_tags(tags: Array) -> String:
 	var parts: PackedStringArray = PackedStringArray()
 	for tag in tags:
-		parts.append(String(GameTypes.ActionTag.find_key(int(tag))))
+		parts.append(_action_tag_label(int(tag)))
 	return ", ".join(parts)
+
+
+func _action_tag_label(tag_value: int) -> String:
+	match tag_value:
+		int(GameTypes.ActionTag.CARE):
+			return "Забота"
+		int(GameTypes.ActionTag.VULNERABILITY):
+			return "Уязвимость"
+		int(GameTypes.ActionTag.SIMPLICITY):
+			return "Простота"
+		int(GameTypes.ActionTag.PRESTIGE):
+			return "Престиж"
+		int(GameTypes.ActionTag.CONTROL):
+			return "Контроль"
+		int(GameTypes.ActionTag.DOMINANCE):
+			return "Доминирование"
+		int(GameTypes.ActionTag.RISK):
+			return "Риск"
+		int(GameTypes.ActionTag.CONFLICT):
+			return "Конфликт"
+		int(GameTypes.ActionTag.SPONTANEITY):
+			return "Спонтанность"
+		int(GameTypes.ActionTag.ABSURDITY):
+			return "Абсурд"
+		int(GameTypes.ActionTag.ORIGINALITY):
+			return "Оригинальность"
+		int(GameTypes.ActionTag.OBSESSION):
+			return "Одержимость"
+		_:
+			return "действие"
 
 
 func _reaction_text(reaction: int) -> String:
 	match reaction:
 		-1:
-			return "негативная"
+			return "[-1]"
 		0:
-			return "нейтральная"
+			return "[0]"
 		1:
-			return "позитивная"
-	return str(reaction)
+			return "[+1]"
+	return "[%d]" % reaction
 
 
 func _resolve_reaction_source_label(source_id: StringName) -> String:
@@ -1580,7 +1972,6 @@ func _resolve_reaction_source_label(source_id: StringName) -> String:
 		var approach: DiscoveryApproachDefinition = gd.call("find_discovery_approach", source_id) as DiscoveryApproachDefinition
 		if approach != null and approach.label.strip_edges() != "":
 			return approach.label
-	# Production UI: skip unresolved technical IDs.
 	if OS.is_debug_build() or OS.has_feature("editor"):
 		push_warning("[PhoneJournal] unresolved reaction source: %s" % String(source_id))
 	return ""

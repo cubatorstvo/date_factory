@@ -3,6 +3,9 @@ extends CanvasLayer
 ## One-time 3-pass clone calibration (MODULE 17).
 ## Deterministic track; miss retries same pass; abort creates no clone.
 
+const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
+const BODY_FONT_SIZE: int = 16
+
 signal calibration_finished()
 signal calibration_aborted()
 signal phase_changed(phase: FirstCloneTypes.CalibrationPhase)
@@ -308,6 +311,7 @@ func _build_ui() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.process_mode = Node.PROCESS_MODE_ALWAYS
+	_apply_theme(root)
 	add_child(root)
 	_ui_root = root
 	var dim: ColorRect = ColorRect.new()
@@ -322,18 +326,26 @@ func _build_ui() -> void:
 	panel.position = Vector2(-340, -230)
 	panel.size = Vector2(680, 460)
 	root.add_child(panel)
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(margin)
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.name = "VBox"
-	panel.add_child(vbox)
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
 	var title: Label = Label.new()
 	title.name = "Title"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(title)
 	var body: Label = Label.new()
 	body.name = "Body"
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(640, 90)
+	body.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	vbox.add_child(body)
 	var track: Control = Control.new()
 	track.name = "Track"
@@ -361,6 +373,7 @@ func _build_ui() -> void:
 	feedback.name = "Feedback"
 	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	feedback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	feedback.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	vbox.add_child(feedback)
 	var buttons: HBoxContainer = HBoxContainer.new()
 	buttons.name = "Buttons"
@@ -369,11 +382,15 @@ func _build_ui() -> void:
 	var cont: Button = Button.new()
 	cont.name = "ContinueBtn"
 	cont.text = "Начать"
+	cont.custom_minimum_size = Vector2(0, 34)
+	cont.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	cont.pressed.connect(_on_continue_pressed)
 	buttons.add_child(cont)
 	var abort_btn: Button = Button.new()
 	abort_btn.name = "AbortBtn"
 	abort_btn.text = "Отмена"
+	abort_btn.custom_minimum_size = Vector2(0, 34)
+	abort_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	abort_btn.pressed.connect(_on_abort_pressed)
 	buttons.add_child(abort_btn)
 
@@ -381,12 +398,12 @@ func _build_ui() -> void:
 func _refresh_ui() -> void:
 	if _ui_root == null or not is_instance_valid(_ui_root):
 		return
-	var title: Label = _ui_root.get_node_or_null("Panel/VBox/Title") as Label
-	var body: Label = _ui_root.get_node_or_null("Panel/VBox/Body") as Label
-	var feedback: Label = _ui_root.get_node_or_null("Panel/VBox/Feedback") as Label
-	var track: Control = _ui_root.get_node_or_null("Panel/VBox/Track") as Control
-	var cont: Button = _ui_root.get_node_or_null("Panel/VBox/Buttons/ContinueBtn") as Button
-	var abort_btn: Button = _ui_root.get_node_or_null("Panel/VBox/Buttons/AbortBtn") as Button
+	var title: Label = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Title") as Label
+	var body: Label = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Body") as Label
+	var feedback: Label = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Feedback") as Label
+	var track: Control = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Track") as Control
+	var cont: Button = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Buttons/ContinueBtn") as Button
+	var abort_btn: Button = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Buttons/AbortBtn") as Button
 	if feedback != null:
 		feedback.text = _last_feedback
 	match _phase:
@@ -444,8 +461,8 @@ func _refresh_ui() -> void:
 func _refresh_track_ui() -> void:
 	if _ui_root == null or not is_instance_valid(_ui_root):
 		return
-	var zone: ColorRect = _ui_root.get_node_or_null("Panel/VBox/Track/Zone") as ColorRect
-	var pointer: ColorRect = _ui_root.get_node_or_null("Panel/VBox/Track/Pointer") as ColorRect
+	var zone: ColorRect = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Track/Zone") as ColorRect
+	var pointer: ColorRect = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Track/Pointer") as ColorRect
 	var track_w: float = 600.0
 	var origin_x: float = 20.0
 	var center: float = FirstCloneTypes.pass_center(_pass_index)
@@ -464,3 +481,12 @@ func _on_continue_pressed() -> void:
 
 func _on_abort_pressed() -> void:
 	abort_calibration()
+
+
+func _apply_theme(root: Control) -> void:
+	if root == null:
+		return
+	if ResourceLoader.exists(THEME_PATH):
+		var theme_res: Resource = load(THEME_PATH)
+		if theme_res is Theme:
+			root.theme = theme_res as Theme

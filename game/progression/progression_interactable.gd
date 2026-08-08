@@ -1,11 +1,13 @@
 class_name ProgressionInteractable
 extends Interactable
-## Apartment self-assessment entry to Progression modal (MODULE 14A).
+## Apartment self-assessment entry to Progression UI (MODULE 14A / MODULE 22).
+## Opens coherent perk tree with optional preselected characteristic tab.
 
 const LAYER_INTERACTABLE: int = 4
-const MODAL_SCRIPT: String = "res://ui/progression/progression_modal_ui.gd"
+const MODAL_SCRIPT: String = "res://ui/progression/progression_ui.gd"
 
 @export var prompt_text: String = "Самооценка"
+@export var characteristic: GameTypes.PlayerCharacteristic = GameTypes.PlayerCharacteristic.MUSCLE
 
 var _modal: CanvasLayer = null
 
@@ -49,11 +51,11 @@ func _open_modal(player: Node) -> void:
 		return
 	var layer := CanvasLayer.new()
 	layer.set_script(script)
-	layer.name = "ProgressionModalUI"
+	layer.name = "ProgressionUI"
 	add_child(layer)
 	_modal = layer
 	if layer.has_method("open"):
-		layer.call("open", player, Callable(self, "_on_modal_closed"))
+		layer.call("open", player, Callable(self, "_on_modal_closed"), characteristic)
 	else:
 		_enter_modal(player)
 

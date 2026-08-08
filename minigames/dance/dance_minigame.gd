@@ -1,17 +1,23 @@
 class_name DanceMinigame
 extends CanvasLayer
-## Dance sequence overlay UI (MODULE 07B). World stays visible behind.
+## Dance sequence overlay UI (MODULE 07B / MODULE 22 presentation). World stays visible behind.
 
 
 signal match_finished(result: RivalCompetitionResult)
+
+const TITLE_TEXT: String = "Танцевальное противостояние"
 
 var match_state: DanceMatch = null
 var accept_input: bool = true
 var auto_tick: bool = true
 var _finished_emitted: bool = false
+var _result_hold: float = 0.0
+var _pending_result: RivalCompetitionResult = null
 var _request: RivalCompetitionRequest = null
 var _rival_actor: Node3D = null
 
+var _root: Control = null
+var _title_label: Label = null
 var _score_label: Label = null
 var _phase_label: Label = null
 var _hint_label: Label = null
@@ -49,17 +55,22 @@ func setup(
 		rng_seed,
 	)
 	_finished_emitted = false
+	_result_hold = 0.0
+	_pending_result = null
 	_refresh_ui()
 
 
 func setup_match(state: DanceMatch) -> void:
 	match_state = state
 	_finished_emitted = false
+	_result_hold = 0.0
+	_pending_result = null
 	_refresh_ui()
 
 
 func force_finish_emit() -> void:
-	_try_emit_finished()
+	_result_hold = 0.0
+	_try_emit_finished(true)
 
 
 func _read_perks_from_game_state() -> Dictionary:
@@ -76,10 +87,15 @@ func _read_perks_from_game_state() -> Dictionary:
 
 
 func _process(delta: float) -> void:
+	if _result_hold > 0.0:
+		_result_hold = maxf(0.0, _result_hold - delta)
+		if _result_hold <= 0.0:
+			_try_emit_finished(false)
+		return
 	if match_state == null:
 		return
 	if match_state.ended:
-		_try_emit_finished()
+		_try_emit_finished(false)
 		return
 	var prev_phase: DanceMatch.Phase = match_state.phase
 	var prev_demo: int = match_state.demo_index
@@ -93,11 +109,13 @@ func _process(delta: float) -> void:
 	elif prev_phase != DanceMatch.Phase.OPPONENT_DEMO and match_state.phase == DanceMatch.Phase.OPPONENT_DEMO:
 		_present_rival_move(match_state.demo_move)
 	_refresh_ui()
-	_try_emit_finished()
+	_try_emit_finished(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not accept_input or match_state == null or match_state.ended:
+		return
+	if _result_hold > 0.0:
 		return
 	if not match_state.is_input_phase():
 		return
@@ -118,18 +136,28 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if match_state.press_move(move as DanceTiming.DanceMove):
 		_refresh_ui()
-		_try_emit_finished()
+		_try_emit_finished(false)
 	get_viewport().set_input_as_handled()
 
 
-func _try_emit_finished() -> void:
+func _try_emit_finished(force: bool) -> void:
 	if _finished_emitted or match_state == null or not match_state.ended:
+		return
+	if _pending_result == null:
+		_pending_result = match_state.build_result_once()
+		if _pending_result == null:
+			return
+		if not force:
+			MinigameShell.build_result_overlay(_root, _pending_result)
+			_result_hold = MinigameShell.RESULT_HOLD_SEC
+			accept_input = false
+			_refresh_ui()
+			return
+	if not force and _result_hold > 0.0:
 		return
 	_finished_emitted = true
 	accept_input = false
-	var res: RivalCompetitionResult = match_state.build_result_once()
-	if res != null:
-		match_finished.emit(res)
+	match_finished.emit(_pending_result)
 
 
 func _present_rival_move(move: DanceTiming.DanceMove) -> void:
@@ -170,25 +198,45 @@ func _present_rival_move(move: DanceTiming.DanceMove) -> void:
 
 
 func _build_ui() -> void:
-	var root: Control = Control.new()
-	root.name = "Root"
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(root)
+	_root = Control.new()
+	_root.name = "Root"
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_root)
+	MinigameShell.apply_theme(_root)
+
+	_title_label = Label.new()
+	_title_label.name = "Title"
+	_title_label.text = TITLE_TEXT
+	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_title_label.offset_left = -360.0
+	_title_label.offset_right = 360.0
+	_title_label.offset_top = 28.0
+	_title_label.offset_bottom = 64.0
+	_title_label.add_theme_font_size_override("font_size", 26)
+	_root.add_child(_title_label)
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.name = "Panel"
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	panel.offset_left = -380.0
 	panel.offset_right = 380.0
-	panel.offset_top = -260.0
+	panel.offset_top = -280.0
 	panel.offset_bottom = -24.0
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(panel)
+	_root.add_child(panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(margin)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 8)
-	panel.add_child(vbox)
+	margin.add_child(vbox)
 
 	_score_label = Label.new()
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -210,16 +258,18 @@ func _build_ui() -> void:
 
 	_sequence_label = Label.new()
 	_sequence_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_sequence_label.add_theme_font_size_override("font_size", 20)
+	_sequence_label.add_theme_font_size_override("font_size", 22)
 	vbox.add_child(_sequence_label)
 
 	_hint_label = Label.new()
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_label.text = "WASD — направления"
+	_hint_label.add_theme_font_size_override("font_size", 16)
+	_hint_label.text = "W A S D — направления"
 	vbox.add_child(_hint_label)
 
 	_streak_label = Label.new()
 	_streak_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_streak_label.add_theme_font_size_override("font_size", 16)
 	vbox.add_child(_streak_label)
 
 	_feedback_label = Label.new()
@@ -231,11 +281,11 @@ func _build_ui() -> void:
 func _refresh_ui() -> void:
 	if match_state == null:
 		return
-	_score_label.text = "Ты %d : %d Соперник   цель %d" % [
+	_score_label.text = MinigameShell.format_score(
 		match_state.player_score,
 		match_state.rival_score,
 		match_state.target_score,
-	]
+	)
 	_phase_label.text = _phase_text(match_state.phase)
 	_sequence_label.text = _sequence_text()
 	_streak_label.text = "Серия: %d" % match_state.streak
@@ -256,13 +306,13 @@ func _phase_text(p: DanceMatch.Phase) -> String:
 		DanceMatch.Phase.OPPONENT_DEMO:
 			return "СМОТРИ"
 		DanceMatch.Phase.PRE_ROLL:
-			return "ТВОЯ ОЧЕРЕДЬ"
+			return "ТВОЙ ХОД" if match_state.is_pre_roll_for_own() else "ПОВТОРИ"
 		DanceMatch.Phase.PLAYER_REPEAT:
 			return "ПОВТОРИ"
 		DanceMatch.Phase.OWN_PREVIEW:
-			return "ТВОЙ ВЫХОД"
+			return "ТВОЙ ХОД"
 		DanceMatch.Phase.PLAYER_OWN:
-			return "ТВОЙ ВЫХОД"
+			return "ТВОЙ ХОД"
 		DanceMatch.Phase.ROUND_FEEDBACK:
 			return "УСПЕХ" if match_state.last_sequence_success else "ПРОВАЛ"
 		DanceMatch.Phase.FINISHED:
@@ -286,7 +336,7 @@ func _sequence_text() -> String:
 				):
 					slots.append("[%s]" % _move_glyph(match_state.get_clue_move()))
 				else:
-					slots.append("_" )
+					slots.append("_")
 			return " ".join(slots)
 		DanceMatch.Phase.OWN_PREVIEW, DanceMatch.Phase.PLAYER_OWN:
 			var parts: PackedStringArray = PackedStringArray()
@@ -321,11 +371,11 @@ func _move_glyph(move: DanceTiming.DanceMove) -> String:
 func _feedback_text(fb: DanceMatch.Feedback) -> String:
 	match fb:
 		DanceMatch.Feedback.MISS:
-			return "MISS"
+			return "МИМО"
 		DanceMatch.Feedback.HIT:
-			return "HIT"
+			return "ПОПАЛ"
 		DanceMatch.Feedback.PERFECT:
-			return "PERFECT"
+			return "ИДЕАЛЬНО"
 		DanceMatch.Feedback.SUCCESS:
 			return "УСПЕХ"
 		DanceMatch.Feedback.FAIL:

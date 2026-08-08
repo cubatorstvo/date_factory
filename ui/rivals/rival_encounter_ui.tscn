@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/rivals/rival_encounter_ui.gd" id="1_rival_ui"]
+
+[node name="RivalEncounterUI" type="CanvasLayer"]
+layer = 48
+script = ExtResource("1_rival_ui")
