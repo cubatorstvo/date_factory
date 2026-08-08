@@ -1,0 +1,14 @@
+﻿BEFORE (broken external_skeleton path relative to BoneAttachment3D):
+- stored path: Body/Armature/Skeleton3D
+- resolve_stored: false
+- hair BoneAttachment global_y: 0.0
+- bone_idx: -1
+
+AFTER (path relative to attachment):
+- stored/runtime path: ../Body/Armature/Skeleton3D
+- resolve: true
+- hair BoneAttachment global_y: ~1.606 (Head bone)
+- bone_idx: 6
+
+Live lineup metrics (after_slot_heights.json): hair_y 1.57-1.79, top_y 1.22-1.28, bottom_y 0.67-0.77, shoes_y 0.15-0.18
+Presentation test: ALL PASS (902)
