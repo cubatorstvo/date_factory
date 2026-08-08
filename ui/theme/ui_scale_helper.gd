@@ -34,6 +34,12 @@ static func apply_to_control(root: Control) -> void:
 	if root == null or not is_instance_valid(root):
 		return
 	root.scale = Vector2(_current_scale, _current_scale)
+	_refresh_control_pivot(root)
+	if not root.has_meta("_ui_scale_pivot_connected"):
+		root.set_meta("_ui_scale_pivot_connected", true)
+		root.resized.connect(func() -> void:
+			_refresh_control_pivot(root)
+		)
 
 
 static func apply_to_canvas_item(root: CanvasItem) -> void:
@@ -41,3 +47,9 @@ static func apply_to_canvas_item(root: CanvasItem) -> void:
 		return
 	if root is Control:
 		apply_to_control(root as Control)
+
+
+static func _refresh_control_pivot(root: Control) -> void:
+	if root == null or not is_instance_valid(root):
+		return
+	root.pivot_offset = root.size * 0.5

@@ -6,11 +6,8 @@
 [ext_resource type="PackedScene" uid="uid://craep8snu78fc" path="res://game/rivals/rival_actor.tscn" id="4_6aj8w"]
 [ext_resource type="Script" uid="uid://bwtavkdcvpoir" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
-[ext_resource type="Script" uid="uid://cm01ma3nlptyj" path="res://game/rivals/rival_actor.gd" id="5_voiok"]
 [ext_resource type="PackedScene" path="res://game/girls/girl_actor.tscn" id="6_bepj1"]
-[ext_resource type="Script" uid="uid://hijvba7yq260" path="res://game/girls/girl_actor.gd" id="7_g5o7a"]
 [ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="9_bepj1"]
-[ext_resource type="Script" uid="uid://dx0ba68hwmey5" path="res://world/flavor/flavor_interactable.gd" id="10_g5o7a"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
@@ -268,44 +265,36 @@ script = ExtResource("3_pspawn")
 [node name="npc_rival_gym_mirror" type="Marker3D" parent="NpcSpawns" unique_id=484160620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -2)
 script = ExtResource("4_nspawn")
+spawn_id = "rival_gym_mirror"
 npc_kind = 2
 
-[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_gym_mirror" unique_id=515275552 instance=ExtResource("4_6aj8w")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_voiok")
+[node name="RivalActor" parent="NpcSpawns/npc_rival_gym_mirror" unique_id=515275552 instance=ExtResource("4_6aj8w")]
+rival_id = "rival_gym_mirror"
 
 [node name="npc_girl_gym_chalk" type="Marker3D" parent="NpcSpawns" unique_id=1508729009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -2)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_gym_chalk"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_gym_chalk" unique_id=439552364 instance=ExtResource("6_bepj1")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_g5o7a")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_gym_chalk" unique_id=439552364 instance=ExtResource("6_bepj1")]
+girl_id = "girl_gym_chalk"
 
 [node name="npc_girl_gym_timer" type="Marker3D" parent="NpcSpawns" unique_id=491818472]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0.05, 1.5)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_gym_timer"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_gym_timer" unique_id=1856202593 instance=ExtResource("6_bepj1")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_g5o7a")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_gym_timer" unique_id=1856202593 instance=ExtResource("6_bepj1")]
+girl_id = "girl_gym_timer"
 
 [node name="npc_rival_gym_plate_counter" type="Marker3D" parent="NpcSpawns" unique_id=413925889]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.05, 1.5)
 script = ExtResource("4_nspawn")
+spawn_id = "rival_gym_plate_counter"
 npc_kind = 2
 
-[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_gym_plate_counter" unique_id=475364189 instance=ExtResource("4_6aj8w")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_voiok")
+[node name="RivalActor" parent="NpcSpawns/npc_rival_gym_plate_counter" unique_id=475364189 instance=ExtResource("4_6aj8w")]
+rival_id = "rival_gym_plate_counter"
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1487399742]
 
@@ -323,25 +312,15 @@ event_point_id = &"story_point_gym_activity"
 
 [node name="Interactables" type="Node3D" parent="." unique_id=1777444064]
 
-[node name="FlavorMirror" type="Area3D" parent="Interactables" unique_id=1242682029 instance=ExtResource("9_bepj1")]
+[node name="FlavorMirror" parent="Interactables" unique_id=1242682029 instance=ExtResource("9_bepj1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 1.3, -4.5)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("10_g5o7a")
 text = "ЗЕРКАЛО
 Повторения засчитываются даже если ты смотришь на себя."
-prompt_action = "Осмотреть"
 
-[node name="FlavorPlateRack" type="Area3D" parent="Interactables" unique_id=237040750 instance=ExtResource("9_bepj1")]
+[node name="FlavorPlateRack" parent="Interactables" unique_id=237040750 instance=ExtResource("9_bepj1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 1, -3.8)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("10_g5o7a")
 text = "БЛИНЫ
 Не еда. Ошибка терминологии уже принята коллективом."
-prompt_action = "Осмотреть"
 
 [node name="Transitions" type="Node3D" parent="." unique_id=976965251]
 

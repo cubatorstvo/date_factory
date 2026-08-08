@@ -139,12 +139,15 @@ func _build_ui() -> void:
 	dim.color = Color(0.04, 0.05, 0.07, 0.72)
 	_root.add_child(dim)
 
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.add_child(center)
+
 	var panel := PanelContainer.new()
 	panel.name = "Panel"
-	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(860, 620)
 	_apply_panel_style(panel)
-	_root.add_child(panel)
+	center.add_child(panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)

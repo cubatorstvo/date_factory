@@ -6,12 +6,9 @@
 [ext_resource type="PackedScene" path="res://game/girls/girl_actor.tscn" id="4_aplqh"]
 [ext_resource type="Script" uid="uid://bwtavkdcvpoir" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
-[ext_resource type="Script" uid="uid://hijvba7yq260" path="res://game/girls/girl_actor.gd" id="5_xlji7"]
 [ext_resource type="PackedScene" uid="uid://craep8snu78fc" path="res://game/rivals/rival_actor.tscn" id="6_sgsvq"]
-[ext_resource type="Script" uid="uid://cm01ma3nlptyj" path="res://game/rivals/rival_actor.gd" id="7_aplqh"]
 [ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="9_n632s"]
 [ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="10_sgsvq"]
-[ext_resource type="Script" uid="uid://dx0ba68hwmey5" path="res://world/flavor/flavor_interactable.gd" id="11_07mk6"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
@@ -258,75 +255,60 @@ script = ExtResource("3_pspawn")
 [node name="npc_girl_cafe_laptop" type="Marker3D" parent="NpcSpawns" unique_id=2122251097]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -1)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_laptop"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_laptop" unique_id=194019789 instance=ExtResource("4_aplqh")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_xlji7")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_laptop" unique_id=194019789 instance=ExtResource("4_aplqh")]
+girl_id = "girl_cafe_laptop"
 
 [node name="npc_rival_cafe_receipt" type="Marker3D" parent="NpcSpawns" unique_id=782695364]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -1)
 script = ExtResource("4_nspawn")
+spawn_id = "rival_cafe_receipt"
+npc_kind = 2
 
-[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_cafe_receipt" unique_id=515275552 instance=ExtResource("6_sgsvq")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_aplqh")
+[node name="RivalActor" parent="NpcSpawns/npc_rival_cafe_receipt" unique_id=515275552 instance=ExtResource("6_sgsvq")]
+rival_id = "rival_cafe_receipt"
 
 [node name="npc_girl_cafe_receipt_notes" type="Marker3D" parent="NpcSpawns" unique_id=1100067813]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 2.5)
 script = ExtResource("4_nspawn")
 spawn_id = &"girl_cafe_receipt_notes"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_receipt_notes" unique_id=914268399 instance=ExtResource("4_aplqh")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_xlji7")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_receipt_notes" unique_id=914268399 instance=ExtResource("4_aplqh")]
 girl_id = &"girl_cafe_receipt_notes"
 
 [node name="npc_girl_cafe_spoon_stack" type="Marker3D" parent="NpcSpawns" unique_id=546469834]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.05, -2.5)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_spoon_stack"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_spoon_stack" unique_id=46885073 instance=ExtResource("4_aplqh")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_xlji7")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_spoon_stack" unique_id=46885073 instance=ExtResource("4_aplqh")]
+girl_id = "girl_cafe_spoon_stack"
 
 [node name="npc_girl_cafe_hot_sauce" type="Marker3D" parent="NpcSpawns" unique_id=545734975]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0.05, -2.5)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_hot_sauce"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_hot_sauce" unique_id=1987305570 instance=ExtResource("4_aplqh")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_xlji7")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_hot_sauce" unique_id=1987305570 instance=ExtResource("4_aplqh")]
+girl_id = "girl_cafe_hot_sauce"
 
 [node name="npc_girl_cafe_sugar_geometry" type="Marker3D" parent="NpcSpawns" unique_id=553203969]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.05, 2.5)
 script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_sugar_geometry"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_sugar_geometry" unique_id=1301382103 instance=ExtResource("4_aplqh")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_xlji7")
+[node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_sugar_geometry" unique_id=1301382103 instance=ExtResource("4_aplqh")]
+girl_id = "girl_cafe_sugar_geometry"
 
 [node name="npc_rival_cafe_menu_holder" type="Marker3D" parent="NpcSpawns" unique_id=136145015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 1)
 script = ExtResource("4_nspawn")
+spawn_id = "rival_cafe_menu_holder"
 npc_kind = 2
 
-[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_cafe_menu_holder" unique_id=1483451366 instance=ExtResource("6_sgsvq")]
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_aplqh")
+[node name="RivalActor" parent="NpcSpawns/npc_rival_cafe_menu_holder" unique_id=1483451366 instance=ExtResource("6_sgsvq")]
+rival_id = "rival_cafe_menu_holder"
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1911734969]
 
@@ -362,35 +344,20 @@ billboard = 1
 text = "Столик для свиданий"
 font_size = 28
 
-[node name="FlavorMenu" type="Area3D" parent="Interactables" unique_id=1242682029 instance=ExtResource("10_sgsvq")]
+[node name="FlavorMenu" parent="Interactables" unique_id=1242682029 instance=ExtResource("10_sgsvq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, 3.5)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("11_07mk6")
 text = "МЕНЮ
 Любая проблема может быть дороже на 20% после добавления соуса."
-prompt_action = "Осмотреть"
 
-[node name="FlavorSugarTray" type="Area3D" parent="Interactables" unique_id=1802001927 instance=ExtResource("10_sgsvq")]
+[node name="FlavorSugarTray" parent="Interactables" unique_id=1802001927 instance=ExtResource("10_sgsvq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.85, 0)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("11_07mk6")
 text = "САХАР
 Свободная геометрия. Пока."
-prompt_action = "Осмотреть"
 
-[node name="FlavorReservedTable" type="Area3D" parent="Interactables" unique_id=335085206 instance=ExtResource("10_sgsvq")]
+[node name="FlavorReservedTable" parent="Interactables" unique_id=335085206 instance=ExtResource("10_sgsvq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.55, 4.2)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("11_07mk6")
 text = "БРОНЬ
 Стол уже достиг большего социального статуса, чем некоторые посетители."
-prompt_action = "Осмотреть"
 
 [node name="Transitions" type="Node3D" parent="." unique_id=1815322725]
 

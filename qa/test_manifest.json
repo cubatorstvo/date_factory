@@ -217,6 +217,15 @@
     "required_for_rc": true
   },
   {
+    "id": "title_menu_layout",
+    "module": "VP",
+    "scene_path": "res://ui/frontend/test/title_menu_layout_test.tscn",
+    "category": "ui_layout",
+    "timeout_seconds": 120,
+    "required_for_rc": true,
+    "notes": "Main Menu centering invariants at ui_scale 100/125/150"
+  },
+  {
     "id": "progression_ui",
     "module": "M22",
     "scene_path": "res://ui/progression/test/progression_ui_self_test.tscn",

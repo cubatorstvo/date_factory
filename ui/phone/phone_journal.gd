@@ -154,6 +154,10 @@ func select_girl_by_id(girl_id: StringName) -> bool:
 	return false
 
 
+func set_tab(tab: PhoneTab) -> void:
+	_set_active_tab(tab)
+
+
 func refresh() -> void:
 	_refresh_tab_visibility()
 	_refresh_top_bar()

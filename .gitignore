@@ -31,3 +31,6 @@ release/generated_steam_config.cfg
 __pycache__/
 *.py[cod]
 
+# Visual playtest review artifacts
+_review/
+

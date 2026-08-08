@@ -1,30 +1,57 @@
-# ACCEPTANCE — MODULE 28 Release Integration
+# ACCEPTANCE — Visual Playtest Audit
 
 ## Question
-Can we produce a reproducible Windows 1.0.0 release package with fail-open Steam, no GodotIQ runtime, local logs, notices, and an honest technical vs store readiness gate?
+Can we run a development-only scripted visual playtest from Main Menu to Ending, capture a standardized screenshot gallery, auto-detect layout defects, fix reproducible BLOCKER/MAJOR issues, keep RC green, and publish review screenshots on a temporary branch?
 
-## Input gate (MODULE 27)
-- RC baseline: 33/33 → post-M28 **34/34** (added `release_integration`)
-- BLOCKER=0, MAJOR=0
-- Manual A–F: NOT EXECUTABLE IN ENVIRONMENT
-- KI-M27-01: headless teardown MINOR; exported normal exit **exit=0** (not escalated)
+## Modes (must remain separate)
 
-## Evidence
-- version `1.0.0`; description `Date Factory` (no player-facing `v2`)
-- Title shows `v1.0.0` from ProjectSettings (onscreen; `tmp/m28_qa/title_version_recheck_full.png`)
-- `export_presets.cfg` “Windows Release”
-- GodotIQRuntime removed from production autoload; package scan FORBIDDEN_HITS=0
-- SteamBridge fail-open; GodotSteam GDExtension 4.20.1 + Steamworks 1.64; AppID not invented
-- `tools/release/build_windows.py` + portable `tools/common/godot_cli.py`
-- ZIP + SHA256 + `dist/release_manifest.json` (gitignored artifacts; rebuildable)
-- RC: **34/34 PASS**
-- `docs/release/RELEASE_STATUS.md`: TECHNICAL READY vs STORE PENDING
-- Independent QA: `docs/agent/qa/M28_QA.md` → TECHNICAL READY
-- Schema **v1**; no gameplay/content/balance drift
+```text
+SCRIPTED PLAYTHROUGH
+VISUAL STATE GALLERY
+HUMAN VERIFICATION REQUIRED
+```
+
+Do not claim human playtest passed for a scripted run.
+
+## Definition of Done (spec §36)
+
+- [ ] development-only scripted playthrough exists under `game/visual_review/`
+- [ ] production APIs used for progression; no direct Stage/XP/story/conquer/Reach cheating in playthrough
+- [ ] visual state gallery exists separately
+- [ ] deterministic screenshot capture; settle wait ≥2 frames + 150–300ms
+- [ ] full playthrough screenshots at 1920×1080
+- [ ] critical UI matrix at 1280/1366/1600/1920/2560/ultrawide
+- [ ] world composition shots at 1280+1920
+- [ ] Main Menu 1280 horizontal offset fixed (UiScale center pivot)
+- [ ] regression test for menu centering (`required_for_rc: true`)
+- [ ] automatic Control bounds/layout audit
+- [ ] UI scale 100/125/150 at 1280 tested
+- [ ] apartment/city/cafe/gym/appearance/rivals/salary/media/overload/lab/Stage6/Final represented
+- [ ] Phone / Progression / Save/Load / Settings gallery
+- [ ] scripted negative path
+- [ ] visual/layout BLOCKER=0 and MAJOR=0 after objective Cursor pass
+- [ ] all RC regressions pass
+- [ ] `report.md` / `report.json` + contact sheets
+- [ ] final screenshots roughly 70–120 PNGs
+- [ ] source fixes on main; screenshots only on `visual-review/<stamp>` branch
+- [ ] human-only limitations stated honestly
+- [ ] STOP. Do not delete review branch.
+
+## Evidence locations
+
+- Harness: `game/visual_review/`, `tools/visual_review/run_visual_playtest.py`
+- Docs: `docs/qa/VISUAL_PLAYTEST.md`
+- Artifacts: `_review/visual_playtest/<run_id>/`
+- RC: `py -3 tools/qa/run_all_tests.py --only-rc`
 
 ## Verdict
-**READY** (TECHNICAL READY)
 
-STORE READY / Steam overlay / production AppID remain **PENDING** (do not block MODULE 28).
+**READY** (scripted visual playtest + layout RC)
 
-STOP — MODULE00–28 complete. Do not invent MODULE 29.
+Evidence: harness under `game/visual_review/` + `tools/visual_review/`; Main Menu centering fixed; modal CenterContainer fixes; RC **35/35 PASS** (includes `title_menu_layout`); run `final_vp2` (156 PNGs, layout ERROR=0); review artifacts published on temporary `visual-review/*` branch only.
+
+```text
+SCRIPTED PLAYTHROUGH
+VISUAL STATE GALLERY
+HUMAN VERIFICATION REQUIRED
+```
