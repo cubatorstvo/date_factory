@@ -28,6 +28,11 @@ func get_interaction_prompt(player: Node) -> String:
 
 func _on_interact(player: Node) -> void:
 	_active_player = player
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	if overload != null and overload.has_method("can_start_personal_date"):
+		if bool(overload.call("is_started")) and not bool(overload.call("can_start_personal_date")):
+			_show_error(DatingOverloadTypes.DATE_VENUE_CAPACITY_MESSAGE, player)
+			return
 	_show_girl_picker(player)
 
 
@@ -116,13 +121,21 @@ func _build_rows(location_id: StringName) -> Array[Dictionary]:
 		var status: StringName = avail.get("status", RelationshipTypes.AVAIL_UNKNOWN_GIRL) as StringName
 		var label: String = def.display_name
 		var available: bool = status == RelationshipTypes.AVAIL_AVAILABLE
+		var demand_count: int = 0
+		var overload: Node = get_node_or_null("/root/DatingOverload")
+		if overload != null and overload.has_method("get_demand_count_for_girl"):
+			demand_count = int(overload.call("get_demand_count_for_girl", girl_id))
 		if status == RelationshipTypes.AVAIL_COOLDOWN:
 			var days: int = int(avail.get("cooldown_days", 0))
 			label = "%s — пауза %d дн." % [def.display_name, days]
+		elif status == DatingOverloadTypes.AVAIL_BODY_CAPACITY_USED:
+			label = "%s — лимит тела" % def.display_name
 		elif status == RelationshipTypes.AVAIL_AVAILABLE:
 			label = "%s — доступна" % def.display_name
 		else:
 			label = "%s — недоступна" % def.display_name
+		if demand_count > 0:
+			label = "%s — спрос: %d" % [label, demand_count]
 		out.append({
 			"girl_id": girl_id,
 			"label": label,
@@ -151,7 +164,13 @@ func _start_date(girl_id: StringName, player: Node) -> void:
 	var start: Dictionary = rel.call("start_date_with_history", req) as Dictionary
 	if not bool(start.get("ok", false)):
 		_close_ui(player)
-		_show_error("Не удалось начать свидание.", player)
+		var err: StringName = start.get("error", &"") as StringName
+		var msg: String = "Не удалось начать свидание."
+		if err == DatingOverloadTypes.AVAIL_BODY_CAPACITY_USED:
+			msg = DatingOverloadTypes.BODY_CAPACITY_USED_MESSAGE
+		elif start.has("message"):
+			msg = str(start.get("message", msg))
+		_show_error(msg, player)
 		return
 	_close_ui(player)
 	var ui: CanvasLayer = _ensure_dating_ui()

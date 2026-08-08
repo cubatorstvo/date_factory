@@ -171,7 +171,9 @@ func _test_phone_media_section() -> void:
 	_day.call("advance_day")
 	_media.call("publish_photo", MediaContent.PHOTO_COVER)
 	phone.refresh()
-	_ok(phone.get_story_text().contains("Спрос растёт быстрее обычного"), "phone story overload handoff")
+	# MODULE16 activates on overload_ready → STAGE_4 story uses §66 copy.
+	_ok(phone.get_story_text().contains("Спрос растёт быстрее тебя"), "phone story overload handoff")
+	_ok(phone.has_overload_section_visible(), "phone OVERLOAD visible after ready")
 	phone.close()
 	phone.queue_free()
 

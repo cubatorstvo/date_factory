@@ -1,16 +1,15 @@
-﻿# File ownership — MODULE 15 Media / Attention
+﻿# File ownership — MODULE 16 Dating Overload
 
 | Task | Agent | Writable | Forbidden | Status |
 |------|-------|----------|-----------|--------|
-| M15_A_CORE | df-gameplay-worker | GameState media, game/media/**, GirlDiscovery helper, project.godot Media, media tests | Phone UI, MODULE 16 | done |
-| M15_B_WORLD | df-scene-worker | PhotoSessionInteractable placement, MediaAttentionVisual, appearance_space + city_hub | Phone, Media formulas, MODULE 16 | done |
-| M15_C_PHONE_DOCS | df-gameplay-worker | phone_journal MEDIA + docs | scenes, MODULE 16 | done |
-| M15_D_QA | df-qa-worker | evidence only | product sources | done |
+| M16_A_CORE | gameplay-worker | GameState overload, dating_overload/**, Relationships gate, DateVenue, project.godot, tests | Phone, MODULE 17 | done |
+| M16_B_PHONE_DOCS | gameplay-worker | phone_journal Overload + docs | DatingOverload math, MODULE 17 | done |
+| M16_C_QA | qa-worker | evidence only | product sources | done |
 
 ## Product decisions
-1. Media after SalaryMine; no _process.
-2. Shots/poses in media_content.gd constants.
-3. Thresholds 15/30/45/60; overload_ready Att>=45 AND offers>=3 once.
-4. Article +15 no daily quota; photos +10/+15/+20; 1 photo/GameDay.
-5. discover_girl_from_media: clue0 + contact, no Good Profile.
-6. STOP — no MODULE 16.
+1. DatingOverload after Media; no _process.
+2. Capacity gate in Relationships.start_date_with_history.
+3. Consume on completed date only.
+4. Demand from Media offers cycle; 19:00/20:00 presentation only.
+5. Recognition: day>=start+2, generated>=7, backlog>=4, personal_dates>=1.
+6. STOP — no MODULE 17.

@@ -69,7 +69,7 @@
 - Доступ локаций — `StoryFeature` (не `GameState.unlock_location` для канонических девяти).
 - `PUBLIC_CITY_ACCESS` — внутренний gate внутри `city_hub`, не отдельная location.
 - Физический телефон в квартире открывает PhoneJournal; экономика шахты — MODULE 13.
-- PhoneJournal (MODULE 14A/14B/15): top status + Story (`Story.get_current_progress()`) + girls + MEDIA (Attention / photos / incoming / feed) + salary; STAGE_4 story handoff tracks photo session → publish → overload_ready when Scientist content is absent.
+- PhoneJournal (MODULE 14A/14B/15/16): top status + Story (`Story.get_current_progress()`) + girls + MEDIA (Attention / photos / incoming / feed) + ПЕРЕГРУЗКА (capacity / backlog / Feed Boost) + salary; STAGE_4 story handoff tracks photo session → publish → overload → recognition when Scientist content is absent.
 - MODULE 14B ordinary public NPCs sit behind existing `PUBLIC_CITY_ACCESS`; Editor pair + photo cue live in `appearance_space`; MODULE 15 photo session uses that cue.
 
 
@@ -110,13 +110,16 @@
 
 Это не полноценный симулятор социальной сети.
 
-### Реализация (MODULE 15)
+### Реализация (MODULE 15 / 16)
 
 - `Attention` = persistent media meter `0..100`, non-spendable.
 - Photo session creates 3 fixed photo records; one photo publish per GameDay.
 - Phone MEDIA section shows Attention, publish buttons, NEW/READ incoming (Open → journal, no schedule), feed newest-first.
 - MODULE15 incoming offers are unscheduled initiatives; MODULE16 owns capacity/overlap.
 - Four authored thresholds (15/30/45/60); overload-ready at Attention ≥ 45 and ≥ 3 offers.
+- Phone ПЕРЕГРУЗКА (after MEDIA): daily personal capacity, backlog rows (OVERDUE then WAITING with 19:00/20:00 labels), Feed Boost «Поднять волну» until recognition.
+- Realization modal uses exact «Проблема не в графике / Проблема в количестве меня» on next Phone open or safe GAMEPLAY; mechanical recognition does not wait for the modal.
+- Overlap is authored slot labels, not a real clock; intentionally not a calendar manager.
 
 ---
 

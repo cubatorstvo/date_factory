@@ -66,6 +66,16 @@ var _media_last_photo_publish_day: int = -1
 var _media_incoming_offer_girl_ids: Array[StringName] = []
 var _media_read_offer_girl_ids: Array[StringName] = []
 var _media_feed_event_ids: Array[StringName] = []
+var _dating_overload_started: bool = false
+var _dating_overload_start_day: int = -1
+var _dating_overload_next_request_id: int = 1
+var _dating_overload_requests: Array = []
+var _dating_overload_candidate_cursor: int = 0
+var _dating_overload_last_personal_date_day: int = -1
+var _dating_overload_personal_dates_completed: int = 0
+var _dating_overload_last_feed_boost_day: int = -1
+var _dating_overload_boost_pending: bool = false
+var _dating_overload_problem_recognized: bool = false
 
 const CHAR_MIN: int = 0
 const MEDIA_ATTENTION_MIN: int = 0
@@ -124,6 +134,16 @@ func reset_for_new_game() -> void:
 	_media_incoming_offer_girl_ids = []
 	_media_read_offer_girl_ids = []
 	_media_feed_event_ids = []
+	_dating_overload_started = false
+	_dating_overload_start_day = -1
+	_dating_overload_next_request_id = 1
+	_dating_overload_requests = []
+	_dating_overload_candidate_cursor = 0
+	_dating_overload_last_personal_date_day = -1
+	_dating_overload_personal_dates_completed = 0
+	_dating_overload_last_feed_boost_day = -1
+	_dating_overload_boost_pending = false
+	_dating_overload_problem_recognized = false
 	state_reset.emit()
 
 
@@ -379,6 +399,140 @@ func mark_media_offer_read(girl_id: StringName) -> bool:
 		return false
 	_media_read_offer_girl_ids.append(girl_id)
 	return true
+
+
+# --- Dating Overload (MODULE 16) ---
+
+func is_dating_overload_started() -> bool:
+	return _dating_overload_started
+
+
+## Returns true only the first time.
+func mark_dating_overload_started(day: int) -> bool:
+	if _dating_overload_started:
+		return false
+	_dating_overload_started = true
+	_dating_overload_start_day = day
+	return true
+
+
+func get_dating_overload_start_day() -> int:
+	return _dating_overload_start_day
+
+
+func allocate_dating_demand_request_id() -> int:
+	var id: int = _dating_overload_next_request_id
+	_dating_overload_next_request_id += 1
+	return id
+
+
+func append_dating_demand(entry: DatingDemandEntry) -> bool:
+	if entry == null:
+		push_error("[GameState] append_dating_demand null entry")
+		return false
+	if entry.request_id <= 0:
+		push_error("[GameState] append_dating_demand invalid request_id")
+		return false
+	if not _is_valid_id(entry.girl_id):
+		push_error("[GameState] append_dating_demand empty girl_id")
+		return false
+	for existing in _dating_overload_requests:
+		var e: DatingDemandEntry = existing as DatingDemandEntry
+		if e != null and e.request_id == entry.request_id:
+			push_error("[GameState] append_dating_demand duplicate request_id %s" % entry.request_id)
+			return false
+	_dating_overload_requests.append(entry)
+	return true
+
+
+## Snapshot copies — caller must not mutate GameState internals.
+func get_dating_demand_entries() -> Array:
+	var out: Array = []
+	for existing in _dating_overload_requests:
+		var e: DatingDemandEntry = existing as DatingDemandEntry
+		if e != null:
+			out.append(e.duplicate_entry())
+	return out
+
+
+func set_dating_demand_status(request_id: int, status: int) -> bool:
+	var entry: DatingDemandEntry = _find_dating_demand(request_id)
+	if entry == null:
+		return false
+	entry.status = status as DatingOverloadTypes.DatingDemandStatus
+	return true
+
+
+func mark_dating_demand_fulfilled(request_id: int, day: int) -> bool:
+	var entry: DatingDemandEntry = _find_dating_demand(request_id)
+	if entry == null:
+		return false
+	if entry.status == DatingOverloadTypes.DatingDemandStatus.FULFILLED:
+		return false
+	entry.status = DatingOverloadTypes.DatingDemandStatus.FULFILLED
+	entry.fulfilled_day = day
+	return true
+
+
+func get_dating_overload_candidate_cursor() -> int:
+	return _dating_overload_candidate_cursor
+
+
+func set_dating_overload_candidate_cursor(value: int) -> void:
+	_dating_overload_candidate_cursor = maxi(0, value)
+
+
+func get_dating_overload_last_personal_date_day() -> int:
+	return _dating_overload_last_personal_date_day
+
+
+func set_dating_overload_last_personal_date_day(day: int) -> void:
+	_dating_overload_last_personal_date_day = day
+
+
+func get_dating_overload_personal_dates_completed() -> int:
+	return _dating_overload_personal_dates_completed
+
+
+func increment_dating_overload_personal_dates_completed() -> int:
+	_dating_overload_personal_dates_completed += 1
+	return _dating_overload_personal_dates_completed
+
+
+func get_dating_overload_last_feed_boost_day() -> int:
+	return _dating_overload_last_feed_boost_day
+
+
+func set_dating_overload_last_feed_boost_day(day: int) -> void:
+	_dating_overload_last_feed_boost_day = day
+
+
+func is_dating_overload_boost_pending() -> bool:
+	return _dating_overload_boost_pending
+
+
+func set_dating_overload_boost_pending(value: bool) -> void:
+	_dating_overload_boost_pending = value
+
+
+func is_dating_overload_problem_recognized() -> bool:
+	return _dating_overload_problem_recognized
+
+
+## Returns true only the first time.
+func mark_dating_overload_problem_recognized() -> bool:
+	if _dating_overload_problem_recognized:
+		return false
+	_dating_overload_problem_recognized = true
+	return true
+
+
+func _find_dating_demand(request_id: int) -> DatingDemandEntry:
+	for existing in _dating_overload_requests:
+		var e: DatingDemandEntry = existing as DatingDemandEntry
+		if e != null and e.request_id == request_id:
+			return e
+	return null
 
 
 # --- Money ---

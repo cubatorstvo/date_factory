@@ -199,6 +199,18 @@
 
 После этого сюжет естественно ведёт к Учёной и клонированию.
 
+### Реализация (MODULE 16)
+
+After Media `overload_ready`, personal hero capacity = 1 completed manual date per GameDay.
+Dating demand generates 3 initial overlapping requests, then 2/day.
+Backlog is non-punitive and persists.
+Problem recognition after >=2 days, >=7 generated, >=4 backlog, >=1 completed personal date.
+
+Implementation clarification (not a product rewrite):
+The overlap is represented by authored slot labels 19:00/20:00, not a real clock.
+The system is intentionally not a calendar manager.
+Scientist / Lab / first clone remain MODULE 17.
+
 ---
 
 # 37. Первый клон
@@ -420,14 +432,14 @@ PROLOGUE: girl_neighbor
 STAGE_1: rival_actress → girl_actress
 STAGE_2: rival_mine_boss → girl_mine_boss
 STAGE_3: Salary Mine unlock → rival_magazine_editor → girl_magazine_editor
-STAGE_4: MEDIA_ATTENTION → photo session → Attention + Phone MEDIA → incoming offers → overload_ready
+STAGE_4: MEDIA_ATTENTION → photo session → Attention + Phone MEDIA → incoming offers → overload_ready → DatingOverload → recognition («количество меня»)
 ```
 
 Editor rival: MONEY+DANCE, Auth4→+3; without Payable Intent MONEY locked, DANCE available.
 
-Implementation note (MODULE 15, not a product rewrite):
+Implementation note (MODULE 15/16, not a product rewrite):
 MODULE15 uses 4 authored Attention thresholds (15/30/45/60) so the first incoming initiatives are deterministic.
 At Attention ≥ 45 and ≥ 3 offers Media becomes `overload_ready`.
-Dating Overload capacity/overlap and Scientist content remain MODULE 16+.
+MODULE16 owns body capacity, demand backlog, Feed Boost, and recognition handoff; Scientist content remains MODULE 17.
 
 ---

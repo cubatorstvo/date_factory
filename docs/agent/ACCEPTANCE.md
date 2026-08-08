@@ -1,15 +1,16 @@
-# ACCEPTANCE — MODULE 15 Media / Attention Escalation
+# ACCEPTANCE — MODULE 16 Dating Overload
 
 ## Player-visible result
 
-STAGE_4 → PhotoSession at Editor studio → article Attention 15 + first incoming → publish photos (1/day) → Attention rises → ≥3 offers → overload_ready; Phone MEDIA section; fame visuals at thresholds. No calendar/capacity/Scientist.
+After Media overload_ready: 3 overlapping requests (19:00/19:00/20:00), body capacity 1 date/GameDay, +2 demand/day, backlog grows, Feed Boost optional, after conditions → realization «Проблема в количестве меня» + clone_solution_needed. Stage stays 4. No Scientist/Lab/clones.
 
 ## PASS
 
-- Media autoload; Attention 0..100 no decay; session exactly once, 3 shots BASE/STAGED/EDITORIAL (App 0/1/2)
-- Article +15 + first offer; photos once each, 1/GameDay; thresholds 15/30/45/60 deterministic
-- Incoming ordinary girls only; media discovery helper; Phone MEDIA; visuals; overload_ready once; STAGE4 stays
-- MODULE 15 tests + MODULE 02–14 regressions; no MODULE 16
+- DatingOverload autoload; activation idempotent from Media.overload_ready at STAGE_4
+- Cap 1 completed date/day after activation; pre-overload unlimited
+- Demand math: 3 then +2/day; WAITING→OVERDUE; fulfill oldest matching girl
+- Phone overload + DateVenue annotations; Feed Boost +5 Att / next wave 3 once/day
+- Recognition exact; no penalties; regressions MODULE 02–15; no MODULE 17
 
 ## Verdict
 

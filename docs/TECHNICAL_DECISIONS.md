@@ -725,3 +725,21 @@ Deliver player-visible fame growth and Phone tools while keeping a clean stop be
 
 Scope:
 `game/media/**`, GameState media fields, `ui/phone/phone_journal.gd`, `docs/PROJECT_STRUCTURE.md`, GDD implementation notes
+
+## MODULE 16: Dating Overload (body capacity + Phone backlog)
+
+Context:
+After Media `overload_ready`, the game must prove one body is not enough without building a calendar manager or Scientist/Lab/clone sequence (MODULE 17).
+
+Decision:
+1. After Media overload-ready at STAGE_4, personal hero capacity = 1 completed manual date per GameDay; demand generates 3 initial overlapping requests (authored 19:00/19:00/20:00 labels), then 2/day.
+2. Backlog is non-punitive and persists; slots are presentation labels, not a real clock. The system is intentionally not a calendar manager.
+3. Optional Feed Boost (`Поднять волну`) once/day: +5 Attention and next-day boosted demand wave; hidden after problem recognition.
+4. Problem recognition after >=2 days, >=7 generated, >=4 backlog, >=1 completed personal date → mechanical flag immediately; Phone realization modal/toast deferred to next Phone open or safe GAMEPLAY with exact text «Проблема не в графике / Проблема в количестве меня».
+5. PhoneJournal adds ПЕРЕГРУЗКА after MEDIA (incoming preserved); STAGE_4 story handoff switches to overload / recognition copy. Stage stays STAGE_4.
+
+Reason:
+Stage the clone premise as a felt capacity shortage without calendar optimization or MODULE 17 content.
+
+Scope:
+`game/dating_overload/**`, GameState overload fields, Relationships/DateVenue capacity gates, `ui/phone/phone_journal.gd`, docs structure/GDD notes

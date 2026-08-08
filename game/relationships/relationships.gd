@@ -170,6 +170,14 @@ func get_date_availability(girl_id: StringName) -> Dictionary:
 	var cd: int = int(gs.call("get_girl_date_cooldown_days_remaining", girl_id))
 	if cd > 0:
 		return {"status": RelationshipTypes.AVAIL_COOLDOWN, "cooldown_days": cd}
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	if overload != null and overload.has_method("can_start_personal_date"):
+		if not bool(overload.call("can_start_personal_date")):
+			return {
+				"status": DatingOverloadTypes.AVAIL_BODY_CAPACITY_USED,
+				"cooldown_days": 0,
+				"message": DatingOverloadTypes.BODY_CAPACITY_USED_MESSAGE,
+			}
 	return {"status": RelationshipTypes.AVAIL_AVAILABLE, "cooldown_days": 0}
 
 
@@ -199,7 +207,10 @@ func start_date_with_history(request: DatingStartRequest) -> Dictionary:
 	var avail: Dictionary = get_date_availability(request.girl_id)
 	var status: StringName = avail.get("status", RelationshipTypes.AVAIL_UNKNOWN_GIRL) as StringName
 	if status != RelationshipTypes.AVAIL_AVAILABLE:
-		return {"ok": false, "error": status, "availability": avail}
+		var out: Dictionary = {"ok": false, "error": status, "availability": avail}
+		if status == DatingOverloadTypes.AVAIL_BODY_CAPACITY_USED:
+			out["message"] = DatingOverloadTypes.BODY_CAPACITY_USED_MESSAGE
+		return out
 	var dc: Node = get_node("/root/DatingCore")
 	request.excluded_event_ids = get_event_exclusions_for_next_date(request.girl_id)
 	var first: Dictionary = dc.call("start_date", request) as Dictionary

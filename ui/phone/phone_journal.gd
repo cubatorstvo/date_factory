@@ -1,7 +1,8 @@
 class_name PhoneJournal
 extends Control
 ## Functional phone journal for discovered girls (MODULE 08)
-## + global/story status (MODULE 14A) + salary (MODULE 13) + MEDIA (MODULE 15).
+## + global/story status (MODULE 14A) + salary (MODULE 13) + MEDIA (MODULE 15)
+## + Dating Overload section (MODULE 16).
 ## No Dating CTA / messaging / scheduling / calendar.
 
 signal opened()
@@ -44,6 +45,18 @@ var _media_feed_title: Label = null
 var _media_feed_label: Label = null
 var _media_signals_connected: bool = false
 
+var _overload_section: VBoxContainer = null
+var _overload_title: Label = null
+var _overload_summary: Label = null
+var _overload_demand_list: VBoxContainer = null
+var _overload_boost_btn: Button = null
+var _overload_boost_hint: Label = null
+var _overload_signals_connected: bool = false
+var _realization_pending: bool = false
+var _realization_presented: bool = false
+var _realization_dialog: AcceptDialog = null
+var _player_mode_connected: bool = false
+
 
 func _ready() -> void:
 	visible = false
@@ -52,6 +65,7 @@ func _ready() -> void:
 	_build_ui()
 	_connect_salary_signals()
 	_connect_media_signals()
+	_connect_overload_signals()
 
 
 func open(player: Node = null) -> void:
@@ -63,10 +77,12 @@ func open(player: Node = null) -> void:
 	if _player != null and _player.has_method("enter_modal_ui"):
 		_player.call("enter_modal_ui")
 	_clear_salary_feedback()
+	_ensure_player_mode_hook()
 	refresh()
 	visible = true
 	_is_open = true
 	opened.emit()
+	_try_present_realization(true)
 
 
 func close() -> void:
@@ -77,6 +93,7 @@ func close() -> void:
 	if _player != null and _player.has_method("enter_gameplay"):
 		_player.call("enter_gameplay")
 	closed.emit()
+	call_deferred("_try_present_realization", false)
 
 
 func is_open() -> bool:
@@ -110,6 +127,7 @@ func refresh() -> void:
 	_refresh_story_section()
 	_refresh_list()
 	_refresh_media_section()
+	_refresh_overload_section()
 	_refresh_salary_section()
 
 
@@ -171,6 +189,44 @@ func get_media_pre_session_text() -> String:
 	return String(_media_pre_session.text)
 
 
+func has_overload_section_visible() -> bool:
+	return _overload_section != null and _overload_section.visible
+
+
+func get_overload_summary_text() -> String:
+	if _overload_summary == null:
+		return ""
+	return String(_overload_summary.text)
+
+
+func get_overload_demand_row_count() -> int:
+	if _overload_demand_list == null:
+		return 0
+	return _overload_demand_list.get_child_count()
+
+
+func is_overload_boost_visible() -> bool:
+	return _overload_boost_btn != null and _overload_boost_btn.visible
+
+
+func is_overload_boost_enabled() -> bool:
+	return (
+		_overload_boost_btn != null
+		and _overload_boost_btn.visible
+		and not _overload_boost_btn.disabled
+	)
+
+
+func get_overload_boost_button_text() -> String:
+	if _overload_boost_btn == null:
+		return ""
+	return String(_overload_boost_btn.text)
+
+
+func was_realization_presented() -> bool:
+	return _realization_presented
+
+
 func _build_ui() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.09, 0.12, 0.92)
@@ -207,6 +263,7 @@ func _build_ui() -> void:
 	_detail.fit_content = false
 	split.add_child(_detail)
 	_build_media_section(vbox)
+	_build_overload_section(vbox)
 	_build_salary_section(vbox)
 	_close_btn = Button.new()
 	_close_btn.text = "Закрыть"
@@ -303,6 +360,42 @@ func _build_media_section(parent: VBoxContainer) -> void:
 	_media_feed_block.add_child(_media_feed_label)
 
 
+func _build_overload_section(parent: VBoxContainer) -> void:
+	_overload_section = VBoxContainer.new()
+	_overload_section.visible = false
+	_overload_section.add_theme_constant_override("separation", 4)
+	parent.add_child(_overload_section)
+	var sep := HSeparator.new()
+	_overload_section.add_child(sep)
+	_overload_title = Label.new()
+	_overload_title.text = "ПЕРЕГРУЗКА"
+	_overload_title.add_theme_font_size_override("font_size", 18)
+	_overload_section.add_child(_overload_title)
+	_overload_summary = Label.new()
+	_overload_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_overload_section.add_child(_overload_summary)
+	_overload_demand_list = VBoxContainer.new()
+	_overload_demand_list.add_theme_constant_override("separation", 6)
+	_overload_section.add_child(_overload_demand_list)
+	var boost_row := HBoxContainer.new()
+	boost_row.add_theme_constant_override("separation", 12)
+	_overload_section.add_child(boost_row)
+	_overload_boost_btn = Button.new()
+	_overload_boost_btn.text = "Поднять волну"
+	_overload_boost_btn.visible = false
+	_overload_boost_btn.pressed.connect(_on_overload_feed_boost_pressed)
+	boost_row.add_child(_overload_boost_btn)
+	_overload_boost_hint = Label.new()
+	_overload_boost_hint.visible = false
+	_overload_boost_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	boost_row.add_child(_overload_boost_hint)
+	_realization_dialog = AcceptDialog.new()
+	_realization_dialog.title = ""
+	_realization_dialog.dialog_text = ""
+	_realization_dialog.ok_button_text = "ОК"
+	add_child(_realization_dialog)
+
+
 func _build_salary_section(parent: VBoxContainer) -> void:
 	_salary_section = VBoxContainer.new()
 	_salary_section.visible = false
@@ -392,7 +485,9 @@ func _on_upgrade_points_changed_status(_new_value: int, _delta: int) -> void:
 func _on_day_advanced_status(_new_day: int) -> void:
 	_request_status_refresh()
 	_request_media_refresh()
+	_request_overload_refresh()
 	_request_salary_refresh()
+	_request_story_refresh()
 
 
 func _on_story_objective_changed(_progress: StoryStageProgress) -> void:
@@ -496,6 +591,31 @@ func _is_stage4_media_handoff(progress: StoryStageProgress) -> bool:
 
 
 func _stage4_media_handoff_text() -> String:
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	if overload != null and overload.has_method("is_problem_recognized") and bool(overload.call("is_problem_recognized")):
+		var after: PackedStringArray = PackedStringArray()
+		after.append("СТАДИЯ 4")
+		after.append("")
+		after.append(DatingOverloadTypes.REALIZATION_LINE_1)
+		after.append(DatingOverloadTypes.REALIZATION_LINE_2)
+		after.append("")
+		after.append("Следующий шаг:")
+		after.append("Найти способ быть в нескольких местах одновременно.")
+		return "\n".join(after)
+	if overload != null and overload.has_method("is_started") and bool(overload.call("is_started")):
+		var during: PackedStringArray = PackedStringArray()
+		during.append("СТАДИЯ 4")
+		during.append("Медийность")
+		var incoming_n: int = 0
+		var media_for_count: Node = get_node_or_null("/root/Media")
+		if media_for_count != null and media_for_count.has_method("get_incoming_offer_girl_ids"):
+			var offers: Array = media_for_count.call("get_incoming_offer_girl_ids") as Array
+			incoming_n = offers.size()
+		during.append("Входящих встреч: %d" % incoming_n)
+		during.append("Лично успеваешь: 1 / день")
+		during.append("")
+		during.append("Спрос растёт быстрее тебя.")
+		return "\n".join(during)
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("СТАДИЯ 4")
 	lines.append("Медийность")
@@ -687,6 +807,228 @@ func _on_media_feed_changed() -> void:
 func _on_media_overload_ready() -> void:
 	_request_media_refresh()
 	_request_story_refresh()
+	_request_overload_refresh()
+
+
+func _connect_overload_signals() -> void:
+	if _overload_signals_connected:
+		return
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	if overload != null:
+		if overload.has_signal("overload_started") and not overload.is_connected("overload_started", _on_overload_started):
+			overload.connect("overload_started", _on_overload_started)
+		if overload.has_signal("backlog_changed") and not overload.is_connected("backlog_changed", _on_overload_backlog_changed):
+			overload.connect("backlog_changed", _on_overload_backlog_changed)
+		if overload.has_signal("personal_capacity_changed") and not overload.is_connected("personal_capacity_changed", _on_overload_capacity_changed):
+			overload.connect("personal_capacity_changed", _on_overload_capacity_changed)
+		if overload.has_signal("feed_boost_used") and not overload.is_connected("feed_boost_used", _on_overload_feed_boost_used):
+			overload.connect("feed_boost_used", _on_overload_feed_boost_used)
+		if overload.has_signal("problem_recognized") and not overload.is_connected("problem_recognized", _on_overload_problem_recognized):
+			overload.connect("problem_recognized", _on_overload_problem_recognized)
+		if overload.has_signal("demand_fulfilled") and not overload.is_connected("demand_fulfilled", _on_overload_demand_fulfilled):
+			overload.connect("demand_fulfilled", _on_overload_demand_fulfilled)
+		if overload.has_method("is_problem_recognized") and bool(overload.call("is_problem_recognized")):
+			_realization_pending = true
+	_overload_signals_connected = true
+
+
+func _on_overload_started() -> void:
+	_request_overload_refresh()
+	_request_story_refresh()
+
+
+func _on_overload_backlog_changed(_backlog_count: int) -> void:
+	_request_overload_refresh()
+
+
+func _on_overload_capacity_changed() -> void:
+	_request_overload_refresh()
+
+
+func _on_overload_feed_boost_used() -> void:
+	_request_overload_refresh()
+	_request_media_refresh()
+
+
+func _on_overload_demand_fulfilled(_request_id: int) -> void:
+	_request_overload_refresh()
+
+
+func _on_overload_problem_recognized() -> void:
+	_realization_pending = true
+	_request_overload_refresh()
+	_request_story_refresh()
+	# Do not interrupt an open Phone / dating / rival flow (§107).
+	if not _is_open:
+		_try_present_realization(false)
+
+
+func _request_overload_refresh() -> void:
+	if _is_open:
+		_refresh_overload_section()
+
+
+func _refresh_overload_section() -> void:
+	if _overload_section == null:
+		return
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	var active: bool = false
+	if overload != null and overload.has_method("is_started"):
+		active = bool(overload.call("is_started"))
+	_overload_section.visible = active
+	if not active:
+		return
+	var status: DatingOverloadStatus = null
+	if overload.has_method("get_status"):
+		status = overload.call("get_status") as DatingOverloadStatus
+	if status == null:
+		return
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("Сегодня можно лично посетить: %d" % status.capacity_per_day)
+	lines.append("Сегодня уже посещено: %d/%d" % [status.capacity_used_today, status.capacity_per_day])
+	lines.append("")
+	lines.append("Невыполненный спрос: %d" % status.backlog_count)
+	lines.append("Завершено запросов: %d" % status.fulfilled_count)
+	_overload_summary.text = "\n".join(lines)
+	_refresh_overload_demand_rows(overload)
+	var recognized: bool = status.problem_recognized
+	if recognized:
+		_overload_boost_btn.visible = false
+		_overload_boost_hint.visible = false
+	else:
+		_overload_boost_btn.visible = true
+		_overload_boost_hint.visible = true
+		if status.feed_boost_available:
+			_overload_boost_btn.text = "Поднять волну"
+			_overload_boost_btn.disabled = false
+			_overload_boost_hint.text = "+5 Внимания\nСледующий день: +1 входящий запрос"
+		else:
+			_overload_boost_btn.text = "Волна поднята"
+			_overload_boost_btn.disabled = true
+			_overload_boost_hint.text = "Доступно завтра"
+
+
+func _refresh_overload_demand_rows(overload: Node) -> void:
+	if _overload_demand_list == null:
+		return
+	for child in _overload_demand_list.get_children():
+		_overload_demand_list.remove_child(child)
+		child.queue_free()
+	var sorted: Array[DatingDemandEntry] = []
+	if overload.has_method("get_backlog_entries_sorted"):
+		sorted = overload.call("get_backlog_entries_sorted") as Array[DatingDemandEntry]
+	if sorted.is_empty():
+		var empty := Label.new()
+		empty.text = "Нет активных запросов"
+		_overload_demand_list.add_child(empty)
+		return
+	var day_node: Node = get_node_or_null("/root/GameDay")
+	var current_day: int = 1
+	if day_node != null and day_node.has_method("get_current_day"):
+		current_day = int(day_node.call("get_current_day"))
+	for entry in sorted:
+		var e: DatingDemandEntry = entry as DatingDemandEntry
+		if e == null:
+			continue
+		var row := VBoxContainer.new()
+		row.add_theme_constant_override("separation", 1)
+		_overload_demand_list.add_child(row)
+		var status_lbl := Label.new()
+		if e.status == DatingOverloadTypes.DatingDemandStatus.OVERDUE:
+			status_lbl.text = "OVERDUE"
+		else:
+			status_lbl.text = "WAITING"
+		row.add_child(status_lbl)
+		var time_lbl := Label.new()
+		var slot_time: String = DatingOverloadTypes.slot_display_time(e.slot)
+		if e.status == DatingOverloadTypes.DatingDemandStatus.OVERDUE:
+			var day_delta: int = current_day - e.appointment_day
+			if day_delta <= 1:
+				time_lbl.text = "Вчера, %s" % slot_time
+			else:
+				time_lbl.text = "%d дн. назад, %s" % [day_delta, slot_time]
+		else:
+			time_lbl.text = slot_time
+		row.add_child(time_lbl)
+		var name_row := HBoxContainer.new()
+		name_row.add_theme_constant_override("separation", 8)
+		row.add_child(name_row)
+		var name_lbl := Label.new()
+		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_lbl.text = _actor_display_name(e.girl_id, false)
+		name_row.add_child(name_lbl)
+		var open_btn := Button.new()
+		open_btn.text = "Открыть контакт"
+		var captured_id: StringName = e.girl_id
+		open_btn.pressed.connect(func() -> void: select_girl_by_id(captured_id))
+		name_row.add_child(open_btn)
+
+
+func _on_overload_feed_boost_pressed() -> void:
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	if overload == null or not overload.has_method("use_feed_boost"):
+		return
+	overload.call("use_feed_boost")
+	_refresh_overload_section()
+	_request_media_refresh()
+	_request_story_refresh()
+
+
+func _ensure_player_mode_hook() -> void:
+	if _player_mode_connected:
+		return
+	if _player == null:
+		var tree: SceneTree = get_tree()
+		if tree != null:
+			_player = tree.get_first_node_in_group("player")
+	if _player == null:
+		return
+	if _player.has_signal("control_mode_changed") and not _player.is_connected("control_mode_changed", _on_player_control_mode_changed):
+		_player.connect("control_mode_changed", _on_player_control_mode_changed)
+		_player_mode_connected = true
+
+
+func _on_player_control_mode_changed(mode: Variant) -> void:
+	if int(mode) == int(PlayerController.ControlMode.GAMEPLAY):
+		_try_present_realization(false)
+
+
+func _try_present_realization(from_phone_open: bool) -> void:
+	if _realization_presented:
+		return
+	var overload: Node = get_node_or_null("/root/DatingOverload")
+	if overload == null or not overload.has_method("is_problem_recognized"):
+		return
+	if not bool(overload.call("is_problem_recognized")):
+		return
+	_realization_pending = true
+	if not from_phone_open:
+		# Safe world GAMEPLAY only — never interrupt Phone / dating / rival (§107).
+		if _is_open:
+			return
+		if _player != null and _player.has_method("get_control_mode"):
+			var mode: Variant = _player.call("get_control_mode")
+			if int(mode) != int(PlayerController.ControlMode.GAMEPLAY):
+				return
+	_show_realization_dialog()
+
+
+func _show_realization_dialog() -> void:
+	if _realization_presented:
+		return
+	if _realization_dialog == null:
+		_realization_dialog = AcceptDialog.new()
+		_realization_dialog.ok_button_text = "ОК"
+		add_child(_realization_dialog)
+	var text: String = "%s\n\n%s\n\n%s" % [
+		DatingOverloadTypes.REALIZATION_LINE_1,
+		DatingOverloadTypes.REALIZATION_LINE_2,
+		DatingOverloadTypes.REALIZATION_LINE_3,
+	]
+	_realization_dialog.dialog_text = text
+	_realization_presented = true
+	_realization_pending = false
+	_realization_dialog.popup_centered()
 
 
 func _request_media_refresh() -> void:
