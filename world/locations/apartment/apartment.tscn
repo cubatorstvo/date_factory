@@ -12,12 +12,24 @@
 [ext_resource type="Script" uid="uid://cb572kponqf7p" path="res://game/progression/progression_interactable.gd" id="8_pw7ec"]
 [ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="9_pw7ec"]
 
-[sub_resource type="Environment" id="Env"]
+[sub_resource type="Environment" id="Environment_pw7ec"]
 background_mode = 1
-background_color = Color(0.42, 0.48, 0.55, 1)
-ambient_light_source = 2
-ambient_light_color = Color(0.78, 0.78, 0.82, 1)
-ambient_light_energy = 0.9
+background_color = Color(0.1254902, 0.078431375, 0.14117648, 1)
+background_energy_multiplier = 0.45
+ambient_light_source = 3
+ambient_light_color = Color(0.35686275, 0.22745098, 0.33333334, 1)
+ambient_light_energy = 0.62
+tonemap_mode = 2
+tonemap_exposure = 1.08
+ssao_enabled = true
+ssao_radius = 1.6
+ssil_enabled = true
+glow_enabled = true
+glow_intensity = 0.65
+adjustment_enabled = true
+adjustment_brightness = 1.03
+adjustment_contrast = 1.08
+adjustment_saturation = 1.08
 
 [sub_resource type="BoxMesh" id="BoxMesh_Floor"]
 size = Vector3(12, 0.2, 12)
@@ -86,8 +98,14 @@ size = Vector3(0.45, 0.9, 0.45)
 [sub_resource type="BoxMesh" id="BoxMesh_m8kc2"]
 size = Vector3(1.1, 0.7, 1.1)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_m8kc2"]
+size = Vector3(1.1, 0.9, 1.1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_2h5qe"]
 size = Vector3(0.6, 1.6, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2h5qe"]
+size = Vector3(0.7, 1.6, 0.5)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2h5qe"]
 albedo_color = Color(0.93, 0.91, 0.84, 1)
@@ -121,11 +139,12 @@ script = ExtResource("1_loc")
 location_id = &"apartment"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=481208679]
-environment = SubResource("Env")
+environment = SubResource("Environment_pw7ec")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=1612996839]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 6, 0)
-light_energy = 0.85
+visible = false
+light_energy = 0.0
 
 [node name="Geometry" type="Node3D" parent="." unique_id=1021090303]
 
@@ -196,7 +215,7 @@ visible = false
 text = "КВАРТИРА"
 font_size = 64
 
-[node name="DonorApartment" type="Node3D" parent="Geometry" unique_id=2072976250 instance=ExtResource("2_pw7ec")]
+[node name="DonorApartment" parent="Geometry" unique_id=2072976250 instance=ExtResource("2_pw7ec")]
 
 [node name="PlayerSpawns" type="Node3D" parent="." unique_id=2031239532]
 
@@ -222,7 +241,7 @@ event_point_id = &"story_point_wardrobe"
 [node name="Interactables" type="Node3D" parent="." unique_id=643483785]
 
 [node name="Phone" type="Area3D" parent="Interactables" unique_id=1396833284]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1, -0.75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 0.85, -0.75)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -237,7 +256,7 @@ mesh = SubResource("PhoneMesh")
 surface_material_override/0 = SubResource("PhoneMat")
 
 [node name="DayAdvance" type="Area3D" parent="Interactables" unique_id=25707921]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 1, -1.55)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.9, -1.55)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -253,11 +272,12 @@ mesh = SubResource("BoxMesh_yeam2")
 
 [node name="Label" type="Label3D" parent="Interactables/DayAdvance" unique_id=209507003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+visible = false
 modulate = Color(0.95, 0.88, 0.75, 1)
 text = "ДЕНЬ"
 
 [node name="DateVenue" type="Area3D" parent="Interactables" unique_id=636659215]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.05, 0.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.7, 0.61)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -270,12 +290,16 @@ mesh = SubResource("BoxMesh_m8kc2")
 
 [node name="Label" type="Label3D" parent="Interactables/DateVenue" unique_id=1519297154]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+visible = false
 billboard = 1
 text = "Стол для свидания"
 font_size = 28
 
+[node name="Collision" type="CollisionShape3D" parent="Interactables/DateVenue" unique_id=302647249]
+shape = SubResource("BoxShape3D_m8kc2")
+
 [node name="ProgressionSelfAssessment" type="Area3D" parent="Interactables" unique_id=67378799]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 0.05, 0.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1, 0.95)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -288,34 +312,68 @@ mesh = SubResource("BoxMesh_2h5qe")
 
 [node name="Label" type="Label3D" parent="Interactables/ProgressionSelfAssessment" unique_id=1905293907]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+visible = false
 billboard = 1
 text = "Самооценка"
 font_size = 28
 
+[node name="Collision" type="CollisionShape3D" parent="Interactables/ProgressionSelfAssessment" unique_id=1771537736]
+shape = SubResource("BoxShape3D_2h5qe")
+
 [node name="FlavorMirror" parent="Interactables" unique_id=1242682029 instance=ExtResource("9_pw7ec")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.2, 0.55)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1.2, 0.15)
 text = "ОТРАЖЕНИЕ
 Статус: пока оригинал."
 
+[node name="Mesh" parent="Interactables/FlavorMirror" index="1" unique_id=1246067171]
+visible = false
+
+[node name="Label" parent="Interactables/FlavorMirror" index="2" unique_id=931679821]
+visible = false
+
 [node name="FlavorWardrobe" parent="Interactables" unique_id=420890977 instance=ExtResource("9_pw7ec")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1, 0.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1, 1.15)
 text = "ГАРДЕРОБ
 Некоторые вещи уже выглядят как решение."
+
+[node name="Mesh" parent="Interactables/FlavorWardrobe" index="1" unique_id=1246067171]
+visible = false
+
+[node name="Label" parent="Interactables/FlavorWardrobe" index="2" unique_id=931679821]
+visible = false
 
 [node name="FlavorFridge" parent="Interactables" unique_id=695661774 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 1, -2.15)
 text = "ХОЛОДИЛЬНИК
 Внутри находится еда и ни одного социального обязательства."
 
+[node name="Mesh" parent="Interactables/FlavorFridge" index="1" unique_id=1246067171]
+visible = false
+
+[node name="Label" parent="Interactables/FlavorFridge" index="2" unique_id=931679821]
+visible = false
+
 [node name="FlavorWindow" parent="Interactables" unique_id=2011150761 instance=ExtResource("9_pw7ec")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 1.4, -2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 1.4, -2.2)
 text = "ОКНО
 Город пока не подозревает о производственном плане."
+
+[node name="Mesh" parent="Interactables/FlavorWindow" index="1" unique_id=1246067171]
+visible = false
+
+[node name="Label" parent="Interactables/FlavorWindow" index="2" unique_id=931679821]
+visible = false
 
 [node name="FlavorChair" parent="Interactables" unique_id=1483552862 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 0.55, 0.61)
 text = "СТУЛ
 Пахнет ламинатом и надеждами."
+
+[node name="Mesh" parent="Interactables/FlavorChair" index="1" unique_id=1246067171]
+visible = false
+
+[node name="Label" parent="Interactables/FlavorChair" index="2" unique_id=931679821]
+visible = false
 
 [node name="ScenicGags" type="Node3D" parent="Interactables" unique_id=1814693174]
 
@@ -385,3 +443,9 @@ shape = SubResource("TransitionShape")
 visible = false
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
+
+[editable path="Interactables/FlavorMirror"]
+[editable path="Interactables/FlavorWardrobe"]
+[editable path="Interactables/FlavorFridge"]
+[editable path="Interactables/FlavorWindow"]
+[editable path="Interactables/FlavorChair"]

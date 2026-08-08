@@ -32,26 +32,13 @@ Prefab scripts point at `res://world/art/donor_import/characters/character_anim_
 
 ---
 
-## women_modular (Ultimate Modular Women)
+## women_modular / PACK_019 (Ultimate Modular Women) — NOT USED IN PRODUCTION
 
 | Field | Value |
 |---|---|
-| Author | Quaternius (@Quaternius) |
-| License | CC0 1.0 Universal — see `assets/characters/women_modular/LICENSE.txt` |
-| Vendor | https://quaternius.com / Patreon linked in LICENSE |
-| Copied from donor | `assets/characters/women_modular/` (full pack closure) |
-
-### Copied paths (summary)
-
-| Path | Role |
-|---|---|
-| `assets/characters/women_modular/LICENSE.txt` | License + attribution |
-| `assets/characters/women_modular/meshes/individuals/*.gltf` | Casual + other individual variants |
-| `assets/characters/women_modular/meshes/humanoid_rigs/*.fbx` | Modular humanoid rigs |
-| `assets/characters/women_modular/prefabs/Girl_Casual.tscn` | Primary Casual prefab |
-| `assets/characters/women_modular/prefabs/Girl_Formal.tscn` | Formal prefab |
-| `assets/characters/women_modular/prefabs/Girl_Worker.tscn` | Worker prefab |
-| `assets/characters/women_modular/prefabs/Manager_Suit.tscn` | Suit prefab |
+| Status | **Removed from current project** (visual corrective 2026-08-09) |
+| Production characters | PACK_021 `hero_base` only — one male + one female Superhero full-body base |
+| Note | Donor may still contain the pack; donor is READ-ONLY and unchanged |
 
 ---
 

@@ -1,7 +1,5 @@
 [gd_scene format=3 uid="uid://cun0j4oayyoox"]
 
-[ext_resource type="PackedScene" uid="uid://c4hpgey31w3xg" path="res://assets/characters/women_modular/meshes/individuals/Worker.gltf" id="1_33hsb"]
+[ext_resource type="PackedScene" uid="uid://jw6l45vnbk5p" path="res://characters/female/female_base_visual.tscn" id="1_base"]
 
-[node name="FemaleWorkerVisual" type="Node3D" unique_id=1177271306]
-
-[node name="Model" type="Node3D" parent="." unique_id=457321823 instance=ExtResource("1_33hsb")]
+[node name="FemaleWorkerVisual" instance=ExtResource("1_base")]

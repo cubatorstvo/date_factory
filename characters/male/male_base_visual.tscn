@@ -1,7 +1,353 @@
 [gd_scene format=3 uid="uid://6qayaw4thh05"]
 
-[ext_resource type="PackedScene" uid="uid://ck2333y3ca24q" path="res://assets/characters/hero_base/meshes/bodies/Superhero_Male_FullBody.gltf" id="1_xbf2e"]
+[ext_resource type="Script" uid="uid://dih0ycnn3nxbn" path="res://characters/framework/character_variant_controller.gd" id="1_2ub7h"]
+[ext_resource type="PackedScene" uid="uid://ck2333y3ca24q" path="res://assets/characters/hero_base/meshes/bodies/Superhero_Male_FullBody.gltf" id="2_ivq7b"]
 
-[node name="MaleBaseVisual" type="Node3D" unique_id=656105466]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0te8m"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
 
-[node name="Model" type="Node3D" parent="." unique_id=292018486 instance=ExtResource("1_xbf2e")]
+[sub_resource type="SphereMesh" id="SphereMesh_6jd7s"]
+radius = 0.06
+height = 0.1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0uala"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_own8p"]
+size = Vector3(0.18, 0.08, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h43jg"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_rcx8j"]
+radius = 0.04
+height = 0.22
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_12xwq"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_2ub7h"]
+radius = 0.05
+height = 0.34
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ivq7b"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_altx7"]
+size = Vector3(0.16, 0.12, 0.14)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0xh4u"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_q2h5w"]
+size = Vector3(0.34, 0.28, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rejm7"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_dxwtw"]
+size = Vector3(0.36, 0.32, 0.22)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_owgl0"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_ca18k"]
+radius = 0.1
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dfei6"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_u7783"]
+size = Vector3(0.38, 0.24, 0.24)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qeaw8"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_p6xwm"]
+size = Vector3(0.3, 0.34, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vivke"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_sv5vx"]
+radius = 0.08
+height = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w26xl"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_ssths"]
+size = Vector3(0.32, 0.28, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6lnhm"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_xwbgn"]
+size = Vector3(0.14, 0.08, 0.24)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a22os"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_dav0a"]
+size = Vector3(0.16, 0.1, 0.28)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a81rs"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_ryvid"]
+size = Vector3(0.18, 0.05, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jyrju"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="SphereMesh" id="SphereMesh_bhqjr"]
+radius = 0.08
+height = 0.08
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xetmf"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_o75iw"]
+size = Vector3(0.1, 0.04, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uvg1v"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_4116x"]
+size = Vector3(0.08, 0.1, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fjxdq"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="SphereMesh" id="SphereMesh_n3ox3"]
+radius = 0.025
+height = 0.05
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o05i8"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_eoynu"]
+size = Vector3(0.04, 0.08, 0.04)
+
+[node name="CharacterVisual" type="Node3D" unique_id=801175737]
+script = ExtResource("1_2ub7h")
+
+[node name="Body" type="Node3D" parent="." unique_id=1868054064 instance=ExtResource("2_ivq7b")]
+
+[node name="HairRoot" type="BoneAttachment3D" parent="." unique_id=1161600967]
+bone_name = "Head"
+use_external_skeleton = true
+external_skeleton = NodePath("Body/Armature/Skeleton3D")
+
+[node name="Hair_01" type="Node3D" parent="HairRoot" unique_id=1848241333]
+
+[node name="Mesh" type="MeshInstance3D" parent="HairRoot/Hair_01" unique_id=1262094691]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0.02)
+material_override = SubResource("StandardMaterial3D_0te8m")
+mesh = SubResource("SphereMesh_6jd7s")
+
+[node name="Hair_02" type="Node3D" parent="HairRoot" unique_id=1449742050]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="HairRoot/Hair_02" unique_id=946671888]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.06, 0)
+material_override = SubResource("StandardMaterial3D_0uala")
+mesh = SubResource("BoxMesh_own8p")
+
+[node name="Hair_03" type="Node3D" parent="HairRoot" unique_id=1771905461]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="HairRoot/Hair_03" unique_id=1053228722]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+material_override = SubResource("StandardMaterial3D_h43jg")
+mesh = SubResource("CapsuleMesh_rcx8j")
+
+[node name="Hair_04" type="Node3D" parent="HairRoot" unique_id=1209864185]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="HairRoot/Hair_04" unique_id=368985790]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, -0.04)
+material_override = SubResource("StandardMaterial3D_12xwq")
+mesh = SubResource("CapsuleMesh_2ub7h")
+
+[node name="Hair_05" type="Node3D" parent="HairRoot" unique_id=1825842287]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="HairRoot/Hair_05" unique_id=1210246709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.04, 0.1, -0.02)
+material_override = SubResource("StandardMaterial3D_ivq7b")
+mesh = SubResource("BoxMesh_altx7")
+
+[node name="TopRoot" type="BoneAttachment3D" parent="." unique_id=699536169]
+bone_name = "UpperChest"
+use_external_skeleton = true
+external_skeleton = NodePath("Body/Armature/Skeleton3D")
+
+[node name="Top_01" type="Node3D" parent="TopRoot" unique_id=1110210080]
+
+[node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_01" unique_id=1425411809]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.02)
+material_override = SubResource("StandardMaterial3D_0xh4u")
+mesh = SubResource("BoxMesh_q2h5w")
+
+[node name="Top_02" type="Node3D" parent="TopRoot" unique_id=1556677183]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_02" unique_id=361742797]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+material_override = SubResource("StandardMaterial3D_rejm7")
+mesh = SubResource("BoxMesh_dxwtw")
+
+[node name="Top_03" type="Node3D" parent="TopRoot" unique_id=173622323]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_03" unique_id=715392804]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0.02)
+material_override = SubResource("StandardMaterial3D_owgl0")
+mesh = SubResource("CapsuleMesh_ca18k")
+
+[node name="Top_04" type="Node3D" parent="TopRoot" unique_id=1725067019]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_04" unique_id=1294395142]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0.04)
+material_override = SubResource("StandardMaterial3D_dfei6")
+mesh = SubResource("BoxMesh_u7783")
+
+[node name="BottomRoot" type="BoneAttachment3D" parent="." unique_id=1113760369]
+bone_name = "Hips"
+use_external_skeleton = true
+external_skeleton = NodePath("Body/Armature/Skeleton3D")
+
+[node name="Bottom_01" type="Node3D" parent="BottomRoot" unique_id=909455350]
+
+[node name="Mesh" type="MeshInstance3D" parent="BottomRoot/Bottom_01" unique_id=1340773403]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.12, 0)
+material_override = SubResource("StandardMaterial3D_qeaw8")
+mesh = SubResource("BoxMesh_p6xwm")
+
+[node name="Bottom_02" type="Node3D" parent="BottomRoot" unique_id=1254463250]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="BottomRoot/Bottom_02" unique_id=287688706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.16, 0)
+material_override = SubResource("StandardMaterial3D_vivke")
+mesh = SubResource("CapsuleMesh_sv5vx")
+
+[node name="Bottom_03" type="Node3D" parent="BottomRoot" unique_id=827373127]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="BottomRoot/Bottom_03" unique_id=1680962012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0.02)
+material_override = SubResource("StandardMaterial3D_w26xl")
+mesh = SubResource("BoxMesh_ssths")
+
+[node name="ShoesRoot" type="BoneAttachment3D" parent="." unique_id=863525298]
+bone_name = "LeftFoot"
+use_external_skeleton = true
+external_skeleton = NodePath("Body/Armature/Skeleton3D")
+
+[node name="Shoes_01" type="Node3D" parent="ShoesRoot" unique_id=856135802]
+
+[node name="Mesh" type="MeshInstance3D" parent="ShoesRoot/Shoes_01" unique_id=2102166906]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0.06)
+material_override = SubResource("StandardMaterial3D_6lnhm")
+mesh = SubResource("BoxMesh_xwbgn")
+
+[node name="Shoes_02" type="Node3D" parent="ShoesRoot" unique_id=1691413191]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="ShoesRoot/Shoes_02" unique_id=1645711053]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0.08)
+material_override = SubResource("StandardMaterial3D_a22os")
+mesh = SubResource("BoxMesh_dav0a")
+
+[node name="HeadAccessoryRoot" type="BoneAttachment3D" parent="." unique_id=223915248]
+bone_name = "Head"
+use_external_skeleton = true
+external_skeleton = NodePath("Body/Armature/Skeleton3D")
+
+[node name="Head_None" type="Node3D" parent="HeadAccessoryRoot" unique_id=129656805]
+
+[node name="Head_Glasses" type="Node3D" parent="HeadAccessoryRoot" unique_id=1006692923]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="HeadAccessoryRoot/Head_Glasses" unique_id=678925822]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.1)
+material_override = SubResource("StandardMaterial3D_a81rs")
+mesh = SubResource("BoxMesh_ryvid")
+
+[node name="Head_Hat" type="Node3D" parent="HeadAccessoryRoot" unique_id=1626927854]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="HeadAccessoryRoot/Head_Hat" unique_id=976224769]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, 0)
+material_override = SubResource("StandardMaterial3D_jyrju")
+mesh = SubResource("SphereMesh_bhqjr")
+
+[node name="NeckAccessoryRoot" type="BoneAttachment3D" parent="." unique_id=226914764]
+bone_name = "Neck"
+use_external_skeleton = true
+external_skeleton = NodePath("Body/Armature/Skeleton3D")
+
+[node name="Neck_None" type="Node3D" parent="NeckAccessoryRoot" unique_id=1470197253]
+
+[node name="Neck_01" type="Node3D" parent="NeckAccessoryRoot" unique_id=678252420]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="NeckAccessoryRoot/Neck_01" unique_id=1830534028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0.02)
+material_override = SubResource("StandardMaterial3D_xetmf")
+mesh = SubResource("BoxMesh_o75iw")
+
+[node name="Neck_02" type="Node3D" parent="NeckAccessoryRoot" unique_id=2004369005]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="NeckAccessoryRoot/Neck_02" unique_id=1731092285]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, 0.06)
+material_override = SubResource("StandardMaterial3D_uvg1v")
+mesh = SubResource("BoxMesh_4116x")
+
+[node name="HandAccessoryRoot" type="BoneAttachment3D" parent="." unique_id=1310822267]
+bone_name = "LeftHand"
+use_external_skeleton = true
+external_skeleton = NodePath("Body/Armature/Skeleton3D")
+
+[node name="Hand_None" type="Node3D" parent="HandAccessoryRoot" unique_id=1287315707]
+
+[node name="Hand_01" type="Node3D" parent="HandAccessoryRoot" unique_id=1794157505]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="HandAccessoryRoot/Hand_01" unique_id=260229043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, 0, 0.04)
+material_override = SubResource("StandardMaterial3D_fjxdq")
+mesh = SubResource("SphereMesh_n3ox3")
+
+[node name="Hand_02" type="Node3D" parent="HandAccessoryRoot" unique_id=2056408122]
+visible = false
+
+[node name="Mesh" type="MeshInstance3D" parent="HandAccessoryRoot/Hand_02" unique_id=562328596]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.05)
+material_override = SubResource("StandardMaterial3D_o05i8")
+mesh = SubResource("BoxMesh_eoynu")

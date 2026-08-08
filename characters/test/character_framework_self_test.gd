@@ -43,6 +43,7 @@ func _run_all() -> void:
 	await _test_apply_appearance_replace()
 	_test_missing_appearance_fails_safely()
 	_test_visibility_toggle()
+	await _test_presentation_slots_smoke()
 
 
 func _test_male_female_instantiate_idle() -> void:
@@ -154,6 +155,32 @@ func _test_visibility_toggle() -> void:
 	female.set_character_visible(true)
 	_ok(visual.visible, "visual shown")
 	_ok(not collision.disabled, "collision enabled when shown")
+
+
+func _test_presentation_slots_smoke() -> void:
+	var male: CharacterActor = CharacterFactory.create(&"appearance_male_base", &"pres_male", _spawn_root)
+	var female: CharacterActor = CharacterFactory.create(&"appearance_female_base", &"pres_female", _spawn_root)
+	_ok(male != null and female != null, "presentation smoke actors")
+	if male == null or female == null:
+		return
+	for actor in [male, female]:
+		var typed: CharacterActor = actor as CharacterActor
+		var controller: CharacterVariantController = null
+		var visual_root: Node = typed.get_node_or_null("VisualRoot")
+		if visual_root != null:
+			var queue: Array[Node] = [visual_root]
+			while not queue.is_empty() and controller == null:
+				var node: Node = queue.pop_front()
+				controller = node as CharacterVariantController
+				for child in node.get_children():
+					queue.append(child)
+		_ok(controller != null, "%s presentation controller" % String(typed.content_id))
+		if controller != null:
+			_ok(controller.count_visible_slot_children("HairRoot") == 1, "%s one hair" % String(typed.content_id))
+			_ok(controller.count_visible_slot_children("TopRoot") <= 1, "%s top slot" % String(typed.content_id))
+	male.queue_free()
+	female.queue_free()
+	await get_tree().process_frame
 
 
 func _find_actor(content_id: StringName) -> CharacterActor:

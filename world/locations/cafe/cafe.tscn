@@ -11,13 +11,6 @@
 [ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="9_n632s"]
 [ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="10_sgsvq"]
 
-[sub_resource type="Environment" id="Env"]
-background_mode = 1
-background_color = Color(0.42, 0.48, 0.55, 1)
-ambient_light_source = 2
-ambient_light_color = Color(0.78, 0.78, 0.82, 1)
-ambient_light_energy = 0.9
-
 [sub_resource type="BoxMesh" id="BoxMesh_Floor"]
 size = Vector3(12, 0.2, 12)
 
@@ -117,13 +110,6 @@ albedo_color = Color(0.2, 0.55, 0.75, 1)
 [node name="cafe" type="Node3D" unique_id=987500279]
 script = ExtResource("1_loc")
 location_id = &"cafe"
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1704544038]
-environment = SubResource("Env")
-
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=591518521]
-transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 6, 0)
-light_energy = 0.85
 
 [node name="Geometry" type="Node3D" parent="." unique_id=1117895103]
 
@@ -270,15 +256,12 @@ script = ExtResource("3_pspawn")
 [node name="npc_girl_cafe_laptop" type="Marker3D" parent="NpcSpawns" unique_id=2122251097]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.15, 0.05, 0.35)
 script = ExtResource("4_nspawn")
-spawn_id = "girl_cafe_laptop"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_laptop" unique_id=194019789 instance=ExtResource("4_aplqh")]
-girl_id = "girl_cafe_laptop"
 
 [node name="npc_rival_cafe_receipt" type="Marker3D" parent="NpcSpawns" unique_id=782695364]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.45, 0.05, -0.65)
 script = ExtResource("4_nspawn")
-spawn_id = "rival_cafe_receipt"
 npc_kind = 2
 
 [node name="RivalActor" parent="NpcSpawns/npc_rival_cafe_receipt" unique_id=515275552 instance=ExtResource("6_sgsvq")]
@@ -286,39 +269,30 @@ npc_kind = 2
 [node name="npc_girl_cafe_receipt_notes" type="Marker3D" parent="NpcSpawns" unique_id=1100067813]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0.05, 0)
 script = ExtResource("4_nspawn")
-spawn_id = "girl_cafe_receipt_notes"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_receipt_notes" unique_id=914268399 instance=ExtResource("4_aplqh")]
-girl_id = "girl_cafe_receipt_notes"
 
 [node name="npc_girl_cafe_spoon_stack" type="Marker3D" parent="NpcSpawns" unique_id=546469834]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -2.15, 0.05, -2.15)
 script = ExtResource("4_nspawn")
-spawn_id = "girl_cafe_spoon_stack"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_spoon_stack" unique_id=46885073 instance=ExtResource("4_aplqh")]
-girl_id = "girl_cafe_spoon_stack"
 
 [node name="npc_girl_cafe_hot_sauce" type="Marker3D" parent="NpcSpawns" unique_id=545734975]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 4.45, 0.05, 1.45)
 script = ExtResource("4_nspawn")
-spawn_id = "girl_cafe_hot_sauce"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_hot_sauce" unique_id=1987305570 instance=ExtResource("4_aplqh")]
-girl_id = "girl_cafe_hot_sauce"
 
 [node name="npc_girl_cafe_sugar_geometry" type="Marker3D" parent="NpcSpawns" unique_id=553203969]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -2.15, 0.05, 2.45)
 script = ExtResource("4_nspawn")
-spawn_id = "girl_cafe_sugar_geometry"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_sugar_geometry" unique_id=1301382103 instance=ExtResource("4_aplqh")]
-girl_id = "girl_cafe_sugar_geometry"
 
 [node name="npc_rival_cafe_menu_holder" type="Marker3D" parent="NpcSpawns" unique_id=136145015]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -4.6, 0.05, 1.5)
 script = ExtResource("4_nspawn")
-spawn_id = "rival_cafe_menu_holder"
 npc_kind = 2
 
 [node name="RivalActor" parent="NpcSpawns/npc_rival_cafe_menu_holder" unique_id=1483451366 instance=ExtResource("6_sgsvq")]

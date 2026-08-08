@@ -65,3 +65,38 @@
 ## D-VB-11 — Characters already on Quaternius path
 
 **Decision:** Stage F does not rebuild GirlActor/RivalActor. Bases already point at PACK_021/019 meshes via CharacterActor. Scope = variant wrappers + appearance `visual_scene` remaps + review screenshots. No FPS player body.
+
+## D-VC-01 — Corrective pass supersedes bootstrap non-blockers
+
+**Decision:** User TZ `VISUAL_BOOTSTRAP_CORRECTIVE_SINGLE_BASE_CHARACTERS_RU.md` supersedes D-VB-09 / D-VB-10 / D-VB-11 for remaining visual debt.
+
+Must fix now (not polish):
+- City / apartment / cafe donor lighting parity (wrapper brightening removed or donor values restored literally).
+- Visible interactive placeholders → real assets + Area/Interactable reparented (no floating Areas).
+- Debug Label3D removed from production render.
+- Lab ceiling/shell obstruction and debug labels addressed within existing PACK_015 (still no inventing PACK_013).
+
+## D-VC-02 — Single male + single female PACK_021 bases
+
+**Decision:**
+- Male base mesh: `res://assets/characters/hero_base/meshes/bodies/Superhero_Male_FullBody.gltf`
+- Female base mesh: `res://assets/characters/hero_base/meshes/bodies/Superhero_Female_FullBody.gltf`
+
+All production NPCs use these two bases only. Diversity = modular placeholder slots via `CharacterVariantController` + optional fields on `AppearanceProfileDefinition`. No PACK_019 whole-mesh variants.
+
+Female animation: switch `animation_female_base` to UAL path proven by `DateGirl_UAL.tscn` (`DF_UAL_Aliases` / same male UAL libraries). Do not keep `DF_Women_*` as required runtime after PACK_019 removal.
+
+## D-VC-03 — PACK_019 removal gate
+
+**Decision:** Delete `assets/characters/women_modular/**` only after:
+1. All female wrappers/appearances on PACK_021 female base.
+2. Cafe `restaurant.tscn` has zero Girl_Casual / Casual.gltf instances.
+3. Project grep runtime refs to `women_modular` = 0 (excluding historical docs if needed).
+
+## D-VC-04 — PACK_016 sushi license documentation
+
+**Decision:** Per user TZ §17, document Sushi Restaurant Kit as Quaternius CC0 with official source `https://quaternius.com/packs/sushirestaurantkit.html`. Usage remains cafe donor dependency only (D-VB-04 scope unchanged).
+
+## D-VC-05 — No layout redesign
+
+**Decision:** Corrective pass does not change floor plans, POI positions, building placement, or gameplay semantics. Asset-first replacement of placeholders only.

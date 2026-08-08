@@ -138,16 +138,16 @@ All under `assets/audio/licenses/`:
 
 ---
 
-## Environment — Sushi Restaurant Kit (Quaternius lineage / PACK_016)
+## Environment — Sushi Restaurant Kit (PACK_016)
 
 | Project path | Role |
 |---|---|
-| `assets/environment/restaurant/sushi_restaurant/` | Cafe/restaurant kit meshes (glTF) — art-scene dependency only |
+| `assets/environment/restaurant/sushi_restaurant/` | Cafe donor dependency meshes (glTF) |
 
-- **LICENSE status: MISSING** in donor pack folder (no `LICENSE.txt` / README shipped with meshes)
-- No Quaternius readme for this pack found elsewhere in donor or `Downloads/assets` to copy
-- Do **not** invent a fake license file. Provenance: donor `PACK_016`; typical Quaternius kits are CC0, but this tree is undocumented until a real license text is obtained
-- Usage: needed by donor cafe art scene; do not expand gameplay usage without license clarification
+- Author: Quaternius
+- License: **CC0**
+- Official source: https://quaternius.com/packs/sushirestaurantkit.html
+- Usage: cafe donor dependency only (location id `cafe`). Do not expand into a separate restaurant location.
 
 ---
 

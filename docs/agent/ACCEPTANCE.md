@@ -1,44 +1,39 @@
-# ACCEPTANCE — Visual Bootstrap (Donor / Asset Packs)
+# ACCEPTANCE — Visual Bootstrap Corrective + Single-Base Characters
 
 ## Question
-Can we replace cube prototypes for city / player room / cafe (donor scenes) and mine / lab / late / characters (audited packs) with local production assets, keep gameplay routes working, and deliver legacy + current screenshot sets without redesigning the game?
+Can we restore donor lighting parity, replace interactive/debug placeholders with real assets (no floating Areas), move all NPCs to ONE male + ONE female PACK_021 base with modular placeholders, remove PACK_019, update PACK_016 license docs, pass RC tests, and deliver a new screenshot review — without redesigning layouts or systems?
 
-## Locked sources (Orchestrator)
+## Locked decisions
+- D-VC-01 … D-VC-05 in `docs/agent/DECISIONS.md`
+- Male: `Superhero_Male_FullBody.gltf`
+- Female: `Superhero_Female_FullBody.gltf`
+- Cafe stays location id `cafe`
+- Donor `../date_factory_legacy` READ-ONLY
 
-| Location | Donor / pack source | Current target |
-|---|---|---|
-| City | `scenes/world/city/city.tscn` (+ POI) | `world/locations/city_hub/city_hub.tscn` |
-| Room | `vertical_slice/apartment.tscn` | `world/locations/apartment/apartment.tscn` |
-| Cafe | `vertical_slice/restaurant.tscn` **as cafe** (D-VB-03) | `world/locations/cafe/cafe.tscn` |
-| Mine | PACK_002 kenney_factory | `salary_mine` |
-| Lab | PACK_015 scifi_essentials (no PACK_013) | `laboratory` |
-| Late | PACK_002 + PACK_015 | `production_area` |
-| Characters | PACK_021/019/020 + variant wrappers | CharacterActor appearances |
+## Definition of Done (TZ §§1–20)
 
-## Definition of Done (TZ §7)
+- [ ] City donor light/env restored; red trim/emissive artifacts addressed vs donor
+- [ ] City interactive placeholders → real assets + Areas attached
+- [ ] Apartment debug labels gone; Day/Date/SelfAssessment/flavor bound to real objects
+- [ ] Apartment donor lighting baseline restored
+- [ ] Cafe donor lighting; interactions not floating; PACK_019 NPC stripped from art
+- [ ] Mine / lab / late placeholders skinned or replaced; no floating Areas; lab camera obstruction fixed
+- [ ] Exactly 1 male + 1 female production base
+- [ ] Modular variants: hair 5 + colors 5, top 4, bottom 3, shoes 2, head 3, neck 2+none, hand 2+none
+- [ ] CharacterVariantController presentation-only; deterministic appearance profiles
+- [ ] PACK_019 source removed; runtime refs 0
+- [ ] PACK_016 license docs updated (not unknown)
+- [ ] Character presentation test + RC suite
+- [ ] donor runtime refs 0
+- [ ] Source on main; screenshots on `visual-review/corrective-<date>`
+- [ ] Final report sections 1–11; then STOP
 
-- [x] Donor city transferred, local resources only
-- [x] Donor room transferred, local resources only
-- [x] Donor cafe transferred **as cafe**
-- [x] No runtime dependency on `../date_factory_legacy`
-- [x] city / room / cafe load and early routes work
-- [x] mine / lab / late are non-cube production bases
-- [x] minimal male + female character visual base usable for NPCs
-- [x] no critical missing materials/meshes
-- [x] critical interaction points still work after transfer
-- [x] legacy screenshot set (A1–A3) exists
-- [x] current screenshot set (B–F lists) exists
-- [x] source on main; review PNGs on temporary `visual-review/*` branch
-- [x] final report sections 1–6 delivered
-- [x] STOP — no unsolicited art polish pass
+## Evidence (to fill)
 
-## Evidence
-
-- Final report: `docs/agent/qa/VISUAL_BOOTSTRAP_FINAL_REPORT.md`
-- Stage G QA: `docs/agent/qa/VISUAL_BOOTSTRAP_STAGE_G_QA.md` — PASS / READY
-- Legacy/current PNGs: `tmp/visual_bootstrap_review/` → review branch `_review/visual_bootstrap/`
-- Source: `assets/environment/**`, `world/locations/**`, `world/art/donor_import/**`, `characters/female/*_visual.tscn`
+- Corrective report: `docs/agent/qa/VISUAL_BOOTSTRAP_CORRECTIVE_FINAL_REPORT.md`
+- Independent QA: `docs/agent/qa/VISUAL_BOOTSTRAP_CORRECTIVE_QA.md`
+- Screenshots: review branch `_review/visual_corrective/`
 
 ## Verdict
 
-**READY**
+**PENDING**

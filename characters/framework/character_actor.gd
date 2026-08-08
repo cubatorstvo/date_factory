@@ -68,6 +68,7 @@ func apply_appearance(profile_id: StringName) -> bool:
 	visual_root.add_child(_visual_instance)
 	visual_root.scale = Vector3.ONE * maxf(profile.visual_scale, 0.001)
 	visual_root.position = Vector3(0.0, profile.vertical_offset, 0.0)
+	_apply_modular_variants(_visual_instance, profile)
 
 	_appearance_profile_id = profile_id
 	_body_type = profile.body_type
@@ -146,6 +147,45 @@ func _get_interaction_target() -> Area3D:
 	if _interaction_target != null:
 		return _interaction_target
 	return get_node_or_null("InteractionTarget") as Area3D
+
+
+func _find_variant_controller(visual: Node) -> CharacterVariantController:
+	if visual == null:
+		return null
+	var queue: Array[Node] = [visual]
+	while not queue.is_empty():
+		var node: Node = queue.pop_front()
+		var typed: CharacterVariantController = node as CharacterVariantController
+		if typed != null:
+			return typed
+		for child in node.get_children():
+			queue.append(child)
+	return null
+
+
+func _apply_modular_variants(visual: Node, profile: AppearanceProfileDefinition) -> void:
+	if visual == null or profile == null:
+		return
+	var controller: CharacterVariantController = visual as CharacterVariantController
+	if controller == null:
+		controller = _find_variant_controller(visual)
+	if controller != null:
+		controller.apply_from_profile(profile)
+		return
+	if visual.has_method("apply_variants"):
+		visual.call(
+			"apply_variants",
+			profile.hair_variant,
+			profile.hair_color,
+			profile.top_variant,
+			profile.top_color,
+			profile.bottom_variant,
+			profile.bottom_color,
+			profile.shoes_variant,
+			profile.head_accessory,
+			profile.neck_accessory,
+			profile.hand_accessory
+		)
 
 
 func _clear_visual(visual_root: Node3D) -> void:
