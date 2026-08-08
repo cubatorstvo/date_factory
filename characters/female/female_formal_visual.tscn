@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://00ppoib1es54"]
+
+[ext_resource type="PackedScene" uid="uid://ie4qjjob3w0j" path="res://assets/characters/women_modular/meshes/individuals/Formal.gltf" id="1_ilx6b"]
+
+[node name="FemaleFormalVisual" type="Node3D" unique_id=692609555]
+
+[node name="Model" type="Node3D" parent="." unique_id=2008458744 instance=ExtResource("1_ilx6b")]

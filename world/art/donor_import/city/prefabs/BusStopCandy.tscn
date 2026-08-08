@@ -1,0 +1,116 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf" id="1_kp4hp"]
+[ext_resource type="PackedScene" path="res://assets/props/food/meshes/ChocolateBar.fbx" id="2_dcljc"]
+[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Trashcan_Cylindric.fbx" id="3_urcmf"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1jd1r"]
+albedo_color = Color(0.3, 0.35, 0.4, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jir84"]
+albedo_color = Color(0.4, 0.4, 0.45, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rcrcs"]
+albedo_color = Color(0.4, 0.4, 0.45, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8ae4b"]
+albedo_color = Color(0.6, 0.75, 0.85, 0.55)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7g4jm"]
+albedo_color = Color(0.2, 0.35, 0.55, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_obihm"]
+albedo_color = Color(0.85, 0.25, 0.35, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_od7wj"]
+albedo_color = Color(0.7, 0.9, 1, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bv3ce"]
+size = Vector3(2.4, 2.4, 1.6)
+
+[node name="BusStopCandy" type="Node3D" unique_id=57739814]
+metadata/temp_parts = "bus shelter + candy machine CSG; bench/trash/chocolate from packs"
+metadata/packs_checked = "Downtown Standard subset has no bus shelter mesh"
+metadata/future_replacement = "urban bus shelter + vending machine prop"
+
+[node name="Visuals" type="Node3D" parent="." unique_id=1095906150]
+
+[node name="ShelterRoof" type="CSGBox3D" parent="Visuals" unique_id=540797433]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
+size = Vector3(2.8, 0.1, 1.4)
+material = SubResource("StandardMaterial3D_1jd1r")
+
+[node name="PoleL" type="CSGCylinder3D" parent="Visuals" unique_id=1804913152]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 1.15, -0.5)
+radius = 0.05
+height = 2.3
+material = SubResource("StandardMaterial3D_jir84")
+
+[node name="PoleR" type="CSGCylinder3D" parent="Visuals" unique_id=57289589]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 1.15, -0.5)
+radius = 0.05
+height = 2.3
+material = SubResource("StandardMaterial3D_rcrcs")
+
+[node name="GlassBack" type="CSGBox3D" parent="Visuals" unique_id=2131503639]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -0.55)
+size = Vector3(2.4, 1.8, 0.05)
+material = SubResource("StandardMaterial3D_8ae4b")
+
+[node name="Environment_Bench_Inst" type="Node3D" parent="Visuals" unique_id=1906984469 instance=ExtResource("1_kp4hp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.1)
+
+[node name="InfoSign" type="CSGBox3D" parent="Visuals" unique_id=1820463670]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35, 1.5, 0.35)
+size = Vector3(0.08, 1, 0.55)
+material = SubResource("StandardMaterial3D_7g4jm")
+
+[node name="CandyMachineBody" type="CSGBox3D" parent="Visuals" unique_id=1700327663]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 0.75, 0.45)
+size = Vector3(0.55, 1.5, 0.45)
+material = SubResource("StandardMaterial3D_obihm")
+
+[node name="CandyGlass" type="CSGBox3D" parent="Visuals" unique_id=1472010105]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 1, 0.7)
+size = Vector3(0.4, 0.7, 0.05)
+material = SubResource("StandardMaterial3D_od7wj")
+
+[node name="ChocolateBar_Inst" type="Node3D" parent="Visuals" unique_id=479095695 instance=ExtResource("2_dcljc")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, -1.35, 1.35, 0.55)
+
+[node name="Trashcan_Cylindric_Inst" type="Node3D" parent="Visuals" unique_id=874534215 instance=ExtResource("3_urcmf")]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 1.55, 0, 0.7)
+
+[node name="Collision" type="StaticBody3D" parent="." unique_id=1366617128]
+
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=1587156950]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+shape = SubResource("BoxShape3D_bv3ce")
+
+[node name="Anchors" type="Node3D" parent="." unique_id=1399224248]
+
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=1080107021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
+
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=567440900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
+
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=144562132]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="SitAnchor" type="Marker3D" parent="Anchors" unique_id=1918426959]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.15)

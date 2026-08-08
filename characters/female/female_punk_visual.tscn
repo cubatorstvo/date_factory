@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://chihb2ea7ftgi"]
+
+[ext_resource type="PackedScene" uid="uid://dhlbw2m1pc1q2" path="res://assets/characters/women_modular/meshes/individuals/Punk.gltf" id="1_bedpy"]
+
+[node name="FemalePunkVisual" type="Node3D" unique_id=1124885860]
+
+[node name="Model" type="Node3D" parent="." unique_id=2001756592 instance=ExtResource("1_bedpy")]

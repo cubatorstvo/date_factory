@@ -1,0 +1,108 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/environment/factory/kenney_factory/meshes/screen-small.glb" id="1_8plsg"]
+[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Light_Stand1.fbx" id="2_3hfr5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_odob0"]
+albedo_color = Color(0.35, 0.2, 0.35, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_71v7g"]
+albedo_color = Color(0.25, 0.25, 0.28, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dn77g"]
+albedo_color = Color(0.15, 0.15, 0.18, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i4036"]
+albedo_color = Color(0.55, 0.55, 0.6, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8fl6v"]
+albedo_color = Color(0.2, 0.2, 0.22, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qknu7"]
+albedo_color = Color(0.2, 0.2, 0.22, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7op8q"]
+albedo_color = Color(0.95, 0.4, 0.7, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_athet"]
+size = Vector3(2.4, 2.4, 1.6)
+
+[node name="KaraokeStand" type="Node3D" unique_id=1089057549]
+metadata/temp_parts = "mic/stand/speakers/stage deck CSG; screen+light from packs"
+metadata/source_pack = "Kenney Factory screens + House Light_Stand"
+metadata/future_replacement = "low-poly wired mic + adjustable stand"
+
+[node name="Visuals" type="Node3D" parent="." unique_id=2093142262]
+
+[node name="StageDeck" type="CSGBox3D" parent="Visuals" unique_id=937346594]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+size = Vector3(2.2, 0.16, 1.4)
+material = SubResource("StandardMaterial3D_odob0")
+
+[node name="MicPole" type="CSGCylinder3D" parent="Visuals" unique_id=1208523864]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.85, 0.25)
+radius = 0.03
+height = 1.4
+material = SubResource("StandardMaterial3D_71v7g")
+
+[node name="MicHead" type="CSGSphere3D" parent="Visuals" unique_id=354920989]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.55, 0.25)
+radius = 0.07
+material = SubResource("StandardMaterial3D_dn77g")
+
+[node name="MicGrill" type="CSGBox3D" parent="Visuals" unique_id=1786127871]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.55, 0.32)
+size = Vector3(0.06, 0.06, 0.04)
+material = SubResource("StandardMaterial3D_i4036")
+
+[node name="SpeakerL" type="CSGBox3D" parent="Visuals" unique_id=1891535103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.85, 0.55, 0.1)
+size = Vector3(0.35, 0.9, 0.3)
+material = SubResource("StandardMaterial3D_8fl6v")
+
+[node name="SpeakerR" type="CSGBox3D" parent="Visuals" unique_id=1444271760]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.85, 0.55, 0.1)
+size = Vector3(0.35, 0.9, 0.3)
+material = SubResource("StandardMaterial3D_qknu7")
+
+[node name="screen-small_Inst" type="Node3D" parent="Visuals" unique_id=209574262 instance=ExtResource("1_8plsg")]
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 1.35, -0.25)
+
+[node name="Light_Stand1_Inst" type="Node3D" parent="Visuals" unique_id=1904711373 instance=ExtResource("2_3hfr5")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, -1.15, 0, -0.2)
+
+[node name="AccentLight" type="CSGBox3D" parent="Visuals" unique_id=1421364660]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.1)
+size = Vector3(0.3, 0.12, 0.3)
+material = SubResource("StandardMaterial3D_7op8q")
+
+[node name="Collision" type="StaticBody3D" parent="." unique_id=517020593]
+
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=322531581]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+shape = SubResource("BoxShape3D_athet")
+
+[node name="Anchors" type="Node3D" parent="." unique_id=642121068]
+
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=382235139]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
+
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1327440311]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
+
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=1647066124]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

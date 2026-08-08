@@ -1,35 +1,67 @@
-# DECISIONS — Visual Playtest Audit
+# DECISIONS — Visual Bootstrap (Donor / Asset Packs)
 
-## D-VP-01 — UI scale centering
+## D-VB-01 — Donor city source
 
-**Decision:** Keep `Control.scale` in `UiScaleHelper.apply_to_control`, but set `pivot_offset = size * 0.5` and refresh on `resized`.
+**Decision:** Primary transfer source is `date_factory_legacy/scenes/world/city/city.tscn` plus its POI prefab closure under `scenes/art/city/`.
 
-**Why:** Title/pause/settings/HUD apply scale to FULL_RECT roots. CenterContainer centers unscaled geometry; top-left pivot then biases the panel right/down at 125%/150%. Center pivot preserves centering without per-resolution magic offsets.
+**Why:** Named production city with `PlayerSpawn`, `CafeEntrance`, `HomeEntrance`, and district POIs aligned to gameplay spokes. `vertical_slice/street.tscn` is denser mesh placement but thinner POI coverage; use only as supplement if Stage A shots show city too sparse — do not invent a new layout.
 
-## D-VP-02 — Two test modes
+## D-VB-02 — Donor room source
 
-**Decision:** Strict separation of `SCRIPTED_PLAYTHROUGH` (production progression APIs) vs `VISUAL_STATE_GALLERY` (fixtures / save restore allowed).
+**Decision:** Transfer `scenes/world/vertical_slice/apartment.tscn` (house_interior + food props). Ignore thin `Apartment_Blockout_Finalized.tscn`.
 
-**Forbidden in playthrough:** `GameState.advance_stage`, `restore_stage`, direct XP inject, `mark_girl_conquered`, `mark_rival_defeated`, `set_story_flag`, `set_world_reach`.
+## D-VB-03 — Cafe = donor restaurant scene, location id stays cafe
 
-**Allowed acceleration:** FakeCompetitionRunner, minigame `debug_*`, `complete_calibration_for_test`, `advance_simulation_for_test`, `set_test_auto_win_exhibition`.
+**Decision:** Transfer `scenes/world/vertical_slice/restaurant.tscn` into current **`cafe`** location. Do **not** create a separate restaurant location. Do **not** invent a new cafe interior from scratch. Rename player-facing labels to cafe where needed; keep internal mesh names if harmless. `CafeTwoHearts` stays city façade/approach only.
 
-## D-VP-03 — RC vs visual runs
+**Why (TZ lock, overrides researcher caution):** User TZ states the donor «ресторан / кафе» scene must be used **as cafe**, a separate restaurant must not be built, and a good donor venue must be transferred rather than redesigned. Donor has no other production cafe interior — only this vertical-slice venue + facade POI. Product ID/path/ContentDB keys remain `cafe` (not `restaurant`).
 
-**Decision:** Headless title-menu layout centering suite is `required_for_rc: true`. Full PNG visual playtest stays windowed via `tools/visual_review/run_visual_playtest.py` and is **not** in `--only-rc`.
+**Supersedes:** researcher recommendation “do not transfer restaurant.tscn as cafe / compose new interior”. That would violate TZ §3D and §4 (no reinventing layout when donor venue exists).
 
-## D-VP-04 — Phone tab seam
+## D-VB-04 — Sushi kit (PACK_016) scope
 
-**Decision:** Add public `PhoneJournal.set_tab(tab)` wrapping `_set_active_tab` for gallery/matrix screenshots. No new phone architecture.
+**Decision:** Copy only the sushi_restaurant dependency closure required by the donor cafe scene. Do not expand sushi usage. Do not build a new restaurant from PACK_016.
 
-## D-VP-05 — Release / git hygiene
+**Risk:** Donor tree has **no** `LICENSE.txt` under `sushi_restaurant/`. Track as remaining license hygiene issue; do not block transfer of the existing donor cafe scene per TZ “keep good donor cafe”.
 
-**Decision:**
+## D-VB-05 — Packs on disk vs TZ pack list
 
-- Exclude `game/visual_review/*` and `_review/*` from Windows export.
-- Gitignore `_review/` on main; review branch force-adds final run artifacts only.
-- Source fixes land on main first; then create `visual-review/<YYYYMMDD-HHMM>`.
+**Decision:** Use packs physically present under donor `assets/`:
 
-## D-VP-06 — World art scope
+| TZ id | On disk |
+|---|---|
+| PACK_001 Downtown | `assets/environment/city/downtown_megakit` (CC0) |
+| PACK_018 House Interior | `assets/environment/interior/house_interior` (CC0) |
+| PACK_002 Kenney Factory | `assets/environment/factory/kenney_factory` |
+| PACK_015 Sci-Fi Essentials | `assets/environment/lab/scifi_essentials` |
+| PACK_017 Food | `assets/props/food` |
+| PACK_019/020/021 | donor/current `assets/characters`, `assets/animation` |
+| PACK_013 Modular SciFi | **NOT present** — lab/late use PACK_015 (+ factory) only |
+| PACK_014 music | **out of scope** |
+| PACK_016 sushi | only as cafe scene deps (D-VB-04) |
 
-**Decision:** Fix only reproducible BLOCKER/MAJOR emptiness/placement/lighting. Leave subjective art quality to external human review.
+## D-VB-06 — Integration pattern
+
+**Decision:** Keep current `world_location.gd` / spawn / transition / interactable scripts. Replace BoxMesh visuals by instancing transferred art roots (or merging geometry under a `VisualRoot`) and re-placing logic markers onto donor landmarks. Prefer adapting marker transforms to donor geometry over rebuilding rooms.
+
+## D-VB-07 — Screenshot / git hygiene
+
+**Decision:** Legacy + current PNGs live under `tmp/visual_bootstrap_review/` then publish on temporary `visual-review/bootstrap-<stamp>`. Source asset/scene fixes land on main. Do not commit PNG dumps to main.
+
+## D-VB-08 — No gameplay redesign
+
+**Decision:** No stage/XP/story/dating/balance/content catalog changes except minimal path/marker fixes required for travel and interactions after visual swap.
+
+## D-VB-09 — City transfer accepted with known non-blockers
+
+**Decision:** Accept Stage B city mount (`Geometry/DonorCity`) as bootstrap PASS.
+
+**Known non-blockers (do not redesign city for these now):** WorldTransition debug BoxMeshes still visible; occasional megakit trim/emissive red edge artifacts; stylized CSG POI shells. Fix only if they break travel/collision or cause missing-resource errors.
+
+## D-VB-10 — Lab dating booths stay box shells
+
+**Decision:** Accept Stage E2 lab with PACK_015 prop dressing. Dating booth structural shells may remain tinted BoxMeshes because PACK_013 Modular SciFi is absent. Do not invent modular wall kits.
+
+## D-VB-11 — Characters already on Quaternius path
+
+**Decision:** Stage F does not rebuild GirlActor/RivalActor. Bases already point at PACK_021/019 meshes via CharacterActor. Scope = variant wrappers + appearance `visual_scene` remaps + review screenshots. No FPS player body.

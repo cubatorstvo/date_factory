@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://dm7ldkpar2i02"]
+
+[ext_resource type="Script" uid="uid://dv47nd1380jex" path="res://world/art/donor_import/characters/character_anim_controller.gd" id="1_sesjp"]
+[ext_resource type="AnimationLibrary" path="res://assets/animation/universal_library/libraries/DF_Women_Aliases.res" id="2_lmiw1"]
+[ext_resource type="PackedScene" uid="uid://d17557baga2qy" path="res://assets/characters/women_modular/meshes/individuals/Casual.gltf" id="3_uc14i"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_yknt0"]
+radius = 0.3
+height = 1.75
+
+[node name="Girl_Casual" type="CharacterBody3D" unique_id=772809294]
+collision_layer = 2
+script = ExtResource("1_sesjp")
+alias_library = ExtResource("2_lmiw1")
+label_text = "Girl_Casual"
+metadata/_df_anim_aliases = PackedStringArray("idle", "walk", "run", "approach", "turn", "sit", "sit_enter", "sit_idle", "seated_gesture", "stand", "sit_exit", "gesture", "react")
+metadata/_df_alias_library = "res://assets/animation/universal_library/libraries/DF_Women_Aliases.res"
+
+[node name="Visual" parent="." unique_id=1126355955 instance=ExtResource("3_uc14i")]
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=482214229]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+shape = SubResource("CapsuleShape3D_yknt0")

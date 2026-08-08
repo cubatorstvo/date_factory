@@ -1,20 +1,37 @@
 [gd_scene format=3 uid="uid://c20p43rndxykl"]
 
 [ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
+[ext_resource type="PackedScene" uid="uid://0hekxn1vu1j7" path="res://assets/environment/factory/kenney_factory/meshes/floor-large.glb" id="2_fy3lc"]
 [ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
 [ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
+[ext_resource type="PackedScene" uid="uid://c3yffljrvol7c" path="res://assets/environment/factory/kenney_factory/meshes/structure-wall.glb" id="4_imajm"]
 [ext_resource type="Script" uid="uid://bwtavkdcvpoir" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
 [ext_resource type="Script" uid="uid://cxh7f2je26ldx" path="res://game/salary/salary_station.gd" id="5_6naao"]
+[ext_resource type="PackedScene" uid="uid://b3rd7gcountec" path="res://assets/environment/factory/kenney_factory/meshes/structure-doorway-wide.glb" id="5_kb78v"]
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
+[ext_resource type="PackedScene" uid="uid://baeicg5o1e6xy" path="res://assets/environment/factory/kenney_factory/meshes/door-wide-open.glb" id="6_3233j"]
 [ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="6_mikh5"]
-[ext_resource type="Script" uid="uid://dx0ba68hwmey5" path="res://world/flavor/flavor_interactable.gd" id="7_3tg5r"]
+[ext_resource type="PackedScene" uid="uid://cj1d405amfmrd" path="res://assets/environment/factory/kenney_factory/meshes/machine.glb" id="7_yr5fy"]
+[ext_resource type="PackedScene" uid="uid://byt8onr173lgm" path="res://assets/environment/factory/kenney_factory/meshes/conveyor-long-sides.glb" id="8_5omie"]
+[ext_resource type="PackedScene" uid="uid://dm7lmnxnahppd" path="res://assets/environment/factory/kenney_factory/meshes/conveyor-sides.glb" id="9_q7i6q"]
+[ext_resource type="PackedScene" uid="uid://kok3anfh1lwf" path="res://assets/environment/factory/kenney_factory/meshes/machine-fortified.glb" id="10_g6cn6"]
+[ext_resource type="PackedScene" uid="uid://c2e1105r7hgq4" path="res://assets/environment/factory/kenney_factory/meshes/screen-panel-small.glb" id="11_e1a66"]
+[ext_resource type="PackedScene" uid="uid://cp5ma43s1byuu" path="res://assets/environment/factory/kenney_factory/meshes/box-large.glb" id="12_0uymd"]
+[ext_resource type="PackedScene" uid="uid://1fn5xt4ywenf" path="res://assets/environment/factory/kenney_factory/meshes/box-wide.glb" id="13_8hmj3"]
+[ext_resource type="PackedScene" uid="uid://1obu856m83rf" path="res://assets/environment/factory/kenney_factory/meshes/box-small.glb" id="14_o2oqm"]
+[ext_resource type="PackedScene" uid="uid://bkl6pmboru24h" path="res://assets/environment/factory/kenney_factory/meshes/pipe-large-valve.glb" id="15_lum6t"]
+[ext_resource type="PackedScene" uid="uid://bbdtew8nk8pui" path="res://assets/environment/factory/kenney_factory/meshes/structure-window.glb" id="16_v3d0m"]
+[ext_resource type="PackedScene" uid="uid://ip7ra3sg5isd" path="res://assets/environment/factory/kenney_factory/meshes/catwalk-straight.glb" id="17_hckmu"]
+[ext_resource type="PackedScene" uid="uid://csaqjuy8orcas" path="res://assets/environment/factory/kenney_factory/meshes/cog-c.glb" id="18_isnsj"]
+[ext_resource type="PackedScene" uid="uid://b00su4g14pwrn" path="res://assets/environment/factory/kenney_factory/meshes/structure-yellow-medium.glb" id="19_v3e0n"]
+[ext_resource type="PackedScene" uid="uid://d4atp3ohvypkp" path="res://assets/environment/factory/kenney_factory/meshes/screen-hanging-small.glb" id="20_vdbd1"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
-background_color = Color(0.42, 0.48, 0.55, 1)
+background_color = Color(0.18, 0.2, 0.24, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.78, 0.78, 0.82, 1)
-ambient_light_energy = 0.9
+ambient_light_color = Color(0.72, 0.74, 0.78, 1)
+ambient_light_energy = 0.75
 
 [sub_resource type="BoxMesh" id="BoxMesh_Floor"]
 size = Vector3(12, 0.2, 12)
@@ -134,12 +151,14 @@ environment = SubResource("Env")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=594437904]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 6, 0)
-light_energy = 0.85
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 0.55
 
 [node name="Geometry" type="Node3D" parent="." unique_id=865703880]
 
 [node name="Floor" type="MeshInstance3D" parent="Geometry" unique_id=1115810040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+visible = false
 mesh = SubResource("BoxMesh_Floor")
 surface_material_override/0 = SubResource("Mat_Floor")
 
@@ -151,6 +170,7 @@ shape = SubResource("BoxShape_Floor")
 
 [node name="WallN" type="MeshInstance3D" parent="Geometry" unique_id=118556079]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6)
+visible = false
 mesh = SubResource("BoxMesh_WallN")
 surface_material_override/0 = SubResource("Mat_WallN")
 
@@ -161,6 +181,7 @@ shape = SubResource("BoxShape_WallN")
 
 [node name="WallS" type="MeshInstance3D" parent="Geometry" unique_id=1715780917]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6)
+visible = false
 mesh = SubResource("BoxMesh_WallS")
 surface_material_override/0 = SubResource("Mat_WallS")
 
@@ -171,6 +192,7 @@ shape = SubResource("BoxShape_WallS")
 
 [node name="WallE" type="MeshInstance3D" parent="Geometry" unique_id=338154586]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, 0)
+visible = false
 mesh = SubResource("BoxMesh_WallE")
 surface_material_override/0 = SubResource("Mat_WallE")
 
@@ -181,6 +203,7 @@ shape = SubResource("BoxShape_WallE")
 
 [node name="WallW" type="MeshInstance3D" parent="Geometry" unique_id=927823508]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 0)
+visible = false
 mesh = SubResource("BoxMesh_WallW")
 surface_material_override/0 = SubResource("Mat_WallW")
 
@@ -191,19 +214,300 @@ shape = SubResource("BoxShape_WallW")
 
 [node name="Sign" type="Label3D" parent="Geometry" unique_id=1279550436]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+visible = false
 text = "ШАХТА"
 font_size = 64
+
+[node name="PackVisuals" type="Node3D" parent="Geometry" unique_id=615407476]
+
+[node name="floor-large_0_0" type="Node3D" parent="Geometry/PackVisuals" unique_id=1845235497 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -5)
+
+[node name="floor-large_0_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=2046835344 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -5)
+
+[node name="floor-large_0_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=1975667748 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -5)
+
+[node name="floor-large_0_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=1407429867 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -5)
+
+[node name="floor-large_0_4" type="Node3D" parent="Geometry/PackVisuals" unique_id=1264938541 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -5)
+
+[node name="floor-large_0_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=1285752701 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -5)
+
+[node name="floor-large_1_0" type="Node3D" parent="Geometry/PackVisuals" unique_id=1403252040 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -3)
+
+[node name="floor-large_1_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=928505925 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -3)
+
+[node name="floor-large_1_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=1994212342 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -3)
+
+[node name="floor-large_1_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=1826806603 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -3)
+
+[node name="floor-large_1_4" type="Node3D" parent="Geometry/PackVisuals" unique_id=2026855533 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -3)
+
+[node name="floor-large_1_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=479603250 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -3)
+
+[node name="floor-large_2_0" type="Node3D" parent="Geometry/PackVisuals" unique_id=1121223020 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -1)
+
+[node name="floor-large_2_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=703127725 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -1)
+
+[node name="floor-large_2_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=1505481839 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1)
+
+[node name="floor-large_2_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=68873812 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -1)
+
+[node name="floor-large_2_4" type="Node3D" parent="Geometry/PackVisuals" unique_id=2075388996 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -1)
+
+[node name="floor-large_2_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=652386252 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -1)
+
+[node name="floor-large_3_0" type="Node3D" parent="Geometry/PackVisuals" unique_id=689937419 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 1)
+
+[node name="floor-large_3_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=1917739521 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 1)
+
+[node name="floor-large_3_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=427253346 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1)
+
+[node name="floor-large_3_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=723255658 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
+
+[node name="floor-large_3_4" type="Node3D" parent="Geometry/PackVisuals" unique_id=1248659130 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 1)
+
+[node name="floor-large_3_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=146867294 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 1)
+
+[node name="floor-large_4_0" type="Node3D" parent="Geometry/PackVisuals" unique_id=1639769008 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 3)
+
+[node name="floor-large_4_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=1729060940 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 3)
+
+[node name="floor-large_4_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=1299890355 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 3)
+
+[node name="floor-large_4_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=1143968631 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 3)
+
+[node name="floor-large_4_4" type="Node3D" parent="Geometry/PackVisuals" unique_id=1447326905 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 3)
+
+[node name="floor-large_4_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=619457238 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 3)
+
+[node name="floor-large_5_0" type="Node3D" parent="Geometry/PackVisuals" unique_id=462752155 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 5)
+
+[node name="floor-large_5_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=1249640312 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 5)
+
+[node name="floor-large_5_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=1563947260 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 5)
+
+[node name="floor-large_5_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=1193601592 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 5)
+
+[node name="floor-large_5_4" type="Node3D" parent="Geometry/PackVisuals" unique_id=1684906266 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 5)
+
+[node name="floor-large_5_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=1080192741 instance=ExtResource("2_fy3lc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
+
+[node name="WallN_0" type="Node3D" parent="Geometry/PackVisuals" unique_id=1871411981 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -5)
+
+[node name="WallN_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=136237488 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -5)
+
+[node name="WallN_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=353089884 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -5)
+
+[node name="WallN_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=1940481999 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -5)
+
+[node name="WallN_4" type="Node3D" parent="Geometry/PackVisuals" unique_id=186371001 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -5)
+
+[node name="WallN_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=776483972 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
+
+[node name="WallN_6" type="Node3D" parent="Geometry/PackVisuals" unique_id=1372936463 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -5)
+
+[node name="WallN_7" type="Node3D" parent="Geometry/PackVisuals" unique_id=1317530744 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -5)
+
+[node name="WallN_8" type="Node3D" parent="Geometry/PackVisuals" unique_id=864361006 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -5)
+
+[node name="WallN_9" type="Node3D" parent="Geometry/PackVisuals" unique_id=1890873314 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -5)
+
+[node name="WallN_10" type="Node3D" parent="Geometry/PackVisuals" unique_id=674305797 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -5)
+
+[node name="EntranceDoorway" type="Node3D" parent="Geometry/PackVisuals" unique_id=1002276233 instance=ExtResource("5_kb78v")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 5)
+
+[node name="EntranceDoor" type="Node3D" parent="Geometry/PackVisuals" unique_id=2057633237 instance=ExtResource("6_3233j")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 4.85)
+
+[node name="WallS_L0" type="Node3D" parent="Geometry/PackVisuals" unique_id=1664379036 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 5)
+
+[node name="WallS_L1" type="Node3D" parent="Geometry/PackVisuals" unique_id=35554857 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 5)
+
+[node name="WallS_L2" type="Node3D" parent="Geometry/PackVisuals" unique_id=787761280 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 5)
+
+[node name="WallS_R0" type="Node3D" parent="Geometry/PackVisuals" unique_id=1346730389 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 5)
+
+[node name="WallS_R1" type="Node3D" parent="Geometry/PackVisuals" unique_id=1914090566 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 5)
+
+[node name="WallS_R2" type="Node3D" parent="Geometry/PackVisuals" unique_id=1820015000 instance=ExtResource("4_imajm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
+
+[node name="SalaryMachine" type="Node3D" parent="Geometry/PackVisuals" unique_id=1778229515 instance=ExtResource("7_yr5fy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.2)
+
+[node name="MainConveyor" type="Node3D" parent="Geometry/PackVisuals" unique_id=1952329353 instance=ExtResource("8_5omie")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, -2.2)
+
+[node name="ConveyorEnd" type="Node3D" parent="Geometry/PackVisuals" unique_id=2027666013 instance=ExtResource("9_q7i6q")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0, -2.2)
+
+[node name="ConveyorFeedMachine" type="Node3D" parent="Geometry/PackVisuals" unique_id=564067960 instance=ExtResource("10_g6cn6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -2.2)
+
+[node name="SalaryScreen" type="Node3D" parent="Geometry/PackVisuals" unique_id=1724918941 instance=ExtResource("11_e1a66")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.1, 0, -3.3)
+
+[node name="BoxStackA" type="Node3D" parent="Geometry/PackVisuals" unique_id=1116124940 instance=ExtResource("12_0uymd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0, -3.5)
+
+[node name="BoxStackB" type="Node3D" parent="Geometry/PackVisuals" unique_id=46395908 instance=ExtResource("13_8hmj3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0, -2.2)
+
+[node name="BoxWarn" type="Node3D" parent="Geometry/PackVisuals" unique_id=342377288 instance=ExtResource("14_o2oqm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0, -1.2)
+
+[node name="PipeValve" type="Node3D" parent="Geometry/PackVisuals" unique_id=1073374867 instance=ExtResource("15_lum6t")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 1.5)
+
+[node name="WallE_Win0" type="Node3D" parent="Geometry/PackVisuals" unique_id=177556182 instance=ExtResource("16_v3d0m")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, -2)
+
+[node name="WallE_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=1511376829 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 0)
+
+[node name="WallE_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=1422188985 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 2)
+
+[node name="WallE_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=8467331 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 4)
+
+[node name="WallW_Win0" type="Node3D" parent="Geometry/PackVisuals" unique_id=950348061 instance=ExtResource("16_v3d0m")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0, -2)
+
+[node name="WallW_1" type="Node3D" parent="Geometry/PackVisuals" unique_id=624232902 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0, 0)
+
+[node name="WallW_2" type="Node3D" parent="Geometry/PackVisuals" unique_id=2129280562 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0, 2)
+
+[node name="WallW_3" type="Node3D" parent="Geometry/PackVisuals" unique_id=228082959 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0, 4)
+
+[node name="WallE_m4" type="Node3D" parent="Geometry/PackVisuals" unique_id=8467332 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, -4)
+
+[node name="WallE_m3" type="Node3D" parent="Geometry/PackVisuals" unique_id=8467333 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, -3)
+
+[node name="WallE_3b" type="Node3D" parent="Geometry/PackVisuals" unique_id=8467334 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 3)
+
+[node name="WallE_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=8467335 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 5)
+
+[node name="WallW_m4" type="Node3D" parent="Geometry/PackVisuals" unique_id=228082960 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0, -4)
+
+[node name="WallW_m3" type="Node3D" parent="Geometry/PackVisuals" unique_id=228082961 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0, -3)
+
+[node name="WallW_3b" type="Node3D" parent="Geometry/PackVisuals" unique_id=228082962 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0, 3)
+
+[node name="WallW_5" type="Node3D" parent="Geometry/PackVisuals" unique_id=228082963 instance=ExtResource("4_imajm")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -5, 0, 5)
+
+[node name="CatwalkA" type="Node3D" parent="Geometry/PackVisuals" unique_id=126114464 instance=ExtResource("17_hckmu")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5, 0, 1.5)
+
+[node name="DecorCog" type="Node3D" parent="Geometry/PackVisuals" unique_id=1239169711 instance=ExtResource("18_isnsj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0, -4)
+
+[node name="WarnPost" type="Node3D" parent="Geometry/PackVisuals" unique_id=1269402629 instance=ExtResource("19_v3e0n")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0, -1.2)
+
+[node name="HangScreen" type="Node3D" parent="Geometry/PackVisuals" unique_id=1499948211 instance=ExtResource("20_vdbd1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 2.2, -3)
+
+[node name="IndustrialLights" type="Node3D" parent="Geometry/PackVisuals" unique_id=1443361469]
+
+[node name="Omni_0" type="OmniLight3D" parent="Geometry/PackVisuals/IndustrialLights" unique_id=2055949310]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, -3)
+light_color = Color(1, 0.85, 0.65, 1)
+light_energy = 1.1
+omni_range = 7.0
+
+[node name="Omni_1" type="OmniLight3D" parent="Geometry/PackVisuals/IndustrialLights" unique_id=1006883502]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3.2, 0)
+light_color = Color(1, 0.85, 0.65, 1)
+light_energy = 1.1
+omni_range = 7.0
+
+[node name="Omni_2" type="OmniLight3D" parent="Geometry/PackVisuals/IndustrialLights" unique_id=944164336]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3.2, 1)
+light_color = Color(1, 0.85, 0.65, 1)
+light_energy = 1.1
+omni_range = 7.0
+
+[node name="Omni_3" type="OmniLight3D" parent="Geometry/PackVisuals/IndustrialLights" unique_id=810893930]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 4)
+light_color = Color(1, 0.85, 0.65, 1)
+light_energy = 1.1
+omni_range = 7.0
 
 [node name="PlayerSpawns" type="Node3D" parent="." unique_id=1868817635]
 
 [node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=1856672757]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, 2.5)
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.05, 3.2)
 script = ExtResource("3_pspawn")
 
 [node name="NpcSpawns" type="Node3D" parent="." unique_id=454741019]
 
 [node name="npc_mine_01" type="Marker3D" parent="NpcSpawns" unique_id=1927061544]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 0.05, -0.2)
 script = ExtResource("4_nspawn")
 spawn_id = &"npc_mine_01"
 
@@ -232,21 +536,25 @@ shape = SubResource("BoxShape3D_fb5o2")
 
 [node name="Pedestal" type="MeshInstance3D" parent="Interactables/SalaryStation/Visuals" unique_id=991848368]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.35, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_mikh5")
 mesh = SubResource("BoxMesh_3tg5r")
 
 [node name="Chute" type="MeshInstance3D" parent="Interactables/SalaryStation/Visuals" unique_id=1292715338]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0.35)
+visible = false
 material_override = SubResource("StandardMaterial3D_oshaa")
 mesh = SubResource("BoxMesh_iyvyt")
 
 [node name="LeverBase" type="MeshInstance3D" parent="Interactables/SalaryStation/Visuals" unique_id=1512026400]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.28, 0.2, -0.05)
+visible = false
 material_override = SubResource("StandardMaterial3D_oshaa")
 mesh = SubResource("BoxMesh_imfmo")
 
 [node name="Lever" type="MeshInstance3D" parent="Interactables/SalaryStation/Visuals" unique_id=1790513909]
 transform = Transform3D(0.90630776, 0.42261827, 0, -0.42261827, 0.90630776, 0, 0, 0, 1, 0.28, 0.42, -0.05)
+visible = false
 material_override = SubResource("StandardMaterial3D_oshaa")
 mesh = SubResource("BoxMesh_r0e7y")
 
@@ -269,29 +577,32 @@ light_color = Color(1, 0.82, 0.55, 1)
 light_energy = 0.85
 omni_range = 4.0
 
-[node name="FlavorConveyor" type="Area3D" parent="Interactables" unique_id=1242682029 instance=ExtResource("6_mikh5")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1, -2)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_3tg5r")
+[node name="FlavorConveyor" parent="Interactables" unique_id=1242682029 instance=ExtResource("6_mikh5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2.2)
 text = "КОНВЕЙЕР
 Деньги физически существуют только ради убедительности."
 prompt = "Осмотреть"
-prompt_action = "Осмотреть"
 
-[node name="FlavorWarning" type="Area3D" parent="Interactables" unique_id=2069594187 instance=ExtResource("6_mikh5")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1, -1.2)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_3tg5r")
+[node name="Mesh" parent="Interactables/FlavorConveyor" index="1" unique_id=1246067171]
+visible = false
+
+[node name="Label" parent="Interactables/FlavorConveyor" index="2" unique_id=931679821]
+visible = false
+
+[node name="FlavorWarning" parent="Interactables" unique_id=2069594187 instance=ExtResource("6_mikh5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1, -1.2)
 text = "ТЕХНИКА БЕЗОПАСНОСТИ
 Не стой под начислением."
 prompt = "Осмотреть"
-prompt_action = "Осмотреть"
+
+[node name="Mesh" parent="Interactables/FlavorWarning" index="1" unique_id=1246067172]
+visible = false
+
+[node name="Label" parent="Interactables/FlavorWarning" index="2" unique_id=931679822]
+visible = false
 
 [node name="ScenicGags" type="Node3D" parent="Interactables" unique_id=1951106461]
+visible = false
 
 [node name="SalaryConveyorGag" type="Node3D" parent="Interactables/ScenicGags" unique_id=570126449]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.35, -2.2)
@@ -325,7 +636,7 @@ font_size = 14
 [node name="Transitions" type="Node3D" parent="." unique_id=2049564111]
 
 [node name="ToCity" type="Area3D" parent="Transitions" unique_id=35288708]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 4.8)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -337,5 +648,9 @@ display_name = "В город"
 shape = SubResource("TransitionShape")
 
 [node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity" unique_id=1973300013]
+visible = false
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
+
+[editable path="Interactables/FlavorConveyor"]
+[editable path="Interactables/FlavorWarning"]

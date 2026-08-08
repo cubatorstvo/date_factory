@@ -1,0 +1,119 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="1_vlajo"]
+[ext_resource type="PackedScene" path="res://assets/environment/factory/kenney_factory/meshes/machine.glb" id="2_c5big"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3c7kx"]
+albedo_color = Color(0.3, 0.7, 0.45, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nye25"]
+albedo_color = Color(0.24000001, 0.56, 0.35999998, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1828e"]
+albedo_color = Color(0.25, 0.25, 0.28, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lutn7"]
+albedo_color = Color(0.25, 0.25, 0.28, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_slyrc"]
+albedo_color = Color(0.35, 0.35, 0.38, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tuxgm"]
+albedo_color = Color(0.2, 0.2, 0.22, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o7oha"]
+albedo_color = Color(0.2, 0.2, 0.22, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xe3x0"]
+albedo_color = Color(0.2, 0.45, 0.3, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_vtch6"]
+size = Vector3(2.4, 2.4, 1.6)
+
+[node name="GymFacade" type="Node3D" unique_id=1473028307]
+metadata/temp_parts = "rack/barbell/mat CSG; Kenney machine as cardio silhouette"
+metadata/future_replacement = "dedicated gym bench/rack/cardio props"
+
+[node name="Visuals" type="Node3D" parent="." unique_id=2074436942]
+
+[node name="Building_Small_1_Inst" type="Node3D" parent="Visuals" unique_id=969699209 instance=ExtResource("1_vlajo")]
+transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0, -0.45)
+
+[node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=62954115]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.35, 0.95)
+size = Vector3(2.6, 0.08, 0.9)
+material = SubResource("StandardMaterial3D_3c7kx")
+
+[node name="AwningStripe" type="CSGBox3D" parent="Visuals" unique_id=1866817973]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.29, 0.95)
+size = Vector3(2.6, 0.04, 0.9)
+material = SubResource("StandardMaterial3D_nye25")
+
+[node name="machine_Inst" type="Node3D" parent="Visuals" unique_id=943348078 instance=ExtResource("2_c5big")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, -0.55, 0, 0.55)
+
+[node name="RackUprightL" type="CSGBox3D" parent="Visuals" unique_id=2128378037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.85, 0.55)
+size = Vector3(0.08, 1.7, 0.08)
+material = SubResource("StandardMaterial3D_1828e")
+
+[node name="RackUprightR" type="CSGBox3D" parent="Visuals" unique_id=2089754776]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05, 0.85, 0.55)
+size = Vector3(0.08, 1.7, 0.08)
+material = SubResource("StandardMaterial3D_lutn7")
+
+[node name="Barbell" type="CSGCylinder3D" parent="Visuals" unique_id=1547732832]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 1.15, 0.55)
+radius = 0.04
+height = 0.7
+material = SubResource("StandardMaterial3D_slyrc")
+
+[node name="PlateL" type="CSGCylinder3D" parent="Visuals" unique_id=1825060638]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.15, 0.55)
+radius = 0.14
+height = 0.06
+material = SubResource("StandardMaterial3D_tuxgm")
+
+[node name="PlateR" type="CSGCylinder3D" parent="Visuals" unique_id=602716313]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 1.15, 0.55)
+radius = 0.14
+height = 0.06
+material = SubResource("StandardMaterial3D_o7oha")
+
+[node name="Mat" type="CSGBox3D" parent="Visuals" unique_id=1226080309]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.03, 1.15)
+size = Vector3(1.4, 0.05, 0.7)
+material = SubResource("StandardMaterial3D_xe3x0")
+
+[node name="Collision" type="StaticBody3D" parent="." unique_id=1107935787]
+
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=528934723]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+shape = SubResource("BoxShape3D_vtch6")
+
+[node name="Anchors" type="Node3D" parent="." unique_id=1356161313]
+
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=589404119]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
+
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1499218071]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
+
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=264406922]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://douhwwv6xbv5i"]
+
+[ext_resource type="PackedScene" uid="uid://bsews4hfgtfky" path="res://assets/characters/women_modular/meshes/individuals/Suit.gltf" id="1_et2qe"]
+
+[node name="FemaleSuitVisual" type="Node3D" unique_id=1729277627]
+
+[node name="Model" type="Node3D" parent="." unique_id=1507749233 instance=ExtResource("1_et2qe")]

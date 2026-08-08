@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://bb8tg2xq2jf61"]
+
+[ext_resource type="Script" uid="uid://dv47nd1380jex" path="res://world/art/donor_import/characters/character_anim_controller.gd" id="1_gvxbc"]
+[ext_resource type="AnimationLibrary" path="res://assets/animation/universal_library/libraries/DF_UAL_Aliases.res" id="2_fu2tt"]
+[ext_resource type="PackedScene" uid="uid://ck2333y3ca24q" path="res://assets/characters/hero_base/meshes/bodies/Superhero_Male_FullBody.gltf" id="3_do48n"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_r340r"]
+radius = 0.3
+height = 1.75
+
+[node name="Clone" type="CharacterBody3D" unique_id=50660944]
+transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0, 0)
+collision_layer = 2
+script = ExtResource("1_gvxbc")
+alias_library = ExtResource("2_fu2tt")
+label_text = "Clone"
+metadata/_df_anim_aliases = PackedStringArray("idle", "walk", "run", "approach", "turn", "sit", "sit_enter", "sit_idle", "seated_gesture", "stand", "sit_exit", "gesture", "react")
+metadata/_df_alias_library = "res://assets/animation/universal_library/libraries/DF_UAL_Aliases.res"
+
+[node name="Visual" parent="." unique_id=548399332 instance=ExtResource("3_do48n")]
+
+[node name="Armature2" type="Node3D" parent="Visual" unique_id=1656401906]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Visual" unique_id=422134177]
+libraries/df_aliases = ExtResource("2_fu2tt")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1499998700]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+shape = SubResource("CapsuleShape3D_r340r")

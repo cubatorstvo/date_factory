@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
 [ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
+[ext_resource type="PackedScene" path="res://world/art/donor_import/city/city.tscn" id="3_0bmg4"]
 [ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
 [ext_resource type="Script" uid="uid://bwtavkdcvpoir" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
 [ext_resource type="PackedScene" path="res://game/girls/girl_actor.tscn" id="4_xiq57"]
@@ -14,10 +15,12 @@
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
-background_color = Color(0.42, 0.48, 0.55, 1)
+background_color = Color(0.35, 0.4, 0.5, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.78, 0.78, 0.82, 1)
-ambient_light_energy = 0.9
+ambient_light_color = Color(0.85, 0.86, 0.92, 1)
+ambient_light_energy = 1.15
+tonemap_mode = 2
+tonemap_exposure = 1.15
 
 [sub_resource type="BoxMesh" id="BoxMesh_Floor"]
 size = Vector3(12, 0.2, 12)
@@ -142,12 +145,13 @@ environment = SubResource("Env")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=89120705]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 6, 0)
-light_energy = 0.85
+light_energy = 1.35
 
 [node name="Geometry" type="Node3D" parent="." unique_id=72437723]
 
 [node name="Floor" type="MeshInstance3D" parent="Geometry" unique_id=1860789777]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+visible = false
 mesh = SubResource("BoxMesh_Floor")
 surface_material_override/0 = SubResource("Mat_Floor")
 
@@ -156,9 +160,11 @@ collision_mask = 0
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody" unique_id=2126259243]
 shape = SubResource("BoxShape_Floor")
+disabled = true
 
 [node name="WallN" type="MeshInstance3D" parent="Geometry" unique_id=1535382964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6)
+visible = false
 mesh = SubResource("BoxMesh_WallN")
 surface_material_override/0 = SubResource("Mat_WallN")
 
@@ -166,9 +172,11 @@ surface_material_override/0 = SubResource("Mat_WallN")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body" unique_id=1687755439]
 shape = SubResource("BoxShape_WallN")
+disabled = true
 
 [node name="WallS" type="MeshInstance3D" parent="Geometry" unique_id=890768675]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 6)
+visible = false
 mesh = SubResource("BoxMesh_WallS")
 surface_material_override/0 = SubResource("Mat_WallS")
 
@@ -176,9 +184,11 @@ surface_material_override/0 = SubResource("Mat_WallS")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body" unique_id=699293314]
 shape = SubResource("BoxShape_WallS")
+disabled = true
 
 [node name="WallE" type="MeshInstance3D" parent="Geometry" unique_id=1364343407]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, 0)
+visible = false
 mesh = SubResource("BoxMesh_WallE")
 surface_material_override/0 = SubResource("Mat_WallE")
 
@@ -186,9 +196,11 @@ surface_material_override/0 = SubResource("Mat_WallE")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body" unique_id=809564268]
 shape = SubResource("BoxShape_WallE")
+disabled = true
 
 [node name="WallW" type="MeshInstance3D" parent="Geometry" unique_id=1966672487]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 0)
+visible = false
 mesh = SubResource("BoxMesh_WallW")
 surface_material_override/0 = SubResource("Mat_WallW")
 
@@ -196,9 +208,11 @@ surface_material_override/0 = SubResource("Mat_WallW")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body" unique_id=824454574]
 shape = SubResource("BoxShape_WallW")
+disabled = true
 
 [node name="Sign" type="Label3D" parent="Geometry" unique_id=1841918457]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+visible = false
 text = "ГОРОД"
 font_size = 64
 
@@ -206,6 +220,7 @@ font_size = 64
 
 [node name="PublicFloor" type="MeshInstance3D" parent="Geometry/PublicSegment" unique_id=473494177]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, -9)
+visible = false
 mesh = SubResource("BoxMesh_PublicFloor")
 surface_material_override/0 = SubResource("Mat_PublicFloor")
 
@@ -213,13 +228,16 @@ surface_material_override/0 = SubResource("Mat_PublicFloor")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/PublicSegment/PublicFloor/Body" unique_id=1998103780]
 shape = SubResource("BoxShape_PublicFloor")
+disabled = true
 
 [node name="PublicSign" type="Label3D" parent="Geometry/PublicSegment" unique_id=1928612443]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -9)
+visible = false
 text = "ПУБЛИЧНЫЙ ГОРОД"
 font_size = 40
 
 [node name="MediaAttentionVisuals" type="Node3D" parent="Geometry/PublicSegment" unique_id=815601000]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 8.5)
 
 [node name="Attention15Magazine" type="Node3D" parent="Geometry/PublicSegment/MediaAttentionVisuals" unique_id=815601015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0, -8.2)
@@ -310,7 +328,7 @@ font_size = 22
 [node name="ScenicGags" type="Node3D" parent="Geometry" unique_id=1454510031]
 
 [node name="BusStopGag" type="Node3D" parent="Geometry/ScenicGags" unique_id=1361012470]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 0, 3.6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, 5)
 
 [node name="Pole" type="MeshInstance3D" parent="Geometry/ScenicGags/BusStopGag" unique_id=519096493]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
@@ -335,7 +353,7 @@ text = "Ожидание не ускоряет событие"
 font_size = 8
 
 [node name="ConflictingCenterArrows" type="Node3D" parent="Geometry/ScenicGags" unique_id=1582678528]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.2)
 
 [node name="ArrowLeft" type="Label3D" parent="Geometry/ScenicGags/ConflictingCenterArrows" unique_id=452812904]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 1.45, 0)
@@ -354,16 +372,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 material_override = SubResource("StandardMaterial3D_1cnle")
 mesh = SubResource("BoxMesh_rt5w2")
 
+[node name="DonorCity" type="Node3D" parent="Geometry" unique_id=872770394 instance=ExtResource("3_0bmg4")]
+
 [node name="PlayerSpawns" type="Node3D" parent="." unique_id=140394985]
 
 [node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=875830126]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.05, 2.5)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 29.2, 0.05, 9)
 script = ExtResource("3_pspawn")
 
 [node name="NpcSpawns" type="Node3D" parent="." unique_id=969248519]
 
 [node name="npc_girl_city_bicycle" type="Marker3D" parent="NpcSpawns" unique_id=580185440]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.05, 3.5)
 script = ExtResource("4_nspawn")
 spawn_id = "girl_city_bicycle"
 
@@ -371,7 +391,7 @@ spawn_id = "girl_city_bicycle"
 girl_id = "girl_city_bicycle"
 
 [node name="npc_rival_city_silent" type="Marker3D" parent="NpcSpawns" unique_id=1815574643]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -3.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.05, -3.2)
 script = ExtResource("4_nspawn")
 spawn_id = "rival_city_silent"
 npc_kind = 2
@@ -380,7 +400,7 @@ npc_kind = 2
 rival_id = "rival_city_silent"
 
 [node name="npc_rival_city_tracksuit" type="Marker3D" parent="NpcSpawns" unique_id=638973735]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.05, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.05, 3.8)
 script = ExtResource("4_nspawn")
 spawn_id = "rival_city_tracksuit"
 npc_kind = 2
@@ -389,18 +409,18 @@ npc_kind = 2
 rival_id = "rival_city_tracksuit"
 
 [node name="npc_rival_mine_boss" type="Marker3D" parent="NpcSpawns" unique_id=664597524]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.05, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.05, 2.5)
 script = ExtResource("8_w30d6")
 actor_kind = 1
 story_stage = 2
 
 [node name="npc_girl_mine_boss" type="Marker3D" parent="NpcSpawns" unique_id=598449541]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.05, -2.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.05, 3)
 script = ExtResource("8_w30d6")
 story_stage = 2
 
 [node name="npc_girl_public_sculpture" type="Marker3D" parent="NpcSpawns" unique_id=1187463068]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.05, -3.4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, 10)
 script = ExtResource("4_nspawn")
 spawn_id = &"girl_public_sculpture"
 
@@ -408,7 +428,7 @@ spawn_id = &"girl_public_sculpture"
 girl_id = &"girl_public_sculpture"
 
 [node name="npc_rival_public_coat" type="Marker3D" parent="NpcSpawns" unique_id=1765296058]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0.05, -3.4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.05, 11)
 script = ExtResource("4_nspawn")
 spawn_id = &"rival_public_coat"
 
@@ -416,7 +436,7 @@ spawn_id = &"rival_public_coat"
 rival_id = &"rival_public_coat"
 
 [node name="npc_rival_public_watch" type="Marker3D" parent="NpcSpawns" unique_id=1911835569]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.05, -5.6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.05, 14)
 script = ExtResource("4_nspawn")
 spawn_id = &"rival_public_watch"
 
@@ -424,33 +444,33 @@ spawn_id = &"rival_public_watch"
 rival_id = &"rival_public_watch"
 
 [node name="npc_story_scientist" type="Marker3D" parent="NpcSpawns" unique_id=976732318]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4.5, 0.05, 2.5)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -14, 0.05, -3.5)
 script = ExtResource("8_w30d6")
 story_stage = 4
 requires_overload_recognized = true
 
 [node name="npc_story_scientist_rival" type="Marker3D" parent="NpcSpawns" unique_id=1706155615]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.8, 0.05, 3.4)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -12, 0.05, -3)
 script = ExtResource("8_w30d6")
 actor_kind = 1
 story_stage = 4
 requires_overload_recognized = true
 
 [node name="npc_story_president_rival" type="Marker3D" parent="NpcSpawns" unique_id=1900002101]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0.05, 0.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0.05, -3.5)
 script = ExtResource("8_w30d6")
 actor_kind = 1
 story_stage = 5
 requires_first_clone_created = true
 
 [node name="npc_story_president" type="Marker3D" parent="NpcSpawns" unique_id=1900002102]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.05, 2.9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.05, -2.8)
 script = ExtResource("8_w30d6")
 story_stage = 5
 requires_first_clone_created = true
 
 [node name="npc_girl_city_umbrella" type="Marker3D" parent="NpcSpawns" unique_id=1444426351]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0.05, -7.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.05, 8)
 script = ExtResource("4_nspawn")
 spawn_id = "girl_city_umbrella"
 
@@ -458,7 +478,7 @@ spawn_id = "girl_city_umbrella"
 girl_id = "girl_city_umbrella"
 
 [node name="npc_girl_city_lanyard" type="Marker3D" parent="NpcSpawns" unique_id=626288389]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.05, 3.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.05, 10)
 script = ExtResource("4_nspawn")
 spawn_id = "girl_city_lanyard"
 
@@ -466,7 +486,7 @@ spawn_id = "girl_city_lanyard"
 girl_id = "girl_city_lanyard"
 
 [node name="npc_girl_city_crosswalk" type="Marker3D" parent="NpcSpawns" unique_id=1173652358]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.05, -7.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.5, 0.05, 0)
 script = ExtResource("4_nspawn")
 spawn_id = "girl_city_crosswalk"
 
@@ -474,7 +494,7 @@ spawn_id = "girl_city_crosswalk"
 girl_id = "girl_city_crosswalk"
 
 [node name="npc_rival_city_thermos" type="Marker3D" parent="NpcSpawns" unique_id=947187221]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.85, 0.05, -6.15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.05, -3.5)
 script = ExtResource("4_nspawn")
 spawn_id = &"rival_city_thermos"
 npc_kind = 2
@@ -483,7 +503,7 @@ npc_kind = 2
 rival_id = &"rival_city_thermos"
 
 [node name="npc_rival_city_headphones" type="Marker3D" parent="NpcSpawns" unique_id=274199108]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.65, 0.05, 0.85)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.05, -3)
 script = ExtResource("4_nspawn")
 spawn_id = &"rival_city_headphones"
 npc_kind = 2
@@ -494,19 +514,19 @@ rival_id = &"rival_city_headphones"
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1615612912]
 
 [node name="story_point_city_01" type="Marker3D" parent="StoryEventPoints" unique_id=1591258814]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.05, 0.5)
 script = ExtResource("5_story")
 event_point_id = &"story_point_city_01"
 
 [node name="story_point_city_public_01" type="Marker3D" parent="StoryEventPoints" unique_id=384068991]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.05, 12)
 script = ExtResource("5_story")
 event_point_id = &"story_point_city_public_01"
 
 [node name="FeatureGates" type="Node3D" parent="." unique_id=1712626040]
 
 [node name="PublicCityGate" type="Node3D" parent="FeatureGates" unique_id=1854731875]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 7.2)
 script = ExtResource("7_gate")
 
 [node name="BarrierVisual" type="MeshInstance3D" parent="FeatureGates/PublicCityGate" unique_id=1362862884]
@@ -524,34 +544,34 @@ shape = SubResource("GateShape")
 [node name="Interactables" type="Node3D" parent="." unique_id=1622704107]
 
 [node name="FlavorBench" parent="Interactables" unique_id=1242682029 instance=ExtResource("12_c5lr1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6, 0.45, 2.4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 0.45, 3.4)
 text = "СКАМЕЙКА
 Не бронируй место на тротуаре своим существованием."
 
 [node name="FlavorPublicSign" parent="Interactables" unique_id=475044028 instance=ExtResource("12_c5lr1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1.2, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.2, 6.5)
 text = "ГОРОДСКОЙ ЦЕНТР
 Люди всё ещё перемещаются индивидуально."
 
 [node name="FlavorTrashBin" parent="Interactables" unique_id=1595709888 instance=ExtResource("12_c5lr1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 0.5, -1.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.5, 3.8)
 text = "УРНА
 Принимает решения без предварительной записи."
 
 [node name="FlavorSideDoor" parent="Interactables" unique_id=677108438 instance=ExtResource("12_c5lr1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 1.2, 3.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 1.2, -5)
 text = "СЛУЖЕБНЫЙ ВХОД
 У тебя пока нет должности, которая звучит убедительно."
 
 [node name="FlavorMap" parent="Interactables" unique_id=1204759473 instance=ExtResource("12_c5lr1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 1.3, 2.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 1.2, 8)
 text = "КАРТА ГОРОДА
 Масштаб пока позволяет притворяться, что это личная жизнь."
 
 [node name="Transitions" type="Node3D" parent="." unique_id=9561482]
 
 [node name="ToApartment" type="Area3D" parent="Transitions" unique_id=1981512313]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.8, 1.1, 16.5)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -567,7 +587,7 @@ mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
 
 [node name="ToCafe" type="Area3D" parent="Transitions" unique_id=505080721]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 1.1, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.85, 1.1, 14.2)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -587,7 +607,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 text = "КАФЕ"
 
 [node name="ToGym" type="Area3D" parent="Transitions" unique_id=1476768413]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.1, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 1.1, 13.05)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -608,7 +628,7 @@ text = "КАЧАЛКА"
 font_size = 28
 
 [node name="ToAppearance" type="Area3D" parent="Transitions" unique_id=275533903]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 1.1, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 1.1, -5.3)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -624,7 +644,7 @@ mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
 
 [node name="ToMine" type="Area3D" parent="Transitions" unique_id=977167563]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 1.1, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2, 1.1, -5.3)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -644,7 +664,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 text = "ШАХТА"
 
 [node name="ToLab" type="Area3D" parent="Transitions" unique_id=1795273931]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 1.1, 5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1.1, -5)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -665,7 +685,7 @@ text = "ЛАБОРАТОРИЯ"
 font_size = 24
 
 [node name="ToProduction" type="Area3D" parent="Transitions" unique_id=1276183270]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.1, 5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 1.1, -4)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -687,7 +707,7 @@ text = "ГОСУДАРСТВЕННАЯ ПРОГРАММА КЛОНИРОВАНИ
 font_size = 18
 
 [node name="ToFinal" type="Area3D" parent="Transitions" unique_id=1172226935]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 1.1, 5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 1.1, 5)
 collision_layer = 4
 collision_mask = 0
 monitoring = false

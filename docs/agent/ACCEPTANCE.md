@@ -1,57 +1,44 @@
-# ACCEPTANCE — Visual Playtest Audit
+# ACCEPTANCE — Visual Bootstrap (Donor / Asset Packs)
 
 ## Question
-Can we run a development-only scripted visual playtest from Main Menu to Ending, capture a standardized screenshot gallery, auto-detect layout defects, fix reproducible BLOCKER/MAJOR issues, keep RC green, and publish review screenshots on a temporary branch?
+Can we replace cube prototypes for city / player room / cafe (donor scenes) and mine / lab / late / characters (audited packs) with local production assets, keep gameplay routes working, and deliver legacy + current screenshot sets without redesigning the game?
 
-## Modes (must remain separate)
+## Locked sources (Orchestrator)
 
-```text
-SCRIPTED PLAYTHROUGH
-VISUAL STATE GALLERY
-HUMAN VERIFICATION REQUIRED
-```
+| Location | Donor / pack source | Current target |
+|---|---|---|
+| City | `scenes/world/city/city.tscn` (+ POI) | `world/locations/city_hub/city_hub.tscn` |
+| Room | `vertical_slice/apartment.tscn` | `world/locations/apartment/apartment.tscn` |
+| Cafe | `vertical_slice/restaurant.tscn` **as cafe** (D-VB-03) | `world/locations/cafe/cafe.tscn` |
+| Mine | PACK_002 kenney_factory | `salary_mine` |
+| Lab | PACK_015 scifi_essentials (no PACK_013) | `laboratory` |
+| Late | PACK_002 + PACK_015 | `production_area` |
+| Characters | PACK_021/019/020 + variant wrappers | CharacterActor appearances |
 
-Do not claim human playtest passed for a scripted run.
+## Definition of Done (TZ §7)
 
-## Definition of Done (spec §36)
+- [x] Donor city transferred, local resources only
+- [x] Donor room transferred, local resources only
+- [x] Donor cafe transferred **as cafe**
+- [x] No runtime dependency on `../date_factory_legacy`
+- [x] city / room / cafe load and early routes work
+- [x] mine / lab / late are non-cube production bases
+- [x] minimal male + female character visual base usable for NPCs
+- [x] no critical missing materials/meshes
+- [x] critical interaction points still work after transfer
+- [x] legacy screenshot set (A1–A3) exists
+- [x] current screenshot set (B–F lists) exists
+- [x] source on main; review PNGs on temporary `visual-review/*` branch
+- [x] final report sections 1–6 delivered
+- [x] STOP — no unsolicited art polish pass
 
-- [ ] development-only scripted playthrough exists under `game/visual_review/`
-- [ ] production APIs used for progression; no direct Stage/XP/story/conquer/Reach cheating in playthrough
-- [ ] visual state gallery exists separately
-- [ ] deterministic screenshot capture; settle wait ≥2 frames + 150–300ms
-- [ ] full playthrough screenshots at 1920×1080
-- [ ] critical UI matrix at 1280/1366/1600/1920/2560/ultrawide
-- [ ] world composition shots at 1280+1920
-- [ ] Main Menu 1280 horizontal offset fixed (UiScale center pivot)
-- [ ] regression test for menu centering (`required_for_rc: true`)
-- [ ] automatic Control bounds/layout audit
-- [ ] UI scale 100/125/150 at 1280 tested
-- [ ] apartment/city/cafe/gym/appearance/rivals/salary/media/overload/lab/Stage6/Final represented
-- [ ] Phone / Progression / Save/Load / Settings gallery
-- [ ] scripted negative path
-- [ ] visual/layout BLOCKER=0 and MAJOR=0 after objective Cursor pass
-- [ ] all RC regressions pass
-- [ ] `report.md` / `report.json` + contact sheets
-- [ ] final screenshots roughly 70–120 PNGs
-- [ ] source fixes on main; screenshots only on `visual-review/<stamp>` branch
-- [ ] human-only limitations stated honestly
-- [ ] STOP. Do not delete review branch.
+## Evidence
 
-## Evidence locations
-
-- Harness: `game/visual_review/`, `tools/visual_review/run_visual_playtest.py`
-- Docs: `docs/qa/VISUAL_PLAYTEST.md`
-- Artifacts: `_review/visual_playtest/<run_id>/`
-- RC: `py -3 tools/qa/run_all_tests.py --only-rc`
+- Final report: `docs/agent/qa/VISUAL_BOOTSTRAP_FINAL_REPORT.md`
+- Stage G QA: `docs/agent/qa/VISUAL_BOOTSTRAP_STAGE_G_QA.md` — PASS / READY
+- Legacy/current PNGs: `tmp/visual_bootstrap_review/` → review branch `_review/visual_bootstrap/`
+- Source: `assets/environment/**`, `world/locations/**`, `world/art/donor_import/**`, `characters/female/*_visual.tscn`
 
 ## Verdict
 
-**READY** (scripted visual playtest + layout RC)
-
-Evidence: harness under `game/visual_review/` + `tools/visual_review/`; Main Menu centering fixed; modal CenterContainer fixes; RC **35/35 PASS** (includes `title_menu_layout`); run `final_vp2` (156 PNGs, layout ERROR=0); review artifacts published on temporary `visual-review/*` branch only.
-
-```text
-SCRIPTED PLAYTHROUGH
-VISUAL STATE GALLERY
-HUMAN VERIFICATION REQUIRED
-```
+**READY**

@@ -1,0 +1,117 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="1_nu5d7"]
+[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Light_Stand1.fbx" id="2_bihsm"]
+[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Light_Desk.fbx" id="3_snt1m"]
+[ext_resource type="PackedScene" path="res://assets/environment/factory/kenney_factory/meshes/screen-panel-small.glb" id="4_aqhu5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5j561"]
+albedo_color = Color(0.9, 0.9, 0.92, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4g27b"]
+albedo_color = Color(0.71999997, 0.71999997, 0.736, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uyf75"]
+albedo_color = Color(0.95, 0.92, 0.88, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gippl"]
+albedo_color = Color(0.2, 0.2, 0.22, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vm072"]
+albedo_color = Color(0.2, 0.2, 0.22, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b43te"]
+albedo_color = Color(0.12, 0.12, 0.14, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qokve"]
+albedo_color = Color(0.1, 0.1, 0.12, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_07klk"]
+size = Vector3(2.4, 2.4, 1.6)
+
+[node name="PhotoStudio" type="Node3D" unique_id=675083981]
+metadata/temp_parts = "tripod/camera/backdrop CSG; lights/screen from packs"
+metadata/future_replacement = "camera + tripod + softbox set"
+
+[node name="Visuals" type="Node3D" parent="." unique_id=573042248]
+
+[node name="Building_Small_1_Inst" type="Node3D" parent="Visuals" unique_id=969699209 instance=ExtResource("1_nu5d7")]
+transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0, -0.4)
+
+[node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=209219673]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.35, 0.95)
+size = Vector3(2.6, 0.08, 0.9)
+material = SubResource("StandardMaterial3D_5j561")
+
+[node name="AwningStripe" type="CSGBox3D" parent="Visuals" unique_id=2110833319]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.29, 0.95)
+size = Vector3(2.6, 0.04, 0.9)
+material = SubResource("StandardMaterial3D_4g27b")
+
+[node name="Light_Stand1_Inst" type="Node3D" parent="Visuals" unique_id=1904711373 instance=ExtResource("2_bihsm")]
+transform = Transform3D(0.90630776, 0, 0.42261827, 0, 1, 0, -0.42261827, 0, 0.90630776, -0.85, 0, 0.85)
+
+[node name="Light_Desk_Inst" type="Node3D" parent="Visuals" unique_id=566621716 instance=ExtResource("3_snt1m")]
+transform = Transform3D(1.0336618, 0, -0.37622213, 0, 1.1, 0, 0.37622213, 0, 1.0336618, 0.7, 0.9, 0.55)
+
+[node name="Backdrop" type="CSGBox3D" parent="Visuals" unique_id=966051538]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -0.05)
+size = Vector3(1.8, 2, 0.06)
+material = SubResource("StandardMaterial3D_uyf75")
+
+[node name="TripodLegA" type="CSGCylinder3D" parent="Visuals" unique_id=1208136811]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.55, 0.95)
+radius = 0.025
+height = 1.1
+material = SubResource("StandardMaterial3D_gippl")
+
+[node name="TripodLegB" type="CSGCylinder3D" parent="Visuals" unique_id=840398807]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.55, 0.8)
+radius = 0.025
+height = 1.1
+material = SubResource("StandardMaterial3D_vm072")
+
+[node name="CameraBody" type="CSGBox3D" parent="Visuals" unique_id=273724238]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.2, 0.9)
+size = Vector3(0.22, 0.14, 0.18)
+material = SubResource("StandardMaterial3D_b43te")
+
+[node name="Lens" type="CSGCylinder3D" parent="Visuals" unique_id=1896940639]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.2, 1.05)
+radius = 0.06
+height = 0.1
+material = SubResource("StandardMaterial3D_qokve")
+
+[node name="screen-panel-small_Inst" type="Node3D" parent="Visuals" unique_id=1573559240 instance=ExtResource("4_aqhu5")]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -0.2, 1.1, 0.2)
+
+[node name="Collision" type="StaticBody3D" parent="." unique_id=413161639]
+
+[node name="Shape" type="CollisionShape3D" parent="Collision" unique_id=1451555432]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+shape = SubResource("BoxShape3D_07klk")
+
+[node name="Anchors" type="Node3D" parent="." unique_id=1308957996]
+
+[node name="InteractAnchor" type="Marker3D" parent="Anchors" unique_id=353815922]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.1)
+
+[node name="PromptAnchor" type="Marker3D" parent="Anchors" unique_id=1173615727]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 1.1)
+
+[node name="OutlineTarget" type="Marker3D" parent="Anchors" unique_id=625272124]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

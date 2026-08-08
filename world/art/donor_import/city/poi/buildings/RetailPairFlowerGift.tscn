@@ -1,0 +1,331 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/art/donor_import/city/poi/core/CityPOIBuilding.gd" id="1_8fv1j"]
+[ext_resource type="Script" path="res://world/art/donor_import/city/poi/core/CityPOITenant.gd" id="2_kedhh"]
+[ext_resource type="Script" path="res://world/art/donor_import/city/donor_interactable_stub.gd" id="3_c7tnd"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_SakuraFlower.gltf" id="4_w5ph8"]
+[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf" id="5_idlhi"]
+[ext_resource type="PackedScene" path="res://assets/props/food/meshes/Cupcake.fbx" id="6_gw1qr"]
+[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx" id="7_tk0c3"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s3gis"]
+albedo_color = Color(0.72, 0.78, 0.68, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="BoxMesh_2mq8i"]
+size = Vector3(10.5, 3.2, 4.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l217b"]
+albedo_color = Color(0.45, 0.5, 0.42, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y4je1"]
+albedo_color = Color(0.08, 0.07, 0.09, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3m1o1"]
+albedo_color = Color(0.54, 0.585, 0.51, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tqmp4"]
+albedo_color = Color(0.08, 0.07, 0.09, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j00lq"]
+albedo_color = Color(0.55, 0.4, 0.45, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gyh4g"]
+albedo_color = Color(0.55, 0.35, 0.45, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ifow6"]
+albedo_color = Color(0.55, 0.78, 0.45, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_antwd"]
+albedo_color = Color(0.85, 0.45, 0.55, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_paegj"]
+albedo_color = Color(0.75, 0.95, 0.7, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ajcul"]
+albedo_color = Color(0.95, 0.75, 0.8, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jnr12"]
+size = Vector3(10.5, 3.2, 4.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kaxgm"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_iui34"]
+size = Vector3(12, 0.08, 7.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ja36g"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7lxsq"]
+albedo_color = Color(0.15, 0.28, 0.15, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nfiq2"]
+albedo_color = Color(0.7, 0.95, 0.55, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qlmq6"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kpinc"]
+albedo_color = Color(0.28, 0.12, 0.18, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_07dt5"]
+albedo_color = Color(0.95, 0.55, 0.65, 1)
+metallic = 0.05
+roughness = 0.55
+
+[node name="RetailPairFlowerGift" type="Node3D" unique_id=6161282]
+script = ExtResource("1_8fv1j")
+building_id = "retail_flower_gift"
+district_id = "main_street"
+building_mode = "MultiTenant"
+reserved_lot_size = Vector2(12, 7.5)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=691387106]
+
+[node name="ProxyBody" type="MeshInstance3D" parent="VisualRoot" unique_id=1490453374]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -1.3999999)
+material_override = SubResource("StandardMaterial3D_s3gis")
+mesh = SubResource("BoxMesh_2mq8i")
+
+[node name="Roof" type="CSGBox3D" parent="VisualRoot" unique_id=913740016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.32, -1.3999999)
+size = Vector3(10.75, 0.22, 4.35)
+material = SubResource("StandardMaterial3D_l217b")
+
+[node name="PortalInset" type="CSGBox3D" parent="VisualRoot" unique_id=711553279]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 1.075, 0.51)
+size = Vector3(1.05, 2.15, 0.38)
+material = SubResource("StandardMaterial3D_y4je1")
+
+[node name="PortalFrame" type="CSGBox3D" parent="VisualRoot" unique_id=1498570915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 1.075, 0.68)
+size = Vector3(1.21, 2.31, 0.08)
+material = SubResource("StandardMaterial3D_3m1o1")
+
+[node name="PortalInsetB" type="CSGBox3D" parent="VisualRoot" unique_id=1760402336]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1.075, 0.51)
+size = Vector3(1.05, 2.15, 0.38)
+material = SubResource("StandardMaterial3D_tqmp4")
+
+[node name="PortalFrameB" type="CSGBox3D" parent="VisualRoot" unique_id=707653576]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1.075, 0.68)
+size = Vector3(1.21, 2.31, 0.08)
+material = SubResource("StandardMaterial3D_j00lq")
+
+[node name="SplitBand" type="CSGBox3D" parent="VisualRoot" unique_id=2074038319]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0.72)
+size = Vector3(10.2, 0.14, 0.1)
+material = SubResource("StandardMaterial3D_gyh4g")
+
+[node name="FlowerAwning" type="CSGBox3D" parent="VisualRoot" unique_id=467075086]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 2.35, 1.05)
+size = Vector3(3.2, 0.08, 0.8)
+material = SubResource("StandardMaterial3D_ifow6")
+
+[node name="GiftAwning" type="CSGBox3D" parent="VisualRoot" unique_id=1546826400]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.35, 1.05)
+size = Vector3(3.2, 0.08, 0.8)
+material = SubResource("StandardMaterial3D_antwd")
+
+[node name="WinFlower" type="CSGBox3D" parent="VisualRoot" unique_id=1519155986]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 1.4, 0.72)
+size = Vector3(1.2, 1, 0.06)
+material = SubResource("StandardMaterial3D_paegj")
+
+[node name="WinGift" type="CSGBox3D" parent="VisualRoot" unique_id=205269387]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 1.4, 0.72)
+size = Vector3(1.2, 1, 0.06)
+material = SubResource("StandardMaterial3D_ajcul")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=838732898]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1473912865]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=119711383]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -1.4)
+shape = SubResource("BoxShape3D_jnr12")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=688653804]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_kaxgm")
+mesh = SubResource("BoxMesh_iui34")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=480060197]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=1790932852]
+
+[node name="FlowerShop" type="Node3D" parent="TenantSlots" unique_id=2087062430]
+script = ExtResource("2_kedhh")
+poi_id = "flower_shop"
+action_id = &"open_flower_shop"
+prompt_text = "Открыть витрину"
+functional_type = "StorefrontPOI"
+progression_stage = 1
+display_name = "Цветочный"
+action_label = "Открыть витрину"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/FlowerShop" unique_id=955110257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/FlowerShop" unique_id=426904464]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0, 1.05)
+script = ExtResource("3_c7tnd")
+display_name = "Цветочный"
+action_label = "Открыть витрину"
+action_id = &"open_flower_shop"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/FlowerShop/InteractionArea" unique_id=638832713]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_ja36g")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/FlowerShop" unique_id=87452455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/FlowerShop" unique_id=1376276933]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/FlowerShop" unique_id=1250481836]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/FlowerShop/Signage" unique_id=1521157839]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_7lxsq")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/FlowerShop/Signage" unique_id=190500464]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_nfiq2")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/FlowerShop/Signage" unique_id=304394514]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "FLOWERS"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/FlowerShop" unique_id=863454843]
+
+[node name="PlantGlow" type="OmniLight3D" parent="TenantSlots/FlowerShop/LocalLights" unique_id=1392362554]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0.4)
+light_color = Color(0.65, 1, 0.55, 1)
+light_energy = 0.8
+omni_range = 3.5
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/FlowerShop" unique_id=1530696608]
+
+[node name="Decoration_SakuraFlower_Inst" type="Node3D" parent="TenantSlots/FlowerShop/IdentityProps" unique_id=982828134 instance=ExtResource("4_w5ph8")]
+transform = Transform3D(1.0336618, 0, 0.37622213, 0, 1.1, 0, -0.37622213, 0, 1.0336618, -0.4, 0.95, 0.2)
+
+[node name="Prop_Planter_Single_Inst" type="Node3D" parent="TenantSlots/FlowerShop/IdentityProps" unique_id=262268339 instance=ExtResource("5_idlhi")]
+transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, 0.55, 0, 0.35)
+
+[node name="GiftShop" type="Node3D" parent="TenantSlots" unique_id=912525574]
+script = ExtResource("2_kedhh")
+poi_id = "gift_shop"
+action_id = &"open_gift_shop"
+prompt_text = "Открыть"
+functional_type = "StorefrontPOI"
+progression_stage = 1
+display_name = "Магазин подарков"
+action_label = "Открыть"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/GiftShop" unique_id=1444784383]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/GiftShop" unique_id=607048137]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0, 1.05)
+script = ExtResource("3_c7tnd")
+display_name = "Магазин подарков"
+action_label = "Открыть"
+action_id = &"open_gift_shop"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/GiftShop/InteractionArea" unique_id=1398997193]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_qlmq6")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/GiftShop" unique_id=595907568]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/GiftShop" unique_id=341169442]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/GiftShop" unique_id=1407615608]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/GiftShop/Signage" unique_id=1304133136]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_kpinc")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/GiftShop/Signage" unique_id=1418334842]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_07dt5")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/GiftShop/Signage" unique_id=876198768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "GIFTS"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/GiftShop" unique_id=456209151]
+
+[node name="WarmGift" type="OmniLight3D" parent="TenantSlots/GiftShop/LocalLights" unique_id=1963106148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0.4)
+light_color = Color(1, 0.7, 0.55, 1)
+light_energy = 0.9
+omni_range = 3.5
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/GiftShop" unique_id=813987705]
+
+[node name="Cupcake_Inst" type="Node3D" parent="TenantSlots/GiftShop/IdentityProps" unique_id=1523147399 instance=ExtResource("6_gw1qr")]
+transform = Transform3D(1.4, 0, 0, 0, 1.4, 0, 0, 0, 1.4, 0.2, 1.05, 0.25)
+
+[node name="Shelf_1_Inst" type="Node3D" parent="TenantSlots/GiftShop/IdentityProps" unique_id=1422317027 instance=ExtResource("7_tk0c3")]
+transform = Transform3D(-0.55, 0, -4.8082526e-08, 0, 0.55, 0, 4.8082526e-08, 0, -0.55, -0.2, 0.15, -0.1)

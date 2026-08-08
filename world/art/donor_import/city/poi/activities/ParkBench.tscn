@@ -1,0 +1,72 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/art/donor_import/city/poi/core/CityPOITenant.gd" id="1_ih5g2"]
+[ext_resource type="Script" path="res://world/art/donor_import/city/donor_interactable_stub.gd" id="2_kthbv"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Bench.gltf" id="3_qvnbf"]
+[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Sidewalk_Planter.gltf" id="4_lb8ec"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ttnvm"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_u5g6v"]
+size = Vector3(1.8, 0.9, 0.8)
+
+[node name="ParkBench" type="Node3D" unique_id=1178852987]
+script = ExtResource("1_ih5g2")
+poi_id = "park_bench"
+action_id = &"city_rest"
+prompt_text = "Посидеть"
+functional_type = "WorldActivityPOI"
+progression_stage = 2
+display_name = "Скамейка в парке"
+action_label = "Посидеть"
+payload = {
+"art_backed": true,
+"bonus": 1.5
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="." unique_id=1204363851]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.85)
+
+[node name="InteractionArea" type="Area3D" parent="." unique_id=245002076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.85)
+script = ExtResource("2_kthbv")
+display_name = "Скамейка в парке"
+action_label = "Посидеть"
+action_id = &"city_rest"
+payload = {
+"art_backed": true,
+"bonus": 1.5
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea" unique_id=1811366352]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_ttnvm")
+
+[node name="PromptAnchor" type="Marker3D" parent="." unique_id=1832738478]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0.85)
+
+[node name="SignAnchor" type="Marker3D" parent="." unique_id=447968603]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0.5)
+
+[node name="Signage" type="Node3D" parent="." unique_id=708189244]
+
+[node name="LocalLights" type="Node3D" parent="." unique_id=1836150144]
+
+[node name="IdentityProps" type="Node3D" parent="." unique_id=136692462]
+
+[node name="VisualRoot" type="Node3D" parent="IdentityProps" unique_id=1225225781]
+
+[node name="Environment_Bench_Inst" type="Node3D" parent="IdentityProps/VisualRoot" unique_id=1906984469 instance=ExtResource("3_qvnbf")]
+transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 0, 0, 0)
+
+[node name="Sidewalk_Planter_Inst" type="Node3D" parent="IdentityProps/VisualRoot" unique_id=587490261 instance=ExtResource("4_lb8ec")]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -1.1, 0, -0.2)
+
+[node name="Collision" type="StaticBody3D" parent="IdentityProps" unique_id=577469437]
+
+[node name="@CollisionShape3D@3" type="CollisionShape3D" parent="IdentityProps/Collision" unique_id=1521384662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("BoxShape3D_u5g6v")

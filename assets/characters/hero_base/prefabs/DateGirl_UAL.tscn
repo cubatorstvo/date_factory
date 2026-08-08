@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://df4rxx0pnyshb"]
+
+[ext_resource type="Script" uid="uid://dv47nd1380jex" path="res://world/art/donor_import/characters/character_anim_controller.gd" id="1_r1tk7"]
+[ext_resource type="AnimationLibrary" path="res://assets/animation/universal_library/libraries/DF_UAL_Aliases.res" id="2_h5hsv"]
+[ext_resource type="PackedScene" uid="uid://dk4drcouymmgr" path="res://assets/characters/hero_base/meshes/bodies/Superhero_Female_FullBody.gltf" id="3_8bqtn"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mc52b"]
+radius = 0.28
+height = 1.7
+
+[node name="DateGirl_UAL" type="CharacterBody3D" unique_id=132088752]
+collision_layer = 2
+script = ExtResource("1_r1tk7")
+alias_library = ExtResource("2_h5hsv")
+label_text = "DateGirl_UAL"
+
+[node name="Visual" parent="." unique_id=1816752861 instance=ExtResource("3_8bqtn")]
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=106504550]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_mc52b")

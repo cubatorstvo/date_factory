@@ -112,6 +112,94 @@ All under `assets/audio/licenses/`:
 
 ---
 
+## Environment — Downtown City MegaKit (Quaternius)
+
+| Project path | Role |
+|---|---|
+| `assets/environment/city/downtown_megakit/` | City buildings, street props (glTF) |
+
+- Author: Quaternius
+- License: **CC0 1.0** — `assets/environment/city/downtown_megakit/LICENSE.txt`
+- Vendor: https://quaternius.com
+- Copied from read-only donor (identical `res://assets/...` layout)
+
+---
+
+## Environment — House Interior + Drinkware (Quaternius)
+
+| Project path | Role |
+|---|---|
+| `assets/environment/interior/house_interior/` | Apartment furniture / interior meshes (FBX) |
+| `assets/environment/interior/drinkware/` | Glass/cup prop scenes + meshes |
+
+- Author: Quaternius (house_interior pack text)
+- License: **CC0 1.0** — `assets/environment/interior/house_interior/LICENSE.txt`
+- **Note:** `drinkware/` has no separate LICENSE file in the donor pack; treat as Quaternius interior companion props. Do not invent a second license text.
+
+---
+
+## Environment — Sushi Restaurant Kit (Quaternius lineage / PACK_016)
+
+| Project path | Role |
+|---|---|
+| `assets/environment/restaurant/sushi_restaurant/` | Cafe/restaurant kit meshes (glTF) — art-scene dependency only |
+
+- **LICENSE status: MISSING** in donor pack folder (no `LICENSE.txt` / README shipped with meshes)
+- No Quaternius readme for this pack found elsewhere in donor or `Downloads/assets` to copy
+- Do **not** invent a fake license file. Provenance: donor `PACK_016`; typical Quaternius kits are CC0, but this tree is undocumented until a real license text is obtained
+- Usage: needed by donor cafe art scene; do not expand gameplay usage without license clarification
+
+---
+
+## Environment — Kenney Factory Kit
+
+| Project path | Role |
+|---|---|
+| `assets/environment/factory/kenney_factory/` | Factory / industrial kit (GLB) |
+
+- Author: Kenney (www.kenney.nl)
+- License: **CC0** — `assets/environment/factory/kenney_factory/LICENSE.txt`
+
+---
+
+## Environment — Sci-Fi Essentials (Quaternius)
+
+| Project path | Role |
+|---|---|
+| `assets/environment/lab/scifi_essentials/` | Lab / sci-fi props (glTF) |
+
+- Author: Quaternius
+- License: **CC0 1.0** — `assets/environment/lab/scifi_essentials/LICENSE.txt`
+- Vendor: https://quaternius.com
+
+---
+
+## Props — Ultimate Food Pack (Quaternius)
+
+| Project path | Role |
+|---|---|
+| `assets/props/food/` | Food / bottle props (FBX) |
+
+- Author: Quaternius
+- License: **CC0 1.0** — `assets/props/food/LICENSE.txt`
+
+---
+
+## Art scenes — donor import mirror
+
+| Project path | Role |
+|---|---|
+| `world/art/donor_import/city/` | Donor `city.tscn` + `scenes/art/city/**` (rewritten paths) |
+| `world/art/donor_import/apartment/` | Donor apartment vertical-slice scene + place-setting script |
+| `world/art/donor_import/cafe/restaurant.tscn` | Donor restaurant scene (filename kept; folder = cafe) |
+| `world/art/donor_import/characters/character_anim_controller.gd` | Prefab anim binder (from donor `scenes/art/characters/`) |
+
+- Not gameplay locations (`world/locations/**` untouched)
+- Path rewrite: `res://scenes/art/city/` → `res://world/art/donor_import/city/`
+- Assets remain `res://assets/...` (no donor filesystem paths)
+
+---
+
 ## Engine / platform — GodotSteam (MODULE 28)
 
 | Item | Pin |
