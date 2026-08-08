@@ -511,6 +511,7 @@ func _on_authority_changed_salary(_new_value: int, _delta: int) -> void:
 
 func _on_experience_changed_status(_new_value: int, _delta: int) -> void:
 	_request_status_refresh()
+	_request_story_refresh()
 
 
 func _on_upgrade_points_changed_status(_new_value: int, _delta: int) -> void:
@@ -586,9 +587,15 @@ func _refresh_story_section() -> void:
 	if progress.stage == GameTypes.GameStage.STAGE_4:
 		_story_label.text = _stage4_story_text(progress)
 		return
-	# STAGE_5: first-clone handoff; President content intentionally absent (MODULE 17 §24).
+	# STAGE_5: lab handoff → President hunt (MODULE 20 §§56–59).
 	if progress.stage == GameTypes.GameStage.STAGE_5:
 		_story_label.text = _stage5_story_text()
+		return
+	if progress.stage == GameTypes.GameStage.STAGE_6:
+		_story_label.text = _stage6_story_text()
+		return
+	if progress.stage == GameTypes.GameStage.FINALE:
+		_story_label.text = _finale_story_text()
 		return
 	var stage_name: String = progress.display_name.strip_edges()
 	if stage_name == "":
@@ -636,21 +643,81 @@ func _stage4_story_text(progress: StoryStageProgress) -> String:
 
 func _stage5_story_text() -> String:
 	var total: int = 0
+	var experience: int = 0
+	var rival_defeated: bool = false
 	var gs: Node = get_node_or_null("/root/GameState")
-	if gs != null and gs.has_method("get_total_clones"):
-		total = int(gs.call("get_total_clones"))
+	if gs != null:
+		if gs.has_method("get_total_clones"):
+			total = int(gs.call("get_total_clones"))
+		if gs.has_method("get_experience"):
+			experience = int(gs.call("get_experience"))
+		if gs.has_method("is_rival_defeated"):
+			rival_defeated = bool(gs.call("is_rival_defeated", StoryIds.RIVAL_PRESIDENT))
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("СТАДИЯ 5")
-	lines.append("Лаборатория")
-	lines.append("")
 	if total < 1:
-		# MODULE 17 §24 — first clone handoff; no missing President objective.
+		# MODULE 20 §56 — before first clone.
+		lines.append("Лаборатория")
+		lines.append("")
 		lines.append("Лаборатория открыта.")
 		lines.append("Создай первого клона.")
+		return "\n".join(lines)
+	lines.append("Президент")
+	lines.append("")
+	if experience < 10:
+		# MODULE 20 §57 — clone exists, XP < 10.
+		lines.append("Опытность: %d / 10" % experience)
+		lines.append("")
+		lines.append("Автоматические свидания расширяют твой земной статус.")
+	elif not rival_defeated:
+		# MODULE 20 §58 — XP10, rival alive.
+		lines.append("Президент инспектирует вход в производственную зону.")
+		lines.append("Сначала разберись с её официальным ухажёром.")
 	else:
-		# MODULE 18 §60 — automation handoff; no President objective yet.
-		lines.append("Автоматизация запущена.")
-		lines.append("Наращивай производство клонов.")
+		# MODULE 20 §59 — rival defeated.
+		lines.append("Следующий шаг:")
+		lines.append("Познакомиться с Президентом у производственной зоны.")
+	return "\n".join(lines)
+
+
+func _stage6_story_text() -> String:
+	var reach: int = 0
+	var total: int = 0
+	var money_rate: float = 0.0
+	var dating_rate: float = 0.0
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null:
+		if gs.has_method("get_world_reach"):
+			reach = int(gs.call("get_world_reach"))
+		if gs.has_method("get_total_clones"):
+			total = int(gs.call("get_total_clones"))
+		if gs.has_method("get_money_per_minute"):
+			money_rate = float(gs.call("get_money_per_minute"))
+		if gs.has_method("get_dates_per_minute"):
+			dating_rate = float(gs.call("get_dates_per_minute"))
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("СТАДИЯ 6")
+	lines.append("Мировое расширение")
+	lines.append("")
+	lines.append("Охват Земли: %d / 100" % reach)
+	lines.append("Клоны: %d" % total)
+	lines.append("Денег/мин: %s" % _format_clone_money_rate(money_rate))
+	lines.append("Свиданий/мин: %s" % _format_clone_date_rate(dating_rate))
+	lines.append("")
+	lines.append("Следующий шаг:")
+	lines.append("Расширять мировой охват.")
+	return "\n".join(lines)
+
+
+func _finale_story_text() -> String:
+	# MODULE 20 §61 — FINALE handoff only; do not start final sequence.
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("ФИНАЛ")
+	lines.append("")
+	lines.append("Земная цель исчерпана.")
+	lines.append("Обнаружена романтическая цель вне Земли.")
+	lines.append("")
+	lines.append("Финальная локация открыта.")
 	return "\n".join(lines)
 
 
@@ -893,6 +960,8 @@ func _connect_clone_signals() -> void:
 		gs.connect("clone_counts_changed", _on_clone_counts_changed)
 	if gs != null and gs.has_signal("late_rates_changed") and not gs.is_connected("late_rates_changed", _on_late_rates_changed):
 		gs.connect("late_rates_changed", _on_late_rates_changed)
+	if gs != null and gs.has_signal("world_reach_changed") and not gs.is_connected("world_reach_changed", _on_world_reach_changed):
+		gs.connect("world_reach_changed", _on_world_reach_changed)
 	_clone_signals_connected = true
 
 
@@ -903,6 +972,11 @@ func _on_clone_counts_changed(_total: int, _working: int, _dating: int, _free: i
 
 func _on_late_rates_changed(_money_per_minute: float, _dates_per_minute: float) -> void:
 	_request_clone_refresh()
+	_request_story_refresh()
+
+
+func _on_world_reach_changed(_new_value: int, _delta: int) -> void:
+	_request_story_refresh()
 
 
 func _request_clone_refresh() -> void:

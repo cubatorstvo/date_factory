@@ -81,7 +81,11 @@ func get_production_interval() -> float:
 	if gs == null:
 		return CloneIncrementalTypes.BASE_PRODUCTION_INTERVAL
 	var level: int = int(gs.call("get_clone_production_upgrade_level"))
-	return CloneIncrementalTypes.production_interval(level)
+	var local_interval: float = CloneIncrementalTypes.production_interval(level)
+	var mult: float = _external_production_multiplier()
+	if mult <= 0.0:
+		mult = 1.0
+	return maxf(LateGameTypes.MIN_EFFECTIVE_PRODUCTION_INTERVAL, local_interval / mult)
 
 
 func get_seconds_to_next_clone() -> float:
@@ -108,7 +112,7 @@ func snapshot() -> CloneIncrementalStatus:
 	status.production_level = int(gs.call("get_clone_production_upgrade_level"))
 	status.work_level = int(gs.call("get_clone_work_upgrade_level"))
 	status.dating_level = int(gs.call("get_clone_dating_upgrade_level"))
-	status.production_interval = CloneIncrementalTypes.production_interval(status.production_level)
+	status.production_interval = get_production_interval()
 	status.production_elapsed = _production_elapsed_seconds
 	if status.active:
 		status.seconds_to_next_clone = maxf(0.0, status.production_interval - _production_elapsed_seconds)
@@ -138,10 +142,24 @@ func recalculate_rates() -> void:
 	var dating: int = int(gs.call("get_clones_dating"))
 	var work_level: int = int(gs.call("get_clone_work_upgrade_level"))
 	var dating_level: int = int(gs.call("get_clone_dating_upgrade_level"))
-	var mpm: float = float(working) * CloneIncrementalTypes.money_per_minute_per_clone(work_level)
-	var dpm: float = float(dating) * CloneIncrementalTypes.dates_per_minute_per_clone(dating_level)
+	var mpm: float = (
+		float(working)
+		* CloneIncrementalTypes.money_per_minute_per_clone(work_level)
+		* _external_work_multiplier()
+	)
+	var dpm: float = (
+		float(dating)
+		* CloneIncrementalTypes.dates_per_minute_per_clone(dating_level)
+		* _external_dating_multiplier()
+	)
 	gs.call("set_late_rates", mpm, dpm)
 	_updating_rates = false
+
+
+## MODULE 20: recompute rates under global multipliers; preserve production elapsed.
+func refresh_external_modifiers() -> void:
+	recalculate_rates()
+	_resolve_production_spawns()
 
 
 func advance_simulation_for_test(seconds: float) -> void:
@@ -368,6 +386,36 @@ func buy_upgrade(upgrade_type: int) -> CloneUpgradePurchaseResult:
 		_resolve_production_spawns()
 	upgrade_purchased.emit(upgrade_type, next_level)
 	return result
+
+
+func _external_production_multiplier() -> float:
+	var lge: Node = get_node_or_null("/root/LateGameExpansion")
+	if lge == null or not lge.has_method("get_production_multiplier"):
+		return 1.0
+	var mult: float = float(lge.call("get_production_multiplier"))
+	if mult <= 0.0:
+		return 1.0
+	return mult
+
+
+func _external_work_multiplier() -> float:
+	var lge: Node = get_node_or_null("/root/LateGameExpansion")
+	if lge == null or not lge.has_method("get_work_multiplier"):
+		return 1.0
+	var mult: float = float(lge.call("get_work_multiplier"))
+	if mult <= 0.0:
+		return 1.0
+	return mult
+
+
+func _external_dating_multiplier() -> float:
+	var lge: Node = get_node_or_null("/root/LateGameExpansion")
+	if lge == null or not lge.has_method("get_dating_multiplier"):
+		return 1.0
+	var mult: float = float(lge.call("get_dating_multiplier"))
+	if mult <= 0.0:
+		return 1.0
+	return mult
 
 
 func _get_upgrade_level(gs: Node, upgrade_type: int) -> int:

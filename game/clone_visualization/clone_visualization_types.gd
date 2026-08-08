@@ -54,6 +54,10 @@ const DATE_SCENE_LABELS: Array[String] = [
 
 const LABEL_ROOM_FREE: String = "СВОБОДНО"
 const LABEL_EXTERNAL_PREFIX: String = "ВНЕШНИЙ ПОТОК: "
+const LABEL_EXTERNAL_TITLE: String = "ВНЕШНИЕ ПЛОЩАДКИ"
+const LABEL_EXTERNAL_WORK: String = "Работа"
+const LABEL_EXTERNAL_DATING: String = "Свидания"
+const LABEL_EXTERNAL_FREE: String = "Ожидают"
 const LABEL_PRODUCTION_READY: String = "КЛОН ГОТОВ"
 const LABEL_FREE_AREA: String = "СВОБОДНЫЕ КЛОНЫ"
 const LABEL_WORK_SIGN: String = "РАБОЧИЙ МАРШРУТ\n→ ЗАРПЛАТНАЯ ШАХТА"
@@ -91,6 +95,18 @@ static func girl_appearance_for_slot(slot_index: int) -> StringName:
 static func date_scene_label(scene_index: int) -> String:
 	var idx: int = posmod(scene_index, DATE_SCENE_LABELS.size())
 	return DATE_SCENE_LABELS[idx]
+
+
+static func format_external_label(external_work: int, external_dating: int, external_free: int) -> String:
+	return "%s\n\n%s: %d\n%s: %d\n%s: %d" % [
+		LABEL_EXTERNAL_TITLE,
+		LABEL_EXTERNAL_WORK,
+		external_work,
+		LABEL_EXTERNAL_DATING,
+		external_dating,
+		LABEL_EXTERNAL_FREE,
+		external_free,
+	]
 
 
 static func mass_interval_for_external(external_total: int) -> float:

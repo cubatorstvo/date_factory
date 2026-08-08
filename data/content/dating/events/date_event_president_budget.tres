@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_president_budget_owner"
+label = "«У каждой цифры будет ответственный»"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4, 3])
+result_text = "«У каждой цифры будет ответственный»"
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_president_budget_decide"
+label = "«Сначала принимаем решение, потом считаем его вес»"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([5])
+result_text = "«Сначала принимаем решение, потом считаем его вес»"
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_president_budget_page"
+label = "Оформить первую страницу так, чтобы она уже выглядела утверждённой"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "Оформить первую страницу так, чтобы она уже выглядела утверждённой"
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_president_budget_understand"
+label = "«Бюджет сам поймёт масштаб задачи»"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([9])
+result_text = "«Бюджет сам поймёт масштаб задачи»"
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_president_budget"
+category = 0
+title = "Бюджет"
+setup_text = "Она просит объяснить бюджет проекта одной фразой, пока помощник уже открыл таблицу на сорока семи страницах."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

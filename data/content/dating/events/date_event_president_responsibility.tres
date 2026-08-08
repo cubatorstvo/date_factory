@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_president_resp_name_self"
+label = "Назвать себя ответственным до выяснения деталей"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4])
+result_text = "Назвать себя ответственным до выяснения деталей"
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_president_resp_one_owner"
+label = "Сказать, что у решения должен быть один окончательный хозяин"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([5])
+result_text = "Сказать, что у решения должен быть один окончательный хозяин"
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_president_resp_public"
+label = "Сначала определить публичную позицию"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "Сначала определить публичную позицию"
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_president_resp_hope"
+label = "Признаться, что надеялся, что никто не спросит"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([1])
+result_text = "Признаться, что надеялся, что никто не спросит"
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_president_responsibility"
+category = 0
+title = "Ответственность"
+setup_text = "Президент спрашивает, кто отвечает, если десять тысяч твоих копий одновременно делают правильную вещь неправильным способом."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

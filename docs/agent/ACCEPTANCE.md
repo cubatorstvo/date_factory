@@ -1,10 +1,10 @@
-# ACCEPTANCE — MODULE 19 Physical Clone Visualization
+# ACCEPTANCE — MODULE 20 Late Game Expansion
 
 ## Player-visible result
-In laboratory: free waiters, work corridor departures, up to 10 dating rooms with clone+girl comedy cycle, then external mass flow for overflow. Aggregate economy unchanged. One FirstClone preview at total=0; no duplicate representative after assignment.
+After first clone: President at city ToProduction → rival → +5 → STAGE_6 / Production Area → Global Terminal, Reach 0→100, global upgrades, optional events, visual escalation → Reach 100 → FINALE + extraterrestrial signal. No final date yet.
 
 ## PASS
-Caps 10/3/2/2; ≤27 actors at high totals; live reassignment refresh; sim-disabled cycles don't change Money/XP; FirstClone suppress + MODULE17 fallback; Stage5; no President/MODULE20; MODULE 02–18 regressions.
+President pack + first-clone gates; LateGameExpansion Reach/multipliers exact; CloneIncremental seam; Production terminal; M19 external breakdown; Story completion; MODULE 02–19 regressions; no MODULE 21.
 
 ## Verdict
 READY

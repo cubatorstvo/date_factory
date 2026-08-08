@@ -35,6 +35,7 @@ Media="*res://game/media/media.gd"
 DatingOverload="*res://game/dating_overload/dating_overload.gd"
 FirstClone="*res://game/first_clone/first_clone.gd"
 CloneIncremental="*res://game/clone_incremental/clone_incremental.gd"
+LateGameExpansion="*res://game/late_game/late_game_expansion.gd"
 
 [display]
 

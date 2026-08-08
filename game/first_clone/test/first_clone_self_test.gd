@@ -125,13 +125,19 @@ func _test_autoload_order_and_no_process() -> void:
 	_ok(not src.contains("set_late_rates(") and not src.contains("\"set_late_rates\""), "FirstClone never set_late_rates")
 	var anchor_src: String = FileAccess.get_file_as_string("res://world/actors/stage_actor_anchor.gd")
 	_ok(anchor_src.contains("requires_overload_recognized"), "StageActorAnchor export flag")
+	_ok(anchor_src.contains("requires_first_clone_created"), "StageActorAnchor first-clone export")
+	_ok(anchor_src.contains("clone_counts_changed"), "StageActorAnchor listens clone_counts_changed")
 	_ok(anchor_src.contains("state_reset"), "StageActorAnchor listens state_reset")
 	_ok(not anchor_src.contains("func _process"), "StageActorAnchor no _process")
 	var girl_actor_src: String = FileAccess.get_file_as_string("res://game/girls/girl_actor.gd")
 	_ok(girl_actor_src.contains("STORY_PREREQUISITE"), "GirlActor STORY_PREREQUISITE branch")
 	_ok(
 		girl_actor_src.contains("Сначала нужно понять, зачем тебе вообще второй ты."),
-		"GirlActor prerequisite feedback text",
+		"GirlActor Scientist prerequisite feedback",
+	)
+	_ok(
+		girl_actor_src.contains("Сначала лаборатория должна доказать, что умеет производить больше одного тебя."),
+		"GirlActor President prerequisite feedback",
 	)
 	var discovery_src: String = FileAccess.get_file_as_string("res://game/girls/girl_discovery.gd")
 	var gate_idx: int = discovery_src.find("func _story_gate_block")
@@ -523,9 +529,20 @@ func _test_phone_story_and_clone_section() -> void:
 	_ok(stats.contains("Денег/мин:"), "phone money rate label")
 	_ok(stats.contains("Свиданий/мин:"), "phone dates rate label")
 	var story_done: String = phone.get_story_text()
-	_ok(story_done.contains("Автоматизация запущена."), "phone story after clone")
-	_ok(story_done.contains("Наращивай производство клонов."), "phone story grow production")
-	_ok(not story_done.contains("Президент"), "phone no President objective")
+	# MODULE 20 §§57–59 — after first clone Phone switches to President hunt.
+	_ok(story_done.contains("Президент"), "phone President title after clone")
+	_ok(story_done.contains("Опытность:"), "phone President XP line")
+	_ok(story_done.contains("Автоматические свидания расширяют твой земной статус."), "phone President XP hint")
+	_ok(not story_done.contains("Автоматизация запущена."), "phone no M18 automation handoff")
+	_gs.call("add_experience", 10)
+	phone.refresh()
+	var story_rival: String = phone.get_story_text()
+	_ok(story_rival.contains("Президент инспектирует вход в производственную зону."), "phone §58 rival alive")
+	_ok(story_rival.contains("Сначала разберись с её официальным ухажёром."), "phone §58 rival line")
+	_gs.call("mark_rival_defeated", StoryIds.RIVAL_PRESIDENT)
+	phone.refresh()
+	var story_meet: String = phone.get_story_text()
+	_ok(story_meet.contains("Познакомиться с Президентом у производственной зоны."), "phone §59 meet")
 	phone.close()
 	phone.queue_free()
 
@@ -537,4 +554,16 @@ func _test_boundaries_overload_cap() -> void:
 	_fc.call("assign_work")
 	_ok(int(_overload.call("get_backlog_count")) == backlog_before, "68 backlog unchanged")
 	_ok(bool(_story.call("is_feature_unlocked", StoryTypes.StoryFeature.LABORATORY)), "68 lab unlocked")
-	_ok(not ResourceLoader.exists("res://data/content/girls/girl_president.tres"), "68 President absent")
+	# MODULE 20: President content ships, but first-clone gate + story rival/XP still apply.
+	_ok(ResourceLoader.exists("res://data/content/girls/girl_president.tres"), "68 President content present")
+	var begin_p: Dictionary = _gd.call("begin_attempt", StoryIds.GIRL_PRESIDENT) as Dictionary
+	var reason_p: StringName = begin_p.get("reason", &"") as StringName
+	_ok(not bool(begin_p.get("ok", true)), "68 President begin blocked")
+	_ok(
+		reason_p == &"STORY_RIVAL_REQUIRED"
+		or reason_p == &"LOCKED_EXPERIENCE"
+		or reason_p == &"STORY_PREREQUISITE",
+		"68 President not freely available",
+	)
+	_gd.call("force_clear_attempt")
+	_ok(not ResourceLoader.exists("res://data/girls/girl_final_target.tres"), "68 no MODULE21 final target")

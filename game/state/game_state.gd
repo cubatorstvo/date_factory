@@ -21,6 +21,8 @@ signal stage_changed(new_stage: GameTypes.GameStage, previous_stage: GameTypes.G
 signal clone_counts_changed(total: int, working: int, dating: int, free: int)
 signal late_rates_changed(money_per_minute: float, dates_per_minute: float)
 signal clone_upgrade_changed(upgrade_type: int, new_level: int, previous_level: int)
+signal world_reach_changed(new_value: int, delta: int)
+signal global_upgrade_changed(upgrade_type: int, new_level: int, previous_level: int)
 signal media_attention_changed(new_value: int, delta: int)
 signal state_reset()
 
@@ -55,6 +57,10 @@ var _dates_per_minute: float = 0.0
 var _clone_production_upgrade_level: int = 0
 var _clone_work_upgrade_level: int = 0
 var _clone_dating_upgrade_level: int = 0
+var _world_reach: int = 0
+var _global_production_upgrade_level: int = 0
+var _global_work_upgrade_level: int = 0
+var _global_dating_upgrade_level: int = 0
 var _purchased_perks: Dictionary = {}
 var _defeated_rivals: Dictionary = {}
 var _salary_initialized: bool = false
@@ -126,6 +132,10 @@ func reset_for_new_game() -> void:
 	_clone_production_upgrade_level = 0
 	_clone_work_upgrade_level = 0
 	_clone_dating_upgrade_level = 0
+	_world_reach = 0
+	_global_production_upgrade_level = 0
+	_global_work_upgrade_level = 0
+	_global_dating_upgrade_level = 0
 	_purchased_perks = {}
 	_defeated_rivals = {}
 	_salary_initialized = false
@@ -1209,6 +1219,82 @@ func set_late_rates(money_per_minute: float, dates_per_minute: float) -> bool:
 	_money_per_minute = money_per_minute
 	_dates_per_minute = dates_per_minute
 	late_rates_changed.emit(_money_per_minute, _dates_per_minute)
+	return true
+
+
+# --- World Reach / global upgrades (MODULE 20) ---
+
+const WORLD_REACH_MIN: int = 0
+const WORLD_REACH_MAX: int = 100
+const GLOBAL_UPGRADE_MAX_LEVEL: int = 3
+
+
+func get_world_reach() -> int:
+	return _world_reach
+
+
+func set_world_reach(value: int) -> void:
+	var clamped: int = clampi(value, WORLD_REACH_MIN, WORLD_REACH_MAX)
+	var prev: int = _world_reach
+	if prev == clamped:
+		return
+	_world_reach = clamped
+	world_reach_changed.emit(_world_reach, clamped - prev)
+
+
+func add_world_reach(amount: int) -> int:
+	if amount < 0:
+		push_error("[GameState] add_world_reach negative amount: %s" % amount)
+		return _world_reach
+	if amount == 0:
+		return _world_reach
+	var prev: int = _world_reach
+	var next: int = clampi(prev + amount, WORLD_REACH_MIN, WORLD_REACH_MAX)
+	var delta: int = next - prev
+	if delta == 0:
+		return _world_reach
+	_world_reach = next
+	world_reach_changed.emit(_world_reach, delta)
+	return _world_reach
+
+
+func get_global_production_upgrade_level() -> int:
+	return _global_production_upgrade_level
+
+
+func get_global_work_upgrade_level() -> int:
+	return _global_work_upgrade_level
+
+
+func get_global_dating_upgrade_level() -> int:
+	return _global_dating_upgrade_level
+
+
+func set_global_upgrade_level(upgrade_type: int, level: int) -> bool:
+	if level < 0 or level > GLOBAL_UPGRADE_MAX_LEVEL:
+		push_error("[GameState] global upgrade level out of range: %s" % level)
+		return false
+	var prev: int = 0
+	match upgrade_type:
+		int(LateGameTypes.GlobalUpgradeType.GLOBAL_PRODUCTION):
+			prev = _global_production_upgrade_level
+			if prev == level:
+				return true
+			_global_production_upgrade_level = level
+		int(LateGameTypes.GlobalUpgradeType.GLOBAL_WORK):
+			prev = _global_work_upgrade_level
+			if prev == level:
+				return true
+			_global_work_upgrade_level = level
+		int(LateGameTypes.GlobalUpgradeType.GLOBAL_DATING):
+			prev = _global_dating_upgrade_level
+			if prev == level:
+				return true
+			_global_dating_upgrade_level = level
+		_:
+			push_error("[GameState] unknown global upgrade type: %s" % upgrade_type)
+			return false
+	global_upgrade_changed.emit(upgrade_type, level, prev)
 	return true
 
 

@@ -100,7 +100,10 @@ func _on_interact(player: Node) -> void:
 		elif reason == &"STORY_WRONG_STAGE":
 			_show_story_lock_feedback("Эта линия пока недоступна.", player)
 		elif reason == &"STORY_PREREQUISITE":
-			_show_story_lock_feedback("Сначала нужно понять, зачем тебе вообще второй ты.", player)
+			var prereq_text: String = "Сначала нужно понять, зачем тебе вообще второй ты."
+			if girl_id == StoryIds.GIRL_PRESIDENT:
+				prereq_text = "Сначала лаборатория должна доказать, что умеет производить больше одного тебя."
+			_show_story_lock_feedback(prereq_text, player)
 		return
 	_show_approach_choices(begin, player)
 

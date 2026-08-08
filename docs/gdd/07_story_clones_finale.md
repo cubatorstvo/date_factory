@@ -117,6 +117,12 @@
 - открывается Стадия 6;
 - поздняя автоматизация переходит от локальной фабрики к мировому масштабу.
 
+### Реализация (MODULE 20 — PART A)
+
+- `girl_president` STATUS + VARIETY_SEEKING, XP 10, dedicated 6-event cafe pool + farewell; `rival_president` Authority 10 / +5, preferred MONEY, allowed MONEY/SIGMA/DANCE.
+- Physical pair at city_hub near `ToProduction`; spawn only when `total_clones >= 1` (live refresh on first clone). Direct discovery blocked with `STORY_PREREQUISITE` before first clone.
+- President +5 → existing Story STAGE_5→STAGE_6, `WORLD_EXPANSION`, Production Area access. No custom stage call.
+
 ## 33.7. Стадия 6 — Мировое расширение
 
 Основной геймплей:
@@ -129,6 +135,13 @@
 - короткие ручные комедийные события.
 
 Стадия заканчивается, когда земная цель героя фактически исчерпана и появляется внеземная финальная цель.
+
+### Реализация (MODULE 20 — PART B)
+
+- Autoload `LateGameExpansion`: Earth Reach (`Охват Земли`) 0..100 starts at 0 on STAGE_6 (no retroactive XP).
+- Reach +2 per `late_experience_granted` only; backlog/manual dates give none. Three optional Production Area FPS events (+10 once) — not required.
+- Three global upgrades levels 0..3 → ×1/×2/×4/×8, costs 1000/5000/25000; `CloneIncremental` remains economy owner and applies multipliers.
+- Reach 100 → `Story.complete_world_expansion()` → FINALE + `FINAL_DATE` + extraterrestrial signal. No `girl_final_target` / final date (MODULE 21).
 
 ---
 
@@ -323,10 +336,9 @@ Scientist / Lab / first clone are MODULE 17 (implemented).
 ### Реализация (MODULE 19)
 
 - Lab-local `CloneVisualizationController` (not autoload) projects `GameState` aggregate counts; `CloneIncremental` still owns economy / rates.
-- Exact caps: 10 date rooms / 3 work / 2 free / 2 mass-flow (≤27 presentation actors). Overflow → labels + mass corridor (`ВНЕШНИЕ ПЛОЩАДКИ`) — not yet «другие города» / transport (MODULE 20).
+- Exact caps: 10 date rooms / 3 work / 2 free / 2 mass-flow (≤27 presentation actors). Overflow → labels + mass corridor (`ВНЕШНИЕ ПЛОЩАДКИ`: Работа / Свидания / Ожидают). Stage6 transport wording is presentation in Production Area / city / lab (MODULE 20), not per-clone shipping.
 - Date-room cycle is ambient theater only (no DatingCore / XP / Money). Anonymous female presentation figures, not `GirlActor`.
 - FirstClone representative suppressed when the controller owns the lab (`total_clones >= 1`); reveal + no-controller fallback unchanged.
-- Stage stays STAGE_5. STOP before MODULE 20 world expansion / President.
 
 ---
 
@@ -380,6 +392,12 @@ Scientist / Lab / first clone are MODULE 17 (implemented).
 Игрок распределяет клонов между деньгами и свиданиями, покупает улучшения и быстро доводит систему до планетарного масштаба.
 
 Финальный рост должен быть быстрым и зрелищным, а не требовать долгого ожидания.
+
+### Реализация (MODULE 20)
+
+- Production Area Global Terminal: Reach, aggregate counts, effective rates, local assign APIs, three global upgrade tracks.
+- World scale = one Reach meter + global ×2^n + presentation thresholds 0/25/50/75/100. No country database / logistics simulator.
+- Reach 100 → FINALE signal handoff. STOP before MODULE 21 final date sequence.
 
 ---
 
@@ -472,5 +490,14 @@ Implementation note (MODULE 15/16, not a product rewrite):
 MODULE15 uses 4 authored Attention thresholds (15/30/45/60) so the first incoming initiatives are deterministic.
 At Attention ≥ 45 and ≥ 3 offers Media becomes `overload_ready`.
 MODULE16 owns body capacity, demand backlog, Feed Boost, and recognition handoff; Scientist content remains MODULE 17.
+
+### Реализация (MODULE 17–20 route)
+
+```text
+STAGE_4 recognition → Scientist → first clone → Clone Incremental
+→ President (after total≥1) → STAGE_6 / Production Area
+→ Reach 0..100 + global ×2^n → Reach100 → FINALE signal
+STOP before girl_final_target / final date (MODULE 21)
+```
 
 ---

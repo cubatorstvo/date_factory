@@ -197,7 +197,12 @@ func _test_external_math() -> void:
 	_ok(int(_c(&"get_external_work")) == 2, "external work 2")
 	_ok(int(_c(&"get_external_free")) == 1, "external free 1")
 	_ok(int(_c(&"get_external_total")) == 5, "external total 5")
-	_ok(str(_c(&"get_external_label_text")).contains("5"), "external label shows 5")
+	var ext_label: String = str(_c(&"get_external_label_text"))
+	_ok(ext_label.contains("ВНЕШНИЕ ПЛОЩАДКИ"), "external label title")
+	_ok(ext_label.contains("Работа: 2"), "external label work breakdown")
+	_ok(ext_label.contains("Свидания: 2"), "external label dating breakdown")
+	_ok(ext_label.contains("Ожидают: 1"), "external label free breakdown")
+	_ok(not ext_label.contains("ВНЕШНИЙ ПОТОК"), "external label not old total-only prefix")
 
 
 func _test_actor_budget() -> void:

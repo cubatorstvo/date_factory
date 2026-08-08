@@ -45,6 +45,7 @@ func _run_all() -> void:
 	_test_clones()
 	_test_late_rates()
 	_test_clone_upgrades()
+	_test_world_reach_and_global_upgrades()
 	_test_signals()
 	_gs.call("reset_for_new_game")
 
@@ -106,6 +107,10 @@ func _test_reset_defaults() -> void:
 	_ok(int(_gs.call("get_clone_production_upgrade_level")) == 0, "reset clone production level 0")
 	_ok(int(_gs.call("get_clone_work_upgrade_level")) == 0, "reset clone work level 0")
 	_ok(int(_gs.call("get_clone_dating_upgrade_level")) == 0, "reset clone dating level 0")
+	_ok(int(_gs.call("get_world_reach")) == 0, "reset world reach 0")
+	_ok(int(_gs.call("get_global_production_upgrade_level")) == 0, "reset global production 0")
+	_ok(int(_gs.call("get_global_work_upgrade_level")) == 0, "reset global work 0")
+	_ok(int(_gs.call("get_global_dating_upgrade_level")) == 0, "reset global dating 0")
 	_ok(_reset_signal_count == before_reset + 1, "reset emits state_reset")
 
 
@@ -278,6 +283,31 @@ func _test_clone_upgrades() -> void:
 	_ok(int(_gs.call("get_clone_production_upgrade_level")) == 0, "reset clears production")
 	_ok(int(_gs.call("get_clone_work_upgrade_level")) == 0, "reset clears work")
 	_ok(int(_gs.call("get_clone_dating_upgrade_level")) == 0, "reset clears dating")
+
+
+func _test_world_reach_and_global_upgrades() -> void:
+	_gs.call("reset_for_new_game")
+	_ok(int(_gs.call("get_world_reach")) == 0, "reach starts 0")
+	_gs.call("set_world_reach", 40)
+	_ok(int(_gs.call("get_world_reach")) == 40, "set reach 40")
+	_ok(int(_gs.call("add_world_reach", 10)) == 50, "add reach 10 => 50")
+	_gs.call("add_world_reach", 100)
+	_ok(int(_gs.call("get_world_reach")) == 100, "reach clamps 100")
+	_gs.call("set_world_reach", -5)
+	_ok(int(_gs.call("get_world_reach")) == 0, "reach clamps 0")
+	_ok(bool(_gs.call("set_global_upgrade_level", LateGameTypes.GlobalUpgradeType.GLOBAL_PRODUCTION, 2)), "set global prod 2")
+	_ok(int(_gs.call("get_global_production_upgrade_level")) == 2, "get global prod 2")
+	_ok(bool(_gs.call("set_global_upgrade_level", LateGameTypes.GlobalUpgradeType.GLOBAL_WORK, 3)), "set global work 3")
+	_ok(int(_gs.call("get_global_work_upgrade_level")) == 3, "get global work 3")
+	_ok(bool(_gs.call("set_global_upgrade_level", LateGameTypes.GlobalUpgradeType.GLOBAL_DATING, 1)), "set global dating 1")
+	_ok(int(_gs.call("get_global_dating_upgrade_level")) == 1, "get global dating 1")
+	_ok(not bool(_gs.call("set_global_upgrade_level", LateGameTypes.GlobalUpgradeType.GLOBAL_PRODUCTION, 4)), "reject global prod 4")
+	_ok(not bool(_gs.call("set_global_upgrade_level", LateGameTypes.GlobalUpgradeType.GLOBAL_WORK, -1)), "reject global work -1")
+	_gs.call("reset_for_new_game")
+	_ok(int(_gs.call("get_world_reach")) == 0, "reset clears reach")
+	_ok(int(_gs.call("get_global_production_upgrade_level")) == 0, "reset clears global prod")
+	_ok(int(_gs.call("get_global_work_upgrade_level")) == 0, "reset clears global work")
+	_ok(int(_gs.call("get_global_dating_upgrade_level")) == 0, "reset clears global dating")
 
 
 func _test_signals() -> void:

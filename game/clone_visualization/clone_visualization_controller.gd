@@ -271,7 +271,11 @@ func _update_external_label() -> void:
 		_external_label.text = "%s0" % CloneVisualizationTypes.LABEL_EXTERNAL_PREFIX
 		return
 	_external_label.visible = true
-	_external_label.text = "%s%d" % [CloneVisualizationTypes.LABEL_EXTERNAL_PREFIX, _external_total]
+	_external_label.text = CloneVisualizationTypes.format_external_label(
+		_external_work,
+		_external_dating,
+		_external_free
+	)
 
 
 func _update_mass_timer() -> void:

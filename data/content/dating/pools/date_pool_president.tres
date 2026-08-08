@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="DatingEventPoolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_pool_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_pool_president"
+event_ids = Array[StringName]([&"date_event_president_responsibility", &"date_event_president_budget", &"date_event_president_security_table", &"date_event_president_press_camera", &"date_event_president_three_orders", &"date_event_president_private_or_state"])

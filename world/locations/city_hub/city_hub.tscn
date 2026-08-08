@@ -412,6 +412,21 @@ content_id = "rival_scientist"
 story_stage = 4
 requires_overload_recognized = true
 
+[node name="npc_story_president_rival" type="Marker3D" parent="NpcSpawns" unique_id=1900002101]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0.05, 0.5)
+script = ExtResource("8_w30d6")
+actor_kind = 1
+content_id = "rival_president"
+story_stage = 5
+requires_first_clone_created = true
+
+[node name="npc_story_president" type="Marker3D" parent="NpcSpawns" unique_id=1900002102]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.05, 2.9)
+script = ExtResource("8_w30d6")
+content_id = "girl_president"
+story_stage = 5
+requires_first_clone_created = true
+
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1615612912]
 
 [node name="story_point_city_01" type="Marker3D" parent="StoryEventPoints" unique_id=1591258814]
@@ -575,6 +590,12 @@ shape = SubResource("TransitionShape")
 [node name="Mesh" type="MeshInstance3D" parent="Transitions/ToProduction" unique_id=318382403]
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
+
+[node name="LabelStage6Production" type="Label3D" parent="Transitions/ToProduction" unique_id=1900002103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+billboard = 1
+text = "ГОСУДАРСТВЕННАЯ ПРОГРАММА КЛОНИРОВАНИЯ"
+font_size = 18
 
 [node name="ToFinal" type="Area3D" parent="Transitions" unique_id=1172226935]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 1.1, 5.2)

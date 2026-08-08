@@ -388,11 +388,18 @@ func _story_gate_block(girl_id: StringName) -> Dictionary:
 	return {}
 
 
-## Scientist MODULE17 gate. Not FAILURE — no clue/cooldown side effects.
+## Story girl prerequisites. Not FAILURE — no clue/cooldown side effects.
 ## Used by discover_girl (proximity) and by _story_gate_block (begin_attempt).
+## Scientist MODULE17: overload recognized. President MODULE20: first clone.
 func _story_prerequisite_block(girl_id: StringName) -> Dictionary:
-	if girl_id != StoryIds.GIRL_SCIENTIST:
-		return {}
+	if girl_id == StoryIds.GIRL_SCIENTIST:
+		return _scientist_prerequisite_block()
+	if girl_id == StoryIds.GIRL_PRESIDENT:
+		return _president_prerequisite_block()
+	return {}
+
+
+func _scientist_prerequisite_block() -> Dictionary:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:
 		return {}
@@ -402,6 +409,19 @@ func _story_prerequisite_block(girl_id: StringName) -> Dictionary:
 	if overload == null or not overload.has_method("is_problem_recognized"):
 		return _result(false, RESULT_STORY_PREREQUISITE)
 	if not bool(overload.call("is_problem_recognized")):
+		return _result(false, RESULT_STORY_PREREQUISITE)
+	return {}
+
+
+func _president_prerequisite_block() -> Dictionary:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return {}
+	if int(gs.call("get_stage")) != int(GameTypes.GameStage.STAGE_5):
+		return {}
+	if not gs.has_method("get_total_clones"):
+		return _result(false, RESULT_STORY_PREREQUISITE)
+	if int(gs.call("get_total_clones")) < 1:
 		return _result(false, RESULT_STORY_PREREQUISITE)
 	return {}
 

@@ -114,6 +114,7 @@ func _run_all() -> void:
 	_test_no_phone_hotkey()
 	_test_contentdb_validation()
 	await _test_character_regression()
+	_test_president_first_clone_prerequisite()
 	_gs.call("reset_for_new_game")
 	_gd.call("force_clear_attempt")
 
@@ -576,9 +577,9 @@ func _test_contentdb_validation() -> void:
 	var result: Dictionary = db.call("validate_all") as Dictionary
 	_ok(bool(result.get("ok", false)), "140 ContentDB validate_all")
 	var girls: Array = db.call("list_girls") as Array
-	_ok(girls.size() == 12, "140 production girls 12 with scientist")
+	_ok(girls.size() == 13, "140 production girls 13 with president")
 	var sits: Array = db.call("list_discovery_situations") as Array
-	_ok(sits.size() == 12, "140 production discovery 12 with scientist")
+	_ok(sits.size() == 13, "140 production discovery 13 with president")
 	# Index fixture catalog
 	var cat: ContentCatalog = ContentCatalog.new()
 	var girl: GirlDefinition = load("res://data/test/girl_test_discovery.tres") as GirlDefinition
@@ -615,3 +616,39 @@ func _test_character_regression() -> void:
 	if ch != null:
 		_ok(ch.get_appearance_profile_id() == &"appearance_female_base", "141 appearance applied")
 	actor.queue_free()
+
+
+func _test_president_first_clone_prerequisite() -> void:
+	# MODULE 20 §88 — President gated until first clone; no side effects.
+	_reset()
+	_gs.call("restore_stage", GameTypes.GameStage.STAGE_5)
+	_gs.call("mark_rival_defeated", StoryIds.RIVAL_PRESIDENT)
+	_gs.call("add_experience", 10)
+	_ok(int(_gs.call("get_total_clones")) == 0, "M20 president gate clones0")
+	var discover: Dictionary = _gd.call("discover_girl", StoryIds.GIRL_PRESIDENT) as Dictionary
+	_ok(not bool(discover.get("ok", true)), "M20 discover blocked")
+	_ok(discover.get("reason", &"") == &"STORY_PREREQUISITE", "M20 discover STORY_PREREQUISITE")
+	_ok(not bool(_gs.call("is_girl_discovered", StoryIds.GIRL_PRESIDENT)), "M20 no discovery side effect")
+	var begin: Dictionary = _gd.call("begin_attempt", StoryIds.GIRL_PRESIDENT) as Dictionary
+	_ok(not bool(begin.get("ok", true)), "M20 begin blocked")
+	_ok(begin.get("reason", &"") == &"STORY_PREREQUISITE", "M20 begin STORY_PREREQUISITE")
+	_ok(not bool(_gs.call("has_girl_contact", StoryIds.GIRL_PRESIDENT)), "M20 no contact")
+	_ok(int(_gs.call("get_girl_retry_days_remaining", StoryIds.GIRL_PRESIDENT)) == 0, "M20 no cooldown")
+	_ok((_gs.call("get_known_girl_clue_indices", StoryIds.GIRL_PRESIDENT) as Array).is_empty(), "M20 no clues")
+	_ok(bool(_gs.call("set_clone_counts", 1, 1, 0)), "M20 seed clone")
+	var begin_ok: Dictionary = _gd.call("begin_attempt", StoryIds.GIRL_PRESIDENT) as Dictionary
+	_ok(bool(begin_ok.get("ok", false)), "M20 begin after clone")
+	_ok(begin_ok.get("reason", &"") == &"SUCCESS", "M20 begin SUCCESS")
+	_gd.call("force_clear_attempt")
+	var actor_src: String = FileAccess.get_file_as_string("res://game/girls/girl_actor.gd")
+	_ok(
+		actor_src.contains("Сначала лаборатория должна доказать, что умеет производить больше одного тебя."),
+		"M20 GirlActor President feedback",
+	)
+	_ok(
+		actor_src.contains("Сначала нужно понять, зачем тебе вообще второй ты."),
+		"M20 GirlActor Scientist feedback preserved",
+	)
+	var anchor_src: String = FileAccess.get_file_as_string("res://world/actors/stage_actor_anchor.gd")
+	_ok(anchor_src.contains("requires_first_clone_created"), "M20 StageActorAnchor export")
+	_ok(anchor_src.contains("clone_counts_changed"), "M20 StageActorAnchor listens clones")

@@ -61,20 +61,31 @@
 - локальные комнаты свиданий;
 - поздний мировой конвейер.
 
+## 46.8. Производственная зона
+
+- Global Expansion Terminal;
+- Охват Земли / карта;
+- глобальные улучшения ×2^n;
+- короткие optional FPS-события;
+- визуальная эскалация до планетарного масштаба;
+- сигнал внеземной цели после Reach 100.
+
 Мир должен быть компактным. Большая карта не является ценностью сама по себе.
 
-### Реализация (MODULE 12)
+### Реализация (MODULE 12 / 19 / 20)
 
 - Девять отдельных сцен, hub-and-spoke через `city_hub`.
 - Доступ локаций — `StoryFeature` (не `GameState.unlock_location` для канонических девяти).
 - `PUBLIC_CITY_ACCESS` — внутренний gate внутри `city_hub`, не отдельная location.
 - Физический телефон в квартире открывает PhoneJournal; экономика шахты — MODULE 13.
-- PhoneJournal (MODULE 14A/14B/15/16/17/18/19): top status + Story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1, read-only counts + rates) + salary.
+- PhoneJournal (MODULE 14A–20): top status + Story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1, read-only counts + rates) + salary.
 - STAGE_4 Story: photo session → publish → overload → recognition → Scientist hunt at closed laboratory gate.
-- STAGE_5 Story: before clone «Создай первого клона»; after clone «Автоматизация запущена / Наращивай производство клонов» (no President); clone management via lab terminal.
+- STAGE_5 Story: before clone «Создай первого клона»; after clone → automation → President (requires first clone); clone management via lab terminal.
+- STAGE_6 Story: «Мировое расширение», Reach XX/100; Production Area open via `WORLD_EXPANSION`.
 - MODULE 14B ordinary public NPCs sit behind existing `PUBLIC_CITY_ACCESS`; Editor pair + photo cue live in `appearance_space`; MODULE 15 photo session uses that cue.
 - MODULE 17: Scientist/rival anchors at city_hub laboratory gate (`requires_overload_recognized`); laboratory hosts one-off clone machine + FirstClone representative (suppressed when MODULE 19 controller owns lab).
-- MODULE 19: lab-local `CloneVisualizationController` — 10 date rooms / 3 work / 2 free / 2 mass-flow; overflow labels + `ВНЕШНИЕ ПЛОЩАДКИ` corridor; visualization over aggregates only. STOP before MODULE 20 world expansion / President.
+- MODULE 19: lab-local `CloneVisualizationController` — 10 date rooms / 3 work / 2 free / 2 mass-flow; overflow labels + `ВНЕШНИЕ ПЛОЩАДКИ` (Работа / Свидания / Ожидают).
+- MODULE 20: President/rival near city `ToProduction` after first clone; `production_area` Global Terminal + Reach visuals + 3 optional events; Reach100 → FINALE signal. STOP before MODULE 21 final date.
 
 
 ---
@@ -114,7 +125,7 @@
 
 Это не полноценный симулятор социальной сети.
 
-### Реализация (MODULE 15 / 16 / 17)
+### Реализация (MODULE 15 / 16 / 17 / 18 / 20)
 
 - `Attention` = persistent media meter `0..100`, non-spendable.
 - Photo session creates 3 fixed photo records; one photo publish per GameDay.
@@ -125,8 +136,9 @@
 - Realization modal uses exact «Проблема не в графике / Проблема в количестве меня» on next Phone open or safe GAMEPLAY; mechanical recognition does not wait for the modal.
 - Overlap is authored slot labels, not a real clock; intentionally not a calendar manager.
 - MODULE17 Phone: after recognition → «Найти Учёную у закрытой лаборатории»; STAGE_5 before clone → «Лаборатория открыта. / Создай первого клона.»
-- MODULE18 Phone: STAGE_5 after clone → «Автоматизация запущена. / Наращивай производство клонов.»; КЛОНЫ shows Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин (read-only; assign/upgrades stay on lab terminal).
-- MODULE19: Phone/Terminal stay functionally unchanged; physical caps live only in laboratory visualization (10/3/2/2 + mass corridor).
+- MODULE18 Phone: STAGE_5 after clone → automation / clone growth; КЛОНЫ shows Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин (read-only; local assign/upgrades stay on lab terminal).
+- MODULE19: physical caps only in laboratory visualization (10/3/2/2 + mass corridor).
+- MODULE20 Phone: STAGE_5 President copy (XP / rival / meet at Production); STAGE_6 Reach XX/100 + rates; FINALE → «Земная цель исчерпана / романтическая цель вне Земли» (does not start final date). Global upgrades managed at Production Area terminal.
 
 ---
 

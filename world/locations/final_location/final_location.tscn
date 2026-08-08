@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://world/world_location.gd" id="1_loc"]
 [ext_resource type="Script" path="res://world/world_transition.gd" id="2_transition"]
@@ -95,6 +95,24 @@ size = Vector3(8, 0.2, 8)
 [sub_resource type="BoxShape3D" id="BoxShape_PublicFloor"]
 size = Vector3(8, 0.2, 8)
 
+[sub_resource type="StandardMaterial3D" id="Mat_Beacon"]
+albedo_color = Color(0.35, 0.55, 0.75, 1)
+emission_enabled = true
+emission = Color(0.25, 0.55, 0.85, 1)
+emission_energy_multiplier = 0.8
+
+[sub_resource type="CylinderMesh" id="Mesh_BeaconPillar"]
+top_radius = 0.18
+bottom_radius = 0.35
+height = 2.2
+radial_segments = 12
+
+[sub_resource type="SphereMesh" id="Mesh_BeaconOrb"]
+radius = 0.35
+height = 0.7
+radial_segments = 16
+rings = 8
+
 [node name="final_location" type="Node3D"]
 script = ExtResource("1_loc")
 location_id = &"final_location"
@@ -169,6 +187,28 @@ shape = SubResource("BoxShape_WallW")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
 text = "ФИНАЛ"
 font_size = 64
+
+[node name="BeaconPillar" type="MeshInstance3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, -2.5)
+mesh = SubResource("Mesh_BeaconPillar")
+surface_material_override/0 = SubResource("Mat_Beacon")
+
+[node name="BeaconOrb" type="MeshInstance3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, -2.5)
+mesh = SubResource("Mesh_BeaconOrb")
+surface_material_override/0 = SubResource("Mat_Beacon")
+
+[node name="FinalSignalBeacon" type="Label3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.35, -2.5)
+billboard = 1
+text = "ИСТОЧНИК СИГНАЛА:
+ЗА ПРЕДЕЛАМИ ЗЕМЛИ
+
+РОМАНТИЧЕСКИЙ СТАТУС:
+НЕ УСТАНОВЛЕН"
+font_size = 28
+outline_size = 8
+modulate = Color(0.85, 0.95, 1, 1)
 
 [node name="PlayerSpawns" type="Node3D" parent="."]
 

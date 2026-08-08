@@ -798,3 +798,22 @@ Prove the comedy of “same man, room after room” and the readable handoff fro
 
 Scope:
 `game/clone_visualization/**`, narrow FirstClone representative suppress, `world/locations/laboratory/laboratory.tscn`, docs §39 / locations lab notes
+
+## MODULE 20: LateGameExpansion (Reach + global ×2^n; STOP before final date)
+
+Context:
+After first clone + MODULE 18/19, STAGE_5 needs President as last Earth story girl, then STAGE_6 world expansion without a country/logistics simulator or MODULE 21 final date.
+
+Decision:
+1. President (`girl_president` STATUS+VARIETY_SEEKING, XP10; `rival_president` Auth10 / +5, MONEY/SIGMA/DANCE) appears at city_hub `ToProduction` only when `total_clones >= 1` (`StageActorAnchor.requires_first_clone_created` + GirlDiscovery `STORY_PREREQUISITE`). Existing Story owns STAGE_5→STAGE_6 / `WORLD_EXPANSION`.
+2. Autoload `LateGameExpansion` (after CloneIncremental) owns `world_reach` 0..100 and three global tracks (`GLOBAL_PRODUCTION` / `GLOBAL_WORK` / `GLOBAL_DATING`, levels 0..3 → ×1/×2/×4/×8, costs 1000/5000/25000 Money). Reach starts at 0 on STAGE_6 — not derived from historical Experience.
+3. Reach advances only from `CloneIncremental.late_experience_granted` (+2 per amount) while STAGE_6; backlog/manual dates give no Reach. Optional three Production Area FPS events (+10 once each) are not required.
+4. `CloneIncremental` remains economy owner; it queries LateGameExpansion multipliers (absent/inactive → ×1). Effective production interval = `max(0.5, local / global_prod)`; work/dating rates multiply local formulas. Purchase emits refresh; production elapsed is preserved.
+5. Production Area hosts Global Expansion Terminal (Reach, rates, assign, global upgrades) + Reach visuals 0/25/50/75/100. MODULE19 external label shows Работа / Свидания / Ожидают.
+6. Reach ≥ 100 → exactly `Story.complete_world_expansion()` → FINALE + `FINAL_DATE` + extraterrestrial signal presentation. No `girl_final_target`, no final date gameplay, no country DB / logistics. STOP before MODULE 21.
+
+Reason:
+Earth story + fast planetary incremental peak without a second stage machine, without skipping Stage6 via old XP, and without shipping the alien finale early.
+
+Scope:
+`game/late_game/**`, GameState Reach/global levels, CloneIncremental multiplier seam, President content, Production Area terminal/events, Story world-expansion completion, Phone STAGE_5/6/FINALE copy, docs

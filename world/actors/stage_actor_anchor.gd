@@ -15,6 +15,7 @@ const RIVAL_ACTOR_SCENE: String = "res://game/rivals/rival_actor.tscn"
 @export var content_id: StringName = &""
 @export var story_stage: GameTypes.GameStage = GameTypes.GameStage.PROLOGUE
 @export var requires_overload_recognized: bool = false
+@export var requires_first_clone_created: bool = false
 
 var _spawned: Node3D = null
 
@@ -26,6 +27,9 @@ func _ready() -> void:
 			gs.connect("stage_changed", _on_stage_changed)
 		if gs.has_signal("state_reset") and not gs.is_connected("state_reset", _on_state_reset):
 			gs.connect("state_reset", _on_state_reset)
+		if requires_first_clone_created and gs.has_signal("clone_counts_changed"):
+			if not gs.is_connected("clone_counts_changed", _on_clone_counts_changed):
+				gs.connect("clone_counts_changed", _on_clone_counts_changed)
 	var story: Node = get_node_or_null("/root/Story")
 	if story != null and story.has_signal("stage_started"):
 		if not story.is_connected("stage_started", _on_story_stage_started):
@@ -46,6 +50,10 @@ func _on_state_reset() -> void:
 
 
 func _on_problem_recognized() -> void:
+	_refresh_spawn()
+
+
+func _on_clone_counts_changed(_total: int, _working: int, _dating: int, _free: int) -> void:
 	_refresh_spawn()
 
 
@@ -100,6 +108,11 @@ func _should_spawn() -> bool:
 		if overload == null or not overload.has_method("is_problem_recognized"):
 			return false
 		if not bool(overload.call("is_problem_recognized")):
+			return false
+	if requires_first_clone_created:
+		if not gs.has_method("get_total_clones"):
+			return false
+		if int(gs.call("get_total_clones")) < 1:
 			return false
 	return true
 

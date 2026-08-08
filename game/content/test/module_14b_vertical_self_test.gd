@@ -102,9 +102,9 @@ func _test_validate_and_counts() -> void:
 	var rivals: Array = _db.call("list_rivals") as Array
 	var situations: Array = _db.call("list_discovery_situations") as Array
 	var pools: Array = _db.call("list_dating_pools") as Array
-	_ok(girls.size() == 12, "12 girls")
-	_ok(rivals.size() == 11, "11 rivals")
-	_ok(situations.size() == 12, "12 discovery situations")
+	_ok(girls.size() == 13, "13 girls")
+	_ok(rivals.size() == 12, "12 rivals")
+	_ok(situations.size() == 13, "13 discovery situations")
 	var editor_pool: DatingEventPoolDefinition = _db.call("get_dating_pool", &"date_pool_magazine_editor") as DatingEventPoolDefinition
 	_ok(editor_pool != null, "date_pool_magazine_editor exists")
 	_ok(pools.size() >= 6, "dating pools >= 6")
