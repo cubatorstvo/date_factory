@@ -246,9 +246,10 @@ Scientist / Lab / first clone are MODULE 17 (implemented).
 
 - `CloneIncremental` owns late rates → `GameState.set_late_rates`; production / work / dating formulas; lab terminal management; upgrade cost `30×3^level`.
 - Balance: production 30→5 s; work 20→70 Money/min/clone; dating 0.50→1.75 dates/min/clone.
-- Auto dates clear overload backlog first; then grant Experience / Upgrade Points. No DatingCore per auto date. No MODULE 19 physical slots yet.
+- Auto dates clear overload backlog first; then grant Experience / Upgrade Points. No DatingCore per auto date.
 - Phone STAGE_5 after clone: «Автоматизация запущена. / Наращивай производство клонов.»
 - Phone КЛОНЫ (read-only) after `total_clones >= 1`: Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин.
+- Physical lab crowd visualization is MODULE 19 (projection only; CloneIncremental still owns economy).
 
 ---
 
@@ -318,6 +319,14 @@ Scientist / Lab / first clone are MODULE 17 (implemented).
 - могут визуально исчезать в направлении поездов, самолётов или глобального логистического узла.
 
 Сотни и тысячи клонов существуют числами и производственной постановкой, а не как сотни активных NPC.
+
+### Реализация (MODULE 19)
+
+- Lab-local `CloneVisualizationController` (not autoload) projects `GameState` aggregate counts; `CloneIncremental` still owns economy / rates.
+- Exact caps: 10 date rooms / 3 work / 2 free / 2 mass-flow (≤27 presentation actors). Overflow → labels + mass corridor (`ВНЕШНИЕ ПЛОЩАДКИ`) — not yet «другие города» / transport (MODULE 20).
+- Date-room cycle is ambient theater only (no DatingCore / XP / Money). Anonymous female presentation figures, not `GirlActor`.
+- FirstClone representative suppressed when the controller owns the lab (`total_clones >= 1`); reveal + no-controller fallback unchanged.
+- Stage stays STAGE_5. STOP before MODULE 20 world expansion / President.
 
 ---
 

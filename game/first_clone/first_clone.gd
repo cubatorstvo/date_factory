@@ -179,6 +179,10 @@ func reconstruct_representative() -> void:
 	if int(gs.call("get_total_clones")) < 1:
 		_clear_representative()
 		return
+	# MODULE 19: when lab has CloneVisualizationController, it owns aggregate visuals.
+	if _lab_has_clone_visualization_controller():
+		_clear_representative()
+		return
 	var world: Node = get_node_or_null("/root/World")
 	if world == null:
 		return
@@ -360,6 +364,11 @@ func _commit_assignment(kind: FirstCloneTypes.Assignment) -> bool:
 
 
 func _place_assigned_actor(kind: FirstCloneTypes.Assignment) -> void:
+	# MODULE 19 owns aggregate lab visuals — do not leave a duplicate FirstClone body.
+	if _lab_has_clone_visualization_controller():
+		_clear_preview()
+		_clear_representative()
+		return
 	var marker_name: String = FirstCloneTypes.MARKER_WORK
 	if kind == FirstCloneTypes.Assignment.DATING:
 		marker_name = FirstCloneTypes.MARKER_DATE
@@ -454,6 +463,44 @@ func _clear_representative() -> void:
 	if _representative != null and is_instance_valid(_representative):
 		_representative.queue_free()
 	_representative = null
+
+
+func _lab_has_clone_visualization_controller() -> bool:
+	# String/group detection avoids hard class_name parse coupling to MODULE 19.
+	var tree: SceneTree = get_tree()
+	if tree != null:
+		var grouped: Array = tree.get_nodes_in_group("clone_visualization_controller")
+		for node in grouped:
+			if node != null and is_instance_valid(node):
+				return true
+	var world: Node = get_node_or_null("/root/World")
+	if world != null and world.has_method("get_current_location"):
+		var loc: Node = world.call("get_current_location") as Node
+		if loc != null and _node_contains_clone_visualization_controller(loc):
+			return true
+	if tree != null and tree.current_scene != null:
+		if _node_contains_clone_visualization_controller(tree.current_scene):
+			return true
+	return false
+
+
+func _node_contains_clone_visualization_controller(root: Node) -> bool:
+	if root == null:
+		return false
+	if _node_is_clone_visualization_controller(root):
+		return true
+	var named: Node = root.find_child("CloneVisualizationController", true, false)
+	return _node_is_clone_visualization_controller(named)
+
+
+func _node_is_clone_visualization_controller(node: Node) -> bool:
+	if node == null or not is_instance_valid(node):
+		return false
+	var script_res: Script = node.get_script() as Script
+	if script_res == null:
+		return false
+	var path: String = String(script_res.resource_path)
+	return path.ends_with("clone_visualization_controller.gd")
 
 
 func _find_marker(marker_name: String) -> Node3D:

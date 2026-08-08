@@ -772,10 +772,29 @@ Decision:
 2. Exact MODULE 18 balance: production interval 30→5 s; work 20→70 Money/min/clone; dating 0.50→1.75 dates/min/clone; upgrade cost `30×3^level` (levels 0..5). Tunable later in MODULE 26.
 3. Automated dates do not invoke DatingCore; overload backlog is fulfilled first; after backlog is empty each whole auto date grants `GameState.add_experience(1)` (+ UP seam as implemented). Rates use real gameplay seconds; GameDay does not simulate incremental output; no offline gains.
 4. Management stays physical at the lab Clone Terminal (assign Work/Dating + buy upgrades). Phone КЛОНЫ is read-only: Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин; listens to `clone_counts_changed` and `late_rates_changed`.
-5. STAGE_5 after first clone: «Автоматизация запущена. / Наращивай производство клонов.» Story never advances from clone numbers; no President / MODULE 19 slots / Stage 6.
+5. STAGE_5 after first clone: «Автоматизация запущена. / Наращивай производство клонов.» Story never advances from clone numbers; no President / Stage 6. Physical crowd visualization is MODULE 19 (read-only over these aggregates).
 
 Reason:
 Turn the first clone into a small incremental factory while keeping GameState aggregates, DatingOverload backlog, and Phone presentation coherent — and STOP before physical crowd visualization.
 
 Scope:
 `game/clone_incremental/**`, GameState late rates / upgrade levels, DatingOverload backlog consume, lab terminal UI, `ui/phone/phone_journal.gd`, docs §82
+
+## MODULE 19: Physical Clone Visualization (lab-local, aggregate projection)
+
+Context:
+After MODULE 18 rates exist, the player must see the local→mass transition in the laboratory FPS space without turning aggregate counts into individual NPC simulation, and without MODULE 20 world expansion / President.
+
+Decision:
+1. `CloneVisualizationController` is **lab-local** inside `laboratory.tscn` — not an autoload, not a global manager. No new GameState fields; no ContentDB expansion.
+2. Visualization only over `GameState` aggregates (`total_clones` / `clones_working` / `clones_dating` / `free_clones`) plus `CloneIncremental` signals (`clone_produced`, counts). `CloneIncremental` still owns economy / rates / assignment.
+3. Exact local caps: 10 date rooms / 3 work visuals / 2 free wait visuals / 2 mass-flow actors (≤27 presentation `CharacterActor`s). Overflow = external numeric labels + mass corridor (`ВНЕШНИЕ ПЛОЩАДКИ`); node count does not scale with aggregate totals.
+4. Date-room scenes (CALM / OVER_EXPLAINING / SILENT_SUCCESS / MUTUAL_CONFUSION) and work/mass Tweens are ambient theater only — never call DatingCore, Money, Experience, or clone-count mutation.
+5. When the lab controller is present and `total_clones >= 1`, FirstClone’s persistent representative is suppressed (no duplicate body). FirstClone reveal (`total_clones == 0`) and no-controller test fallback remain intact.
+6. STOP: Stage stays STAGE_5; no President; no MODULE 20 countries / airports / global map.
+
+Reason:
+Prove the comedy of “same man, room after room” and the readable handoff from countable bodies to abstract mass flow, while keeping MODULE 18 aggregates as the only production truth.
+
+Scope:
+`game/clone_visualization/**`, narrow FirstClone representative suppress, `world/locations/laboratory/laboratory.tscn`, docs §39 / locations lab notes
