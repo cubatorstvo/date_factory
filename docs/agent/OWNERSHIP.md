@@ -16,7 +16,7 @@
 | VB-E3-late | df-scene-worker | `world/locations/production_area/production_area.tscn` | factory + lab assets | other location `.tscn` | complete |
 | VB-F-chars | df-scene-worker | `characters/female/**`, `characters/male/**` (new wrappers only), `data/content/appearances/*.tres` (visual_scene remap only), `tmp/visual_bootstrap_review/current/current_chars_*.png`, `tmp/vb_stage_f_*` | CharacterActor/Factory RO, pack meshes RO | girl_actor/rival_actor scripts, player.tscn, dating/story | complete |
 | VB-G-verify | df-qa-worker | `tmp/visual_bootstrap_review/**`, `tmp/vb_stage_g_*`, `docs/agent/qa/VISUAL_BOOTSTRAP_STAGE_G_QA.md` | full game RO for play | product redesign, location art rewrites unless critical FAIL | complete |
-| VB-REVIEW-BRANCH | Orchestrator | git branch `visual-review/bootstrap-20260809` for PNGs only | — | do not dump PNGs on main | active |
+| VB-REVIEW-BRANCH | Orchestrator | git branch `visual-review/bootstrap-20260809` for PNGs only | — | do not dump PNGs on main | complete |
 
 ## Serialization rules
 

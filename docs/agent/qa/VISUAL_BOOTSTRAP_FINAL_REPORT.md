@@ -72,9 +72,10 @@ Not used: PACK_014 music. PACK_016 not expanded beyond donor cafe/city deps.
 | Legacy (A1–A3) | 22 | `tmp/visual_bootstrap_review/legacy/` |
 | Current (B–F) | 43 | `tmp/visual_bootstrap_review/current/` |
 
-**Branch:** `visual-review/bootstrap-20260809` (screenshots + this report artifacts)  
-**Source commit:** see `main` HEAD after source commit  
-**Screenshot path on review branch:** `_review/visual_bootstrap/{legacy,current}/`
+**Branch:** `visual-review/bootstrap-20260809` @ `0b09f0b`  
+**Source commit (main):** `80e972e`  
+**Screenshot path on review branch:** `_review/visual_bootstrap/{legacy,current}/`  
+*(Working copies also under `tmp/visual_bootstrap_review/` — not committed on main.)*
 
 ---
 
