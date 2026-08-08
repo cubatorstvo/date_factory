@@ -352,4 +352,11 @@ Playable slice through Editor:
 
 Dating pools use ContentDB IDs `date_pool_*` (not draft `dating_pool_*`). Inventories: `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`. Scientist remains MODULE 15+.
 
+### Реализация (MODULE 25 — Content Completion)
+
+- **16 ordinary girls** cover the complete **4×4** primary×secondary trait matrix (one girl per unique pair).
+- Production total: **23 girls** (16 Ordinary + 6 Story + 1 Final).
+- Canonical inventory: `docs/content/MANUAL_CONTENT_COMPLETE.md`.
+- Content completion is **locked before the MODULE 26 balance pass** (no trait/formula redesign here).
+
 ---

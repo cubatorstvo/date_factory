@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_loud_table_quiet"
+label = "Попросить их говорить тише"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([7])
+result_text = "Соседи стихают на полтона; ваш разговор снова принадлежит только столу."
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_loud_table_topic"
+label = "Сменить тему так, чтобы наблюдатели потеряли сюжет"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([10])
+result_text = "Тема уходит в сторону; соседний стол теряет нить и возвращается к своим делам."
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_loud_table_move"
+label = "Попросить другой стол у персонала"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4, 7])
+is_public = true
+result_text = "Вас пересаживают дальше от комментаторов; тишина возвращается как услуга заведения."
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_loud_table_louder"
+label = "Начать обсуждать соседний стол ещё громче"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([7, 9])
+is_public = true
+result_text = "Вы комментируете соседей громче них; зал ненадолго выбирает, чей сюжет важнее."
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_cafe_loud_table"
+category = 0
+title = "Громкие соседи"
+setup_text = "Соседний стол обсуждает ваш разговор громче вас."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

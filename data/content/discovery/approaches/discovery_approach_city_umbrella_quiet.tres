@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DiscoveryApproachDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_approach_city_umbrella_quiet"
+label = "Посоветовать всем разойтись без лишнего шума"
+has_requirement = true
+required_characteristic = 3
+required_level = 1
+outcome = 1
+result_text = "Тишина ей не нужна. Она уже держит зонт так, чтобы это заметили."

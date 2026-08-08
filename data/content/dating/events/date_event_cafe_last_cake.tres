@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_last_cake_yield"
+label = "Уступить кусок"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([0, 2])
+result_text = "Кусок уходит соседу; вы оба делаете вид, что торт никогда не существовал."
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_last_cake_split"
+label = "Предложить разделить его так, чтобы обе тарелки выглядели нормально"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([10])
+result_text = "Разрез выглядит как дизайн-решение; сосед соглашается, не поняв, что его уговорили."
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_last_cake_buy_all"
+label = "Купить весь оставшийся торт"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "Последний кусок становится вашим по праву покупки; витрина пустеет торжественно."
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_last_cake_debate"
+label = "Предложить решить право на торт публичным спором"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([7])
+result_text = "Спор за торт собирает тихий круг зрителей; победитель получает кусок и чужое уважение."
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_cafe_last_cake"
+category = 2
+title = "Последний кусок"
+setup_text = "В витрине остался последний кусок торта. За ним одновременно тянется другой посетитель."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

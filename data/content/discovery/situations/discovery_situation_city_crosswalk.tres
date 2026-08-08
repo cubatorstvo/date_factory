@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DiscoverySituationDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_situation_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_approach"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_city_crosswalk_two_ways.tres" id="a0"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_city_crosswalk_safe.tres" id="a1"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_city_crosswalk_one.tres" id="a2"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_situation_city_crosswalk"
+location_id = &"city_hub"
+setup_text = "Она стоит у перехода и сравнивает три маршрута, хотя все три ведут на противоположную сторону одной улицы."
+approaches = Array[ExtResource("1_approach")]([ExtResource("a0"), ExtResource("a1"), ExtResource("a2")])

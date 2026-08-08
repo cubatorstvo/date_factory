@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_sig_umbrella_help"
+label = "Помочь собрать посуду"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([0, 2])
+result_text = "Посуда снова на подносе; тишина в зале чуть отпускает."
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_sig_umbrella_ok"
+label = "Первым сказать, что всё нормально, достаточно громко для всего зала"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([0])
+is_public = true
+result_text = "Ваш голос разбивает паузу — зал снова начинает шуметь."
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_sig_umbrella_ignore"
+label = "Сделать вид, что ничего не произошло"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4])
+result_text = "Вы продолжаете разговор поверх тишины, будто это был план."
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_sig_umbrella_comp"
+label = "Потребовать компенсацию"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([7])
+result_text = "Персонал предлагает извинения и мелкий жест в вашу сторону."
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_signature_city_umbrella_waiter"
+category = 1
+title = "Упавший поднос"
+setup_text = "Официант роняет поднос. Никто не пострадал, но весь зал замолчал."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

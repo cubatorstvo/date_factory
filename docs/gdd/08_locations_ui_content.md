@@ -96,6 +96,7 @@
 - MODULE 20: President/rival near city `ToProduction` after first clone; `production_area` Global Terminal + Reach visuals + 3 optional events; Reach100 → FINALE signal.
 - MODULE 21: `final_location` + scene-local `FinalDateController`; catalog **14/14**; exhibition rivals; success ending + Continue; fail full retry.
 - MODULE 22: persistent GameHUD + shared Theme + five Phone tabs + Progression 32 + unified modal presentation. STOP before MODULE 23 audio/animation.
+- MODULE 25: flavor / scenic gags / NPC placement — see note under §48.
 
 
 ---
@@ -200,6 +201,15 @@ Architecture: `docs/ui/UI_ARCHITECTURE.md`.
 
 - Production catalog closed for main path: **14 girls / 14 rivals** (includes `girl_final_target` + two exhibition final rivals).
 - Final date is a unique authored scene, not a shared ordinary dating pool.
+
+### Реализация (MODULE 25 — Content Completion)
+
+- Catalog after MODULE25: **23 girls / 19 rivals / 22 discovery situations** (inventory: `docs/content/MANUAL_CONTENT_COMPLETE.md`).
+- Flavor: **≥24** presentation-only `FlavorInteractable` props across all 9 locations (exact Spec distribution 5/5/3/2/3/2/2/1/1).
+- Scenic gags: **≥12** no-reward staged visuals (§78 apartment → final).
+- Ordinary girls/rivals keep **fixed physical NPC placements** (no procedural spawn).
+- Late visual tiers (`UpgradeLevelVisual`) are presentation-only for existing local/global upgrade levels — no formula changes.
+- Content completion locked before MODULE 26 balance.
 
 ---
 

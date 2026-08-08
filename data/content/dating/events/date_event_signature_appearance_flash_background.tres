@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_sig_flash_compose"
+label = "Перестроить кадр так, чтобы суп выглядел частью композиции"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([3, 7])
+is_public = true
+result_text = "Суп становится фоном, будто так и задумывали для портрета."
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_sig_flash_move"
+label = "Попросить человека пересесть"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([5])
+result_text = "Человек с супом уступает место — кадр очищается."
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_sig_flash_pay"
+label = "Оплатить ему другой стол"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4, 3])
+result_text = "Суп переезжает за ваш счёт, фон становится чище."
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_sig_flash_endure"
+label = "Сказать, что настоящий кадр выдержит суп"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([9])
+result_text = "Она соглашается проверить теорию — суп остаётся в истории снимка."
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_signature_appearance_flash_background"
+category = 0
+title = "Суп в кадре"
+setup_text = "Она замечает, что на заднем плане вашей фотографии человек ест суп."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

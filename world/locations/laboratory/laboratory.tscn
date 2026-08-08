@@ -6,7 +6,10 @@
 [ext_resource type="Script" uid="uid://47ida632vn2m" path="res://game/first_clone/first_clone_machine_interactable.gd" id="4_m87cs"]
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
 [ext_resource type="Script" uid="uid://b8djw7ivxedsg" path="res://game/clone_incremental/clone_terminal_interactable.gd" id="5_tpvxc"]
-[ext_resource type="Script" path="res://game/clone_visualization/clone_visualization_controller.gd" id="6_cvis"]
+[ext_resource type="Script" uid="uid://d3t54epmyae8v" path="res://game/clone_visualization/clone_visualization_controller.gd" id="6_cvis"]
+[ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="6_jdboj"]
+[ext_resource type="Script" uid="uid://dx0ba68hwmey5" path="res://world/flavor/flavor_interactable.gd" id="7_1reew"]
+[ext_resource type="Script" uid="uid://ckkhr7iw40sm7" path="res://game/clone_incremental/upgrade_level_visual.gd" id="10_73jk0"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
@@ -25,6 +28,20 @@ roughness = 0.85
 [sub_resource type="BoxShape3D" id="BoxShape_Floor"]
 size = Vector3(22, 0.2, 18)
 
+[sub_resource type="BoxMesh" id="BoxMesh_Ceiling"]
+size = Vector3(22, 0.15, 18)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Ceiling"]
+albedo_color = Color(0.55, 0.52, 0.48, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="BoxMesh_Corridor"]
+size = Vector3(6.2, 0.03, 16.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Corridor"]
+albedo_color = Color(0.42, 0.4, 0.38, 1)
+roughness = 0.7
+
 [sub_resource type="BoxMesh" id="BoxMesh_WallNS"]
 size = Vector3(22, 3.2, 0.3)
 
@@ -40,34 +57,6 @@ size = Vector3(0.3, 3.2, 18)
 
 [sub_resource type="BoxShape3D" id="BoxShape_WallEW"]
 size = Vector3(0.3, 3.2, 18)
-
-[sub_resource type="BoxMesh" id="BoxMesh_Ceiling"]
-size = Vector3(22, 0.15, 18)
-
-[sub_resource type="StandardMaterial3D" id="Mat_Ceiling"]
-albedo_color = Color(0.55, 0.52, 0.48, 1)
-roughness = 0.9
-
-[sub_resource type="BoxMesh" id="BoxMesh_Corridor"]
-size = Vector3(6.2, 0.03, 16.5)
-
-[sub_resource type="StandardMaterial3D" id="Mat_Corridor"]
-albedo_color = Color(0.42, 0.4, 0.38, 1)
-roughness = 0.7
-
-[sub_resource type="BoxMesh" id="BoxMesh_Column"]
-size = Vector3(0.45, 3.0, 0.45)
-
-[sub_resource type="StandardMaterial3D" id="Mat_Column"]
-albedo_color = Color(0.4, 0.38, 0.36, 1)
-roughness = 0.8
-
-[sub_resource type="BoxMesh" id="BoxMesh_Bench"]
-size = Vector3(1.6, 0.45, 0.5)
-
-[sub_resource type="StandardMaterial3D" id="Mat_Bench"]
-albedo_color = Color(0.36, 0.3, 0.26, 1)
-roughness = 0.75
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tpvxc"]
 transparency = 1
@@ -98,6 +87,27 @@ roughness = 0.5
 [sub_resource type="BoxMesh" id="BoxMesh_rsglh"]
 size = Vector3(1.4, 0.08, 1.4)
 
+[sub_resource type="StandardMaterial3D" id="Mat_Column"]
+albedo_color = Color(0.4, 0.38, 0.36, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_Column"]
+size = Vector3(0.45, 3, 0.45)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Bench"]
+albedo_color = Color(0.36, 0.3, 0.26, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_Bench"]
+size = Vector3(1.6, 0.45, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ExitArch"]
+albedo_color = Color(0.38, 0.36, 0.34, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_ExitArch"]
+size = Vector3(1.6, 2.4, 0.25)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a74n1"]
 albedo_color = Color(0.32, 0.42, 0.48, 1)
 metallic = 0.25
@@ -125,6 +135,27 @@ emission_energy_multiplier = 0.45
 [sub_resource type="BoxMesh" id="BoxMesh_jdboj"]
 size = Vector3(0.85, 0.55, 0.06)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_irctf"]
+size = Vector3(0.7, 1.2, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_msbmx"]
+albedo_color = Color(0.72, 0.68, 0.62, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_iejgs"]
+size = Vector3(0.45, 0.9, 0.45)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rsglh"]
+albedo_color = Color(0.85, 0.55, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_a74n1"]
+size = Vector3(0.7, 0.08, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c4qwf"]
+albedo_color = Color(0.9, 0.4, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cfwlh"]
+size = Vector3(0.22, 0.08, 0.32)
+
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
 
@@ -134,32 +165,113 @@ size = Vector3(1.2, 2.2, 0.4)
 [sub_resource type="StandardMaterial3D" id="TransitionMat"]
 albedo_color = Color(0.25, 0.5, 0.62, 1)
 
+[sub_resource type="StandardMaterial3D" id="Mat_RoomFloor"]
+albedo_color = Color(0.4, 0.36, 0.32, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_RoomFloor"]
+size = Vector3(2.8, 0.04, 2.6)
+
 [sub_resource type="StandardMaterial3D" id="Mat_RoomWall"]
 albedo_color = Color(0.52, 0.48, 0.44, 1)
 roughness = 0.8
 
+[sub_resource type="BoxMesh" id="BoxMesh_RoomBack"]
+size = Vector3(0.12, 2.5, 2.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_RoomSide"]
+size = Vector3(2.8, 2.5, 0.12)
+
 [sub_resource type="StandardMaterial3D" id="Mat_RoomGlass"]
 transparency = 1
 albedo_color = Color(0.55, 0.7, 0.78, 0.28)
-roughness = 0.15
 metallic = 0.1
+roughness = 0.15
+
+[sub_resource type="BoxMesh" id="BoxMesh_RoomGlass"]
+size = Vector3(0.06, 2.4, 2.45)
 
 [sub_resource type="StandardMaterial3D" id="Mat_Shutter"]
 albedo_color = Color(0.18, 0.17, 0.16, 1)
-roughness = 0.65
 metallic = 0.2
+roughness = 0.65
 
-[sub_resource type="StandardMaterial3D" id="Mat_RoomFloor"]
-albedo_color = Color(0.4, 0.36, 0.32, 1)
-roughness = 0.85
+[sub_resource type="BoxMesh" id="BoxMesh_Shutter"]
+size = Vector3(0.08, 2.35, 2.4)
 
 [sub_resource type="StandardMaterial3D" id="Mat_Table"]
 albedo_color = Color(0.45, 0.32, 0.24, 1)
 roughness = 0.7
 
+[sub_resource type="BoxMesh" id="BoxMesh_Table"]
+size = Vector3(0.7, 0.7, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6b7bo"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bxlkw"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s1m2u"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8t0iv"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7gga4"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4m41p"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gxu8l"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_i6mu7"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c1wrt"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ox27s"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6aef6"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_udic2"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g5hfn"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_en3f6"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_plemh"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_urat6"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1aevx"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7l7jr"]
+size = Vector3(0.35, 0.22, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kndxf"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_0avw3"]
+size = Vector3(0.35, 0.22, 0.04)
+
 [sub_resource type="StandardMaterial3D" id="Mat_PadWork"]
 albedo_color = Color(0.4, 0.48, 0.34, 1)
 roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_SmallPad"]
+size = Vector3(0.9, 0.05, 0.9)
 
 [sub_resource type="StandardMaterial3D" id="Mat_PadFree"]
 albedo_color = Color(0.42, 0.4, 0.5, 1)
@@ -169,33 +281,95 @@ roughness = 0.7
 albedo_color = Color(0.5, 0.38, 0.32, 1)
 roughness = 0.7
 
-[sub_resource type="BoxMesh" id="BoxMesh_RoomFloor"]
-size = Vector3(2.8, 0.04, 2.6)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0qtbv"]
+albedo_color = Color(0.3, 0.55, 0.75, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_RoomSide"]
-size = Vector3(2.8, 2.5, 0.12)
+[sub_resource type="BoxMesh" id="BoxMesh_h5dkr"]
+size = Vector3(0.9, 0.12, 0.12)
 
-[sub_resource type="BoxMesh" id="BoxMesh_RoomBack"]
-size = Vector3(0.12, 2.5, 2.6)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_akc1e"]
+albedo_color = Color(0.25, 0.3, 0.35, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_RoomGlass"]
-size = Vector3(0.06, 2.4, 2.45)
+[sub_resource type="BoxMesh" id="BoxMesh_aqpdh"]
+size = Vector3(0.5, 0.35, 0.06)
 
-[sub_resource type="BoxMesh" id="BoxMesh_Shutter"]
-size = Vector3(0.08, 2.35, 2.4)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l8exp"]
+albedo_color = Color(0.15, 0.15, 0.15, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_Table"]
-size = Vector3(0.7, 0.7, 0.7)
+[sub_resource type="BoxMesh" id="BoxMesh_22tle"]
+size = Vector3(0.7, 0.1, 0.25)
 
-[sub_resource type="BoxMesh" id="BoxMesh_SmallPad"]
-size = Vector3(0.9, 0.05, 0.9)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d468o"]
+albedo_color = Color(0.55, 0.45, 0.2, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_ExitArch"]
-size = Vector3(1.6, 2.4, 0.25)
+[sub_resource type="BoxMesh" id="BoxMesh_6evhk"]
+size = Vector3(0.85, 0.08, 0.55)
 
-[sub_resource type="StandardMaterial3D" id="Mat_ExitArch"]
-albedo_color = Color(0.38, 0.36, 0.34, 1)
-roughness = 0.75
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qt88q"]
+albedo_color = Color(0.15, 0.18, 0.22, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kxlml"]
+size = Vector3(1.6, 0.35, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_44346"]
+albedo_color = Color(0.75, 0.7, 0.55, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_u1jh3"]
+size = Vector3(0.25, 0.35, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_75d48"]
+albedo_color = Color(0.2, 0.25, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_blms8"]
+size = Vector3(0.7, 0.4, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a4grk"]
+albedo_color = Color(0.85, 0.82, 0.75, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_w0wdx"]
+size = Vector3(0.3, 0.25, 0.25)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ttkct"]
+albedo_color = Color(0.35, 0.45, 0.35, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rwxfe"]
+size = Vector3(0.6, 0.45, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p4ph8"]
+albedo_color = Color(0.15, 0.18, 0.22, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3mr4n"]
+size = Vector3(1.6, 0.35, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kqng4"]
+albedo_color = Color(0.25, 0.28, 0.35, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_owmbm"]
+size = Vector3(0.8, 0.5, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ljrka"]
+albedo_color = Color(0.75, 0.35, 0.45, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_clkgl"]
+size = Vector3(0.25, 0.45, 0.25)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yh3kb"]
+albedo_color = Color(0.2, 0.35, 0.45, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ta1w5"]
+size = Vector3(0.9, 0.4, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i12ro"]
+albedo_color = Color(0.9, 0.75, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_b7i5v"]
+size = Vector3(0.55, 0.2, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1i4me"]
+albedo_color = Color(0.15, 0.18, 0.22, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_xaisn"]
+size = Vector3(1.6, 0.35, 0.06)
 
 [node name="laboratory" type="Node3D" unique_id=1900000001]
 script = ExtResource("1_loc")
@@ -213,13 +387,13 @@ light_energy = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, -2)
 light_color = Color(1, 0.92, 0.82, 1)
 light_energy = 0.55
-omni_range = 14
+omni_range = 14.0
 
 [node name="FillLightB" type="OmniLight3D" parent="." unique_id=1900000005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 4)
 light_color = Color(0.95, 0.9, 0.85, 1)
 light_energy = 0.4
-omni_range = 12
+omni_range = 12.0
 
 [node name="Geometry" type="Node3D" parent="." unique_id=1900000006]
 
@@ -375,7 +549,8 @@ mesh = SubResource("BoxMesh_ExitArch")
 [node name="LabelWorkRoute" type="Label3D" parent="Geometry" unique_id=1900000041]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 2.55, 7.2)
 billboard = 1
-text = "РАБОЧИЙ МАРШРУТ\n→ ЗАРПЛАТНАЯ ШАХТА"
+text = "РАБОЧИЙ МАРШРУТ
+→ ЗАРПЛАТНАЯ ШАХТА"
 font_size = 22
 
 [node name="PlayerSpawns" type="Node3D" parent="." unique_id=1900000042]
@@ -463,6 +638,75 @@ billboard = 1
 text = "ТЕРМИНАЛ"
 font_size = 26
 
+[node name="FlavorCloneChamber" type="Area3D" parent="Interactables" unique_id=1242682029 instance=ExtResource("6_jdboj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2, 1, -2.4)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_1reew")
+text = "КАМЕРА КЛОНИРОВАНИЯ
+Гарантия не распространяется на уверенность."
+prompt = "Осмотреть"
+prompt_action = "Осмотреть"
+
+[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorCloneChamber" unique_id=374407289]
+shape = SubResource("BoxShape3D_irctf")
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorCloneChamber" unique_id=1246067171]
+material_override = SubResource("StandardMaterial3D_msbmx")
+mesh = SubResource("BoxMesh_iejgs")
+
+[node name="Label" type="Label3D" parent="Interactables/FlavorCloneChamber" unique_id=931679821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+billboard = 1
+text = "Камера клонирования"
+font_size = 22
+
+[node name="FlavorDateCorridor" type="Area3D" parent="Interactables" unique_id=384386330 instance=ExtResource("6_jdboj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1.8)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_1reew")
+text = "РОМАНТИЧЕСКИЙ СЕКТОР
+Индивидуальный учёт прекращается после десятой комнаты."
+prompt = "Осмотреть"
+prompt_action = "Осмотреть"
+
+[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorDateCorridor" unique_id=1619999283]
+shape = SubResource("BoxShape3D_irctf")
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorDateCorridor" unique_id=1141523595]
+material_override = SubResource("StandardMaterial3D_msbmx")
+mesh = SubResource("BoxMesh_iejgs")
+
+[node name="Label" type="Label3D" parent="Interactables/FlavorDateCorridor" unique_id=828548493]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+billboard = 1
+text = "Романтический сектор"
+font_size = 22
+
+[node name="ScenicGags" type="Node3D" parent="Interactables" unique_id=807221774]
+
+[node name="CloneOutputReadyGag" type="Node3D" parent="Interactables/ScenicGags" unique_id=1761509661]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 1.2, -3)
+
+[node name="ArrowBody" type="MeshInstance3D" parent="Interactables/ScenicGags/CloneOutputReadyGag" unique_id=2021789252]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0, 0)
+material_override = SubResource("StandardMaterial3D_rsglh")
+mesh = SubResource("BoxMesh_a74n1")
+
+[node name="ArrowTip" type="MeshInstance3D" parent="Interactables/ScenicGags/CloneOutputReadyGag" unique_id=108871617]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0, 0)
+material_override = SubResource("StandardMaterial3D_c4qwf")
+mesh = SubResource("BoxMesh_cfwlh")
+
+[node name="ReadySign" type="Label3D" parent="Interactables/ScenicGags/CloneOutputReadyGag" unique_id=953361177]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35, 0.25, 0)
+billboard = 1
+text = "ЧЕЛОВЕК ГОТОВ"
+font_size = 22
+
 [node name="Transitions" type="Node3D" parent="." unique_id=1900000061]
 
 [node name="ToCity" type="Area3D" parent="Transitions" unique_id=1900000062]
@@ -544,6 +788,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_01" unique_id=1900000079]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
 
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_01" unique_id=19856517]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_01/RoomPlate" unique_id=878994216]
+material_override = SubResource("StandardMaterial3D_6b7bo")
+mesh = SubResource("BoxMesh_bxlkw")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_01/RoomPlate" unique_id=266119815]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "01"
+font_size = 28
+
 [node name="clone_date_slot_02" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0, -3.5)
 
@@ -599,6 +856,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
 
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_02" unique_id=1900000091]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
+
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_02" unique_id=838705910]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_02/RoomPlate" unique_id=1241272849]
+material_override = SubResource("StandardMaterial3D_s1m2u")
+mesh = SubResource("BoxMesh_8t0iv")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_02/RoomPlate" unique_id=1751782864]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "02"
+font_size = 28
 
 [node name="clone_date_slot_03" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000092]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0, -0.5)
@@ -656,6 +926,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_03" unique_id=1900000103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
 
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_03" unique_id=96869877]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_03/RoomPlate" unique_id=1778456301]
+material_override = SubResource("StandardMaterial3D_7gga4")
+mesh = SubResource("BoxMesh_4m41p")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_03/RoomPlate" unique_id=1264966278]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "03"
+font_size = 28
+
 [node name="clone_date_slot_04" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000104]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0, 2.5)
 
@@ -711,6 +994,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
 
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_04" unique_id=1900000115]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
+
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_04" unique_id=1877070596]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_04/RoomPlate" unique_id=682885984]
+material_override = SubResource("StandardMaterial3D_gxu8l")
+mesh = SubResource("BoxMesh_i6mu7")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_04/RoomPlate" unique_id=525930402]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "04"
+font_size = 28
 
 [node name="clone_date_slot_05" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000116]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0, 5.5)
@@ -768,6 +1064,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_05" unique_id=1900000127]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
 
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_05" unique_id=2139137596]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_05/RoomPlate" unique_id=200432134]
+material_override = SubResource("StandardMaterial3D_c1wrt")
+mesh = SubResource("BoxMesh_ox27s")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_05/RoomPlate" unique_id=1863439553]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "05"
+font_size = 28
+
 [node name="clone_date_slot_06" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000128]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, -6.5)
 
@@ -823,6 +1132,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
 
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_06" unique_id=1900000139]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
+
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_06" unique_id=1902952142]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_06/RoomPlate" unique_id=52349025]
+material_override = SubResource("StandardMaterial3D_6aef6")
+mesh = SubResource("BoxMesh_udic2")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_06/RoomPlate" unique_id=1130188137]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "06"
+font_size = 28
 
 [node name="clone_date_slot_07" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000140]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, -3.5)
@@ -880,6 +1202,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_07" unique_id=1900000151]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
 
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_07" unique_id=1414929671]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_07/RoomPlate" unique_id=663461364]
+material_override = SubResource("StandardMaterial3D_g5hfn")
+mesh = SubResource("BoxMesh_en3f6")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_07/RoomPlate" unique_id=1421589880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "07"
+font_size = 28
+
 [node name="clone_date_slot_08" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000152]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, -0.5)
 
@@ -935,6 +1270,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
 
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_08" unique_id=1900000163]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
+
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_08" unique_id=1161037987]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_08/RoomPlate" unique_id=1972212328]
+material_override = SubResource("StandardMaterial3D_plemh")
+mesh = SubResource("BoxMesh_urat6")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_08/RoomPlate" unique_id=1706429739]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "08"
+font_size = 28
 
 [node name="clone_date_slot_09" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000164]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, 2.5)
@@ -992,6 +1340,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_09" unique_id=1900000175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
 
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_09" unique_id=546945759]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_09/RoomPlate" unique_id=1551783127]
+material_override = SubResource("StandardMaterial3D_1aevx")
+mesh = SubResource("BoxMesh_7l7jr")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_09/RoomPlate" unique_id=1678239630]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "09"
+font_size = 28
+
 [node name="clone_date_slot_10" type="Node3D" parent="CloneVisualization/DatingRooms" unique_id=1900000176]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, 5.5)
 
@@ -1048,13 +1409,25 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.05, 0.25)
 [node name="girl_stand" type="Marker3D" parent="CloneVisualization/DatingRooms/clone_date_slot_10" unique_id=1900000187]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.05, 0.25)
 
+[node name="RoomPlate" type="Node3D" parent="CloneVisualization/DatingRooms/clone_date_slot_10" unique_id=2111897620]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, -0.55)
+
+[node name="PlateMesh" type="MeshInstance3D" parent="CloneVisualization/DatingRooms/clone_date_slot_10/RoomPlate" unique_id=568836263]
+material_override = SubResource("StandardMaterial3D_kndxf")
+mesh = SubResource("BoxMesh_0avw3")
+
+[node name="PlateNumber" type="Label3D" parent="CloneVisualization/DatingRooms/clone_date_slot_10/RoomPlate" unique_id=756542486]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.04)
+billboard = 1
+text = "10"
+font_size = 28
+
 [node name="WorkVisuals" type="Node3D" parent="CloneVisualization" unique_id=1900000188]
 
 [node name="clone_work_visual_01" type="Marker3D" parent="CloneVisualization/WorkVisuals" unique_id=1900000189]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.05, 3.6)
 
 [node name="Pad" type="MeshInstance3D" parent="CloneVisualization/WorkVisuals/clone_work_visual_01" unique_id=1900000190]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 material_override = SubResource("Mat_PadWork")
 mesh = SubResource("BoxMesh_SmallPad")
 
@@ -1062,7 +1435,6 @@ mesh = SubResource("BoxMesh_SmallPad")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0.05, 4.6)
 
 [node name="Pad" type="MeshInstance3D" parent="CloneVisualization/WorkVisuals/clone_work_visual_02" unique_id=1900000192]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 material_override = SubResource("Mat_PadWork")
 mesh = SubResource("BoxMesh_SmallPad")
 
@@ -1070,7 +1442,6 @@ mesh = SubResource("BoxMesh_SmallPad")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.05, 5.6)
 
 [node name="Pad" type="MeshInstance3D" parent="CloneVisualization/WorkVisuals/clone_work_visual_03" unique_id=1900000194]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 material_override = SubResource("Mat_PadWork")
 mesh = SubResource("BoxMesh_SmallPad")
 
@@ -1121,3 +1492,263 @@ billboard = 1
 text = "ВНЕШНИЙ ПОТОК: 0"
 font_size = 20
 
+[node name="UpgradeVisuals" type="Node3D" parent="." unique_id=378513859]
+
+[node name="ProductionSpeed" type="Node3D" parent="UpgradeVisuals" unique_id=1477271745]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -3.5)
+
+[node name="Level0_ChamberBase" type="Label3D" parent="UpgradeVisuals/ProductionSpeed" unique_id=166887308]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0)
+billboard = 1
+text = "КАМЕРА #1"
+font_size = 16
+
+[node name="Tier1_CoolingPipe" type="Node3D" parent="UpgradeVisuals/ProductionSpeed" unique_id=1592705134]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 1.6, 0.3)
+script = ExtResource("10_73jk0")
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/ProductionSpeed/Tier1_CoolingPipe" unique_id=998172600]
+material_override = SubResource("StandardMaterial3D_0qtbv")
+mesh = SubResource("BoxMesh_h5dkr")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/ProductionSpeed/Tier1_CoolingPipe" unique_id=1521937488]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21, 0)
+billboard = 1
+text = "труба охлаждения"
+font_size = 14
+
+[node name="Tier2_StatusPanel" type="Node3D" parent="UpgradeVisuals/ProductionSpeed" unique_id=1308747834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 1.7, 0.5)
+script = ExtResource("10_73jk0")
+minimum_level = 2
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/ProductionSpeed/Tier2_StatusPanel" unique_id=1333488172]
+material_override = SubResource("StandardMaterial3D_akc1e")
+mesh = SubResource("BoxMesh_aqpdh")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/ProductionSpeed/Tier2_StatusPanel" unique_id=1362440465]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.325, 0)
+billboard = 1
+text = "ПАНЕЛЬ 2"
+font_size = 14
+
+[node name="Tier3_CableBundle" type="Node3D" parent="UpgradeVisuals/ProductionSpeed" unique_id=895280219]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0.2)
+script = ExtResource("10_73jk0")
+minimum_level = 3
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/ProductionSpeed/Tier3_CableBundle" unique_id=237693234]
+material_override = SubResource("StandardMaterial3D_l8exp")
+mesh = SubResource("BoxMesh_22tle")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/ProductionSpeed/Tier3_CableBundle" unique_id=380409915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+billboard = 1
+text = "кабели"
+font_size = 14
+
+[node name="Tier4_EmitterFrame" type="Node3D" parent="UpgradeVisuals/ProductionSpeed" unique_id=305323225]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.85)
+script = ExtResource("10_73jk0")
+minimum_level = 4
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/ProductionSpeed/Tier4_EmitterFrame" unique_id=1971592432]
+material_override = SubResource("StandardMaterial3D_d468o")
+mesh = SubResource("BoxMesh_6evhk")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/ProductionSpeed/Tier4_EmitterFrame" unique_id=528891091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.19, 0)
+billboard = 1
+text = "излучатель"
+font_size = 14
+
+[node name="Tier5_SerialSign" type="Node3D" parent="UpgradeVisuals/ProductionSpeed" unique_id=1621516610]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1, 0)
+script = ExtResource("10_73jk0")
+minimum_level = 5
+
+[node name="Board" type="MeshInstance3D" parent="UpgradeVisuals/ProductionSpeed/Tier5_SerialSign" unique_id=1563551472]
+material_override = SubResource("StandardMaterial3D_qt88q")
+mesh = SubResource("BoxMesh_kxlml")
+
+[node name="SignText" type="Label3D" parent="UpgradeVisuals/ProductionSpeed/Tier5_SerialSign" unique_id=2128787593]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.05)
+billboard = 1
+text = "ПЕЧАТЬ ЧЕЛОВЕКА: СЕРИЙНАЯ"
+font_size = 16
+
+[node name="WorkEfficiency" type="Node3D" parent="UpgradeVisuals" unique_id=370702607]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 5.5)
+
+[node name="Level0_WorkExitSign" type="Label3D" parent="UpgradeVisuals/WorkEfficiency" unique_id=1007132821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
+billboard = 1
+text = "ВЫХОД: РАБОТА"
+font_size = 18
+
+[node name="Tier1_Clipboard" type="Node3D" parent="UpgradeVisuals/WorkEfficiency" unique_id=813550384]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.2, 0.2)
+script = ExtResource("10_73jk0")
+upgrade_type = 1
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/WorkEfficiency/Tier1_Clipboard" unique_id=2104118447]
+material_override = SubResource("StandardMaterial3D_44346")
+mesh = SubResource("BoxMesh_u1jh3")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/WorkEfficiency/Tier1_Clipboard" unique_id=1035693919]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.325, 0)
+billboard = 1
+text = "клипборд"
+font_size = 14
+
+[node name="Tier2_TimeBoard" type="Node3D" parent="UpgradeVisuals/WorkEfficiency" unique_id=1064961389]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 1.8, 0.2)
+script = ExtResource("10_73jk0")
+upgrade_type = 1
+minimum_level = 2
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/WorkEfficiency/Tier2_TimeBoard" unique_id=972699901]
+material_override = SubResource("StandardMaterial3D_75d48")
+mesh = SubResource("BoxMesh_blms8")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/WorkEfficiency/Tier2_TimeBoard" unique_id=766043375]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+billboard = 1
+text = "ВРЕМЯ"
+font_size = 14
+
+[node name="Tier3_ContractStack" type="Node3D" parent="UpgradeVisuals/WorkEfficiency" unique_id=457914234]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.9, 0.3)
+script = ExtResource("10_73jk0")
+upgrade_type = 1
+minimum_level = 3
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/WorkEfficiency/Tier3_ContractStack" unique_id=243197003]
+material_override = SubResource("StandardMaterial3D_a4grk")
+mesh = SubResource("BoxMesh_w0wdx")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/WorkEfficiency/Tier3_ContractStack" unique_id=1837776842]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.275, 0)
+billboard = 1
+text = "договоры"
+font_size = 14
+
+[node name="Tier4_StampedRoute" type="Node3D" parent="UpgradeVisuals/WorkEfficiency" unique_id=107960012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 1.4, 0.5)
+script = ExtResource("10_73jk0")
+upgrade_type = 1
+minimum_level = 4
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/WorkEfficiency/Tier4_StampedRoute" unique_id=1336751770]
+material_override = SubResource("StandardMaterial3D_ttkct")
+mesh = SubResource("BoxMesh_rwxfe")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/WorkEfficiency/Tier4_StampedRoute" unique_id=494238579]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, 0)
+billboard = 1
+text = "МАРШРУТ ✓"
+font_size = 14
+
+[node name="Tier5_AutoWorkSign" type="Node3D" parent="UpgradeVisuals/WorkEfficiency" unique_id=594254100]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, 0)
+script = ExtResource("10_73jk0")
+upgrade_type = 1
+minimum_level = 5
+
+[node name="Board" type="MeshInstance3D" parent="UpgradeVisuals/WorkEfficiency/Tier5_AutoWorkSign" unique_id=264467795]
+material_override = SubResource("StandardMaterial3D_p4ph8")
+mesh = SubResource("BoxMesh_3mr4n")
+
+[node name="SignText" type="Label3D" parent="UpgradeVisuals/WorkEfficiency/Tier5_AutoWorkSign" unique_id=1629183505]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.05)
+billboard = 1
+text = "РАБОТА РАСПРЕДЕЛЯЕТСЯ АВТОМАТИЧЕСКИ"
+font_size = 16
+
+[node name="DatingEfficiency" type="Node3D" parent="UpgradeVisuals" unique_id=1650261023]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+
+[node name="Level0_DateCorridor" type="Label3D" parent="UpgradeVisuals/DatingEfficiency" unique_id=2028270995]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+billboard = 1
+text = "КОРИДОР СВИДАНИЙ"
+font_size = 18
+
+[node name="Tier1_QueueBoard" type="Node3D" parent="UpgradeVisuals/DatingEfficiency" unique_id=1943374556]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 1.6, 0)
+script = ExtResource("10_73jk0")
+upgrade_type = 2
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/DatingEfficiency/Tier1_QueueBoard" unique_id=1287956383]
+material_override = SubResource("StandardMaterial3D_kqng4")
+mesh = SubResource("BoxMesh_owmbm")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/DatingEfficiency/Tier1_QueueBoard" unique_id=1096825602]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+billboard = 1
+text = "ОЧЕРЕДЬ 01-10"
+font_size = 14
+
+[node name="Tier2_Flowers" type="Node3D" parent="UpgradeVisuals/DatingEfficiency" unique_id=1334489331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.7, 0.4)
+script = ExtResource("10_73jk0")
+upgrade_type = 2
+minimum_level = 2
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/DatingEfficiency/Tier2_Flowers" unique_id=692119285]
+material_override = SubResource("StandardMaterial3D_ljrka")
+mesh = SubResource("BoxMesh_clkgl")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/DatingEfficiency/Tier2_Flowers" unique_id=1019611030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, 0)
+billboard = 1
+text = "цветы"
+font_size = 14
+
+[node name="Tier3_ScheduleDisplay" type="Node3D" parent="UpgradeVisuals/DatingEfficiency" unique_id=1204472249]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0.6)
+script = ExtResource("10_73jk0")
+upgrade_type = 2
+minimum_level = 3
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/DatingEfficiency/Tier3_ScheduleDisplay" unique_id=634444125]
+material_override = SubResource("StandardMaterial3D_yh3kb")
+mesh = SubResource("BoxMesh_ta1w5")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/DatingEfficiency/Tier3_ScheduleDisplay" unique_id=352620985]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+billboard = 1
+text = "РАСПИСАНИЕ"
+font_size = 14
+
+[node name="Tier4_NextLight" type="Node3D" parent="UpgradeVisuals/DatingEfficiency" unique_id=166119253]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 2.2, 0.2)
+script = ExtResource("10_73jk0")
+upgrade_type = 2
+minimum_level = 4
+
+[node name="Mesh" type="MeshInstance3D" parent="UpgradeVisuals/DatingEfficiency/Tier4_NextLight" unique_id=375269097]
+material_override = SubResource("StandardMaterial3D_i12ro")
+mesh = SubResource("BoxMesh_b7i5v")
+
+[node name="Label" type="Label3D" parent="UpgradeVisuals/DatingEfficiency/Tier4_NextLight" unique_id=413967149]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+billboard = 1
+text = "СЛЕДУЮЩИЙ"
+font_size = 14
+
+[node name="Tier5_RomanceConveyorSign" type="Node3D" parent="UpgradeVisuals/DatingEfficiency" unique_id=1872069521]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+script = ExtResource("10_73jk0")
+upgrade_type = 2
+minimum_level = 5
+
+[node name="Board" type="MeshInstance3D" parent="UpgradeVisuals/DatingEfficiency/Tier5_RomanceConveyorSign" unique_id=248459982]
+material_override = SubResource("StandardMaterial3D_1i4me")
+mesh = SubResource("BoxMesh_xaisn")
+
+[node name="SignText" type="Label3D" parent="UpgradeVisuals/DatingEfficiency/Tier5_RomanceConveyorSign" unique_id=2083327299]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.05)
+billboard = 1
+text = "РОМАНТИЧЕСКИЙ КОНВЕЙЕР: НОРМА"
+font_size = 16

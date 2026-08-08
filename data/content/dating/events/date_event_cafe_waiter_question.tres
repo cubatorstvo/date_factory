@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_waiter_question_honest"
+label = "Честно назвать одну проблему без наезда"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([1, 0])
+result_text = "Ты называешь одну конкретную мелочь; официант записывает её как полезный факт."
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_waiter_question_balance"
+label = "Сначала отметить хорошее, потом конкретную проблему"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4])
+result_text = "Похвала идёт первой; замечание звучит аккуратно и не разрушает сервис."
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_waiter_question_price"
+label = "Сказать, что всё должно соответствовать цене"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "Ты связываешь впечатление с ценником; официант кивает с профессиональной серьёзностью."
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_waiter_question_data"
+label = "Ответить: «мы ещё собираем данные»"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([9])
+result_text = "Официант принимает ответ как промежуточный отчёт и отступает без уточнений."
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_cafe_waiter_question"
+category = 0
+title = "Всё ли понравилось"
+setup_text = "Официант спрашивает, всё ли понравилось, и явно ждёт настоящего ответа."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

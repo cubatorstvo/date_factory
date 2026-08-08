@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DiscoverySituationDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_situation_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_approach"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_appearance_coat_check_replace.tres" id="a0"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_appearance_coat_check_buy.tres" id="a1"]
+[ext_resource type="Resource" path="res://data/content/discovery/approaches/discovery_approach_appearance_coat_check_aura.tres" id="a2"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_situation_appearance_coat_check"
+location_id = &"appearance_space"
+setup_text = "Она спорит с номерком гардероба: пальто дорогое, номерок дешёвый, и это, по её словам, создаёт неверную управленческую связь."
+approaches = Array[ExtResource("1_approach")]([ExtResource("a0"), ExtResource("a1"), ExtResource("a2")])

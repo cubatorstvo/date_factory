@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GirlDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/girl_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"girl_appearance_mannequin"
+display_name = "Девушка у манекена"
+is_story = false
+has_story_stage = false
+story_stage = 0
+primary_trait = 3
+secondary_trait = 0
+required_experience = 3
+discovery_situation_id = &"discovery_situation_appearance_mannequin"
+appearance_profile_id = &"appearance_female_appearance_mannequin"
+dating_pool_ids = Array[StringName]([&"date_pool_cafe_common", &"date_pool_signature_appearance_mannequin"])
+default_date_location_id = &"cafe"
+dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_greeting_attention", &"dating_greeting_immediate_joke", &"dating_greeting_check_comfort", &"dating_greeting_offer_choice", &"dating_greeting_notice_detail", &"dating_greeting_direct_plan", &"dating_greeting_small_confession"])
+dating_farewell_id = &"dating_farewell_last_word_common"
+speech_style_note = "Серьёзно относится к нелепым системам и предпочитает, чтобы их последствия были видны окружающим."
+clue_notes = Array[String](["Попросила манекен отвернуться, прежде чем переодеть второй манекен.", "Если странный ритуал никто не заметил, считает эксперимент неполным.", "Официальная дорогая версия вещи кажется ей менее интересной, чем неправильная с точным правилом."])

@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DatingEventDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_event_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_wrong_order_chase"
+label = "Догнать и вернуть тарелку"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([0])
+result_text = "Ты возвращаешь чужой заказ до конца коридора; официант кивает, будто так и было задумано."
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_wrong_order_replace"
+label = "Попросить заменить заказ без сцены"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4])
+result_text = "Замена проходит шёпотом; чужая тарелка исчезает без объяснений и без аплодисментов."
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_wrong_order_double"
+label = "Оставить чужой заказ и заказать свой второй раз"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "На столе оказываются два ужина; персонал делает вид, что это нормальный формат вечера."
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_cafe_wrong_order_choice"
+label = "Объявить ошибку новым выбором вечера"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([8, 9])
+result_text = "Ты принимаешь чужой заказ как судьбу; она смотрит на тарелку с уважением к импровизации."
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_event_cafe_wrong_order"
+category = 1
+title = "Чужой заказ"
+setup_text = "Официант приносит чужой заказ и уже уходит."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3")]
+allowed_location_ids = Array[StringName]([&"cafe"])

@@ -1,0 +1,61 @@
+[gd_resource type="Resource" script_class="DatingFarewellDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_farewell_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_last_honest"
+label = "Честно сказать, что вечер понравился"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([1])
+result_text = "Честно сказать, что вечер понравился"
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_last_phrase"
+label = "Закончить вечер одной хорошо сформулированной фразой"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "Закончить вечер одной хорошо сформулированной фразой"
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_last_next"
+label = "Сразу предложить конкретный следующий план"
+characteristic = 2
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([4])
+result_text = "Сразу предложить конкретный следующий план"
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_last_hers"
+label = "Оставить последнюю реплику ей"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([0, 10])
+result_text = "Оставить последнюю реплику ей"
+
+[sub_resource type="Resource" id="Action_4"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_last_sudden"
+label = "Закончить внезапным предложением продолжить хаос завтра"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([8, 6])
+result_text = "Закончить внезапным предложением продолжить хаос завтра"
+
+[resource]
+script = ExtResource("1_script")
+id = &"dating_farewell_last_word_common"
+title = "Прощание — последнее слово"
+setup_text = "Встреча заканчивается. Осталась одна финальная реплика."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3"), SubResource("Action_4")]

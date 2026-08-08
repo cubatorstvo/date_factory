@@ -1,10 +1,12 @@
-[gd_scene load_steps=54 format=3]
+[gd_scene format=3 uid="uid://busp6s8isfehu"]
 
-[ext_resource type="Script" path="res://world/world_location.gd" id="1_loc"]
-[ext_resource type="Script" path="res://world/world_transition.gd" id="2_transition"]
-[ext_resource type="Script" path="res://world/player_spawn_point.gd" id="3_pspawn"]
-[ext_resource type="Script" path="res://world/story_event_point.gd" id="5_story"]
-[ext_resource type="Script" path="res://game/final_date/final_signal_interactable.gd" id="8_final_sig"]
+[ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
+[ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
+[ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
+[ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="5_p4461"]
+[ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
+[ext_resource type="Script" uid="uid://dx0ba68hwmey5" path="res://world/flavor/flavor_interactable.gd" id="6_dfhbf"]
+[ext_resource type="Script" uid="uid://d33qu0bo2or22" path="res://game/final_date/final_signal_interactable.gd" id="8_final_sig"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
@@ -14,22 +16,22 @@ ambient_light_color = Color(0.55, 0.62, 0.72, 1)
 ambient_light_energy = 0.75
 tonemap_mode = 2
 
+[sub_resource type="BoxMesh" id="BoxMesh_Floor"]
+size = Vector3(30, 0.2, 14)
+
 [sub_resource type="StandardMaterial3D" id="Mat_Floor"]
 albedo_color = Color(0.22, 0.26, 0.32, 1)
 roughness = 0.88
 
-[sub_resource type="BoxMesh" id="BoxMesh_Floor"]
-size = Vector3(30, 0.2, 14)
-
 [sub_resource type="BoxShape3D" id="BoxShape_Floor"]
 size = Vector3(30, 0.2, 14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_WallNS"]
+size = Vector3(30, 3.4, 0.3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_Wall"]
 albedo_color = Color(0.32, 0.36, 0.42, 1)
 roughness = 0.92
-
-[sub_resource type="BoxMesh" id="BoxMesh_WallNS"]
-size = Vector3(30, 3.4, 0.3)
 
 [sub_resource type="BoxShape3D" id="BoxShape_WallNS"]
 size = Vector3(30, 3.4, 0.3)
@@ -40,41 +42,21 @@ size = Vector3(0.3, 3.4, 14)
 [sub_resource type="BoxShape3D" id="BoxShape_WallEW"]
 size = Vector3(0.3, 3.4, 14)
 
+[sub_resource type="BoxMesh" id="BoxMesh_ZoneAFloor"]
+size = Vector3(9.6, 0.04, 12.5)
+
 [sub_resource type="StandardMaterial3D" id="Mat_ZoneAFloor"]
 albedo_color = Color(0.28, 0.34, 0.42, 1)
 roughness = 0.8
 
-[sub_resource type="BoxMesh" id="BoxMesh_ZoneAFloor"]
-size = Vector3(9.6, 0.04, 12.5)
+[sub_resource type="BoxMesh" id="BoxMesh_AccentStrip"]
+size = Vector3(0.2, 0.05, 12)
 
-[sub_resource type="StandardMaterial3D" id="Mat_ZoneBFloor"]
-albedo_color = Color(0.3, 0.32, 0.38, 1)
-roughness = 0.75
-
-[sub_resource type="BoxMesh" id="BoxMesh_ZoneBWalk"]
-size = Vector3(9.8, 0.06, 4.2)
-
-[sub_resource type="StandardMaterial3D" id="Mat_ZoneCFloor"]
-albedo_color = Color(0.36, 0.32, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_ZoneCFloor"]
-size = Vector3(9.6, 0.04, 12.5)
-
-[sub_resource type="StandardMaterial3D" id="Mat_Rail"]
-albedo_color = Color(0.45, 0.5, 0.58, 1)
-metallic = 0.35
-roughness = 0.4
-
-[sub_resource type="BoxMesh" id="BoxMesh_Rail"]
-size = Vector3(9.6, 0.08, 0.12)
-
-[sub_resource type="BoxMesh" id="BoxMesh_RailPost"]
-size = Vector3(0.1, 1.0, 0.1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_Column"]
-albedo_color = Color(0.38, 0.4, 0.46, 1)
-roughness = 0.7
+[sub_resource type="StandardMaterial3D" id="Mat_AccentStrip"]
+albedo_color = Color(0.4, 0.65, 0.75, 1)
+emission_enabled = true
+emission = Color(0.25, 0.5, 0.65, 1)
+emission_energy_multiplier = 0.3
 
 [sub_resource type="CylinderMesh" id="Mesh_Column"]
 top_radius = 0.28
@@ -82,23 +64,32 @@ bottom_radius = 0.32
 height = 3.2
 radial_segments = 10
 
-[sub_resource type="StandardMaterial3D" id="Mat_Beacon"]
-albedo_color = Color(0.35, 0.55, 0.75, 1)
+[sub_resource type="StandardMaterial3D" id="Mat_Column"]
+albedo_color = Color(0.38, 0.4, 0.46, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_Console"]
+size = Vector3(1.4, 1, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Console"]
+albedo_color = Color(0.24, 0.28, 0.34, 1)
+metallic = 0.25
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_ConsoleScreen"]
+size = Vector3(1.1, 0.55, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ConsoleScreen"]
+albedo_color = Color(0.2, 0.55, 0.7, 1)
 emission_enabled = true
-emission = Color(0.25, 0.55, 0.85, 1)
-emission_energy_multiplier = 0.9
+emission = Color(0.15, 0.5, 0.7, 1)
+emission_energy_multiplier = 0.45
 
-[sub_resource type="CylinderMesh" id="Mesh_BeaconPillar"]
-top_radius = 0.18
-bottom_radius = 0.38
-height = 2.4
-radial_segments = 12
-
-[sub_resource type="SphereMesh" id="Mesh_BeaconOrb"]
-radius = 0.4
-height = 0.8
-radial_segments = 16
-rings = 8
+[sub_resource type="TorusMesh" id="Mesh_BeaconRing"]
+inner_radius = 0.55
+outer_radius = 0.72
+rings = 12
+ring_segments = 16
 
 [sub_resource type="StandardMaterial3D" id="Mat_BeaconRing"]
 transparency = 1
@@ -107,18 +98,23 @@ emission_enabled = true
 emission = Color(0.3, 0.65, 0.95, 1)
 emission_energy_multiplier = 0.55
 
-[sub_resource type="TorusMesh" id="Mesh_BeaconRing"]
-inner_radius = 0.55
-outer_radius = 0.72
-rings = 12
-ring_segments = 16
+[sub_resource type="BoxMesh" id="BoxMesh_ZoneBWalk"]
+size = Vector3(9.8, 0.06, 4.2)
 
-[sub_resource type="StandardMaterial3D" id="Mat_Planet"]
-albedo_color = Color(0.55, 0.38, 0.28, 1)
-emission_enabled = true
-emission = Color(0.35, 0.2, 0.12, 1)
-emission_energy_multiplier = 0.25
-roughness = 0.95
+[sub_resource type="StandardMaterial3D" id="Mat_ZoneBFloor"]
+albedo_color = Color(0.3, 0.32, 0.38, 1)
+roughness = 0.75
+
+[sub_resource type="BoxMesh" id="BoxMesh_Rail"]
+size = Vector3(9.6, 0.08, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Rail"]
+albedo_color = Color(0.45, 0.5, 0.58, 1)
+metallic = 0.35
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_RailPost"]
+size = Vector3(0.1, 1, 0.1)
 
 [sub_resource type="SphereMesh" id="Mesh_Planet"]
 radius = 4.5
@@ -126,12 +122,12 @@ height = 9.0
 radial_segments = 20
 rings = 12
 
-[sub_resource type="StandardMaterial3D" id="Mat_Star"]
-albedo_color = Color(0.85, 0.9, 1, 1)
+[sub_resource type="StandardMaterial3D" id="Mat_Planet"]
+albedo_color = Color(0.55, 0.38, 0.28, 1)
+roughness = 0.95
 emission_enabled = true
-emission = Color(0.8, 0.88, 1, 1)
-emission_energy_multiplier = 1.2
-shading_mode = 0
+emission = Color(0.35, 0.2, 0.12, 1)
+emission_energy_multiplier = 0.25
 
 [sub_resource type="SphereMesh" id="Mesh_Star"]
 radius = 0.12
@@ -139,9 +135,16 @@ height = 0.24
 radial_segments = 8
 rings = 4
 
-[sub_resource type="StandardMaterial3D" id="Mat_Table"]
-albedo_color = Color(0.42, 0.3, 0.2, 1)
-roughness = 0.65
+[sub_resource type="StandardMaterial3D" id="Mat_Star"]
+shading_mode = 0
+albedo_color = Color(0.85, 0.9, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ZoneCFloor"]
+size = Vector3(9.6, 0.04, 12.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ZoneCFloor"]
+albedo_color = Color(0.36, 0.32, 0.28, 1)
+roughness = 0.85
 
 [sub_resource type="CylinderMesh" id="Mesh_TableTop"]
 top_radius = 0.85
@@ -149,21 +152,73 @@ bottom_radius = 0.85
 height = 0.08
 radial_segments = 16
 
+[sub_resource type="StandardMaterial3D" id="Mat_Table"]
+albedo_color = Color(0.42, 0.3, 0.2, 1)
+roughness = 0.65
+
 [sub_resource type="CylinderMesh" id="Mesh_TableLeg"]
 top_radius = 0.08
 bottom_radius = 0.12
 height = 0.72
 radial_segments = 8
 
+[sub_resource type="BoxMesh" id="BoxMesh_ChairSeat"]
+size = Vector3(0.55, 0.08, 0.55)
+
 [sub_resource type="StandardMaterial3D" id="Mat_Chair"]
 albedo_color = Color(0.35, 0.28, 0.22, 1)
 roughness = 0.75
 
-[sub_resource type="BoxMesh" id="BoxMesh_ChairSeat"]
-size = Vector3(0.55, 0.08, 0.55)
-
 [sub_resource type="BoxMesh" id="BoxMesh_ChairBack"]
 size = Vector3(0.55, 0.55, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j6h6k"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_g034q"]
+size = Vector3(0.14, 0.04, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bv3iv"]
+albedo_color = Color(0.5, 0.5, 0.52, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_y6wba"]
+size = Vector3(0.02, 0.14, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rmp6h"]
+albedo_color = Color(0.5, 0.5, 0.52, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tr3n6"]
+size = Vector3(0.02, 0.14, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6jf85"]
+albedo_color = Color(0.95, 0.95, 0.92, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_f8lkh"]
+size = Vector3(0.08, 0.12, 0.06)
+
+[sub_resource type="CylinderMesh" id="Mesh_BeaconPillar"]
+top_radius = 0.18
+bottom_radius = 0.38
+height = 2.4
+radial_segments = 12
+
+[sub_resource type="StandardMaterial3D" id="Mat_Beacon"]
+albedo_color = Color(0.35, 0.55, 0.75, 1)
+emission_enabled = true
+emission = Color(0.25, 0.55, 0.85, 1)
+emission_energy_multiplier = 0.9
+
+[sub_resource type="SphereMesh" id="Mesh_BeaconOrb"]
+radius = 0.4
+height = 0.8
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxShape3D" id="BoxShape_Gate"]
+size = Vector3(0.35, 2.8, 5.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Gate"]
+size = Vector3(0.35, 2.8, 5.5)
 
 [sub_resource type="StandardMaterial3D" id="Mat_Gate"]
 albedo_color = Color(0.55, 0.45, 0.25, 1)
@@ -173,361 +228,358 @@ emission_enabled = true
 emission = Color(0.35, 0.28, 0.1, 1)
 emission_energy_multiplier = 0.2
 
-[sub_resource type="BoxMesh" id="BoxMesh_Gate"]
-size = Vector3(0.35, 2.8, 5.5)
-
-[sub_resource type="BoxShape3D" id="BoxShape_Gate"]
-size = Vector3(0.35, 2.8, 5.5)
-
-[sub_resource type="StandardMaterial3D" id="Mat_Console"]
-albedo_color = Color(0.24, 0.28, 0.34, 1)
-metallic = 0.25
-roughness = 0.4
-
-[sub_resource type="BoxMesh" id="BoxMesh_Console"]
-size = Vector3(1.4, 1.0, 0.7)
-
-[sub_resource type="StandardMaterial3D" id="Mat_ConsoleScreen"]
-albedo_color = Color(0.2, 0.55, 0.7, 1)
-emission_enabled = true
-emission = Color(0.15, 0.5, 0.7, 1)
-emission_energy_multiplier = 0.45
-
-[sub_resource type="BoxMesh" id="BoxMesh_ConsoleScreen"]
-size = Vector3(1.1, 0.55, 0.05)
-
 [sub_resource type="BoxShape3D" id="BoxShape_Interact"]
-size = Vector3(1.6, 2.0, 1.4)
+size = Vector3(1.6, 2, 1.4)
 
-[sub_resource type="StandardMaterial3D" id="TransitionMat"]
-albedo_color = Color(0.2, 0.55, 0.75, 1)
+[sub_resource type="BoxShape3D" id="BoxShape3D_irctf"]
+size = Vector3(0.7, 1.2, 0.7)
 
-[sub_resource type="BoxMesh" id="TransitionMesh"]
-size = Vector3(1.2, 2.2, 0.4)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_msbmx"]
+albedo_color = Color(0.72, 0.68, 0.62, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_iejgs"]
+size = Vector3(0.45, 0.9, 0.45)
 
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
 
-[sub_resource type="StandardMaterial3D" id="Mat_AccentStrip"]
-albedo_color = Color(0.4, 0.65, 0.75, 1)
-emission_enabled = true
-emission = Color(0.25, 0.5, 0.65, 1)
-emission_energy_multiplier = 0.3
+[sub_resource type="BoxMesh" id="TransitionMesh"]
+size = Vector3(1.2, 2.2, 0.4)
 
-[sub_resource type="BoxMesh" id="BoxMesh_AccentStrip"]
-size = Vector3(0.2, 0.05, 12)
+[sub_resource type="StandardMaterial3D" id="TransitionMat"]
+albedo_color = Color(0.2, 0.55, 0.75, 1)
 
-[node name="final_location" type="Node3D"]
+[node name="final_location" type="Node3D" unique_id=1356847887]
 script = ExtResource("1_loc")
 location_id = &"final_location"
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=655219357]
 environment = SubResource("Env")
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1694297806]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 8, 0)
 light_color = Color(0.85, 0.9, 1, 1)
 light_energy = 0.7
-shadow_enabled = false
 
-[node name="FillA" type="OmniLight3D" parent="."]
+[node name="FillA" type="OmniLight3D" parent="." unique_id=2008871856]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 3.2, -2)
 light_color = Color(0.55, 0.75, 1, 1)
 light_energy = 1.1
 omni_range = 9.0
 
-[node name="FillB" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, 0)
+[node name="FillB" type="OmniLight3D" parent="." unique_id=1270636792]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 light_color = Color(0.7, 0.78, 0.95, 1)
 light_energy = 0.85
 omni_range = 10.0
 
-[node name="FillC" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 3.0, 0)
+[node name="FillC" type="OmniLight3D" parent="." unique_id=520879403]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 3, 0)
 light_color = Color(1, 0.85, 0.65, 1)
-light_energy = 1.0
 omni_range = 9.0
 
-[node name="Geometry" type="Node3D" parent="."]
+[node name="Geometry" type="Node3D" parent="." unique_id=1349365845]
 
-[node name="Floor" type="MeshInstance3D" parent="Geometry"]
+[node name="Floor" type="MeshInstance3D" parent="Geometry" unique_id=2045811456]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 mesh = SubResource("BoxMesh_Floor")
 surface_material_override/0 = SubResource("Mat_Floor")
 
-[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor"]
-collision_layer = 1
+[node name="FloorBody" type="StaticBody3D" parent="Geometry/Floor" unique_id=578504198]
 collision_mask = 0
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor/FloorBody" unique_id=225280919]
 shape = SubResource("BoxShape_Floor")
 
-[node name="WallN" type="MeshInstance3D" parent="Geometry"]
+[node name="WallN" type="MeshInstance3D" parent="Geometry" unique_id=1908698612]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -7)
 mesh = SubResource("BoxMesh_WallNS")
 surface_material_override/0 = SubResource("Mat_Wall")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallN"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallN" unique_id=146238890]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN/Body" unique_id=910057918]
 shape = SubResource("BoxShape_WallNS")
 
-[node name="WallS" type="MeshInstance3D" parent="Geometry"]
+[node name="WallS" type="MeshInstance3D" parent="Geometry" unique_id=2069391641]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 7)
 mesh = SubResource("BoxMesh_WallNS")
 surface_material_override/0 = SubResource("Mat_Wall")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallS"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallS" unique_id=1578169723]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS/Body" unique_id=1358064242]
 shape = SubResource("BoxShape_WallNS")
 
-[node name="WallE" type="MeshInstance3D" parent="Geometry"]
+[node name="WallE" type="MeshInstance3D" parent="Geometry" unique_id=1442564576]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1.7, 0)
 mesh = SubResource("BoxMesh_WallEW")
 surface_material_override/0 = SubResource("Mat_Wall")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallE"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallE" unique_id=526745265]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE/Body" unique_id=2346151]
 shape = SubResource("BoxShape_WallEW")
 
-[node name="WallW" type="MeshInstance3D" parent="Geometry"]
+[node name="WallW" type="MeshInstance3D" parent="Geometry" unique_id=129252878]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1.7, 0)
 mesh = SubResource("BoxMesh_WallEW")
 surface_material_override/0 = SubResource("Mat_Wall")
 
-[node name="Body" type="StaticBody3D" parent="Geometry/WallW"]
-collision_layer = 1
+[node name="Body" type="StaticBody3D" parent="Geometry/WallW" unique_id=94390428]
 
-[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body"]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW/Body" unique_id=1743582136]
 shape = SubResource("BoxShape_WallEW")
 
-[node name="ZONE_A_SIGNAL_CHAMBER" type="Node3D" parent="Geometry"]
+[node name="ZONE_A_SIGNAL_CHAMBER" type="Node3D" parent="Geometry" unique_id=636194044]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 0)
 
-[node name="ZoneAFloor" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="ZoneAFloor" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=1474884831]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 mesh = SubResource("BoxMesh_ZoneAFloor")
 surface_material_override/0 = SubResource("Mat_ZoneAFloor")
 
-[node name="AccentStripL" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="AccentStripL" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=338496597]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0.05, 0)
 mesh = SubResource("BoxMesh_AccentStrip")
 surface_material_override/0 = SubResource("Mat_AccentStrip")
 
-[node name="AccentStripR" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="AccentStripR" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=1694640754]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0.05, 0)
 mesh = SubResource("BoxMesh_AccentStrip")
 surface_material_override/0 = SubResource("Mat_AccentStrip")
 
-[node name="ColumnNW" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="ColumnNW" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=901068889]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 1.6, -5.2)
 mesh = SubResource("Mesh_Column")
 surface_material_override/0 = SubResource("Mat_Column")
 
-[node name="ColumnNE" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="ColumnNE" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=2123292874]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 1.6, -5.2)
 mesh = SubResource("Mesh_Column")
 surface_material_override/0 = SubResource("Mat_Column")
 
-[node name="ColumnSW" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="ColumnSW" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=569345408]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 1.6, 5.2)
 mesh = SubResource("Mesh_Column")
 surface_material_override/0 = SubResource("Mat_Column")
 
-[node name="ColumnSE" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="ColumnSE" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=1368572985]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 1.6, 5.2)
 mesh = SubResource("Mesh_Column")
 surface_material_override/0 = SubResource("Mat_Column")
 
-[node name="SignalConsole" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="SignalConsole" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=346412502]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 0.5, -3.2)
 mesh = SubResource("BoxMesh_Console")
 surface_material_override/0 = SubResource("Mat_Console")
 
-[node name="SignalConsoleScreen" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="SignalConsoleScreen" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=967094904]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 1.15, -2.85)
 mesh = SubResource("BoxMesh_ConsoleScreen")
 surface_material_override/0 = SubResource("Mat_ConsoleScreen")
 
-[node name="BeaconRing" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="BeaconRing" type="MeshInstance3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=1241982227]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, -3.2)
 mesh = SubResource("Mesh_BeaconRing")
 surface_material_override/0 = SubResource("Mat_BeaconRing")
 
-[node name="ZoneALabel" type="Label3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER"]
+[node name="ZoneALabel" type="Label3D" parent="Geometry/ZONE_A_SIGNAL_CHAMBER" unique_id=720338519]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.15, -5.4)
 billboard = 1
+modulate = Color(0.75, 0.9, 1, 1)
 text = "КАМЕРА СИГНАЛА"
 font_size = 42
 outline_size = 10
-modulate = Color(0.75, 0.9, 1, 1)
 
-[node name="ZONE_B_ORBIT_WALK" type="Node3D" parent="Geometry"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+[node name="ZONE_B_ORBIT_WALK" type="Node3D" parent="Geometry" unique_id=862723681]
 
-[node name="OrbitWalkway" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="OrbitWalkway" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=220514358]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
 mesh = SubResource("BoxMesh_ZoneBWalk")
 surface_material_override/0 = SubResource("Mat_ZoneBFloor")
 
-[node name="RailNorth" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="RailNorth" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=121275998]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, -2.15)
 mesh = SubResource("BoxMesh_Rail")
 surface_material_override/0 = SubResource("Mat_Rail")
 
-[node name="RailSouth" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="RailSouth" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=1671454939]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 2.15)
 mesh = SubResource("BoxMesh_Rail")
 surface_material_override/0 = SubResource("Mat_Rail")
 
-[node name="RailPostN1" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="RailPostN1" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=1722158628]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.5, -2.15)
 mesh = SubResource("BoxMesh_RailPost")
 surface_material_override/0 = SubResource("Mat_Rail")
 
-[node name="RailPostN2" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="RailPostN2" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=362650624]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -2.15)
 mesh = SubResource("BoxMesh_RailPost")
 surface_material_override/0 = SubResource("Mat_Rail")
 
-[node name="RailPostN3" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="RailPostN3" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=672565684]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.5, -2.15)
 mesh = SubResource("BoxMesh_RailPost")
 surface_material_override/0 = SubResource("Mat_Rail")
 
-[node name="RailPostS1" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="RailPostS1" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=1572403473]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.5, 2.15)
 mesh = SubResource("BoxMesh_RailPost")
 surface_material_override/0 = SubResource("Mat_Rail")
 
-[node name="RailPostS2" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="RailPostS2" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=1264281445]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 2.15)
 mesh = SubResource("BoxMesh_RailPost")
 surface_material_override/0 = SubResource("Mat_Rail")
 
-[node name="RailPostS3" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="RailPostS3" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=1926697752]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.5, 2.15)
 mesh = SubResource("BoxMesh_RailPost")
 surface_material_override/0 = SubResource("Mat_Rail")
 
-[node name="DistantPlanet" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="DistantPlanet" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=1043890297]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -18)
 mesh = SubResource("Mesh_Planet")
 surface_material_override/0 = SubResource("Mat_Planet")
 
-[node name="StarA" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="StarA" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=822071702]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 4.2, -12)
 mesh = SubResource("Mesh_Star")
 surface_material_override/0 = SubResource("Mat_Star")
 
-[node name="StarB" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 5.0, -14)
+[node name="StarB" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=1648458254]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 5, -14)
 mesh = SubResource("Mesh_Star")
 surface_material_override/0 = SubResource("Mat_Star")
 
-[node name="StarC" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="StarC" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=611585092]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 3.8, -10)
 mesh = SubResource("Mesh_Star")
 surface_material_override/0 = SubResource("Mat_Star")
 
-[node name="CeremonialPad" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 2.4)
+[node name="CeremonialPad" type="MeshInstance3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=2062602806]
+transform = Transform3D(0.35, 0, 0, 0, 1, 0, 0, 0, 0.55, 0, 0.08, 2.4)
 mesh = SubResource("BoxMesh_ZoneBWalk")
 surface_material_override/0 = SubResource("Mat_ZoneBFloor")
-scale = Vector3(0.35, 1, 0.55)
 
-[node name="ZoneBLabel" type="Label3D" parent="Geometry/ZONE_B_ORBIT_WALK"]
+[node name="ZoneBLabel" type="Label3D" parent="Geometry/ZONE_B_ORBIT_WALK" unique_id=729239714]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, -3.2)
 billboard = 1
+modulate = Color(0.8, 0.88, 1, 1)
 text = "ОРБИТАЛЬНАЯ ПРОГУЛКА"
 font_size = 36
 outline_size = 10
-modulate = Color(0.8, 0.88, 1, 1)
 
-[node name="ZONE_C_FINAL_TABLE" type="Node3D" parent="Geometry"]
+[node name="ZONE_C_FINAL_TABLE" type="Node3D" parent="Geometry" unique_id=1079372372]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 0)
 
-[node name="ZoneCFloor" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ZoneCFloor" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=1338292424]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 mesh = SubResource("BoxMesh_ZoneCFloor")
 surface_material_override/0 = SubResource("Mat_ZoneCFloor")
 
-[node name="ColumnNW" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ColumnNW" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=1215651097]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 1.6, -5.2)
 mesh = SubResource("Mesh_Column")
 surface_material_override/0 = SubResource("Mat_Column")
 
-[node name="ColumnNE" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ColumnNE" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=2073889587]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 1.6, -5.2)
 mesh = SubResource("Mesh_Column")
 surface_material_override/0 = SubResource("Mat_Column")
 
-[node name="ColumnSW" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ColumnSW" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=1863832602]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 1.6, 5.2)
 mesh = SubResource("Mesh_Column")
 surface_material_override/0 = SubResource("Mat_Column")
 
-[node name="ColumnSE" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ColumnSE" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=1289127736]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 1.6, 5.2)
 mesh = SubResource("Mesh_Column")
 surface_material_override/0 = SubResource("Mat_Column")
 
-[node name="FinalTable" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="FinalTable" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=533713524]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.76, 0)
 mesh = SubResource("Mesh_TableTop")
 surface_material_override/0 = SubResource("Mat_Table")
 
-[node name="TableLeg" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="TableLeg" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=703819121]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.36, 0)
 mesh = SubResource("Mesh_TableLeg")
 surface_material_override/0 = SubResource("Mat_Table")
 
-[node name="ChairGirl" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ChairGirl" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=323839342]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, -1.35)
 mesh = SubResource("BoxMesh_ChairSeat")
 surface_material_override/0 = SubResource("Mat_Chair")
 
-[node name="ChairGirlBack" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ChairGirlBack" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=447748849]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, -1.58)
 mesh = SubResource("BoxMesh_ChairBack")
 surface_material_override/0 = SubResource("Mat_Chair")
 
-[node name="ChairPlayer" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ChairPlayer" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=1182954602]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 1.35)
 mesh = SubResource("BoxMesh_ChairSeat")
 surface_material_override/0 = SubResource("Mat_Chair")
 
-[node name="ChairPlayerBack" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
+[node name="ChairPlayerBack" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=1871815895]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 1.58)
 mesh = SubResource("BoxMesh_ChairBack")
 surface_material_override/0 = SubResource("Mat_Chair")
 
-[node name="ZoneCLabel" type="Label3D" parent="Geometry/ZONE_C_FINAL_TABLE"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, 5.5)
+[node name="ZoneCLabel" type="Label3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=1117619036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 5.5)
 billboard = 1
+modulate = Color(1, 0.9, 0.75, 1)
 text = "ФИНАЛЬНЫЙ СТОЛ"
 font_size = 42
 outline_size = 10
-modulate = Color(1, 0.9, 0.75, 1)
 
-[node name="BeaconPillar" type="MeshInstance3D" parent="Geometry"]
+[node name="NapkinHolderGag" type="Node3D" parent="Geometry/ZONE_C_FINAL_TABLE" unique_id=503226649]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14999962, 0.88, 0)
+
+[node name="HolderBase" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE/NapkinHolderGag" unique_id=1969238710]
+material_override = SubResource("StandardMaterial3D_j6h6k")
+mesh = SubResource("BoxMesh_g034q")
+
+[node name="SlotL" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE/NapkinHolderGag" unique_id=2144065088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04, 0.08, 0)
+material_override = SubResource("StandardMaterial3D_bv3iv")
+mesh = SubResource("BoxMesh_y6wba")
+
+[node name="SlotR" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE/NapkinHolderGag" unique_id=1203470921]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.04, 0.08, 0)
+material_override = SubResource("StandardMaterial3D_rmp6h")
+mesh = SubResource("BoxMesh_tr3n6")
+
+[node name="Napkins" type="MeshInstance3D" parent="Geometry/ZONE_C_FINAL_TABLE/NapkinHolderGag" unique_id=124764048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+material_override = SubResource("StandardMaterial3D_6jf85")
+mesh = SubResource("BoxMesh_f8lkh")
+
+[node name="GagCaption" type="Label3D" parent="Geometry/ZONE_C_FINAL_TABLE/NapkinHolderGag" unique_id=160826055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, 0)
+billboard = 1
+text = "салфетки"
+font_size = 12
+
+[node name="BeaconPillar" type="MeshInstance3D" parent="Geometry" unique_id=1760950165]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1.2, -3.2)
 mesh = SubResource("Mesh_BeaconPillar")
 surface_material_override/0 = SubResource("Mat_Beacon")
 
-[node name="BeaconOrb" type="MeshInstance3D" parent="Geometry"]
+[node name="BeaconOrb" type="MeshInstance3D" parent="Geometry" unique_id=18273064]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 2.65, -3.2)
 mesh = SubResource("Mesh_BeaconOrb")
 surface_material_override/0 = SubResource("Mat_Beacon")
 
-[node name="FinalSignalBeacon" type="Label3D" parent="Geometry"]
+[node name="FinalSignalBeacon" type="Label3D" parent="Geometry" unique_id=1893856910]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 3.55, -3.2)
 billboard = 1
+modulate = Color(0.85, 0.95, 1, 1)
 text = "ИСТОЧНИК СИГНАЛА:
 ЗА ПРЕДЕЛАМИ ЗЕМЛИ
 
@@ -535,125 +587,121 @@ text = "ИСТОЧНИК СИГНАЛА:
 НЕ УСТАНОВЛЕН"
 font_size = 28
 outline_size = 8
-modulate = Color(0.85, 0.95, 1, 1)
 
-[node name="Sign" type="Label3D" parent="Geometry"]
+[node name="Sign" type="Label3D" parent="Geometry" unique_id=177016153]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 2.8, 0)
 billboard = 1
 text = "ФИНАЛ"
 font_size = 48
 outline_size = 10
 
-[node name="PlayerSpawns" type="Node3D" parent="."]
+[node name="PlayerSpawns" type="Node3D" parent="." unique_id=1696695636]
 
-[node name="spawn_default" type="Marker3D" parent="PlayerSpawns"]
+[node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=33401132]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10, 0.05, 4.2)
 script = ExtResource("3_pspawn")
-spawn_id = &"spawn_default"
 
-[node name="NpcSpawns" type="Node3D" parent="."]
+[node name="NpcSpawns" type="Node3D" parent="." unique_id=592802358]
 
-[node name="StoryEventPoints" type="Node3D" parent="."]
+[node name="StoryEventPoints" type="Node3D" parent="." unique_id=202441020]
 
-[node name="story_point_final_sequence" type="Marker3D" parent="StoryEventPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.05, -3.0)
+[node name="story_point_final_sequence" type="Marker3D" parent="StoryEventPoints" unique_id=2089435833]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.05, -3)
 script = ExtResource("5_story")
 event_point_id = &"story_point_final_sequence"
 
-[node name="FinalMarkers" type="Node3D" parent="."]
+[node name="FinalMarkers" type="Node3D" parent="." unique_id=430077186]
 
-[node name="final_attempt_start" type="Marker3D" parent="FinalMarkers"]
+[node name="final_attempt_start" type="Marker3D" parent="FinalMarkers" unique_id=1560377374]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10, 0.05, 3.5)
 
-[node name="final_target_signal_marker" type="Marker3D" parent="FinalMarkers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4, 0.05, -3.0)
+[node name="final_target_signal_marker" type="Marker3D" parent="FinalMarkers" unique_id=1312047087]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4, 0.05, -3)
 
-[node name="final_target_orbit_marker" type="Marker3D" parent="FinalMarkers"]
+[node name="final_target_orbit_marker" type="Marker3D" parent="FinalMarkers" unique_id=2133525628]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0.05, -1.4)
 
-[node name="final_target_table_marker" type="Marker3D" parent="FinalMarkers"]
+[node name="final_target_table_marker" type="Marker3D" parent="FinalMarkers" unique_id=297265725]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.05, -1.35)
 
-[node name="final_rival_ceremonial_marker" type="Marker3D" parent="FinalMarkers"]
+[node name="final_rival_ceremonial_marker" type="Marker3D" parent="FinalMarkers" unique_id=1070775566]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0.05, 2.6)
 
-[node name="final_rival_gravity_marker" type="Marker3D" parent="FinalMarkers"]
+[node name="final_rival_gravity_marker" type="Marker3D" parent="FinalMarkers" unique_id=617720347]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 12.2, 0.05, 2.8)
 
-[node name="final_checkpoint_event_1" type="Marker3D" parent="FinalMarkers"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.2, 0.05, -1.0)
+[node name="final_checkpoint_event_1" type="Marker3D" parent="FinalMarkers" unique_id=455891116]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.2, 0.05, -1)
 
-[node name="final_checkpoint_rival_1" type="Marker3D" parent="FinalMarkers"]
+[node name="final_checkpoint_rival_1" type="Marker3D" parent="FinalMarkers" unique_id=1062115167]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.5, 0.05, 1.8)
 
-[node name="final_checkpoint_event_2" type="Marker3D" parent="FinalMarkers"]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.2, 0.05, -1.0)
+[node name="final_checkpoint_event_2" type="Marker3D" parent="FinalMarkers" unique_id=859197929]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.2, 0.05, -1)
 
-[node name="final_checkpoint_rival_2" type="Marker3D" parent="FinalMarkers"]
+[node name="final_checkpoint_rival_2" type="Marker3D" parent="FinalMarkers" unique_id=1332077209]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 11.5, 0.05, 2.2)
 
-[node name="final_checkpoint_event_3" type="Marker3D" parent="FinalMarkers"]
+[node name="final_checkpoint_event_3" type="Marker3D" parent="FinalMarkers" unique_id=2033725756]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.4, 0.05, -0.2)
 
-[node name="final_checkpoint_event_4" type="Marker3D" parent="FinalMarkers"]
+[node name="final_checkpoint_event_4" type="Marker3D" parent="FinalMarkers" unique_id=105285958]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.6, 0.05, 0.4)
 
-[node name="final_walk_checkpoint_a" type="Marker3D" parent="FinalMarkers"]
+[node name="final_walk_checkpoint_a" type="Marker3D" parent="FinalMarkers" unique_id=525546126]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.5, 0.05, 0)
 
-[node name="final_walk_checkpoint_b" type="Marker3D" parent="FinalMarkers"]
+[node name="final_walk_checkpoint_b" type="Marker3D" parent="FinalMarkers" unique_id=628927136]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0.05, 0)
 
-[node name="final_walk_checkpoint_c" type="Marker3D" parent="FinalMarkers"]
+[node name="final_walk_checkpoint_c" type="Marker3D" parent="FinalMarkers" unique_id=1306770974]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 6.5, 0.05, 0)
 
-[node name="PhaseGates" type="Node3D" parent="."]
+[node name="PhaseGates" type="Node3D" parent="." unique_id=1637201896]
 
-[node name="final_gate_zone_b" type="StaticBody3D" parent="PhaseGates"]
+[node name="final_gate_zone_b" type="StaticBody3D" parent="PhaseGates" unique_id=1967445112]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.4, 0)
-collision_layer = 1
 collision_mask = 0
 
-[node name="Collision" type="CollisionShape3D" parent="PhaseGates/final_gate_zone_b"]
+[node name="Collision" type="CollisionShape3D" parent="PhaseGates/final_gate_zone_b" unique_id=107280610]
 shape = SubResource("BoxShape_Gate")
 
-[node name="Mesh" type="MeshInstance3D" parent="PhaseGates/final_gate_zone_b"]
+[node name="Mesh" type="MeshInstance3D" parent="PhaseGates/final_gate_zone_b" unique_id=1922179127]
 mesh = SubResource("BoxMesh_Gate")
 surface_material_override/0 = SubResource("Mat_Gate")
 
-[node name="GateLabel" type="Label3D" parent="PhaseGates/final_gate_zone_b"]
+[node name="GateLabel" type="Label3D" parent="PhaseGates/final_gate_zone_b" unique_id=729898484]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 billboard = 1
+modulate = Color(1, 0.9, 0.6, 1)
 text = "ПРОХОД B"
 font_size = 26
 outline_size = 8
-modulate = Color(1, 0.9, 0.6, 1)
 
-[node name="final_gate_zone_c" type="StaticBody3D" parent="PhaseGates"]
+[node name="final_gate_zone_c" type="StaticBody3D" parent="PhaseGates" unique_id=1018086201]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.4, 0)
-collision_layer = 1
 collision_mask = 0
 
-[node name="Collision" type="CollisionShape3D" parent="PhaseGates/final_gate_zone_c"]
+[node name="Collision" type="CollisionShape3D" parent="PhaseGates/final_gate_zone_c" unique_id=1210037922]
 shape = SubResource("BoxShape_Gate")
 
-[node name="Mesh" type="MeshInstance3D" parent="PhaseGates/final_gate_zone_c"]
+[node name="Mesh" type="MeshInstance3D" parent="PhaseGates/final_gate_zone_c" unique_id=1317853826]
 mesh = SubResource("BoxMesh_Gate")
 surface_material_override/0 = SubResource("Mat_Gate")
 
-[node name="GateLabel" type="Label3D" parent="PhaseGates/final_gate_zone_c"]
+[node name="GateLabel" type="Label3D" parent="PhaseGates/final_gate_zone_c" unique_id=1715240049]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 billboard = 1
+modulate = Color(1, 0.9, 0.6, 1)
 text = "ПРОХОД C"
 font_size = 26
 outline_size = 8
-modulate = Color(1, 0.9, 0.6, 1)
 
-[node name="FeatureGates" type="Node3D" parent="."]
+[node name="FeatureGates" type="Node3D" parent="." unique_id=325182791]
 
-[node name="Interactables" type="Node3D" parent="."]
+[node name="Interactables" type="Node3D" parent="." unique_id=459419903]
 
-[node name="FinalSignalInteractable" type="Area3D" parent="Interactables"]
+[node name="FinalSignalInteractable" type="Area3D" parent="Interactables" unique_id=1058803679]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.05, -2.4)
 collision_layer = 4
 collision_mask = 0
@@ -661,33 +709,56 @@ monitoring = false
 script = ExtResource("8_final_sig")
 prompt_action = "Ответить на внеземной сигнал"
 
-[node name="Collision" type="CollisionShape3D" parent="Interactables/FinalSignalInteractable"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+[node name="Collision" type="CollisionShape3D" parent="Interactables/FinalSignalInteractable" unique_id=1650107726]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape_Interact")
 
-[node name="PromptHint" type="Label3D" parent="Interactables/FinalSignalInteractable"]
+[node name="PromptHint" type="Label3D" parent="Interactables/FinalSignalInteractable" unique_id=1184601067]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0.6)
 billboard = 1
+modulate = Color(0.85, 0.95, 1, 1)
 text = "[E] Ответить на внеземной сигнал"
 font_size = 20
 outline_size = 6
-modulate = Color(0.85, 0.95, 1, 1)
 
-[node name="Transitions" type="Node3D" parent="."]
+[node name="FlavorFinalTable" type="Area3D" parent="Interactables" unique_id=1242682029 instance=ExtResource("5_p4461")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 0.90999997, 0.4)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("6_dfhbf")
+text = "СТОЛ
+После планетарной автоматизации всё снова свелось к двум стульям."
+prompt = "Осмотреть"
+prompt_action = "Осмотреть"
 
-[node name="ToCity" type="Area3D" parent="Transitions"]
+[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorFinalTable" unique_id=374407289]
+shape = SubResource("BoxShape3D_irctf")
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorFinalTable" unique_id=1246067171]
+material_override = SubResource("StandardMaterial3D_msbmx")
+mesh = SubResource("BoxMesh_iejgs")
+
+[node name="Label" type="Label3D" parent="Interactables/FlavorFinalTable" unique_id=931679821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+billboard = 1
+text = "Стол"
+font_size = 22
+
+[node name="Transitions" type="Node3D" parent="." unique_id=238137647]
+
+[node name="ToCity" type="Area3D" parent="Transitions" unique_id=1222315402]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1.1, 6.3)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("2_transition")
 target_location_id = &"city_hub"
-target_spawn_id = &"spawn_default"
 display_name = "В город"
 
-[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity"]
+[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity" unique_id=1077538243]
 shape = SubResource("TransitionShape")
 
-[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity"]
+[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity" unique_id=1973626557]
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")

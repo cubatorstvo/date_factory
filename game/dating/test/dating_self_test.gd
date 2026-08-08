@@ -90,6 +90,8 @@ func _run_all() -> void:
 	_test_phone_labels()
 	_test_no_limit_not_fake()
 	_test_finish_once()
+	_test_module25_ordinary_date_feasibility()
+	_test_module25_ordinary_planner_sample()
 	_gs.call("reset_for_new_game")
 	_dc.call("force_clear_session")
 
@@ -678,3 +680,544 @@ func _test_finish_once() -> void:
 	_ok(_finished_count == 1, "date_finished once")
 	var again: Dictionary = _dc.call("select_action", &"action_test_care") as Dictionary
 	_ok(not bool(again.get("ok", true)), "input rejected after finish")
+
+
+## MODULE 25 Wave K — ordinary dating feasibility (spec §92–95 practical).
+func _ordinary_production_girls() -> Array[GirlDefinition]:
+	var out: Array[GirlDefinition] = []
+	var girls: Array = _db.call("list_girls") as Array
+	for g in girls:
+		var girl: GirlDefinition = g as GirlDefinition
+		if girl == null or girl.is_story:
+			continue
+		out.append(girl)
+	return out
+
+
+func _action_usable_level0(action: DatingActionDefinition) -> bool:
+	## Spec §92: required characteristic level 0 only (money/perks may still gate runtime).
+	if action == null:
+		return false
+	if action.required_characteristic_level > 0:
+		return false
+	if String(action.required_perk_id) != "":
+		return false
+	return true
+
+
+func _collect_level0_event_slots(girl: GirlDefinition) -> Array[Dictionary]:
+	var slots: Array[Dictionary] = []
+	var location_id: StringName = girl.default_date_location_id
+	var seen: Dictionary = {}
+	for pool_id in girl.dating_pool_ids:
+		var pool: DatingEventPoolDefinition = _db.call("get_dating_pool", pool_id) as DatingEventPoolDefinition
+		if pool == null:
+			continue
+		for eid in pool.event_ids:
+			if seen.has(eid):
+				continue
+			seen[eid] = true
+			var ev: DatingEventDefinition = _db.call("get_dating_event", eid) as DatingEventDefinition
+			if ev == null:
+				continue
+			if not DatingEventPlanner.event_allowed_at_location(ev, location_id):
+				continue
+			var usable: Array[DatingActionDefinition] = []
+			for action in ev.actions:
+				if _action_usable_level0(action):
+					usable.append(action)
+			if usable.is_empty():
+				continue
+			slots.append({
+				"event_id": eid,
+				"category": ev.category,
+				"actions": usable,
+			})
+	return slots
+
+
+func _collect_level0_farewell_actions(girl: GirlDefinition) -> Array[DatingActionDefinition]:
+	var out: Array[DatingActionDefinition] = []
+	var farewell: DatingFarewellDefinition = _db.call("get_dating_farewell", girl.dating_farewell_id) as DatingFarewellDefinition
+	if farewell == null:
+		return out
+	for action in farewell.actions:
+		if _action_usable_level0(action):
+			out.append(action)
+	return out
+
+
+func _score_actions_for_girl(
+	girl: GirlDefinition,
+	actions: Array[DatingActionDefinition],
+) -> Dictionary:
+	var primary_def: PrimaryTraitDefinition = _db.call("get_primary_trait", girl.primary_trait) as PrimaryTraitDefinition
+	var records: Array[DatingDecisionRecord] = []
+	var primary_total: int = 0
+	for action in actions:
+		var typed: Array[GameTypes.ActionTag] = []
+		for t in action.direct_tags:
+			typed.append(t as GameTypes.ActionTag)
+		var rec := DatingDecisionRecord.new()
+		rec.source_id = action.id
+		rec.characteristic = action.characteristic
+		rec.final_tags = typed
+		rec.primary_reaction = PrimaryTraitEvaluator.evaluate_with_definition(primary_def, typed)
+		rec.was_public = action.is_public
+		primary_total += rec.primary_reaction
+		records.append(rec)
+	var secondary: int = SecondaryTraitEvaluator.evaluate(girl.secondary_trait, records)
+	var delta: int = clampi(primary_total + secondary, -5, 5)
+	return {
+		"delta": delta,
+		"primary_total": primary_total,
+		"secondary": secondary,
+	}
+
+
+func _annotate_action(
+	action: DatingActionDefinition,
+	primary_def: PrimaryTraitDefinition,
+	event_id: StringName,
+	category: int,
+	is_farewell: bool,
+) -> Dictionary:
+	var typed: Array[GameTypes.ActionTag] = []
+	for t in action.direct_tags:
+		typed.append(t as GameTypes.ActionTag)
+	var reaction: int = PrimaryTraitEvaluator.evaluate_with_definition(primary_def, typed)
+	return {
+		"action": action,
+		"event_id": event_id,
+		"category": category,
+		"reaction": reaction,
+		"characteristic": int(action.characteristic),
+		"is_public": action.is_public,
+		"has_conflict": typed.has(GameTypes.ActionTag.CONFLICT),
+		"is_farewell": is_farewell,
+	}
+
+
+func _try_score_candidates(girl: GirlDefinition, picks: Array) -> int:
+	if picks.size() != 4:
+		return -999
+	var e0: Dictionary = picks[0] as Dictionary
+	var e1: Dictionary = picks[1] as Dictionary
+	var e2: Dictionary = picks[2] as Dictionary
+	var f: Dictionary = picks[3] as Dictionary
+	if bool(e0.get("is_farewell", false)) or bool(e1.get("is_farewell", false)) or bool(e2.get("is_farewell", false)):
+		return -999
+	if not bool(f.get("is_farewell", false)):
+		return -999
+	var id0: StringName = e0.get("event_id", &"") as StringName
+	var id1: StringName = e1.get("event_id", &"") as StringName
+	var id2: StringName = e2.get("event_id", &"") as StringName
+	if id0 == id1 or id1 == id2 or id0 == id2:
+		return -999
+	var c0: int = int(e0.get("category", -1))
+	var c1: int = int(e1.get("category", -1))
+	var c2: int = int(e2.get("category", -1))
+	if c0 == c1 and c1 == c2:
+		return -999
+	var route: Array[DatingActionDefinition] = [
+		e0["action"] as DatingActionDefinition,
+		e1["action"] as DatingActionDefinition,
+		e2["action"] as DatingActionDefinition,
+		f["action"] as DatingActionDefinition,
+	]
+	return int(_score_actions_for_girl(girl, route).get("delta", -999))
+
+
+func _route_bounds_for_girl(girl: GirlDefinition) -> Dictionary:
+	var slots: Array[Dictionary] = _collect_level0_event_slots(girl)
+	var farewell_actions: Array[DatingActionDefinition] = _collect_level0_farewell_actions(girl)
+	var primary_def: PrimaryTraitDefinition = _db.call("get_primary_trait", girl.primary_trait) as PrimaryTraitDefinition
+	var central: Array[Dictionary] = []
+	var farewells: Array[Dictionary] = []
+	var liked_level0: int = 0
+	var disliked_level0: int = 0
+	for slot in slots:
+		var eid: StringName = slot["event_id"] as StringName
+		var cat: int = int(slot["category"])
+		for a in slot["actions"] as Array:
+			var ann: Dictionary = _annotate_action(a as DatingActionDefinition, primary_def, eid, cat, false)
+			central.append(ann)
+			if int(ann["reaction"]) > 0:
+				liked_level0 += 1
+			elif int(ann["reaction"]) < 0:
+				disliked_level0 += 1
+	for a2 in farewell_actions:
+		var ann2: Dictionary = _annotate_action(a2, primary_def, &"", -1, true)
+		farewells.append(ann2)
+		if int(ann2["reaction"]) > 0:
+			liked_level0 += 1
+		elif int(ann2["reaction"]) < 0:
+			disliked_level0 += 1
+	var best: int = -999
+	var worst: int = 999
+	if slots.size() < 3 or farewells.is_empty():
+		return {
+			"best": best,
+			"worst": worst,
+			"plus5": false,
+			"nonpos": false,
+			"liked": liked_level0,
+			"disliked": disliked_level0,
+			"slots": slots.size(),
+			"farewell": farewells.size(),
+		}
+	var liked_central: Array[Dictionary] = []
+	var disliked_central: Array[Dictionary] = []
+	var scandal_central: Array[Dictionary] = []
+	for c in central:
+		if int(c["reaction"]) > 0:
+			liked_central.append(c)
+		if int(c["reaction"]) < 0:
+			disliked_central.append(c)
+		if bool(c["is_public"]) and bool(c["has_conflict"]):
+			scandal_central.append(c)
+	var liked_farewell: Array[Dictionary] = []
+	var disliked_farewell: Array[Dictionary] = []
+	var scandal_farewell: Array[Dictionary] = []
+	for f in farewells:
+		if int(f["reaction"]) > 0:
+			liked_farewell.append(f)
+		if int(f["reaction"]) < 0:
+			disliked_farewell.append(f)
+		if bool(f["is_public"]) and bool(f["has_conflict"]):
+			scandal_farewell.append(f)
+	# Targeted positive constructions by secondary.
+	var pos_routes: Array = _build_positive_route_candidates(
+		girl, liked_central, liked_farewell, scandal_central, scandal_farewell, farewells
+	)
+	for picks in pos_routes:
+		var delta: int = _try_score_candidates(girl, picks as Array)
+		if delta > best:
+			best = delta
+	# Targeted non-positive: prefer disliked, fall back to mixed.
+	var neg_pool_c: Array[Dictionary] = disliked_central if not disliked_central.is_empty() else central
+	var neg_pool_f: Array[Dictionary] = disliked_farewell if not disliked_farewell.is_empty() else farewells
+	var neg_routes: Array = _build_triple_farewell_routes(neg_pool_c, neg_pool_f, 40)
+	for picks2 in neg_routes:
+		var delta2: int = _try_score_candidates(girl, picks2 as Array)
+		if delta2 < worst:
+			worst = delta2
+		if delta2 > best:
+			best = delta2
+	# Extra mixed sample to tighten bounds.
+	var mixed: Array = _build_triple_farewell_routes(central, farewells, 30)
+	for picks3 in mixed:
+		var delta3: int = _try_score_candidates(girl, picks3 as Array)
+		if delta3 > best:
+			best = delta3
+		if delta3 < worst:
+			worst = delta3
+	return {
+		"best": best,
+		"worst": worst,
+		"plus5": best >= 5,
+		"nonpos": worst <= 0,
+		"liked": liked_level0,
+		"disliked": disliked_level0,
+		"slots": slots.size(),
+		"farewell": farewells.size(),
+	}
+
+
+func _build_triple_farewell_routes(
+	central: Array[Dictionary],
+	farewells: Array[Dictionary],
+	limit: int,
+) -> Array:
+	var out: Array = []
+	if central.size() < 3 or farewells.is_empty():
+		return out
+	var n: int = central.size()
+	for i in range(n):
+		for j in range(i + 1, n):
+			for k in range(j + 1, n):
+				if out.size() >= limit:
+					return out
+				var a: Dictionary = central[i]
+				var b: Dictionary = central[j]
+				var c: Dictionary = central[k]
+				if a["event_id"] == b["event_id"] or b["event_id"] == c["event_id"] or a["event_id"] == c["event_id"]:
+					continue
+				if int(a["category"]) == int(b["category"]) and int(b["category"]) == int(c["category"]):
+					continue
+				for f in farewells:
+					out.append([a, b, c, f])
+					if out.size() >= limit:
+						return out
+	return out
+
+
+func _build_positive_route_candidates(
+	girl: GirlDefinition,
+	liked_central: Array[Dictionary],
+	liked_farewell: Array[Dictionary],
+	scandal_central: Array[Dictionary],
+	scandal_farewell: Array[Dictionary],
+	all_farewell: Array[Dictionary],
+) -> Array:
+	var out: Array = []
+	var fw: Array[Dictionary] = liked_farewell if not liked_farewell.is_empty() else all_farewell
+	match girl.secondary_trait:
+		GameTypes.SecondaryGirlTrait.DEMANDING:
+			out.append_array(_build_triple_farewell_routes(liked_central, fw, 120))
+		GameTypes.SecondaryGirlTrait.VARIETY_SEEKING:
+			out.append_array(_routes_for_variety(liked_central, fw))
+		GameTypes.SecondaryGirlTrait.CONSISTENT:
+			out.append_array(_routes_for_consistent(liked_central, fw))
+		GameTypes.SecondaryGirlTrait.SCANDALOUS:
+			out.append_array(_routes_for_scandalous(liked_central, fw, scandal_central, scandal_farewell))
+	# Always include generic liked routes as fallback.
+	out.append_array(_build_triple_farewell_routes(liked_central, fw, 80))
+	return out
+
+
+func _routes_for_variety(liked_central: Array[Dictionary], farewells: Array[Dictionary]) -> Array:
+	var out: Array = []
+	var by_char: Dictionary = {}
+	for c in liked_central:
+		var key: int = int(c["characteristic"])
+		if not by_char.has(key):
+			by_char[key] = []
+		(by_char[key] as Array).append(c)
+	var keys: Array = by_char.keys()
+	if keys.size() < 3:
+		return out
+	# Pick three different-char central likes + farewell that preferably adds a 3rd/4th char.
+	for i in range(keys.size()):
+		for j in range(i + 1, keys.size()):
+			for k in range(j + 1, keys.size()):
+				var pool_a: Array = by_char[keys[i]] as Array
+				var pool_b: Array = by_char[keys[j]] as Array
+				var pool_c: Array = by_char[keys[k]] as Array
+				for a in pool_a:
+					for b in pool_b:
+						for c2 in pool_c:
+							var da: Dictionary = a as Dictionary
+							var db: Dictionary = b as Dictionary
+							var dc: Dictionary = c2 as Dictionary
+							if da["event_id"] == db["event_id"] or db["event_id"] == dc["event_id"] or da["event_id"] == dc["event_id"]:
+								continue
+							if int(da["category"]) == int(db["category"]) and int(db["category"]) == int(dc["category"]):
+								continue
+							for f in farewells:
+								out.append([da, db, dc, f])
+								if out.size() >= 80:
+									return out
+	return out
+
+
+func _routes_for_consistent(liked_central: Array[Dictionary], farewells: Array[Dictionary]) -> Array:
+	var out: Array = []
+	var by_char: Dictionary = {}
+	for c in liked_central:
+		var key: int = int(c["characteristic"])
+		if not by_char.has(key):
+			by_char[key] = []
+		(by_char[key] as Array).append(c)
+	for key in by_char.keys():
+		var pool: Array = by_char[key] as Array
+		if pool.size() < 2:
+			continue
+		# Need >=3 of same characteristic across 4 slots.
+		var same_farewell: Array[Dictionary] = []
+		var other_farewell: Array[Dictionary] = []
+		for f in farewells:
+			if int(f["characteristic"]) == int(key):
+				same_farewell.append(f)
+			else:
+				other_farewell.append(f)
+		# Case A: 3 central same char + any farewell.
+		if pool.size() >= 3:
+			for i in range(pool.size()):
+				for j in range(i + 1, pool.size()):
+					for k in range(j + 1, pool.size()):
+						var a: Dictionary = pool[i] as Dictionary
+						var b: Dictionary = pool[j] as Dictionary
+						var c: Dictionary = pool[k] as Dictionary
+						if a["event_id"] == b["event_id"] or b["event_id"] == c["event_id"] or a["event_id"] == c["event_id"]:
+							continue
+						if int(a["category"]) == int(b["category"]) and int(b["category"]) == int(c["category"]):
+							continue
+						for f2 in farewells:
+							out.append([a, b, c, f2])
+							if out.size() >= 80:
+								return out
+		# Case B: 2 central same + same-char farewell + one other liked central.
+		if same_farewell.is_empty():
+			continue
+		for i2 in range(pool.size()):
+			for j2 in range(i2 + 1, pool.size()):
+				var a2: Dictionary = pool[i2] as Dictionary
+				var b2: Dictionary = pool[j2] as Dictionary
+				if a2["event_id"] == b2["event_id"]:
+					continue
+				for other in liked_central:
+					if int(other["characteristic"]) == int(key):
+						continue
+					if other["event_id"] == a2["event_id"] or other["event_id"] == b2["event_id"]:
+						continue
+					if (
+						int(a2["category"]) == int(b2["category"])
+						and int(b2["category"]) == int(other["category"])
+					):
+						continue
+					for f3 in same_farewell:
+						out.append([a2, b2, other, f3])
+						if out.size() >= 80:
+							return out
+	return out
+
+
+func _routes_for_scandalous(
+	liked_central: Array[Dictionary],
+	farewells: Array[Dictionary],
+	scandal_central: Array[Dictionary],
+	scandal_farewell: Array[Dictionary],
+) -> Array:
+	var out: Array = []
+	var scandal_liked: Array[Dictionary] = []
+	for s in scandal_central:
+		if int(s["reaction"]) > 0:
+			scandal_liked.append(s)
+	if scandal_liked.is_empty():
+		scandal_liked = scandal_central
+	for sc in scandal_liked:
+		for i in range(liked_central.size()):
+			var a: Dictionary = liked_central[i]
+			if a["event_id"] == sc["event_id"]:
+				continue
+			for j in range(i + 1, liked_central.size()):
+				var b: Dictionary = liked_central[j]
+				if b["event_id"] == sc["event_id"] or b["event_id"] == a["event_id"]:
+					continue
+				if (
+					int(sc["category"]) == int(a["category"])
+					and int(a["category"]) == int(b["category"])
+				):
+					continue
+				for f in farewells:
+					out.append([sc, a, b, f])
+					if out.size() >= 100:
+						return out
+	var sf_list: Array[Dictionary] = []
+	for sf in scandal_farewell:
+		sf_list.append(sf)
+	if not sf_list.is_empty():
+		out.append_array(_build_triple_farewell_routes(liked_central, sf_list, 40))
+	return out
+
+
+func _primary_dislikes_conflict(primary: GameTypes.PrimaryGirlTrait) -> bool:
+	var def: PrimaryTraitDefinition = _db.call("get_primary_trait", primary) as PrimaryTraitDefinition
+	if def == null:
+		return false
+	return def.disliked_tags.has(GameTypes.ActionTag.CONFLICT)
+
+
+func _test_module25_ordinary_date_feasibility() -> void:
+	var ordinary: Array[GirlDefinition] = _ordinary_production_girls()
+	_ok(ordinary.size() == 16, "MODULE25 dating ordinary girls == 16 got %s" % ordinary.size())
+	# Common-pool disliked coverage for all four primaries (spec §93).
+	var cafe: DatingEventPoolDefinition = _db.call("get_dating_pool", &"date_pool_cafe_common") as DatingEventPoolDefinition
+	_ok(cafe != null, "MODULE25 cafe_common for dislike coverage")
+	if cafe != null:
+		for primary in [
+			GameTypes.PrimaryGirlTrait.KIND,
+			GameTypes.PrimaryGirlTrait.STATUS,
+			GameTypes.PrimaryGirlTrait.THRILL_SEEKING,
+			GameTypes.PrimaryGirlTrait.STRANGE,
+		]:
+			var pdef: PrimaryTraitDefinition = _db.call("get_primary_trait", primary) as PrimaryTraitDefinition
+			var has_dislike: bool = false
+			for eid in cafe.event_ids:
+				var ev: DatingEventDefinition = _db.call("get_dating_event", eid) as DatingEventDefinition
+				if ev == null:
+					continue
+				for action in ev.actions:
+					if not _action_usable_level0(action):
+						continue
+					var typed: Array[GameTypes.ActionTag] = []
+					for t in action.direct_tags:
+						typed.append(t as GameTypes.ActionTag)
+					if PrimaryTraitEvaluator.evaluate_with_definition(pdef, typed) < 0:
+						has_dislike = true
+						break
+				if has_dislike:
+					break
+			_ok(has_dislike, "MODULE25 cafe_common has disliked tags for primary %s" % int(primary))
+	for girl in ordinary:
+		var gid: String = String(girl.id)
+		var bounds: Dictionary = _route_bounds_for_girl(girl)
+		_ok(int(bounds.get("slots", 0)) >= 3, "MODULE25 %s level0 event slots >= 3" % gid)
+		_ok(int(bounds.get("farewell", 0)) >= 1, "MODULE25 %s level0 farewell actions" % gid)
+		_ok(int(bounds.get("liked", 0)) >= 4, "MODULE25 %s liked level0 actions >= 4" % gid)
+		_ok(int(bounds.get("disliked", 0)) >= 1, "MODULE25 %s disliked level0 actions >= 1" % gid)
+		var scandal_conflict_trap: bool = (
+			int(girl.secondary_trait) == int(GameTypes.SecondaryGirlTrait.SCANDALOUS)
+			and _primary_dislikes_conflict(girl.primary_trait)
+		)
+		if scandal_conflict_trap:
+			# KIND+SCANDALOUS cannot mathematically hit +5: SCANDALOUS +1 needs
+			# public CONFLICT, which KIND dislikes (primary -1 on that slot).
+			_ok(
+				int(bounds.get("best", -999)) >= 4,
+				"MODULE25 %s best level0 route >= 4 (scandal/conflict trap) got %s"
+				% [gid, int(bounds.get("best", -999))],
+			)
+		else:
+			_ok(
+				bool(bounds.get("plus5", false)) or int(bounds.get("best", -999)) >= 5,
+				"MODULE25 %s has +5 level0 first-date route best=%s"
+				% [gid, int(bounds.get("best", -999))],
+			)
+		_ok(
+			bool(bounds.get("nonpos", false)) or int(bounds.get("worst", 999)) <= 0,
+			"MODULE25 %s has non-positive level0 route worst=%s"
+			% [gid, int(bounds.get("worst", 999))],
+		)
+
+
+func _test_module25_ordinary_planner_sample() -> void:
+	# One planner simulation sample: start_date for a representative ordinary girl.
+	var sample_id: StringName = &"girl_city_bicycle"
+	var girl: GirlDefinition = _db.call("get_girl", sample_id) as GirlDefinition
+	_ok(girl != null and not girl.is_story, "MODULE25 planner sample girl exists")
+	if girl == null:
+		return
+	_reset()
+	_contact(sample_id)
+	var req := DatingStartRequest.new()
+	req.girl_id = sample_id
+	req.location_id = girl.default_date_location_id
+	var greetings: Array[StringName] = []
+	for gid in girl.dating_greeting_ids:
+		greetings.append(gid)
+	req.greeting_ids = greetings
+	req.farewell_id = girl.dating_farewell_id
+	req.rng_seed = 42
+	var start: Dictionary = _dc.call("start_date", req) as Dictionary
+	_ok(bool(start.get("ok", false)), "MODULE25 planner sample start_date ok")
+	if not bool(start.get("ok", false)):
+		print("MODULE_09_TEST planner sample error: %s" % str(start.get("error", "")))
+		return
+	var session: DatingSession = _dc.call("get_session") as DatingSession
+	_ok(session != null and session.central_event_ids.size() == 3, "MODULE25 planner sample 3 events")
+	if session != null:
+		_ok(
+			session.central_event_ids[0] != session.central_event_ids[1]
+			and session.central_event_ids[1] != session.central_event_ids[2]
+			and session.central_event_ids[0] != session.central_event_ids[2],
+			"MODULE25 planner sample unique event ids",
+		)
+		var cats: Array = session.central_categories
+		if cats.size() == 3:
+			_ok(
+				not (int(cats[0]) == int(cats[1]) and int(cats[1]) == int(cats[2])),
+				"MODULE25 planner sample no AAA categories",
+			)
+	_dc.call("force_clear_session")

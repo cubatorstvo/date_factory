@@ -201,6 +201,94 @@
 [ext_resource type="Resource" path="res://data/content/girls/girl_final_target.tres" id="r178"]
 [ext_resource type="Resource" path="res://data/content/rivals/rival_final_ceremonial.tres" id="r179"]
 [ext_resource type="Resource" path="res://data/content/rivals/rival_final_gravity.tres" id="r180"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_city_umbrella.tres" id="r181"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_cafe_spoon_stack.tres" id="r182"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_city_lanyard.tres" id="r183"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_appearance_coat_check.tres" id="r184"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_gym_timer.tres" id="r185"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_city_crosswalk.tres" id="r186"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_cafe_hot_sauce.tres" id="r187"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_appearance_mannequin.tres" id="r188"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_female_cafe_sugar_geometry.tres" id="r189"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_city_umbrella.tres" id="r190"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_cafe_spoon_stack.tres" id="r191"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_city_lanyard.tres" id="r192"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_appearance_coat_check.tres" id="r193"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_gym_timer.tres" id="r194"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_city_crosswalk.tres" id="r195"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_cafe_hot_sauce.tres" id="r196"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_appearance_mannequin.tres" id="r197"]
+[ext_resource type="Resource" path="res://data/content/girls/girl_cafe_sugar_geometry.tres" id="r198"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_city_umbrella.tres" id="r199"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_cafe_spoon_stack.tres" id="r200"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_city_lanyard.tres" id="r201"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_appearance_coat_check.tres" id="r202"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_gym_timer.tres" id="r203"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_city_crosswalk.tres" id="r204"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_cafe_hot_sauce.tres" id="r205"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_appearance_mannequin.tres" id="r206"]
+[ext_resource type="Resource" path="res://data/content/discovery/situations/discovery_situation_cafe_sugar_geometry.tres" id="r207"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_wrong_order.tres" id="r208"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_last_cake.tres" id="r209"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_window_draft.tres" id="r210"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_phone_charger.tres" id="r211"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_reserved_sign.tres" id="r212"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_loud_table.tres" id="r213"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_wobbly_spoon.tres" id="r214"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_free_sample.tres" id="r215"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_coat_mixup.tres" id="r216"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_waiter_question.tres" id="r217"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_table_photo.tres" id="r218"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_cafe_closing_chairs.tres" id="r219"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_city_bicycle_lock.tres" id="r220"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_cafe_laptop_power.tres" id="r221"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_gym_chalk_challenge.tres" id="r222"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_appearance_ritual_napkin.tres" id="r223"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_public_sculpture_menu_name.tres" id="r224"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_receipt_waiter.tres" id="r225"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_appearance_flash_background.tres" id="r226"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_city_umbrella_waiter.tres" id="r227"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_spoon_stack_repeat.tres" id="r228"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_city_lanyard_reservation.tres" id="r229"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_coat_check_glass.tres" id="r230"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_gym_timer_spicy.tres" id="r231"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_crosswalk_three_routes.tres" id="r232"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_hot_sauce_second_round.tres" id="r233"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_mannequin_third_chair.tres" id="r234"]
+[ext_resource type="Resource" path="res://data/content/dating/events/date_event_signature_sugar_geometry_cup.tres" id="r235"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_city_bicycle.tres" id="r236"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_cafe_laptop.tres" id="r237"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_gym_chalk.tres" id="r238"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_appearance_ritual.tres" id="r239"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_public_sculpture.tres" id="r240"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_cafe_receipt_notes.tres" id="r241"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_appearance_flash.tres" id="r242"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_city_umbrella.tres" id="r243"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_cafe_spoon_stack.tres" id="r244"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_city_lanyard.tres" id="r245"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_appearance_coat_check.tres" id="r246"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_gym_timer.tres" id="r247"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_city_crosswalk.tres" id="r248"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_cafe_hot_sauce.tres" id="r249"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_appearance_mannequin.tres" id="r250"]
+[ext_resource type="Resource" path="res://data/content/dating/pools/date_pool_signature_cafe_sugar_geometry.tres" id="r251"]
+[ext_resource type="Resource" path="res://data/content/dating/greetings/dating_greeting_offer_choice.tres" id="r252"]
+[ext_resource type="Resource" path="res://data/content/dating/greetings/dating_greeting_notice_detail.tres" id="r253"]
+[ext_resource type="Resource" path="res://data/content/dating/greetings/dating_greeting_direct_plan.tres" id="r254"]
+[ext_resource type="Resource" path="res://data/content/dating/greetings/dating_greeting_small_confession.tres" id="r255"]
+[ext_resource type="Resource" path="res://data/content/dating/farewells/dating_farewell_walk_common.tres" id="r256"]
+[ext_resource type="Resource" path="res://data/content/dating/farewells/dating_farewell_transport_common.tres" id="r257"]
+[ext_resource type="Resource" path="res://data/content/dating/farewells/dating_farewell_last_word_common.tres" id="r258"]
+[ext_resource type="Resource" path="res://data/content/rivals/rival_city_thermos.tres" id="r259"]
+[ext_resource type="Resource" path="res://data/content/rivals/rival_gym_plate_counter.tres" id="r260"]
+[ext_resource type="Resource" path="res://data/content/rivals/rival_appearance_ringlight.tres" id="r261"]
+[ext_resource type="Resource" path="res://data/content/rivals/rival_cafe_menu_holder.tres" id="r262"]
+[ext_resource type="Resource" path="res://data/content/rivals/rival_city_headphones.tres" id="r263"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_male_city_thermos.tres" id="r264"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_male_gym_plate_counter.tres" id="r265"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_male_appearance_ringlight.tres" id="r266"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_male_cafe_menu_holder.tres" id="r267"]
+[ext_resource type="Resource" path="res://data/content/appearances/appearance_male_city_headphones.tres" id="r268"]
 [resource]
 script = ExtResource("1_script")
 primary_traits = Array[ExtResource("58_x8lld")]([ExtResource("r2"), ExtResource("r3"), ExtResource("r4"), ExtResource("r5")])
@@ -209,12 +297,12 @@ competitions = Array[ExtResource("7_t48gc")]([ExtResource("r10"), ExtResource("r
 perks = Array[ExtResource("25_s6adr")]([ExtResource("r31"), ExtResource("r32"), ExtResource("r33"), ExtResource("r34"), ExtResource("r35"), ExtResource("r36"), ExtResource("r37"), ExtResource("r38"), ExtResource("r39"), ExtResource("r40"), ExtResource("r41"), ExtResource("r42"), ExtResource("r43"), ExtResource("r44"), ExtResource("r45"), ExtResource("r46"), ExtResource("r47"), ExtResource("r48"), ExtResource("r49"), ExtResource("r50"), ExtResource("r51"), ExtResource("r52"), ExtResource("r53"), ExtResource("r54"), ExtResource("r55"), ExtResource("r56"), ExtResource("r57"), ExtResource("r58"), ExtResource("r59"), ExtResource("r60"), ExtResource("r61"), ExtResource("r62")])
 locations = Array[ExtResource("15_f176v")]([ExtResource("r14"), ExtResource("r15"), ExtResource("r16"), ExtResource("r17"), ExtResource("r18"), ExtResource("r19"), ExtResource("r20"), ExtResource("r21"), ExtResource("r22")])
 stages = Array[ExtResource("70_m381w")]([ExtResource("r23"), ExtResource("r24"), ExtResource("r25"), ExtResource("r26"), ExtResource("r27"), ExtResource("r28"), ExtResource("r29"), ExtResource("r30")])
-appearance_profiles = Array[ExtResource("4_37wg4")]([ExtResource("5_pjut5"), ExtResource("6_p0dw6"), ExtResource("r76"), ExtResource("r77"), ExtResource("r78"), ExtResource("r79"), ExtResource("r80"), ExtResource("r81"), ExtResource("r82"), ExtResource("r83"), ExtResource("r84"), ExtResource("r85"), ExtResource("r86"), ExtResource("r87"), ExtResource("r88"), ExtResource("r126"), ExtResource("r127"), ExtResource("r128"), ExtResource("r129"), ExtResource("r130"), ExtResource("r131"), ExtResource("r132"), ExtResource("r133"), ExtResource("r151"), ExtResource("r152"), ExtResource("r153"), ExtResource("r162"), ExtResource("r163"), ExtResource("r175"), ExtResource("r176"), ExtResource("r177")])
+appearance_profiles = Array[ExtResource("4_37wg4")]([ExtResource("5_pjut5"), ExtResource("6_p0dw6"), ExtResource("r76"), ExtResource("r77"), ExtResource("r78"), ExtResource("r79"), ExtResource("r80"), ExtResource("r81"), ExtResource("r82"), ExtResource("r83"), ExtResource("r84"), ExtResource("r85"), ExtResource("r86"), ExtResource("r87"), ExtResource("r88"), ExtResource("r126"), ExtResource("r127"), ExtResource("r128"), ExtResource("r129"), ExtResource("r130"), ExtResource("r131"), ExtResource("r132"), ExtResource("r133"), ExtResource("r151"), ExtResource("r152"), ExtResource("r153"), ExtResource("r162"), ExtResource("r163"), ExtResource("r175"), ExtResource("r176"), ExtResource("r177"), ExtResource("r181"), ExtResource("r182"), ExtResource("r183"), ExtResource("r184"), ExtResource("r185"), ExtResource("r186"), ExtResource("r187"), ExtResource("r188"), ExtResource("r189"), ExtResource("r264"), ExtResource("r265"), ExtResource("r266"), ExtResource("r267"), ExtResource("r268")])
 animation_profiles = Array[ExtResource("1_5q52a")]([ExtResource("2_p7o74"), ExtResource("3_cjwjc")])
-girls = Array[ExtResource("14_gduvv")]([ExtResource("r63"), ExtResource("r64"), ExtResource("r65"), ExtResource("r66"), ExtResource("r67"), ExtResource("r68"), ExtResource("r69"), ExtResource("r134"), ExtResource("r135"), ExtResource("r136"), ExtResource("r137"), ExtResource("r154"), ExtResource("r164"), ExtResource("r178")])
-rivals = Array[ExtResource("63_ce5wv")]([ExtResource("r70"), ExtResource("r71"), ExtResource("r72"), ExtResource("r73"), ExtResource("r74"), ExtResource("r75"), ExtResource("r138"), ExtResource("r139"), ExtResource("r140"), ExtResource("r141"), ExtResource("r155"), ExtResource("r165"), ExtResource("r179"), ExtResource("r180")])
-dating_events = Array[ExtResource("12_3x8re")]([ExtResource("r96"), ExtResource("r97"), ExtResource("r98"), ExtResource("r99"), ExtResource("r100"), ExtResource("r101"), ExtResource("r102"), ExtResource("r103"), ExtResource("r104"), ExtResource("r105"), ExtResource("r106"), ExtResource("r107"), ExtResource("r108"), ExtResource("r109"), ExtResource("r110"), ExtResource("r111"), ExtResource("r112"), ExtResource("r113"), ExtResource("r114"), ExtResource("r115"), ExtResource("r142"), ExtResource("r143"), ExtResource("r144"), ExtResource("r145"), ExtResource("r156"), ExtResource("r157"), ExtResource("r158"), ExtResource("r159"), ExtResource("r166"), ExtResource("r167"), ExtResource("r168"), ExtResource("r169"), ExtResource("r170"), ExtResource("r171")])
-dating_pools = Array[ExtResource("13_vrb6v")]([ExtResource("r116"), ExtResource("r117"), ExtResource("r118"), ExtResource("r119"), ExtResource("r120"), ExtResource("r146"), ExtResource("r160"), ExtResource("r172")])
-dating_greetings = Array[ExtResource("s_greet_script")]([ExtResource("r121"), ExtResource("r122"), ExtResource("r123"), ExtResource("r124")])
-dating_farewells = Array[ExtResource("s_farewell_script")]([ExtResource("r125"), ExtResource("r173")])
-discovery_situations = Array[ExtResource("s_discovery_script")]([ExtResource("r89"), ExtResource("r90"), ExtResource("r91"), ExtResource("r92"), ExtResource("r93"), ExtResource("r94"), ExtResource("r95"), ExtResource("r147"), ExtResource("r148"), ExtResource("r149"), ExtResource("r150"), ExtResource("r161"), ExtResource("r174")])
+girls = Array[ExtResource("14_gduvv")]([ExtResource("r63"), ExtResource("r64"), ExtResource("r65"), ExtResource("r66"), ExtResource("r67"), ExtResource("r68"), ExtResource("r69"), ExtResource("r134"), ExtResource("r135"), ExtResource("r136"), ExtResource("r137"), ExtResource("r154"), ExtResource("r164"), ExtResource("r178"), ExtResource("r190"), ExtResource("r191"), ExtResource("r192"), ExtResource("r193"), ExtResource("r194"), ExtResource("r195"), ExtResource("r196"), ExtResource("r197"), ExtResource("r198")])
+rivals = Array[ExtResource("63_ce5wv")]([ExtResource("r70"), ExtResource("r71"), ExtResource("r72"), ExtResource("r73"), ExtResource("r74"), ExtResource("r75"), ExtResource("r138"), ExtResource("r139"), ExtResource("r140"), ExtResource("r141"), ExtResource("r155"), ExtResource("r165"), ExtResource("r179"), ExtResource("r180"), ExtResource("r259"), ExtResource("r260"), ExtResource("r261"), ExtResource("r262"), ExtResource("r263")])
+dating_events = Array[ExtResource("12_3x8re")]([ExtResource("r96"), ExtResource("r97"), ExtResource("r98"), ExtResource("r99"), ExtResource("r100"), ExtResource("r101"), ExtResource("r102"), ExtResource("r103"), ExtResource("r104"), ExtResource("r105"), ExtResource("r106"), ExtResource("r107"), ExtResource("r108"), ExtResource("r109"), ExtResource("r110"), ExtResource("r111"), ExtResource("r112"), ExtResource("r113"), ExtResource("r114"), ExtResource("r115"), ExtResource("r142"), ExtResource("r143"), ExtResource("r144"), ExtResource("r145"), ExtResource("r156"), ExtResource("r157"), ExtResource("r158"), ExtResource("r159"), ExtResource("r166"), ExtResource("r167"), ExtResource("r168"), ExtResource("r169"), ExtResource("r170"), ExtResource("r171"), ExtResource("r208"), ExtResource("r209"), ExtResource("r210"), ExtResource("r211"), ExtResource("r212"), ExtResource("r213"), ExtResource("r214"), ExtResource("r215"), ExtResource("r216"), ExtResource("r217"), ExtResource("r218"), ExtResource("r219"), ExtResource("r220"), ExtResource("r221"), ExtResource("r222"), ExtResource("r223"), ExtResource("r224"), ExtResource("r225"), ExtResource("r226"), ExtResource("r227"), ExtResource("r228"), ExtResource("r229"), ExtResource("r230"), ExtResource("r231"), ExtResource("r232"), ExtResource("r233"), ExtResource("r234"), ExtResource("r235")])
+dating_pools = Array[ExtResource("13_vrb6v")]([ExtResource("r116"), ExtResource("r117"), ExtResource("r118"), ExtResource("r119"), ExtResource("r120"), ExtResource("r146"), ExtResource("r160"), ExtResource("r172"), ExtResource("r236"), ExtResource("r237"), ExtResource("r238"), ExtResource("r239"), ExtResource("r240"), ExtResource("r241"), ExtResource("r242"), ExtResource("r243"), ExtResource("r244"), ExtResource("r245"), ExtResource("r246"), ExtResource("r247"), ExtResource("r248"), ExtResource("r249"), ExtResource("r250"), ExtResource("r251")])
+dating_greetings = Array[ExtResource("s_greet_script")]([ExtResource("r121"), ExtResource("r122"), ExtResource("r123"), ExtResource("r124"), ExtResource("r252"), ExtResource("r253"), ExtResource("r254"), ExtResource("r255")])
+dating_farewells = Array[ExtResource("s_farewell_script")]([ExtResource("r125"), ExtResource("r173"), ExtResource("r256"), ExtResource("r257"), ExtResource("r258")])
+discovery_situations = Array[ExtResource("s_discovery_script")]([ExtResource("r89"), ExtResource("r90"), ExtResource("r91"), ExtResource("r92"), ExtResource("r93"), ExtResource("r94"), ExtResource("r95"), ExtResource("r147"), ExtResource("r148"), ExtResource("r149"), ExtResource("r150"), ExtResource("r161"), ExtResource("r174"), ExtResource("r199"), ExtResource("r200"), ExtResource("r201"), ExtResource("r202"), ExtResource("r203"), ExtResource("r204"), ExtResource("r205"), ExtResource("r206"), ExtResource("r207")])

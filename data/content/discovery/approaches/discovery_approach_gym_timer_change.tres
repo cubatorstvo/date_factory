@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DiscoveryApproachDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_approach_gym_timer_change"
+label = "Предложить каждый раз менять упражнение"
+has_requirement = true
+required_characteristic = 1
+required_level = 1
+outcome = 1
+result_text = "Смена упражнения после каждого сигнала ей не подходит. Последовательность важнее декора."

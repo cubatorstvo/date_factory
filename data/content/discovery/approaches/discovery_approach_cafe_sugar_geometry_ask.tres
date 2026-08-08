@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DiscoveryApproachDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/discovery_approach_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"discovery_approach_cafe_sugar_geometry_ask"
+label = "Спросить, где должен лежать пакет, чтобы схема снова считалась вежливой"
+has_requirement = false
+required_characteristic = 0
+required_level = 0
+outcome = 0
+result_text = "Она указывает точную вершину и оставляет контакт как продолжение схемы."

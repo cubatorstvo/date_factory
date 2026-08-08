@@ -8,7 +8,10 @@
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
 [ext_resource type="Script" uid="uid://hijvba7yq260" path="res://game/girls/girl_actor.gd" id="5_xlji7"]
 [ext_resource type="PackedScene" uid="uid://craep8snu78fc" path="res://game/rivals/rival_actor.tscn" id="6_sgsvq"]
+[ext_resource type="Script" uid="uid://cm01ma3nlptyj" path="res://game/rivals/rival_actor.gd" id="7_aplqh"]
 [ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="9_n632s"]
+[ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="10_sgsvq"]
+[ext_resource type="Script" uid="uid://dx0ba68hwmey5" path="res://world/flavor/flavor_interactable.gd" id="11_07mk6"]
 
 [sub_resource type="Environment" id="Env"]
 background_mode = 1
@@ -62,6 +65,45 @@ albedo_color = Color(0.55, 0.45, 0.4, 1)
 [sub_resource type="BoxShape3D" id="BoxShape_WallW"]
 size = Vector3(0.3, 3, 12)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n632s"]
+albedo_color = Color(0.55, 0.38, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bwde7"]
+size = Vector3(0.9, 0.06, 0.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lkgp8"]
+size = Vector3(0.06, 0.72, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wngqx"]
+size = Vector3(0.06, 0.72, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_a7fb4"]
+size = Vector3(0.06, 0.72, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_xp3ek"]
+size = Vector3(0.06, 0.52, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ky16e"]
+albedo_color = Color(0.92, 0.88, 0.78, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kq3pd"]
+size = Vector3(0.22, 0.04, 0.16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_74vhu"]
+transparency = 1
+albedo_color = Color(0.75, 0.82, 0.88, 0.85)
+
+[sub_resource type="BoxMesh" id="BoxMesh_i45ql"]
+size = Vector3(0.7, 0.9, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_m5dlf"]
+albedo_color = Color(0.95, 0.55, 0.65, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_fxw5d"]
+top_radius = 0.16
+bottom_radius = 0.18
+height = 0.14
+
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_interact"]
 radius = 0.45
 height = 1.8
@@ -74,8 +116,21 @@ height = 1.8
 radius = 0.45
 height = 1.8
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_voiok"]
+radius = 0.45
+height = 1.8
+
 [sub_resource type="BoxMesh" id="BoxMesh_dp0xu"]
 size = Vector3(1.1, 0.7, 1.1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_irctf"]
+size = Vector3(0.7, 1.2, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_msbmx"]
+albedo_color = Color(0.72, 0.68, 0.62, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_iejgs"]
+size = Vector3(0.45, 0.9, 0.45)
 
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
@@ -155,6 +210,68 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
 text = "КАФЕ"
 font_size = 64
 
+[node name="ScenicGags" type="Node3D" parent="Geometry" unique_id=464043516]
+
+[node name="StabilizedTableLeg" type="Node3D" parent="Geometry/ScenicGags" unique_id=1146968448]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6, 0, 4.4)
+
+[node name="TableTop" type="MeshInstance3D" parent="Geometry/ScenicGags/StabilizedTableLeg" unique_id=438196236]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
+material_override = SubResource("StandardMaterial3D_n632s")
+mesh = SubResource("BoxMesh_bwde7")
+
+[node name="Leg1" type="MeshInstance3D" parent="Geometry/ScenicGags/StabilizedTableLeg" unique_id=1517755687]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.38, 0.36, -0.38)
+material_override = SubResource("StandardMaterial3D_n632s")
+mesh = SubResource("BoxMesh_lkgp8")
+
+[node name="Leg2" type="MeshInstance3D" parent="Geometry/ScenicGags/StabilizedTableLeg" unique_id=1052175562]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, 0.36, -0.38)
+material_override = SubResource("StandardMaterial3D_n632s")
+mesh = SubResource("BoxMesh_wngqx")
+
+[node name="Leg3" type="MeshInstance3D" parent="Geometry/ScenicGags/StabilizedTableLeg" unique_id=977630302]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.38, 0.36, 0.38)
+material_override = SubResource("StandardMaterial3D_n632s")
+mesh = SubResource("BoxMesh_a7fb4")
+
+[node name="ShortLeg" type="MeshInstance3D" parent="Geometry/ScenicGags/StabilizedTableLeg" unique_id=1492627573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, 0.48, 0.38)
+material_override = SubResource("StandardMaterial3D_n632s")
+mesh = SubResource("BoxMesh_xp3ek")
+
+[node name="FoldedMenu" type="MeshInstance3D" parent="Geometry/ScenicGags/StabilizedTableLeg" unique_id=1908080388]
+transform = Transform3D(0.89748764, -0.12613367, 0.42261827, 0.1391731, 0.99026805, 0, -0.41850537, 0.058817096, 0.90630776, 0.38, 0.08, 0.38)
+material_override = SubResource("StandardMaterial3D_ky16e")
+mesh = SubResource("BoxMesh_kq3pd")
+
+[node name="MenuLabel" type="Label3D" parent="Geometry/ScenicGags/StabilizedTableLeg" unique_id=438564257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, 0.22, 0.38)
+billboard = 1
+modulate = Color(0.2, 0.15, 0.1, 1)
+text = "меню"
+font_size = 10
+
+[node name="LastCakeDisplay" type="Node3D" parent="Geometry/ScenicGags" unique_id=713625408]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5.2)
+
+[node name="Stand" type="MeshInstance3D" parent="Geometry/ScenicGags/LastCakeDisplay" unique_id=316363594]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+material_override = SubResource("StandardMaterial3D_74vhu")
+mesh = SubResource("BoxMesh_i45ql")
+
+[node name="Cake" type="MeshInstance3D" parent="Geometry/ScenicGags/LastCakeDisplay" unique_id=1047958662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+material_override = SubResource("StandardMaterial3D_m5dlf")
+mesh = SubResource("CylinderMesh_fxw5d")
+
+[node name="LastLabel" type="Label3D" parent="Geometry/ScenicGags/LastCakeDisplay" unique_id=50855449]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.28, 0.12)
+billboard = 1
+modulate = Color(0.85, 0.1, 0.1, 1)
+text = "ПОСЛЕДНИЙ"
+font_size = 18
+
 [node name="PlayerSpawns" type="Node3D" parent="." unique_id=150638794]
 
 [node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=570043663]
@@ -166,10 +283,8 @@ script = ExtResource("3_pspawn")
 [node name="npc_girl_cafe_laptop" type="Marker3D" parent="NpcSpawns" unique_id=2122251097]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.05, -1)
 script = ExtResource("4_nspawn")
-spawn_id = "girl_cafe_laptop"
 
 [node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_laptop" unique_id=80850875 instance=ExtResource("4_aplqh")]
-girl_id = "girl_cafe_laptop"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_laptop/GirlActor" unique_id=2072436705]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -178,10 +293,8 @@ shape = SubResource("CapsuleShape3D_interact")
 [node name="npc_rival_cafe_receipt" type="Marker3D" parent="NpcSpawns" unique_id=782695364]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.05, -1)
 script = ExtResource("4_nspawn")
-spawn_id = "rival_cafe_receipt"
 
 [node name="RivalActor" parent="NpcSpawns/npc_rival_cafe_receipt" unique_id=515275552 instance=ExtResource("6_sgsvq")]
-rival_id = "rival_cafe_receipt"
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_cafe_receipt/RivalActor" unique_id=1049199870]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -192,16 +305,81 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 2.5)
 script = ExtResource("4_nspawn")
 spawn_id = &"girl_cafe_receipt_notes"
 
-[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_receipt_notes" unique_id=395611070 instance=ExtResource("4_aplqh")]
+[node name="GirlActor" parent="NpcSpawns/npc_girl_cafe_receipt_notes" unique_id=395611070 instance=ExtResource("4_aplqh")]
+girl_id = &"girl_cafe_receipt_notes"
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_receipt_notes/GirlActor" unique_id=1141777158]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_kokhl")
+
+[node name="npc_girl_cafe_spoon_stack" type="Marker3D" parent="NpcSpawns" unique_id=546469834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.05, -2.5)
+script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_spoon_stack"
+
+[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_spoon_stack" unique_id=1571188797 instance=ExtResource("4_aplqh")]
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("5_xlji7")
-girl_id = &"girl_cafe_receipt_notes"
+girl_id = "girl_cafe_spoon_stack"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_receipt_notes/GirlActor" unique_id=1141777158]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_spoon_stack/GirlActor" unique_id=1506286408]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-shape = SubResource("CapsuleShape3D_kokhl")
+shape = SubResource("CapsuleShape3D_interact")
+
+[node name="npc_girl_cafe_hot_sauce" type="Marker3D" parent="NpcSpawns" unique_id=545734975]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0.05, -2.5)
+script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_hot_sauce"
+
+[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_hot_sauce" unique_id=1799181530 instance=ExtResource("4_aplqh")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_xlji7")
+girl_id = "girl_cafe_hot_sauce"
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_hot_sauce/GirlActor" unique_id=197963312]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_interact")
+
+[node name="npc_girl_cafe_sugar_geometry" type="Marker3D" parent="NpcSpawns" unique_id=553203969]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.05, 2.5)
+script = ExtResource("4_nspawn")
+spawn_id = "girl_cafe_sugar_geometry"
+
+[node name="GirlActor" type="Area3D" parent="NpcSpawns/npc_girl_cafe_sugar_geometry" unique_id=538417352 instance=ExtResource("4_aplqh")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_xlji7")
+girl_id = "girl_cafe_sugar_geometry"
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_girl_cafe_sugar_geometry/GirlActor" unique_id=1256577309]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_interact")
+
+[node name="npc_rival_cafe_menu_holder" type="Marker3D" parent="NpcSpawns" unique_id=136145015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 1)
+script = ExtResource("4_nspawn")
+spawn_id = "rival_cafe_menu_holder"
+npc_kind = 2
+
+[node name="RivalActor" type="Area3D" parent="NpcSpawns/npc_rival_cafe_menu_holder" unique_id=1244291354 instance=ExtResource("6_sgsvq")]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_aplqh")
+rival_id = "rival_cafe_menu_holder"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NpcSpawns/npc_rival_cafe_menu_holder/RivalActor" unique_id=1799433962]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_voiok")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="NpcSpawns/npc_rival_cafe_menu_holder/RivalActor" unique_id=1520801959]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_k0wc4")
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1911734969]
 
@@ -236,6 +414,75 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 billboard = 1
 text = "Столик для свиданий"
 font_size = 28
+
+[node name="FlavorMenu" type="Area3D" parent="Interactables" unique_id=1242682029 instance=ExtResource("10_sgsvq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, 3.5)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_07mk6")
+text = "МЕНЮ
+Любая проблема может быть дороже на 20% после добавления соуса."
+prompt_action = "Осмотреть"
+
+[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorMenu" unique_id=374407289]
+shape = SubResource("BoxShape3D_irctf")
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorMenu" unique_id=1246067171]
+material_override = SubResource("StandardMaterial3D_msbmx")
+mesh = SubResource("BoxMesh_iejgs")
+
+[node name="Label" type="Label3D" parent="Interactables/FlavorMenu" unique_id=931679821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+billboard = 1
+text = "МЕНЮ"
+font_size = 22
+
+[node name="FlavorSugarTray" type="Area3D" parent="Interactables" unique_id=564761193 instance=ExtResource("10_sgsvq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.85, 0)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_07mk6")
+text = "САХАР
+Свободная геометрия. Пока."
+prompt_action = "Осмотреть"
+
+[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorSugarTray" unique_id=1830634634]
+shape = SubResource("BoxShape3D_irctf")
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorSugarTray" unique_id=1060078366]
+material_override = SubResource("StandardMaterial3D_msbmx")
+mesh = SubResource("BoxMesh_iejgs")
+
+[node name="Label" type="Label3D" parent="Interactables/FlavorSugarTray" unique_id=186693058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+billboard = 1
+text = "САХАР"
+font_size = 22
+
+[node name="FlavorReservedTable" type="Area3D" parent="Interactables" unique_id=2015525969 instance=ExtResource("10_sgsvq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.55, 4.2)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_07mk6")
+text = "БРОНЬ
+Стол уже достиг большего социального статуса, чем некоторые посетители."
+prompt_action = "Осмотреть"
+
+[node name="Collision" type="CollisionShape3D" parent="Interactables/FlavorReservedTable" unique_id=139837688]
+shape = SubResource("BoxShape3D_irctf")
+
+[node name="Mesh" type="MeshInstance3D" parent="Interactables/FlavorReservedTable" unique_id=497562428]
+material_override = SubResource("StandardMaterial3D_msbmx")
+mesh = SubResource("BoxMesh_iejgs")
+
+[node name="Label" type="Label3D" parent="Interactables/FlavorReservedTable" unique_id=1470156043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+billboard = 1
+text = "БРОНЬ"
+font_size = 22
 
 [node name="Transitions" type="Node3D" parent="." unique_id=1815322725]
 

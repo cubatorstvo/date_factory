@@ -265,4 +265,13 @@ new = clamp(old + date_delta, -5, +5)
 - PhoneJournal shows global status + Story section from `Story.get_current_progress()`; salary section still unlocks with `SALARY_MINE`; STAGE_4 shows media handoff text.
 - Content feasibility: story girls must be able to reach `date_delta = +5`; paid actions are never the only free route.
 
+### Реализация (MODULE 25 — Content Completion)
+
+- Production central dating events: **≥62** (exact catalog count **62**).
+- `date_pool_cafe_common` = **24** events (pre-M25 12 + MODULE25 **+12**).
+- Ordinary signatures: **16** one-event pools / **16** signature events (one per ordinary girl).
+- Greetings expanded to **8** (4 pre-M25 + 4 MODULE25).
+- Farewells: **5** definitions (`early_common`, `president`, + 3 ordinary: `walk` / `transport` / `last_word`).
+- Inventory: `docs/content/MANUAL_CONTENT_COMPLETE.md`. Balance pass deferred to MODULE 26.
+
 ---

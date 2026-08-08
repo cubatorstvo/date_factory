@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 24 — Save / Load / Settings**.  
+Фактическая структура после **MODULE 25 — Content Completion**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → title menu → World after New/Continue/Load
 
 UI architecture: `docs/ui/UI_ARCHITECTURE.md`.  
@@ -74,7 +74,7 @@ Licenses: `docs/ASSET_LICENSES.md`.
 - `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
 - `types/perk_ids.gd` — `class_name PerkIds` 32 canonical perk `StringName` constants
 - `definitions/*.gd` — typed `Resource` schemas (incl. dating action/event/pool/greeting/farewell, discovery, appearance)
-- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); through MODULE 21: **14 girls / 14 rivals** / 13 discovery situations (+ President + final target / exhibition rivals)
+- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); after MODULE 25: **23 girls / 19 rivals / 22 discovery situations** / **62** central dating events / **45** appearance profiles (see `docs/content/MANUAL_CONTENT_COMPLETE.md`)
 - `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; `try_get_girl`/`try_get_rival` for safe missing-content presentation)
 - `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations, girls, rivals, discovery, dating)
 - `test/` — fixtures + MODULE 06–09 test content (`dating_test_fixtures.gd`, discovery/rival fixtures; not in production catalog)
@@ -273,18 +273,26 @@ Dependency-safe production order (`project.godot`):
 - Success once: relationship +5 / conquered / `add_experience(1)`; fail → full retry, zero permanent penalties
 - `test/final_date_test.tscn` + `final_date_self_test.gd` — MODULE 21 headless runner
 
-## Canonical future destinations
+## Canonical status / next destinations
 
-Persistence through MODULE 24 is complete: SaveSystem (schema v1, 3+autosave, atomic+backup, settings.cfg, title/pause). Remaining:
+Persistence through MODULE 24 remains complete: SaveSystem (**schema v1** unchanged through MODULE 25; 3+autosave, atomic+backup, settings.cfg, title/pause).
 
-- MODULE 25 — content completion (catalog polish / missing copy / balance fill — not a new persistence layer).
+After **MODULE 25 — Content Completion**:
 
-Catalog **14/14** girls/rivals; inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`, `docs/content/MANUAL_CONTENT_17.md`.  
+- Production catalog: **23 girls** (16 ordinary 4×4 + 6 story + 1 final), **19 rivals** (12 ordinary + 5 Earth story + 2 final), **22** discovery situations.
+- Dating: cafe common **24**, ordinary signatures **16**, greetings **8**, farewells **5**, central events **62**.
+- World flavor **24** + scenic gags **12**; late `UpgradeLevelVisual` tiers presentation-only.
+- Canonical inventory: `docs/content/MANUAL_CONTENT_COMPLETE.md` (prior slice notes 14A/14B/17 remain historical).
+
+Remaining:
+
+- MODULE 26 — Balance / Anti-Grind (formulas, pacing, economy — not content packs).
+
 Gameplay headless runners remain under each `game/**/test/` and `minigames/**/test/`.  
 UI presentation runners: `ui/hud/test/`, `ui/progression/test/`.  
 Audio runner: `audio/test/`.  
 Save runner: `persistence/test/`.  
-STOP before MODULE 25 content completion.
+STOP before MODULE 26 balance.
 
 ## Donor
 

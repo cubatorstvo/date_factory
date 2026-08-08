@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RivalDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/rival_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"rival_cafe_menu_holder"
+display_name = "Самец с кожаной папкой меню"
+is_story = false
+has_story_stage = false
+story_stage = 0
+required_authority = 4
+authority_reward = 2
+muscle = 2
+appearance = 3
+capital = 5
+aura = 2
+preferred_competition = 2
+allowed_competitions = Array[int]([2, 0])
+appearance_profile_id = &"appearance_male_cafe_menu_holder"
+competition_modifier_id = &""

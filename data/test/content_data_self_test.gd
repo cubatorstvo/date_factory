@@ -4,6 +4,27 @@ extends Node
 
 const _ContentDBScript = preload("res://data/catalog/content_db.gd")
 
+## MODULE 25 Wave K — ordinary matrix completeness (spec §88–91, counts).
+const _FINAL_EXHIBITION_RIVAL_IDS: Array[StringName] = [
+	&"rival_final_ceremonial",
+	&"rival_final_gravity",
+]
+
+const _CAFE_COMMON_NEW_EVENT_IDS: Array[StringName] = [
+	&"date_event_cafe_wrong_order",
+	&"date_event_cafe_last_cake",
+	&"date_event_cafe_window_draft",
+	&"date_event_cafe_phone_charger",
+	&"date_event_cafe_reserved_sign",
+	&"date_event_cafe_loud_table",
+	&"date_event_cafe_wobbly_spoon",
+	&"date_event_cafe_free_sample",
+	&"date_event_cafe_coat_mixup",
+	&"date_event_cafe_waiter_question",
+	&"date_event_cafe_table_photo",
+	&"date_event_cafe_closing_chairs",
+]
+
 var _failed: int = 0
 var _passed: int = 0
 
@@ -47,6 +68,12 @@ func _run_all() -> void:
 	_test_duplicate_id()
 	_test_immutability()
 	_test_gamestate_untouched()
+	_test_module25_ordinary_matrix()
+	_test_module25_ordinary_girl_completeness()
+	_test_module25_signature_pools()
+	_test_module25_cafe_common_pool()
+	_test_module25_rivals_and_discovery()
+	_test_module25_dating_central_events()
 
 
 func _test_contentdb_ready() -> void:
@@ -258,11 +285,11 @@ func _test_stages() -> void:
 	_ok(prologue != null and prologue.story_girl_id == &"girl_neighbor" and prologue.story_rival_id == &"", "prologue refs")
 	var finale: StoryStageDefinition = db.call("get_stage", GameTypes.GameStage.FINALE) as StoryStageDefinition
 	_ok(finale != null and finale.story_girl_id == &"girl_final_target", "finale girl")
-	# MODULE 21 ships final target + exhibition rivals (14 girls / 14 rivals).
+	# MODULE 25: 23 girls (16 ordinary + 7 story/final); rivals 19 after Wave G.
 	var prod_girls: Array = db.call("list_girls") as Array
-	_ok(prod_girls.size() == 14, "14 production GirlDefinitions with final target")
+	_ok(prod_girls.size() == 23, "23 production GirlDefinitions with MODULE25 ordinary set")
 	var prod_rivals: Array = db.call("list_rivals") as Array
-	_ok(prod_rivals.size() == 14, "14 production RivalDefinitions with final rivals")
+	_ok(prod_rivals.size() == 19, "19 production RivalDefinitions with MODULE25 Wave G rivals")
 	for gid in [
 		&"girl_neighbor",
 		&"girl_actress",
@@ -278,6 +305,15 @@ func _test_stages() -> void:
 		&"girl_scientist",
 		&"girl_president",
 		&"girl_final_target",
+		&"girl_city_umbrella",
+		&"girl_cafe_spoon_stack",
+		&"girl_city_lanyard",
+		&"girl_appearance_coat_check",
+		&"girl_gym_timer",
+		&"girl_city_crosswalk",
+		&"girl_cafe_hot_sauce",
+		&"girl_appearance_mannequin",
+		&"girl_cafe_sugar_geometry",
 	]:
 		var g: GirlDefinition = db.call("get_girl", gid) as GirlDefinition
 		_ok(g != null and g.id == gid, "production girl %s" % String(gid))
@@ -399,3 +435,178 @@ func _test_gamestate_untouched() -> void:
 	var gs: Node = get_node("/root/GameState")
 	_ok(int(gs.call("get_money")) == 0, "ContentDB did not change money")
 	_ok(int(gs.call("get_stage")) == int(GameTypes.GameStage.PROLOGUE), "ContentDB did not change stage")
+
+
+func _ordinary_girls(db: Node) -> Array[GirlDefinition]:
+	var out: Array[GirlDefinition] = []
+	var girls: Array = db.call("list_girls") as Array
+	for g in girls:
+		var girl: GirlDefinition = g as GirlDefinition
+		if girl == null:
+			continue
+		if girl.is_story:
+			continue
+		out.append(girl)
+	return out
+
+
+func _signature_pool_id_for_girl(girl: GirlDefinition) -> StringName:
+	for pid in girl.dating_pool_ids:
+		var s: String = String(pid)
+		if s.begins_with("date_pool_signature_"):
+			return pid
+	return &""
+
+
+func _test_module25_ordinary_matrix() -> void:
+	var db: Node = get_node("/root/ContentDB")
+	var ordinary: Array[GirlDefinition] = _ordinary_girls(db)
+	var all_girls: Array = db.call("list_girls") as Array
+	_ok(ordinary.size() == 16, "MODULE25 ordinary girls count == 16 got %s" % ordinary.size())
+	_ok(all_girls.size() == 23, "MODULE25 total girls == 23 got %s" % all_girls.size())
+	var pairs: Dictionary = {}
+	var expected_primaries: Array = [
+		GameTypes.PrimaryGirlTrait.KIND,
+		GameTypes.PrimaryGirlTrait.STATUS,
+		GameTypes.PrimaryGirlTrait.THRILL_SEEKING,
+		GameTypes.PrimaryGirlTrait.STRANGE,
+	]
+	var expected_secondaries: Array = [
+		GameTypes.SecondaryGirlTrait.SCANDALOUS,
+		GameTypes.SecondaryGirlTrait.CONSISTENT,
+		GameTypes.SecondaryGirlTrait.VARIETY_SEEKING,
+		GameTypes.SecondaryGirlTrait.DEMANDING,
+	]
+	for girl in ordinary:
+		var key: String = "%s|%s" % [int(girl.primary_trait), int(girl.secondary_trait)]
+		_ok(not pairs.has(key), "MODULE25 unique pair for %s" % String(girl.id))
+		pairs[key] = girl.id
+	_ok(pairs.size() == 16, "MODULE25 16 unique primary×secondary pairs got %s" % pairs.size())
+	for p in expected_primaries:
+		for s in expected_secondaries:
+			var need: String = "%s|%s" % [int(p), int(s)]
+			_ok(pairs.has(need), "MODULE25 matrix cell primary=%s secondary=%s" % [int(p), int(s)])
+
+
+func _test_module25_ordinary_girl_completeness() -> void:
+	var db: Node = get_node("/root/ContentDB")
+	var ordinary: Array[GirlDefinition] = _ordinary_girls(db)
+	for girl in ordinary:
+		var gid: String = String(girl.id)
+		var appearance: AppearanceProfileDefinition = db.call(
+			"get_appearance_profile", girl.appearance_profile_id
+		) as AppearanceProfileDefinition
+		_ok(
+			appearance != null and String(girl.appearance_profile_id) != "",
+			"MODULE25 %s valid appearance" % gid,
+		)
+		var discovery: DiscoverySituationDefinition = db.call(
+			"get_discovery_situation", girl.discovery_situation_id
+		) as DiscoverySituationDefinition
+		_ok(
+			discovery != null and String(girl.discovery_situation_id) != "",
+			"MODULE25 %s valid discovery" % gid,
+		)
+		_ok(
+			girl.required_experience >= 0 and girl.required_experience <= 4,
+			"MODULE25 %s XP 0..4 got %s" % [gid, girl.required_experience],
+		)
+		_ok(
+			girl.dating_pool_ids.has(&"date_pool_cafe_common"),
+			"MODULE25 %s has cafe_common pool" % gid,
+		)
+		var sig_pool: StringName = _signature_pool_id_for_girl(girl)
+		_ok(String(sig_pool) != "", "MODULE25 %s has signature pool" % gid)
+		if String(sig_pool) != "":
+			var pool: DatingEventPoolDefinition = db.call("get_dating_pool", sig_pool) as DatingEventPoolDefinition
+			_ok(pool != null, "MODULE25 %s signature pool resolves" % gid)
+		_ok(not girl.dating_greeting_ids.is_empty(), "MODULE25 %s greetings nonempty" % gid)
+		for gre_id in girl.dating_greeting_ids:
+			var gre: DatingGreetingDefinition = db.call("get_dating_greeting", gre_id) as DatingGreetingDefinition
+			_ok(gre != null, "MODULE25 %s greeting %s" % [gid, String(gre_id)])
+		var farewell: DatingFarewellDefinition = db.call(
+			"get_dating_farewell", girl.dating_farewell_id
+		) as DatingFarewellDefinition
+		_ok(
+			farewell != null and String(girl.dating_farewell_id) != "",
+			"MODULE25 %s farewell set" % gid,
+		)
+		_ok(girl.clue_notes.size() == 3, "MODULE25 %s exactly 3 clues got %s" % [gid, girl.clue_notes.size()])
+		for i in range(girl.clue_notes.size()):
+			_ok(girl.clue_notes[i].strip_edges() != "", "MODULE25 %s clue %s nonempty" % [gid, i])
+		_ok(
+			girl.speech_style_note.strip_edges() != "",
+			"MODULE25 %s speech_style_note nonempty" % gid,
+		)
+
+
+func _test_module25_signature_pools() -> void:
+	var db: Node = get_node("/root/ContentDB")
+	var ordinary: Array[GirlDefinition] = _ordinary_girls(db)
+	var sig_pools: Dictionary = {}
+	var sig_events: Dictionary = {}
+	for girl in ordinary:
+		var sig_pool_id: StringName = _signature_pool_id_for_girl(girl)
+		_ok(String(sig_pool_id) != "", "MODULE25 signature pool id for %s" % String(girl.id))
+		if String(sig_pool_id) == "":
+			continue
+		_ok(not sig_pools.has(sig_pool_id), "MODULE25 unique signature pool %s" % String(sig_pool_id))
+		sig_pools[sig_pool_id] = girl.id
+		var pool: DatingEventPoolDefinition = db.call("get_dating_pool", sig_pool_id) as DatingEventPoolDefinition
+		_ok(pool != null, "MODULE25 signature pool exists %s" % String(sig_pool_id))
+		if pool == null:
+			continue
+		_ok(pool.event_ids.size() == 1, "MODULE25 %s has exactly 1 signature event" % String(sig_pool_id))
+		if pool.event_ids.is_empty():
+			continue
+		var eid: StringName = pool.event_ids[0]
+		var ev: DatingEventDefinition = db.call("get_dating_event", eid) as DatingEventDefinition
+		_ok(ev != null, "MODULE25 signature event exists %s" % String(eid))
+		_ok(not sig_events.has(eid), "MODULE25 signature event not shared %s" % String(eid))
+		sig_events[eid] = girl.id
+	_ok(sig_pools.size() == 16, "MODULE25 exactly 16 signature pools got %s" % sig_pools.size())
+	_ok(sig_events.size() == 16, "MODULE25 exactly 16 signature events got %s" % sig_events.size())
+
+
+func _test_module25_cafe_common_pool() -> void:
+	var db: Node = get_node("/root/ContentDB")
+	var pool: DatingEventPoolDefinition = db.call("get_dating_pool", &"date_pool_cafe_common") as DatingEventPoolDefinition
+	_ok(pool != null, "MODULE25 date_pool_cafe_common exists")
+	if pool == null:
+		return
+	_ok(
+		pool.event_ids.size() >= 24,
+		"MODULE25 cafe_common events >= 24 got %s" % pool.event_ids.size(),
+	)
+	for eid in _CAFE_COMMON_NEW_EVENT_IDS:
+		_ok(pool.event_ids.has(eid), "MODULE25 cafe_common contains %s" % String(eid))
+		var ev: DatingEventDefinition = db.call("get_dating_event", eid) as DatingEventDefinition
+		_ok(ev != null, "MODULE25 cafe_common event resource %s" % String(eid))
+
+
+func _test_module25_rivals_and_discovery() -> void:
+	var db: Node = get_node("/root/ContentDB")
+	var rivals: Array = db.call("list_rivals") as Array
+	_ok(rivals.size() == 19, "MODULE25 rivals == 19 got %s" % rivals.size())
+	var ordinary_rivals: int = 0
+	for r in rivals:
+		var rival: RivalDefinition = r as RivalDefinition
+		if rival == null:
+			continue
+		if rival.is_story:
+			continue
+		if _FINAL_EXHIBITION_RIVAL_IDS.has(rival.id):
+			continue
+		ordinary_rivals += 1
+	_ok(ordinary_rivals == 12, "MODULE25 ordinary rivals == 12 got %s" % ordinary_rivals)
+	for fid in _FINAL_EXHIBITION_RIVAL_IDS:
+		var fr: RivalDefinition = db.call("get_rival", fid) as RivalDefinition
+		_ok(fr != null and not fr.is_story, "MODULE25 final exhibition present %s" % String(fid))
+	var situations: Array = db.call("list_discovery_situations") as Array
+	_ok(situations.size() == 22, "MODULE25 discovery situations == 22 got %s" % situations.size())
+
+
+func _test_module25_dating_central_events() -> void:
+	var db: Node = get_node("/root/ContentDB")
+	var events: Array = db.call("list_dating_events") as Array
+	_ok(events.size() >= 62, "MODULE25 dating central events >= 62 got %s" % events.size())

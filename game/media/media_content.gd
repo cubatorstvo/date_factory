@@ -33,6 +33,15 @@ const CANDIDATE_PRIORITY: Array[StringName] = [
 	&"girl_appearance_ritual",
 	&"girl_cafe_laptop",
 	&"girl_city_bicycle",
+	&"girl_city_umbrella",
+	&"girl_cafe_spoon_stack",
+	&"girl_city_lanyard",
+	&"girl_gym_timer",
+	&"girl_city_crosswalk",
+	&"girl_appearance_coat_check",
+	&"girl_cafe_hot_sauce",
+	&"girl_appearance_mannequin",
+	&"girl_cafe_sugar_geometry",
 ]
 
 const SHOT_IDS: Array[StringName] = [

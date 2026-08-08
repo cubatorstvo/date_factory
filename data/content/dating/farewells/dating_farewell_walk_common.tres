@@ -1,0 +1,62 @@
+[gd_resource type="Resource" script_class="DatingFarewellDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/dating_farewell_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://data/definitions/dating_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_0"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_walk_crossroad"
+label = "Проводить до следующего перекрёстка"
+characteristic = 0
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([0, 2])
+result_text = "Проводить до следующего перекрёстка"
+
+[sub_resource type="Resource" id="Action_1"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_walk_pretty"
+label = "Выбрать красивый короткий маршрут"
+characteristic = 1
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([3])
+result_text = "Выбрать красивый короткий маршрут"
+
+[sub_resource type="Resource" id="Action_2"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_walk_car"
+label = "Заказать машину до дома"
+characteristic = 2
+required_characteristic_level = 0
+money_cost = 10
+resolver_id = &"direct"
+direct_tags = Array[int]([3, 4])
+result_text = "Заказать машину до дома"
+
+[sub_resource type="Resource" id="Action_3"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_walk_right_moment"
+label = "Сказать, что правильный момент прощания уже наступил"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([8])
+result_text = "Сказать, что правильный момент прощания уже наступил"
+
+[sub_resource type="Resource" id="Action_4"]
+script = ExtResource("2_action")
+id = &"date_action_farewell_walk_absurd_exit"
+label = "Попрощаться так, будто это сцена из чужого сна"
+characteristic = 3
+required_characteristic_level = 0
+resolver_id = &"direct"
+direct_tags = Array[int]([9])
+result_text = "Попрощаться так, будто это сцена из чужого сна"
+
+[resource]
+script = ExtResource("1_script")
+id = &"dating_farewell_walk_common"
+title = "Прощание — прогулка"
+setup_text = "Пора расходиться. До ближайшего перекрёстка ещё можно идти вместе."
+actions = [SubResource("Action_0"), SubResource("Action_1"), SubResource("Action_2"), SubResource("Action_3"), SubResource("Action_4")]

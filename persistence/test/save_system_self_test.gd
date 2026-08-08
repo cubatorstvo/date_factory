@@ -44,6 +44,7 @@ func _run_all() -> void:
 	_test_metadata_without_gameplay()
 	_test_normalize_runtime_rejects_non_finite()
 	_test_corrupt_runtime_no_mutation()
+	_test_module25_old14_save_compat()
 
 
 func _ok(cond: bool, label: String) -> void:
@@ -370,6 +371,108 @@ func _assert_live_untouched(
 		is_equal_approx(float(live.get("date_fraction", -1.0)), float(expected_runtime.get("date_fraction", -2.0))),
 		"%s date_fraction untouched" % label,
 	)
+
+
+func _module24_old14_girl_ids() -> Array[StringName]:
+	## Production catalog at MODULE24 close (14 girls). MODULE25 adds 9 ordinary IDs.
+	var out: Array[StringName] = [
+		&"girl_neighbor",
+		&"girl_actress",
+		&"girl_mine_boss",
+		&"girl_magazine_editor",
+		&"girl_scientist",
+		&"girl_president",
+		&"girl_final_target",
+		&"girl_city_bicycle",
+		&"girl_cafe_laptop",
+		&"girl_gym_chalk",
+		&"girl_appearance_ritual",
+		&"girl_public_sculpture",
+		&"girl_cafe_receipt_notes",
+		&"girl_appearance_flash",
+	]
+	return out
+
+
+func _module25_new_girl_ids() -> Array[StringName]:
+	var out: Array[StringName] = [
+		&"girl_city_umbrella",
+		&"girl_cafe_spoon_stack",
+		&"girl_city_lanyard",
+		&"girl_appearance_coat_check",
+		&"girl_gym_timer",
+		&"girl_city_crosswalk",
+		&"girl_cafe_hot_sauce",
+		&"girl_appearance_mannequin",
+		&"girl_cafe_sugar_geometry",
+	]
+	return out
+
+
+func _slot_json_contains_girl_id(slot: SaveTypes.Slot, girl_id: StringName) -> bool:
+	var path: String = SaveTypes.slot_path(slot)
+	var f: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return false
+	var text: String = f.get_as_text()
+	f.close()
+	return text.find(String(girl_id)) >= 0
+
+
+## MODULE25 §109 — schema v1 old14 fixture loads; new girl ID roundtrips.
+func _test_module25_old14_save_compat() -> void:
+	_ok(SaveTypes.SAVE_SCHEMA_VERSION == 1, "SAVE_SCHEMA_VERSION remains 1")
+	_ensure_saveable_world()
+	_gs.call("reset_for_new_game")
+	_day.call("restore_day", 11)
+	_gs.call("restore_stage", GameTypes.GameStage.STAGE_3)
+	_gs.call("add_money", 1800)
+	_ci.call(
+		"restore_runtime_state",
+		{"production_elapsed_seconds": 0.5, "money_fraction": 0.1, "date_fraction": 0.2},
+	)
+	var old14: Array[StringName] = _module24_old14_girl_ids()
+	var new9: Array[StringName] = _module25_new_girl_ids()
+	_ok(old14.size() == 14, "old14 fixture size")
+	_ok(new9.size() == 9, "module25 new girl count")
+	for gid in old14:
+		_gs.call("mark_girl_discovered", gid)
+		_gs.call("set_girl_relationship", gid, 2)
+	# Conquer a couple of historical IDs only.
+	_gs.call("mark_girl_conquered", &"girl_neighbor")
+	_gs.call("mark_girl_conquered", &"girl_appearance_flash")
+	var save_r: SaveResult = _ss.call("save_slot", SaveTypes.Slot.MANUAL_1) as SaveResult
+	_ok(save_r != null and save_r.ok, "old14 fixture save ok")
+	for nid in new9:
+		_ok(not _slot_json_contains_girl_id(SaveTypes.Slot.MANUAL_1, nid), "fixture omits new id %s" % String(nid))
+	# Mutate live state so load must restore historical girls and clear accidental new marks.
+	_gs.call("mark_girl_discovered", &"girl_city_umbrella")
+	_gs.call("mark_girl_conquered", &"girl_city_umbrella")
+	_gs.call("add_money", 5000)
+	var load_r: SaveResult = _ss.call("load_slot", SaveTypes.Slot.MANUAL_1) as SaveResult
+	_ok(load_r != null and load_r.ok, "old14 Module24-style save loads under Module25")
+	_ok(int(_gs.call("get_money")) == 1800, "old14 load money")
+	_ok(bool(_gs.call("is_girl_discovered", &"girl_neighbor")), "old14 neighbor discovered")
+	_ok(bool(_gs.call("is_girl_conquered", &"girl_appearance_flash")), "old14 flash conquered")
+	for nid2 in new9:
+		_ok(not bool(_gs.call("is_girl_discovered", nid2)), "new id absent after old14 load %s" % String(nid2))
+		_ok(not bool(_gs.call("is_girl_conquered", nid2)), "new id not conquered after old14 load %s" % String(nid2))
+	var new_id: StringName = &"girl_city_umbrella"
+	_gs.call("mark_girl_discovered", new_id)
+	_gs.call("mark_girl_conquered", new_id)
+	_gs.call("set_girl_relationship", new_id, 4)
+	var save_new: SaveResult = _ss.call("save_slot", SaveTypes.Slot.MANUAL_2) as SaveResult
+	_ok(save_new != null and save_new.ok, "save with new Module25 girl id")
+	_ok(_slot_json_contains_girl_id(SaveTypes.Slot.MANUAL_2, new_id), "new id present in save json")
+	_gs.call("reset_for_new_game")
+	_day.call("restore_day", 1)
+	_gs.call("add_money", 1)
+	var load_new: SaveResult = _ss.call("load_slot", SaveTypes.Slot.MANUAL_2) as SaveResult
+	_ok(load_new != null and load_new.ok, "reload with new girl id")
+	_ok(bool(_gs.call("is_girl_discovered", new_id)), "new girl discovered persists")
+	_ok(bool(_gs.call("is_girl_conquered", new_id)), "new girl conquered persists")
+	_ok(int(_gs.call("get_girl_relationship", new_id)) == 4, "new girl relationship persists")
+	_ok(SaveTypes.SAVE_SCHEMA_VERSION == 1, "schema still 1 after new-id roundtrip")
 
 
 func _test_corrupt_runtime_no_mutation() -> void:

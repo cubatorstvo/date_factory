@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GirlDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/girl_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"girl_cafe_sugar_geometry"
+display_name = "Девушка с сахарной схемой"
+is_story = false
+has_story_stage = false
+story_stage = 0
+primary_trait = 3
+secondary_trait = 3
+required_experience = 4
+discovery_situation_id = &"discovery_situation_cafe_sugar_geometry"
+appearance_profile_id = &"appearance_female_cafe_sugar_geometry"
+dating_pool_ids = Array[StringName]([&"date_pool_cafe_common", &"date_pool_signature_cafe_sugar_geometry"])
+default_date_location_id = &"cafe"
+dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_greeting_attention", &"dating_greeting_immediate_joke", &"dating_greeting_check_comfort", &"dating_greeting_offer_choice", &"dating_greeting_notice_detail", &"dating_greeting_direct_plan", &"dating_greeting_small_confession"])
+dating_farewell_id = &"dating_farewell_last_word_common"
+speech_style_note = "Строит точные бессмысленные системы. Одна ошибка интересна, две ошибки означают, что человек не понял систему."
+clue_notes = Array[String](["Раскладывает сахар по треугольнику, хотя кофе пьёт без сахара.", "Первое нарушение схемы исправляет. Второе классифицирует.", "Дорогой десерт не впечатляет, если его нельзя встроить в правило."])

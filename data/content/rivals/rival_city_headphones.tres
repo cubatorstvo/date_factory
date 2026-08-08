@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RivalDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/rival_definition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"rival_city_headphones"
+display_name = "Самец в наушниках без музыки"
+is_story = false
+has_story_stage = false
+story_stage = 0
+required_authority = 5
+authority_reward = 2
+muscle = 3
+appearance = 4
+capital = 2
+aura = 5
+preferred_competition = 3
+allowed_competitions = Array[int]([3, 1, 0])
+appearance_profile_id = &"appearance_male_city_headphones"
+competition_modifier_id = &""
