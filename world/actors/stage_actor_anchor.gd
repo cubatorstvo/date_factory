@@ -21,9 +21,11 @@ var _spawned: Node3D = null
 
 func _ready() -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
-	if gs != null and gs.has_signal("stage_changed"):
-		if not gs.is_connected("stage_changed", _on_stage_changed):
+	if gs != null:
+		if gs.has_signal("stage_changed") and not gs.is_connected("stage_changed", _on_stage_changed):
 			gs.connect("stage_changed", _on_stage_changed)
+		if gs.has_signal("state_reset") and not gs.is_connected("state_reset", _on_state_reset):
+			gs.connect("state_reset", _on_state_reset)
 	var story: Node = get_node_or_null("/root/Story")
 	if story != null and story.has_signal("stage_started"):
 		if not story.is_connected("stage_started", _on_story_stage_started):
@@ -36,6 +38,10 @@ func _ready() -> void:
 	if overload != null and overload.has_signal("problem_recognized"):
 		if not overload.is_connected("problem_recognized", _on_problem_recognized):
 			overload.connect("problem_recognized", _on_problem_recognized)
+	_refresh_spawn()
+
+
+func _on_state_reset() -> void:
 	_refresh_spawn()
 
 

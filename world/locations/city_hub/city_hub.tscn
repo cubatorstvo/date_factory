@@ -398,14 +398,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_7mim2")
 
 [node name="npc_story_scientist" type="Marker3D" parent="NpcSpawns" unique_id=976732318]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8, 0.05, 3.8)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4.5, 0.05, 2.5)
 script = ExtResource("8_w30d6")
 content_id = "girl_scientist"
 story_stage = 4
 requires_overload_recognized = true
 
 [node name="npc_story_scientist_rival" type="Marker3D" parent="NpcSpawns" unique_id=1706155615]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0.05, 4.6)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.8, 0.05, 3.4)
 script = ExtResource("8_w30d6")
 actor_kind = 1
 content_id = "rival_scientist"

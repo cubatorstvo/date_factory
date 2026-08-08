@@ -99,6 +99,8 @@ func _on_interact(player: Node) -> void:
 			_show_story_lock_feedback("Сначала разберись с её текущим ухажёром.", player)
 		elif reason == &"STORY_WRONG_STAGE":
 			_show_story_lock_feedback("Эта линия пока недоступна.", player)
+		elif reason == &"STORY_PREREQUISITE":
+			_show_story_lock_feedback("Сначала нужно понять, зачем тебе вообще второй ты.", player)
 		return
 	_show_approach_choices(begin, player)
 

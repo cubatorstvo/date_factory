@@ -1,11 +1,15 @@
-# ACCEPTANCE — MODULE 17 First Clone Sequence
+# ACCEPTANCE — MODULE 17 FIX Scientist production wiring
 
 ## Player-visible result
 
-After overload recognition: Scientist pair at lab gate → rival → contact/date +5 → STAGE_5 / LABORATORY → lab machine → 3-pass calibration → physical clone → WORK or DATING → total_clones=1. Rates remain 0. No President/MODULE 18.
+After DatingOverload recognition on already-loaded city_hub, Scientist + rival appear at lab gate without reload. Direct discovery before recognition shows prerequisite feedback (not FAILURE). Rival → Scientist +5 → STAGE_5 → Lab → first clone still works.
 
 ## PASS
-Scientist KIND+DEMANDING XP4; rival Auth7 SIGMA+SLAP; recognition gate; Stage5+Lab; FirstClone once; calibration constants exact; WORK/DATING commit; Phone counts; ContentDB + MODULE 02–16 regressions; no MODULE 18.
+- `requires_overload_recognized` + event refresh + `state_reset` refresh
+- city_hub Scientist anchors Stage4, appear live after recognition, absent before
+- GirlDiscovery STORY_PREREQUISITE + GirlActor feedback string
+- FirstClone unchanged (1/1/0 or 1/0/1, rates 0)
+- MODULE 02–17 regressions PASS; no MODULE 18
 
 ## Verdict
 READY

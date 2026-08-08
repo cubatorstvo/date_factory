@@ -12,6 +12,9 @@ var _gd: Node = null
 var _world: Node = null
 var _overload: Node = null
 var _story: Node = null
+var _day: Node = null
+var _rel: Node = null
+var _date_id_seq: int = 17000
 
 
 func _ready() -> void:
@@ -21,6 +24,8 @@ func _ready() -> void:
 	_world = get_node("/root/World")
 	_overload = get_node("/root/DatingOverload")
 	_story = get_node("/root/Story")
+	_day = get_node("/root/GameDay")
+	_rel = get_node("/root/Relationships")
 	await get_tree().process_frame
 	await _run_all()
 	if _failed == 0:
@@ -51,6 +56,8 @@ func _reset() -> void:
 		_fc.call("set_instant_for_test", true)
 	_gd.call("clear_content_overrides")
 	_gd.call("force_clear_attempt")
+	if _rel != null and _rel.has_method("clear_applied_date_ids"):
+		_rel.call("clear_applied_date_ids")
 	_world.set("current_location_id", &"apartment")
 
 
@@ -102,7 +109,7 @@ func _run_all() -> void:
 	_test_machine_gates()
 	_test_representative_reconstruct()
 	_test_story_prerequisite()
-	await _test_stage_anchor_overload_flag()
+	await _test_scientist_production_wiring()
 	_test_boundaries_overload_cap()
 	_test_phone_story_and_clone_section()
 	_reset()
@@ -115,7 +122,14 @@ func _test_autoload_order_and_no_process() -> void:
 	_ok(not src.contains("set_late_rates(") and not src.contains("\"set_late_rates\""), "FirstClone never set_late_rates")
 	var anchor_src: String = FileAccess.get_file_as_string("res://world/actors/stage_actor_anchor.gd")
 	_ok(anchor_src.contains("requires_overload_recognized"), "StageActorAnchor export flag")
+	_ok(anchor_src.contains("state_reset"), "StageActorAnchor listens state_reset")
 	_ok(not anchor_src.contains("func _process"), "StageActorAnchor no _process")
+	var girl_actor_src: String = FileAccess.get_file_as_string("res://game/girls/girl_actor.gd")
+	_ok(girl_actor_src.contains("STORY_PREREQUISITE"), "GirlActor STORY_PREREQUISITE branch")
+	_ok(
+		girl_actor_src.contains("Сначала нужно понять, зачем тебе вообще второй ты."),
+		"GirlActor prerequisite feedback text",
+	)
 
 
 func _test_calibration_constants() -> void:
@@ -313,43 +327,146 @@ func _test_representative_reconstruct() -> void:
 	_ok(repd != null and date_marker != null and repd.get_parent() == date_marker, "67 DATING at date station")
 
 
+func _seed_stage4_overload_started(attention: int = 45, offers: int = 3) -> void:
+	_reset()
+	_gs.call("restore_stage", GameTypes.GameStage.STAGE_4)
+	_gs.call("add_experience", 4)
+	_gs.call("mark_media_photo_session_completed")
+	var candidates: Array[StringName] = [
+		&"girl_appearance_flash",
+		&"girl_public_sculpture",
+		&"girl_cafe_receipt_notes",
+		&"girl_gym_chalk",
+	]
+	for i in range(mini(offers, candidates.size())):
+		var gid: StringName = candidates[i]
+		_gs.call("add_girl_contact", gid)
+		_gs.call("add_media_incoming_offer", gid)
+	_gs.call("set_media_attention", attention)
+	if attention >= 45 and offers >= 3 and _overload.has_method("_ensure_started_from_media"):
+		_overload.call("_ensure_started_from_media")
+
+
+func _make_overload_date_result(girl_id: StringName, delta: int = 0) -> DatingResult:
+	var r: DatingResult = DatingResult.new()
+	_date_id_seq += 1
+	r.date_id = _date_id_seq
+	r.girl_id = girl_id
+	r.date_delta = delta
+	var evs: Array[StringName] = [
+		StringName("date_event_m17fix_%s_a" % _date_id_seq),
+		StringName("date_event_m17fix_%s_b" % _date_id_seq),
+		StringName("date_event_m17fix_%s_c" % _date_id_seq),
+	]
+	r.central_event_ids = evs
+	return r
+
+
+func _complete_overload_date(girl_id: StringName, delta: int = 0) -> RelationshipDateResult:
+	_gs.call("set_girl_date_cooldown_days_remaining", girl_id, 0)
+	return _rel.call("apply_date_result", _make_overload_date_result(girl_id, delta)) as RelationshipDateResult
+
+
+func _drive_live_overload_recognition() -> void:
+	# Same production path as dating_overload_self_test: start + advance + personal date.
+	_day.call("advance_day")
+	_day.call("advance_day")
+	if not bool(_overload.call("is_problem_recognized")):
+		_complete_overload_date(&"girl_public_sculpture", 0)
+	if not bool(_overload.call("is_problem_recognized")):
+		_complete_overload_date(&"girl_appearance_flash", 0)
+
+
 func _test_story_prerequisite() -> void:
 	_reset()
 	_register_scientist_stub()
 	_gs.call("restore_stage", GameTypes.GameStage.STAGE_4)
+	# D — unrecognized, even with rival already defeated.
+	_gs.call("mark_rival_defeated", StoryIds.RIVAL_SCIENTIST)
 	var disc: Dictionary = _gd.call("discover_girl", &"girl_scientist") as Dictionary
-	_ok(not bool(disc.get("ok", true)), "10 discover blocked")
-	_ok(disc.get("reason", &"") == &"STORY_PREREQUISITE", "10 STORY_PREREQUISITE")
-	_ok(not bool(_gs.call("is_girl_discovered", &"girl_scientist")), "10 no discovery side effect")
+	_ok(not bool(disc.get("ok", true)), "D discover blocked")
+	_ok(disc.get("reason", &"") == &"STORY_PREREQUISITE", "D discover STORY_PREREQUISITE")
+	_ok(not bool(_gs.call("is_girl_discovered", &"girl_scientist")), "D no discovery side effect")
 	var begin: Dictionary = _gd.call("begin_attempt", &"girl_scientist") as Dictionary
-	_ok(not bool(begin.get("ok", true)), "10 begin blocked")
-	_ok(begin.get("reason", &"") == &"STORY_PREREQUISITE", "10 begin STORY_PREREQUISITE")
-	_ok(int(_gs.call("get_girl_retry_days_remaining", &"girl_scientist")) == 0, "10 no cooldown")
+	_ok(not bool(begin.get("ok", true)), "D begin blocked")
+	_ok(begin.get("reason", &"") == &"STORY_PREREQUISITE", "D begin STORY_PREREQUISITE")
+	_ok(int(_gs.call("get_girl_retry_days_remaining", &"girl_scientist")) == 0, "D no cooldown")
+	_ok(not bool(_gs.call("has_girl_contact", &"girl_scientist")), "D no contact")
+	# E — recognition then rival gate.
 	_gs.call("mark_dating_overload_problem_recognized")
-	var disc2: Dictionary = _gd.call("discover_girl", &"girl_scientist") as Dictionary
-	_ok(bool(disc2.get("ok", false)), "10 discover after recognition")
-
-
-func _test_stage_anchor_overload_flag() -> void:
+	# Clear defeated mark via full reset of rival state is not available; re-seed stage path.
 	_reset()
+	_register_scientist_stub()
 	_gs.call("restore_stage", GameTypes.GameStage.STAGE_4)
-	var anchor: StageActorAnchor = StageActorAnchor.new()
-	anchor.name = "TestScientistAnchor"
-	anchor.actor_kind = StageActorAnchor.ActorKind.GIRL
-	anchor.content_id = &"girl_neighbor"
-	anchor.story_stage = GameTypes.GameStage.STAGE_4
-	anchor.requires_overload_recognized = true
-	add_child(anchor)
-	await get_tree().process_frame
-	_ok(anchor.get_child_count() == 0, "anchor hidden before recognition")
 	_gs.call("mark_dating_overload_problem_recognized")
-	# Emit if DatingOverload tracks recognition already set without signal.
-	if _overload.has_signal("problem_recognized"):
-		# Force refresh if signal already consumed.
-		anchor.call("_refresh_spawn")
+	var begin_e: Dictionary = _gd.call("begin_attempt", &"girl_scientist") as Dictionary
+	_ok(not bool(begin_e.get("ok", true)), "E begin blocked")
+	_ok(begin_e.get("reason", &"") == &"STORY_RIVAL_REQUIRED", "E STORY_RIVAL_REQUIRED")
+	# F — recognized + rival defeated + XP → not prerequisite/rival gates.
+	# Use real ContentDB scientist (not stub) so discovery content can open.
+	_gd.call("clear_content_overrides")
+	_gs.call("mark_rival_defeated", StoryIds.RIVAL_SCIENTIST)
+	if int(_gs.call("get_experience")) < 4:
+		_gs.call("add_experience", 4 - int(_gs.call("get_experience")))
+	_gd.call("force_clear_attempt")
+	var begin_f: Dictionary = _gd.call("begin_attempt", StoryIds.GIRL_SCIENTIST) as Dictionary
+	var reason_f: StringName = begin_f.get("reason", &"") as StringName
+	_ok(reason_f != &"STORY_PREREQUISITE", "F not STORY_PREREQUISITE")
+	_ok(reason_f != &"STORY_RIVAL_REQUIRED", "F not STORY_RIVAL_REQUIRED")
+	_ok(
+		bool(begin_f.get("ok", false)) or reason_f == &"LOCKED_EXPERIENCE",
+		"F attempt proceeds past story gates",
+	)
+	_gd.call("force_clear_attempt")
+
+
+func _test_scientist_production_wiring() -> void:
+	# A — default false anchors still spawn on matching stage.
+	_reset()
+	var default_anchor: StageActorAnchor = StageActorAnchor.new()
+	default_anchor.name = "TestDefaultNeighborAnchor"
+	default_anchor.actor_kind = StageActorAnchor.ActorKind.GIRL
+	default_anchor.content_id = &"girl_neighbor"
+	default_anchor.story_stage = GameTypes.GameStage.PROLOGUE
+	_ok(not default_anchor.requires_overload_recognized, "A default requires_overload_recognized false")
+	add_child(default_anchor)
 	await get_tree().process_frame
-	_ok(anchor.get_child_count() >= 1, "anchor spawns after recognition")
-	anchor.queue_free()
+	_ok(default_anchor.get_child_count() >= 1, "A default false spawns on matching stage")
+	default_anchor.queue_free()
+	await get_tree().process_frame
+	# B+C — scientist anchors empty before recognition; live spawn via problem_recognized.
+	_seed_stage4_overload_started()
+	_ok(bool(_overload.call("is_started")), "C overload started")
+	var girl_anchor: StageActorAnchor = StageActorAnchor.new()
+	girl_anchor.name = "TestScientistGirlAnchor"
+	girl_anchor.actor_kind = StageActorAnchor.ActorKind.GIRL
+	girl_anchor.content_id = StoryIds.GIRL_SCIENTIST
+	girl_anchor.story_stage = GameTypes.GameStage.STAGE_4
+	girl_anchor.requires_overload_recognized = true
+	var rival_anchor: StageActorAnchor = StageActorAnchor.new()
+	rival_anchor.name = "TestScientistRivalAnchor"
+	rival_anchor.actor_kind = StageActorAnchor.ActorKind.RIVAL
+	rival_anchor.content_id = StoryIds.RIVAL_SCIENTIST
+	rival_anchor.story_stage = GameTypes.GameStage.STAGE_4
+	rival_anchor.requires_overload_recognized = true
+	add_child(girl_anchor)
+	add_child(rival_anchor)
+	await get_tree().process_frame
+	_ok(girl_anchor.get_child_count() == 0, "B scientist girl empty unrecognized")
+	_ok(rival_anchor.get_child_count() == 0, "B scientist rival empty unrecognized")
+	_drive_live_overload_recognition()
+	await get_tree().process_frame
+	_ok(bool(_overload.call("is_problem_recognized")), "C problem recognized via DatingOverload path")
+	# Critical: no manual _refresh_spawn — only signal-driven spawn.
+	_ok(girl_anchor.get_child_count() >= 1, "C girl spawned without manual refresh")
+	_ok(rival_anchor.get_child_count() >= 1, "C rival spawned without manual refresh")
+	# state_reset clears spawned actors (reset does not emit stage_changed).
+	_gs.call("reset_for_new_game")
+	await get_tree().process_frame
+	_ok(girl_anchor.get_child_count() == 0, "state_reset clears scientist girl")
+	_ok(rival_anchor.get_child_count() == 0, "state_reset clears scientist rival")
+	girl_anchor.queue_free()
+	rival_anchor.queue_free()
 
 
 func _test_phone_story_and_clone_section() -> void:

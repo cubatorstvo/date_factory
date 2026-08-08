@@ -1,17 +1,14 @@
-﻿# File ownership — MODULE 17 First Clone Sequence
+﻿# File ownership — MODULE 17 FIX Scientist production wiring
 
 | Task | Agent | Writable | Forbidden | Status |
 |------|-------|----------|-----------|--------|
-| M17_A_CORE | gameplay | `world/actors/stage_actor_anchor.gd`, `game/girls/girl_discovery.gd` (STORY_PREREQUISITE for scientist), `game/first_clone/**`, `project.godot` (FirstClone after DatingOverload), `game/first_clone/test/**` | Phone UI, city_hub/lab .tscn, bulk content, MODULE 18 | done |
-| M17_B_CONTENT | content | `data/content/girls/girl_scientist*`, rivals, appearances, discovery, dating scientist pool/events, `content_catalog.tres` | FirstClone formulas, scenes, MODULE 18/President | done |
-| M17_C_SCENES | scene | `city_hub.tscn` (scientist anchors), `laboratory.tscn` (machine + markers + blockout) | catalog, Phone, MODULE 18 | done |
-| M17_D_PHONE_DOCS | gameplay | `phone_journal.gd`, docs §70 | FirstClone math, MODULE 18 | done |
-| M17_E_QA | qa | evidence only | product sources | done |
+| M17FIX_A_GAMEPLAY | gameplay | `world/actors/stage_actor_anchor.gd` (state_reset → refresh), `game/girls/girl_actor.gd` (STORY_PREREQUISITE feedback), `game/first_clone/test/**` (unassisted live spawn tests A–F) | city_hub.tscn, laboratory.tscn, FirstClone formulas, Phone hunt copy, MODULE 18 | done |
+| M17FIX_B_SCENES | scene | `world/locations/city_hub/city_hub.tscn` only — place scientist rival then girl before ToLab, 2.5–4 m spacing | stage_actor_anchor.gd, girl_actor, catalog, MODULE 18 | done |
+| M17FIX_C_QA | qa | evidence only under `tmp/m17_fix_qa/`, `docs/agent/qa/M17_FIX_QA.md` | product sources | done |
 
 ## Product decisions
-1. Scientist anchors: `requires_overload_recognized=true`, STAGE_4, city_hub at laboratory gate.
-2. No manual `advance_stage` — Story owns STAGE_4→5.
-3. Clone truth = `GameState.set_clone_counts`; no first_clone_created bool; rates stay 0.
-4. Calibration: 3 deterministic SPACE passes; miss retries; abort → 0 clones.
-5. Assignment WORK 1/1/0 or DATING 1/0/1 exactly once.
-6. STOP — no MODULE 18 production/rates.
+1. Keep existing FirstClone / Scientist content / Phone STAGE5 — do not rewrite.
+2. Overload prerequisite stays explicit on StageActorAnchor + GirlDiscovery (no Story DSL).
+3. Live spawn must work from real `DatingOverload.problem_recognized` without scene reload or manual `_refresh_spawn`.
+4. STORY_PREREQUISITE feedback: «Сначала нужно понять, зачем тебе вообще второй ты.»
+5. STOP — no MODULE 18.
