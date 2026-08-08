@@ -330,12 +330,16 @@ func _resolve_competition_result(result: RivalCompetitionResult, from_minigame: 
 		else:
 			authority_delta = 0
 	else:
-		heroic = _qualifies_heroic_defeat()
-		if heroic:
+		# MODULE 26: story rival PLAYER_LOSS never changes Authority (anti-grind).
+		if def != null and def.is_story:
 			authority_delta = 0
 		else:
-			var lost: int = int(gs.call("lose_authority", 1))
-			authority_delta = -lost
+			heroic = _qualifies_heroic_defeat()
+			if heroic:
+				authority_delta = 0
+			else:
+				var lost: int = int(gs.call("lose_authority", 1))
+				authority_delta = -lost
 
 	_session.outcome = result.outcome
 	_session.has_outcome = true

@@ -438,9 +438,13 @@ func _stakes_text(def: RivalDefinition) -> String:
 		reward = def.authority_reward
 	var win_line: String = "Победа: Авторитет %s" % UiNumberFormat.format_signed(reward)
 	var loss_line: String = "Поражение: Авторитет -1"
-	var gs: Node = _service("/root/GameState")
-	if gs != null and bool(gs.call("has_perk", PerkIds.MUSCLE_HEROIC_DEFEAT)):
-		loss_line = "Поражение: обычно -1"
+	if def != null and def.is_story:
+		# MODULE 26: story loss never changes Authority.
+		loss_line = "Поражение: Авторитет не меняется"
+	else:
+		var gs: Node = _service("/root/GameState")
+		if gs != null and bool(gs.call("has_perk", PerkIds.MUSCLE_HEROIC_DEFEAT)):
+			loss_line = "Поражение: обычно -1"
 	return "%s\n%s" % [win_line, loss_line]
 
 

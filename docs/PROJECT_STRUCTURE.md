@@ -1,11 +1,12 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 25 — Content Completion**.  
+Фактическая структура после **MODULE 26 — Balance / Anti-Grind** (balance locked).  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → title menu → World after New/Continue/Load
 
 UI architecture: `docs/ui/UI_ARCHITECTURE.md`.  
 Presentation (audio/camera/VFX): `docs/presentation/PRESENTATION_ARCHITECTURE.md`.  
 Persistence: `docs/persistence/SAVE_ARCHITECTURE.md`.  
+Balance report: `docs/balance/BALANCE_REPORT.md`.  
 Licenses: `docs/ASSET_LICENSES.md`.
 
 ## Top-level (существует сейчас)
@@ -18,8 +19,8 @@ Licenses: `docs/ASSET_LICENSES.md`.
 | `characters/` | Player + Character Framework | `framework/` (+ semantic animation aliases); `male/`; `female/`; `player/` (+ `camera_feedback.gd`, pose export); `test/` | Dating/Rival/AI domain systems |
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → title then World, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
-| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, `ui/`, `presentation/`, `persistence/SAVE_ARCHITECTURE.md`, `ASSET_LICENSES.md` | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState (+ save export/restore); `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental (+ fractions runtime save); `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion (+ Global Terminal UI); `final_date/` scene-local FinalDateController + FinalDateUI; `progression/` Progression; `rivals/` RivalEncounters + exhibition seam; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
+| `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, `ui/`, `presentation/`, `persistence/SAVE_ARCHITECTURE.md`, `balance/BALANCE_REPORT.md`, `ASSET_LICENSES.md` | Runtime code |
+| `game/` | Canonical gameplay runtime | `state/` GameState (+ save export/restore); `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental (+ fractions runtime save); `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion (+ Global Terminal UI); `final_date/` scene-local FinalDateController + FinalDateUI; `progression/` Progression; `rivals/` RivalEncounters + exhibition seam; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story; `balance/test/` MODULE 26 test-only projection (no runtime BalanceManager) | Parallel resource copies / EventBus / effect engines |
 | `persistence/` | MODULE 24 SaveSystem | `save_system.gd` autoload; `save_types.gd`; `save_result.gd`; `save_slot_metadata.gd`; `test/` | Gameplay formulas / second save service |
 | `presentation/` | Soft VFX / camera helpers (MODULE 23) | `vfx/` ScreenFlash, UiAccentPulse, MeshEmissivePulse, BeaconPulse, PresentationCamera | VFX framework / gameplay mutation |
 | `ui/` | Presentation shell (MODULE 22–24) | Theme; GameHUD; Phone; Progression; Dating; RivalEncounterUI; format/scale/tutorial; `frontend/` Title/Pause/Settings; `AudioDirector` via `AudioIds` | UIManager / gameplay formulas |
@@ -275,24 +276,33 @@ Dependency-safe production order (`project.godot`):
 
 ## Canonical status / next destinations
 
-Persistence through MODULE 24 remains complete: SaveSystem (**schema v1** unchanged through MODULE 25; 3+autosave, atomic+backup, settings.cfg, title/pause).
+Persistence through MODULE 24 remains complete: SaveSystem (**schema v1** unchanged through MODULE 26; 3+autosave, atomic+backup, settings.cfg, title/pause).
 
-After **MODULE 25 — Content Completion**:
+After **MODULE 25 — Content Completion** (content locked):
 
 - Production catalog: **23 girls** (16 ordinary 4×4 + 6 story + 1 final), **19 rivals** (12 ordinary + 5 Earth story + 2 final), **22** discovery situations.
 - Dating: cafe common **24**, ordinary signatures **16**, greetings **8**, farewells **5**, central events **62**.
 - World flavor **24** + scenic gags **12**; late `UpgradeLevelVisual` tiers presentation-only.
 - Canonical inventory: `docs/content/MANUAL_CONTENT_COMPLETE.md` (prior slice notes 14A/14B/17 remain historical).
 
+After **MODULE 26 — Balance / Anti-Grind** (balance locked):
+
+- Only production rule change: Earth **story rival loss Authority −1 → 0** (ordinary loss −1 floor 0; exhibition 0). No other production constants retuned — clone / Stage6 / President / salary / perk / Media budgets passed.
+- Clean Auth ladder locked: `0 → 2 → 4 → 7 → 10 → 15`.
+- Test-only harness: `game/balance/test/`. Report: `docs/balance/BALANCE_REPORT.md`.
+- Evidence: `tmp/m26_a_rival_encounter_test.log`, `tmp/m26_balance_self_test.log`.
+
 Remaining:
 
-- MODULE 26 — Balance / Anti-Grind (formulas, pacing, economy — not content packs).
+- MODULE 27 — Full Game QA (F5 routes A–F / natural 5–8 h assessment; regressions).
+- MODULE 28 — Release Integration.
 
 Gameplay headless runners remain under each `game/**/test/` and `minigames/**/test/`.  
+Balance runner: `game/balance/test/`.  
 UI presentation runners: `ui/hud/test/`, `ui/progression/test/`.  
 Audio runner: `audio/test/`.  
 Save runner: `persistence/test/`.  
-STOP before MODULE 26 balance.
+STOP before MODULE 27 Full Game QA.
 
 ## Donor
 

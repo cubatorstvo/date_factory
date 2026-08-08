@@ -769,7 +769,7 @@ After the first clone exists, the player needs automatic free-clone production, 
 
 Decision:
 1. `CloneIncremental` (autoload after FirstClone) is the canonical owner of late-rate computation; it writes only through `GameState.set_late_rates` / `set_clone_counts`. No individual clone records.
-2. Exact MODULE 18 balance: production interval 30→5 s; work 20→70 Money/min/clone; dating 0.50→1.75 dates/min/clone; upgrade cost `30×3^level` (levels 0..5). Tunable later in MODULE 26.
+2. Exact MODULE 18 balance: production interval 30→5 s; work 20→70 Money/min/clone; dating 0.50→1.75 dates/min/clone; upgrade cost `30×3^level` (levels 0..5). MODULE 26 audited these as release-locked (no retune; budgets passed).
 3. Automated dates do not invoke DatingCore; overload backlog is fulfilled first; after backlog is empty each whole auto date grants `GameState.add_experience(1)` (+ UP seam as implemented). Rates use real gameplay seconds; GameDay does not simulate incremental output; no offline gains.
 4. Management stays physical at the lab Clone Terminal (assign Work/Dating + buy upgrades). Phone КЛОНЫ is read-only: Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин; listens to `clone_counts_changed` and `late_rates_changed`.
 5. STAGE_5 after first clone: «Автоматизация запущена. / Наращивай производство клонов.» Story never advances from clone numbers; no President / Stage 6. Physical crowd visualization is MODULE 19 (read-only over these aggregates).
@@ -900,3 +900,21 @@ Persist the full production state safely with one service and a strict schema, k
 
 Scope:
 `persistence/**`, GameState/GameDay/CloneIncremental/World save seams, `ui/frontend/**`, `core/main_bootstrap.gd`, `project.godot` autoload order, docs (`PROJECT_STRUCTURE`, this file, `SAVE_ARCHITECTURE`, `UI_ARCHITECTURE` title/pause, `PRESENTATION_ARCHITECTURE` settings seams)
+
+## MODULE 26: Balance / Anti-Grind (STOP before MODULE 27)
+
+Context:
+Content (MODULE 25) and systems were complete, but story rival loss still applied `lose_authority(1)` to Earth story rivals — a clean Authority ladder drop that could force ordinary farm before retry. Clone / Stage6 / President pacing needed quantitative proof, not speculative retunes.
+
+Decision:
+1. **Only production rule change:** Earth story rival loss Authority **−1 → 0** in `RivalEncounters._resolve_competition_result` (`def.is_story` → `authority_delta = 0`). Ordinary loss remains −1 floor 0; Heroic Defeat ordinary unchanged; Final exhibition unchanged (0).
+2. **No other production constants retuned** — salary, perk `3^N`, Media thresholds 15/30/45/60, Overload recognition, local/global clone tables, cooldowns 1..3 all **LOCKED — passed budget**.
+3. Test-only harness under `game/balance/test/` (`BalanceProjection` + `balance_self_test`); no runtime BalanceManager / BalanceConfig.
+4. Measured Wave B budgets: President A/B/C **269 / 359 / 329 s** (≤390); Stage6 no-upgrade **436** (≤480); Stage6 events **344** (≤390); combined **795** (≤900); local first upgrade **90 s** (≤90). Clean Auth ladder `0→2→4→7→10→15` locked. `SAVE_SCHEMA_VERSION` remains **1**.
+5. Report of record: `docs/balance/BALANCE_REPORT.md`. Full F5 routes A–F / natural 5–8 h timing deferred to MODULE 27.
+
+Reason:
+Remove the only proven anti-grind Authority softlock without opening a retune free-for-all; lock release-candidate numbers behind measured harness evidence.
+
+Scope:
+`game/rivals/rival_encounters.gd` (story-loss rule; prior wave), `game/balance/test/**`, docs (`balance/BALANCE_REPORT.md`, `PROJECT_STRUCTURE`, this file, GDD male-loss note). STOP before MODULE 27 Full Game QA.

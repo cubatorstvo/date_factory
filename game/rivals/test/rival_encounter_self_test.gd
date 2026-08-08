@@ -140,6 +140,8 @@ func _run_all() -> void:
 	_test_loss()
 	_test_crushing_loss()
 	_test_loss_at_zero()
+	_test_ordinary_loss_still_minus_one()
+	_test_story_loss_no_authority()
 	_test_heroic_qualifies()
 	_test_heroic_does_not_qualify()
 	_test_heroic_relevant_characteristic()
@@ -393,6 +395,81 @@ func _test_loss_at_zero() -> void:
 	var result: RivalEncounterResult = _re.call("get_last_result") as RivalEncounterResult
 	_ok(result != null and result.authority_delta == 0, "98 delta 0")
 	_ok(result.outcome == GameTypes.RivalCompetitionOutcome.PLAYER_LOSS, "98 still loss")
+
+
+## MODULE 26 §68 — ordinary rival loss still −1 (floor 0 covered by §98).
+func _test_ordinary_loss_still_minus_one() -> void:
+	_reset_run()
+	_gs.call("add_authority", 5)
+	_runner.set_forced(
+		GameTypes.RivalCompetitionOutcome.PLAYER_LOSS,
+		GameTypes.VictoryGrade.CLOSE,
+	)
+	_re.call("start_encounter", &"rival_test_low", GameTypes.RivalEncounterInitiator.PLAYER)
+	_re.call("choose_competition", GameTypes.CompetitionType.SLAP)
+	_ok(int(_gs.call("get_authority")) == 4, "M26 ordinary loss 5→4")
+	var result: RivalEncounterResult = _re.call("get_last_result") as RivalEncounterResult
+	_ok(result != null and result.authority_delta == -1, "M26 ordinary loss delta -1")
+	_ok(not bool(_gs.call("is_rival_defeated", &"rival_test_low")), "M26 ordinary loss not defeated")
+
+
+## MODULE 26 §67 — Earth story rival loss: Authority unchanged, retry remains legal.
+func _test_story_loss_no_authority() -> void:
+	var story_specs: Array[Dictionary] = [
+		{"id": &"rival_actress", "path": "res://data/content/rivals/rival_actress.tres", "required": 0},
+		{"id": &"rival_mine_boss", "path": "res://data/content/rivals/rival_mine_boss.tres", "required": 2},
+		{"id": &"rival_magazine_editor", "path": "res://data/content/rivals/rival_magazine_editor.tres", "required": 4},
+		{"id": &"rival_scientist", "path": "res://data/content/rivals/rival_scientist.tres", "required": 7},
+		{"id": &"rival_president", "path": "res://data/content/rivals/rival_president.tres", "required": 10},
+	]
+	for spec_v in story_specs:
+		var spec: Dictionary = spec_v
+		var rival_id: StringName = spec["id"] as StringName
+		var path: String = str(spec["path"])
+		var required: int = int(spec["required"])
+		var def: RivalDefinition = load(path) as RivalDefinition
+		_ok(def != null and def.is_story, "M26 story load %s" % String(rival_id))
+		if def == null:
+			continue
+		_ok(def.required_authority == required, "M26 story required %s=%d" % [String(rival_id), required])
+		_re.call("register_rival_definition", def)
+		_reset_run()
+		if required > 0:
+			_gs.call("add_authority", required)
+		var auth_before: int = int(_gs.call("get_authority"))
+		_ok(auth_before == required, "M26 story auth set %s" % String(rival_id))
+		_runner.set_forced(
+			GameTypes.RivalCompetitionOutcome.PLAYER_LOSS,
+			GameTypes.VictoryGrade.CLOSE,
+		)
+		var available: Array = _re.call("get_available_competitions", rival_id) as Array
+		_ok(not available.is_empty(), "M26 story has competition %s" % String(rival_id))
+		if available.is_empty():
+			continue
+		var ctype: GameTypes.CompetitionType = available[0] as GameTypes.CompetitionType
+		var start: Dictionary = _re.call(
+			"start_encounter",
+			rival_id,
+			GameTypes.RivalEncounterInitiator.PLAYER,
+		) as Dictionary
+		_ok(bool(start.get("ok", false)), "M26 story start %s" % String(rival_id))
+		var choose: Dictionary = _re.call("choose_competition", ctype) as Dictionary
+		_ok(bool(choose.get("ok", false)), "M26 story force loss %s" % String(rival_id))
+		_ok(int(_gs.call("get_authority")) == auth_before, "M26 story auth unchanged %s" % String(rival_id))
+		_ok(not bool(_gs.call("is_rival_defeated", rival_id)), "M26 story not defeated %s" % String(rival_id))
+		var result: RivalEncounterResult = _re.call("get_last_result") as RivalEncounterResult
+		_ok(result != null and result.authority_delta == 0, "M26 story delta 0 %s" % String(rival_id))
+		_ok(result != null and not result.heroic_defeat_triggered, "M26 story not heroic %s" % String(rival_id))
+		_re.call("force_clear_session")
+		var can: Dictionary = _re.call("can_challenge", rival_id) as Dictionary
+		_ok(bool(can.get("ok", false)), "M26 story retry legal %s" % String(rival_id))
+		var retry: Dictionary = _re.call(
+			"start_encounter",
+			rival_id,
+			GameTypes.RivalEncounterInitiator.PLAYER,
+		) as Dictionary
+		_ok(bool(retry.get("ok", false)), "M26 story retry start %s" % String(rival_id))
+		_re.call("force_clear_session")
 
 
 func _test_heroic_qualifies() -> void:
