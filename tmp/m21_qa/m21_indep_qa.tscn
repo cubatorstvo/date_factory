@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tmp/m21_qa/m21_indep_qa.gd" id="1_qa"]
+
+[node name="M21IndepQa" type="Node"]
+script = ExtResource("1_qa")

@@ -817,3 +817,22 @@ Earth story + fast planetary incremental peak without a second stage machine, wi
 
 Scope:
 `game/late_game/**`, GameState Reach/global levels, CloneIncremental multiplier seam, President content, Production Area terminal/events, Story world-expansion completion, Phone STAGE_5/6/FINALE copy, docs
+
+## MODULE 21: FinalDateController staged sequence (STOP before polish)
+
+Context:
+After Reach100 / FINALE / `FINAL_DATE`, the game needs one concrete extraterrestrial date with «Последняя», two familiar minigames, full retry on fail, and a single success ending — without DatingCore, without alternate endings, and without MODULE 22 art/credits polish.
+
+Decision:
+1. Scene-local `FinalDateController` inside `final_location.tscn` (not an autoload). Authored phases: INTRO → EVENT_1 → RIVAL_1_DANCE → EVENT_2 → MOVE_TO_FINAL_TABLE → RIVAL_2_SLAP → EVENT_3/4 → assessment. Own transient connection score + characteristic variety; no DatingCore planner.
+2. Production catalog **14 girls / 14 rivals**: add `girl_final_target` (display «Последняя», empty normal dating pool) + exhibition-only `rival_final_ceremonial` (DANCE) and `rival_final_gravity` (SLAP).
+3. Narrow `RivalCompetitionRunner.run_exhibition_competition(request, rival_definition, result_callback)`: same Slap/Dance + control modes; callback to FinalDateController; **no** RivalEncounters submit / Authority / `mark_rival_defeated` / Heroic Defeat. Normal rival path unchanged.
+4. Success once: `girl_final_target` relationship → +5, conquered → true, `GameState.add_experience(1)` (+UP). Canonical completion = `GameState.is_girl_conquered(girl_final_target)` (no `FLAG_FINAL_COMPLETE`). Functional ending screen + `[Продолжить]` returns to playable world.
+5. Fail (rival loss or connection): comedy UI → **full** sequence retry; zero permanent penalties (money/authority/XP/relationship/reach/clones untouched). Infinite attempts.
+6. STOP before MODULE 22: no final art, voice, prestige/NG+, alternate endings, alien world systems.
+
+Reason:
+Close the F5→ending main path with one deterministic staged finale while reusing existing minigames and the girl-conquest XP invariant.
+
+Scope:
+`game/final_date/**`, `RivalCompetitionRunner` exhibition seam, final content `.tres` + catalog 14/14, `world/locations/final_location/`, docs §43–44 / locations finale notes

@@ -710,16 +710,33 @@ func _stage6_story_text() -> String:
 
 
 func _finale_story_text() -> String:
-	# MODULE 20 §61 — FINALE handoff only; do not start final sequence.
-	var lines: PackedStringArray = PackedStringArray()
-	lines.append("ФИНАЛ")
-	lines.append("")
-	lines.append("Земная цель исчерпана.")
-	lines.append("Обнаружена романтическая цель вне Земли.")
-	lines.append("")
-	lines.append("Финальная локация открыта.")
-	return "\n".join(lines)
-
+	# MODULE 21 §113 — before contact / in progress / completed.
+	# Keeps MODULE 20 §61 handoff lines before contact for phone continuity.
+	var gs_finale: Node = get_node_or_null("/root/GameState")
+	var finale_lines: PackedStringArray = PackedStringArray()
+	if gs_finale != null and bool(gs_finale.call("is_girl_conquered", StoryIds.GIRL_FINAL_TARGET)):
+		finale_lines.append("ФИНАЛ ЗАВЕРШЁН")
+		finale_lines.append("")
+		finale_lines.append("Последняя: +5")
+		var reach_done: int = 100
+		if gs_finale.has_method("get_world_reach"):
+			reach_done = int(gs_finale.call("get_world_reach"))
+		finale_lines.append("Охват Земли: %d" % reach_done)
+		finale_lines.append("")
+		finale_lines.append("Цель достигнута.")
+		return "\n".join(finale_lines)
+	if gs_finale != null and bool(gs_finale.call("has_girl_contact", StoryIds.GIRL_FINAL_TARGET)):
+		finale_lines.append("Последняя")
+		finale_lines.append("Финальное свидание")
+		return "\n".join(finale_lines)
+	finale_lines.append("ФИНАЛ")
+	finale_lines.append("")
+	finale_lines.append("Внеземной сигнал обнаружен.")
+	finale_lines.append("Земная цель исчерпана.")
+	finale_lines.append("Обнаружена романтическая цель вне Земли.")
+	finale_lines.append("")
+	finale_lines.append("Финальная локация открыта.")
+	return "\n".join(finale_lines)
 
 func _stage4_media_overload_text(overload: Node) -> String:
 	if overload != null and overload.has_method("is_started") and bool(overload.call("is_started")):
@@ -1444,6 +1461,17 @@ func _show_detail(girl_id: StringName) -> void:
 	if def != null and def.display_name.strip_edges() != "":
 		name = def.display_name
 	lines.append("[b]%s[/b]" % name)
+	if girl_id == StoryIds.GIRL_FINAL_TARGET:
+		if bool(gs.call("is_girl_conquered", girl_id)):
+			lines.append("Отношения: +5")
+			lines.append("Статус: цель достигнута")
+		elif bool(gs.call("has_girl_contact", girl_id)):
+			lines.append("Статус: контакт установлен")
+			lines.append("Финальное свидание")
+		else:
+			lines.append("Статус: сигнал обнаружен")
+		_detail.text = "\n".join(lines)
+		return
 	var has_contact: bool = bool(gs.call("has_girl_contact", girl_id))
 	if has_contact:
 		lines.append("Статус: Номер получен")

@@ -1,6 +1,6 @@
 # PROJECT STRUCTURE
 
-Фактическая структура после **MODULE 20 — Late Game Expansion**.  
+Фактическая структура после **MODULE 21 — Final Date Sequence**.  
 Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via autoload `World`
 
 ## Top-level (существует сейчас)
@@ -13,9 +13,9 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 | `core/` | Техническая инфраструктура | debug helpers, bootstrap → World apartment, Interactable contract | Game managers, feature gameplay |
 | `data/` | Static typed content (MODULE 03+) | definitions, catalog, seed `.tres`, appearance/animation profiles | Runtime progress / GameState mutation |
 | `docs/` | Документация репозитория | GDD, tech plan, module specs, decisions, perk effect contracts | Runtime code |
-| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental; `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion; `progression/` Progression; `rivals/` RivalEncounters; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
-| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ counts/rates + salary); `dating/dating_ui.tscn` (result panel) | Final phone/date art |
-| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations (lab MODULE 19 slots; production_area MODULE 20 Global Terminal), markers, transitions, MODULE 12 test | Open-world streaming / country simulation |
+| `game/` | Canonical gameplay runtime | `state/` GameState; `day/` GameDay; `salary/` SalaryMine; `media/` Media; `dating_overload/` DatingOverload; `first_clone/` FirstClone; `clone_incremental/` CloneIncremental; `clone_visualization/` lab-local CloneVisualizationController; `late_game/` LateGameExpansion; `final_date/` scene-local FinalDateController; `progression/` Progression; `rivals/` RivalEncounters + exhibition seam; `girls/` GirlDiscovery; `dating/` DatingCore; `relationships/` Relationships; `story/` Story | Parallel resource copies / EventBus / effect engines |
+| `ui/` | Phone journal + dating UI shell | `phone/phone_journal.tscn` (status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ counts/rates + salary); `dating/dating_ui.tscn` (result panel); final date UI lives under `game/final_date/` | Final phone/date art (MODULE 22) |
+| `world/` | World service + 9 location blockouts + tests | `World` autoload, locations (lab MODULE 19; production_area MODULE 20; `final_location` MODULE 21 staged finale), markers, transitions, MODULE 12 test | Open-world streaming / country simulation |
 | `main.tscn` | Canonical entry | bootstrap → apartment via `World` | Бог-объект |
 | `project.godot` | Godot project settings | app/input/display/layers/plugins/autoloads | Legacy `Game` singleton |
 | `icon.svg` | Иконка приложения | — | — |
@@ -41,7 +41,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 - `types/game_types.gd` — `class_name GameTypes` shared enums (incl. `CharacterBodyType`)
 - `types/perk_ids.gd` — `class_name PerkIds` 32 canonical perk `StringName` constants
 - `definitions/*.gd` — typed `Resource` schemas (incl. dating action/event/pool/greeting/farewell, discovery, appearance)
-- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); through MODULE 20: 13 girls / 12 rivals / 13 discovery situations (+ President pack)
+- `catalog/content_catalog.tres` — explicit production catalog (no FS scan); through MODULE 21: **14 girls / 14 rivals** / 13 discovery situations (+ President + final target / exhibition rivals)
 - `catalog/content_db.gd` — autoload `ContentDB` (load/index/validate/lookup; `try_get_girl`/`try_get_rival` for safe missing-content presentation)
 - `content/` — production seed `.tres` (traits, perks, competitions, locations, stages, appearances, animations, girls, rivals, discovery, dating)
 - `test/` — fixtures + MODULE 06–09 test content (`dating_test_fixtures.gd`, discovery/rival fixtures; not in production catalog)
@@ -102,7 +102,7 @@ Godot 4.7 · Forward Plus · main scene: `res://main.tscn` → apartment via aut
 ### `game/rivals/`
 
 - `rival_encounters.gd` — autoload `RivalEncounters`: encounter lifecycle, competition gates, perk hooks, minigame contract
-- `rival_competition_runner.gd` — autoload `RivalCompetitionRunner` (after RivalEncounters): SLAP/DANCE/SIGMA/MONEY routes; Hostile Acquisition signal; Player MINIGAME; exactly-once submit
+- `rival_competition_runner.gd` — autoload `RivalCompetitionRunner` (after RivalEncounters): SLAP/DANCE/SIGMA/MONEY routes; Hostile Acquisition signal; Player MINIGAME; exactly-once submit; MODULE 21 `run_exhibition_competition` (Slap/Dance only, callback to FinalDateController, no Authority/defeat)
 - `rival_encounter_session.gd` / `rival_competition_request.gd` / `rival_competition_result.gd` / `rival_encounter_result.gd` — typed transient objects
 - `rival_fake_competition_runner.gd` — test-only forced WIN/LOSS via `set_competition_runner` seam
 - `rival_actor.gd` — thin Interactable adapter (`[E] Вызвать`)
@@ -186,7 +186,7 @@ Dependency-safe production order (`project.godot`):
 | `DatingOverload` | Personal date capacity / demand backlog / feed boost / problem recognition (MODULE 16); after Media; activates from Media `overload_ready` at STAGE_4 |
 | `FirstClone` | One-off first clone sequence (MODULE 17); after DatingOverload; eligibility → calibration → physical representative → WORK/DATING aggregate counts; lab representative suppressed when `CloneVisualizationController` owns lab |
 | `CloneIncremental` | Late clone economy (MODULE 18); after FirstClone; owns production/work/dating formulas → `GameState.set_late_rates`; lab terminal assign/upgrades; Phone read-only rates; economy owner; queries LateGameExpansion global ×2^n seams |
-| `LateGameExpansion` | Earth Reach + global upgrades (MODULE 20); after CloneIncremental; STAGE_6 Reach 0..100; multipliers for CloneIncremental; Production Area Global Terminal; Reach100 → `Story.complete_world_expansion()`; STOP before MODULE 21 final date |
+| `LateGameExpansion` | Earth Reach + global upgrades (MODULE 20); after CloneIncremental; STAGE_6 Reach 0..100; multipliers for CloneIncremental; Production Area Global Terminal; Reach100 → `Story.complete_world_expansion()` → FINALE / `FINAL_DATE` |
 
 ### `game/media/`
 
@@ -231,6 +231,16 @@ Dependency-safe production order (`project.godot`):
 - `world_reach_visual.gd` — presentation thresholds 0/25/50/75/100
 - `test/late_game_test.tscn` + `late_game_self_test.gd` — MODULE 20 headless runner
 
+### `game/final_date/`
+
+- `final_date_controller.gd` — **scene-local** (not autoload) inside `final_location.tscn`: staged FINALE sequence (intro → events → DANCE exhibition → walk → SLAP exhibition → assessment); own connection score; no DatingCore
+- `final_date_types.gd` / `final_date_ui.gd` — phases/failure reasons/event copy; functional CanvasLayer (choices, fail retry, success ending + `[Продолжить]`)
+- `final_checkpoint_interactable.gd` / `final_signal_interactable.gd` — FPS checkpoints + answer-signal entry
+- Content: `girl_final_target` («Последняя»), `rival_final_ceremonial` (DANCE), `rival_final_gravity` (SLAP) — exhibition-only
+- Success once: relationship +5 / conquered / `add_experience(1)`; fail → full retry, zero permanent penalties
+- `test/final_date_test.tscn` + `final_date_self_test.gd` — MODULE 21 headless runner
+- STOP before MODULE 22 polish (art/credits/phone shell)
+
 ## Canonical future destinations (ещё не созданы)
 
 ```text
@@ -247,10 +257,10 @@ audio/
 `game/story/` реализован (MODULE 11).  
 `world/` каркас 9 локаций реализован (MODULE 12).  
 `game/day/` + `game/salary/` реализова зарплаты (MODULE 13).  
-`data/content/` production content through President / STAGE_6 (MODULE 14A+14B+17+20); inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`, `docs/content/MANUAL_CONTENT_17.md`.
+`data/content/` production content through final pack (MODULE 14A+14B+17+20+21); catalog **14/14** girls/rivals; inventories `docs/content/MANUAL_CONTENT_14A.md`, `docs/content/MANUAL_CONTENT_14B.md`, `docs/content/MANUAL_CONTENT_17.md`.
 `game/content/test/module_14a_vertical_test.tscn` — MODULE 14A headless integration runner.
 `game/content/test/module_14b_vertical_test.tscn` — MODULE 14B Editor → STAGE_4 / MEDIA_ATTENTION headless runner.
-`ui/phone/` функциональный журнал: status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1, read-only counts + Money/min + Dates/min) + salary; STAGE_4: media → overload → Scientist hunt; STAGE_5: lab → first clone → President (after total≥1); STAGE_6: Reach XX/100; FINALE handoff text only (MODULE 08–20); финальный phone shell — MODULE 22.  
+`ui/phone/` функциональный журнал: status + story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ + salary; STAGE_4→6 as MODULE 08–20; FINALE: final target completed via `GameState.is_girl_conquered(girl_final_target)`; финальный phone/art polish — MODULE 22.  
 `ui/dating/` функциональный dating UI (MODULE 09/10 result panel).
 `game/media/test/media_test.tscn` — MODULE 15 Media headless runner.
 `game/dating_overload/test/dating_overload_test.tscn` — MODULE 16 Dating Overload headless runner.
@@ -258,8 +268,10 @@ audio/
 `game/clone_incremental/test/clone_incremental_test.tscn` — MODULE 18 Clone Incremental headless runner.
 `game/clone_visualization/test/clone_visualization_test.tscn` — MODULE 19 Physical Clone Visualization headless runner.
 `game/late_game/test/late_game_test.tscn` — MODULE 20 Late Game Expansion headless runner.
+`game/final_date/test/final_date_test.tscn` — MODULE 21 Final Date Sequence headless runner.
 Laboratory (`world/locations/laboratory/`): MODULE 19 local→mass visuals.
-Production Area (`world/locations/production_area/`): MODULE 20 Global Terminal + Reach visuals + optional events; STOP before MODULE 21 final date / `girl_final_target`.
+Production Area (`world/locations/production_area/`): MODULE 20 Global Terminal + Reach visuals + optional events.
+Final location (`world/locations/final_location/`): MODULE 21 staged finale; STOP before MODULE 22 polish.
 
 ## Donor
 

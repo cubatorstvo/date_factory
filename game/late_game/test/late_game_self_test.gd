@@ -298,7 +298,7 @@ func _test_terminal_prompts() -> void:
 
 
 func _test_no_module_21() -> void:
-	_ok(not ResourceLoader.exists("res://data/girls/girl_final_target.tres"), "no girl_final_target")
+	_ok(ResourceLoader.exists("res://data/content/girls/girl_final_target.tres"), "girl_final_target content present")
 	_ok(not ResourceLoader.exists("res://game/finale/"), "no finale gameplay dir")
 
 

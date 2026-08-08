@@ -1,10 +1,12 @@
-# ACCEPTANCE — MODULE 20 Late Game Expansion
+# ACCEPTANCE — MODULE 21 Final Date Sequence
 
 ## Player-visible result
-After first clone: President at city ToProduction → rival → +5 → STAGE_6 / Production Area → Global Terminal, Reach 0→100, global upgrades, optional events, visual escalation → Reach 100 → FINALE + extraterrestrial signal. No final date yet.
+FINALE: answer signal in final_location → staged date with «Последняя» → DANCE then SLAP exhibitions → success ending screen and continue playing; fail → full retry. Clean F5 path complete.
 
 ## PASS
-President pack + first-clone gates; LateGameExpansion Reach/multipliers exact; CloneIncremental seam; Production terminal; M19 external breakdown; Story completion; MODULE 02–19 regressions; no MODULE 21.
+girl_final_target + 2 exhibition rivals; no ordinary dating path; 3 zones; scoring threshold; exhibition seam; ending + Continue; Phone completed; MODULE 02–20 regressions; no MODULE 22+.
 
 ## Verdict
-READY
+**READY**
+
+Evidence: `docs/agent/qa/M21_QA.md`, `tmp/m21_qa/` (headless 78/139/120/101; indep `passed=101 failed=0`; screenshots apartment / final_location / phone / INTRO).

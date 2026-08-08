@@ -566,4 +566,4 @@ func _test_boundaries_overload_cap() -> void:
 		"68 President not freely available",
 	)
 	_gd.call("force_clear_attempt")
-	_ok(not ResourceLoader.exists("res://data/girls/girl_final_target.tres"), "68 no MODULE21 final target")
+	_ok(ResourceLoader.exists("res://data/content/girls/girl_final_target.tres"), "68 MODULE21 final target content")

@@ -2,6 +2,7 @@ extends Node
 ## Production Rival competition runner (MODULE 07B–07D).
 ## Autoload: RivalCompetitionRunner. Registers via RivalEncounters.set_competition_runner.
 ## competition_requested remains notification-only; this Callable is the sole launch/submit path.
+## MODULE 21: run_exhibition_competition reuses Slap/Dance without RivalEncounters persistence.
 
 
 signal hostile_acquisition_requested(rival_id: StringName)
@@ -13,6 +14,9 @@ var _hostile_emitted: bool = false
 var _player: PlayerController = null
 var _return_mode: int = int(PlayerController.ControlMode.GAMEPLAY)
 var _current_request: RivalCompetitionRequest = null
+var _exhibition_mode: bool = false
+var _exhibition_callback: Callable = Callable()
+var _exhibition_rival_def: RivalDefinition = null
 
 
 func get_active_minigame() -> CanvasLayer:
@@ -58,6 +62,62 @@ func run_competition(request: RivalCompetitionRequest) -> void:
 			)
 
 
+## MODULE 21 exhibition seam: same Slap/Dance + control modes, no RivalEncounters submit / Authority / defeat.
+func run_exhibition_competition(
+	request: RivalCompetitionRequest,
+	rival_definition: RivalDefinition,
+	result_callback: Callable,
+) -> bool:
+	if request == null:
+		push_error("[RivalCompetitionRunner] exhibition null request")
+		return false
+	if rival_definition == null:
+		push_error("[RivalCompetitionRunner] exhibition null rival_definition")
+		return false
+	if not result_callback.is_valid():
+		push_error("[RivalCompetitionRunner] exhibition invalid result_callback")
+		return false
+	if _busy:
+		push_error("[RivalCompetitionRunner] busy; refusing exhibition competition")
+		return false
+	match request.competition_type:
+		GameTypes.CompetitionType.SLAP, GameTypes.CompetitionType.DANCE:
+			pass
+		_:
+			push_error(
+				"[RivalCompetitionRunner] exhibition supports only SLAP/DANCE, got=%s"
+				% str(request.competition_type)
+			)
+			return false
+	_exhibition_mode = true
+	_exhibition_callback = result_callback
+	_exhibition_rival_def = rival_definition
+	match request.competition_type:
+		GameTypes.CompetitionType.SLAP:
+			_start_slap(request)
+		GameTypes.CompetitionType.DANCE:
+			_start_dance(request)
+	if not _busy:
+		_clear_exhibition_state()
+		return false
+	return true
+
+
+func _clear_exhibition_state() -> void:
+	_exhibition_mode = false
+	_exhibition_callback = Callable()
+	_exhibition_rival_def = null
+
+
+func _rival_definition_for(request: RivalCompetitionRequest) -> RivalDefinition:
+	if _exhibition_mode and _exhibition_rival_def != null:
+		return _exhibition_rival_def
+	var encounters: Node = get_node_or_null("/root/RivalEncounters")
+	if encounters == null:
+		return null
+	return encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
+
+
 func _start_slap(request: RivalCompetitionRequest) -> void:
 	_busy = true
 	_submitted = false
@@ -65,7 +125,7 @@ func _start_slap(request: RivalCompetitionRequest) -> void:
 	_current_request = request
 	var encounters: Node = get_node("/root/RivalEncounters")
 	var is_story: bool = false
-	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
+	var def: RivalDefinition = _rival_definition_for(request)
 	if def != null:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_slap_perks()
@@ -84,7 +144,7 @@ func _start_dance(request: RivalCompetitionRequest) -> void:
 	_current_request = request
 	var encounters: Node = get_node("/root/RivalEncounters")
 	var is_story: bool = false
-	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
+	var def: RivalDefinition = _rival_definition_for(request)
 	if def != null:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_dance_perks()
@@ -104,7 +164,7 @@ func _start_sigma(request: RivalCompetitionRequest) -> void:
 	_current_request = request
 	var encounters: Node = get_node("/root/RivalEncounters")
 	var is_story: bool = false
-	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
+	var def: RivalDefinition = _rival_definition_for(request)
 	if def != null:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_sigma_perks()
@@ -124,7 +184,7 @@ func _start_money(request: RivalCompetitionRequest) -> void:
 	_current_request = request
 	var encounters: Node = get_node("/root/RivalEncounters")
 	var is_story: bool = false
-	var def: RivalDefinition = encounters.call("get_rival_definition", request.rival_id) as RivalDefinition
+	var def: RivalDefinition = _rival_definition_for(request)
 	if def != null:
 		is_story = def.is_story
 	_prepare_player_mode(encounters, Input.MOUSE_MODE_VISIBLE)
@@ -208,6 +268,9 @@ func _on_match_finished(result: RivalCompetitionResult) -> void:
 	if _submitted:
 		return
 	_submitted = true
+	if _exhibition_mode:
+		_finish_exhibition(result)
+		return
 	_maybe_emit_hostile_acquisition(result)
 	var encounters: Node = get_node_or_null("/root/RivalEncounters")
 	if encounters != null and result != null:
@@ -216,6 +279,17 @@ func _on_match_finished(result: RivalCompetitionResult) -> void:
 	_cleanup_active()
 	_busy = false
 	_current_request = null
+
+
+func _finish_exhibition(result: RivalCompetitionResult) -> void:
+	var cb: Callable = _exhibition_callback
+	_clear_exhibition_state()
+	_restore_player()
+	_cleanup_active()
+	_busy = false
+	_current_request = null
+	if cb.is_valid() and result != null:
+		cb.call(result)
 
 
 func _maybe_emit_hostile_acquisition(result: RivalCompetitionResult) -> void:

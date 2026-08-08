@@ -26,6 +26,7 @@ func _ready() -> void:
 	_re.connect("competition_requested", _on_requested)
 	_load_fixtures()
 	_run_all()
+	await _run_exhibition_tests()
 	if _failed == 0:
 		DfLog.info("MODULE_06_TEST", "ALL PASS (%s)" % _passed)
 		print("MODULE_06_TEST: ALL PASS (%s)" % _passed)
@@ -546,3 +547,185 @@ func _test_no_relationship_contamination() -> void:
 	var src: String = FileAccess.get_file_as_string("res://game/rivals/rival_encounters.gd")
 	_ok(not src.contains("girl_relationship"), "113 no girl_relationship API")
 	_ok(not src.contains("add_experience"), "113 no add_experience")
+
+
+func _make_exhibition_def(rival_id: StringName, competition: GameTypes.CompetitionType) -> RivalDefinition:
+	var def: RivalDefinition = RivalDefinition.new()
+	def.id = rival_id
+	def.display_name = "Exhibition"
+	def.is_story = false
+	def.required_authority = 0
+	def.authority_reward = 99
+	def.muscle = 3
+	def.appearance = 3
+	def.capital = 3
+	def.aura = 3
+	def.preferred_competition = competition
+	def.allowed_competitions = [competition] as Array[GameTypes.CompetitionType]
+	return def
+
+
+func _make_exhibition_request(
+	rival_id: StringName,
+	competition: GameTypes.CompetitionType,
+) -> RivalCompetitionRequest:
+	var request: RivalCompetitionRequest = RivalCompetitionRequest.new()
+	request.rival_id = rival_id
+	request.competition_type = competition
+	request.player_level = 3
+	request.rival_level = 3
+	request.initiator = GameTypes.RivalEncounterInitiator.RIVAL
+	request.context = GameTypes.RivalEncounterContext.WORLD
+	return request
+
+
+func _run_exhibition_tests() -> void:
+	# MODULE 21 §§13–16 / §111 — exhibition seam must not mutate Rival persistence.
+	if _runner != null:
+		_runner.restore_production_runner()
+	var production: Node = get_node_or_null("/root/RivalCompetitionRunner")
+	_ok(production != null, "M21 exhibition runner present")
+	if production == null:
+		return
+	_ok(production.has_method("run_exhibition_competition"), "M21 run_exhibition_competition API")
+
+	_gs.call("reset_for_new_game")
+	_re.call("force_clear_session")
+	_gs.call("add_authority", 5)
+	var auth_before: int = int(_gs.call("get_authority"))
+	var finish_before: int = _finish_count
+	var won_before: int = _won_count
+	var lost_before: int = _lost_count
+
+	var def_win: RivalDefinition = _make_exhibition_def(
+		&"rival_exhibition_win",
+		GameTypes.CompetitionType.SLAP,
+	)
+	var req_win: RivalCompetitionRequest = _make_exhibition_request(
+		def_win.id,
+		GameTypes.CompetitionType.SLAP,
+	)
+	var got_win: Array = []
+	var cb_win: Callable = func(result: RivalCompetitionResult) -> void:
+		got_win.append(result)
+	var started_win: bool = bool(
+		production.call("run_exhibition_competition", req_win, def_win, cb_win)
+	)
+	_ok(started_win, "M21 exhibition SLAP win started")
+	_ok(bool(production.call("is_busy")), "M21 exhibition busy while active")
+	var mg_win: CanvasLayer = production.call("get_active_minigame") as CanvasLayer
+	_ok(mg_win is SlapMinigame, "M21 exhibition launches SlapMinigame")
+	if mg_win != null:
+		mg_win.set("auto_tick", false)
+		mg_win.set("accept_input", false)
+		var win_result: RivalCompetitionResult = RivalCompetitionResult.new()
+		win_result.outcome = GameTypes.RivalCompetitionOutcome.PLAYER_WIN
+		win_result.victory_grade = GameTypes.VictoryGrade.CLOSE
+		win_result.debug_score_summary = "exhibition_win_test"
+		mg_win.emit_signal("match_finished", win_result)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_ok(got_win.size() == 1, "M21 exhibition win callback once")
+	if got_win.size() == 1:
+		var wr: RivalCompetitionResult = got_win[0] as RivalCompetitionResult
+		_ok(
+			wr != null and wr.outcome == GameTypes.RivalCompetitionOutcome.PLAYER_WIN,
+			"M21 exhibition callback PLAYER_WIN",
+		)
+	_ok(int(_gs.call("get_authority")) == auth_before, "M21 exhibition win auth unchanged")
+	_ok(
+		not bool(_gs.call("is_rival_defeated", &"rival_exhibition_win")),
+		"M21 exhibition win not defeated",
+	)
+	_ok(_finish_count == finish_before, "M21 exhibition win no encounter_finished")
+	_ok(_won_count == won_before, "M21 exhibition win no encounter_won")
+	_ok(not bool(production.call("is_busy")), "M21 exhibition win runner idle")
+	_ok(production.call("get_active_minigame") == null, "M21 exhibition win cleaned up")
+
+	auth_before = int(_gs.call("get_authority"))
+	finish_before = _finish_count
+	lost_before = _lost_count
+	var def_loss: RivalDefinition = _make_exhibition_def(
+		&"rival_exhibition_loss",
+		GameTypes.CompetitionType.DANCE,
+	)
+	var req_loss: RivalCompetitionRequest = _make_exhibition_request(
+		def_loss.id,
+		GameTypes.CompetitionType.DANCE,
+	)
+	var got_loss: Array = []
+	var cb_loss: Callable = func(result: RivalCompetitionResult) -> void:
+		got_loss.append(result)
+	var started_loss: bool = bool(
+		production.call("run_exhibition_competition", req_loss, def_loss, cb_loss)
+	)
+	_ok(started_loss, "M21 exhibition DANCE loss started")
+	var mg_loss: CanvasLayer = production.call("get_active_minigame") as CanvasLayer
+	_ok(mg_loss is DanceMinigame, "M21 exhibition launches DanceMinigame")
+	if mg_loss != null:
+		mg_loss.set("auto_tick", false)
+		mg_loss.set("accept_input", false)
+		var loss_result: RivalCompetitionResult = RivalCompetitionResult.new()
+		loss_result.outcome = GameTypes.RivalCompetitionOutcome.PLAYER_LOSS
+		loss_result.victory_grade = GameTypes.VictoryGrade.CLOSE
+		loss_result.debug_score_summary = "exhibition_loss_test"
+		mg_loss.emit_signal("match_finished", loss_result)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_ok(got_loss.size() == 1, "M21 exhibition loss callback once")
+	if got_loss.size() == 1:
+		var lr: RivalCompetitionResult = got_loss[0] as RivalCompetitionResult
+		_ok(
+			lr != null and lr.outcome == GameTypes.RivalCompetitionOutcome.PLAYER_LOSS,
+			"M21 exhibition callback PLAYER_LOSS",
+		)
+	_ok(int(_gs.call("get_authority")) == auth_before, "M21 exhibition loss auth unchanged")
+	_ok(
+		not bool(_gs.call("is_rival_defeated", &"rival_exhibition_loss")),
+		"M21 exhibition loss not defeated",
+	)
+	_ok(_finish_count == finish_before, "M21 exhibition loss no encounter_finished")
+	_ok(_lost_count == lost_before, "M21 exhibition loss no encounter_lost")
+
+	var def_money: RivalDefinition = _make_exhibition_def(
+		&"rival_exhibition_money",
+		GameTypes.CompetitionType.MONEY,
+	)
+	var req_money: RivalCompetitionRequest = _make_exhibition_request(
+		def_money.id,
+		GameTypes.CompetitionType.MONEY,
+	)
+	var rejected: bool = bool(
+		production.call(
+			"run_exhibition_competition",
+			req_money,
+			def_money,
+			func(_r: RivalCompetitionResult) -> void: pass,
+		)
+	)
+	_ok(not rejected, "M21 exhibition rejects MONEY")
+	_ok(not bool(production.call("is_busy")), "M21 exhibition idle after reject")
+
+	if _runner != null:
+		_runner.attach(_re)
+		_runner.reset_counts()
+		_runner.auto_submit = true
+		_runner.set_forced(
+			GameTypes.RivalCompetitionOutcome.PLAYER_WIN,
+			GameTypes.VictoryGrade.CLOSE,
+		)
+	_gs.call("reset_for_new_game")
+	_re.call("force_clear_session")
+	_gs.call("add_authority", 4)
+	var start_normal: Dictionary = _re.call(
+		"start_encounter",
+		&"rival_test_high",
+		GameTypes.RivalEncounterInitiator.RIVAL,
+	) as Dictionary
+	_ok(bool(start_normal.get("ok", false)), "M21 normal after exhibition start")
+	var begin_normal: Dictionary = _re.call("begin_competition") as Dictionary
+	_ok(bool(begin_normal.get("ok", false)), "M21 normal after exhibition begin")
+	_ok(int(_gs.call("get_authority")) == 7, "M21 normal after exhibition authority +3")
+	_ok(bool(_gs.call("is_rival_defeated", &"rival_test_high")), "M21 normal after exhibition defeated")
+	if _runner != null:
+		_runner.restore_production_runner()

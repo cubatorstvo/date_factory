@@ -141,7 +141,7 @@
 - Autoload `LateGameExpansion`: Earth Reach (`Охват Земли`) 0..100 starts at 0 on STAGE_6 (no retroactive XP).
 - Reach +2 per `late_experience_granted` only; backlog/manual dates give none. Three optional Production Area FPS events (+10 once) — not required.
 - Three global upgrades levels 0..3 → ×1/×2/×4/×8, costs 1000/5000/25000; `CloneIncremental` remains economy owner and applies multipliers.
-- Reach 100 → `Story.complete_world_expansion()` → FINALE + `FINAL_DATE` + extraterrestrial signal. No `girl_final_target` / final date (MODULE 21).
+- Reach 100 → `Story.complete_world_expansion()` → FINALE + `FINAL_DATE` + extraterrestrial signal → MODULE 21 final date.
 
 ---
 
@@ -397,7 +397,7 @@ Scientist / Lab / first clone are MODULE 17 (implemented).
 
 - Production Area Global Terminal: Reach, aggregate counts, effective rates, local assign APIs, three global upgrade tracks.
 - World scale = one Reach meter + global ×2^n + presentation thresholds 0/25/50/75/100. No country database / logistics simulator.
-- Reach 100 → FINALE signal handoff. STOP before MODULE 21 final date sequence.
+- Reach 100 → FINALE signal handoff → MODULE 21 final date in `final_location`.
 
 ---
 
@@ -421,6 +421,13 @@ Scientist / Lab / first clone are MODULE 17 (implemented).
 - сущностью, вокруг которой уже существует собственная иерархия внеземных самцов.
 
 Главное: это конкретный персонаж и конкретное финальное свидание, а не абстрактный «алгоритм» в интерфейсе.
+
+### Реализация (MODULE 21)
+
+- Production ID `girl_final_target`, display «Последняя»; catalog **14/14** girls/rivals.
+- Concrete character in `final_location` after answering the extraterrestrial signal; not a UI meter.
+- Completion source: `GameState.is_girl_conquered(girl_final_target)` (no extra final story flag).
+- STOP before MODULE 22 polish (rename/art/credits).
 
 ---
 
@@ -454,6 +461,14 @@ Scientist / Lab / first clone are MODULE 17 (implemented).
 - повторяется именно всё финальное свидание целиком.
 
 Это единственный основной финал. Разные характеристики меняют способы прохождения отдельных частей, но не создают четыре разные концовки.
+
+### Реализация (MODULE 21)
+
+- Scene-local `FinalDateController` staged phases (not DatingCore): characteristic events → exhibition DANCE (`rival_final_ceremonial`) → walk → exhibition SLAP (`rival_final_gravity`) → score gate.
+- Exhibition rivals reuse Slap/Dance via `RivalCompetitionRunner.run_exhibition_competition`; no Authority / defeat persistence.
+- SUCCESS once: relationship +5 / conquered / +1 Experience; functional ending + `[Продолжить]` (world stays playable).
+- FAIL → comedy UI → full retry; zero permanent penalties; no bad ending.
+- STOP before MODULE 22 polish.
 
 ---
 
@@ -491,13 +506,14 @@ MODULE15 uses 4 authored Attention thresholds (15/30/45/60) so the first incomin
 At Attention ≥ 45 and ≥ 3 offers Media becomes `overload_ready`.
 MODULE16 owns body capacity, demand backlog, Feed Boost, and recognition handoff; Scientist content remains MODULE 17.
 
-### Реализация (MODULE 17–20 route)
+### Реализация (MODULE 17–21 route)
 
 ```text
 STAGE_4 recognition → Scientist → first clone → Clone Incremental
 → President (after total≥1) → STAGE_6 / Production Area
 → Reach 0..100 + global ×2^n → Reach100 → FINALE signal
-STOP before girl_final_target / final date (MODULE 21)
+→ final_location → girl_final_target staged date → ending + Continue
+STOP before MODULE 22 polish
 ```
 
 ---

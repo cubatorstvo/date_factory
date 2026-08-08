@@ -70,22 +70,31 @@
 - визуальная эскалация до планетарного масштаба;
 - сигнал внеземной цели после Reach 100.
 
+## 46.9. Финальная локация
+
+- ответ на внеземной сигнал;
+- поставленное свидание с «Последней»;
+- зоны / checkpoints / walk между частями сцены;
+- exhibition DANCE затем SLAP;
+- функциональный ending screen.
+
 Мир должен быть компактным. Большая карта не является ценностью сама по себе.
 
-### Реализация (MODULE 12 / 19 / 20)
+### Реализация (MODULE 12 / 19 / 20 / 21)
 
 - Девять отдельных сцен, hub-and-spoke через `city_hub`.
 - Доступ локаций — `StoryFeature` (не `GameState.unlock_location` для канонических девяти).
 - `PUBLIC_CITY_ACCESS` — внутренний gate внутри `city_hub`, не отдельная location.
 - Физический телефон в квартире открывает PhoneJournal; экономика шахты — MODULE 13.
-- PhoneJournal (MODULE 14A–20): top status + Story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1, read-only counts + rates) + salary.
+- PhoneJournal (MODULE 14A–21): top status + Story + girls + MEDIA + ПЕРЕГРУЗКА + КЛОНЫ (after total≥1, read-only counts + rates) + salary; final completion via conquered `girl_final_target`.
 - STAGE_4 Story: photo session → publish → overload → recognition → Scientist hunt at closed laboratory gate.
 - STAGE_5 Story: before clone «Создай первого клона»; after clone → automation → President (requires first clone); clone management via lab terminal.
 - STAGE_6 Story: «Мировое расширение», Reach XX/100; Production Area open via `WORLD_EXPANSION`.
 - MODULE 14B ordinary public NPCs sit behind existing `PUBLIC_CITY_ACCESS`; Editor pair + photo cue live in `appearance_space`; MODULE 15 photo session uses that cue.
 - MODULE 17: Scientist/rival anchors at city_hub laboratory gate (`requires_overload_recognized`); laboratory hosts one-off clone machine + FirstClone representative (suppressed when MODULE 19 controller owns lab).
 - MODULE 19: lab-local `CloneVisualizationController` — 10 date rooms / 3 work / 2 free / 2 mass-flow; overflow labels + `ВНЕШНИЕ ПЛОЩАДКИ` (Работа / Свидания / Ожидают).
-- MODULE 20: President/rival near city `ToProduction` after first clone; `production_area` Global Terminal + Reach visuals + 3 optional events; Reach100 → FINALE signal. STOP before MODULE 21 final date.
+- MODULE 20: President/rival near city `ToProduction` after first clone; `production_area` Global Terminal + Reach visuals + 3 optional events; Reach100 → FINALE signal.
+- MODULE 21: `final_location` + scene-local `FinalDateController`; catalog **14/14**; exhibition rivals; success ending + Continue; fail full retry. STOP before MODULE 22 polish.
 
 
 ---
@@ -125,7 +134,7 @@
 
 Это не полноценный симулятор социальной сети.
 
-### Реализация (MODULE 15 / 16 / 17 / 18 / 20)
+### Реализация (MODULE 15 / 16 / 17 / 18 / 20 / 21)
 
 - `Attention` = persistent media meter `0..100`, non-spendable.
 - Photo session creates 3 fixed photo records; one photo publish per GameDay.
@@ -138,7 +147,8 @@
 - MODULE17 Phone: after recognition → «Найти Учёную у закрытой лаборатории»; STAGE_5 before clone → «Лаборатория открыта. / Создай первого клона.»
 - MODULE18 Phone: STAGE_5 after clone → automation / clone growth; КЛОНЫ shows Всего / Свободно / Работают / Денег/мин / На свиданиях / Свиданий/мин (read-only; local assign/upgrades stay on lab terminal).
 - MODULE19: physical caps only in laboratory visualization (10/3/2/2 + mass corridor).
-- MODULE20 Phone: STAGE_5 President copy (XP / rival / meet at Production); STAGE_6 Reach XX/100 + rates; FINALE → «Земная цель исчерпана / романтическая цель вне Земли» (does not start final date). Global upgrades managed at Production Area terminal.
+- MODULE20 Phone: STAGE_5 President copy (XP / rival / meet at Production); STAGE_6 Reach XX/100 + rates; FINALE handoff → extraterrestrial goal. Global upgrades at Production Area terminal.
+- MODULE21 UI: functional `FinalDateUI` (event choices, fail→retry, success dialogue, ending + `[Продолжить]`). Phone marks final girl completed when conquered. STOP before MODULE 22 phone/art polish.
 
 ---
 
@@ -184,6 +194,11 @@
 - часть персональных реплик.
 
 Это позволяет создавать много комбинаций без полного отдельного сценария на каждую девушку.
+
+### Реализация (MODULE 21 catalog)
+
+- Production catalog closed for main path: **14 girls / 14 rivals** (includes `girl_final_target` + two exhibition final rivals).
+- Final date is a unique authored scene, not a shared ordinary dating pool.
 
 ---
 

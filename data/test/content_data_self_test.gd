@@ -258,9 +258,11 @@ func _test_stages() -> void:
 	_ok(prologue != null and prologue.story_girl_id == &"girl_neighbor" and prologue.story_rival_id == &"", "prologue refs")
 	var finale: StoryStageDefinition = db.call("get_stage", GameTypes.GameStage.FINALE) as StoryStageDefinition
 	_ok(finale != null and finale.story_girl_id == &"girl_final_target", "finale girl")
-	# MODULE 20 ships President + prior production girls (13 total).
+	# MODULE 21 ships final target + exhibition rivals (14 girls / 14 rivals).
 	var prod_girls: Array = db.call("list_girls") as Array
-	_ok(prod_girls.size() == 13, "13 production GirlDefinitions with president")
+	_ok(prod_girls.size() == 14, "14 production GirlDefinitions with final target")
+	var prod_rivals: Array = db.call("list_rivals") as Array
+	_ok(prod_rivals.size() == 14, "14 production RivalDefinitions with final rivals")
 	for gid in [
 		&"girl_neighbor",
 		&"girl_actress",
@@ -275,6 +277,7 @@ func _test_stages() -> void:
 		&"girl_appearance_flash",
 		&"girl_scientist",
 		&"girl_president",
+		&"girl_final_target",
 	]:
 		var g: GirlDefinition = db.call("get_girl", gid) as GirlDefinition
 		_ok(g != null and g.id == gid, "production girl %s" % String(gid))
@@ -296,6 +299,41 @@ func _test_stages() -> void:
 	_ok(president != null and president.is_story and president.story_stage == GameTypes.GameStage.STAGE_5, "20 girl_president present STAGE_5")
 	var rival_president: RivalDefinition = db.call("get_rival", &"rival_president") as RivalDefinition
 	_ok(rival_president != null and rival_president.is_story and rival_president.story_stage == GameTypes.GameStage.STAGE_5, "20 rival_president present STAGE_5")
+	var final_girl: GirlDefinition = null
+	if db.has_method("try_get_girl"):
+		final_girl = db.call("try_get_girl", StoryIds.GIRL_FINAL_TARGET) as GirlDefinition
+	else:
+		final_girl = db.call("get_girl", StoryIds.GIRL_FINAL_TARGET) as GirlDefinition
+	_ok(
+		final_girl != null
+		and final_girl.is_story
+		and final_girl.story_stage == GameTypes.GameStage.FINALE
+		and final_girl.primary_trait == GameTypes.PrimaryGirlTrait.STRANGE
+		and final_girl.secondary_trait == GameTypes.SecondaryGirlTrait.VARIETY_SEEKING
+		and final_girl.dating_pool_ids.is_empty()
+		and String(final_girl.discovery_situation_id) == "",
+		"21 girl_final_target FINALE empty dating/discovery",
+	)
+	var rival_ceremonial: RivalDefinition = db.call("get_rival", &"rival_final_ceremonial") as RivalDefinition
+	_ok(
+		rival_ceremonial != null
+		and rival_ceremonial.required_authority == 0
+		and rival_ceremonial.authority_reward == 0
+		and rival_ceremonial.preferred_competition == GameTypes.CompetitionType.DANCE
+		and rival_ceremonial.allowed_competitions.size() == 1
+		and rival_ceremonial.allowed_competitions[0] == GameTypes.CompetitionType.DANCE,
+		"21 rival_final_ceremonial DANCE auth0",
+	)
+	var rival_gravity: RivalDefinition = db.call("get_rival", &"rival_final_gravity") as RivalDefinition
+	_ok(
+		rival_gravity != null
+		and rival_gravity.required_authority == 0
+		and rival_gravity.authority_reward == 0
+		and rival_gravity.preferred_competition == GameTypes.CompetitionType.SLAP
+		and rival_gravity.allowed_competitions.size() == 1
+		and rival_gravity.allowed_competitions[0] == GameTypes.CompetitionType.SLAP,
+		"21 rival_final_gravity SLAP auth0",
+	)
 
 
 func _test_fixture_lookups() -> void:
