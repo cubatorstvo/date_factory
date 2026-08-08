@@ -1,178 +1,125 @@
-# VISUAL BOOTSTRAP CORRECTIVE — Independent QA
+# VISUAL BOOTSTRAP CORRECTIVE — Independent QA (RECHECK)
 
-**Task ID:** VC-QA / VC-REVIEW  
+**Task ID:** VC-QA-RECHECK  
 **Date:** 2026-08-09  
 **Branch:** `visual-review/corrective-20260809`  
-**Base SHA:** `d9fa8326c8f48851f28aa407324e5599b3a4f459` (`Correct visual bootstrap: donor lighting, real interactables, single-base characters.`)  
+**Main SHA (fix):** `b59c3c9b6cf6c91a5b9d2bf567afc686306094f3` — *Fix modular character bone attachments so outfit placeholders sit on the body.*  
+**Review tip (pre-PNG commit):** merge of main into review containing `b59c3c9`  
+**Prior FAIL base:** `d9fa8326c8f48851f28aa407324e5599b3a4f459`  
 **Engine:** Godot 4.7.1 (`C:\Godot\Godot_v4.7.1-stable_win64.exe`), windowed 1920×1080  
-**QA worker:** df-qa-worker (independent; did not trust implementation evidence alone)
+**QA worker:** df-qa-worker (independent recheck; own captures + opened PNGs)
 
 ## Overall status
 
-**NOT READY**
+**READY**
 
-Critical player-visible failure: modular character presentation does not show readable appearance differences. Variant lineups and in-world NPCs render as identical underwear base meshes; accessory/prop meshes sit at feet as colored boxes. Automated presentation self-test previously logged PASS, but opened PNGs contradict “modular differences readable.”
+Prior critical blocker (modular parts piled at feet; variant lineups unreadable) is cleared after `b59c3c9` (`BoneAttachment` `external_skeleton` → `../Body/Armature/Skeleton3D`). Fresh 1920×1080 captures show hair/top/bottom placeholders on head/chest/hips for ≥6 male and ≥6 female profiles. Presentation self-test: **ALL PASS (902)**.
 
-Travel, interactables with CollisionShape3D, donor refs, and women_modular/PACK_019 runtime refs are PASS.
+Locations / travel / interactables / donor + women_modular ref checks from the prior VC-QA pass remain accepted (not re-failed). Non-blocking city polish and placeholder-art caveats remain.
 
 ## Criteria table
 
 | # | Criterion | Status | Evidence | Reproduction |
 |---|-----------|--------|----------|--------------|
-| 1 | Normal project / scene load for captures | **PASS** | All location+char capture scripts exit 0; 31 PNGs 1920×1080 | `Godot --path . --windowed --resolution 1920x1080 -s res://tmp/vc_qa/capture_locations.gd` |
-| 2 | Travel apartment ↔ city ↔ cafe | **PASS** | `verify_travel.log` travel rc=0 each hop | `... -s res://tmp/vc_qa/verify_travel_interactables.gd` |
-| 3 | Mine / lab / production unlock via `restore_stage` | **PASS** | STAGE_3 mine, STAGE_5+scientist lab, STAGE_6 production | same verify script |
-| 4 | Interactables exist + CollisionShape3D (not floating empty Areas) | **PASS** | DayAdvance, DateVenue, ProgressionSelfAssessment, cafe DateVenue, SalaryStation, FirstCloneMachine, CloneTerminal, GlobalExpansionTerminal all `shape=true` | verify log |
-| 5 | Control return / repeated cafe travel | **PASS** | repeated cafe travel PASS; STAGE_1 blocks production | verify log |
-| 6 | Save/load smoke | **PASS** *(WARN)* | MANUAL_1 save/load ok; engine WARN `saved player pose invalid; keeping spawn_default` | verify log |
-| 7 | Donor runtime refs = 0 | **PASS** | runtime + static scan 0 | verify log |
-| 8 | women_modular / PACK_019 runtime refs = 0 | **PASS** | scan 0 under world/characters/data/game/ui (+ assets excl. women_modular folder) | verify log |
-| 9 | No critical Failed to load / missing resources on travel | **PASS** | No `Failed to load` / missing resource during travel; only quit-time RID leak noise | `verify_travel_stdout.txt` |
-| 10 | Character presentation self-test log | **PASS** *(script)* / **FAIL** *(visual)* | `tmp/vc_rc/character_presentation.log`: `ALL PASS (691)`; opened variant PNGs show no modular clothing/hair differences | re-open `_review/visual_corrective/chars_*_variants.png` |
-| 11 | Cafe empty via QA fixture only (NpcSpawns hidden) | **PASS** | capture log `QA_FIXTURE hide NpcSpawns`; empty shots have no NPCs | capture_locations.log + opened cafe_empty_*.png |
-| 12 | Cafe production shows NPCs | **PASS** *(presence)* / **FAIL** *(presentation)* | NPCs present; all underwear base + green pedestals | cafe_production_*.png |
-| 13 | Screenshot set complete (exact names) | **PASS** | 31/31 PNGs published under `_review/visual_corrective/` | inventory below |
-| 14 | Modular variants ≥5 side-by-side, differences readable | **FAIL** | 6 male + 6 female profiles spawned; meshes look identical underwear; colored boxes at feet | chars_male_variants.png, chars_female_variants.png |
-| 15 | City visual quality (no void / obvious broken lights) | **WARNING** | Night street readable; greybox buildings; floating pink/red light slab on cafe approach; translucent blue volumes on street | city_*.png |
-| 16 | Edge: locked late location at STAGE_1 | **PASS** | `edge_locked_production_rc=1` | verify log |
+| 1 | Normal project / scene load for captures | **PASS** | Char + cafe production captures exit 0; PNGs 1920×1080 | `Godot ... -s res://tmp/vc_qa/capture_chars.gd` |
+| 2 | Travel apartment ↔ city ↔ cafe | **PASS** *(prior)* | Prior `verify_travel.log` travel rc=0 | prior VC-QA |
+| 3 | Mine / lab / production unlock via `restore_stage` | **PASS** *(prior)* | Prior verify stages | prior VC-QA |
+| 4 | Interactables + CollisionShape3D | **PASS** *(prior)* | Prior verify shape=true | prior VC-QA |
+| 5 | Control return / repeated cafe travel | **PASS** *(prior)* | Prior verify | prior VC-QA |
+| 6 | Save/load smoke | **PASS** *(WARN, prior)* | Prior MANUAL_1; pose invalid warning | prior VC-QA |
+| 7 | Donor runtime refs = 0 | **PASS** *(prior)* | Prior scan 0 | prior VC-QA |
+| 8 | women_modular / PACK_019 runtime refs = 0 | **PASS** *(prior)* | Prior scan 0 | prior VC-QA |
+| 9 | No critical Failed to load on travel | **PASS** *(prior)* | Prior stdout | prior VC-QA |
+| 10 | Character presentation self-test | **PASS** | `VC_CHARS_PRESENTATION_TEST: ALL PASS (902)`; `tmp/vc_qa/presentation_test_recheck.txt` | `Godot ... res://characters/test/character_presentation_test.tscn` |
+| 11 | Cafe empty via QA fixture only | **PASS** *(prior)* | Prior empty shots | prior VC-QA |
+| 12 | Cafe production shows NPCs with parts on body | **PASS** | Opened `cafe_production_*.png` — hair/tops/bottoms at head/torso/hips; NPCs present | recheck cafe capture |
+| 13 | Screenshot set complete (exact names) | **PASS** | 31/31 under `_review/visual_corrective/`; 10 char/cafe PNGs refreshed | inventory |
+| 14 | Modular variants ≥5 side-by-side, differences readable | **PASS** | Opened male/female variant PNGs: 6+6 distinct hair/top/bottom combos on body | `chars_male_variants.png`, `chars_female_variants.png` |
+| 15 | City visual quality | **WARNING** | Night street readable; greybox / black sky / prior floating light notes unchanged for non-refreshed city_*.png | prior city_*.png |
+| 16 | Edge: locked late location at STAGE_1 | **PASS** *(prior)* | Prior `edge_locked_production_rc=1` | prior VC-QA |
 
 ## Blocking issues
 
-1. **Character modular presentation unreadable (critical).** Studio and venue NPCs show bald underwear bases only. Variant lineups do not show distinct hair/top/bottom/shoes. Colored primitive boxes at feet indicate slot/prop attach failure visible to player. Undermines corrective commit’s “single-base characters” player result.
-2. **In-world NPC presentation matches the same failure** (city + cafe production), so it is not limited to the studio QA fixture.
+*None.* Previous critical modular-attachment FAIL is resolved on main `b59c3c9` and confirmed by recheck screenshots + presentation test.
 
 ## Non-blocking issues
 
-1. City still mixes detailed brick facades with large greybox blocks; night sky is pure black.
-2. `city_cafe_approach`: floating pink/red glowing rectangular light/sign.
-3. City street: large translucent blue volumes (likely transition debug/Area visuals).
-4. Save restore: `saved player pose invalid; keeping spawn_default` warning (load still succeeds).
-5. Capture script quit leaks RID/resources (engine teardown noise only; not travel-time failures).
-6. Cafe lighting is very high-contrast / dark corners (readable enough for venue review).
+1. Outfit slots still use **colored primitive placeholders** (not final clothing art) — intentional for modular POC; do not block readiness per recheck scope.
+2. Thin **black shoe/foot placeholder** at left foot is expected shoe-slot attach (not the old all-parts-at-feet pile).
+3. Animated cafe poses can make rigid placeholder boxes look slightly offset / clipping while still bone-attached at correct body height.
+4. City still mixes greybox blocks; night sky pure black; prior floating pink light on `city_cafe_approach` (not re-captured this recheck).
+5. Save restore warning: `saved player pose invalid; keeping spawn_default` (prior).
+6. Capture script quit RID/resource teardown noise only.
 
-## Screenshot inventory (opened PNG descriptions)
+## Screenshot inventory (opened PNG descriptions — recheck)
 
-Committed copies: `_review/visual_corrective/<name>.png` (source work dir `tmp/visual_corrective/`).
+Committed copies: `_review/visual_corrective/<name>.png` (work dir `tmp/visual_corrective/`).
 
-### CITY
+### CHARACTERS (refreshed 2026-08-09 recheck)
 
-| File | Opened content |
-|------|----------------|
-| `city_spawn_forward.png` | Night city street looking past lit brick storefront (pink awning), outdoor bench; bald underwear NPCs on green pedestals along street; greybox wall mid-frame. |
-| `city_main_street_left.png` | Looking down street between greybox shops with cyan/white wall panels; muscular male underwear NPC left; globe streetlamps; large translucent blue volume mid-street; brick towers far. |
-| `city_intersection.png` | Wide street view; female underwear NPC left; several male underwear NPCs right sidewalk; mint/tan storefronts; distant blue glow. |
-| `city_cafe_approach.png` | Brick cafe facade + outdoor table/stool; **floating pink/red glowing slab + vertical glow** in street; no NPCs in frame. |
+| File | Opened content / verdict |
+|------|--------------------------|
+| `chars_male_base.png` | Single male base; **tan cylinder hair on head**, **teal box on chest**, **dark apron on hips**, black shoe box at left foot. Parts ON body. |
+| `chars_female_base.png` | Single female base; **black sphere on head**, **green cube on chest**, **purple plane on hip**, black shoe box at left foot. Parts ON body. |
+| `chars_male_variants.png` | **Six** males side-by-side; distinct hair (tan cyl / flat brown / red slab / purple cubes / grey-blue) + tops (teal/blue/white/orange/red/grey) + bottoms (dark/tan/orange/white/grey/blue). **Differences readable. PASS.** |
+| `chars_female_variants.png` | **Six** females; distinct hair (black sphere / yellow hat-cyl / red hair mesh / purple box / brown slab) + tops (green/teal/grey/white/orange/navy) + bottoms (purple/black drop/blue/orange/white pill/tan). **Differences readable. PASS.** |
+| `chars_mixed_group.png` | Six mixed profiles; hair/tops/bottoms on body with distinct color combos. PASS. |
+| `chars_city_example.png` | Night city; NPCs with green torso / purple hip / head pieces on body (not piled at feet). PASS for attach. |
+| `chars_cafe_example.png` | Cafe NPCs with yellow hair cylinders / green tops / purple bottoms at body heights; black shoe boxes at feet. PASS for attach. |
 
-### ROOM (apartment)
+### CAFE PRODUCTION (refreshed)
 
-| File | Opened content |
-|------|----------------|
-| `room_spawn.png` | Compact low-poly studio: bed+blue curtains, round table with two plates, dresser; warm light, no void. |
-| `room_main_area.png` | Kitchenette (sink/stove) + bed + table + dresser; coherent apartment. |
-| `room_wide_a.png` | High angle: fridge/cabinets/sink/stove, bed, table, dresser; furniture grounded. |
-| `room_wide_b.png` | Wide corner including door, kitchen wall, bed/window; same donor-style room. |
+| File | Opened content / verdict |
+|------|--------------------------|
+| `cafe_production_entrance.png` | Multiple NPCs; yellow hair on heads, green tops on torsos, purple bottoms on hips. PASS. |
+| `cafe_production_center.png` | Male near dango table; hair/top at head/chest height during pose (rigid placeholders can look offset). Attach height OK vs prior feet pile. |
+| `cafe_production_date_view.png` | Date seating + NPCs; green torso boxes and distinct head pieces visible; dark venue. PASS for attach. |
 
-### CAFE VENUE_ONLY (NpcSpawns hidden via QA fixture)
+### Unchanged from prior VC-QA (not re-captured)
 
-| File | Opened content |
-|------|----------------|
-| `cafe_empty_entrance.png` | Dim Japanese cafe: red chairs, lanterns, bamboo, eye banner; **no NPCs**. |
-| `cafe_empty_center.png` | Table + dango on red runner, red armchair; empty of NPCs. |
-| `cafe_empty_date_view.png` | Date seating + cherry blossom + sushi sign; empty of NPCs. |
-| `cafe_empty_wide.png` | Elevated wide cafe interior; empty of NPCs. |
+CITY (`city_*`), ROOM (`room_*`), CAFE EMPTY (`cafe_empty_*`), MINE, LAB, LATE — prior PASS descriptions still apply; city WARNING polish remains.
 
-### CAFE PRODUCTION
+**Screenshot count:** 31 (10 refreshed this recheck)
 
-| File | Opened content |
-|------|----------------|
-| `cafe_production_entrance.png` | Same cafe entrance with **multiple underwear NPCs** (+ green pedestals). |
-| `cafe_production_center.png` | Center seating; muscular male underwear NPC right. |
-| `cafe_production_date_view.png` | Date view with several underwear NPCs + blossom tree. |
-
-### MINE
-
-| File | Opened content |
-|------|----------------|
-| `mine_wide.png` | Industrial low-poly hall, orange wall stripe, bed/machine left, blue console+stool, crates/gear; sci-fi pack look (matches `salary_mine.tscn` load in log). |
-| `mine_salary.png` | Close view: blue salary console, grey stool, large gear prop, orange stripe walls. |
-
-### LAB
-
-| File | Opened content |
-|------|----------------|
-| `lab_entrance.png` | Dark cyan lab aisle, white desks, glowing wall panels, crate, shelves; flat purple-grey band top of frame. |
-| `lab_wide.png` | Darker wide aisle between glowing partitions; chair+terminal far; dim. |
-| `lab_clone_core.png` | Cyan-lit crate + translucent wall pods + white desk/chair. |
-| `lab_terminal.png` | White curved desk+chair, glowing blue terminal, shelves; grounded. |
-
-### LATE (production_area)
-
-| File | Opened content |
-|------|----------------|
-| `late_entrance.png` | Purple/orange-stripe production hall; white/black global terminal center; crates; floating text. |
-| `late_wide.png` | Wide production view; central terminal; Cyrillic **«Охват Земли: 0»**; machinery/crates. |
-| `late_terminal.png` | Close terminal console + blank monitor; duplicate «Охват Земли: 0» labels. |
-
-### CHARACTERS
-
-| File | Opened content |
-|------|----------------|
-| `chars_male_base.png` | Single muscular bald male in dark briefs on grey studio floor; teal/yellow prop box at feet. |
-| `chars_female_base.png` | Single bald athletic female in black bikini underwear; green/black boxes at feet. |
-| `chars_male_variants.png` | **Six identical** underwear males in a row; only foot-box colors differ — **modular differences NOT readable**. |
-| `chars_female_variants.png` | **Six identical** underwear females in a row; colored platforms/boxes differ — **modular differences NOT readable**. |
-| `chars_mixed_group.png` | Six mixed male/female underwear bases; same presentation failure. |
-| `chars_city_example.png` | Night city sidewalk; underwear NPCs on green pedestals near streetlamps/brick bg. |
-| `chars_cafe_example.png` | Cafe interior with multiple underwear NPCs among red chairs/tables. |
-
-**Screenshot count:** 31
-
-## Engine logs / journals
+## Engine logs / journals (recheck)
 
 | Path | Role |
 |------|------|
-| `tmp/vc_qa/capture_locations.log` | Location capture journal |
-| `tmp/vc_qa/capture_locations_stdout.txt` | Raw Godot stdout (locations) |
+| `tmp/vc_qa/capture_chars_stdout_recheck.txt` | Raw Godot stdout (chars recheck) |
 | `tmp/vc_qa/capture_chars.log` | Character capture journal |
-| `tmp/vc_qa/capture_chars_stdout.txt` | Raw Godot stdout (chars) |
-| `tmp/vc_qa/verify_travel.log` | Travel/interactable/refs journal |
-| `tmp/vc_qa/verify_travel_stdout.txt` | Raw Godot stdout (verify) |
-| `tmp/vc_qa/verify_journal.txt` | Same verify lines |
-| `tmp/vc_rc/character_presentation.log` | Prior presentation self-test: `ALL PASS (691)` |
+| `tmp/vc_qa/capture_cafe_production_stdout.txt` | Raw Godot stdout (cafe production) |
+| `tmp/vc_qa/capture_cafe_production.log` | Cafe production journal |
+| `tmp/vc_qa/presentation_test_recheck.txt` | Presentation self-test: `ALL PASS (902)` |
+| `docs/agent/qa/evidence/vc_chars_fix/after_lineup_variants.png` | Presentation-test lineup evidence |
+| `docs/agent/qa/evidence/vc_chars_fix/after_slot_heights.json` | Slot height metrics |
 
-## Refs checks
-
-| Check | Result |
-|-------|--------|
-| Runtime `scene_file_path` donor leaks on loaded locations | **0** |
-| Static production text donor (`date_factory_legacy`, `../date_factory`) | **0** |
-| women_modular / PACK_019 runtime refs (world/characters/data/game/ui + assets excl. pack folder) | **0** |
-
-## Commands executed
+## Commands executed (recheck)
 
 ```text
-git fetch; git checkout -B visual-review/corrective-20260809 d9fa832
-C:\Godot\Godot_v4.7.1-stable_win64.exe --path . --windowed --resolution 1920x1080 -s res://tmp/vc_qa/capture_locations.gd
+git checkout main; git pull origin main
+# main HEAD = b59c3c9
+git stash push -u -m "VC-QA-RECHECK stash unrelated WIP..."
+git checkout visual-review/corrective-20260809
+git merge main -m "Merge main into visual-review/corrective-20260809 for character modular fix recheck."
 C:\Godot\Godot_v4.7.1-stable_win64.exe --path . --windowed --resolution 1920x1080 -s res://tmp/vc_qa/capture_chars.gd
-C:\Godot\Godot_v4.7.1-stable_win64.exe --path . --windowed --resolution 1920x1080 -s res://tmp/vc_qa/verify_travel_interactables.gd
-# copy PNGs → _review/visual_corrective/
+C:\Godot\Godot_v4.7.1-stable_win64.exe --path . --windowed --resolution 1920x1080 -s res://tmp/vc_qa/capture_cafe_production.gd
+C:\Godot\Godot_v4.7.1-stable_win64.exe --path . --windowed --resolution 1920x1080 res://characters/test/character_presentation_test.tscn
+# copy refreshed PNGs → _review/visual_corrective/
 ```
 
 ## Unmet criteria
 
-- Readable modular differences for `chars_male_variants` / `chars_female_variants` (≥5 profiles side-by-side with visible hair/clothing variance).
-- Production NPC presentation in city/cafe matching intended modular outfits (not underwear + foot props).
-- (Non-blocking) city_cafe_approach floating light; city greybox + blue volume polish.
+*None blocking.* Remaining items are non-blocking polish (city greybox/lights, placeholder clothing art, save pose warning).
 
 ## Recommendation
 
-**NOT READY**
+**READY**
 
-Do not treat the corrective visual bootstrap as player-ready until character slot visuals are fixed and re-captured. Locations, travel, interactable collision, and zero donor/women_modular runtime refs are in good shape and can stay; character presentation is the blocker.
+Character modular bone-attachment fix on main `b59c3c9` is verified by independent re-capture and opened PNGs. Review branch screenshots under `_review/visual_corrective/` updated for chars_* and cafe_production_*. Prior location/travel/ref PASS results stand.
 
-## Reproduction steps (blocker)
+## Reproduction steps (verify fix)
 
-1. Checkout `d9fa832` / branch `visual-review/corrective-20260809`.
-2. Run `capture_chars.gd` as above (or open `_review/visual_corrective/chars_male_variants.png` and `chars_female_variants.png`).
-3. Observe six near-identical underwear bodies; colored boxes at feet; no distinct modular outfits.
-4. Open `cafe_production_entrance.png` / `chars_city_example.png` — same underwear NPCs in venues.
+1. Checkout `visual-review/corrective-20260809` (after recheck push) or main `b59c3c9`.
+2. Open `_review/visual_corrective/chars_male_variants.png` and `chars_female_variants.png`.
+3. Confirm ≥5 profiles with hair on head, tops on chest, bottoms on hips; color/shape differences readable.
+4. Run presentation test scene → expect `VC_CHARS_PRESENTATION_TEST: ALL PASS (902)`.
