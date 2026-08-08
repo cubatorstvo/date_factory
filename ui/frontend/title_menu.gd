@@ -114,6 +114,20 @@ func _build_ui() -> void:
 	_status_label.add_theme_font_size_override("font_size", 16)
 	vbox.add_child(_status_label)
 
+	# Screen-bottom version: sibling of scaled _root so UiScaleHelper cannot push it off-screen.
+	var version_label := Label.new()
+	var app_version: String = str(ProjectSettings.get_setting("application/config/version", ""))
+	version_label.text = "v%s" % app_version
+	version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	version_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	version_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	version_label.offset_top = -32.0
+	version_label.offset_bottom = -10.0
+	version_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	version_label.add_theme_font_size_override("font_size", 14)
+	version_label.add_theme_color_override("font_color", Color(0.75, 0.78, 0.85, 0.9))
+	add_child(version_label)
+
 	_confirm_host = Control.new()
 	_confirm_host.visible = false
 	_confirm_host.set_anchors_preset(Control.PRESET_FULL_RECT)

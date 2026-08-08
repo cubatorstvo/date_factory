@@ -1,0 +1,11 @@
+"AppBuild"
+{
+	"AppID" "YOUR_APP_ID"
+	"Desc" "DATE FACTORY 1.0.0 placeholder — replace before Steam Pipe upload"
+	"ContentRoot" "..\\..\\..\\dist\\steam_content_placeholder"
+	"BuildOutput" "..\\..\\..\\dist\\steam_build_output_placeholder"
+	"Depots"
+	{
+		"YOUR_DEPOT_ID" "depot_build_placeholder.vdf"
+	}
+}

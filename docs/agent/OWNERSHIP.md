@@ -1,9 +1,8 @@
-﻿# File ownership — MODULE 27 Full Game QA
+﻿# File ownership — MODULE 28 Release Integration
 
-**Status:** complete / READY  
-**Spec:** `docs/modules/MODULE_27_FULL_GAME_QA.md`
+**Status:** complete / READY (TECHNICAL)  
+**Spec:** `docs/modules/MODULE_28_RELEASE_INTEGRATION.md`
 
-Tooling: `qa/test_manifest.json`, `tools/qa/run_all_tests.py`  
-Integration: `game/qa/test/`  
-Docs: `docs/qa/`  
-Fixes: catalog asserts, dance Auth expect, spawn_ids, world_location settle.
+Deliverables: version 1.0.0, SteamBridge fail-open, GodotSteam 4.20.1 GDExtension, export preset, build pipeline, notices, release docs, M28 RC suite.
+
+STORE READY / AppID / overlay: PENDING external.

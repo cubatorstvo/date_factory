@@ -22,3 +22,12 @@ mono_crash.*.json
 # Local MCP secrets (license key / bridge token)
 .cursor/mcp.json
 .godotiq/
+
+# MODULE 28 release packaging / local Steam smoke
+build/
+dist/
+steam_appid.txt
+release/generated_steam_config.cfg
+__pycache__/
+*.py[cod]
+

@@ -1,0 +1,6 @@
+{
+  "blocker_open": 0,
+  "major_open": 0,
+  "accepted_minor_ids": ["KI-M27-01"],
+  "notes": "KI-M27-01: headless teardown SIGSEGV after ALL PASS; recheck exported normal exit in MODULE 28 smoke."
+}

@@ -1,0 +1,11 @@
+"DepotBuild"
+{
+	"DepotID" "YOUR_DEPOT_ID"
+	"ContentRoot" "..\\..\\..\\dist\\DateFactory_extract_placeholder"
+	"FileMapping"
+	{
+		"LocalPath" "*"
+		"DepotPath" "."
+		"recursive" "1"
+	}
+}

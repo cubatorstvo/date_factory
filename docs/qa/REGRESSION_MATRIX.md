@@ -4,7 +4,7 @@
 **Manifest:** `qa/test_manifest.json`  
 **Runner:** `tools/qa/run_all_tests.py --only-rc`  
 **Evidence root:** `tmp/qa/`  
-**Date:** 2026-08-08 (independent QA recheck — **33/33 PASS**)
+**Date:** 2026-08-08 (independent QA recheck — **34/34 PASS**)
 
 Status legend:
 
@@ -65,10 +65,16 @@ Manual A–F: **NOT EXECUTABLE IN ENVIRONMENT** for all rows unless noted.
 | Bucket | Count |
 |---|---|
 | Manifest entries | 34 |
-| `required_for_rc: true` | 33 (incl. `full_game_integration`) |
-| PASS / PASS* | **33** |
+| `required_for_rc: true` | 34 (incl. `full_game_integration`, `release_integration`) |
+| PASS / PASS* | **34** |
 | FAIL | **0** |
 | CRASH incomplete | **0** |
 | Interactive excluded | 2 (`player_fps`, `character_framework_visual`) |
 
 Runner transcript: `tmp/qa/runner_rc_smoke.out` · summary: `tmp/qa/summary.txt`
+
+### MODULE 28
+
+| System | Suite id | Module | required_for_rc | Automated | Result | Evidence |
+|---|---|---|---|---|---|---|
+| Release Integration | `release_integration` | M28 | yes | PASS | **PASS** | `tmp/qa/release_integration.log` |

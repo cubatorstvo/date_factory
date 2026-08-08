@@ -11,7 +11,7 @@
 | MINOR | 1 (non-blocking, release-decidable) |
 | TRIVIAL | 0 |
 
-No open BLOCKER or MAJOR. Automated `required_for_rc` = **33/33 PASS**.
+No open BLOCKER or MAJOR. Automated `required_for_rc` = **34/34 PASS** (post-MODULE 28).
 
 ---
 
@@ -25,7 +25,7 @@ No open BLOCKER or MAJOR. Automated `required_for_rc` = **33/33 PASS**.
 | Reproduction | Run several `required_for_rc` suites via `tools/qa/run_all_tests.py`. Suite prints `ALL PASS (N)`, then process exits with Windows code `3221225477` / CrashHandler signal 11 during ObjectDB/resource cleanup. Observed on e.g. `full_game_integration`, `save_system`, `world_save_pose` (2026-08-08 recheck). |
 | Impact | Does not invalidate assertion results when `ALL PASS` appears before the crash. Runner treats these as PASS when configured. No known player-facing gameplay break. |
 | Workaround | Treat post-suite engine crash as known harness noise; rely on `ALL PASS` marker + runner classification. |
-| Release decision | Accept for RC; track as engine/teardown hygiene, not product blocker. |
+| Release decision | Accept for RC; track as engine/teardown hygiene, not product blocker. MODULE 28 exported smoke: window close exit=0 — treat as headless-only. |
 
 ---
 

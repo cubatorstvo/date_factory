@@ -112,6 +112,22 @@ All under `assets/audio/licenses/`:
 
 ---
 
+## Engine / platform — GodotSteam (MODULE 28)
+
+| Item | Pin |
+|---|---|
+| GodotSteam GDExtension | **4.20.1** |
+| Steamworks SDK redistributable | **1.64** |
+| Runtime path | `addons/godotsteam/` |
+| Pin note | `third_party/godotsteam/README.md` |
+| GodotSteam license | **MIT** — `addons/godotsteam/license.md` |
+| Steamworks redistributable | Valve / Steamworks terms (**not MIT**) |
+| Notices | `release/THIRD_PARTY_NOTICES.txt`, `release/DEPENDENCIES.md` |
+
+Do not use custom GodotSteam engine templates; normal Godot **4.7.1** export templates + this GDExtension.
+
+---
+
 ## Policy
 
 - Unknown-provenance files must not ship on release-facing production paths.

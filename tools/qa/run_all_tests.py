@@ -12,18 +12,19 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Any
 
+_TOOLS = Path(__file__).resolve().parents[1]
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
 
-DEFAULT_GODOT = (
-    r"C:\Users\User\Downloads\Godot_v4.7.1-stable_win64"
-    r"\Godot_v4.7.1-stable_win64_console.exe"
-)
+from common.godot_cli import resolve_godot as resolve_godot_portable  # noqa: E402
+
+
 DEFAULT_MANIFEST = "qa/test_manifest.json"
 
 PASS_MARKER = "ALL PASS"
@@ -40,11 +41,7 @@ def repo_root() -> Path:
 
 
 def resolve_godot(cli_godot: str | None) -> Path:
-    candidate = cli_godot or os.environ.get("GODOT") or DEFAULT_GODOT
-    path = Path(candidate)
-    if not path.is_file():
-        raise FileNotFoundError(f"Godot executable not found: {path}")
-    return path
+    return resolve_godot_portable(cli_godot)
 
 
 def load_manifest(manifest_path: Path) -> list[dict[str, Any]]:
@@ -222,7 +219,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--godot",
         default=None,
-        help="Path to Godot executable (default: env GODOT or project Downloads path)",
+        help="Path to Godot executable (default: GODOT env, else PATH godot/godot4)",
     )
     parser.add_argument(
         "--filter",

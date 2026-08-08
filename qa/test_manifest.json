@@ -281,5 +281,14 @@
     "timeout_seconds": 300,
     "required_for_rc": true,
     "notes": "Wave C scripted Route A + Route B + save continuation (§§118–122)"
+  },
+  {
+    "id": "release_integration",
+    "module": "M28",
+    "scene_path": "res://release/test/release_integration_test.tscn",
+    "category": "release",
+    "timeout_seconds": 120,
+    "required_for_rc": true,
+    "notes": "MODULE 28 version/SteamBridge fail-open/boot log/schema/notices"
   }
 ]

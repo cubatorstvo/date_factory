@@ -8,7 +8,7 @@
 
 ## RC QA STATUS: **PASS** (automated / scripted)
 
-**Orchestrator-facing recommendation: READY** — all `required_for_rc` suites **33/33 PASS**, open **BLOCKER=0 / MAJOR=0**.  
+**Orchestrator-facing recommendation: READY** — all `required_for_rc` suites **34/34 PASS (post-MODULE 28; includes `release_integration`)**, open **BLOCKER=0 / MAJOR=0**.  
 Manual routes A–F remain **NOT EXECUTABLE IN ENVIRONMENT** (not claimed PASS). Light title / New Game / title-API loop verified under GodotIQ where environment permitted.
 
 | Field | Value |
@@ -16,7 +16,7 @@ Manual routes A–F remain **NOT EXECUTABLE IN ENVIRONMENT** (not claimed PASS).
 | Commit SHA | `1f5b8dd` |
 | Godot version | 4.7.1.stable.official (CLI + GodotIQ editor) |
 | OS / test machine | Windows 10 |
-| Automated suites | **33/33 PASS** (`tmp/qa/summary.txt`) |
+| Automated suites | **34/34 PASS (post-MODULE 28; includes `release_integration`)** (`tmp/qa/summary.txt`) |
 | Manual routes A–F | **NOT EXECUTABLE IN ENVIRONMENT** |
 | Light title smoke | **PASS** (API + screenshots; return visual caveat below) |
 | Open BLOCKER / MAJOR / MINOR / TRIVIAL | **0 / 0 / 1 / 0** — [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) |
@@ -36,8 +36,8 @@ Manual routes A–F remain **NOT EXECUTABLE IN ENVIRONMENT** (not claimed PASS).
 **Final recheck summary:**
 
 ```
-TOTAL 33
-PASS  33
+TOTAL 34
+PASS  34
 FAIL  0
 ```
 
@@ -140,10 +140,17 @@ See [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md).
 
 ## 8. Orchestrator close checklist
 
-- [x] Full `run_all_tests.py --only-rc` recheck → **33/33 PASS**
+- [x] Full `run_all_tests.py --only-rc` recheck → **34/34 PASS (post-MODULE 28; includes `release_integration`)**
 - [x] Confirm 14a/14b PASS on new asserts
 - [x] Decide KI-M27-02 disposition → **closed**
 - [x] Manual A–F honesty → remaining **NOT EXECUTABLE** (6 routes); light title smoke done
 - [x] RC QA STATUS **PASS**; recommendation **READY** (automated gate)
 
 Independent report: [`docs/agent/qa/M27_QA.md`](../agent/qa/M27_QA.md)
+
+## MODULE 28 addendum (2026-08-08)
+
+- Added required suite `release_integration` (M28).
+- Post-M28 `run_all_tests.py --only-rc` → **34/34 PASS** (`tmp/qa/summary.txt`).
+- BLOCKER=0 / MAJOR=0 unchanged.
+- KI-M27-01: exported normal window close exit=0; keep as headless-only MINOR.

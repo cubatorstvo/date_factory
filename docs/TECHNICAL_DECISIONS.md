@@ -5,23 +5,26 @@
 
 ---
 
-## GodotIQ addon retained
+## GodotIQ addon retained (updated MODULE 28)
 
 Context:
-Нужен AI/editor bridge для разработки в Cursor.
+Нужен AI/editor bridge для разработки в Cursor; release package must not ship GodotIQ runtime.
 
 Options:
 - Не ставить addon и работать только filesystem tools
-- Сохранить GodotIQ как editor/runtime bridge addon
+- Сохранить GodotIQ как editor/runtime bridge addon including production autoload
+- Keep addon + editor plugin for Cursor; remove `GodotIQRuntime` from committed production autoload; strip during export
 
 Decision:
-Оставить `addons/godotiq` (v0.5.16) и autoload `GodotIQRuntime`.
+Оставить `addons/godotiq` (v0.5.16) и `editor_plugins` entry for Cursor.  
+**Committed production `project.godot` must not list `GodotIQRuntime`.**  
+`build_windows.py` temporarily disables the GodotIQ editor plugin during export so it cannot re-add the autoload into packaged settings.
 
 Reason:
-Прямо ускоряет разработку; не содержит gameplay. Autoload — часть addon lifecycle, не gameplay manager.
+Addon accelerates editor/Cursor work; shipping GodotIQRuntime breaks release (missing/broken autoload when addon is excluded).
 
 Scope:
-`addons/godotiq/`, `project.godot` `[autoload]` / `[editor_plugins]`
+`addons/godotiq/`, `project.godot` `[autoload]` / `[editor_plugins]`, `tools/release/build_windows.py`, `docs/release/RELEASE_BUILD.md`
 
 ---
 
@@ -918,3 +921,21 @@ Remove the only proven anti-grind Authority softlock without opening a retune fr
 
 Scope:
 `game/rivals/rival_encounters.gd` (story-loss rule; prior wave), `game/balance/test/**`, docs (`balance/BALANCE_REPORT.md`, `PROJECT_STRUCTURE`, this file, GDD male-loss note). STOP before MODULE 27 Full Game QA.
+
+---
+
+## MODULE 28 — Release Integration
+
+Context:
+Need reproducible Windows 1.0.0 packaging + minimal Steam + logs + notices.
+
+Decision:
+- TECHNICAL READY is module completion; STORE READY may stay PENDING without AppID.
+- Do not invent production Steam AppID (not even 480 as DF AppID).
+- Vendor/use GodotSteam GDExtension 4.20.1 + Steamworks redistributable 1.64; SteamBridge fail-open only.
+- Export templates must be preinstalled; builder never auto-downloads.
+- Save schema remains 1; no gameplay/content/balance changes.
+
+Scope:
+platform/steam/, 	ools/release/, export_presets.cfg, 
+elease/, docs/release/
