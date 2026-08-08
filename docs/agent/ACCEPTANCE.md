@@ -12,28 +12,29 @@ Can we restore donor lighting parity, replace interactive/debug placeholders wit
 
 ## Definition of Done (TZ §§1–20)
 
-- [ ] City donor light/env restored; red trim/emissive artifacts addressed vs donor
-- [ ] City interactive placeholders → real assets + Areas attached
-- [ ] Apartment debug labels gone; Day/Date/SelfAssessment/flavor bound to real objects
-- [ ] Apartment donor lighting baseline restored
-- [ ] Cafe donor lighting; interactions not floating; PACK_019 NPC stripped from art
-- [ ] Mine / lab / late placeholders skinned or replaced; no floating Areas; lab camera obstruction fixed
-- [ ] Exactly 1 male + 1 female production base
-- [ ] Modular variants: hair 5 + colors 5, top 4, bottom 3, shoes 2, head 3, neck 2+none, hand 2+none
-- [ ] CharacterVariantController presentation-only; deterministic appearance profiles
-- [ ] PACK_019 source removed; runtime refs 0
-- [ ] PACK_016 license docs updated (not unknown)
-- [ ] Character presentation test + RC suite
-- [ ] donor runtime refs 0
-- [ ] Source on main; screenshots on `visual-review/corrective-<date>`
-- [ ] Final report sections 1–11; then STOP
+- [x] City donor light/env restored; red trim/emissive artifacts addressed vs donor
+- [x] City interactive placeholders → real assets + Areas attached
+- [x] Apartment debug labels gone; Day/Date/SelfAssessment/flavor bound to real objects
+- [x] Apartment donor lighting baseline restored
+- [x] Cafe donor lighting; interactions not floating; PACK_019 NPC stripped from art
+- [x] Mine / lab / late placeholders skinned or replaced; no floating Areas; lab camera obstruction fixed
+- [x] Exactly 1 male + 1 female production base
+- [x] Modular variants: hair 5 + colors 5, top 4, bottom 3, shoes 2, head 3, neck 2+none, hand 2+none
+- [x] CharacterVariantController presentation-only; deterministic appearance profiles
+- [x] PACK_019 source removed; runtime refs 0
+- [x] PACK_016 license docs updated (not unknown)
+- [x] Character presentation test + RC suite
+- [x] donor runtime refs 0
+- [x] Source on main; screenshots on `visual-review/corrective-20260809`
+- [x] Final report sections 1–11; then STOP
 
-## Evidence (to fill)
+## Evidence
 
-- Corrective report: `docs/agent/qa/VISUAL_BOOTSTRAP_CORRECTIVE_FINAL_REPORT.md`
-- Independent QA: `docs/agent/qa/VISUAL_BOOTSTRAP_CORRECTIVE_QA.md`
-- Screenshots: review branch `_review/visual_corrective/`
+- Final report: `docs/agent/qa/VISUAL_BOOTSTRAP_CORRECTIVE_FINAL_REPORT.md`
+- Independent QA: `docs/agent/qa/VISUAL_BOOTSTRAP_CORRECTIVE_QA.md` (on review branch; READY after attach fix)
+- Screenshots: `_review/visual_corrective/` (31 PNGs) on `visual-review/corrective-20260809` @ `05c2f0a`
+- Source main: `d9fa832` + `b59c3c9`
 
 ## Verdict
 
-**PENDING**
+**READY**
