@@ -87,7 +87,7 @@ size = Vector3(2.05, 0.52, 1.05)
 size = Vector3(0.42, 0.72, 0.42)
 
 [sub_resource type="BoxShape3D" id="BoxShape_Wardrobe"]
-size = Vector3(0.55, 1.55, 0.95)
+size = Vector3(0.56, 1.05, 1.42)
 
 [sub_resource type="BoxShape3D" id="BoxShape_DiningTable"]
 size = Vector3(1.05, 0.78, 1.05)
@@ -102,7 +102,7 @@ size = Vector3(0.72, 1.85, 0.7)
 size = Vector3(0.7, 0.95, 0.62)
 
 [sub_resource type="BoxShape3D" id="BoxShape_ExitDoor"]
-size = Vector3(0.14, 2.15, 0.95)
+size = Vector3(0.18, 2.06, 0.84)
 
 [sub_resource type="BoxShape3D" id="BoxShape_NeighborDoor"]
 size = Vector3(0.95, 2.15, 0.14)
@@ -246,7 +246,7 @@ collision_mask = 0
 shape = SubResource("BoxShape_NightStand")
 
 [node name="WardrobeBody" type="StaticBody3D" parent="Colliders" unique_id=1900100006]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 0.78, 0.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.152, 0.53, 0.95)
 collision_mask = 0
 
 [node name="Shape" type="CollisionShape3D" parent="Colliders/WardrobeBody" unique_id=1900100007]
@@ -302,7 +302,7 @@ collision_mask = 0
 shape = SubResource("BoxShape_KitchenCounter")
 
 [node name="ExitDoorBody" type="StaticBody3D" parent="Colliders" unique_id=1900100022]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.42, 1.08, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.43, 1.03, 0.684)
 collision_mask = 0
 
 [node name="Shape" type="CollisionShape3D" parent="Colliders/ExitDoorBody" unique_id=1900100023]

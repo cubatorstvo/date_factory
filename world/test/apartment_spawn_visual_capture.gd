@@ -83,9 +83,9 @@ func _probe_furniture_blocking(loc: Node3D, spawn: Node3D) -> void:
 	for point_name in [
 		["bed", Vector3(1.55, 0.9, -1.55)],
 		["table", Vector3(0.4, 0.9, 0.61)],
-		["wardrobe", Vector3(2.15, 0.9, 0.95)],
+		["wardrobe", Vector3(2.15, 0.55, 0.95)],
 		["fridge", Vector3(-2.05, 0.9, -2.15)],
-		["exit_door", Vector3(-2.42, 1.0, 0.25)],
+		["exit_door", Vector3(-2.43, 1.0, 0.684)],
 	]:
 		var label: String = str(point_name[0])
 		var at: Vector3 = point_name[1] as Vector3
@@ -114,8 +114,8 @@ func _probe_furniture_blocking(loc: Node3D, spawn: Node3D) -> void:
 	_ok(open_hits.is_empty(), "spawn floor capsule free")
 	# Ray into exit door from approach stand.
 	var ray := PhysicsRayQueryParameters3D.create(
-		Vector3(-1.5, 1.0, 0.25),
-		Vector3(-2.45, 1.0, 0.25)
+		Vector3(-1.5, 1.0, 0.684),
+		Vector3(-2.55, 1.0, 0.684)
 	)
 	ray.collision_mask = 1
 	ray.collide_with_areas = false
