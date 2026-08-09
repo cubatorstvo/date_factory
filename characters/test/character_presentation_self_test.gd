@@ -20,7 +20,7 @@ func _ready() -> void:
 	else:
 		summary = "VC_CHARS_PRESENTATION_TEST: FAIL passed=%s failed=%s" % [_passed, _failed]
 	print(summary)
-	var dir_path: String = "res://docs/agent/qa/evidence/vc_chars_fix"
+	var dir_path: String = "res://docs/agent/qa/evidence/ap1_chars_fix2"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
 	var result_file: FileAccess = FileAccess.open("%s/last_result.txt" % dir_path, FileAccess.WRITE)
 	if result_file != null:
@@ -187,11 +187,15 @@ func _test_slot_bone_heights() -> void:
 		var hair_y: float = controller.get_visible_slot_mesh_global_y("HairRoot")
 		var top_y: float = controller.get_visible_slot_mesh_global_y("TopRoot")
 		var bottom_y: float = controller.get_visible_slot_mesh_global_y("BottomRoot")
-		_ok(hair_y > 1.2, "%s hair Y>1.2 (got %s)" % [appearance_id, snappedf(hair_y, 0.001)])
+		_ok(hair_y > 1.35, "%s hair Y>1.35 (got %s)" % [appearance_id, snappedf(hair_y, 0.001)])
 		_ok(top_y > 0.9, "%s top Y>0.9 (got %s)" % [appearance_id, snappedf(top_y, 0.001)])
 		_ok(bottom_y > 0.4, "%s bottom Y>0.4 (got %s)" % [appearance_id, snappedf(bottom_y, 0.001)])
 		_ok(hair_y > top_y and top_y > bottom_y, "%s hair>top>bottom" % appearance_id)
 		_ok(controller.count_visible_shoe_foot_meshes() == 2, "%s dual shoes in sample" % appearance_id)
+		_ok(_top_silhouette_ok(controller, appearance_id), "%s top AABB thin shell" % appearance_id)
+		_ok(_shoe_pair_size_ok(controller, appearance_id), "%s shoes foot-sized" % appearance_id)
+		if appearance_id.begins_with("appearance_female_"):
+			_ok(_female_hair_on_scalp(controller, appearance_id), "%s female hair on scalp" % appearance_id)
 		hair_ys.append(hair_y)
 		var top_mi: MeshInstance3D = _first_visible_mesh(controller.get_node_or_null("TopRoot"))
 		if top_mi != null and top_mi.material_override is StandardMaterial3D:
@@ -220,8 +224,12 @@ func _test_slot_bone_heights() -> void:
 func _capture_lineup_evidence(actors: Array[CharacterActor]) -> void:
 	if actors.is_empty():
 		return
-	var dir_path: String = "res://docs/agent/qa/evidence/vc_chars_fix"
+	var dir_path: String = "res://docs/agent/qa/evidence/ap1_chars_fix2"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
+	var before_src: String = ProjectSettings.globalize_path("res://docs/agent/qa/evidence/vc_chars_fix/after_lineup_variants.png")
+	var before_dst: String = ProjectSettings.globalize_path("%s/before_lineup_variants.png" % dir_path)
+	if FileAccess.file_exists(before_src):
+		DirAccess.copy_absolute(before_src, before_dst)
 	var metrics: Array = []
 	for actor in actors:
 		if actor == null or not is_instance_valid(actor):
@@ -230,6 +238,8 @@ func _capture_lineup_evidence(actors: Array[CharacterActor]) -> void:
 		if controller == null:
 			continue
 		var hair_att: BoneAttachment3D = controller.get_node_or_null("HairRoot") as BoneAttachment3D
+		var top_sz: Vector3 = _visible_top_aabb_size(controller)
+		var hair_c: Vector3 = _visible_slot_aabb_center(controller, "HairRoot")
 		metrics.append({
 			"id": String(actor.content_id),
 			"hair_y": snappedf(controller.get_visible_slot_mesh_global_y("HairRoot"), 0.001),
@@ -242,6 +252,8 @@ func _capture_lineup_evidence(actors: Array[CharacterActor]) -> void:
 			"bottom_child": String(controller.get_visible_slot_child_name("BottomRoot")),
 			"hair_bone_idx": hair_att.bone_idx if hair_att != null else -1,
 			"hair_ext": str(hair_att.external_skeleton) if hair_att != null else "",
+			"top_aabb": [snappedf(top_sz.x, 0.001), snappedf(top_sz.y, 0.001), snappedf(top_sz.z, 0.001)],
+			"hair_center": [snappedf(hair_c.x, 0.001), snappedf(hair_c.y, 0.001), snappedf(hair_c.z, 0.001)],
 		})
 	var metrics_path: String = "%s/after_slot_heights.json" % dir_path
 	var metrics_file: FileAccess = FileAccess.open(metrics_path, FileAccess.WRITE)
@@ -285,7 +297,7 @@ func _slot_heights_sane(controller: CharacterVariantController, appearance_id: S
 	var hair_y: float = controller.get_visible_slot_mesh_global_y("HairRoot")
 	var top_y: float = controller.get_visible_slot_mesh_global_y("TopRoot")
 	var bottom_y: float = controller.get_visible_slot_mesh_global_y("BottomRoot")
-	if hair_y <= 1.2:
+	if hair_y <= 1.35:
 		push_error("%s hair Y=%s" % [appearance_id, hair_y])
 		return false
 	if top_y <= 0.9:
@@ -294,7 +306,111 @@ func _slot_heights_sane(controller: CharacterVariantController, appearance_id: S
 	if bottom_y <= 0.4:
 		push_error("%s bottom Y=%s" % [appearance_id, bottom_y])
 		return false
+	if not _top_silhouette_ok(controller, appearance_id):
+		return false
 	return hair_y > top_y and top_y > bottom_y
+
+
+func _top_silhouette_ok(controller: CharacterVariantController, appearance_id: String) -> bool:
+	var mi: MeshInstance3D = _first_visible_mesh(controller.get_node_or_null("TopRoot"))
+	if mi == null or mi.mesh == null:
+		return true
+	# Prefer local BoxMesh size — idle bone tilt inflates world AABB without making clothing thicker.
+	var sz: Vector3 = Vector3.ZERO
+	if mi.mesh is BoxMesh:
+		sz = (mi.mesh as BoxMesh).size
+	else:
+		sz = (mi.global_transform * mi.mesh.get_aabb()).size
+	if sz.z >= 0.35:
+		push_error("%s top depth z=%s" % [appearance_id, sz.z])
+		return false
+	if sz.x >= 0.55:
+		push_error("%s top width x=%s" % [appearance_id, sz.x])
+		return false
+	return true
+
+
+func _shoe_pair_size_ok(controller: CharacterVariantController, appearance_id: String) -> bool:
+	var shoes: Node = controller.get_node_or_null("ShoesRoot")
+	if shoes == null:
+		return false
+	var ok_count: int = 0
+	for child in shoes.get_children():
+		var n3: Node3D = child as Node3D
+		if n3 == null or not n3.visible:
+			continue
+		for side in ["LeftFootAttachment", "RightFootAttachment"]:
+			var att: Node = n3.get_node_or_null(side)
+			if att == null:
+				continue
+			var mi: MeshInstance3D = _first_mesh(att)
+			if mi == null or mi.mesh == null:
+				continue
+			var aabb: AABB = mi.global_transform * mi.mesh.get_aabb()
+			# Foot-sized: long axis ~0.18-0.32, height under ankle (~<=0.14).
+			if aabb.size.z < 0.18 or aabb.size.z > 0.34:
+				push_error("%s %s length z=%s" % [appearance_id, side, aabb.size.z])
+				return false
+			if aabb.size.y > 0.14:
+				push_error("%s %s height y=%s" % [appearance_id, side, aabb.size.y])
+				return false
+			if aabb.get_center().y > 0.22:
+				push_error("%s %s centerY=%s" % [appearance_id, side, aabb.get_center().y])
+				return false
+			ok_count += 1
+	return ok_count == 2
+
+
+func _female_hair_on_scalp(controller: CharacterVariantController, appearance_id: String) -> bool:
+	if controller.get_active_hair_resource_path() == "":
+		return true
+	var center: Vector3 = _visible_slot_aabb_center(controller, "HairRoot")
+	var hair_att: BoneAttachment3D = controller.get_node_or_null("HairRoot") as BoneAttachment3D
+	if hair_att == null:
+		return false
+	if center.y <= 1.35:
+		push_error("%s hair centerY=%s" % [appearance_id, center.y])
+		return false
+	# Scalp sits above head bone; reject mouth/mustache zone near/below head bone.
+	if center.y < hair_att.global_position.y + 0.08:
+		push_error("%s hair below scalp (cY=%s headY=%s)" % [appearance_id, center.y, hair_att.global_position.y])
+		return false
+	return true
+
+
+func _visible_top_aabb_size(controller: CharacterVariantController) -> Vector3:
+	var mi: MeshInstance3D = _first_visible_mesh(controller.get_node_or_null("TopRoot"))
+	if mi == null or mi.mesh == null:
+		return Vector3.ZERO
+	if mi.mesh is BoxMesh:
+		return (mi.mesh as BoxMesh).size
+	var aabb: AABB = mi.global_transform * mi.mesh.get_aabb()
+	return aabb.size
+
+
+func _visible_slot_aabb_center(controller: CharacterVariantController, slot_root_name: String) -> Vector3:
+	var root: Node = controller.get_node_or_null(slot_root_name)
+	if root == null:
+		return Vector3.ZERO
+	var sum := Vector3.ZERO
+	var count: int = 0
+	for child in root.get_children():
+		var n3: Node3D = child as Node3D
+		if n3 == null or not n3.visible:
+			continue
+		var stack: Array[Node] = [n3]
+		while not stack.is_empty():
+			var n: Node = stack.pop_back()
+			var mi: MeshInstance3D = n as MeshInstance3D
+			if mi != null and mi.mesh != null and mi.is_visible_in_tree():
+				var aabb: AABB = mi.global_transform * mi.mesh.get_aabb()
+				sum += aabb.get_center()
+				count += 1
+			for c in n.get_children():
+				stack.append(c)
+	if count <= 0:
+		return Vector3.ZERO
+	return sum / float(count)
 
 
 func _list_appearance_ids() -> PackedStringArray:
