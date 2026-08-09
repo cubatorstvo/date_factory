@@ -112,3 +112,27 @@ Female animation: switch `animation_female_base` to UAL path proven by `DateGirl
 ## D-AP1-03 — City ready-building replacement rule
 
 **Decision:** Replace proxy exteriors only with `Building_Small_1` / `Building_Medium_2_001` / `Building_Large_2` by max(lot) thresholds 8.5 / 11.5. Preserve scenes that already have real Building_*. Uniform scale ≤90% lot. Fit fail → leave unchanged + `READY_BUILDING_FIT_FAILED`.
+
+---
+
+## D-PE01-01 — Player evidence precedes implementation
+
+**Decision:** PLAYER EXPERIENCE PASS 01 starts with two isolated clean-profile, source-blind runs from Main Menu → New Game. No gameplay source, GDD, test fixture, state inspection, teleport, direct Story call, or direct interaction invocation may be used by the black-box player.
+
+**Why:** System/API reachability does not establish first-time-player comprehension. Before/after journals and screenshots must preserve player-visible truth.
+
+## D-PE01-02 — Existing systems only
+
+**Decision:** Present the current Story/Phone objective through the existing HUD, use `TutorialPrompt` and the player interaction pipeline, and retain current World/Interactable semantics. Do not create a quest, waypoint, minimap, dialogue, tutorial-language, or duplicate story-state framework.
+
+## D-PE01-03 — Apartment physics scope
+
+**Decision:** Keep donor apartment visuals and the production wrapper's markers/Areas separate. Fit simple primitive static collision to essential visible apartment furniture only after blind evidence confirms the defect; retain donor CSG as the room shell. One scene writer owns both apartment scenes sequentially.
+
+## D-PE01-04 — Prologue route truth
+
+**Decision:** Neighbor discovery is the intended Stage 0 route. The city exit remains story-locked until normal prologue progress unlocks it, so its player-facing feedback must be clear but it is not a false mandatory route to Neighbor. Restore the Neighbor anchor content reference only if Phase A/B confirms the actor is absent.
+
+## D-PE01-05 — Evidence isolation
+
+**Decision:** Use an isolated empty `user://` profile and never delete developer saves/settings. Source/test/docs fixes land on clean `main`; before/after screenshots, collision diagnostics, recordings, and a copy of the player journal publish only on `visual-review/player-experience-01-<date>`.

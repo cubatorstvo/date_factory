@@ -80,6 +80,36 @@ adjustment_brightness = 1.03
 adjustment_contrast = 1.08
 adjustment_saturation = 1.08
 
+[sub_resource type="BoxShape3D" id="BoxShape_Bed"]
+size = Vector3(2.05, 0.52, 1.05)
+
+[sub_resource type="BoxShape3D" id="BoxShape_NightStand"]
+size = Vector3(0.42, 0.72, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape_Wardrobe"]
+size = Vector3(0.55, 1.55, 0.95)
+
+[sub_resource type="BoxShape3D" id="BoxShape_DiningTable"]
+size = Vector3(1.05, 0.78, 1.05)
+
+[sub_resource type="BoxShape3D" id="BoxShape_DiningChair"]
+size = Vector3(0.46, 0.92, 0.46)
+
+[sub_resource type="BoxShape3D" id="BoxShape_Fridge"]
+size = Vector3(0.72, 1.85, 0.7)
+
+[sub_resource type="BoxShape3D" id="BoxShape_KitchenCounter"]
+size = Vector3(0.7, 0.95, 0.62)
+
+[sub_resource type="BoxShape3D" id="BoxShape_ExitDoor"]
+size = Vector3(0.14, 2.15, 0.95)
+
+[sub_resource type="BoxShape3D" id="BoxShape_NeighborDoor"]
+size = Vector3(0.95, 2.15, 0.14)
+
+[sub_resource type="BoxShape3D" id="BoxShape_Trashcan"]
+size = Vector3(0.32, 0.48, 0.32)
+
 [node name="Apartment" type="Node3D" unique_id=2072976250]
 
 [node name="Architecture" type="Node3D" parent="." unique_id=40778133]
@@ -199,6 +229,99 @@ transform = Transform3D(6.5778484, 0, 2.394141, 0, 7, 0, -2.394141, 0, 6.5778484
 [node name="NeighborDoor" parent="Furniture" unique_id=456612764 instance=ExtResource("16_euyv3")]
 transform = Transform3D(-5, 0, 0, 0, 5, 0, 0, 0, -5, -1.5, 0, 2.42)
 
+[node name="Colliders" type="Node3D" parent="." unique_id=1900100001]
+
+[node name="BedBody" type="StaticBody3D" parent="Colliders" unique_id=1900100002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.26, -1.55)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/BedBody" unique_id=1900100003]
+shape = SubResource("BoxShape_Bed")
+
+[node name="NightStandBody" type="StaticBody3D" parent="Colliders" unique_id=1900100004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 0.36, -0.75)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/NightStandBody" unique_id=1900100005]
+shape = SubResource("BoxShape_NightStand")
+
+[node name="WardrobeBody" type="StaticBody3D" parent="Colliders" unique_id=1900100006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 0.78, 0.95)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/WardrobeBody" unique_id=1900100007]
+shape = SubResource("BoxShape_Wardrobe")
+
+[node name="DiningTableBody" type="StaticBody3D" parent="Colliders" unique_id=1900100008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.399, 0.39, 0.608)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/DiningTableBody" unique_id=1900100009]
+shape = SubResource("BoxShape_DiningTable")
+
+[node name="DiningChairNorthBody" type="StaticBody3D" parent="Colliders" unique_id=1900100010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.651, 0.46, 0.608)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/DiningChairNorthBody" unique_id=1900100011]
+shape = SubResource("BoxShape_DiningChair")
+
+[node name="DiningChairSouthBody" type="StaticBody3D" parent="Colliders" unique_id=1900100012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.449, 0.46, 0.608)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/DiningChairSouthBody" unique_id=1900100013]
+shape = SubResource("BoxShape_DiningChair")
+
+[node name="FridgeBody" type="StaticBody3D" parent="Colliders" unique_id=1900100014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 0.93, -2.15)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/FridgeBody" unique_id=1900100015]
+shape = SubResource("BoxShape_Fridge")
+
+[node name="OvenBody" type="StaticBody3D" parent="Colliders" unique_id=1900100016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.48, -2.15)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/OvenBody" unique_id=1900100017]
+shape = SubResource("BoxShape_KitchenCounter")
+
+[node name="KitchenSinkBody" type="StaticBody3D" parent="Colliders" unique_id=1900100018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, 0.48, -2.15)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/KitchenSinkBody" unique_id=1900100019]
+shape = SubResource("BoxShape_KitchenCounter")
+
+[node name="KitchenDrawersBody" type="StaticBody3D" parent="Colliders" unique_id=1900100020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 0.48, -2.15)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/KitchenDrawersBody" unique_id=1900100021]
+shape = SubResource("BoxShape_KitchenCounter")
+
+[node name="ExitDoorBody" type="StaticBody3D" parent="Colliders" unique_id=1900100022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.42, 1.08, 0.25)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/ExitDoorBody" unique_id=1900100023]
+shape = SubResource("BoxShape_ExitDoor")
+
+[node name="NeighborDoorBody" type="StaticBody3D" parent="Colliders" unique_id=1900100024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.08, 2.42)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/NeighborDoorBody" unique_id=1900100025]
+shape = SubResource("BoxShape_NeighborDoor")
+
+[node name="TrashcanBody" type="StaticBody3D" parent="Colliders" unique_id=1900100026]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.24, -2.1)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/TrashcanBody" unique_id=1900100027]
+shape = SubResource("BoxShape_Trashcan")
+
 [node name="Decor" type="Node3D" parent="." unique_id=1057704250]
 script = ExtResource("20_b8mu0")
 
@@ -280,7 +403,7 @@ omni_range = 3.8
 [node name="Markers" type="Node3D" parent="." unique_id=1088422260]
 
 [node name="PlayerSpawn" type="Marker3D" parent="Markers" unique_id=263029252]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -1.55, 0, 0.25)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -1.2, 0, 0.2)
 
 [node name="ApartmentExit" type="Marker3D" parent="Markers" unique_id=132233783]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, 0, 0.25)

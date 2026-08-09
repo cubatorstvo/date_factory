@@ -13,6 +13,10 @@ enum PromptId {
 }
 
 const DISPLAY_SECONDS: float = 5.0
+## Evidence-based prompts stay until player proof; never idle-timeout.
+const EVIDENCE_BASED: Dictionary = {
+	PromptId.FIRST_MOVEMENT: true,
+}
 
 const COPY := {
 	PromptId.FIRST_MOVEMENT: "WASD — движение\nМышь — обзор\nE — взаимодействие",
@@ -84,6 +88,14 @@ func is_showing() -> bool:
 	return _active_id >= 0
 
 
+func get_active_id() -> int:
+	return _active_id
+
+
+func is_evidence_based(prompt_id: PromptId) -> bool:
+	return bool(EVIDENCE_BASED.get(int(prompt_id), false))
+
+
 func peek_pending() -> int:
 	if _queue.is_empty():
 		return -1
@@ -95,20 +107,63 @@ func begin_next() -> Dictionary:
 		return {}
 	var id: int = int(_queue.pop_front())
 	_active_id = id
-	_seen[id] = true
+	var evidence: bool = bool(EVIDENCE_BASED.get(id, false))
+	# Evidence-based prompts stay unseen until player proof completes.
+	if not evidence:
+		_seen[id] = true
+	var seconds: float = 0.0 if evidence else DISPLAY_SECONDS
 	return {
 		"id": id,
 		"text": String(COPY.get(id, "")),
-		"seconds": DISPLAY_SECONDS,
+		"seconds": seconds,
+		"evidence_based": evidence,
 	}
+
+
+## Hide without completing; re-queue if still unseen (modal/title/pause).
+func suspend_active() -> void:
+	if _active_id < 0:
+		return
+	var id: int = _active_id
+	_active_id = -1
+	if bool(_seen.get(id, false)):
+		return
+	if _queue.has(id):
+		return
+	_queue.insert(0, id)
 
 
 func dismiss_active() -> void:
 	_active_id = -1
 
 
+func complete_active() -> void:
+	if _active_id < 0:
+		return
+	_seen[_active_id] = true
+	_active_id = -1
+
+
 func mark_seen(prompt_id: PromptId) -> void:
 	_seen[int(prompt_id)] = true
+
+
+func has_seen(prompt_id: PromptId) -> bool:
+	return bool(_seen.get(int(prompt_id), false))
+
+
+## Progressive controls copy based on missing player evidence.
+func controls_card_text(moved: bool, looked: bool, interacted: bool) -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	if not moved:
+		lines.append("WASD — движение")
+	if not looked:
+		lines.append("Мышь — обзор")
+	if not interacted:
+		lines.append("E — взаимодействие")
+	if lines.is_empty():
+		return ""
+	return "\n".join(lines)
 
 
 func _parse_seen_id(item: Variant) -> int:

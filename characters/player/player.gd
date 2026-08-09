@@ -11,6 +11,7 @@ enum ControlMode {
 
 signal control_mode_changed(mode: ControlMode)
 signal interaction_target_changed(target: Area3D)
+signal interaction_succeeded(target: Area3D)
 
 @export var move_speed: float = 4.5
 @export var acceleration: float = 30.0
@@ -59,7 +60,10 @@ func _ready() -> void:
 		_interaction.connect("target_changed", _on_interaction_target_changed)
 	_pause_overlay.visible = false
 	_prompt_label.visible = false
-	_debug_label.visible = OS.is_debug_build()
+	# Production path: never render debug mode/target overlay.
+	if _debug_label != null:
+		_debug_label.visible = false
+		_debug_label.text = ""
 	var resume_btn: Button = _pause_overlay.get_node_or_null("Box/ResumeButton") as Button
 	if resume_btn != null and not resume_btn.pressed.is_connected(_on_resume_pressed):
 		resume_btn.pressed.connect(_on_resume_pressed)
@@ -81,6 +85,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pitch = clampf(_pitch - motion.relative.y * sens, -deg_to_rad(pitch_limit_degrees), deg_to_rad(pitch_limit_degrees))
 		_camera_pivot.rotation.x = _pitch
 	if event.is_action_pressed("interact"):
+		var target: Area3D = get_interaction_target()
+		# Emit teaching evidence before Interactable side effects (Neighbor modal, etc.).
+		if (
+			target != null
+			and target.has_method("can_interact")
+			and bool(target.call("can_interact", self))
+		):
+			interaction_succeeded.emit(target)
 		if _interaction.has_method("try_interact"):
 			_interaction.call("try_interact")
 		get_viewport().set_input_as_handled()
@@ -113,7 +125,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = sqrt(2.0 * gravity * jump_height)
 	_try_step_up()
 	move_and_slide()
-	_update_debug_label()
+	_hide_debug_overlay()
 
 
 func get_control_mode() -> ControlMode:
@@ -257,7 +269,7 @@ func _apply_mode_side_effects() -> void:
 		_interaction.call("set_query_enabled", gameplay)
 	# MODULE24: PauseMenu owns pause UI; keep prototype overlay hidden.
 	_pause_overlay.visible = false
-	# MODULE 22: GameHUD owns the gameplay crosshair; FpsHud keeps [E] prompt only.
+	# MODULE 22: GameHUD owns the gameplay crosshair; FpsHud keeps interaction prompt only.
 	_crosshair.visible = false
 	if not gameplay:
 		_prompt_label.visible = false
@@ -268,7 +280,7 @@ func _apply_mode_side_effects() -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		ControlMode.MINIGAME:
 			Input.mouse_mode = _minigame_mouse_mode
-	_update_debug_label()
+	_hide_debug_overlay()
 
 
 func _on_interaction_target_changed(target: Area3D) -> void:
@@ -280,8 +292,9 @@ func _on_interaction_target_changed(target: Area3D) -> void:
 		_prompt_label.visible = false
 		_prompt_label.text = ""
 		return
-	_prompt_label.text = str(target.call("get_interaction_prompt", self))
-	_prompt_label.visible = true
+	var raw_prompt: String = str(target.call("get_interaction_prompt", self))
+	_prompt_label.text = _format_player_prompt(raw_prompt, target)
+	_prompt_label.visible = _prompt_label.text.strip_edges() != ""
 
 
 func _update_focus_safety() -> void:
@@ -337,17 +350,50 @@ func _try_step_up() -> void:
 	global_position = target
 
 
-func _update_debug_label() -> void:
-	if not _debug_label.visible:
+func _hide_debug_overlay() -> void:
+	if _debug_label == null:
 		return
-	var target: Area3D = get_interaction_target()
-	var target_name: String = "-"
-	if target != null:
-		target_name = target.name
-		if target.has_method("can_interact") and not bool(target.call("can_interact", self)):
-			target_name += " (disabled)"
-	var mode_name: String = String(ControlMode.find_key(_mode))
-	_debug_label.text = "mode=%s target=%s" % [mode_name, target_name]
+	_debug_label.visible = false
+	_debug_label.text = ""
+
+
+func _format_player_prompt(raw_prompt: String, target: Area3D) -> String:
+	var action: String = raw_prompt.strip_edges()
+	if action.is_empty():
+		return ""
+	if action.begins_with("[E]"):
+		action = action.substr(3).strip_edges()
+	elif action.begins_with("E —"):
+		action = action.substr(3).strip_edges()
+	elif action.begins_with("E -"):
+		action = action.substr(3).strip_edges()
+	action = action.strip_edges()
+	if action.is_empty() or _looks_like_internal_id(action, target):
+		action = "Взаимодействовать"
+	return "E — %s" % action
+
+
+func _looks_like_internal_id(action: String, target: Area3D) -> bool:
+	if target != null and action == String(target.name):
+		return true
+	if action.contains("="):
+		return true
+	if action.begins_with("mode=") or action.begins_with("target="):
+		return true
+	# Camel/Pascal node-style ids without spaces (FlavorFridge, ToCity).
+	if not action.contains(" ") and not action.contains("—") and not action.contains("-"):
+		if action.length() >= 3 and action.findn("_") < 0:
+			var has_lower: bool = false
+			var has_upper: bool = false
+			for i in range(action.length()):
+				var ch: String = action.substr(i, 1)
+				if ch >= "a" and ch <= "z":
+					has_lower = true
+				elif ch >= "A" and ch <= "Z":
+					has_upper = true
+			if has_lower and has_upper:
+				return true
+	return false
 
 
 func _on_resume_pressed() -> void:

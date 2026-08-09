@@ -60,10 +60,12 @@ offset_bottom = 20.0
 horizontal_alignment = 1
 
 [node name="DebugLabel" type="Label" parent="FpsHud" unique_id=1345502800]
+visible = false
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 480.0
 offset_bottom = 40.0
+text = ""
 
 [node name="PauseOverlay" type="Control" parent="FpsHud" unique_id=2117270702]
 process_mode = 3
