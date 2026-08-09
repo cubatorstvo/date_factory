@@ -1,0 +1,278 @@
+[
+	{
+		"bottom_child": "Bottom_00",
+		"bottom_y": 0.966,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			-0.017,
+			1.649,
+			0.008
+		],
+		"hair_child": "Hair_02",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_SimpleParted.gltf",
+		"hair_y": 1.649,
+		"id": "appearance_male_base",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.41,
+			0.32,
+			0.14
+		],
+		"top_child": "Top_03",
+		"top_y": 1.403
+	},
+	{
+		"bottom_child": "Bottom_02",
+		"bottom_y": 0.764,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			1.163,
+			1.71,
+			0.083
+		],
+		"hair_child": "Hair_00",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_BuzzedFemale.gltf",
+		"hair_y": 1.71,
+		"id": "appearance_female_base",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.34,
+			0.3,
+			0.11
+		],
+		"top_child": "Top_01",
+		"top_y": 1.169
+	},
+	{
+		"bottom_child": "Bottom_02",
+		"bottom_y": 0.77,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			2.383,
+			1.649,
+			0.009
+		],
+		"hair_child": "Hair_02",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_SimpleParted.gltf",
+		"hair_y": 1.649,
+		"id": "appearance_male_city_thermos",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.42,
+			0.32,
+			0.14
+		],
+		"top_child": "Top_00",
+		"top_y": 1.189
+	},
+	{
+		"bottom_child": "Bottom_00",
+		"bottom_y": 0.966,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			0.0,
+			0.0,
+			0.0
+		],
+		"hair_child": "Hair_00",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "",
+		"hair_y": 1.55,
+		"id": "appearance_male_city_headphones",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.42,
+			0.34,
+			0.13
+		],
+		"top_child": "Top_02",
+		"top_y": 1.189
+	},
+	{
+		"bottom_child": "Bottom_01",
+		"bottom_y": 1.029,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			4.783,
+			1.648,
+			0.01
+		],
+		"hair_child": "Hair_02",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_SimpleParted.gltf",
+		"hair_y": 1.648,
+		"id": "appearance_male_gym_mirror",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.4,
+			0.34,
+			0.13
+		],
+		"top_child": "Top_01",
+		"top_y": 1.189
+	},
+	{
+		"bottom_child": "Bottom_00",
+		"bottom_y": 0.966,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			5.982,
+			1.647,
+			0.013
+		],
+		"hair_child": "Hair_01",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_Buzzed.gltf",
+		"hair_y": 1.647,
+		"id": "appearance_male_first_clone",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.42,
+			0.32,
+			0.14
+		],
+		"top_child": "Top_00",
+		"top_y": 1.189
+	},
+	{
+		"bottom_child": "Bottom_01",
+		"bottom_y": 1.029,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			7.182,
+			1.649,
+			0.01
+		],
+		"hair_child": "Hair_03",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_Long.gltf",
+		"hair_y": 1.649,
+		"id": "appearance_male_public_watch",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.41,
+			0.32,
+			0.14
+		],
+		"top_child": "Top_03",
+		"top_y": 1.403
+	},
+	{
+		"bottom_child": "Bottom_02",
+		"bottom_y": 0.764,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			8.362,
+			1.709,
+			0.087
+		],
+		"hair_child": "Hair_00",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_BuzzedFemale.gltf",
+		"hair_y": 1.709,
+		"id": "appearance_female_neighbor",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.36,
+			0.28,
+			0.12
+		],
+		"top_child": "Top_00",
+		"top_y": 1.169
+	},
+	{
+		"bottom_child": "Bottom_01",
+		"bottom_y": 1.002,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			9.562,
+			1.709,
+			0.088
+		],
+		"hair_child": "Hair_02",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_Long.gltf",
+		"hair_y": 1.709,
+		"id": "appearance_female_cafe_laptop",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.35,
+			0.28,
+			0.12
+		],
+		"top_child": "Top_03",
+		"top_y": 1.364
+	},
+	{
+		"bottom_child": "Bottom_02",
+		"bottom_y": 0.764,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			10.762,
+			1.709,
+			0.089
+		],
+		"hair_child": "Hair_02",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_Long.gltf",
+		"hair_y": 1.709,
+		"id": "appearance_female_gym_timer",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.34,
+			0.3,
+			0.11
+		],
+		"top_child": "Top_01",
+		"top_y": 1.169
+	},
+	{
+		"bottom_child": "Bottom_02",
+		"bottom_y": 0.764,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			0.0,
+			0.0,
+			0.0
+		],
+		"hair_child": "Hair_04",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "",
+		"hair_y": 1.502,
+		"id": "appearance_female_city_umbrella",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.36,
+			0.3,
+			0.11
+		],
+		"top_child": "Top_02",
+		"top_y": 1.169
+	},
+	{
+		"bottom_child": "Bottom_00",
+		"bottom_y": 0.94,
+		"hair_bone_idx": 6,
+		"hair_center": [
+			13.162,
+			1.708,
+			0.09
+		],
+		"hair_child": "Hair_00",
+		"hair_ext": "../Body/Armature/Skeleton3D",
+		"hair_path": "res://assets/characters/hero_base/meshes/hairstyles/Origin at 0/glTF (Godot)/Hair_BuzzedFemale.gltf",
+		"hair_y": 1.708,
+		"id": "appearance_female_actress",
+		"shoes_feet": 2,
+		"top_aabb": [
+			0.36,
+			0.28,
+			0.12
+		],
+		"top_child": "Top_00",
+		"top_y": 1.169
+	}
+]

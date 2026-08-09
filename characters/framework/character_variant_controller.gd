@@ -28,7 +28,7 @@ const CLOTH_COLOR_MAP: Dictionary = {
 ## Slot root name -> preferred bone name (PACK_021 Superhero_*_FullBody).
 const SLOT_BONE_MAP: Dictionary = {
 	"HairRoot": &"Head",
-	"TopRoot": &"UpperChest",
+	"TopRoot": &"Chest",
 	"BottomRoot": &"Hips",
 	"HeadAccessoryRoot": &"Head",
 	"NeckAccessoryRoot": &"Neck",
@@ -49,6 +49,7 @@ const NESTED_BONE_MAP: Dictionary = {
 ## Fallbacks if a preferred bone is missing on a future rig.
 const BONE_FALLBACKS: Dictionary = {
 	&"Head": [&"Head", &"head", &"Neck", &"Chest"],
+	&"Chest": [&"Chest", &"UpperChest", &"Spine", &"Hips"],
 	&"UpperChest": [&"UpperChest", &"Chest", &"Spine", &"Hips"],
 	&"Hips": [&"Hips", &"hips", &"Spine", &"Root"],
 	&"LeftFoot": [&"LeftFoot", &"LeftToes", &"LeftLowerLeg", &"Hips"],

@@ -186,7 +186,7 @@ albedo_color = Color(0.55, 0.55, 0.58, 1)
 roughness = 0.75
 
 [sub_resource type="BoxMesh" id="BoxMesh_ivq7b"]
-size = Vector3(0.3, 0.26, 0.14)
+size = Vector3(0.42, 0.32, 0.14)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qeaw8"]
 albedo_color = Color(0.55, 0.55, 0.58, 1)
@@ -208,15 +208,15 @@ height = 0.13
 albedo_color = Color(0.55, 0.55, 0.58, 1)
 roughness = 0.75
 
-[sub_resource type="BoxMesh" id="BoxMesh_q2h5w"]
-size = Vector3(0.28, 0.28, 0.13)
+[sub_resource type="BoxMesh" id="BoxMesh_altx7"]
+size = Vector3(0.4, 0.34, 0.13)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6lnhm"]
 albedo_color = Color(0.55, 0.55, 0.58, 1)
 roughness = 0.75
 
-[sub_resource type="BoxMesh" id="BoxMesh_altx7"]
-size = Vector3(0.3, 0.28, 0.13)
+[sub_resource type="BoxMesh" id="BoxMesh_0xh4u"]
+size = Vector3(0.42, 0.34, 0.13)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a22os"]
 albedo_color = Color(0.55, 0.55, 0.58, 1)
@@ -238,8 +238,8 @@ height = 0.2
 albedo_color = Color(0.55, 0.55, 0.58, 1)
 roughness = 0.75
 
-[sub_resource type="BoxMesh" id="BoxMesh_0xh4u"]
-size = Vector3(0.29, 0.26, 0.13)
+[sub_resource type="BoxMesh" id="BoxMesh_q2h5w"]
+size = Vector3(0.41, 0.32, 0.14)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xetmf"]
 albedo_color = Color(0.55, 0.55, 0.58, 1)
@@ -313,29 +313,29 @@ size = Vector3(0.34, 0.2, 0.2)
 albedo_color = Color(0.12, 0.12, 0.13, 1)
 roughness = 0.75
 
-[sub_resource type="BoxMesh" id="BoxMesh_a22os"]
-size = Vector3(0.1, 0.26, 0.08)
+[sub_resource type="BoxMesh" id="BoxMesh_rejm7"]
+size = Vector3(0.09, 0.27, 0.04)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sfk6m"]
 albedo_color = Color(0.12, 0.12, 0.13, 1)
 roughness = 0.75
 
-[sub_resource type="BoxMesh" id="BoxMesh_dav0a"]
-size = Vector3(0.1, 0.26, 0.08)
+[sub_resource type="BoxMesh" id="BoxMesh_dxwtw"]
+size = Vector3(0.09, 0.27, 0.04)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6nk6n"]
 albedo_color = Color(0.12, 0.12, 0.13, 1)
 roughness = 0.75
 
-[sub_resource type="BoxMesh" id="BoxMesh_a81rs"]
-size = Vector3(0.11, 0.27, 0.075)
+[sub_resource type="BoxMesh" id="BoxMesh_owgl0"]
+size = Vector3(0.095, 0.28, 0.045)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fbxp0"]
 albedo_color = Color(0.12, 0.12, 0.13, 1)
 roughness = 0.75
 
-[sub_resource type="BoxMesh" id="BoxMesh_ryvid"]
-size = Vector3(0.11, 0.27, 0.075)
+[sub_resource type="BoxMesh" id="BoxMesh_ca18k"]
+size = Vector3(0.095, 0.28, 0.045)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6dm3o"]
 albedo_color = Color(0.55, 0.55, 0.58, 1)
@@ -432,21 +432,22 @@ transform = Transform3D(0.01, 0, 0, 0, 0, -0.01, 0, 0.01, 0, 0, 0, 0)
 mesh = SubResource("ArrayMesh_qulep")
 
 [node name="TopRoot" type="BoneAttachment3D" parent="." unique_id=2065981392]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.314881, -0.062455136)
-bone_name = "UpperChest"
-bone_idx = 4
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1817473, -0.06245513)
+bone_name = "Chest"
+bone_idx = 3
 use_external_skeleton = true
 external_skeleton = NodePath("../Body/Armature/Skeleton3D")
 
 [node name="Top_00" type="Node3D" parent="TopRoot" unique_id=13196764]
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_00" unique_id=150223534]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.03, 0.01)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0.1)
 material_override = SubResource("StandardMaterial3D_dfei6")
 mesh = SubResource("BoxMesh_ivq7b")
 
 [node name="LeftSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_00" unique_id=447016871]
 transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.18495262, 0.022438034)
+visible = false
 bone_name = "LeftUpperArm"
 bone_idx = 8
 use_external_skeleton = true
@@ -454,11 +455,13 @@ external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_00/LeftSleeveAttachment" unique_id=1672033545]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, -0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_qeaw8")
 mesh = SubResource("CapsuleMesh_altx7")
 
 [node name="RightSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_00" unique_id=584554765]
 transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.18495262, 0.022438034)
+visible = false
 bone_name = "RightUpperArm"
 bone_idx = 32
 use_external_skeleton = true
@@ -466,6 +469,7 @@ external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_00/RightSleeveAttachment" unique_id=1608533413]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.01, -0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_vivke")
 mesh = SubResource("CapsuleMesh_0xh4u")
 
@@ -473,20 +477,21 @@ mesh = SubResource("CapsuleMesh_0xh4u")
 visible = false
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_01" unique_id=2125382715]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, 0.01)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0.1)
 material_override = SubResource("StandardMaterial3D_w26xl")
-mesh = SubResource("BoxMesh_q2h5w")
+mesh = SubResource("BoxMesh_altx7")
 
 [node name="Top_02" type="Node3D" parent="TopRoot" unique_id=933382170]
 visible = false
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_02" unique_id=107872119]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, 0.01)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0.1)
 material_override = SubResource("StandardMaterial3D_6lnhm")
-mesh = SubResource("BoxMesh_altx7")
+mesh = SubResource("BoxMesh_0xh4u")
 
 [node name="LeftSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_02" unique_id=669802838]
 transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.18495262, 0.022438034)
+visible = false
 bone_name = "LeftUpperArm"
 bone_idx = 8
 use_external_skeleton = true
@@ -494,11 +499,13 @@ external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_02/LeftSleeveAttachment" unique_id=1432269505]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, -0.07, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_a22os")
 mesh = SubResource("CapsuleMesh_dxwtw")
 
 [node name="RightSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_02" unique_id=897527791]
 transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.18495262, 0.022438034)
+visible = false
 bone_name = "RightUpperArm"
 bone_idx = 32
 use_external_skeleton = true
@@ -506,6 +513,7 @@ external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_02/RightSleeveAttachment" unique_id=464743551]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.01, -0.07, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_a81rs")
 mesh = SubResource("CapsuleMesh_owgl0")
 
@@ -513,9 +521,9 @@ mesh = SubResource("CapsuleMesh_owgl0")
 visible = false
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_03" unique_id=595177245]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.03, 0.015)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0.1)
 material_override = SubResource("StandardMaterial3D_jyrju")
-mesh = SubResource("BoxMesh_0xh4u")
+mesh = SubResource("BoxMesh_q2h5w")
 
 [node name="HoodAttachment" type="BoneAttachment3D" parent="TopRoot/Top_03" unique_id=1204690570]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2913108, -0.053010833)
@@ -531,6 +539,7 @@ mesh = SubResource("BoxMesh_dfei6")
 
 [node name="LeftSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_03" unique_id=102335300]
 transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.18495262, 0.022438034)
+visible = false
 bone_name = "LeftUpperArm"
 bone_idx = 8
 use_external_skeleton = true
@@ -538,11 +547,13 @@ external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_03/LeftSleeveAttachment" unique_id=1693934065]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, -0.08, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_uvg1v")
 mesh = SubResource("CapsuleMesh_u7783")
 
 [node name="RightSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_03" unique_id=2066396635]
 transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.18495262, 0.022438034)
+visible = false
 bone_name = "RightUpperArm"
 bone_idx = 32
 use_external_skeleton = true
@@ -550,6 +561,7 @@ external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="TopRoot/Top_03/RightSleeveAttachment" unique_id=267342086]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.01, -0.08, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_fjxdq")
 mesh = SubResource("CapsuleMesh_qeaw8")
 
@@ -643,9 +655,9 @@ use_external_skeleton = true
 external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="ShoesRoot/Shoes_00/LeftFootAttachment" unique_id=1242969791]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0.04)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.055)
 material_override = SubResource("StandardMaterial3D_lt02l")
-mesh = SubResource("BoxMesh_a22os")
+mesh = SubResource("BoxMesh_rejm7")
 
 [node name="RightFootAttachment" type="BoneAttachment3D" parent="ShoesRoot/Shoes_00" unique_id=1112841422]
 transform = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, -0.114305146, 0.087564915, -0.09380579)
@@ -655,9 +667,9 @@ use_external_skeleton = true
 external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="ShoesRoot/Shoes_00/RightFootAttachment" unique_id=453463990]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0.04)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.055)
 material_override = SubResource("StandardMaterial3D_sfk6m")
-mesh = SubResource("BoxMesh_dav0a")
+mesh = SubResource("BoxMesh_dxwtw")
 
 [node name="Shoes_01" type="Node3D" parent="ShoesRoot" unique_id=533510852]
 visible = false
@@ -670,9 +682,9 @@ use_external_skeleton = true
 external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="ShoesRoot/Shoes_01/LeftFootAttachment" unique_id=1686224284]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0.04)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.055)
 material_override = SubResource("StandardMaterial3D_6nk6n")
-mesh = SubResource("BoxMesh_a81rs")
+mesh = SubResource("BoxMesh_owgl0")
 
 [node name="RightFootAttachment" type="BoneAttachment3D" parent="ShoesRoot/Shoes_01" unique_id=1864429041]
 transform = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, -0.114305146, 0.087564915, -0.09380579)
@@ -682,9 +694,9 @@ use_external_skeleton = true
 external_skeleton = NodePath("../../../Body/Armature/Skeleton3D")
 
 [node name="Mesh" type="MeshInstance3D" parent="ShoesRoot/Shoes_01/RightFootAttachment" unique_id=1468434251]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0.04)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.055)
 material_override = SubResource("StandardMaterial3D_fbxp0")
-mesh = SubResource("BoxMesh_ryvid")
+mesh = SubResource("BoxMesh_ca18k")
 
 [node name="HeadAccessoryRoot" type="BoneAttachment3D" parent="." unique_id=18849096]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6061918, -0.11546597)

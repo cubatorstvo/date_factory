@@ -20,7 +20,7 @@ func _ready() -> void:
 	else:
 		summary = "VC_CHARS_PRESENTATION_TEST: FAIL passed=%s failed=%s" % [_passed, _failed]
 	print(summary)
-	var dir_path: String = "res://docs/agent/qa/evidence/ap1_chars_fix2"
+	var dir_path: String = "res://docs/agent/qa/evidence/ap1_chars_fix3"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
 	var result_file: FileAccess = FileAccess.open("%s/last_result.txt" % dir_path, FileAccess.WRITE)
 	if result_file != null:
@@ -41,6 +41,7 @@ func _ok(cond: bool, label: String) -> void:
 
 func _run_all() -> void:
 	_test_idle_walk_bind()
+	await _test_walk_top_stays_on_chest()
 	await _test_hair_and_shoes_rules()
 	await _test_slot_bone_heights()
 	var ids: PackedStringArray = _list_appearance_ids()
@@ -108,6 +109,62 @@ func _test_idle_walk_bind() -> void:
 		_ok(anim.get_current_animation_alias() == &"walk", "%s current walk" % String(typed.content_id))
 	male.queue_free()
 	female.queue_free()
+
+
+func _test_walk_top_stays_on_chest() -> void:
+	## After 0.4s of walk, top shell centroid must stay on/in front of Chest (not a back plate).
+	var sample_ids: PackedStringArray = PackedStringArray([
+		"appearance_male_base",
+		"appearance_female_base",
+		"appearance_male_city_thermos",
+		"appearance_female_neighbor",
+	])
+	for appearance_id in sample_ids:
+		var actor: CharacterActor = CharacterFactory.create(
+			StringName(appearance_id), StringName("walk_%s" % appearance_id), _spawn_root
+		)
+		_ok(actor != null, "walk-top create %s" % appearance_id)
+		if actor == null:
+			continue
+		var controller: CharacterVariantController = _find_controller(actor)
+		_ok(controller != null, "walk-top controller %s" % appearance_id)
+		if controller == null:
+			actor.queue_free()
+			continue
+		controller.ensure_slot_bindings()
+		var anim: CharacterAnimationController = actor.get_animation_controller()
+		_ok(anim != null and anim.play_loop(&"walk"), "walk-top play walk %s" % appearance_id)
+		await get_tree().create_timer(0.4).timeout
+		_ok(_top_on_chest_during_pose(controller, appearance_id), "walk-top on chest %s" % appearance_id)
+		actor.queue_free()
+		await get_tree().process_frame
+
+
+func _top_on_chest_during_pose(controller: CharacterVariantController, appearance_id: String) -> bool:
+	var skel: Skeleton3D = controller.get_body_skeleton()
+	if skel == null:
+		push_error("%s missing skeleton for walk-top" % appearance_id)
+		return false
+	var chest_idx: int = skel.find_bone("Chest")
+	if chest_idx < 0:
+		chest_idx = skel.find_bone("UpperChest")
+	if chest_idx < 0:
+		push_error("%s missing Chest bone" % appearance_id)
+		return false
+	var chest_xf: Transform3D = skel.global_transform * skel.get_bone_global_pose(chest_idx)
+	var top_center: Vector3 = _visible_slot_aabb_center(controller, "TopRoot")
+	if top_center == Vector3.ZERO:
+		push_error("%s empty top center during walk" % appearance_id)
+		return false
+	var local: Vector3 = chest_xf.affine_inverse() * top_center
+	# Rest basis: +Z forward. Thin front shell must sit clearly on/in front of chest.
+	if local.z < 0.06:
+		push_error("%s top not on chest front localZ=%s" % [appearance_id, snappedf(local.z, 0.001)])
+		return false
+	if absf(local.x) > 0.25:
+		push_error("%s top off midline localX=%s" % [appearance_id, snappedf(local.x, 0.001)])
+		return false
+	return true
 
 
 func _test_hair_and_shoes_rules() -> void:
@@ -224,9 +281,9 @@ func _test_slot_bone_heights() -> void:
 func _capture_lineup_evidence(actors: Array[CharacterActor]) -> void:
 	if actors.is_empty():
 		return
-	var dir_path: String = "res://docs/agent/qa/evidence/ap1_chars_fix2"
+	var dir_path: String = "res://docs/agent/qa/evidence/ap1_chars_fix3"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
-	var before_src: String = ProjectSettings.globalize_path("res://docs/agent/qa/evidence/vc_chars_fix/after_lineup_variants.png")
+	var before_src: String = ProjectSettings.globalize_path("res://docs/agent/qa/evidence/ap1_chars_fix2/after_lineup_variants.png")
 	var before_dst: String = ProjectSettings.globalize_path("%s/before_lineup_variants.png" % dir_path)
 	if FileAccess.file_exists(before_src):
 		DirAccess.copy_absolute(before_src, before_dst)
