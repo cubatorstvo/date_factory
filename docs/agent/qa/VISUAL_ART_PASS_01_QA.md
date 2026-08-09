@@ -1,18 +1,18 @@
 # VISUAL ART PASS 01 — Independent QA
 
-**Task ID:** AP1-QA / AP1-QA-RECHECK  
+**Task ID:** AP1-QA / AP1-QA-FINAL-RECHECK  
 **Date:** 2026-08-09  
 **QA agent:** df-qa-worker (independent capture + open-PNG review)  
-**Source (main):** `328ce66dd56c4c93019644cef6e76a7919da3e0e` (`328ce66`, post-`ec64c55` silhouette fix2)  
-**Prior source reviewed:** `ec64c55` (NOT READY — giant box clothing / broken hair / missing shoes)  
+**Source (main):** `7ee5fdef23ffcf2676b95fe2a9bf796785a3db6e` (`7ee5fde`, fix3 after `328ce66` — chest tops + flat foot shoes)  
+**Prior source reviewed:** `328ce66` (NOT READY — walk hollow/back-plate clothing + ankle IK shoe cubes)  
 **Review branch:** `visual-review/art-pass-01-20260809`  
-**Screenshot path:** `_review/art_pass_01/` (also mirrored under `tmp/art_pass_01/`)
+**Screenshot path:** `_review/art_pass_01/`
 
 ## Overall status
 
-**NOT READY**
+**READY**
 
-Idle front lineups (`03`/`05`/`07`) show clear improvement after `328ce66` (hair on scalp, tops as thin close shells, both shoe-slot meshes). City/cafe remain accepted from prior review and were not re-captured. Blocking remains: **walk poses still show floating/hollow clothing + female hair detach**, and **shoes still read as black ankle cuboids / debug blocks** (DoD: clothing/shoes must not read as debug cubes).
+Independent recapture of the four critical character shots on main `@7ee5fde` meets TZ temporary clothing rules: hair seated on scalp, tops read as solid chest shells (not back plates / giant hollow frames), shoes are flat soles under both feet (not ankle IK cubes), and walk poses remain readable. City/cafe/regression frames retained from prior accepted set (not re-captured this pass).
 
 ---
 
@@ -20,123 +20,117 @@ Idle front lineups (`03`/`05`/`07`) show clear improvement after `328ce66` (hair
 
 | Criterion | Status | Evidence |
 |---|---|---|
-| Branch from latest main @ `328ce66` | **PASS** | Rebased `visual-review/art-pass-01-20260809` onto `328ce66` |
-| TZ screenshot set 1920×1080 | **PASS** | Chars `01`–`09` re-captured; city/cafe/regression kept from prior set (already accepted) |
-| Publish under `_review/art_pass_01/` + push review branch | **PASS** | Recheck chars force-added; review branch push |
-| Characters: real hair (not primitive towers / not face) | **WARNING** | Idle fronts: scalp OK. Walk `09`: floating hair mass behind scalp. Some male styles still sparse cards |
-| Characters: clothing silhouettes not giant boxes | **FAIL** | Idle fronts thin close shells (**improved**). Walk `08`/`09`: floating/hollow teal planes around torso still player-visible |
-| Characters: both shoes | **FAIL** | Both feet have shoe-slot meshes, but they still read as black rectangular ankle cubes with bare feet visible — not readable footwear |
-| Characters: bottoms covering legs | **PASS** (minimal) | Boxers / bikini bottoms cover pelvis + upper thigh; female hip blue plane in `05` is a thin bottom shell artifact (WARN) |
-| City / cafe / regression | **PASS** (prior) | Not re-captured this recheck; prior acceptance retained |
-| donor / women_modular prod refs | **PASS** (prior) | Unchanged since prior AP1-QA |
-| Automated presentation ≠ visual readiness | **FAIL gate** | PNG open review remains hard gate; walk/shoes still fail DoD |
+| Branch from latest main @ `7ee5fde` | **PASS** | Review branch reset onto `origin/main` (`7ee5fde`) |
+| TZ screenshot set 1920×1080 | **PASS** | Critical chars `03`/`05`/`08`/`09` re-captured; remaining set retained |
+| Publish under `_review/art_pass_01/` + push review branch | **PASS** | Four PNGs overwritten + QA md; review branch push |
+| Hair on scalp (not face / not floating) | **PASS** | Idle fronts scalp-correct; female walk hair seated; male walk uses short/near-bald style 1 (not floating) |
+| Top on chest (not back plate / not giant hollow frame) | **PASS** | Teal solid chest boxes on idle + walk for male and female |
+| Shoes flat under BOTH feet (not ankle IK cubes) | **PASS** | Thin black sole slabs under both feet in all four opened shots |
+| Walk still readable | **PASS** | `08`/`09` mid-stride clear (legs/arms counterpose) |
+| City / cafe / regression | **PASS** (prior) | Not re-captured; prior acceptance retained |
+| Temporary clothing remains placeholder boxes | **WARNING** | Expected for TZ temp clothing — opaque teal chest cubes / black sole slabs, not final garments |
 
 ---
 
-## Opened PNG verdicts (critical recheck)
+## Opened PNG verdicts (critical final recheck)
 
 ### `03_male_variants_front.png`
 
 | Check | Result | Seen |
 |---|---|---|
-| Hair on scalp (not face) | **PASS** | 5 males; styles on scalp (bald / short / blond / long red / purple buns); face clear |
-| Tops thin close shells | **PASS** | Teal chest/back pieces sit as thin body-following shells — not giant hollow frames |
-| Both shoes | **FAIL** (pair present, art fail) | Both feet have black rectangular ankle blocks; bare feet still readable |
-| Bottoms covering legs | **PASS** | Dark boxer briefs cover pelvis/upper thighs; one variant has blue front flap |
+| Hair on scalp | **PASS** | Bald / short / blond / long red / purple buns — all on scalp, face clear |
+| Top on chest | **PASS** | Solid teal chest boxes on all five; not backpack/back-plate hollow frames |
+| Shoes flat under both feet | **PASS** | Thin black sole slabs under both feet on all five |
+| Walk readable | n/a | Idle lineup |
 
-**Shot verdict:** silhouette/hair improved vs prior FAIL; shoes still debug cubes → character DoD unmet.
+**Shot verdict:** PASS vs TZ temporary clothing rules.
 
 ### `05_female_variants_front.png`
 
 | Check | Result | Seen |
 |---|---|---|
-| Hair on scalp (not face) | **PASS** | Flat-top / swept / blond bun / red twin buns / bald — on scalp, not face masks |
-| Tops thin close shells | **PASS** | Dark bikini tops + teal back pieces read as thin close shells |
-| Both shoes | **FAIL** (pair present, art fail) | Both feet black block shoes on all five |
-| Bottoms covering legs | **PASS** + **WARN** | Bikini bottoms present; horizontal blue plane through hips (bottom shell) across lineup |
+| Hair on scalp | **PASS** | Flat-top / swept / blond bun / red twin buns / bald — seated on scalp |
+| Top on chest | **PASS** | Solid teal chest cubes centered on torso for all five |
+| Shoes flat under both feet | **PASS** | Flat black soles under both feet; not ankle cubes |
+| Walk readable | n/a | Idle lineup |
 
-**Shot verdict:** major hair/top improvement; shoes + hip plane keep DoD short of READY.
+**Shot verdict:** PASS vs TZ temporary clothing rules.
 
-### `07_mixed_variants.png`
+### `08_male_walk_pose.png`
 
 | Check | Result | Seen |
 |---|---|---|
-| Hair on scalp (not face) | **PASS** | Mixed male/female styles on scalp; no face-cover hair |
-| Tops thin close shells | **PASS** | Female bikini tops close to body; males mostly shirtless + backpack straps (not giant chest boxes) |
-| Both shoes | **FAIL** (pair present, art fail) | All 10 have paired black foot blocks |
-| Bottoms covering legs | **PASS** | Shorts / colored loincloth flaps cover pelvis/upper thighs |
+| Hair on scalp | **PASS** | Short/near-bald style 1; no floating hair mass |
+| Top on chest | **PASS** | Solid teal chest box stays on front of torso during walk (not collapsed back plate) |
+| Shoes flat under both feet | **PASS** | Flat black soles under leading and trailing feet |
+| Walk readable | **PASS** | Clear mid-stride; arms/legs counterpose |
 
-**Shot verdict:** idle mixed lineup no longer dominated by giant teal boxes; shoes still blocky.
+**Shot verdict:** PASS — prior walk clothing/shoes FAIL cleared.
 
-### Supporting recapture (opened)
+### `09_female_walk_pose.png`
 
-| File | Verdict | What was seen |
+| Check | Result | Seen |
 |---|---|---|
-| `01_male_base_clean.png` | **PASS** (clean base) | Bald male, underwear, barefoot — intentional clean base |
-| `02_female_base_clean.png` | **PASS** (clean base) | Clean female base (not re-opened in detail; file refreshed) |
-| `04_male_variants_side.png` | **WARNING** | Side: tops look close; shoe blocks at ankles |
-| `06_female_variants_side.png` | **WARNING** | Side: thin teal shells; bald FG; shoe blocks |
-| `08_male_walk_pose.png` | **FAIL** | Walk: floating cyan/teal torso planes + black ankle cubes; hair sparse card |
-| `09_female_walk_pose.png` | **FAIL** | Walk: hollow teal/black torso frame; hair mass floating behind head; black ankle cubes |
+| Hair on scalp | **PASS** | Dark brown hair seated on scalp (no rear detach) |
+| Top on chest | **PASS** | Solid teal chest box on torso during walk |
+| Shoes flat under both feet | **PASS** | Flat black soles under both feet through stride |
+| Walk readable | **PASS** | Clear mid-stride walk pose |
 
-### City / cafe / regression (not re-captured)
+**Shot verdict:** PASS — prior walk FAIL cleared.
 
-Prior AP1-QA acceptance retained for city megakit / cafe framing / apartment-mine-lab-late regression frames (`20`–`43`).
+### Not re-opened this pass
+
+City/cafe/regression (`20`–`43`) and supporting char shots (`01`/`02`/`04`/`06`/`07`) retained from prior review assets on the branch; prior acceptance kept.
 
 ---
 
-## Automated verification (recheck)
+## Automated verification (final recheck)
 
 Commands:
 
 ```text
 GODOT=C:\godot\Godot_v4.7.1-stable_win64.exe
-# stash unrelated dirty UI, checkout main, pull, rebase review onto main
-godot --path . --windowed --resolution 1920x1080 -s res://tmp/ap1_qa/capture_art_pass_01.gd
-# capture patched to characters-only for AP1-QA-RECHECK
-Copy-Item tmp/art_pass_01/0[1-9]_*.png _review/art_pass_01/ -Force
+git fetch origin main
+git checkout visual-review/art-pass-01-20260809
+git reset --hard origin/main   # -> 7ee5fde
+# restore prior _review set, then overwrite 4 critical PNGs
+godot --path . --windowed --resolution 1920x1080 --script res://tmp/ap1_qa/capture_art_pass_01.gd
+Copy-Item tmp/art_pass_01/{03,05,08,09}_*.png _review/art_pass_01/ -Force
 ```
 
 Results:
 
-- Capture: `AP1_CAPTURE_DONE`, shots `01`–`09` `save=0 1920x1080`, `AP1_CHARS_ONLY skip locations`
+- Capture: `AP1_CAPTURE_DONE`, shots `01`–`09` `save=0 1920x1080`, `AP1_CHARS_ONLY skip locations`, exit 0
+- Engine: Godot 4.7.1-stable / Vulkan Forward+ / RTX 4060 Laptop
+- Stdout: `tmp/ap1_qa/capture_final_recheck_stdout.txt`
 - Log: `tmp/ap1_qa/capture_art_pass_01.log`
-- Stdout: `tmp/ap1_qa/capture_recheck_stdout.txt`
+- Independent hashes differ from implementer `docs/agent/qa/evidence/ap1_chars_fix3/` (fresh capture; same visual conclusions)
 
 ---
 
 ## Blocking issues
 
-1. **Walk poses still break clothing silhouette** (`08`/`09`) — floating/hollow teal planes around torso; DoD clothing resize incomplete under animation.
-2. **Shoes still read as black debug cuboids** on variants/mixed/walk — both slots present, but not readable footwear (DoD: not debug cubes).
-3. **Female walk hair detach** (`09`) — mass floating behind scalp under walk.
+None for TZ temporary clothing acceptance on the four critical shots.
 
 ## Non-blocking issues
 
-1. Female front `05`: blue hip plane through all five (thin bottom shell artifact).
-2. City prior warnings unchanged (blue Area volumes in `22`, pink prism in `25`) — out of recheck scope.
-3. Idle front progress is real vs `ec64c55` review — do not regress those transforms when fixing walk/shoes.
+1. Temporary tops remain obvious opaque teal cubes (allowed by TZ temporary clothing; not final garments).
+2. Temporary shoes remain flat black sole slabs (correct placement; not final footwear art).
+3. Male walk uses hair style `1` which reads nearly bald in this framing — not a detach/placement fail.
+4. City prior warnings unchanged (blue Area volumes in `22`, pink prism in `25`) — out of this recheck scope.
 
 ## Evidence
 
-- Screenshots: `_review/art_pass_01/01`–`09` (recheck), `20`–`43` (prior)
-- Capture log: `tmp/ap1_qa/capture_art_pass_01.log`
-- Capture stdout: `tmp/ap1_qa/capture_recheck_stdout.txt`
-- This report: `docs/agent/qa/VISUAL_ART_PASS_01_QA.md`
+- `_review/art_pass_01/03_male_variants_front.png`
+- `_review/art_pass_01/05_female_variants_front.png`
+- `_review/art_pass_01/08_male_walk_pose.png`
+- `_review/art_pass_01/09_female_walk_pose.png`
+- `tmp/ap1_qa/capture_final_recheck_stdout.txt`
+- `tmp/ap1_qa/capture_art_pass_01.log`
 
 ## Reproduction steps
 
-1. `git checkout main && git pull` → expect `328ce66`.
-2. Stash unrelated dirty UI if needed.
-3. Update `visual-review/art-pass-01-20260809` onto main (rebase/merge).
-4. Run characters-only capture at 1920×1080 via `tmp/ap1_qa/capture_art_pass_01.gd`.
-5. Copy `tmp/art_pass_01/01`–`09` → `_review/art_pass_01/`.
-6. Open `03`, `05`, `07` (and walk `08`/`09`); confirm remaining walk/shoes FAIL.
-
----
-
-## Verdict
-
-**NOT READY**
-
-Idle front variants improved after silhouette fix2, but walk clothing/hair and shoe readability still fail Art Pass 01 DoD. City/cafe remain accepted; character route not READY.
+1. Checkout `main` @ `7ee5fde` (or review branch after this push).
+2. Run windowed capture script `res://tmp/ap1_qa/capture_art_pass_01.gd` at 1920×1080.
+3. Open `_review/art_pass_01/03`, `05`, `08`, `09`.
+4. Confirm chest tops + flat sole shoes + scalp hair + readable walk per TZ temporary clothing rules.
