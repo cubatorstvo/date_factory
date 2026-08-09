@@ -1,50 +1,13 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bnhcffo1atyrm"]
 
-[ext_resource type="Script" path="res://world/art/donor_import/city/poi/core/CityPOIBuilding.gd" id="1_5knvw"]
-[ext_resource type="Script" path="res://world/art/donor_import/city/poi/core/CityPOITenant.gd" id="2_wwsbq"]
-[ext_resource type="Script" path="res://world/art/donor_import/city/donor_interactable_stub.gd" id="3_3abn7"]
-[ext_resource type="PackedScene" path="res://assets/props/food/meshes/Bottle1.fbx" id="4_nnrcy"]
-[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx" id="5_20nux"]
-[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Bookshelf.fbx" id="6_5abt1"]
-[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx" id="7_4tjqo"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d5dtf"]
-albedo_color = Color(0.62, 0.66, 0.78, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="BoxMesh" id="BoxMesh_mojd1"]
-size = Vector3(10.5, 3.4, 4.2)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_62kr2"]
-albedo_color = Color(0.35, 0.38, 0.48, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d2y1f"]
-albedo_color = Color(0.08, 0.07, 0.09, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uasln"]
-albedo_color = Color(0.465, 0.495, 0.585, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sii2u"]
-albedo_color = Color(0.08, 0.07, 0.09, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rl6va"]
-albedo_color = Color(0.45, 0.5, 0.7, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pvqx6"]
-albedo_color = Color(0.45, 0.55, 0.85, 1)
-metallic = 0.05
-roughness = 0.55
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/art/donor_import/city/poi/core/CityPOIBuilding.gd" id="1_5knvw"]
+[ext_resource type="PackedScene" uid="uid://ivp31mv268c1" path="res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf" id="2_jcmew"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/art/donor_import/city/poi/core/CityPOITenant.gd" id="2_wwsbq"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/art/donor_import/city/donor_interactable_stub.gd" id="3_3abn7"]
+[ext_resource type="PackedScene" uid="uid://bfecqbxe8rb1o" path="res://assets/props/food/meshes/Bottle1.fbx" id="4_nnrcy"]
+[ext_resource type="PackedScene" uid="uid://cl1dn2fqq10wa" path="res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx" id="5_20nux"]
+[ext_resource type="PackedScene" uid="uid://gfwpy40arbgl" path="res://assets/environment/interior/house_interior/meshes/Bookshelf.fbx" id="6_5abt1"]
+[ext_resource type="PackedScene" uid="uid://hn6p05ki7bm1" path="res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx" id="7_4tjqo"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pk1hb"]
 albedo_color = Color(0.85, 0.75, 0.35, 1)
@@ -56,18 +19,8 @@ albedo_color = Color(0.45, 0.55, 0.85, 1)
 metallic = 0.05
 roughness = 0.55
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3b2rp"]
-albedo_color = Color(0.75, 0.85, 0.95, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tnb4g"]
-albedo_color = Color(0.55, 0.65, 0.9, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_2okmq"]
-size = Vector3(10.5, 3.4, 4.2)
+[sub_resource type="BoxShape3D" id="BoxShape3D_sqaw2"]
+size = Vector3(7.7021947, 9.651794, 5.7375)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_geutr"]
 transparency = 1
@@ -112,41 +65,6 @@ reserved_lot_size = Vector2(12, 7.5)
 
 [node name="VisualRoot" type="Node3D" parent="." unique_id=2009905993]
 
-[node name="ProxyBody" type="MeshInstance3D" parent="VisualRoot" unique_id=198134077]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -1.3999999)
-material_override = SubResource("StandardMaterial3D_d5dtf")
-mesh = SubResource("BoxMesh_mojd1")
-
-[node name="Roof" type="CSGBox3D" parent="VisualRoot" unique_id=841049476]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.52, -1.3999999)
-size = Vector3(10.75, 0.22, 4.35)
-material = SubResource("StandardMaterial3D_62kr2")
-
-[node name="PortalInset" type="CSGBox3D" parent="VisualRoot" unique_id=1948400542]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.075, 0.51)
-size = Vector3(1.05, 2.15, 0.38)
-material = SubResource("StandardMaterial3D_d2y1f")
-
-[node name="PortalFrame" type="CSGBox3D" parent="VisualRoot" unique_id=130150685]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.075, 0.68)
-size = Vector3(1.21, 2.31, 0.08)
-material = SubResource("StandardMaterial3D_uasln")
-
-[node name="PortalInsetB" type="CSGBox3D" parent="VisualRoot" unique_id=82756980]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.075, 0.51)
-size = Vector3(1.05, 2.15, 0.38)
-material = SubResource("StandardMaterial3D_sii2u")
-
-[node name="PortalFrameB" type="CSGBox3D" parent="VisualRoot" unique_id=466301264]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.075, 0.68)
-size = Vector3(1.21, 2.31, 0.08)
-material = SubResource("StandardMaterial3D_rl6va")
-
-[node name="CoolBand" type="CSGBox3D" parent="VisualRoot" unique_id=378323369]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0.72)
-size = Vector3(10.2, 0.16, 0.1)
-material = SubResource("StandardMaterial3D_pvqx6")
-
 [node name="JewelryAwning" type="CSGBox3D" parent="VisualRoot" unique_id=1733806785]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 2.4, 1.05)
 size = Vector3(3, 0.07, 0.7)
@@ -157,23 +75,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 2.5, 1.1)
 size = Vector3(3.4, 0.14, 1)
 material = SubResource("StandardMaterial3D_3wq6c")
 
-[node name="WinJew" type="CSGBox3D" parent="VisualRoot" unique_id=1830014131]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.45, 0.72)
-size = Vector3(1, 1.15, 0.06)
-material = SubResource("StandardMaterial3D_3b2rp")
-
-[node name="WinCloth" type="CSGBox3D" parent="VisualRoot" unique_id=796972716]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1.45, 0.72)
-size = Vector3(1.4, 1, 0.06)
-material = SubResource("StandardMaterial3D_tnb4g")
+[node name="Building_Large_2_Inst" type="Node3D" parent="VisualRoot" unique_id=753147132 instance=ExtResource("2_jcmew")]
+transform = Transform3D(0.40553704, 0, 0, 0, 0.40553704, 0, 0, 0, 0.40553704, 0, 0, -1)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=1969054954]
 
 [node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1570043840]
 
 [node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=1754201341]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -1.4)
-shape = SubResource("BoxShape3D_2okmq")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.825897, -4.244296)
+shape = SubResource("BoxShape3D_sqaw2")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1611781855]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
@@ -203,14 +114,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0, 1.05)
 [node name="InteractionArea" type="Area3D" parent="TenantSlots/JewelryShop" unique_id=1928007157]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0, 1.05)
 script = ExtResource("3_3abn7")
+action_id = &"open_jewelry_shop"
 display_name = "Ювелирный"
 action_label = "Открыть витрину"
-action_id = &"open_jewelry_shop"
 payload = {
 "art_backed": true
 }
-auto_fit_mesh_aabb = false
-aabb_padding = Vector3(0.015, 0.03, 0.015)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/JewelryShop/InteractionArea" unique_id=470596861]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
@@ -250,10 +159,10 @@ omni_range = 3.5
 
 [node name="IdentityProps" type="Node3D" parent="TenantSlots/JewelryShop" unique_id=681746611]
 
-[node name="Bottle1_Inst" type="Node3D" parent="TenantSlots/JewelryShop/IdentityProps" unique_id=1337793721 instance=ExtResource("4_nnrcy")]
+[node name="Bottle1_Inst" parent="TenantSlots/JewelryShop/IdentityProps" unique_id=1337793721 instance=ExtResource("4_nnrcy")]
 transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0.25, 1.05, 0.2)
 
-[node name="Shelf_1_Inst" type="Node3D" parent="TenantSlots/JewelryShop/IdentityProps" unique_id=1422317027 instance=ExtResource("5_20nux")]
+[node name="Shelf_1_Inst" parent="TenantSlots/JewelryShop/IdentityProps" unique_id=1422317027 instance=ExtResource("5_20nux")]
 transform = Transform3D(-0.5, 0, -4.371139e-08, 0, 0.5, 0, 4.371139e-08, 0, -0.5, -0.15, 0.15, -0.1)
 
 [node name="ClothingShop" type="Node3D" parent="TenantSlots" unique_id=1195616171]
@@ -275,14 +184,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 0, 1.05)
 [node name="InteractionArea" type="Area3D" parent="TenantSlots/ClothingShop" unique_id=1677523202]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 0, 1.05)
 script = ExtResource("3_3abn7")
+action_id = &"open_clothing_shop"
 display_name = "Одежда"
 action_label = "Открыть магазин"
-action_id = &"open_clothing_shop"
 payload = {
 "art_backed": true
 }
-auto_fit_mesh_aabb = false
-aabb_padding = Vector3(0.015, 0.03, 0.015)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/ClothingShop/InteractionArea" unique_id=1348568266]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
@@ -323,8 +230,8 @@ omni_range = 3.5
 
 [node name="IdentityProps" type="Node3D" parent="TenantSlots/ClothingShop" unique_id=1357232374]
 
-[node name="Bookshelf_Inst" type="Node3D" parent="TenantSlots/ClothingShop/IdentityProps" unique_id=556293929 instance=ExtResource("6_5abt1")]
+[node name="Bookshelf_Inst" parent="TenantSlots/ClothingShop/IdentityProps" unique_id=556293929 instance=ExtResource("6_5abt1")]
 transform = Transform3D(-0.55, 0, -4.8082526e-08, 0, 0.7, 0, 4.8082526e-08, 0, -0.55, 0.1, 0.1, -0.15)
 
-[node name="Houseplant_1_Inst" type="Node3D" parent="TenantSlots/ClothingShop/IdentityProps" unique_id=1491733927 instance=ExtResource("7_4tjqo")]
+[node name="Houseplant_1_Inst" parent="TenantSlots/ClothingShop/IdentityProps" unique_id=1491733927 instance=ExtResource("7_4tjqo")]
 transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 0.55, 0, 0.3)

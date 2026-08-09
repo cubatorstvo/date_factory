@@ -37,18 +37,19 @@ func _ready() -> void:
 
 
 func _apply_lot_bounds_visibility() -> void:
-	var lot: Node = get_node_or_null("LotBounds")
-	if lot == null:
-		return
 	## Editor-only by default. Opt-in play debug via meta debug_show_lot_bounds=true.
 	var show_debug: bool = Engine.is_editor_hint() or bool(get_meta("debug_show_lot_bounds", false))
-	if lot is CanvasItem:
-		(lot as CanvasItem).visible = show_debug
-	elif lot is Node3D:
-		(lot as Node3D).visible = show_debug
-	## Hide mesh/CSG children of LotBounds in normal play.
-	if not show_debug:
-		_hide_visual_recursive(lot)
+	for lot_name in ["LotBounds", "ReservedLot", "DebugLot"]:
+		var lot: Node = get_node_or_null(lot_name)
+		if lot == null:
+			continue
+		if lot is CanvasItem:
+			(lot as CanvasItem).visible = show_debug
+		elif lot is Node3D:
+			(lot as Node3D).visible = show_debug
+		## Hide mesh/CSG children of lot debug visuals in normal play.
+		if not show_debug:
+			_hide_visual_recursive(lot)
 
 
 func _hide_visual_recursive(node: Node) -> void:

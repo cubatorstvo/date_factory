@@ -100,3 +100,15 @@ Female animation: switch `animation_female_base` to UAL path proven by `DateGirl
 ## D-VC-05 — No layout redesign
 
 **Decision:** Corrective pass does not change floor plans, POI positions, building placement, or gameplay semantics. Asset-first replacement of placeholders only.
+
+## D-AP1-01 — Art Pass 01 scope lock
+
+**Decision:** Art Pass 01 only: real PACK_021 hair; clothing/shoes/accessory silhouette fix (keep slot architecture); city POI proxy→ready Building_* by lot size; LotBounds never visible in production; city spawn NPC exclusion 2.5m; cafe ordinary visual cap 4 + date exclusion 2.2m. No apartment/mine/lab/late art. No PACK_013. No layout redesign. Keep one male + one female PACK_021 base and PACK_019 removed.
+
+## D-AP1-02 — Hair variant indices 0–4
+
+**Decision:** Remap appearance `hair_variant` to exact TZ indices (male 0=bald…4=Buns; female 0=BuzzedFemale…4=bald). Use PACK_021 glTF under `hairstyles/Origin at 0/glTF (Godot)/`. Never Hair_Beard as hairstyle. Per-instance material overrides for hair color.
+
+## D-AP1-03 — City ready-building replacement rule
+
+**Decision:** Replace proxy exteriors only with `Building_Small_1` / `Building_Medium_2_001` / `Building_Large_2` by max(lot) thresholds 8.5 / 11.5. Preserve scenes that already have real Building_*. Uniform scale ≤90% lot. Fit fail → leave unchanged + `READY_BUILDING_FIT_FAILED`.

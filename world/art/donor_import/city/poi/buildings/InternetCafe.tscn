@@ -1,51 +1,14 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://b0t3gjn7r0vx8"]
 
-[ext_resource type="Script" path="res://world/art/donor_import/city/poi/core/CityPOIBuilding.gd" id="1_prfot"]
-[ext_resource type="Script" path="res://world/art/donor_import/city/poi/core/CityPOITenant.gd" id="2_ev4rf"]
-[ext_resource type="Script" path="res://world/art/donor_import/city/donor_interactable_stub.gd" id="3_r8j86"]
-[ext_resource type="PackedScene" path="res://assets/environment/lab/scifi_essentials/meshes/Prop_Desk_Small.gltf" id="4_mthvk"]
-[ext_resource type="PackedScene" path="res://assets/environment/factory/kenney_factory/meshes/screen-panel-small.glb" id="5_xgygg"]
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/art/donor_import/city/poi/core/CityPOIBuilding.gd" id="1_prfot"]
+[ext_resource type="PackedScene" uid="uid://d0s6yraf4qqrs" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="2_2r2aj"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/art/donor_import/city/poi/core/CityPOITenant.gd" id="2_ev4rf"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/art/donor_import/city/donor_interactable_stub.gd" id="3_r8j86"]
+[ext_resource type="PackedScene" uid="uid://vjq158ae5lcf" path="res://assets/environment/lab/scifi_essentials/meshes/Prop_Desk_Small.gltf" id="4_mthvk"]
+[ext_resource type="PackedScene" uid="uid://c2e1105r7hgq4" path="res://assets/environment/factory/kenney_factory/meshes/screen-panel-small.glb" id="5_xgygg"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6j0l5"]
-albedo_color = Color(0.42, 0.5, 0.6, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="BoxMesh" id="BoxMesh_byah6"]
-size = Vector3(5.2, 3.1, 3.8)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o6cbh"]
-albedo_color = Color(0.28, 0.32, 0.4, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yxibm"]
-albedo_color = Color(0.08, 0.07, 0.09, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_78ye2"]
-albedo_color = Color(0.315, 0.375, 0.45000002, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_atu6l"]
-albedo_color = Color(0.15, 0.18, 0.22, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jsb22"]
-albedo_color = Color(0.25, 0.9, 1, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lb1d2"]
-albedo_color = Color(0.55, 0.75, 0.9, 1)
-metallic = 0.05
-roughness = 0.55
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_wswkq"]
-size = Vector3(5.2, 3.1, 3.8)
+[sub_resource type="BoxShape3D" id="BoxShape3D_gg0dm"]
+size = Vector3(4.968225, 6.2722907, 5.355)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a326y"]
 transparency = 1
@@ -83,48 +46,16 @@ reserved_lot_size = Vector2(7, 7)
 
 [node name="VisualRoot" type="Node3D" parent="." unique_id=161501008]
 
-[node name="ProxyBody" type="MeshInstance3D" parent="VisualRoot" unique_id=915157995]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, -1.1999999)
-material_override = SubResource("StandardMaterial3D_6j0l5")
-mesh = SubResource("BoxMesh_byah6")
-
-[node name="Roof" type="CSGBox3D" parent="VisualRoot" unique_id=806270127]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2199998, -1.1999999)
-size = Vector3(5.45, 0.22, 3.95)
-material = SubResource("StandardMaterial3D_o6cbh")
-
-[node name="PortalInset" type="CSGBox3D" parent="VisualRoot" unique_id=2041884730]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.51)
-size = Vector3(1.2, 2.2, 0.38)
-material = SubResource("StandardMaterial3D_yxibm")
-
-[node name="PortalFrame" type="CSGBox3D" parent="VisualRoot" unique_id=1678548281]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.68)
-size = Vector3(1.36, 2.36, 0.08)
-material = SubResource("StandardMaterial3D_78ye2")
-
-[node name="RecessLip" type="CSGBox3D" parent="VisualRoot" unique_id=367526325]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.42)
-size = Vector3(1.6, 2.3, 0.55)
-material = SubResource("StandardMaterial3D_atu6l")
-
-[node name="CyanStrip" type="CSGBox3D" parent="VisualRoot" unique_id=1346607407]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0.78)
-size = Vector3(4.8, 0.1, 0.08)
-material = SubResource("StandardMaterial3D_jsb22")
-
-[node name="TallWin" type="CSGBox3D" parent="VisualRoot" unique_id=2073430196]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7, 1.5, 0.72)
-size = Vector3(0.7, 1.6, 0.05)
-material = SubResource("StandardMaterial3D_lb1d2")
+[node name="Building_Small_1_Inst" type="Node3D" parent="VisualRoot" unique_id=342740020 instance=ExtResource("2_2r2aj")]
+transform = Transform3D(0.43340644, 0, 0, 0, 0.43340644, 0, 0, 0, 0.43340644, 0, 0.005177935, -0.45)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=280732947]
 
 [node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1683328824]
 
 [node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=177687125]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, -1.2)
-shape = SubResource("BoxShape3D_wswkq")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1361454, -2.6005611)
+shape = SubResource("BoxShape3D_gg0dm")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=747901043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
@@ -154,14 +85,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
 [node name="InteractionArea" type="Area3D" parent="TenantSlots/NetCafe" unique_id=130734585]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
 script = ExtResource("3_r8j86")
+action_id = &"city_cafe_job"
 display_name = "ПК №1"
 action_label = "Поработать онлайн"
-action_id = &"city_cafe_job"
 payload = {
 "art_backed": true
 }
-auto_fit_mesh_aabb = false
-aabb_padding = Vector3(0.015, 0.03, 0.015)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/NetCafe/InteractionArea" unique_id=1122901143]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
@@ -201,23 +130,21 @@ light_energy = 1.3
 
 [node name="IdentityProps" type="Node3D" parent="TenantSlots/NetCafe" unique_id=1237844735]
 
-[node name="Prop_Desk_Small_Inst" type="Node3D" parent="TenantSlots/NetCafe/IdentityProps" unique_id=2110471739 instance=ExtResource("4_mthvk")]
+[node name="Prop_Desk_Small_Inst" parent="TenantSlots/NetCafe/IdentityProps" unique_id=2110471739 instance=ExtResource("4_mthvk")]
 transform = Transform3D(-0.75, 0, -6.556708e-08, 0, 0.75, 0, 6.556708e-08, 0, -0.75, -0.4, 0, 0.15)
 
-[node name="screen-panel-small_Inst" type="Node3D" parent="TenantSlots/NetCafe/IdentityProps" unique_id=1573559240 instance=ExtResource("5_xgygg")]
+[node name="screen-panel-small_Inst" parent="TenantSlots/NetCafe/IdentityProps" unique_id=1573559240 instance=ExtResource("5_xgygg")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.95, 0.05)
 
 [node name="InteractScroll" type="Area3D" parent="TenantSlots/NetCafe" unique_id=2082534663]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 1.05)
 script = ExtResource("3_r8j86")
+action_id = &"city_cafe_scroll"
 display_name = "ПК №2"
 action_label = "Скроллить (+популярность)"
-action_id = &"city_cafe_scroll"
 payload = {
 "art_backed": true
 }
-auto_fit_mesh_aabb = false
-aabb_padding = Vector3(0.015, 0.03, 0.015)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/NetCafe/InteractScroll" unique_id=1487518274]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
@@ -226,14 +153,12 @@ shape = SubResource("BoxShape3D_jd8tp")
 [node name="InteractCoffee" type="Area3D" parent="TenantSlots/NetCafe" unique_id=1537622297]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.05)
 script = ExtResource("3_r8j86")
+action_id = &"city_coffee"
 display_name = "Кофейня"
 action_label = "Купить кофе (+внимание)"
-action_id = &"city_coffee"
 payload = {
 "art_backed": true
 }
-auto_fit_mesh_aabb = false
-aabb_padding = Vector3(0.015, 0.03, 0.015)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/NetCafe/InteractCoffee" unique_id=1790735420]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)

@@ -1,8 +1,8 @@
 class_name CharacterVariantController
 extends Node3D
 ## Presentation-only modular outfit/hair controller for PACK_021 bases.
-## Shows exactly one child per slot and applies material color overrides.
-## Binds BoneAttachment3D slots to Body's Skeleton3D (external skeleton path).
+## Shows exactly one child per slot and applies per-instance material color overrides.
+## Binds BoneAttachment3D slots (and nested sleeve/foot attachments) to Body Skeleton3D.
 
 const HAIR_COLOR_MAP: Dictionary = {
 	&"black": Color(0.08, 0.07, 0.07),
@@ -30,10 +30,20 @@ const SLOT_BONE_MAP: Dictionary = {
 	"HairRoot": &"Head",
 	"TopRoot": &"UpperChest",
 	"BottomRoot": &"Hips",
-	"ShoesRoot": &"LeftFoot",
 	"HeadAccessoryRoot": &"Head",
 	"NeckAccessoryRoot": &"Neck",
 	"HandAccessoryRoot": &"LeftHand",
+}
+
+## Nested attachment node name -> preferred bone.
+const NESTED_BONE_MAP: Dictionary = {
+	"LeftSleeveAttachment": &"LeftUpperArm",
+	"RightSleeveAttachment": &"RightUpperArm",
+	"HoodAttachment": &"Head",
+	"LeftLegAttachment": &"LeftUpperLeg",
+	"RightLegAttachment": &"RightUpperLeg",
+	"LeftFootAttachment": &"LeftFoot",
+	"RightFootAttachment": &"RightFoot",
 }
 
 ## Fallbacks if a preferred bone is missing on a future rig.
@@ -42,8 +52,13 @@ const BONE_FALLBACKS: Dictionary = {
 	&"UpperChest": [&"UpperChest", &"Chest", &"Spine", &"Hips"],
 	&"Hips": [&"Hips", &"hips", &"Spine", &"Root"],
 	&"LeftFoot": [&"LeftFoot", &"LeftToes", &"LeftLowerLeg", &"Hips"],
+	&"RightFoot": [&"RightFoot", &"RightToes", &"RightLowerLeg", &"Hips"],
 	&"Neck": [&"Neck", &"Head", &"UpperChest", &"Chest"],
 	&"LeftHand": [&"LeftHand", &"LeftLowerArm", &"LeftUpperArm", &"UpperChest"],
+	&"LeftUpperArm": [&"LeftUpperArm", &"LeftArm", &"LeftLowerArm", &"UpperChest"],
+	&"RightUpperArm": [&"RightUpperArm", &"RightArm", &"RightLowerArm", &"UpperChest"],
+	&"LeftUpperLeg": [&"LeftUpperLeg", &"LeftLeg", &"LeftLowerLeg", &"Hips"],
+	&"RightUpperLeg": [&"RightUpperLeg", &"RightLeg", &"RightLowerLeg", &"Hips"],
 }
 
 var _slots_bound: bool = false
@@ -54,22 +69,22 @@ func _ready() -> void:
 
 
 func apply_variants(
-	hair_variant: StringName = &"01",
+	hair_variant: StringName = &"0",
 	hair_color: StringName = &"brown",
-	top_variant: StringName = &"01",
+	top_variant: StringName = &"0",
 	top_color: StringName = &"gray",
-	bottom_variant: StringName = &"01",
+	bottom_variant: StringName = &"0",
 	bottom_color: StringName = &"navy",
-	shoes_variant: StringName = &"01",
+	shoes_variant: StringName = &"0",
 	head_accessory: StringName = &"none",
 	neck_accessory: StringName = &"none",
 	hand_accessory: StringName = &"none"
 ) -> void:
 	_ensure_slot_bindings()
 	_select_slot_child("HairRoot", _hair_node_name(hair_variant))
-	_select_slot_child("TopRoot", _numbered_node_name("Top", top_variant, 4))
-	_select_slot_child("BottomRoot", _numbered_node_name("Bottom", bottom_variant, 3))
-	_select_slot_child("ShoesRoot", _numbered_node_name("Shoes", shoes_variant, 2))
+	_select_slot_child("TopRoot", _numbered_node_name("Top", top_variant, 0, 3))
+	_select_slot_child("BottomRoot", _numbered_node_name("Bottom", bottom_variant, 0, 2))
+	_select_slot_child("ShoesRoot", _numbered_node_name("Shoes", shoes_variant, 0, 1))
 	_select_slot_child("HeadAccessoryRoot", _accessory_node_name("Head", head_accessory))
 	_select_slot_child("NeckAccessoryRoot", _accessory_node_name("Neck", neck_accessory))
 	_select_slot_child("HandAccessoryRoot", _accessory_node_name("Hand", hand_accessory))
@@ -109,14 +124,7 @@ func get_visible_slot_child_name(slot_root_name: String) -> StringName:
 	if root == null:
 		return &""
 	for child in root.get_children():
-		var n3: Node3D = child as Node3D
-		if n3 != null and n3.visible:
-			return StringName(n3.name)
-		elif child is CanvasItem and (child as CanvasItem).visible:
-			return StringName(child.name)
-		elif child.has_method("is_visible") and bool(child.call("is_visible")):
-			return StringName(child.name)
-		elif "visible" in child and bool(child.get("visible")):
+		if _is_node_visible(child):
 			return StringName(child.name)
 	return &""
 
@@ -132,6 +140,23 @@ func count_visible_slot_children(slot_root_name: String) -> int:
 	return count
 
 
+func count_visible_shoe_foot_meshes() -> int:
+	var shoes_root: Node = get_node_or_null("ShoesRoot")
+	if shoes_root == null:
+		return 0
+	var count: int = 0
+	for child in shoes_root.get_children():
+		if not _is_node_visible(child):
+			continue
+		var left_att: Node = child.get_node_or_null("LeftFootAttachment")
+		var right_att: Node = child.get_node_or_null("RightFootAttachment")
+		if left_att != null and _has_visible_mesh(left_att):
+			count += 1
+		if right_att != null and _has_visible_mesh(right_att):
+			count += 1
+	return count
+
+
 func get_visible_slot_mesh_global_y(slot_root_name: String) -> float:
 	var root: Node = get_node_or_null(slot_root_name)
 	if root == null:
@@ -140,13 +165,89 @@ func get_visible_slot_mesh_global_y(slot_root_name: String) -> float:
 		var n3: Node3D = child as Node3D
 		if n3 == null or not n3.visible:
 			continue
-		if String(n3.name).ends_with("_None"):
-			continue
-		var mi: MeshInstance3D = n3.get_node_or_null("Mesh") as MeshInstance3D
-		if mi != null:
-			return mi.global_position.y
+		if String(n3.name).ends_with("_None") or (slot_root_name == "HairRoot" and not _has_visible_mesh(n3)):
+			# Bald / empty holder: use attachment height.
+			return n3.global_position.y
+		var center_y: float = _visible_mesh_aabb_center_y(n3)
+		if center_y > -INF:
+			return center_y
 		return n3.global_position.y
 	return -INF
+
+
+func _visible_mesh_aabb_center_y(node: Node) -> float:
+	var sum_y: float = 0.0
+	var count: int = 0
+	var stack: Array[Node] = [node]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		var mi: MeshInstance3D = n as MeshInstance3D
+		if mi != null and mi.mesh != null and mi.is_visible_in_tree():
+			var aabb: AABB = mi.global_transform * mi.mesh.get_aabb()
+			sum_y += aabb.get_center().y
+			count += 1
+		for child in n.get_children():
+			stack.append(child)
+	if count <= 0:
+		return -INF
+	return sum_y / float(count)
+
+
+func has_active_primitive_hair() -> bool:
+	var hair_root: Node = get_node_or_null("HairRoot")
+	if hair_root == null:
+		return false
+	for child in hair_root.get_children():
+		if not _is_node_visible(child):
+			continue
+		var stack: Array[Node] = [child]
+		while not stack.is_empty():
+			var node: Node = stack.pop_back()
+			var mi: MeshInstance3D = node as MeshInstance3D
+			if mi != null and mi.mesh != null:
+				if mi.mesh is BoxMesh or mi.mesh is SphereMesh or mi.mesh is CapsuleMesh:
+					return true
+			for c in node.get_children():
+				stack.append(c)
+	return false
+
+
+func get_active_hair_resource_path() -> String:
+	var hair_root: Node = get_node_or_null("HairRoot")
+	if hair_root == null:
+		return ""
+	for child in hair_root.get_children():
+		if not _is_node_visible(child):
+			continue
+		if not _has_visible_mesh(child):
+			return "" # bald
+		for sub in child.get_children():
+			var n3: Node3D = sub as Node3D
+			if n3 == null:
+				continue
+			var path: String = String(n3.scene_file_path)
+			if path != "":
+				return path
+	return ""
+
+
+func sample_visible_hair_albedo() -> Color:
+	var hair_root: Node = get_node_or_null("HairRoot")
+	if hair_root == null:
+		return Color(0, 0, 0, 0)
+	for child in hair_root.get_children():
+		if not _is_node_visible(child):
+			continue
+		var mi: MeshInstance3D = _find_first_mesh(child)
+		if mi == null:
+			return Color(0, 0, 0, 0)
+		var mat: Material = mi.material_override
+		if mat == null:
+			mat = mi.get_active_material(0)
+		var std: StandardMaterial3D = mat as StandardMaterial3D
+		if std != null:
+			return std.albedo_color
+	return Color(0, 0, 0, 0)
 
 
 func _ensure_slot_bindings() -> bool:
@@ -162,21 +263,40 @@ func _ensure_slot_bindings() -> bool:
 			push_warning("[CharacterVariantController] missing slot root: %s" % String(slot_name))
 			all_ok = false
 			continue
-		var preferred: StringName = SLOT_BONE_MAP[slot_name] as StringName
-		var bone_name: String = _resolve_bone_name(skel, preferred)
-		if bone_name == "":
-			push_warning(
-				"[CharacterVariantController] no bone for slot %s (wanted %s)"
-				% [String(slot_name), String(preferred)]
-			)
+		if not _bind_attachment(att, skel, SLOT_BONE_MAP[slot_name] as StringName):
 			all_ok = false
-			continue
-		att.use_external_skeleton = true
-		# Path is relative to the BoneAttachment3D, not the scene root.
-		att.external_skeleton = att.get_path_to(skel)
-		att.bone_name = bone_name
+	# Nested sleeve/leg/foot attachments anywhere under this visual.
+	var nested_ok: bool = _bind_nested_attachments(self, skel)
+	all_ok = all_ok and nested_ok
 	_slots_bound = all_ok
 	return all_ok
+
+
+func _bind_nested_attachments(node: Node, skel: Skeleton3D) -> bool:
+	var ok: bool = true
+	var att: BoneAttachment3D = node as BoneAttachment3D
+	if att != null and NESTED_BONE_MAP.has(String(att.name)):
+		var preferred: StringName = NESTED_BONE_MAP[String(att.name)] as StringName
+		if not _bind_attachment(att, skel, preferred):
+			ok = false
+	for child in node.get_children():
+		if not _bind_nested_attachments(child, skel):
+			ok = false
+	return ok
+
+
+func _bind_attachment(att: BoneAttachment3D, skel: Skeleton3D, preferred: StringName) -> bool:
+	var bone_name: String = _resolve_bone_name(skel, preferred)
+	if bone_name == "":
+		push_warning(
+			"[CharacterVariantController] no bone for attachment %s (wanted %s)"
+			% [att.name, String(preferred)]
+		)
+		return false
+	att.use_external_skeleton = true
+	att.external_skeleton = att.get_path_to(skel)
+	att.bone_name = bone_name
+	return true
 
 
 func _find_body_skeleton() -> Skeleton3D:
@@ -208,7 +328,6 @@ func _resolve_bone_name(skel: Skeleton3D, preferred: StringName) -> String:
 		var name: String = String(candidate)
 		if skel.find_bone(name) >= 0:
 			return name
-	# Last resort: case-insensitive scan.
 	var want: String = String(preferred).to_lower()
 	for i in skel.get_bone_count():
 		var bn: String = skel.get_bone_name(i)
@@ -247,40 +366,72 @@ func _apply_color_to_visible(slot_root_name: String, color: Color) -> void:
 func _apply_color_recursive(node: Node, color: Color) -> void:
 	var mi: MeshInstance3D = node as MeshInstance3D
 	if mi != null:
-		var mat: StandardMaterial3D = StandardMaterial3D.new()
-		mat.albedo_color = color
-		mat.roughness = 0.72
-		mi.material_override = mat
+		_apply_instance_color(mi, color)
 	for child in node.get_children():
 		_apply_color_recursive(child, color)
 
 
+func _apply_instance_color(mi: MeshInstance3D, color: Color) -> void:
+	## Duplicate active material per instance — never mutate shared imported materials.
+	var base: Material = mi.material_override
+	if base == null:
+		base = mi.get_active_material(0)
+	var mat: Material
+	if base != null:
+		mat = base.duplicate()
+	else:
+		mat = StandardMaterial3D.new()
+	var std: StandardMaterial3D = mat as StandardMaterial3D
+	if std != null:
+		std.albedo_color = color
+		if std.roughness <= 0.0:
+			std.roughness = 0.72
+	elif mat is ShaderMaterial:
+		var sm: ShaderMaterial = mat as ShaderMaterial
+		if sm.get_shader_parameter("albedo_color") != null:
+			sm.set_shader_parameter("albedo_color", color)
+		elif sm.get_shader_parameter("base_color") != null:
+			sm.set_shader_parameter("base_color", color)
+	mi.material_override = mat
+
+
 func _hair_node_name(variant: StringName) -> StringName:
-	var key: String = String(variant).strip_edges().to_lower()
-	if key.begins_with("hair_"):
-		key = key.substr(5)
-	key = key.trim_prefix("0")
-	if key == "" or not key.is_valid_int():
-		key = "1"
-	var idx: int = clampi(int(key), 1, 5)
+	var idx: int = _normalize_variant_index(variant, 0, 4, true)
 	return StringName("Hair_%02d" % idx)
 
 
-func _numbered_node_name(prefix: String, variant: StringName, max_n: int) -> StringName:
-	var key: String = String(variant).strip_edges().to_lower()
-	var lower_prefix: String = prefix.to_lower() + "_"
-	if key.begins_with(lower_prefix):
-		key = key.substr(lower_prefix.length())
-	key = key.trim_prefix("0")
-	if key == "" or not key.is_valid_int():
-		key = "1"
-	var idx: int = clampi(int(key), 1, max_n)
+func _numbered_node_name(prefix: String, variant: StringName, min_n: int, max_n: int) -> StringName:
+	var idx: int = _normalize_variant_index(variant, min_n, max_n, false)
 	return StringName("%s_%02d" % [prefix, idx])
+
+
+func _normalize_variant_index(variant: Variant, min_n: int, max_n: int, is_hair: bool) -> int:
+	## Accept 0/"0"/"00" … max, and migrate legacy 1-based "01"–"05" deterministically.
+	var key: String = String(variant).strip_edges().to_lower()
+	if key.begins_with("hair_"):
+		key = key.substr(5)
+	var digits: String = ""
+	for i in key.length():
+		var ch: String = key.substr(i, 1)
+		if ch >= "0" and ch <= "9":
+			digits += ch
+	if digits == "":
+		return min_n
+	var raw: int = int(digits)
+	# Remapped appearances write "0".."4". Accept "00".."04" as 0..4.
+	# Legacy "05"/5 -> 4. Leftover 1-based zero-padded ids above max -> -1.
+	# Hair also migrates leftover zero-padded "01".."05" when value==5 already handled;
+	# unpadded remapped data is preferred so "04" stays index 4.
+	if raw == 5:
+		raw = 4
+	elif (not is_hair) and digits.length() == 2 and raw > max_n and (raw - 1) >= min_n and (raw - 1) <= max_n:
+		raw = raw - 1
+	return clampi(raw, min_n, max_n)
 
 
 func _accessory_node_name(prefix: String, accessory: StringName) -> StringName:
 	var key: String = String(accessory).strip_edges().to_lower()
-	if key == "" or key == "none" or key == "0":
+	if key == "" or key == "none" or key == "0" or key == "00":
 		return StringName("%s_None" % prefix)
 	if key == "glasses" or key == "hat":
 		return StringName("%s_%s" % [prefix, key.capitalize()])
@@ -291,9 +442,16 @@ func _accessory_node_name(prefix: String, accessory: StringName) -> StringName:
 		if rest == "glasses" or rest == "hat":
 			return StringName("%s_%s" % [prefix, rest.capitalize()])
 		if rest.is_valid_int():
-			return StringName("%s_%02d" % [prefix, int(rest)])
+			var rest_n: int = int(rest)
+			if rest_n <= 0:
+				return StringName("%s_None" % prefix)
+			# Scene labels stay Neck_01/Neck_02 / Hand_01/Hand_02.
+			return StringName("%s_%02d" % [prefix, clampi(rest_n, 1, 2)])
 	if key.is_valid_int():
-		return StringName("%s_%02d" % [prefix, int(key)])
+		var n: int = int(key)
+		if n <= 0:
+			return StringName("%s_None" % prefix)
+		return StringName("%s_%02d" % [prefix, clampi(n, 1, 2)])
 	return StringName("%s_None" % prefix)
 
 
@@ -329,3 +487,21 @@ func _set_node_visible(node: Node, visible: bool) -> void:
 		return
 	if "visible" in node:
 		node.set("visible", visible)
+
+
+func _find_first_mesh(node: Node) -> MeshInstance3D:
+	var as_mi: MeshInstance3D = node as MeshInstance3D
+	if as_mi != null and as_mi.mesh != null:
+		return as_mi
+	var named: MeshInstance3D = node.get_node_or_null("Mesh") as MeshInstance3D
+	if named != null:
+		return named
+	for child in node.get_children():
+		var found: MeshInstance3D = _find_first_mesh(child)
+		if found != null:
+			return found
+	return null
+
+
+func _has_visible_mesh(node: Node) -> bool:
+	return _find_first_mesh(node) != null

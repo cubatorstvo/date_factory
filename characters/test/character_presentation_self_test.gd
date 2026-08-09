@@ -1,5 +1,5 @@
 extends Node
-## VC-CHARS presentation self-test: modular slots, materials, bone attach heights.
+## AP1-CHARS presentation self-test: real hair, dual shoes, materials, slot exclusivity.
 
 var _failed: int = 0
 var _passed: int = 0
@@ -14,10 +14,18 @@ func _ready() -> void:
 		_spawn_root.name = "SpawnRoot"
 		add_child(_spawn_root)
 	await _run_all()
+	var summary: String = ""
 	if _failed == 0:
-		print("VC_CHARS_PRESENTATION_TEST: ALL PASS (%s)" % _passed)
+		summary = "VC_CHARS_PRESENTATION_TEST: ALL PASS (%s)" % _passed
 	else:
-		print("VC_CHARS_PRESENTATION_TEST: FAIL passed=%s failed=%s" % [_passed, _failed])
+		summary = "VC_CHARS_PRESENTATION_TEST: FAIL passed=%s failed=%s" % [_passed, _failed]
+	print(summary)
+	var dir_path: String = "res://docs/agent/qa/evidence/vc_chars_fix"
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
+	var result_file: FileAccess = FileAccess.open("%s/last_result.txt" % dir_path, FileAccess.WRITE)
+	if result_file != null:
+		result_file.store_string(summary + "\n")
+		result_file.close()
 	await get_tree().create_timer(0.2).timeout
 	get_tree().quit(0 if _failed == 0 else 1)
 
@@ -33,6 +41,7 @@ func _ok(cond: bool, label: String) -> void:
 
 func _run_all() -> void:
 	_test_idle_walk_bind()
+	await _test_hair_and_shoes_rules()
 	await _test_slot_bone_heights()
 	var ids: PackedStringArray = _list_appearance_ids()
 	_ok(ids.size() == 45, "appearance count == 45 (got %s)" % ids.size())
@@ -50,9 +59,12 @@ func _run_all() -> void:
 		_ok(controller.ensure_slot_bindings(), "%s slot bindings" % appearance_id)
 		_ok(_body_is_expected_pack(controller, appearance_id), "%s PACK_021 body" % appearance_id)
 		_ok(controller.count_visible_slot_children("HairRoot") == 1, "%s exactly one Hair" % appearance_id)
+		_ok(not controller.has_active_primitive_hair(), "%s no primitive hair" % appearance_id)
+		_ok(_hair_selection_valid(controller), "%s real hairstyle or bald" % appearance_id)
 		_ok(controller.count_visible_slot_children("TopRoot") <= 1, "%s <=1 Top" % appearance_id)
 		_ok(controller.count_visible_slot_children("BottomRoot") <= 1, "%s <=1 Bottom" % appearance_id)
-		_ok(controller.count_visible_slot_children("ShoesRoot") <= 1, "%s <=1 Shoes" % appearance_id)
+		_ok(controller.count_visible_slot_children("ShoesRoot") <= 1, "%s <=1 Shoes pair" % appearance_id)
+		_ok(controller.count_visible_shoe_foot_meshes() == 2, "%s left+right shoes" % appearance_id)
 		_ok(controller.count_visible_slot_children("HeadAccessoryRoot") <= 1, "%s <=1 HeadAcc" % appearance_id)
 		_ok(controller.count_visible_slot_children("NeckAccessoryRoot") <= 1, "%s <=1 NeckAcc" % appearance_id)
 		_ok(controller.count_visible_slot_children("HandAccessoryRoot") <= 1, "%s <=1 HandAcc" % appearance_id)
@@ -61,7 +73,6 @@ func _run_all() -> void:
 		_ok(_slot_heights_sane(controller, appearance_id), "%s slot heights on body" % appearance_id)
 		snapshots[appearance_id] = _snapshot(controller)
 		actor.queue_free()
-	# Determinism: recreate and compare snapshots (no RNG / save-load randomization).
 	for appearance_id in snapshots.keys():
 		var id_name2: StringName = StringName(appearance_id)
 		var actor2: CharacterActor = CharacterFactory.create(id_name2, id_name2, _spawn_root)
@@ -99,8 +110,39 @@ func _test_idle_walk_bind() -> void:
 	female.queue_free()
 
 
+func _test_hair_and_shoes_rules() -> void:
+	var actor_a: CharacterActor = CharacterFactory.create(&"appearance_male_base", &"hair_iso_a", _spawn_root)
+	var actor_b: CharacterActor = CharacterFactory.create(&"appearance_male_base", &"hair_iso_b", _spawn_root)
+	_ok(actor_a != null and actor_b != null, "hair isolation actors")
+	if actor_a == null or actor_b == null:
+		return
+	var ctrl_a: CharacterVariantController = _find_controller(actor_a)
+	var ctrl_b: CharacterVariantController = _find_controller(actor_b)
+	_ok(ctrl_a != null and ctrl_b != null, "hair isolation controllers")
+	if ctrl_a == null or ctrl_b == null:
+		return
+	# Force same style, different colors — instance materials must not leak.
+	ctrl_a.apply_variants(&"2", &"blond", &"0", &"gray", &"0", &"navy", &"0", &"none", &"none", &"none")
+	ctrl_b.apply_variants(&"2", &"black", &"0", &"gray", &"0", &"navy", &"0", &"none", &"none", &"none")
+	await get_tree().process_frame
+	var color_a: Color = ctrl_a.sample_visible_hair_albedo()
+	var color_b: Color = ctrl_b.sample_visible_hair_albedo()
+	_ok(color_a.a > 0.0 and color_b.a > 0.0, "hair colors sampled")
+	_ok(not color_a.is_equal_approx(color_b), "hair material instance isolation (A != B)")
+	_ok(not ctrl_a.has_active_primitive_hair(), "isolation A no primitive hair")
+	_ok(ctrl_a.count_visible_shoe_foot_meshes() == 2, "isolation A dual shoes")
+	# Index accept forms: "0"/"00"/0 and "4"/"04".
+	ctrl_a.apply_variants(&"00", &"brown", &"0", &"gray", &"0", &"navy", &"0", &"none", &"none", &"none")
+	_ok(String(ctrl_a.get_visible_slot_child_name("HairRoot")) == "Hair_00", "accept hair 00")
+	ctrl_a.apply_variants(&"04", &"brown", &"0", &"gray", &"0", &"navy", &"0", &"none", &"none", &"none")
+	_ok(String(ctrl_a.get_visible_slot_child_name("HairRoot")) == "Hair_04", "accept hair 04")
+	ctrl_a.apply_variants(&"05", &"brown", &"0", &"gray", &"0", &"navy", &"0", &"none", &"none", &"none")
+	_ok(String(ctrl_a.get_visible_slot_child_name("HairRoot")) == "Hair_04", "migrate legacy hair 05 -> 4")
+	actor_a.queue_free()
+	actor_b.queue_free()
+
+
 func _test_slot_bone_heights() -> void:
-	## Spawn bases + 5 male + 5 female profiles; assert hair/top/bottom above feet.
 	var sample_ids: PackedStringArray = PackedStringArray([
 		"appearance_male_base",
 		"appearance_female_base",
@@ -149,23 +191,17 @@ func _test_slot_bone_heights() -> void:
 		_ok(top_y > 0.9, "%s top Y>0.9 (got %s)" % [appearance_id, snappedf(top_y, 0.001)])
 		_ok(bottom_y > 0.4, "%s bottom Y>0.4 (got %s)" % [appearance_id, snappedf(bottom_y, 0.001)])
 		_ok(hair_y > top_y and top_y > bottom_y, "%s hair>top>bottom" % appearance_id)
+		_ok(controller.count_visible_shoe_foot_meshes() == 2, "%s dual shoes in sample" % appearance_id)
 		hair_ys.append(hair_y)
-		var top_root: Node = controller.get_node_or_null("TopRoot")
-		if top_root != null:
-			for child in top_root.get_children():
-				var n3: Node3D = child as Node3D
-				if n3 == null or not n3.visible:
-					continue
-				var mi: MeshInstance3D = n3.get_node_or_null("Mesh") as MeshInstance3D
-				if mi != null and mi.material_override is StandardMaterial3D:
-					top_colors.append((mi.material_override as StandardMaterial3D).albedo_color)
+		var top_mi: MeshInstance3D = _first_visible_mesh(controller.get_node_or_null("TopRoot"))
+		if top_mi != null and top_mi.material_override is StandardMaterial3D:
+			top_colors.append((top_mi.material_override as StandardMaterial3D).albedo_color)
 		kept.append(actor)
 	await _capture_lineup_evidence(kept)
 	for actor_free in kept:
 		if is_instance_valid(actor_free):
 			actor_free.queue_free()
 	await get_tree().process_frame
-	# Distinctness: at least some hair heights or top colors differ across sample.
 	var distinct_hair: bool = false
 	for i in hair_ys.size():
 		for j in range(i + 1, hair_ys.size()):
@@ -186,7 +222,6 @@ func _capture_lineup_evidence(actors: Array[CharacterActor]) -> void:
 		return
 	var dir_path: String = "res://docs/agent/qa/evidence/vc_chars_fix"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
-	# Metrics from LIVE actors (source of truth for attach heights).
 	var metrics: Array = []
 	for actor in actors:
 		if actor == null or not is_instance_valid(actor):
@@ -200,8 +235,9 @@ func _capture_lineup_evidence(actors: Array[CharacterActor]) -> void:
 			"hair_y": snappedf(controller.get_visible_slot_mesh_global_y("HairRoot"), 0.001),
 			"top_y": snappedf(controller.get_visible_slot_mesh_global_y("TopRoot"), 0.001),
 			"bottom_y": snappedf(controller.get_visible_slot_mesh_global_y("BottomRoot"), 0.001),
-			"shoes_y": snappedf(controller.get_visible_slot_mesh_global_y("ShoesRoot"), 0.001),
+			"shoes_feet": controller.count_visible_shoe_foot_meshes(),
 			"hair_child": String(controller.get_visible_slot_child_name("HairRoot")),
+			"hair_path": controller.get_active_hair_resource_path(),
 			"top_child": String(controller.get_visible_slot_child_name("TopRoot")),
 			"bottom_child": String(controller.get_visible_slot_child_name("BottomRoot")),
 			"hair_bone_idx": hair_att.bone_idx if hair_att != null else -1,
@@ -213,7 +249,6 @@ func _capture_lineup_evidence(actors: Array[CharacterActor]) -> void:
 		metrics_file.store_string(JSON.stringify(metrics, "\t"))
 		metrics_file.close()
 		print("VC_CHARS_PRESENTATION_TEST metrics path=%s count=%s" % [metrics_path, metrics.size()])
-	# Capture LIVE lineup via a temporary current camera (no duplicate / SubViewport).
 	var light := DirectionalLight3D.new()
 	light.name = "EvidenceLight"
 	light.rotation_degrees = Vector3(-35.0, 35.0, 0.0)
@@ -307,6 +342,23 @@ func _body_is_expected_pack(controller: CharacterVariantController, appearance_i
 	return false
 
 
+func _hair_selection_valid(controller: CharacterVariantController) -> bool:
+	var path: String = controller.get_active_hair_resource_path()
+	if path == "":
+		return true # bald
+	var allowed: PackedStringArray = PackedStringArray([
+		"Hair_Buzzed.gltf",
+		"Hair_BuzzedFemale.gltf",
+		"Hair_SimpleParted.gltf",
+		"Hair_Long.gltf",
+		"Hair_Buns.gltf",
+	])
+	var file_name: String = path.get_file()
+	if file_name == "Hair_Beard.gltf":
+		return false
+	return allowed.has(file_name)
+
+
 func _materials_valid(controller: CharacterVariantController) -> bool:
 	for slot_name in ["HairRoot", "TopRoot", "BottomRoot", "ShoesRoot", "HeadAccessoryRoot", "NeckAccessoryRoot", "HandAccessoryRoot"]:
 		var slot: Node = controller.get_node_or_null(slot_name)
@@ -318,14 +370,42 @@ func _materials_valid(controller: CharacterVariantController) -> bool:
 				continue
 			if String(n3.name).ends_with("_None"):
 				continue
-			var mi: MeshInstance3D = n3.get_node_or_null("Mesh") as MeshInstance3D
-			if mi == null:
+			if slot_name == "HairRoot" and not _has_mesh(n3):
+				continue # bald
+			var mi: MeshInstance3D = _first_mesh(n3)
+			if mi == null or mi.mesh == null:
 				return false
-			if mi.mesh == null:
-				return false
-			if mi.material_override == null:
+			if mi.material_override == null and mi.get_active_material(0) == null:
 				return false
 	return true
+
+
+func _first_visible_mesh(slot: Node) -> MeshInstance3D:
+	if slot == null:
+		return null
+	for child in slot.get_children():
+		var n3: Node3D = child as Node3D
+		if n3 == null or not n3.visible:
+			continue
+		var mi: MeshInstance3D = _first_mesh(n3)
+		if mi != null:
+			return mi
+	return null
+
+
+func _first_mesh(node: Node) -> MeshInstance3D:
+	var as_mi: MeshInstance3D = node as MeshInstance3D
+	if as_mi != null and as_mi.mesh != null:
+		return as_mi
+	for child in node.get_children():
+		var found: MeshInstance3D = _first_mesh(child)
+		if found != null:
+			return found
+	return null
+
+
+func _has_mesh(node: Node) -> bool:
+	return _first_mesh(node) != null
 
 
 func _snapshot(controller: CharacterVariantController) -> Dictionary:
@@ -337,6 +417,7 @@ func _snapshot(controller: CharacterVariantController) -> Dictionary:
 		"head": String(controller.get_visible_slot_child_name("HeadAccessoryRoot")),
 		"neck": String(controller.get_visible_slot_child_name("NeckAccessoryRoot")),
 		"hand": String(controller.get_visible_slot_child_name("HandAccessoryRoot")),
+		"shoe_feet": controller.count_visible_shoe_foot_meshes(),
 	}
 
 

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cti1s653hhb5u"]
+
+[ext_resource type="Script" uid="uid://2wwb13lg4ve8" path="res://world/test/npc_presentation_rules_self_test.gd" id="1_ysu2g"]
+
+[node name="NpcPresentationRulesTest" type="Node" unique_id=1806658285]
+script = ExtResource("1_ysu2g")

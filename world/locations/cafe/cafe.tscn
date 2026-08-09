@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://bwtavkdcvpoir" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
 [ext_resource type="Script" uid="uid://cjdj858hibijc" path="res://world/story_event_point.gd" id="5_story"]
 [ext_resource type="PackedScene" uid="uid://craep8snu78fc" path="res://game/rivals/rival_actor.tscn" id="6_sgsvq"]
+[ext_resource type="Script" uid="uid://fxhdpa52ttr0" path="res://world/npc_presentation_rules.gd" id="7_xlji7"]
 [ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="9_n632s"]
 [ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="10_sgsvq"]
 
@@ -243,7 +244,7 @@ modulate = Color(0.85, 0.1, 0.1, 1)
 text = "ПОСЛЕДНИЙ"
 font_size = 18
 
-[node name="DonorCafe" type="Node3D" parent="Geometry" unique_id=853646140 instance=ExtResource("2_rmni2")]
+[node name="DonorCafe" parent="Geometry" unique_id=853646140 instance=ExtResource("2_rmni2")]
 
 [node name="PlayerSpawns" type="Node3D" parent="." unique_id=150638794]
 
@@ -296,6 +297,10 @@ script = ExtResource("4_nspawn")
 npc_kind = 2
 
 [node name="RivalActor" parent="NpcSpawns/npc_rival_cafe_menu_holder" unique_id=1483451366 instance=ExtResource("6_sgsvq")]
+
+[node name="NpcPresentationRules" type="Node" parent="NpcSpawns" unique_id=384742323]
+script = ExtResource("7_xlji7")
+mode = 1
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1911734969]
 
