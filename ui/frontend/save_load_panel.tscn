@@ -1,8 +1,95 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://ui/frontend/save_load_panel.gd" id="1_saveload"]
+[ext_resource type="Theme" path="res://ui/theme/date_factory_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/common/confirmation_dialog.tscn" id="3_confirm"]
 
 [node name="SaveLoadPanel" type="CanvasLayer"]
 process_mode = 3
 layer = 54
 script = ExtResource("1_saveload")
+
+[node name="Root" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme = ExtResource("2_theme")
+
+[node name="Dim" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.05, 0.07, 0.78)
+
+[node name="SafeMargin" type="MarginContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Center" type="CenterContainer" parent="Root/SafeMargin"]
+layout_mode = 2
+
+[node name="Panel" type="PanelContainer" parent="Root/SafeMargin/Center"]
+custom_minimum_size = Vector2(620, 650)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/SafeMargin/Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="Content" type="VBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "ЗАГРУЗИТЬ"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="CardsHost" type="VBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="StatusLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="BackButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "Назад"
+
+[node name="ConfirmationDialog" parent="Root" instance=ExtResource("3_confirm")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1

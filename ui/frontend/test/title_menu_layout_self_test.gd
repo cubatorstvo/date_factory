@@ -30,7 +30,14 @@ func _run_all() -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 
-	var menu: TitleMenu = TitleMenu.new()
+	var packed: PackedScene = load("res://ui/frontend/title_menu.tscn") as PackedScene
+	if packed == null:
+		_fail("title_menu.tscn loads")
+		return
+	var menu: TitleMenu = packed.instantiate() as TitleMenu
+	if menu == null:
+		_fail("title_menu.tscn instantiates")
+		return
 	add_child(menu)
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -111,13 +118,7 @@ func _assert_scale(menu: TitleMenu, scale_value: float) -> void:
 
 
 func _find_menu_panel(root: Control) -> PanelContainer:
-	for child in root.get_children():
-		if child is CenterContainer:
-			var center: CenterContainer = child as CenterContainer
-			for nested in center.get_children():
-				if nested is PanelContainer:
-					return nested as PanelContainer
-	return null
+	return root.get_node_or_null("SafeMargin/Center/Panel") as PanelContainer
 
 
 func _collect_menu_buttons(panel: PanelContainer) -> Array[Button]:
@@ -134,12 +135,7 @@ func _collect_buttons_recursive(node: Node, out: Array[Button]) -> void:
 
 
 func _find_version_label(menu: TitleMenu) -> Label:
-	for child in menu.get_children():
-		if child is Label:
-			var lab: Label = child as Label
-			if String(lab.text).begins_with("v"):
-				return lab
-	return null
+	return menu.get_node_or_null("Root/VersionLabel") as Label
 
 
 func _rect_within_viewport(rect: Rect2, vp: Rect2, slack: float) -> bool:

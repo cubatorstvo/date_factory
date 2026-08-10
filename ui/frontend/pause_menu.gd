@@ -2,15 +2,14 @@ extends CanvasLayer
 ## Pause menu — MODULE24 §§56, 64. Replaces prototype PauseOverlay.
 class_name PauseMenu
 
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
-const TITLE_FONT_SIZE: int = 28
-const BODY_FONT_SIZE: int = 20
-const TITLE_MENU_SCRIPT: String = "res://ui/frontend/title_menu.gd"
+const TITLE_MENU_SCENE: String = "res://ui/frontend/title_menu.tscn"
+const SAVE_LOAD_SCENE: String = "res://ui/frontend/save_load_panel.tscn"
+const SETTINGS_SCENE: String = "res://ui/frontend/settings_panel.tscn"
 
-var _root: Control = null
-var _main_panel: Control = null
-var _confirm_host: Control = null
-var _status_label: Label = null
+@onready var _root: Control = %Root
+@onready var _main_panel: Control = %MainPanel
+@onready var _confirm_dialog: ConfirmationDialogView = %ConfirmationDialog
+@onready var _status_label: Label = %StatusLabel
 var _player: PlayerController = null
 var _subpanel_open: bool = false
 var _visible_menu: bool = false
@@ -20,7 +19,8 @@ func _ready() -> void:
 	add_to_group("pause_menu")
 	layer = 52
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_build_ui()
+	UiScaleHelper.apply_to_control(_root)
+	_wire_controls()
 	hide_menu()
 	call_deferred("_bind_player")
 
@@ -91,74 +91,13 @@ func _hide_prototype_overlay() -> void:
 		overlay.visible = false
 
 
-func _build_ui() -> void:
-	for child in get_children():
-		child.queue_free()
-
-	_root = Control.new()
-	_root.name = "Root"
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_root.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_root)
-	_apply_theme(_root)
-	UiScaleHelper.apply_to_control(_root)
-
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.04, 0.05, 0.07, 0.72)
-	_root.add_child(dim)
-
-	_main_panel = CenterContainer.new()
-	_main_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_root.add_child(_main_panel)
-
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(380, 420)
-	_main_panel.add_child(panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 22)
-	margin.add_theme_constant_override("margin_right", 22)
-	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_bottom", 18)
-	panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
-	margin.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "ПАУЗА"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
-	vbox.add_child(title)
-
-	vbox.add_child(_menu_button("Продолжить", _resume))
-	vbox.add_child(_menu_button("Сохранить", _open_save))
-	vbox.add_child(_menu_button("Загрузить", _open_load))
-	vbox.add_child(_menu_button("Настройки", _open_settings))
-	vbox.add_child(_menu_button("В главное меню", _return_to_title))
-	vbox.add_child(_menu_button("Выйти из игры", _quit_game))
-
-	_status_label = Label.new()
-	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status_label.add_theme_font_size_override("font_size", 16)
-	vbox.add_child(_status_label)
-
-	_confirm_host = Control.new()
-	_confirm_host.visible = false
-	_confirm_host.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_confirm_host.mouse_filter = Control.MOUSE_FILTER_STOP
-	_root.add_child(_confirm_host)
-
-
-func _menu_button(text: String, handler: Callable) -> Button:
-	var btn := Button.new()
-	btn.text = text
-	btn.custom_minimum_size = Vector2(0, 38)
-	btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	btn.pressed.connect(handler)
-	return btn
+func _wire_controls() -> void:
+	%ResumeButton.pressed.connect(_resume)
+	%SaveButton.pressed.connect(_open_save)
+	%LoadButton.pressed.connect(_open_load)
+	%SettingsButton.pressed.connect(_open_settings)
+	%TitleButton.pressed.connect(_return_to_title)
+	%QuitButton.pressed.connect(_quit_game)
 
 
 func _resume() -> void:
@@ -176,7 +115,14 @@ func _open_save() -> void:
 	_subpanel_open = true
 	if _main_panel != null:
 		_main_panel.visible = false
-	var panel: SaveLoadPanel = SaveLoadPanel.new()
+	var packed: PackedScene = load(SAVE_LOAD_SCENE) as PackedScene
+	if packed == null:
+		_subpanel_open = false
+		_main_panel.visible = true
+		return
+	var panel: SaveLoadPanel = packed.instantiate() as SaveLoadPanel
+	if panel == null:
+		return
 	add_child(panel)
 	panel.open_save(func() -> void:
 		_subpanel_open = false
@@ -190,7 +136,14 @@ func _open_load() -> void:
 	_subpanel_open = true
 	if _main_panel != null:
 		_main_panel.visible = false
-	var panel: SaveLoadPanel = SaveLoadPanel.new()
+	var packed: PackedScene = load(SAVE_LOAD_SCENE) as PackedScene
+	if packed == null:
+		_subpanel_open = false
+		_main_panel.visible = true
+		return
+	var panel: SaveLoadPanel = packed.instantiate() as SaveLoadPanel
+	if panel == null:
+		return
 	add_child(panel)
 	panel.open_load(func() -> void:
 		_subpanel_open = false
@@ -210,14 +163,20 @@ func _open_settings() -> void:
 	_subpanel_open = true
 	if _main_panel != null:
 		_main_panel.visible = false
-	var panel: SettingsPanel = SettingsPanel.new()
+	var packed: PackedScene = load(SETTINGS_SCENE) as PackedScene
+	if packed == null:
+		_subpanel_open = false
+		_main_panel.visible = true
+		return
+	var panel: SettingsPanel = packed.instantiate() as SettingsPanel
+	if panel == null:
+		return
 	add_child(panel)
 	panel.open(func() -> void:
 		_subpanel_open = false
 		if _main_panel != null:
 			_main_panel.visible = true
-		if _root != null:
-			UiScaleHelper.apply_to_control(_root)
+		UiScaleHelper.apply_to_control(_root)
 	)
 
 
@@ -241,10 +200,9 @@ func _do_return_to_title() -> void:
 	if title != null and title.has_method("show_menu"):
 		title.call("show_menu")
 	else:
-		var script_res: Resource = load(TITLE_MENU_SCRIPT)
-		if script_res is GDScript:
-			var menu: Node = (script_res as GDScript).new()
-			get_tree().root.add_child(menu)
+		var packed: PackedScene = load(TITLE_MENU_SCENE) as PackedScene
+		if packed != null:
+			get_tree().root.add_child(packed.instantiate())
 
 
 func _quit_game() -> void:
@@ -257,69 +215,18 @@ func _quit_game() -> void:
 
 
 func _confirm(message: String, on_yes: Callable) -> void:
-	_hide_confirm()
 	_subpanel_open = true
-	_confirm_host.visible = true
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0, 0, 0, 0.55)
-	_confirm_host.add_child(dim)
-	var confirm_center := CenterContainer.new()
-	confirm_center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_confirm_host.add_child(confirm_center)
-	var box := PanelContainer.new()
-	box.custom_minimum_size = Vector2(420, 170)
-	confirm_center.add_child(box)
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_bottom", 14)
-	box.add_child(margin)
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 12)
-	margin.add_child(vbox)
-	var lab := Label.new()
-	lab.text = message
-	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(lab)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	vbox.add_child(row)
-	var yes := Button.new()
-	yes.text = "Да"
-	yes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	yes.pressed.connect(func() -> void:
-		_hide_confirm()
+	var confirmed_callback: Callable = func() -> void:
 		_subpanel_open = false
 		if on_yes.is_valid():
 			on_yes.call()
-	)
-	row.add_child(yes)
-	var no := Button.new()
-	no.text = "Нет"
-	no.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	no.pressed.connect(func() -> void:
-		_hide_confirm()
+	var cancelled_callback: Callable = func() -> void:
 		_subpanel_open = false
-	)
-	row.add_child(no)
+	_confirm_dialog.open(message, confirmed_callback, cancelled_callback)
 
 
 func _hide_confirm() -> void:
-	if _confirm_host == null:
-		return
-	for child in _confirm_host.get_children():
-		child.queue_free()
-	_confirm_host.visible = false
-
-
-func _apply_theme(control: Control) -> void:
-	if ResourceLoader.exists(THEME_PATH):
-		var theme_res: Resource = load(THEME_PATH)
-		if theme_res is Theme:
-			control.theme = theme_res as Theme
+	_confirm_dialog.close()
 
 
 func _audio_ui(sound_id: StringName) -> void:
