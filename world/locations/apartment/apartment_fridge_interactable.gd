@@ -77,9 +77,6 @@ func _get_or_create_carrier(player: Node) -> Node:
 		return null
 	carrier.name = "ApartmentMealCarrier"
 	camera.add_child(carrier)
-	var carrier_3d: Node3D = carrier as Node3D
-	carrier_3d.position = Vector3(0.38, -0.28, -0.72)
-	carrier_3d.rotation_degrees = Vector3.ZERO
 	return carrier
 
 

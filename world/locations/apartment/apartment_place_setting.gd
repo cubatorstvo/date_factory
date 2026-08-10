@@ -6,10 +6,6 @@ extends Node3D
 const PLACE_SETTING_NAMES: PackedStringArray = PackedStringArray([
 	"DatePlateA",
 	"DatePlateB",
-	"DateFork",
-	"DateSpoon",
-	"DateForkB",
-	"DateSpoonB",
 	"DateGlassA",
 	"DateGlassB",
 ])

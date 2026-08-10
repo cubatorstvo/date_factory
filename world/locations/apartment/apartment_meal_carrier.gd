@@ -8,6 +8,9 @@ const CATALOG_SCRIPT: String = (
 const SERVING_PAIR_SCENE: String = (
 	"res://world/locations/apartment/apartment_serving_pair.tscn"
 )
+const SIDE_OFFSET: float = 0.38
+const DOWN_OFFSET: float = 0.28
+const FORWARD_OFFSET: float = 0.72
 
 var _serving_id: StringName = &""
 var _visual: Node3D = null
@@ -15,6 +18,12 @@ var _visual: Node3D = null
 
 func _ready() -> void:
 	add_to_group("apartment_meal_carrier")
+	top_level = true
+	_update_world_transform()
+
+
+func _process(_delta: float) -> void:
+	_update_world_transform()
 
 
 func has_serving() -> bool:
@@ -105,6 +114,27 @@ func _get_definition(item_id: StringName) -> Dictionary:
 	if catalog == null:
 		return {}
 	return catalog.call("get_definition", item_id) as Dictionary
+
+
+func _update_world_transform() -> void:
+	var camera: Camera3D = get_parent() as Camera3D
+	if camera == null or not camera.is_inside_tree():
+		return
+	var forward: Vector3 = -camera.global_basis.z
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		forward = Vector3.FORWARD
+	else:
+		forward = forward.normalized()
+	var right: Vector3 = forward.cross(Vector3.UP).normalized()
+	var target_position: Vector3 = (
+		camera.global_position
+		+ right * SIDE_OFFSET
+		+ Vector3.DOWN * DOWN_OFFSET
+		+ forward * FORWARD_OFFSET
+	)
+	var horizontal_basis: Basis = Basis(right, Vector3.UP, -forward)
+	global_transform = Transform3D(horizontal_basis, target_position)
 
 
 func _clear_visual() -> void:

@@ -5,6 +5,12 @@ class_name ApartmentServingPair
 const PLATE_SCENE: String = (
 	"res://assets/environment/interior/house_interior/meshes/Plate_2.fbx"
 )
+const CARRIED_LEFT_POSITION: Vector3 = Vector3(-0.18, 0.0, 0.0)
+const CARRIED_RIGHT_POSITION: Vector3 = Vector3(0.18, 0.0, 0.0)
+const TABLE_LEFT_PLATE_POSITION: Vector3 = Vector3(-0.301, -0.048, -0.002)
+const TABLE_RIGHT_PLATE_POSITION: Vector3 = Vector3(0.299, -0.048, -0.002)
+const TABLE_LEFT_DRINK_POSITION: Vector3 = Vector3(-0.18, -0.048, 0.11)
+const TABLE_RIGHT_DRINK_POSITION: Vector3 = Vector3(0.18, -0.048, -0.11)
 
 func configure(definition: Dictionary, carried: bool) -> bool:
 	if definition.is_empty():
@@ -14,11 +20,16 @@ func configure(definition: Dictionary, carried: bool) -> bool:
 	if left == null or right == null:
 		return false
 	var category: StringName = definition.get("category", &"")
-	var spacing: float = 0.18 if carried else 0.3
-	var drink_depth: float = 0.0 if carried else 0.2
-	left.position = Vector3(-spacing, 0.0, drink_depth if category == &"drink" else 0.0)
-	right.position = Vector3(spacing, 0.0, drink_depth if category == &"drink" else 0.0)
-	rotation_degrees = Vector3(-18.0, 0.0, 0.0) if carried else Vector3.ZERO
+	if carried:
+		left.position = CARRIED_LEFT_POSITION
+		right.position = CARRIED_RIGHT_POSITION
+	elif category == &"drink":
+		left.position = TABLE_LEFT_DRINK_POSITION
+		right.position = TABLE_RIGHT_DRINK_POSITION
+	else:
+		left.position = TABLE_LEFT_PLATE_POSITION
+		right.position = TABLE_RIGHT_PLATE_POSITION
+	rotation_degrees = Vector3.ZERO
 	scale = Vector3(0.78, 0.78, 0.78) if carried else Vector3.ONE
 	_clear_anchor(left)
 	_clear_anchor(right)
