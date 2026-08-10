@@ -37,19 +37,21 @@ func _on_interact(player: Node) -> void:
 		_menu = null
 		return
 	tree.root.add_child(_menu)
-	_menu.connect("dish_selected", _on_dish_selected.bind(player))
+	_menu.connect("serving_selected", _on_serving_selected.bind(player))
 	_menu.connect("closed", _on_menu_closed)
 	_menu.call("open", player)
 
 
-func _on_dish_selected(dish_id: StringName, player: Node) -> void:
+func _on_serving_selected(item_id: StringName, player: Node) -> void:
 	var carrier: Node = _get_or_create_carrier(player)
-	if carrier == null or not carrier.has_method("set_meal"):
+	if carrier == null or not carrier.has_method("set_serving"):
 		return
-	if not bool(carrier.call("set_meal", dish_id)):
+	if not bool(carrier.call("set_serving", item_id)):
 		return
-	var dish_name: String = str(carrier.call("get_meal_name"))
-	_notify("В руках: %s. Отнеси блюдо на стол." % dish_name)
+	var serving_name: String = str(carrier.call("get_serving_name"))
+	var category: StringName = carrier.call("get_serving_category")
+	var noun: String = "два напитка" if category == &"drink" else "две порции"
+	_notify("В руках: %s — %s. Отнеси их на стол." % [noun, serving_name])
 
 
 func _on_menu_closed() -> void:

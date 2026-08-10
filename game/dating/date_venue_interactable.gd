@@ -4,13 +4,16 @@ extends Interactable
 
 const LAYER_INTERACTABLE: int = 4
 const DATING_UI_SCENE: String = "res://ui/dating/dating_ui.tscn"
+const SERVING_PAIR_SCENE: String = (
+	"res://world/locations/apartment/apartment_serving_pair.tscn"
+)
 
 @export var prompt_text: String = "Стол для свидания"
 
 var _ui: CanvasLayer = null
 var _dating_ui: CanvasLayer = null
 var _active_player: Node = null
-var _placed_meal: Node3D = null
+var _placed_servings: Dictionary = {}
 
 
 func _ready() -> void:
@@ -27,11 +30,13 @@ func get_interaction_prompt(player: Node) -> String:
 	if (
 		_current_location_id() == &"apartment"
 		and carrier != null
-		and carrier.has_method("has_meal")
-		and bool(carrier.call("has_meal"))
+		and carrier.has_method("has_serving")
+		and bool(carrier.call("has_serving"))
 	):
-		var dish_name: String = str(carrier.call("get_meal_name"))
-		return "[E] Поставить на стол: %s" % dish_name
+		var serving_name: String = str(carrier.call("get_serving_name"))
+		var category: StringName = carrier.call("get_serving_category")
+		var noun: String = "два напитка" if category == &"drink" else "две порции"
+		return "[E] Поставить %s на стол: %s" % [noun, serving_name]
 	prompt_action = prompt_text
 	return super.get_interaction_prompt(player)
 
@@ -52,17 +57,16 @@ func _try_place_carried_meal(player: Node) -> bool:
 	if _current_location_id() != &"apartment":
 		return false
 	var carrier: Node = _get_meal_carrier(player)
-	if carrier == null or not carrier.has_method("has_meal"):
+	if carrier == null or not carrier.has_method("has_serving"):
 		return false
-	if not bool(carrier.call("has_meal")):
+	if not bool(carrier.call("has_serving")):
 		return false
-	var meal: Dictionary = carrier.call("take_meal")
-	if meal.is_empty():
+	var serving: Dictionary = carrier.call("take_serving")
+	if serving.is_empty():
 		return false
-	var scene_path: String = str(meal.get("scene", ""))
-	var packed: PackedScene = load(scene_path) as PackedScene
+	var packed: PackedScene = load(SERVING_PAIR_SCENE) as PackedScene
 	if packed == null:
-		push_error("[DateVenue] meal scene missing: %s" % scene_path)
+		push_error("[DateVenue] serving pair scene missing")
 		return true
 	var instance: Node = packed.instantiate()
 	if not (instance is Node3D):
@@ -73,14 +77,21 @@ func _try_place_carried_meal(player: Node) -> bool:
 		anchor = Node3D.new()
 		anchor.name = "MealAnchor"
 		add_child(anchor)
-	if _placed_meal != null and is_instance_valid(_placed_meal):
-		_placed_meal.queue_free()
-	_placed_meal = instance as Node3D
-	anchor.add_child(_placed_meal)
-	_placed_meal.position = Vector3.ZERO
-	_placed_meal.rotation_degrees = Vector3.ZERO
-	_placed_meal.scale = Vector3.ONE
-	_notify_meal_placed("На столе: %s" % str(meal.get("name", "блюдо")))
+	var category: StringName = serving.get("category", &"food")
+	var previous: Node3D = _placed_servings.get(category) as Node3D
+	if previous != null and is_instance_valid(previous):
+		previous.queue_free()
+	var pair: Node3D = instance as Node3D
+	pair.name = "PlacedDrinkPair" if category == &"drink" else "PlacedFoodPair"
+	anchor.add_child(pair)
+	if not pair.has_method("configure") or not bool(pair.call("configure", serving, false)):
+		pair.queue_free()
+		return true
+	_placed_servings[category] = pair
+	var noun: String = "два напитка" if category == &"drink" else "две порции"
+	_notify_meal_placed(
+		"На столе: %s — %s" % [noun, str(serving.get("name", "угощение"))]
+	)
 	return true
 
 
