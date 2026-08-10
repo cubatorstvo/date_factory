@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://pq0or76hfct2"]
 
-[ext_resource type="Script" uid="uid://dv47nd1380jex" path="res://world/art/donor_import/characters/character_anim_controller.gd" id="1_8hx8u"]
+[ext_resource type="Script" uid="uid://dv47nd1380jex" path="res://characters/framework/character_anim_controller.gd" id="1_8hx8u"]
 [ext_resource type="AnimationLibrary" path="res://assets/animation/universal_library/libraries/DF_UAL_Aliases.res" id="2_63nd2"]
 [ext_resource type="PackedScene" uid="uid://ck2333y3ca24q" path="res://assets/characters/hero_base/meshes/bodies/Superhero_Male_FullBody.gltf" id="3_k5rs6"]
 

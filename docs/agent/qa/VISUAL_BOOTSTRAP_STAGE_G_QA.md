@@ -26,7 +26,7 @@
 | 4 | Markers exist after travel | **PASS** | All required markers found with scripts/positions (see §Markers). | Harness marker probes |
 | 5 | Early route apartment→city_hub→cafe→city_hub→apartment | **PASS** | Full chain at STAGE_1. | Harness early-route block |
 | 6 | Cafe DateVenue interactable path | **PASS** | Present; script `res://game/dating/date_venue_interactable.gd`; `get_interaction_prompt` → `[E] Столик для свиданий`; `can_interact(null)=true`. **Method used:** node presence + script API (`get_interaction_prompt` / `can_interact`). No dating-schedule cheat invented. | Harness cafe DateVenue block |
-| 7 | Visual presence (non-cube bootstrap) | **PASS** | apartment `Geometry/DonorApartment` kids=6; city `Geometry/DonorCity`; cafe `Geometry/DonorCafe`; mine `Geometry/PackVisuals` kids=85; lab `Geometry/SciFiDressing` kids=61; production `Geometry/DressedShell` kids=160. Screenshots opened and match location names. | Harness + PNG open |
+| 7 | Visual presence (non-cube bootstrap) | **PASS** | apartment `Geometry/ApartmentArt` kids=6; city `Geometry/DonorCity`; cafe `Geometry/DonorCafe`; mine `Geometry/PackVisuals` kids=85; lab `Geometry/SciFiDressing` kids=61; production `Geometry/DressedShell` kids=160. Screenshots opened and match location names. | Harness + PNG open |
 | 8 | Screenshot inventory vs TZ lists | **PASS** | legacy PNG=22/22; current PNG=43/43; no missing names; no extras. | Inventory § below |
 | E1 | Edge: repeated cafe travel | **PASS** | Two consecutive `request_travel(cafe)` succeed. | Harness |
 | E2 | Edge: STAGE_1 blocks production_area | **PASS** | `request_travel(production_area)` rc=1; location stays cafe. | Harness |

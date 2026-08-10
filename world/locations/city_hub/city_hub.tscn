@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
 [ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
-[ext_resource type="PackedScene" path="res://world/art/donor_import/city/city.tscn" id="3_0bmg4"]
+[ext_resource type="PackedScene" path="res://world/locations/city_hub/art/city.tscn" id="3_0bmg4"]
 [ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
 [ext_resource type="Script" uid="uid://bwtavkdcvpoir" path="res://world/npc_spawn_point.gd" id="4_nspawn"]
 [ext_resource type="PackedScene" path="res://game/girls/girl_actor.tscn" id="4_xiq57"]

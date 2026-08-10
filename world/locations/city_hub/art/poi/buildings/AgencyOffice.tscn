@@ -1,0 +1,136 @@
+[gd_scene format=3 uid="uid://bk72bo142bmjt"]
+
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_r21ni"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="2_0vyk5"]
+[ext_resource type="PackedScene" uid="uid://c1v3og5i7d5cg" path="res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf" id="2_xfqhw"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="3_ykrc4"]
+[ext_resource type="PackedScene" uid="uid://vjq158ae5lcf" path="res://assets/environment/lab/scifi_essentials/meshes/Prop_Desk_Small.gltf" id="4_e82bb"]
+[ext_resource type="PackedScene" uid="uid://6e4dx3o7fe3j" path="res://assets/environment/factory/kenney_factory/meshes/screen-wide.glb" id="5_ql180"]
+[ext_resource type="PackedScene" uid="uid://c23y5gl5rhmtp" path="res://assets/environment/lab/scifi_essentials/meshes/Prop_Chair.gltf" id="6_0o7ij"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rnar0"]
+size = Vector3(8.28, 12, 6.6337714)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wtyn0"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7ve0x"]
+size = Vector3(10, 0.08, 9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_b187x"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_omgw3"]
+albedo_color = Color(0.2, 0.22, 0.28, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ysuvq"]
+albedo_color = Color(0.55, 0.7, 0.9, 1)
+metallic = 0.05
+roughness = 0.55
+
+[node name="AgencyOffice" type="Node3D" unique_id=41524359]
+script = ExtResource("1_r21ni")
+building_id = "agency_office"
+district_id = "agency_row"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(10, 9)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=966404165]
+
+[node name="Building_Medium_2_001_Inst" type="Node3D" parent="VisualRoot" unique_id=1096452688 instance=ExtResource("2_xfqhw")]
+transform = Transform3D(0.5977809, 0, 0, 0, 0.5977809, 0, 0, 0, 0.5977809, 0, 0.006142287, -0.55)
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=1330658284]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1446845527]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=335384887]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -4.112666)
+shape = SubResource("BoxShape3D_rnar0")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1010137309]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_wtyn0")
+mesh = SubResource("BoxMesh_7ve0x")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=562712208]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=918299977]
+
+[node name="Agency" type="Node3D" parent="TenantSlots" unique_id=737659874]
+script = ExtResource("2_0vyk5")
+poi_id = "agency_office"
+action_id = &"open_agency_board"
+prompt_text = "Доска расписания"
+functional_type = "StorefrontPOI"
+progression_stage = 2
+display_name = "Офис агентства"
+action_label = "Доска расписания"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Agency" unique_id=520516895]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Agency" unique_id=821051730]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_ykrc4")
+action_id = &"open_agency_board"
+display_name = "Офис агентства"
+action_label = "Доска расписания"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Agency/InteractionArea" unique_id=1408554826]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_b187x")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Agency" unique_id=131898408]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Agency" unique_id=1709269790]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Agency" unique_id=644551425]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/Agency/Signage" unique_id=17394158]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_omgw3")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/Agency/Signage" unique_id=1398121237]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_ysuvq")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Agency/Signage" unique_id=1594558447]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "AGENCY"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Agency" unique_id=588588593]
+
+[node name="Office" type="OmniLight3D" parent="TenantSlots/Agency/LocalLights" unique_id=1566256464]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0.9)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 1.1
+omni_range = 6.0
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Agency" unique_id=2110987905]
+
+[node name="Prop_Desk_Small_Inst" parent="TenantSlots/Agency/IdentityProps" unique_id=2110471739 instance=ExtResource("4_e82bb")]
+transform = Transform3D(-0.8, 0, -6.9938224e-08, 0, 0.8, 0, 6.9938224e-08, 0, -0.8, -0.5, 0, 0.1)
+
+[node name="screen-wide_Inst" parent="TenantSlots/Agency/IdentityProps" unique_id=148367003 instance=ExtResource("5_ql180")]
+transform = Transform3D(1.1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 1.4, 0)
+
+[node name="Prop_Chair_Inst" parent="TenantSlots/Agency/IdentityProps" unique_id=1690381625 instance=ExtResource("6_0o7ij")]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -0.5, 0, 0.7)

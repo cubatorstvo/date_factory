@@ -1,4 +1,4 @@
-﻿# Third-party assets
+# Third-party assets
 
 Assets copied into this repository for Character Framework (Module 04) and VISUAL BOOTSTRAP expansion.  
 All listed packs are **CC0 1.0** (Public Domain) by **Quaternius** (`https://quaternius.com`) unless noted.  
@@ -28,7 +28,7 @@ Runtime paths are local `res://` only — no dependency on any external project 
 | `assets/characters/hero_base/prefabs/Clone.tscn` | Clone prefab |
 | `assets/characters/hero_base/prefabs/DateGirl_UAL.tscn` | Date-girl UAL prefab |
 
-Prefab scripts point at `res://world/art/donor_import/characters/character_anim_controller.gd`.
+Prefab scripts point at `res://characters/framework/character_anim_controller.gd`.
 
 ---
 

@@ -34,7 +34,7 @@ Focused PE01 tests re-run by this QA all PASS. Full RC suite is **34/35** with p
 | `characters/player/player.gd`, `player.tscn` | Onboarding / interaction evidence wiring; no save schema |
 | `ui/hud/game_hud.gd` | Objective HUD + controls onboarding; uses existing `SaveSystem` **settings** APIs for tutorial-seen ids only (`get/set_tutorial_seen_ids`, `save_settings`) — not game-save schema |
 | `ui/tutorial/tutorial_prompt.gd` | Tutorial card text/behavior |
-| `world/art/donor_import/apartment/apartment.tscn` | Added essential furniture/exit `StaticBody3D` colliders under `Colliders/` |
+| `world/locations/apartment/apartment.tscn` | Added essential furniture/exit `StaticBody3D` colliders under `Colliders/` |
 | `world/locations/apartment/apartment.tscn` | Spawn facing/clearance tweak; restore Neighbor `content_id = &"girl_neighbor"` |
 
 ### Focused tests (untracked)
@@ -105,9 +105,9 @@ Get-Content tmp\qa\summary.txt
 Select-String tmp\qa\world_location.log -Pattern "FAIL|empty NpcSpawnPoint"
 
 # Donor / PACK019 / save hygiene
-rg -n "date_factory_legacy|PACK019|PACK_019|res://\.\./" characters/player ui/hud ui/tutorial world/locations/apartment world/art/donor_import/apartment
+rg -n "date_factory_legacy|PACK019|PACK_019|res://\.\./" characters/player ui/hud ui/tutorial world/locations/apartment
 git status --short -- project.godot
-git diff --stat -- characters ui/hud ui/tutorial world/art/donor_import/apartment world/locations/apartment docs/agent
+git diff --stat -- characters ui/hud ui/tutorial world/locations/apartment docs/agent
 
 # Focused tests (isolated APPDATA under tmp/pe01_final_qa)
 godot --path <project> --headless --quit-after 45 res://ui/hud/test/pe01_onboarding_hud_test.tscn
@@ -210,7 +210,7 @@ Reviewed copies mirrored under `tmp/pe01_final_qa/evidence_reviewed/`.
 | `project.godot` | Clean |
 | Runtime refs to `../date_factory_legacy` in PE01 production paths | **0** |
 | Runtime `PACK019` / `PACK_019` refs in those paths | **0** |
-| Apartment art lives under in-project `world/art/donor_import/apartment/` | Copy/import path (not live donor mount) |
+| Apartment art lives under in-project `world/locations/apartment/` | Copy/import path (not live donor mount) |
 
 ---
 

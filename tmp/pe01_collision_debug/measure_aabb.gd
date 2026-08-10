@@ -1,6 +1,6 @@
-﻿extends SceneTree
+extends SceneTree
 func _initialize() -> void:
-	var packed: PackedScene = load("res://world/art/donor_import/apartment/apartment.tscn") as PackedScene
+	var packed: PackedScene = load("res://world/locations/apartment/apartment.tscn") as PackedScene
 	var root: Node3D = packed.instantiate() as Node3D
 	root_node.add_child(root)
 	await process_frame

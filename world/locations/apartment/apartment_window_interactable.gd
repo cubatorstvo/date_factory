@@ -2,7 +2,7 @@ extends Interactable
 class_name ApartmentWindowInteractable
 ## Openable apartment window. Opening it reveals the neighboring brick wall.
 
-@export var curtains_path: NodePath = NodePath("../../Geometry/DonorApartment/Furniture/Curtains")
+@export var curtains_path: NodePath = NodePath("../../Geometry/ApartmentArt/Furniture/Curtains")
 
 var _opened: bool = false
 var _curtains: Node3D = null

@@ -185,17 +185,17 @@ All under `assets/audio/licenses/`:
 
 ---
 
-## Art scenes — donor import mirror
+## Integrated art scenes sourced from the legacy project
 
 | Project path | Role |
 |---|---|
-| `world/art/donor_import/city/` | Donor `city.tscn` + `scenes/art/city/**` (rewritten paths) |
-| `world/art/donor_import/apartment/` | Donor apartment vertical-slice scene + place-setting script |
-| `world/art/donor_import/cafe/restaurant.tscn` | Donor restaurant scene (filename kept; folder = cafe) |
-| `world/art/donor_import/characters/character_anim_controller.gd` | Prefab anim binder (from donor `scenes/art/characters/`) |
+| `world/locations/city_hub/art/` | Donor `city.tscn` + `scenes/art/city/**` (rewritten paths) |
+| `world/locations/apartment/` | Apartment art inlined into the gameplay scene + place-setting script |
+| `world/locations/cafe/restaurant_art.tscn` | Donor restaurant scene (filename kept; folder = cafe) |
+| `characters/framework/character_anim_controller.gd` | Prefab anim binder (from donor `scenes/art/characters/`) |
 
-- Not gameplay locations (`world/locations/**` untouched)
-- Path rewrite: `res://scenes/art/city/` → `res://world/art/donor_import/city/`
+- Copied into canonical gameplay paths and editable in place
+- Path rewrite: `res://scenes/art/city/` → `res://world/locations/city_hub/art/`
 - Assets remain `res://assets/...` (no donor filesystem paths)
 
 ---

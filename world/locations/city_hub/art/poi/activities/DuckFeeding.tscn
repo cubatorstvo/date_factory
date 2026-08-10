@@ -1,0 +1,174 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="1_ym8cr"]
+[ext_resource type="Script" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="2_s5xrc"]
+[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf" id="3_4tmf5"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4oveb"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s8jnc"]
+albedo_color = Color(0.35, 0.45, 0.4, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oex8r"]
+albedo_color = Color(0.35, 0.55, 0.7, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wh7hk"]
+albedo_color = Color(0.92, 0.78, 0.25, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_apwru"]
+albedo_color = Color(0.2, 0.35, 0.55, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fpxgx"]
+albedo_color = Color(0.95, 0.55, 0.2, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_il6n2"]
+albedo_color = Color(0.92, 0.78, 0.25, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4dciv"]
+albedo_color = Color(0.2, 0.35, 0.55, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bqq30"]
+albedo_color = Color(0.95, 0.55, 0.2, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e0eko"]
+albedo_color = Color(0.45, 0.35, 0.25, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fgr07"]
+albedo_color = Color(0.55, 0.45, 0.3, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7nxi7"]
+size = Vector3(2.2, 1.2, 2.2)
+
+[node name="DuckFeeding" type="Node3D" unique_id=414710763]
+script = ExtResource("1_ym8cr")
+poi_id = "duck_feeding"
+action_id = &"city_park_fun"
+prompt_text = "Покормить уток (+⭐)"
+functional_type = "WorldActivityPOI"
+progression_stage = 2
+display_name = "Кормушка"
+action_label = "Покормить уток (+⭐)"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="." unique_id=553982042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0, 0.85)
+
+[node name="InteractionArea" type="Area3D" parent="." unique_id=2146293508]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0, 0.85)
+script = ExtResource("2_s5xrc")
+display_name = "Кормушка"
+action_label = "Покормить уток (+⭐)"
+action_id = &"city_park_fun"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea" unique_id=1755819153]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_4oveb")
+
+[node name="PromptAnchor" type="Marker3D" parent="." unique_id=138481084]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.7, 0.85)
+
+[node name="SignAnchor" type="Marker3D" parent="." unique_id=230825475]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0.5)
+
+[node name="Signage" type="Node3D" parent="." unique_id=1710653900]
+
+[node name="LocalLights" type="Node3D" parent="." unique_id=1003847033]
+
+[node name="IdentityProps" type="Node3D" parent="." unique_id=1064369693]
+
+[node name="VisualRoot" type="Node3D" parent="IdentityProps" unique_id=799833395]
+
+[node name="PondRim" type="CSGCylinder3D" parent="IdentityProps/VisualRoot" unique_id=2002573247]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+radius = 1.1
+height = 0.12
+material = SubResource("StandardMaterial3D_s8jnc")
+
+[node name="Water" type="CSGCylinder3D" parent="IdentityProps/VisualRoot" unique_id=1372174609]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+radius = 0.95
+height = 0.06
+material = SubResource("StandardMaterial3D_oex8r")
+
+[node name="Prop_Planter_Single_Inst" type="Node3D" parent="IdentityProps/VisualRoot" unique_id=262268339 instance=ExtResource("3_4tmf5")]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -1.2, 0, 0.9)
+
+[node name="DuckA" type="Node3D" parent="IdentityProps/VisualRoot" unique_id=162912572]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0.35, 0.18, 0.15)
+
+[node name="Body" type="CSGSphere3D" parent="IdentityProps/VisualRoot/DuckA" unique_id=1884550254]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+radius = 0.12
+material = SubResource("StandardMaterial3D_wh7hk")
+
+[node name="Head" type="CSGSphere3D" parent="IdentityProps/VisualRoot/DuckA" unique_id=1478001777]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.16, 0.02)
+radius = 0.07
+material = SubResource("StandardMaterial3D_apwru")
+
+[node name="Beak" type="CSGBox3D" parent="IdentityProps/VisualRoot/DuckA" unique_id=1261301948]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17, 0.15, 0.02)
+size = Vector3(0.08, 0.03, 0.04)
+material = SubResource("StandardMaterial3D_fpxgx")
+
+[node name="DuckB" type="Node3D" parent="IdentityProps/VisualRoot" unique_id=1529620916]
+transform = Transform3D(0.76604444, 0, -0.6427876, 0, 1, 0, 0.6427876, 0, 0.76604444, -0.25, 0.18, -0.2)
+
+[node name="Body" type="CSGSphere3D" parent="IdentityProps/VisualRoot/DuckB" unique_id=415344830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+radius = 0.12
+material = SubResource("StandardMaterial3D_il6n2")
+
+[node name="Head" type="CSGSphere3D" parent="IdentityProps/VisualRoot/DuckB" unique_id=542408492]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.16, 0.02)
+radius = 0.07
+material = SubResource("StandardMaterial3D_4dciv")
+
+[node name="Beak" type="CSGBox3D" parent="IdentityProps/VisualRoot/DuckB" unique_id=1206508387]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17, 0.15, 0.02)
+size = Vector3(0.08, 0.03, 0.04)
+material = SubResource("StandardMaterial3D_bqq30")
+
+[node name="FeederBag" type="CSGBox3D" parent="IdentityProps/VisualRoot" unique_id=1286904946]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.35, 0.85)
+size = Vector3(0.25, 0.7, 0.25)
+material = SubResource("StandardMaterial3D_e0eko")
+
+[node name="FeederTray" type="CSGBox3D" parent="IdentityProps/VisualRoot" unique_id=1014339898]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.7, 0.85)
+size = Vector3(0.45, 0.08, 0.35)
+material = SubResource("StandardMaterial3D_fgr07")
+
+[node name="Collision" type="StaticBody3D" parent="IdentityProps" unique_id=1093363019]
+
+[node name="@CollisionShape3D@4" type="CollisionShape3D" parent="IdentityProps/Collision" unique_id=2045048821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_7nxi7")

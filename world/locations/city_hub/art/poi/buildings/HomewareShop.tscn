@@ -1,0 +1,142 @@
+[gd_scene format=3 uid="uid://dcs5y7yxw44e"]
+
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_lx3mm"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="2_7pg64"]
+[ext_resource type="PackedScene" uid="uid://d0s6yraf4qqrs" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="2_j12mc"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="3_rd1xi"]
+[ext_resource type="PackedScene" uid="uid://cl1dn2fqq10wa" path="res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx" id="4_ts8dm"]
+[ext_resource type="PackedScene" uid="uid://xvg50boxd6eg" path="res://assets/props/food/meshes/Apple.fbx" id="5_em7p4"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fin42"]
+size = Vector3(4.968, 6.2720065, 5.3547573)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4a7us"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6dm5b"]
+size = Vector3(6, 0.08, 7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0w2fv"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wl7y8"]
+albedo_color = Color(0.35, 0.28, 0.18, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_64k1j"]
+albedo_color = Color(0.9, 0.75, 0.45, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5e2a0"]
+albedo_color = Color(0.85, 0.8, 0.7, 1)
+metallic = 0.05
+roughness = 0.55
+
+[node name="HomewareShop" type="Node3D" unique_id=517111672]
+script = ExtResource("1_lx3mm")
+building_id = "homeware_shop"
+district_id = "main_street"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(6, 7)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=105977542]
+
+[node name="Building_Small_1_Inst" type="Node3D" parent="VisualRoot" unique_id=342740020 instance=ExtResource("2_j12mc")]
+transform = Transform3D(0.4333868, 0, 0, 0, 0.4333868, 0, 0, 0, 0.4333868, 0, 0.0051777, -0.45)
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=331960913]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1413027817]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=889498710]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1360033, -2.6004636)
+shape = SubResource("BoxShape3D_fin42")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1993458955]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_4a7us")
+mesh = SubResource("BoxMesh_6dm5b")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=1639522562]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=129604153]
+
+[node name="Homeware" type="Node3D" parent="TenantSlots" unique_id=1558198938]
+script = ExtResource("2_7pg64")
+poi_id = "homeware_shop"
+action_id = &"open_homeware_shop"
+prompt_text = "Открыть магазин"
+functional_type = "StorefrontPOI"
+progression_stage = 1
+display_name = "Дом и посуда"
+action_label = "Открыть магазин"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Homeware" unique_id=1083400406]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Homeware" unique_id=1610825207]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_rd1xi")
+action_id = &"open_homeware_shop"
+display_name = "Дом и посуда"
+action_label = "Открыть магазин"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Homeware/InteractionArea" unique_id=1658026023]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_0w2fv")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Homeware" unique_id=92878039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Homeware" unique_id=1793934838]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Homeware" unique_id=771066605]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/Homeware/Signage" unique_id=300560973]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_wl7y8")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/Homeware/Signage" unique_id=83729065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_64k1j")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Homeware/Signage" unique_id=386173493]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "HOMEWARE"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Homeware" unique_id=1842744666]
+
+[node name="WarmBeige" type="OmniLight3D" parent="TenantSlots/Homeware/LocalLights" unique_id=1374687771]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.8)
+light_color = Color(1, 0.88, 0.65, 1)
+omni_range = 4.0
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Homeware" unique_id=1126449619]
+
+[node name="Shelf_1_Inst" parent="TenantSlots/Homeware/IdentityProps" unique_id=1422317027 instance=ExtResource("4_ts8dm")]
+transform = Transform3D(-0.55, 0, -4.8082526e-08, 0, 0.55, 0, 4.8082526e-08, 0, -0.55, -0.35, 0.15, 0.1)
+
+[node name="Apple_Inst" parent="TenantSlots/Homeware/IdentityProps" unique_id=693595928 instance=ExtResource("5_em7p4")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0.35, 1, 0.45)
+
+[node name="Bowl" type="CSGCylinder3D" parent="TenantSlots/Homeware/IdentityProps" unique_id=1313527348]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.95, 0.55)
+radius = 0.18
+height = 0.1
+material = SubResource("StandardMaterial3D_5e2a0")

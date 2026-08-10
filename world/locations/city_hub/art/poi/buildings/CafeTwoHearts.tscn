@@ -1,0 +1,163 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_adtic"]
+[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf" id="2_v6sw6"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Table.gltf" id="3_v43ug"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf" id="4_qs6qp"]
+[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf" id="5_qgwt5"]
+[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="6_j85ho"]
+[ext_resource type="Script" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="7_81f4p"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xjt2p"]
+albedo_color = Color(0.95, 0.45, 0.55, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dn3t6"]
+albedo_color = Color(0.74099994, 0.35099998, 0.429, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_btrsy"]
+size = Vector3(4.4, 3.6, 3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4sq0q"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5tuh4"]
+size = Vector3(10, 0.08, 9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_huqgc"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4jkbw"]
+albedo_color = Color(0.18, 0.1, 0.12, 1)
+metallic = 0.05
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iday3"]
+albedo_color = Color(1, 0.55, 0.35, 1)
+metallic = 0.05
+roughness = 0.55
+
+[node name="CafeTwoHearts" type="Node3D" unique_id=374006652]
+script = ExtResource("1_adtic")
+building_id = "cafe_two_hearts"
+district_id = "main_street"
+building_mode = "VenueEntrance"
+reserved_lot_size = Vector2(10, 9)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=1706027354]
+
+[node name="Building_Medium_2_001_Inst" type="Node3D" parent="VisualRoot" unique_id=199150597 instance=ExtResource("2_v6sw6")]
+transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, 0, 0, -0.55)
+
+[node name="Awning" type="CSGBox3D" parent="VisualRoot" unique_id=945656366]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0.95)
+size = Vector3(2.8, 0.08, 0.85)
+material = SubResource("StandardMaterial3D_xjt2p")
+
+[node name="AwningStripe" type="CSGBox3D" parent="VisualRoot" unique_id=669061028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.44, 0.95)
+size = Vector3(2.8, 0.04, 0.85)
+material = SubResource("StandardMaterial3D_dn3t6")
+
+[node name="Environment_Table_Inst" type="Node3D" parent="VisualRoot" unique_id=312039153 instance=ExtResource("3_v43ug")]
+transform = Transform3D(0.4727077, 0, 0.08335112, 0, 0.48, 0, -0.08335112, 0, 0.4727077, 1.45, 0, 0.45)
+
+[node name="Environment_Stool_Inst" type="Node3D" parent="VisualRoot" unique_id=1733044670 instance=ExtResource("4_qs6qp")]
+transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 1.75, 0, 0.25)
+
+[node name="Environment_Counter_Straight_Inst" type="Node3D" parent="VisualRoot" unique_id=1389080145 instance=ExtResource("5_qgwt5")]
+transform = Transform3D(-2.2729921e-08, 0, 0.52, 0, 0.52, 0, -0.52, 0, -2.2729921e-08, -0.95, 0, 0.35)
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=862988982]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=535875364]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=1434377670]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, -0.2)
+shape = SubResource("BoxShape3D_btrsy")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=378982637]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("StandardMaterial3D_4sq0q")
+mesh = SubResource("BoxMesh_5tuh4")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=229412875]
+
+[node name="CafeWarm" type="OmniLight3D" parent="SharedLighting" unique_id=1458139323]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.35, 1)
+light_color = Color(1, 0.72, 0.45, 1)
+light_energy = 1.25
+omni_range = 6.0
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=1584225849]
+
+[node name="Cafe" type="Node3D" parent="TenantSlots" unique_id=751102211]
+script = ExtResource("6_j85ho")
+poi_id = "cafe_two_hearts"
+action_id = &"sit_cafe"
+prompt_text = "Сесть и ждать свидание"
+progression_stage = 1
+display_name = "Кафе Two Hearts"
+action_label = "Сесть и ждать свидание"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Cafe" unique_id=191245867]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Cafe" unique_id=1739930976]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("7_81f4p")
+display_name = "Кафе Two Hearts"
+action_label = "Сесть и ждать свидание"
+action_id = &"sit_cafe"
+payload = {
+"art_backed": true
+}
+auto_fit_mesh_aabb = false
+aabb_padding = Vector3(0.015, 0.03, 0.015)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Cafe/InteractionArea" unique_id=2033107483]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_huqgc")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Cafe" unique_id=1109030507]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Cafe" unique_id=1294822329]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Cafe" unique_id=1837456637]
+
+[node name="SignBoard" type="CSGBox3D" parent="TenantSlots/Cafe/Signage" unique_id=689776876]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+size = Vector3(1.35, 0.36, 0.06)
+material = SubResource("StandardMaterial3D_4jkbw")
+
+[node name="SignAccent" type="CSGBox3D" parent="TenantSlots/Cafe/Signage" unique_id=1243980076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+size = Vector3(1.1, 0.1, 0.04)
+material = SubResource("StandardMaterial3D_iday3")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Cafe/Signage" unique_id=483441]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "TWO HEARTS"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Cafe" unique_id=2040874048]
+
+[node name="PinkGlow" type="OmniLight3D" parent="TenantSlots/Cafe/LocalLights" unique_id=1740895297]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.9)
+light_color = Color(1, 0.55, 0.65, 1)
+light_energy = 0.7
+omni_range = 4.0
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Cafe" unique_id=674048735]

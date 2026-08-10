@@ -11,7 +11,7 @@
 | Location | Donor scene | Notes |
 |---|---|---|
 | City | `scenes/world/city/city.tscn` + `scenes/art/city/**` POIs | Instanced as `Geometry/DonorCity` in `city_hub` |
-| Room | `scenes/world/vertical_slice/apartment.tscn` | Instanced as `Geometry/DonorApartment` |
+| Room | `scenes/world/vertical_slice/apartment.tscn` | Inlined as `Geometry/ApartmentArt` in the gameplay scene |
 | Cafe | `scenes/world/vertical_slice/restaurant.tscn` | Instanced as `Geometry/DonorCafe`; **location id stays `cafe`** (D-VB-03) |
 
 Facade POI `CafeTwoHearts` travels with city art (approach only).
@@ -45,7 +45,7 @@ Not used: PACK_014 music. PACK_016 not expanded beyond donor cafe/city deps.
 | `assets/environment/lab/scifi_essentials/` | Lab / late |
 | `assets/props/food/` | Apartment props |
 | `assets/characters/**`, `assets/animation/universal_library/**` | Expanded character/UAL closures |
-| `world/art/donor_import/{city,apartment,cafe}/` | Rewritten local art scenes |
+| `world/locations/city_hub/art/`, `world/locations/apartment/`, `world/locations/cafe/restaurant_art.tscn` | Integrated local art scenes |
 | `characters/female/female_{formal,suit,worker,punk}_visual.tscn` | Variant wrappers |
 
 **Runtime donor dependency:** none (Stage G scan of `world/`, `assets/`, `characters/`, `data/` = 0 hits for `date_factory_legacy`).
@@ -54,10 +54,10 @@ Not used: PACK_014 music. PACK_016 not expanded beyond donor cafe/city deps.
 
 ## 4. TECHNICAL FIXES APPLIED
 
-- Path rewrites `res://scenes/art/...` → `res://world/art/donor_import/...`
+- Legacy paths rewritten to canonical paths under `world/locations/**`
 - Legacy Interactable → stub on city POIs; travel via current `WorldTransition`
 - `apartment_place_setting.gd` stubbed (no legacy `Game`)
-- Cube Geometry hidden; donor/pack visuals instanced
+- Cube Geometry hidden; local art integrated or instanced
 - Marker remaps onto donor landmarks (spawn, doors, DateVenue, SalaryStation, etc.)
 - Lighting boosts (city ambient/exposure; lab cool; production OmniLights)
 - Debug BoxMeshes hidden on apartment/cafe interactables where practical

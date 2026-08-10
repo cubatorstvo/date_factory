@@ -120,8 +120,8 @@ func _test_spawn_orientation_and_clearance(loc: WorldLocation) -> void:
 
 
 func _test_furniture_colliders(loc: WorldLocation) -> void:
-	var colliders: Node = loc.get_node_or_null("Geometry/DonorApartment/Colliders")
-	_ok(colliders != null, "DonorApartment/Colliders present")
+	var colliders: Node = loc.get_node_or_null("Geometry/ApartmentArt/Colliders")
+	_ok(colliders != null, "ApartmentArt/Colliders present")
 	if colliders == null:
 		return
 	for body_name in ESSENTIAL_COLLIDERS:

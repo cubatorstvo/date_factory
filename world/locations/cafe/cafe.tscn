@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bc4evh7p6qk02"]
 
 [ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_loc"]
-[ext_resource type="PackedScene" uid="uid://blbv8kjvm1ex5" path="res://world/art/donor_import/cafe/restaurant.tscn" id="2_rmni2"]
+[ext_resource type="PackedScene" uid="uid://blbv8kjvm1ex5" path="res://world/locations/cafe/restaurant_art.tscn" id="2_rmni2"]
 [ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="2_transition"]
 [ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="3_pspawn"]
 [ext_resource type="PackedScene" path="res://game/girls/girl_actor.tscn" id="4_aplqh"]
