@@ -7,7 +7,7 @@ const FORWARD_CLEAR_M: float = 1.5
 const ESSENTIAL_COLLIDER_PATHS: Array[String] = [
 	"Geometry/ApartmentArt/Objects/Bed/Physics",
 	"Geometry/ApartmentArt/Colliders/NightStandBody",
-	"Geometry/ApartmentArt/Colliders/WardrobeBody",
+	"Geometry/ApartmentArt/Objects/Wardrobe/Physics",
 	"Geometry/ApartmentArt/Objects/DiningTable/Physics",
 	"Geometry/ApartmentArt/Colliders/DiningChairNorthBody",
 	"Geometry/ApartmentArt/Colliders/DiningChairSouthBody",
@@ -172,7 +172,7 @@ func _test_early_interactables(loc: WorldLocation) -> void:
 	for path in [
 		"Interactables/Phone",
 		"Geometry/ApartmentArt/Objects/Bed/Interaction",
-		"Interactables/ProgressionSelfAssessment",
+		"Geometry/ApartmentArt/Objects/Wardrobe/Interaction",
 		"Geometry/ApartmentArt/Objects/Fridge/Interaction",
 		"Geometry/ApartmentArt/Objects/Window/Interaction",
 		"Geometry/ApartmentArt/Objects/ExitDoor/Interaction",

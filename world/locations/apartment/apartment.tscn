@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://core/interaction_area.tscn" id="9_pw7ec"]
 [ext_resource type="Script" uid="uid://cwbexew6cgj2y" path="res://world/locations/apartment/apartment_fridge_interactable.gd" id="10_fridge"]
 [ext_resource type="Script" uid="uid://4svwuwf0d6n2" path="res://world/locations/apartment/apartment_window_interactable.gd" id="11_window"]
+[ext_resource type="Script" path="res://core/interaction_collision.gd" id="12_fit"]
 
 [ext_resource type="PackedScene" uid="uid://dcxb0evu31xmo" path="res://assets/environment/interior/house_interior/meshes/Bed_Single.fbx" id="1_soanb"]
 [ext_resource type="PackedScene" uid="uid://6tm55as2lwri" path="res://assets/environment/interior/house_interior/meshes/NightStand_2.fbx" id="2_r1gkd"]
@@ -110,30 +111,11 @@ size = Vector3(0.3, 3, 12)
 [sub_resource type="BoxShape3D" id="PhoneShape"]
 size = Vector3(0.35, 0.55, 0.2)
 
-[sub_resource type="BoxMesh" id="PhoneMesh"]
-size = Vector3(0.35, 0.55, 0.2)
-
-[sub_resource type="StandardMaterial3D" id="PhoneMat"]
-albedo_color = Color(0.15, 0.15, 0.18, 1)
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_qrmkd"]
 size = Vector3(0.7, 1.6, 0.7)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nwbdb"]
-albedo_color = Color(0.45, 0.32, 0.22, 1)
-roughness = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_yeam2"]
-size = Vector3(0.45, 0.9, 0.45)
-
-[sub_resource type="BoxMesh" id="BoxMesh_m8kc2"]
-size = Vector3(1.1, 0.7, 1.1)
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_m8kc2"]
 size = Vector3(1.1, 0.9, 1.1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_2h5qe"]
-size = Vector3(0.6, 1.6, 0.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2h5qe"]
 size = Vector3(0.7, 1.6, 0.5)
@@ -158,12 +140,6 @@ size = Vector3(0.22, 0.01, 0.28)
 
 [sub_resource type="BoxShape3D" id="TransitionShape"]
 size = Vector3(1.2, 2.2, 0.4)
-
-[sub_resource type="BoxMesh" id="TransitionMesh"]
-size = Vector3(1.2, 2.2, 0.4)
-
-[sub_resource type="StandardMaterial3D" id="TransitionMat"]
-albedo_color = Color(0.2, 0.55, 0.75, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soanb"]
 albedo_color = Color(0.24, 0.16, 0.11, 1)
@@ -388,6 +364,8 @@ material = SubResource("StandardMaterial3D_1xvmk")
 
 [node name="ExitDoor" type="Node3D" parent="Geometry/ApartmentArt/Objects"]
 
+[node name="Wardrobe" type="Node3D" parent="Geometry/ApartmentArt/Objects"]
+
 [node name="Visual" parent="Geometry/ApartmentArt/Objects/Bed" unique_id=1613490385 instance=ExtResource("1_soanb")]
 transform = Transform3D(-2.1855695e-07, 0, -5, 0, 5, 0, 5, 0, -2.1855695e-07, 1.55, 0, -1.55)
 
@@ -430,7 +408,7 @@ transform = Transform3D(5.6, 0, 0, 0, 5.6, 0, 0, 0, 5.6, -1.35, 0, -2.15)
 transform = Transform3D(-1.9670125e-07, 0, -4.5, 0, 4.5, 0, 4.5, 0, -1.9670125e-07, 2.15, 0, 0.1)
 visible = false
 
-[node name="Wardrobe" parent="Geometry/ApartmentArt/Furniture" unique_id=995397538 instance=ExtResource("13_0bp1g")]
+[node name="Visual" parent="Geometry/ApartmentArt/Objects/Wardrobe" unique_id=995397538 instance=ExtResource("13_0bp1g")]
 transform = Transform3D(-2.2729921e-07, 0, -5.2, 0, 5.2, 0, 5.2, 0, -2.2729921e-07, 2.15, 0, 0.95)
 
 [node name="Houseplant" parent="Geometry/ApartmentArt/Furniture" unique_id=341288505 instance=ExtResource("14_j4f6s")]
@@ -472,11 +450,11 @@ collision_mask = 0
 [node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/NightStandBody" unique_id=1900100005]
 shape = SubResource("BoxShape_NightStand")
 
-[node name="WardrobeBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100006]
+[node name="Physics" type="StaticBody3D" parent="Geometry/ApartmentArt/Objects/Wardrobe" unique_id=1900100006]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.152, 0.53, 0.95)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/WardrobeBody" unique_id=1900100007]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/Wardrobe/Physics" unique_id=1900100007]
 shape = SubResource("BoxShape_Wardrobe")
 
 [node name="Physics" type="StaticBody3D" parent="Geometry/ApartmentArt/Objects/DiningTable" unique_id=1900100008]
@@ -702,11 +680,6 @@ script = ExtResource("6_phone")
 [node name="Collision" type="CollisionShape3D" parent="Interactables/Phone" unique_id=118924433]
 shape = SubResource("PhoneShape")
 
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/Phone" unique_id=805538402]
-visible = false
-mesh = SubResource("PhoneMesh")
-surface_material_override/0 = SubResource("PhoneMat")
-
 [node name="Interaction" type="Area3D" parent="Geometry/ApartmentArt/Objects/Bed" unique_id=25707921]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.9, -1.55)
 collision_layer = 4
@@ -716,17 +689,7 @@ script = ExtResource("5_nwbdb")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/Bed/Interaction" unique_id=1969438262]
 shape = SubResource("BoxShape3D_qrmkd")
-
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/ApartmentArt/Objects/Bed/Interaction" unique_id=67764247]
-visible = false
-material_override = SubResource("StandardMaterial3D_nwbdb")
-mesh = SubResource("BoxMesh_yeam2")
-
-[node name="Label" type="Label3D" parent="Geometry/ApartmentArt/Objects/Bed/Interaction" unique_id=209507003]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
-visible = false
-modulate = Color(0.95, 0.88, 0.75, 1)
-text = "ДЕНЬ"
+script = ExtResource("12_fit")
 
 [node name="Interaction" type="Area3D" parent="Geometry/ApartmentArt/Objects/DiningTable" unique_id=636659215]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.7, 0.61)
@@ -735,44 +698,22 @@ collision_mask = 0
 monitoring = false
 script = ExtResource("7_h50ke")
 
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=1209145303]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
-visible = false
-mesh = SubResource("BoxMesh_m8kc2")
-
-[node name="Label" type="Label3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=1519297154]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-visible = false
-billboard = 1
-text = "Стол для свидания"
-font_size = 28
-
 [node name="Collision" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=302647249]
 shape = SubResource("BoxShape3D_m8kc2")
+script = ExtResource("12_fit")
 
 [node name="MealAnchor" type="Node3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=467541846]
 
-[node name="ProgressionSelfAssessment" type="Area3D" parent="Interactables" unique_id=67378799]
+[node name="Interaction" type="Area3D" parent="Geometry/ApartmentArt/Objects/Wardrobe" unique_id=67378799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1, 0.95)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("8_pw7ec")
 
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/ProgressionSelfAssessment" unique_id=897152027]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
-visible = false
-mesh = SubResource("BoxMesh_2h5qe")
-
-[node name="Label" type="Label3D" parent="Interactables/ProgressionSelfAssessment" unique_id=1905293907]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
-visible = false
-billboard = 1
-text = "Самооценка"
-font_size = 28
-
-[node name="Collision" type="CollisionShape3D" parent="Interactables/ProgressionSelfAssessment" unique_id=1771537736]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/Wardrobe/Interaction" unique_id=1771537736]
 shape = SubResource("BoxShape3D_2h5qe")
+script = ExtResource("12_fit")
 
 [node name="Interaction" parent="Geometry/ApartmentArt/Objects/Fridge" unique_id=695661774 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 1, -2.15)
@@ -844,8 +785,4 @@ display_name = "Выйти в город"
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/ExitDoor/Interaction" unique_id=1872774995]
 shape = SubResource("TransitionShape")
-
-[node name="Mesh" type="MeshInstance3D" parent="Geometry/ApartmentArt/Objects/ExitDoor/Interaction" unique_id=835514611]
-visible = false
-mesh = SubResource("TransitionMesh")
-surface_material_override/0 = SubResource("TransitionMat")
+script = ExtResource("12_fit")
