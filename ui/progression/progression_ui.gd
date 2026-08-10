@@ -6,10 +6,7 @@ extends CanvasLayer
 signal purchase_notified(message: String)
 
 
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
-const BODY_FONT_SIZE: int = 18
-const TITLE_FONT_SIZE: int = 22
-const HEADER_FONT_SIZE: int = 20
+const PERK_BUTTON_SCENE: String = "res://ui/common/action_button.tscn"
 const MAX_STAT: int = 8
 
 const _TAB_CHARS: Array[GameTypes.PlayerCharacteristic] = [
@@ -25,19 +22,35 @@ var _on_closed: Callable = Callable()
 var _selected_char: GameTypes.PlayerCharacteristic = GameTypes.PlayerCharacteristic.MUSCLE
 var _selected_perk_id: StringName = &""
 
-var _root: Control = null
-var _points_label: Label = null
-var _stat_header: Label = null
-var _stat_note: Label = null
-var _perk_host: VBoxContainer = null
-var _detail_name: Label = null
-var _detail_body: Label = null
-var _detail_status: Label = null
-var _buy_btn: Button = null
-var _close_btn: Button = null
+@onready var _root: Control = %Root
+@onready var _points_label: Label = %PointsLabel
+@onready var _stat_header: Label = %StatHeader
+@onready var _stat_note: Label = %StatNote
+@onready var _perk_host: GridContainer = %PerkHost
+@onready var _detail_name: Label = %DetailName
+@onready var _detail_body: Label = %DetailBody
+@onready var _detail_status: Label = %DetailStatus
+@onready var _buy_btn: Button = %BuyButton
+@onready var _close_btn: Button = %CloseButton
 var _tab_buttons: Dictionary = {}
 var _perk_buttons: Dictionary = {}
 var _first_focus_control: Control = null
+
+
+func _ready() -> void:
+	UiScaleHelper.apply_to_control(_root)
+	_tab_buttons = {
+		int(GameTypes.PlayerCharacteristic.MUSCLE): %MuscleTab,
+		int(GameTypes.PlayerCharacteristic.APPEARANCE): %AppearanceTab,
+		int(GameTypes.PlayerCharacteristic.CAPITAL): %CapitalTab,
+		int(GameTypes.PlayerCharacteristic.AURA): %AuraTab,
+	}
+	for ch: GameTypes.PlayerCharacteristic in _TAB_CHARS:
+		var button: Button = _tab_buttons[int(ch)] as Button
+		button.pressed.connect(_select_tab.bind(ch))
+	_first_focus_control = %MuscleTab
+	_buy_btn.pressed.connect(_on_buy_pressed)
+	_close_btn.pressed.connect(close)
 
 
 func get_visible_perk_ids() -> Array[StringName]:
@@ -78,7 +91,6 @@ func open(
 	_selected_perk_id = &""
 	layer = 40
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_build_ui()
 	_refresh()
 	visible = true
 	if _player != null and _player.has_method("enter_modal_ui"):
@@ -104,7 +116,7 @@ func close() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("phone"):
 		close()
 		get_viewport().set_input_as_handled()
 		return
@@ -113,196 +125,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_ESCAPE:
 			close()
 			get_viewport().set_input_as_handled()
-
-
-func _build_ui() -> void:
-	for child in get_children():
-		child.queue_free()
-	_tab_buttons.clear()
-	_perk_buttons.clear()
-	_first_focus_control = null
-
-	_root = Control.new()
-	_root.name = "Root"
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_root.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_root)
-
-	var theme_res: Resource = null
-	if ResourceLoader.exists(THEME_PATH):
-		theme_res = load(THEME_PATH)
-	if theme_res is Theme:
-		_root.theme = theme_res as Theme
-
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.04, 0.05, 0.07, 0.72)
-	_root.add_child(dim)
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_root.add_child(center)
-
-	var panel := PanelContainer.new()
-	panel.name = "Panel"
-	panel.custom_minimum_size = Vector2(860, 620)
-	_apply_panel_style(panel)
-	center.add_child(panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_bottom", 14)
-	panel.add_child(margin)
-
-	var root_vbox := VBoxContainer.new()
-	root_vbox.add_theme_constant_override("separation", 10)
-	margin.add_child(root_vbox)
-
-	var title := Label.new()
-	title.text = "ПРОКАЧКА"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
-	title.add_theme_color_override("font_color", Color(0.95, 0.95, 0.92))
-	root_vbox.add_child(title)
-
-	_points_label = Label.new()
-	_points_label.name = "PointsLabel"
-	_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_points_label.add_theme_font_size_override("font_size", HEADER_FONT_SIZE)
-	_points_label.add_theme_color_override("font_color", Color(0.98, 0.92, 0.55))
-	root_vbox.add_child(_points_label)
-
-	var tabs := HBoxContainer.new()
-	tabs.name = "Tabs"
-	tabs.add_theme_constant_override("separation", 8)
-	root_vbox.add_child(tabs)
-	for ch in _TAB_CHARS:
-		var btn := Button.new()
-		btn.text = _char_tab_title(ch)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.custom_minimum_size = Vector2(0, 36)
-		btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-		var bound_ch: GameTypes.PlayerCharacteristic = ch
-		btn.pressed.connect(func() -> void:
-			_select_tab(bound_ch)
-		)
-		tabs.add_child(btn)
-		_tab_buttons[int(ch)] = btn
-		if _first_focus_control == null:
-			_first_focus_control = btn
-
-	_stat_header = Label.new()
-	_stat_header.name = "StatHeader"
-	_stat_header.add_theme_font_size_override("font_size", HEADER_FONT_SIZE)
-	_stat_header.add_theme_color_override("font_color", Color(0.94, 0.94, 0.9))
-	root_vbox.add_child(_stat_header)
-
-	_stat_note = Label.new()
-	_stat_note.name = "StatNote"
-	_stat_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_stat_note.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_stat_note.add_theme_color_override("font_color", Color(0.78, 0.8, 0.82))
-	root_vbox.add_child(_stat_note)
-
-	var body := HBoxContainer.new()
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 12)
-	root_vbox.add_child(body)
-
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(480, 360)
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_child(scroll)
-
-	_perk_host = VBoxContainer.new()
-	_perk_host.name = "PerkHost"
-	_perk_host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_perk_host.add_theme_constant_override("separation", 8)
-	scroll.add_child(_perk_host)
-
-	var detail := PanelContainer.new()
-	detail.name = "DetailPanel"
-	detail.custom_minimum_size = Vector2(300, 0)
-	detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_apply_detail_style(detail)
-	body.add_child(detail)
-
-	var detail_margin := MarginContainer.new()
-	detail_margin.add_theme_constant_override("margin_left", 10)
-	detail_margin.add_theme_constant_override("margin_right", 10)
-	detail_margin.add_theme_constant_override("margin_top", 10)
-	detail_margin.add_theme_constant_override("margin_bottom", 10)
-	detail.add_child(detail_margin)
-
-	var detail_vbox := VBoxContainer.new()
-	detail_vbox.add_theme_constant_override("separation", 8)
-	detail_margin.add_child(detail_vbox)
-
-	var detail_title := Label.new()
-	detail_title.text = "ОПИСАНИЕ"
-	detail_title.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	detail_title.add_theme_color_override("font_color", Color(0.85, 0.88, 0.9))
-	detail_vbox.add_child(detail_title)
-
-	_detail_name = Label.new()
-	_detail_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail_name.add_theme_font_size_override("font_size", HEADER_FONT_SIZE)
-	_detail_name.add_theme_color_override("font_color", Color(0.97, 0.97, 0.94))
-	detail_vbox.add_child(_detail_name)
-
-	_detail_status = Label.new()
-	_detail_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail_status.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_detail_status.add_theme_color_override("font_color", Color(0.8, 0.84, 0.78))
-	detail_vbox.add_child(_detail_status)
-
-	_detail_body = Label.new()
-	_detail_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail_body.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_detail_body.add_theme_color_override("font_color", Color(0.9, 0.9, 0.88))
-	detail_vbox.add_child(_detail_body)
-
-	_buy_btn = Button.new()
-	_buy_btn.name = "BuyButton"
-	_buy_btn.text = "Купить"
-	_buy_btn.custom_minimum_size = Vector2(0, 40)
-	_buy_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_buy_btn.pressed.connect(_on_buy_pressed)
-	detail_vbox.add_child(_buy_btn)
-
-	_close_btn = Button.new()
-	_close_btn.name = "CloseButton"
-	_close_btn.text = "Закрыть"
-	_close_btn.custom_minimum_size = Vector2(0, 36)
-	_close_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_close_btn.pressed.connect(close)
-	root_vbox.add_child(_close_btn)
-
-
-func _apply_panel_style(panel: PanelContainer) -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.12, 0.15, 0.94)
-	style.border_color = Color(0.35, 0.4, 0.45, 0.85)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(4)
-	style.content_margin_left = 4
-	style.content_margin_right = 4
-	style.content_margin_top = 4
-	style.content_margin_bottom = 4
-	panel.add_theme_stylebox_override("panel", style)
-
-
-func _apply_detail_style(panel: PanelContainer) -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.1, 0.13, 0.9)
-	style.border_color = Color(0.3, 0.34, 0.38, 0.7)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(3)
-	panel.add_theme_stylebox_override("panel", style)
 
 
 func _select_tab(ch: GameTypes.PlayerCharacteristic) -> void:
@@ -343,28 +165,13 @@ func _rebuild_perk_nodes(prog: Node) -> void:
 	_perk_buttons.clear()
 
 	var perks: Array = prog.call("get_perks_for_characteristic", _selected_char) as Array
-	var by_slot: Dictionary = {}
 	for entry in perks:
 		var def: PerkDefinition = entry as PerkDefinition
 		if def == null:
 			continue
-		var key: String = "%d_%d" % [int(def.section), def.order_in_section]
-		by_slot[key] = def
-
-	_perk_host.add_child(_make_single_node_row(by_slot.get("0_1") as PerkDefinition, prog))
-	_perk_host.add_child(_make_single_node_row(by_slot.get("0_2") as PerkDefinition, prog))
-	_perk_host.add_child(_make_branch_pair_row(
-		by_slot.get("1_1") as PerkDefinition,
-		by_slot.get("2_1") as PerkDefinition,
-		prog,
-	))
-	_perk_host.add_child(_make_branch_pair_row(
-		by_slot.get("1_2") as PerkDefinition,
-		by_slot.get("2_2") as PerkDefinition,
-		prog,
-	))
-	_perk_host.add_child(_make_single_node_row(by_slot.get("3_1") as PerkDefinition, prog))
-	_perk_host.add_child(_make_single_node_row(by_slot.get("3_2") as PerkDefinition, prog))
+		var button: Button = _make_perk_node_button(def, prog)
+		if button != null:
+			_perk_host.add_child(button)
 
 	if _selected_perk_id == &"":
 		_auto_select_first_perk(perks)
@@ -379,52 +186,19 @@ func _auto_select_first_perk(perks: Array) -> void:
 		return
 
 
-func _make_single_node_row(def: PerkDefinition, prog: Node) -> Control:
-	var row := HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if def == null:
-		var placeholder := Label.new()
-		placeholder.text = "—"
-		row.add_child(placeholder)
-		return row
-	var node_btn: Button = _make_perk_node_button(def, prog)
-	node_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(node_btn)
-	return row
-
-
-func _make_branch_pair_row(def_a: PerkDefinition, def_b: PerkDefinition, prog: Node) -> Control:
-	var row := HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 8)
-	if def_a != null:
-		var btn_a: Button = _make_perk_node_button(def_a, prog)
-		btn_a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(btn_a)
-	else:
-		var spacer_a := Control.new()
-		spacer_a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(spacer_a)
-	if def_b != null:
-		var btn_b: Button = _make_perk_node_button(def_b, prog)
-		btn_b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(btn_b)
-	else:
-		var spacer_b := Control.new()
-		spacer_b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(spacer_b)
-	return row
-
-
 func _make_perk_node_button(def: PerkDefinition, prog: Node) -> Button:
 	var avail: int = int(prog.call("get_perk_availability", def.id))
 	var cost: int = int(prog.call("get_perk_purchase_cost", def.id))
 	var status: String = _avail_text(avail)
-	var btn := Button.new()
+	var packed: PackedScene = load(PERK_BUTTON_SCENE) as PackedScene
+	if packed == null:
+		return null
+	var btn: Button = packed.instantiate() as Button
+	if btn == null:
+		return null
 	btn.name = "Perk_%s" % String(def.id)
 	btn.text = "%s\nСтоимость: %d\n%s" % [def.display_name, cost, status]
 	btn.custom_minimum_size = Vector2(0, 72)
-	btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	var perk_id: StringName = def.id
 	btn.pressed.connect(func() -> void:

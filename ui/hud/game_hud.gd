@@ -2,10 +2,12 @@ class_name GameHUD
 extends CanvasLayer
 ## Persistent presentation HUD (MODULE 22). Event-driven; no gameplay formulas.
 
-const THEME_PATH := "res://ui/theme/date_factory_theme.tres"
 const NOTIFY_SECONDS: float = 2.2
 const STAGE_SECONDS: float = 3.0
-const NOTIFY_QUEUE_MAX: int = 3
+const NOTIFY_SLIDE_PX: float = 56.0
+const NOTIFY_SLIDE_SEC: float = 0.18
+const NOTIFY_HOST_OFFSET_TOP: float = -130.0
+const NOTIFY_HOST_OFFSET_BOTTOM: float = -20.0
 const REACH_MILESTONES: Array[int] = [25, 50, 75, 100]
 const STAGE0_OBJECTIVE_FALLBACK: String = "Познакомься с соседкой."
 const MOVE_EVIDENCE_THRESHOLD: float = 0.35
@@ -26,33 +28,34 @@ const FEATURE_COPY := {
 	int(StoryTypes.StoryFeature.FINAL_DATE): "ОТКРЫТО: ФИНАЛЬНОЕ СВИДАНИЕ",
 }
 
-var _scale_root: Control
-var _gameplay_root: Control
-var _money_label: Label
-var _authority_label: Label
-var _experience_label: Label
-var _points_label: Label
-var _crosshair: Control
-var _objective_panel: PanelContainer
-var _objective_title: Label
-var _objective_body: Label
-var _notify_panel: PanelContainer
-var _notify_label: Label
-var _stage_panel: PanelContainer
-var _stage_title: Label
-var _stage_subtitle: Label
-var _tutorial_panel: PanelContainer
-var _tutorial_label: Label
-var _notify_timer: Timer
-var _stage_timer: Timer
-var _tutorial_timer: Timer
+@onready var _scale_root: Control = %ScaleRoot
+@onready var _gameplay_root: Control = %GameplayRoot
+@onready var _money_label: Label = %MoneyLabel
+@onready var _authority_label: Label = %AuthorityLabel
+@onready var _experience_label: Label = %ExperienceLabel
+@onready var _points_label: Label = %PointsLabel
+@onready var _crosshair: Control = %Crosshair
+@onready var _objective_panel: PanelContainer = %ObjectivePanel
+@onready var _objective_title: Label = %ObjectiveTitle
+@onready var _objective_body: Label = %ObjectiveBody
+@onready var _notify_host: MarginContainer = %NotifyHost
+@onready var _notify_panel: PanelContainer = %NotifyPanel
+@onready var _notify_label: Label = %NotifyLabel
+@onready var _stage_panel: PanelContainer = %StageCard
+@onready var _stage_title: Label = %StageTitle
+@onready var _stage_subtitle: Label = %StageSubtitle
+@onready var _tutorial_panel: PanelContainer = %TutorialPanel
+@onready var _tutorial_label: Label = %TutorialLabel
+@onready var _notify_timer: Timer = %NotifyTimer
+@onready var _stage_timer: Timer = %StageTimer
+@onready var _tutorial_timer: Timer = %TutorialTimer
 
 var _tutorials: TutorialPrompt = TutorialPrompt.new()
 var _player: PlayerController = null
 var _control_mode: PlayerController.ControlMode = PlayerController.ControlMode.GAMEPLAY
 var _hooks_ready: bool = false
-var _notify_queue: Array[String] = []
 var _notify_showing: bool = false
+var _notify_tween: Tween = null
 var _pending_group_lines: PackedStringArray = PackedStringArray()
 var _group_flush_scheduled: bool = false
 var _reach_milestones_fired: Dictionary = {}
@@ -70,8 +73,11 @@ var _look_arm_after_msec: int = 0
 func _ready() -> void:
 	layer = 18
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_build_ui()
 	_apply_theme_and_scale()
+	_notify_timer.timeout.connect(_on_notify_timeout)
+	_stage_timer.timeout.connect(_on_stage_timeout)
+	_tutorial_timer.wait_time = TutorialPrompt.DISPLAY_SECONDS
+	_tutorial_timer.timeout.connect(_on_tutorial_timeout)
 	_refresh_resources()
 	_hook_signals()
 	_restore_tutorials_from_settings()
@@ -116,183 +122,7 @@ func get_tutorial_prompt() -> TutorialPrompt:
 	return _tutorials
 
 
-func _build_ui() -> void:
-	_scale_root = Control.new()
-	_scale_root.name = "ScaleRoot"
-	_scale_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_scale_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_scale_root)
-
-	_gameplay_root = Control.new()
-	_gameplay_root.name = "GameplayRoot"
-	_gameplay_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_gameplay_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_scale_root.add_child(_gameplay_root)
-
-	var resources := PanelContainer.new()
-	resources.name = "ResourcePanel"
-	resources.position = Vector2(16, 16)
-	resources.custom_minimum_size = Vector2(220, 0)
-	resources.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_gameplay_root.add_child(resources)
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 4)
-	resources.add_child(vbox)
-	_money_label = _make_hud_label("MoneyLabel", "$ 0")
-	_authority_label = _make_hud_label("AuthorityLabel", "АВТОРИТЕТ 0")
-	_experience_label = _make_hud_label("ExperienceLabel", "ОПЫТНОСТЬ 0")
-	_points_label = _make_hud_label("PointsLabel", "БАЛЛЫ 0")
-	for lab in [_money_label, _authority_label, _experience_label, _points_label]:
-		vbox.add_child(lab)
-
-	_objective_panel = PanelContainer.new()
-	_objective_panel.name = "ObjectivePanel"
-	_objective_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_objective_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_objective_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_objective_panel.offset_left = -320.0
-	_objective_panel.offset_top = 16.0
-	_objective_panel.offset_right = -16.0
-	_objective_panel.offset_bottom = 96.0
-	_objective_panel.custom_minimum_size = Vector2(260, 0)
-	_gameplay_root.add_child(_objective_panel)
-	var obj_box := VBoxContainer.new()
-	obj_box.add_theme_constant_override("separation", 2)
-	_objective_panel.add_child(obj_box)
-	_objective_title = _make_hud_label("ObjectiveTitle", "ЦЕЛЬ")
-	_objective_title.add_theme_font_size_override("font_size", 16)
-	_objective_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	obj_box.add_child(_objective_title)
-	_objective_body = _make_hud_label("ObjectiveBody", STAGE0_OBJECTIVE_FALLBACK)
-	_objective_body.add_theme_font_size_override("font_size", 18)
-	_objective_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_objective_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_objective_body.custom_minimum_size = Vector2(240, 0)
-	obj_box.add_child(_objective_body)
-
-	_crosshair = Control.new()
-	_crosshair.name = "Crosshair"
-	_crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	_crosshair.custom_minimum_size = Vector2(12, 12)
-	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_gameplay_root.add_child(_crosshair)
-	var h := ColorRect.new()
-	h.color = Color(0.93, 0.94, 0.95, 0.85)
-	h.size = Vector2(10, 2)
-	h.position = Vector2(1, 5)
-	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_crosshair.add_child(h)
-	var v := ColorRect.new()
-	v.color = Color(0.93, 0.94, 0.95, 0.85)
-	v.size = Vector2(2, 10)
-	v.position = Vector2(5, 1)
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_crosshair.add_child(v)
-
-	var notify_host := Control.new()
-	notify_host.name = "NotifyHost"
-	notify_host.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	notify_host.offset_top = 20
-	notify_host.offset_bottom = 120
-	notify_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_scale_root.add_child(notify_host)
-	_notify_panel = PanelContainer.new()
-	_notify_panel.name = "NotifyPanel"
-	_notify_panel.visible = false
-	_notify_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_notify_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_notify_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	notify_host.add_child(_notify_panel)
-	_notify_label = Label.new()
-	_notify_label.name = "NotifyLabel"
-	_notify_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_notify_label.add_theme_font_size_override("font_size", 20)
-	_notify_panel.add_child(_notify_label)
-
-	_stage_panel = PanelContainer.new()
-	_stage_panel.name = "StageCard"
-	_stage_panel.visible = false
-	_stage_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_stage_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_stage_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_stage_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_scale_root.add_child(_stage_panel)
-	var stage_box := VBoxContainer.new()
-	stage_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	_stage_panel.add_child(stage_box)
-	_stage_title = Label.new()
-	_stage_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_stage_title.add_theme_font_size_override("font_size", 32)
-	stage_box.add_child(_stage_title)
-	_stage_subtitle = Label.new()
-	_stage_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_stage_subtitle.add_theme_font_size_override("font_size", 24)
-	stage_box.add_child(_stage_subtitle)
-
-	_tutorial_panel = PanelContainer.new()
-	_tutorial_panel.name = "TutorialPanel"
-	_tutorial_panel.visible = false
-	_tutorial_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Bottom-center card with explicit size so it cannot collapse to 0-height anchors.
-	_tutorial_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_tutorial_panel.anchor_left = 0.5
-	_tutorial_panel.anchor_right = 0.5
-	_tutorial_panel.anchor_top = 1.0
-	_tutorial_panel.anchor_bottom = 1.0
-	_tutorial_panel.offset_left = -230.0
-	_tutorial_panel.offset_right = 230.0
-	_tutorial_panel.offset_top = -168.0
-	_tutorial_panel.offset_bottom = -88.0
-	_tutorial_panel.custom_minimum_size = Vector2(460, 72)
-	_gameplay_root.add_child(_tutorial_panel)
-	var tut_margin := MarginContainer.new()
-	tut_margin.add_theme_constant_override("margin_left", 16)
-	tut_margin.add_theme_constant_override("margin_right", 16)
-	tut_margin.add_theme_constant_override("margin_top", 10)
-	tut_margin.add_theme_constant_override("margin_bottom", 10)
-	_tutorial_panel.add_child(tut_margin)
-	_tutorial_label = Label.new()
-	_tutorial_label.name = "TutorialLabel"
-	_tutorial_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_tutorial_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_tutorial_label.add_theme_font_size_override("font_size", 18)
-	_tutorial_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_tutorial_label.custom_minimum_size = Vector2(420, 0)
-	tut_margin.add_child(_tutorial_label)
-
-	_notify_timer = Timer.new()
-	_notify_timer.one_shot = true
-	_notify_timer.wait_time = NOTIFY_SECONDS
-	_notify_timer.timeout.connect(_on_notify_timeout)
-	add_child(_notify_timer)
-	_stage_timer = Timer.new()
-	_stage_timer.one_shot = true
-	_stage_timer.wait_time = STAGE_SECONDS
-	_stage_timer.timeout.connect(_on_stage_timeout)
-	add_child(_stage_timer)
-	_tutorial_timer = Timer.new()
-	_tutorial_timer.one_shot = true
-	_tutorial_timer.wait_time = TutorialPrompt.DISPLAY_SECONDS
-	_tutorial_timer.timeout.connect(_on_tutorial_timeout)
-	add_child(_tutorial_timer)
-
-
-func _make_hud_label(node_name: String, text: String) -> Label:
-	var lab := Label.new()
-	lab.name = node_name
-	lab.text = text
-	lab.add_theme_font_size_override("font_size", 20)
-	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return lab
-
-
 func _apply_theme_and_scale() -> void:
-	var theme: Theme = null
-	if ResourceLoader.exists(THEME_PATH):
-		theme = load(THEME_PATH) as Theme
-	if theme == null:
-		theme = DateFactoryThemeBuilder.build()
-	_scale_root.theme = theme
 	UiScaleHelper.apply_to_control(_scale_root)
 
 
@@ -574,12 +404,9 @@ func _on_story_stage_started(_stage: GameTypes.GameStage) -> void:
 
 
 func _on_state_reset() -> void:
-	_notify_queue.clear()
 	_pending_group_lines = PackedStringArray()
 	_group_flush_scheduled = false
-	_notify_showing = false
-	_notify_panel.visible = false
-	_notify_timer.stop()
+	_hide_notification(false)
 	_stage_panel.visible = false
 	_stage_timer.stop()
 	_suspend_tutorial()
@@ -677,29 +504,81 @@ func _flush_grouped_notifications() -> void:
 
 
 func _enqueue_notification(text: String) -> void:
+	## Immediate replace: newest card wins; no pending queue.
 	var cleaned: String = text.strip_edges()
 	if cleaned == "":
 		return
-	if _notify_queue.size() >= NOTIFY_QUEUE_MAX:
-		_notify_queue.pop_front()
-	_notify_queue.append(cleaned)
-	if not _notify_showing:
-		_show_next_notification()
-
-
-func _show_next_notification() -> void:
-	if _notify_queue.is_empty():
-		_notify_showing = false
-		_notify_panel.visible = false
-		return
+	_notify_label.text = cleaned
 	_notify_showing = true
-	_notify_label.text = _notify_queue.pop_front()
-	_notify_panel.visible = _control_mode == PlayerController.ControlMode.GAMEPLAY
+	var gameplay: bool = (
+		(not _title_suppressed)
+		and _control_mode == PlayerController.ControlMode.GAMEPLAY
+	)
+	_notify_panel.visible = gameplay
 	_notify_timer.start(NOTIFY_SECONDS)
+	if gameplay:
+		_play_notify_slide_in()
+
+
+func _play_notify_slide_in() -> void:
+	if _notify_tween != null and is_instance_valid(_notify_tween):
+		_notify_tween.kill()
+	_notify_host.modulate.a = 0.0
+	_notify_host.offset_top = NOTIFY_HOST_OFFSET_TOP + NOTIFY_SLIDE_PX
+	_notify_host.offset_bottom = NOTIFY_HOST_OFFSET_BOTTOM + NOTIFY_SLIDE_PX
+	_notify_tween = create_tween()
+	_notify_tween.set_parallel(true)
+	_notify_tween.tween_property(_notify_host, "modulate:a", 1.0, NOTIFY_SLIDE_SEC)
+	_notify_tween.tween_property(
+		_notify_host, "offset_top", NOTIFY_HOST_OFFSET_TOP, NOTIFY_SLIDE_SEC
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_notify_tween.tween_property(
+		_notify_host, "offset_bottom", NOTIFY_HOST_OFFSET_BOTTOM, NOTIFY_SLIDE_SEC
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+func _hide_notification(animate: bool) -> void:
+	_notify_showing = false
+	_notify_timer.stop()
+	if _notify_tween != null and is_instance_valid(_notify_tween):
+		_notify_tween.kill()
+		_notify_tween = null
+	if animate and _notify_panel.visible:
+		_notify_tween = create_tween()
+		_notify_tween.set_parallel(true)
+		_notify_tween.tween_property(_notify_host, "modulate:a", 0.0, NOTIFY_SLIDE_SEC)
+		_notify_tween.tween_property(
+			_notify_host,
+			"offset_top",
+			NOTIFY_HOST_OFFSET_TOP + NOTIFY_SLIDE_PX,
+			NOTIFY_SLIDE_SEC
+		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		_notify_tween.tween_property(
+			_notify_host,
+			"offset_bottom",
+			NOTIFY_HOST_OFFSET_BOTTOM + NOTIFY_SLIDE_PX,
+			NOTIFY_SLIDE_SEC
+		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		_notify_tween.finished.connect(_on_notify_hide_finished, CONNECT_ONE_SHOT)
+	else:
+		_notify_panel.visible = false
+		_notify_host.modulate.a = 1.0
+		_notify_host.offset_top = NOTIFY_HOST_OFFSET_TOP
+		_notify_host.offset_bottom = NOTIFY_HOST_OFFSET_BOTTOM
+
+
+func _on_notify_hide_finished() -> void:
+	_notify_tween = null
+	if _notify_showing:
+		return
+	_notify_panel.visible = false
+	_notify_host.modulate.a = 1.0
+	_notify_host.offset_top = NOTIFY_HOST_OFFSET_TOP
+	_notify_host.offset_bottom = NOTIFY_HOST_OFFSET_BOTTOM
 
 
 func _on_notify_timeout() -> void:
-	_show_next_notification()
+	_hide_notification(true)
 
 
 func _show_stage_card(stage: GameTypes.GameStage) -> void:

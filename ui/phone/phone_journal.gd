@@ -6,9 +6,8 @@ extends Control
 signal opened()
 signal closed()
 
-const THEME_PATH := "res://ui/theme/date_factory_theme.tres"
-const FONT_SIZE: int = 18
-const FONT_SIZE_TITLE: int = 22
+const CHOICE_CARD_SCENE: String = "res://ui/common/choice_card.tscn"
+const BODY_LABEL_SCENE: String = "res://ui/common/body_label.tscn"
 
 enum PhoneTab {
 	STATUS,
@@ -18,71 +17,77 @@ enum PhoneTab {
 	CLONES,
 }
 
-var _list: ItemList = null
-var _detail: RichTextLabel = null
-var _title: Label = null
-var _close_btn: Button = null
+@onready var _list: ItemList = %GirlsList
+@onready var _detail: RichTextLabel = %GirlDetail
+@onready var _title: Label = %TitleLabel
+@onready var _close_btn: Button = %CloseButton
+@onready var _progression_btn: Button = %ProgressionButton
+@onready var _progression_badge: Label = %ProgressionBadge
 var _player: Node = null
 var _is_open: bool = false
 var _listed_ids: Array[StringName] = []
 var _active_tab: PhoneTab = PhoneTab.STATUS
+var _progression_modal: CanvasLayer = null
 
-var _top_bar_label: Label = null
+const PROGRESSION_SCENE: String = "res://ui/progression/progression_ui.tscn"
+
+@onready var _top_bar_label: Label = %TopBarLabel
 var _status_api_text: String = ""
-var _tab_bar: HBoxContainer = null
+@onready var _tab_bar: HBoxContainer = %TabBar
 var _tab_buttons: Dictionary = {}
 var _tab_pages: Dictionary = {}
 
-var _status_section: VBoxContainer = null
-var _status_label: Label = null
-var _story_section: VBoxContainer = null
-var _story_title: Label = null
-var _story_label: Label = null
-var _girls_section: HSplitContainer = null
+@onready var _status_section: VBoxContainer = %StatusSection
+@onready var _status_label: Label = %StatusLabel
+@onready var _story_section: VBoxContainer = %StorySection
+@onready var _story_title: Label = %StoryTitle
+@onready var _story_label: Label = %StoryLabel
+@onready var _girls_section: HSplitContainer = %GirlsSection
 
-var _salary_section: VBoxContainer = null
-var _salary_title: Label = null
-var _salary_stats: Label = null
-var _salary_advance_btn: Button = null
-var _salary_pending_hint: Label = null
-var _salary_feedback: Label = null
+@onready var _salary_section: VBoxContainer = %SalarySection
+@onready var _salary_title: Label = %SalaryTitle
+@onready var _salary_stats: Label = %SalaryStats
+@onready var _salary_advance_btn: Button = %SalaryAdvanceButton
+@onready var _salary_pending_hint: Label = %SalaryPendingHint
+@onready var _salary_feedback: Label = %SalaryFeedback
 var _salary_signals_connected: bool = false
-var _late_rates_label: Label = null
+@onready var _late_rates_label: Label = %LateRatesLabel
 
-var _media_section: VBoxContainer = null
-var _media_title: Label = null
-var _media_attention_block: VBoxContainer = null
-var _media_attention: Label = null
-var _media_attention_bar: ProgressBar = null
-var _media_attention_markers: Label = null
-var _media_pre_session: Label = null
-var _media_photos_block: VBoxContainer = null
-var _media_photos_title: Label = null
+@onready var _media_section: VBoxContainer = %MediaSection
+@onready var _media_title: Label = %MediaTitle
+@onready var _media_attention_block: VBoxContainer = %AttentionBlock
+@onready var _media_attention: Label = %MediaAttention
+@onready var _media_attention_bar: ProgressBar = %AttentionBar
+@onready var _media_attention_markers: Label = %AttentionMarkers
+@onready var _media_pre_session: Label = %MediaPreSession
+@onready var _media_photos_block: VBoxContainer = %PhotosBlock
+@onready var _media_photos_title: Label = %PhotosTitle
+@onready var _media_photo_rows_host: VBoxContainer = %PhotoRows
 var _media_photo_rows: Dictionary = {}
-var _media_incoming_block: VBoxContainer = null
-var _media_incoming_title: Label = null
-var _media_incoming_list: VBoxContainer = null
-var _media_feed_block: VBoxContainer = null
-var _media_feed_title: Label = null
-var _media_feed_label: Label = null
+@onready var _media_incoming_block: VBoxContainer = %IncomingBlock
+@onready var _media_incoming_title: Label = %IncomingTitle
+@onready var _media_incoming_list: VBoxContainer = %IncomingList
+@onready var _media_feed_block: VBoxContainer = %FeedBlock
+@onready var _media_feed_title: Label = %FeedTitle
+@onready var _media_feed_label: Label = %FeedLabel
 var _media_signals_connected: bool = false
 
-var _overload_section: VBoxContainer = null
-var _overload_title: Label = null
-var _overload_summary: Label = null
-var _overload_demand_list: VBoxContainer = null
-var _overload_boost_btn: Button = null
-var _overload_boost_hint: Label = null
+@onready var _overload_section: VBoxContainer = %OverloadSection
+@onready var _overload_title: Label = %OverloadTitle
+@onready var _overload_summary: Label = %OverloadSummary
+@onready var _overload_demand_list: VBoxContainer = %DemandList
+@onready var _overload_boost_btn: Button = %BoostButton
+@onready var _overload_boost_hint: Label = %BoostHint
 var _overload_signals_connected: bool = false
 var _realization_pending: bool = false
 var _realization_presented: bool = false
-var _realization_dialog: AcceptDialog = null
+@onready var _realization_dialog: AcceptDialog = %RealizationDialog
 var _player_mode_connected: bool = false
 
-var _clone_section: VBoxContainer = null
-var _clone_title: Label = null
-var _clone_stats: Label = null
-var _clone_footer: Label = null
+@onready var _clone_section: VBoxContainer = %CloneSection
+@onready var _clone_title: Label = %CloneTitle
+@onready var _clone_stats: Label = %CloneStats
+@onready var _clone_footer: Label = %CloneFooter
 var _clone_signals_connected: bool = false
 
 
@@ -90,8 +95,9 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	_apply_theme()
-	_build_ui()
+	UiScaleHelper.apply_to_control(self)
+	_wire_scene()
+	_build_photo_rows()
 	_connect_salary_signals()
 	_connect_media_signals()
 	_connect_overload_signals()
@@ -118,6 +124,7 @@ func open(player: Node = null) -> void:
 func close() -> void:
 	if not _is_open and not visible:
 		return
+	_close_progression_modal()
 	_audio_play_ui(AudioIds.UI_BACK)
 	visible = false
 	_is_open = false
@@ -161,6 +168,7 @@ func set_tab(tab: PhoneTab) -> void:
 func refresh() -> void:
 	_refresh_tab_visibility()
 	_refresh_top_bar()
+	_refresh_progression_badge()
 	_refresh_status_section()
 	_refresh_story_section()
 	_refresh_list()
@@ -284,117 +292,125 @@ func get_clone_stats_text() -> String:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _is_open:
 		return
-	if event.is_action_pressed("ui_cancel"):
-		close()
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("phone"):
+		if _has_progression_modal():
+			_close_progression_modal()
+		else:
+			close()
 		get_viewport().set_input_as_handled()
 
 
-func _apply_theme() -> void:
-	if ResourceLoader.exists(THEME_PATH):
-		var theme_res: Resource = load(THEME_PATH)
-		if theme_res is Theme:
-			theme = theme_res as Theme
-
-
-func _build_ui() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.09, 0.12, 0.92)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(bg)
-	var root := MarginContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("margin_left", 40)
-	root.add_theme_constant_override("margin_right", 40)
-	root.add_theme_constant_override("margin_top", 24)
-	root.add_theme_constant_override("margin_bottom", 24)
-	add_child(root)
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
-	root.add_child(vbox)
-
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 12)
-	vbox.add_child(header)
-	_title = Label.new()
-	_title.text = "Телефон"
-	_title.add_theme_font_size_override("font_size", FONT_SIZE_TITLE)
-	header.add_child(_title)
-	_top_bar_label = Label.new()
-	_top_bar_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_top_bar_label.add_theme_font_size_override("font_size", FONT_SIZE)
-	header.add_child(_top_bar_label)
-	_close_btn = Button.new()
-	_close_btn.text = "X"
-	_close_btn.custom_minimum_size = Vector2(44, 36)
+func _wire_scene() -> void:
 	_close_btn.pressed.connect(close)
-	header.add_child(_close_btn)
-
-	_tab_bar = HBoxContainer.new()
-	_tab_bar.add_theme_constant_override("separation", 6)
-	vbox.add_child(_tab_bar)
-	_add_tab_button(PhoneTab.STATUS, "СТАТУС")
-	_add_tab_button(PhoneTab.STORY, "СЮЖЕТ")
-	_add_tab_button(PhoneTab.GIRLS, "ДЕВУШКИ")
-	_add_tab_button(PhoneTab.MEDIA, "МЕДИА")
-	_add_tab_button(PhoneTab.CLONES, "КЛОНЫ")
-
-	var pages := Control.new()
-	pages.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	pages.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_child(pages)
-
-	_status_section = VBoxContainer.new()
-	_status_section.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_status_section.add_theme_constant_override("separation", 8)
-	pages.add_child(_status_section)
-	_tab_pages[PhoneTab.STATUS] = _status_section
-	_build_status_page()
-
-	_story_section = VBoxContainer.new()
-	_story_section.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_story_section.add_theme_constant_override("separation", 6)
-	pages.add_child(_story_section)
-	_tab_pages[PhoneTab.STORY] = _story_section
-	_build_story_page()
-
-	_girls_section = HSplitContainer.new()
-	_girls_section.set_anchors_preset(Control.PRESET_FULL_RECT)
-	pages.add_child(_girls_section)
-	_tab_pages[PhoneTab.GIRLS] = _girls_section
-	_build_girls_page()
-
-	_media_section = VBoxContainer.new()
-	_media_section.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_media_section.visible = false
-	pages.add_child(_media_section)
-	_tab_pages[PhoneTab.MEDIA] = _media_section
-	_build_media_page()
-
-	_clone_section = VBoxContainer.new()
-	_clone_section.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_clone_section.visible = false
-	pages.add_child(_clone_section)
-	_tab_pages[PhoneTab.CLONES] = _clone_section
-	_build_clone_page()
-
-	_realization_dialog = AcceptDialog.new()
-	_realization_dialog.title = ""
-	_realization_dialog.dialog_text = ""
-	_realization_dialog.ok_button_text = "ОК"
-	add_child(_realization_dialog)
-
+	_progression_btn.pressed.connect(_on_progression_pressed)
+	_list.item_selected.connect(_on_item_selected)
+	_tab_buttons = {
+		PhoneTab.STATUS: %StatusTab,
+		PhoneTab.STORY: %StoryTab,
+		PhoneTab.GIRLS: %GirlsTab,
+		PhoneTab.MEDIA: %MediaTab,
+		PhoneTab.CLONES: %ClonesTab,
+	}
+	_tab_pages = {
+		PhoneTab.STATUS: _status_section,
+		PhoneTab.STORY: _story_section,
+		PhoneTab.GIRLS: _girls_section,
+		PhoneTab.MEDIA: _media_section,
+		PhoneTab.CLONES: _clone_section,
+	}
+	for tab_value: int in _tab_buttons.keys():
+		var tab: PhoneTab = tab_value as PhoneTab
+		var button: Button = _tab_buttons[tab_value] as Button
+		button.pressed.connect(_set_active_tab.bind(tab))
+	_salary_advance_btn.pressed.connect(_on_salary_advance_pressed)
+	_overload_boost_btn.pressed.connect(_on_overload_feed_boost_pressed)
 	_set_active_tab(PhoneTab.STATUS)
+	_refresh_progression_badge()
 
 
-func _add_tab_button(tab: PhoneTab, caption: String) -> void:
-	var btn := Button.new()
-	btn.text = caption
-	btn.toggle_mode = true
-	btn.add_theme_font_size_override("font_size", FONT_SIZE)
-	btn.pressed.connect(func() -> void: _set_active_tab(tab))
-	_tab_bar.add_child(btn)
-	_tab_buttons[tab] = btn
+func _refresh_progression_badge() -> void:
+	if _progression_badge == null:
+		return
+	var points: int = 0
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and gs.has_method("get_upgrade_points"):
+		points = int(gs.call("get_upgrade_points"))
+	_progression_badge.visible = points > 0
+	if points > 0:
+		_progression_badge.text = str(points)
+
+
+func _on_progression_pressed() -> void:
+	if not _is_open:
+		return
+	if _has_progression_modal():
+		return
+	_audio_play_ui(AudioIds.UI_CLICK)
+	var packed: PackedScene = load(PROGRESSION_SCENE) as PackedScene
+	if packed == null:
+		push_error("[PhoneJournal] progression scene missing")
+		return
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return
+	add_child(layer)
+	_progression_modal = layer
+	if layer.has_method("open"):
+		# Stay in phone MODAL_UI when progression closes.
+		layer.call("open", _player, Callable(self, "_on_progression_closed"))
+	else:
+		_progression_modal = null
+		layer.queue_free()
+
+
+func _on_progression_closed(_player_ref: Node) -> void:
+	_progression_modal = null
+	_refresh_progression_badge()
+	_request_status_refresh()
+	if _is_open and _player != null and _player.has_method("enter_modal_ui"):
+		_player.call("enter_modal_ui")
+
+
+func _has_progression_modal() -> bool:
+	return _progression_modal != null and is_instance_valid(_progression_modal)
+
+
+func _close_progression_modal() -> void:
+	if not _has_progression_modal():
+		_progression_modal = null
+		return
+	var layer: CanvasLayer = _progression_modal
+	_progression_modal = null
+	if not is_instance_valid(layer):
+		return
+	# Drop callback so teardown does not toggle control mode.
+	layer.set("_on_closed", Callable())
+	layer.set("_player", null)
+	if layer.has_method("close"):
+		layer.call("close")
+	else:
+		layer.queue_free()
+
+
+func _build_photo_rows() -> void:
+	_media_photo_rows.clear()
+	var packed: PackedScene = load(CHOICE_CARD_SCENE) as PackedScene
+	if packed == null:
+		return
+	for photo_id: StringName in MediaContent.SHOT_IDS:
+		var card: ChoiceCard = packed.instantiate() as ChoiceCard
+		if card == null:
+			continue
+		card.configure(MediaContent.photo_title(photo_id), "", "Опубликовать")
+		var captured_id: StringName = photo_id
+		card.chosen.connect(func() -> void: _on_media_publish_pressed(captured_id))
+		_media_photo_rows_host.add_child(card)
+		_media_photo_rows[photo_id] = {
+			"row": card,
+			"label": card.title_label,
+			"gain": card.detail_label,
+			"button": card.action_button,
+		}
 
 
 func _set_active_tab(tab: PhoneTab) -> void:
@@ -465,203 +481,14 @@ func _is_clones_unlocked() -> bool:
 	return false
 
 
-func _make_label(text: String = "", size: int = FONT_SIZE) -> Label:
-	var lab := Label.new()
-	lab.text = text
-	lab.add_theme_font_size_override("font_size", size)
-	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	return lab
-
-
-func _build_status_page() -> void:
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_status_section.add_child(scroll)
-	var body := VBoxContainer.new()
-	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 8)
-	scroll.add_child(body)
-	body.add_child(_make_label("ХАРАКТЕРИСТИКИ", FONT_SIZE))
-	_status_label = _make_label()
-	body.add_child(_status_label)
-	_late_rates_label = _make_label()
-	_late_rates_label.visible = false
-	body.add_child(_late_rates_label)
-	_build_salary_section(body)
-
-
-func _build_story_page() -> void:
-	_story_title = _make_label("СЮЖЕТ", FONT_SIZE)
-	_story_section.add_child(_story_title)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_story_section.add_child(scroll)
-	_story_label = _make_label()
-	_story_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_story_label)
-
-
-func _build_girls_page() -> void:
-	_list = ItemList.new()
-	_list.custom_minimum_size = Vector2(280, 0)
-	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_list.add_theme_font_size_override("font_size", FONT_SIZE)
-	_list.item_selected.connect(_on_item_selected)
-	_girls_section.add_child(_list)
-	_detail = RichTextLabel.new()
-	_detail.bbcode_enabled = true
-	_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail.fit_content = false
-	_detail.scroll_active = true
-	_detail.add_theme_font_size_override("normal_font_size", FONT_SIZE)
-	_detail.add_theme_font_size_override("bold_font_size", FONT_SIZE)
-	_girls_section.add_child(_detail)
-
-
-func _build_media_page() -> void:
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_media_section.add_child(scroll)
-	var body := VBoxContainer.new()
-	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 10)
-	scroll.add_child(body)
-	_media_title = _make_label("МЕДИА", FONT_SIZE)
-	_media_title.visible = false
-	body.add_child(_media_title)
-
-	_media_attention_block = VBoxContainer.new()
-	_media_attention_block.add_theme_constant_override("separation", 4)
-	body.add_child(_media_attention_block)
-	_media_attention_block.add_child(_make_label("ВНИМАНИЕ", FONT_SIZE))
-	_media_attention = _make_label()
-	_media_attention_block.add_child(_media_attention)
-	_media_attention_bar = ProgressBar.new()
-	_media_attention_bar.min_value = 0
-	_media_attention_bar.max_value = float(MediaContent.ATTENTION_MAX)
-	_media_attention_bar.show_percentage = false
-	_media_attention_bar.custom_minimum_size = Vector2(0, 22)
-	_media_attention_block.add_child(_media_attention_bar)
-	_media_attention_markers = _make_label("15 · 30 · 45 · 60")
-	_media_attention_block.add_child(_media_attention_markers)
-	_media_pre_session = _make_label()
-	_media_pre_session.visible = false
-	_media_attention_block.add_child(_media_pre_session)
-
-	_media_photos_block = VBoxContainer.new()
-	_media_photos_block.visible = false
-	_media_photos_block.add_theme_constant_override("separation", 4)
-	body.add_child(_media_photos_block)
-	_media_photos_title = _make_label("ФОТОГРАФИИ", FONT_SIZE)
-	_media_photos_block.add_child(_media_photos_title)
-	_media_photo_rows.clear()
-	for photo_id in MediaContent.SHOT_IDS:
-		var card := VBoxContainer.new()
-		card.add_theme_constant_override("separation", 2)
-		_media_photos_block.add_child(card)
-		var name_lbl := _make_label(MediaContent.photo_title(photo_id))
-		card.add_child(name_lbl)
-		var gain_lbl := _make_label("")
-		card.add_child(gain_lbl)
-		var btn := Button.new()
-		btn.text = "Опубликовать"
-		btn.add_theme_font_size_override("font_size", FONT_SIZE)
-		var captured_id: StringName = photo_id
-		btn.pressed.connect(func() -> void: _on_media_publish_pressed(captured_id))
-		card.add_child(btn)
-		_media_photo_rows[photo_id] = {
-			"row": card,
-			"label": name_lbl,
-			"gain": gain_lbl,
-			"button": btn,
-		}
-
-	_media_incoming_block = VBoxContainer.new()
-	_media_incoming_block.visible = false
-	_media_incoming_block.add_theme_constant_override("separation", 4)
-	body.add_child(_media_incoming_block)
-	_media_incoming_title = _make_label("ВХОДЯЩИЕ", FONT_SIZE)
-	_media_incoming_block.add_child(_media_incoming_title)
-	_media_incoming_list = VBoxContainer.new()
-	_media_incoming_list.add_theme_constant_override("separation", 4)
-	_media_incoming_block.add_child(_media_incoming_list)
-
-	_overload_section = VBoxContainer.new()
-	_overload_section.visible = false
-	_overload_section.add_theme_constant_override("separation", 4)
-	body.add_child(_overload_section)
-	_overload_title = _make_label("ПЕРЕГРУЗКА", FONT_SIZE)
-	_overload_section.add_child(_overload_title)
-	_overload_summary = _make_label()
-	_overload_section.add_child(_overload_summary)
-	_overload_demand_list = VBoxContainer.new()
-	_overload_demand_list.add_theme_constant_override("separation", 6)
-	_overload_section.add_child(_overload_demand_list)
-
-	_media_feed_block = VBoxContainer.new()
-	_media_feed_block.visible = false
-	_media_feed_block.add_theme_constant_override("separation", 4)
-	body.add_child(_media_feed_block)
-	_media_feed_title = _make_label("ЛЕНТА", FONT_SIZE)
-	_media_feed_block.add_child(_media_feed_title)
-	var boost_row := HBoxContainer.new()
-	boost_row.add_theme_constant_override("separation", 12)
-	_media_feed_block.add_child(boost_row)
-	_overload_boost_btn = Button.new()
-	_overload_boost_btn.text = "Поднять волну"
-	_overload_boost_btn.visible = false
-	_overload_boost_btn.add_theme_font_size_override("font_size", FONT_SIZE)
-	_overload_boost_btn.pressed.connect(_on_overload_feed_boost_pressed)
-	boost_row.add_child(_overload_boost_btn)
-	_overload_boost_hint = _make_label()
-	_overload_boost_hint.visible = false
-	boost_row.add_child(_overload_boost_hint)
-	_media_feed_label = _make_label()
-	_media_feed_block.add_child(_media_feed_label)
-
-
-func _build_clone_page() -> void:
-	_clone_title = _make_label("КЛОНЫ", FONT_SIZE)
-	_clone_section.add_child(_clone_title)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_clone_section.add_child(scroll)
-	var body := VBoxContainer.new()
-	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 8)
-	scroll.add_child(body)
-	_clone_stats = _make_label()
-	body.add_child(_clone_stats)
-	_clone_footer = _make_label()
-	body.add_child(_clone_footer)
-
-
-func _build_salary_section(parent: VBoxContainer) -> void:
-	_salary_section = VBoxContainer.new()
-	_salary_section.visible = false
-	_salary_section.add_theme_constant_override("separation", 4)
-	parent.add_child(_salary_section)
-	_salary_title = _make_label("ЗАРПЛАТА", FONT_SIZE)
-	_salary_section.add_child(_salary_title)
-	_salary_stats = _make_label()
-	_salary_section.add_child(_salary_stats)
-	var advance_row := HBoxContainer.new()
-	advance_row.add_theme_constant_override("separation", 12)
-	_salary_section.add_child(advance_row)
-	_salary_advance_btn = Button.new()
-	_salary_advance_btn.text = "Получить зарплату вперёд"
-	_salary_advance_btn.visible = false
-	_salary_advance_btn.add_theme_font_size_override("font_size", FONT_SIZE)
-	_salary_advance_btn.pressed.connect(_on_salary_advance_pressed)
-	advance_row.add_child(_salary_advance_btn)
-	_salary_pending_hint = _make_label()
-	_salary_pending_hint.visible = false
-	advance_row.add_child(_salary_pending_hint)
-	_salary_feedback = _make_label()
-	_salary_section.add_child(_salary_feedback)
+func _make_label(text: String = "") -> Label:
+	var packed: PackedScene = load(BODY_LABEL_SCENE) as PackedScene
+	if packed == null:
+		return null
+	var label: Label = packed.instantiate() as Label
+	if label != null:
+		label.text = text
+	return label
 
 
 func _connect_salary_signals() -> void:
@@ -721,6 +548,7 @@ func _on_experience_changed_status(_new_value: int, _delta: int) -> void:
 
 func _on_upgrade_points_changed_status(_new_value: int, _delta: int) -> void:
 	_request_status_refresh()
+	_refresh_progression_badge()
 
 
 func _on_characteristic_changed_status(
@@ -1448,8 +1276,12 @@ func _refresh_overload_demand_rows(overload: Node) -> void:
 	if overload.has_method("get_backlog_entries_sorted"):
 		sorted = overload.call("get_backlog_entries_sorted") as Array[DatingDemandEntry]
 	if sorted.is_empty():
-		var empty := _make_label("Нет активных запросов")
-		_overload_demand_list.add_child(empty)
+		var empty: Label = _make_label("Нет активных запросов")
+		if empty != null:
+			_overload_demand_list.add_child(empty)
+		return
+	var packed: PackedScene = load(CHOICE_CARD_SCENE) as PackedScene
+	if packed == null:
 		return
 	var day_node: Node = get_node_or_null("/root/GameDay")
 	var current_day: int = 1
@@ -1459,38 +1291,32 @@ func _refresh_overload_demand_rows(overload: Node) -> void:
 		var e: DatingDemandEntry = entry as DatingDemandEntry
 		if e == null:
 			continue
-		var row := VBoxContainer.new()
-		row.add_theme_constant_override("separation", 1)
-		_overload_demand_list.add_child(row)
-		var status_lbl := _make_label()
+		var status_text: String = ""
 		if e.status == DatingOverloadTypes.DatingDemandStatus.OVERDUE:
-			status_lbl.text = "ПРОСРОЧЕНО"
+			status_text = "ПРОСРОЧЕНО"
 		else:
-			status_lbl.text = "СЕГОДНЯ"
-		row.add_child(status_lbl)
-		var time_lbl := _make_label()
+			status_text = "СЕГОДНЯ"
+		var time_text: String = ""
 		var slot_time: String = DatingOverloadTypes.slot_display_time(e.slot)
 		if e.status == DatingOverloadTypes.DatingDemandStatus.OVERDUE:
 			var day_delta: int = current_day - e.appointment_day
 			if day_delta <= 1:
-				time_lbl.text = "Вчера · %s" % slot_time
+				time_text = "Вчера · %s" % slot_time
 			else:
-				time_lbl.text = "%d дн. назад · %s" % [day_delta, slot_time]
+				time_text = "%d дн. назад · %s" % [day_delta, slot_time]
 		else:
-			time_lbl.text = slot_time
-		row.add_child(time_lbl)
-		var name_row := HBoxContainer.new()
-		name_row.add_theme_constant_override("separation", 8)
-		row.add_child(name_row)
-		var name_lbl := _make_label(_actor_display_name(e.girl_id, false))
-		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_row.add_child(name_lbl)
-		var open_btn := Button.new()
-		open_btn.text = "Открыть"
-		open_btn.add_theme_font_size_override("font_size", FONT_SIZE)
+			time_text = slot_time
+		var card: ChoiceCard = packed.instantiate() as ChoiceCard
+		if card == null:
+			continue
+		card.configure(
+			_actor_display_name(e.girl_id, false),
+			"%s · %s" % [status_text, time_text],
+			"Открыть"
+		)
 		var captured_id: StringName = e.girl_id
-		open_btn.pressed.connect(func() -> void: select_girl_by_id(captured_id))
-		name_row.add_child(open_btn)
+		card.chosen.connect(func() -> void: select_girl_by_id(captured_id))
+		_overload_demand_list.add_child(card)
 
 
 func _on_overload_feed_boost_pressed() -> void:
@@ -1549,9 +1375,8 @@ func _show_realization_dialog() -> void:
 	if _realization_presented:
 		return
 	if _realization_dialog == null:
-		_realization_dialog = AcceptDialog.new()
-		_realization_dialog.ok_button_text = "ОК"
-		add_child(_realization_dialog)
+		push_warning("[PhoneJournal] realization dialog scene node is missing")
+		return
 	var text: String = "%s\n\n%s\n\n%s" % [
 		DatingOverloadTypes.REALIZATION_LINE_1,
 		DatingOverloadTypes.REALIZATION_LINE_2,
@@ -1651,26 +1476,27 @@ func _refresh_media_incoming(media: Node) -> void:
 		child.queue_free()
 	var offer_ids: Array = media.call("get_incoming_offer_girl_ids") as Array
 	if offer_ids.is_empty():
-		_media_incoming_list.add_child(_make_label("Пока нет входящих"))
+		var empty: Label = _make_label("Пока нет входящих")
+		if empty != null:
+			_media_incoming_list.add_child(empty)
+		return
+	var packed: PackedScene = load(CHOICE_CARD_SCENE) as PackedScene
+	if packed == null:
 		return
 	for entry in offer_ids:
 		var girl_id: StringName = entry as StringName
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		_media_incoming_list.add_child(row)
-		var status_lbl := _make_label()
 		var is_read: bool = bool(media.call("is_offer_read", girl_id))
-		status_lbl.text = "READ" if is_read else "NEW"
-		row.add_child(status_lbl)
-		var name_lbl := _make_label(_actor_display_name(girl_id, false))
-		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(name_lbl)
-		var open_btn := Button.new()
-		open_btn.text = "Открыть"
-		open_btn.add_theme_font_size_override("font_size", FONT_SIZE)
+		var card: ChoiceCard = packed.instantiate() as ChoiceCard
+		if card == null:
+			continue
+		card.configure(
+			_actor_display_name(girl_id, false),
+			"READ" if is_read else "NEW",
+			"Открыть"
+		)
 		var captured_id: StringName = girl_id
-		open_btn.pressed.connect(func() -> void: _on_media_open_offer_pressed(captured_id))
-		row.add_child(open_btn)
+		card.chosen.connect(func() -> void: _on_media_open_offer_pressed(captured_id))
+		_media_incoming_list.add_child(card)
 
 
 func _refresh_media_feed(media: Node) -> void:

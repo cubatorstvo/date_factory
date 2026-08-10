@@ -1,6 +1,6 @@
-# UI Architecture — MODULE 22 (+ MODULE 23 audio + MODULE 24 title/pause/settings)
+# UI Architecture — adaptive scene-first presentation
 
-**Статус:** реализованная UI presentation architecture после MODULE 22; audio in MODULE 23; title/pause/settings in MODULE 24.  
+**Статус:** production UI хранится в редактируемых `.tscn`; controller-скрипты обновляют состояние и обрабатывают действия.
 **Граница:** UI показывает уже существующее состояние и действия. Gameplay / balance / Story / economy / SaveSystem остаются source of truth.  
 **STOP:** без MODULE 25 content packs; без UIManager / ScreenManager / reactive store.
 
@@ -21,13 +21,13 @@ Persistence: `docs/persistence/SAVE_ARCHITECTURE.md`.
 | Number format | static helper | `ui/ui_number_format.gd` (`UiNumberFormat`) |
 | UI scale | runtime helper | `ui/theme/ui_scale_helper.gd` (`UiScaleHelper`) |
 | Tutorials | HUD-owned helper | `ui/tutorial/tutorial_prompt.gd` (`TutorialPrompt`) |
-| Progression modal | apartment Interactable → spawn | `ui/progression/progression_ui.gd` (+ `.tscn`); shim `progression_modal_ui.gd` |
+| Progression modal | apartment Interactable → PackedScene | `ui/progression/progression_ui.tscn` + `.gd` |
 | Dating modal | DatingCore presentation | `ui/dating/dating_ui.tscn` + `.gd` |
 | Rival choose/result | presentation over RivalEncounters | `ui/rivals/rival_encounter_ui.tscn` + `.gd` |
 | Minigame overlays | RivalCompetitionRunner | `minigames/*/`, shell `minigames/common/minigame_shell.gd` |
-| Clone Terminal | lab Interactable | `game/clone_incremental/clone_terminal_ui.gd` |
-| Global Terminal | Production Area Interactable | `game/late_game/global_expansion_terminal_ui.gd` |
-| Final date UI | scene-local FinalDateController | `game/final_date/final_date_ui.gd` |
+| Clone Terminal | lab Interactable → PackedScene | `game/clone_incremental/clone_terminal_ui.tscn` + `.gd` |
+| Global Terminal | Production Area Interactable → PackedScene | `game/late_game/global_expansion_terminal_ui.tscn` + `.gd` |
+| Final date UI | scene-local FinalDateController → PackedScene | `game/final_date/final_date_ui.tscn` + `.gd` |
 | Title menu | bootstrap-spawned CanvasLayer | `ui/frontend/title_menu.tscn` + `.gd` |
 | Pause menu | player pause → CanvasLayer | `ui/frontend/pause_menu.tscn` + `.gd` |
 | Settings panel | title/pause child panel | `ui/frontend/settings_panel.tscn` + `.gd` |
@@ -37,14 +37,25 @@ Persistence: `docs/persistence/SAVE_ARCHITECTURE.md`.
 
 ---
 
-## 2. Persistent shell
+## 2. Scene-first and adaptive contract
+
+- Каждый production screen, popup и overlay имеет собственную `.tscn`.
+- Статические `Control`/`Label`/`Button` не создаются controller-кодом. Динамические карточки и строки создаются только из `PackedScene`.
+- Общие presentation-компоненты находятся в `ui/common/`: action/choice cards, save-slot card, confirmation/message dialogs, transient notice, separators и result overlay.
+- Layout использует full-rect anchors, `Container`, safe margins, перенос текста и `ScrollContainer` для длинного содержимого.
+- Логический canvas — 1920×1080; `canvas_items` + `expand` адаптируют 16:9, 16:10 и 21:9 от 1280×720 до 3840×2160.
+- Accessibility scale 100/125/150% меняет типографику Theme и вызывает reflow; полноэкранный root всегда остаётся `scale = Vector2.ONE`.
+
+---
+
+## 3. Persistent shell
 
 `World` keeps under `/root` → `WorldHost`:
 
 ```text
 LocationRoot          # swapped location scene
 Player                # persistent FPS
-PersistentUI          # CanvasLayer
+PersistentUI          # world/persistent_ui.tscn
 ├── PhoneJournal
 └── GameHUD
 ```
@@ -55,7 +66,7 @@ PersistentUI          # CanvasLayer
 
 ---
 
-## 3. GameHUD
+## 4. GameHUD
 
 `class_name GameHUD` · `CanvasLayer` · `ui/hud/game_hud.gd`
 
@@ -87,11 +98,11 @@ Event-driven from `GameState` / `Story` / related signals — not `_process` pol
 
 ### Notification rail
 
-Top-center transient queue:
+Bottom-center transient card:
 
-- max 3 pending;
-- ~2.2 s each;
-- same-frame reward lines may group;
+- newest replaces current immediately (no pending queue);
+- ~2.2 s display; slides in from below on each present;
+- same-frame reward lines may group into one card;
 - no passive clone Money spam;
 - salary / major money via `notify_major_money`;
 - authority / XP / UP deltas, feature unlocks, Reach milestones (25/50/75/100).
@@ -154,7 +165,7 @@ Hidden tabs redirect to STATUS. No sixth tab: salary lives under STATUS; ПЕР�
 
 Action logic unchanged from MODULE 15–21 APIs (`Media`, `DatingOverload`, `SalaryMine`, `CloneIncremental` read-only rates, Story progress). Phone does **not** purchase perks or assign clones.
 
-Opens via apartment phone Interactable → `PhoneJournal.open` → `MODAL_UI`. No permanent phone hotkey.
+Opens via **Q** (`phone` InputMap) anywhere in GAMEPLAY, or apartment phone Interactable → `PhoneJournal.open` → `MODAL_UI`. Q / Esc closes. Header button **ПРОКАЧКА** opens Progression UI; badge shows available upgrade points.
 
 ---
 
@@ -166,7 +177,9 @@ ui/progression/progression_ui.gd
 ui/progression/progression_modal_ui.gd   # thin extends shim
 ```
 
-Entry: `game/progression/progression_interactable.gd` loads `progression_ui.gd`, optional characteristic preselect.
+Entry:
+- Phone header **ПРОКАЧКА** (primary; available on Q from any location);
+- apartment `ProgressionInteractable` still opens the same modal locally.
 
 - All **32** ContentDB perks, four characteristic branches;
 - cost `3^N`, tree prereqs, availability via existing `Progression` API;
@@ -182,9 +195,9 @@ Entry: `game/progression/progression_interactable.gd` loads `progression_ui.gd`,
 | DatingUI | `ui/dating/` | MODAL_UI; requirements before choice; greeting non-scoring; reaction `+1/0/-1`; result breakdown; Theme |
 | RivalEncounterUI | `ui/rivals/` | choose / result / exhibition stakes; Authority stakes for normal path; exhibition shows no Authority consequence |
 | Minigames | `minigames/slap|dance|sigma|money/` | `ControlMode.MINIGAME`; shared `MinigameShell` Theme + score/result presentation; formulas untouched |
-| Clone Terminal | `game/clone_incremental/clone_terminal_ui.gd` | assign Work/Dating + local upgrades; Theme |
-| Global Terminal | `game/late_game/global_expansion_terminal_ui.gd` | Reach, rates, global upgrades; Theme |
-| FinalDateUI | `game/final_date/final_date_ui.gd` | staged choices, fail→retry, success ending + Continue; Theme + compact numbers |
+| Clone Terminal | `game/clone_incremental/clone_terminal_ui.tscn` | assign Work/Dating + local upgrades; Theme |
+| Global Terminal | `game/late_game/global_expansion_terminal_ui.tscn` | Reach, rates, global upgrades; Theme |
+| FinalDateUI | `game/final_date/final_date_ui.tscn` | staged choices, fail→retry, success ending + Continue; Theme + compact numbers |
 
 Gameplay controllers remain owners of outcomes; UI is presentation.
 
@@ -212,7 +225,9 @@ Seven `PromptId`s:
 
 `UiScaleHelper` presets: **100% / 125% / 150%**.
 
-- Applied to HUD scale root and other themed roots via `apply_to_control` / `apply_to_canvas_item`;
+- Duplicates the scene Theme and scales centralized font metrics (`Caption`, `Body`, `Header`, `Title`, `Display`);
+- never scales a fullscreen root transform; Containers reflow after metric changes;
+- applied to HUD scale root and other themed roots via `apply_to_control` / `apply_to_canvas_item`;
 - `GameHUD.set_ui_scale_percent` / `get_ui_scale_percent`;
 - persisted as `display/ui_scale` (1.0 / 1.25 / 1.5) through `SaveSystem` Settings.
 
@@ -287,4 +302,6 @@ Volumes / camera feedback / FOV / UI scale persistence → `SaveSystem` (`settin
 | GameHUD smoke | `ui/hud/test/game_hud_smoke_test.tscn` |
 | Number format | `ui/hud/test/ui_number_format_test.tscn` |
 | Progression UI | `ui/progression/test/progression_ui_self_test.tscn` |
+| Scene-first production contract | `ui/test/ui_scene_contract_self_test.tscn` |
+| Multi-resolution gallery | `tools/visual_review/run_visual_playtest.py --layout/--gallery` |
 | AudioDirector | `audio/test/audio_director_self_test.gd` |

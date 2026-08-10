@@ -12,3 +12,444 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.08, 0.09, 0.12, 0.96)
+
+[node name="SafeMargin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="SafeMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="SafeMargin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="SafeMargin/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Телефон"
+
+[node name="TopBarLabel" type="Label" parent="SafeMargin/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "День 1"
+horizontal_alignment = 1
+text_overrun_behavior = 3
+
+[node name="ProgressionButton" type="Button" parent="SafeMargin/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 42)
+layout_mode = 2
+text = "ПРОКАЧКА"
+
+[node name="ProgressionBadge" type="Label" parent="SafeMargin/Content/Header/ProgressionButton"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -22.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 16.0
+grow_horizontal = 0
+theme_type_variation = &"HeaderLabel"
+theme_override_colors/font_color = Color(0.12, 0.1, 0.08, 1)
+theme_override_colors/font_outline_color = Color(0.98, 0.84, 0.28, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 16
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="SafeMargin/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 42)
+layout_mode = 2
+text = "X"
+
+[node name="TabBar" type="HBoxContainer" parent="SafeMargin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="StatusTab" type="Button" parent="SafeMargin/Content/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "СТАТУС"
+
+[node name="StoryTab" type="Button" parent="SafeMargin/Content/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "СЮЖЕТ"
+
+[node name="GirlsTab" type="Button" parent="SafeMargin/Content/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "ДЕВУШКИ"
+
+[node name="MediaTab" type="Button" parent="SafeMargin/Content/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "МЕДИА"
+
+[node name="ClonesTab" type="Button" parent="SafeMargin/Content/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "КЛОНЫ"
+
+[node name="Pages" type="Control" parent="SafeMargin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatusSection" type="VBoxContainer" parent="SafeMargin/Content/Pages"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Scroll" type="ScrollContainer" parent="SafeMargin/Content/Pages/StatusSection"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Body" type="VBoxContainer" parent="SafeMargin/Content/Pages/StatusSection/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="CharacteristicsTitle" type="Label" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ХАРАКТЕРИСТИКИ"
+
+[node name="StatusLabel" type="Label" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="LateRatesLabel" type="Label" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="SalarySection" type="VBoxContainer" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SalaryTitle" type="Label" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body/SalarySection"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ЗАРПЛАТА"
+
+[node name="SalaryStats" type="Label" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body/SalarySection"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="SalaryActions" type="HBoxContainer" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body/SalarySection"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SalaryAdvanceButton" type="Button" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body/SalarySection/SalaryActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Получить зарплату вперёд"
+
+[node name="SalaryPendingHint" type="Label" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body/SalarySection/SalaryActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 2
+
+[node name="SalaryFeedback" type="Label" parent="SafeMargin/Content/Pages/StatusSection/Scroll/Body/SalarySection"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="StorySection" type="VBoxContainer" parent="SafeMargin/Content/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="StoryTitle" type="Label" parent="SafeMargin/Content/Pages/StorySection"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "СЮЖЕТ"
+
+[node name="Scroll" type="ScrollContainer" parent="SafeMargin/Content/Pages/StorySection"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="StoryLabel" type="Label" parent="SafeMargin/Content/Pages/StorySection/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 2
+
+[node name="GirlsSection" type="HSplitContainer" parent="SafeMargin/Content/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+split_offset = 360
+
+[node name="GirlsList" type="ItemList" parent="SafeMargin/Content/Pages/GirlsSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+
+[node name="GirlDetail" type="RichTextLabel" parent="SafeMargin/Content/Pages/GirlsSection"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+
+[node name="MediaSection" type="VBoxContainer" parent="SafeMargin/Content/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Scroll" type="ScrollContainer" parent="SafeMargin/Content/Pages/MediaSection"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Body" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="MediaTitle" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "МЕДИА"
+
+[node name="AttentionBlock" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="AttentionTitle" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/AttentionBlock"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ВНИМАНИЕ"
+
+[node name="MediaAttention" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/AttentionBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AttentionBar" type="ProgressBar" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/AttentionBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+max_value = 60.0
+show_percentage = false
+
+[node name="AttentionMarkers" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/AttentionBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "15 · 30 · 45 · 60"
+
+[node name="MediaPreSession" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/AttentionBlock"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="PhotosBlock" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PhotosTitle" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/PhotosBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ФОТОГРАФИИ"
+
+[node name="PhotoRows" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/PhotosBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="IncomingBlock" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="IncomingTitle" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/IncomingBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ВХОДЯЩИЕ"
+
+[node name="IncomingList" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/IncomingBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OverloadSection" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OverloadTitle" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/OverloadSection"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ПЕРЕГРУЗКА"
+
+[node name="OverloadSummary" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/OverloadSection"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="DemandList" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/OverloadSection"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FeedBlock" type="VBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FeedTitle" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/FeedBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ЛЕНТА"
+
+[node name="BoostRow" type="HBoxContainer" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/FeedBlock"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BoostButton" type="Button" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/FeedBlock/BoostRow"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Поднять волну"
+
+[node name="BoostHint" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/FeedBlock/BoostRow"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 2
+
+[node name="FeedLabel" type="Label" parent="SafeMargin/Content/Pages/MediaSection/Scroll/Body/FeedBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="CloneSection" type="VBoxContainer" parent="SafeMargin/Content/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="CloneTitle" type="Label" parent="SafeMargin/Content/Pages/CloneSection"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "КЛОНЫ"
+
+[node name="Scroll" type="ScrollContainer" parent="SafeMargin/Content/Pages/CloneSection"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="CloneBody" type="VBoxContainer" parent="SafeMargin/Content/Pages/CloneSection/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="CloneStats" type="Label" parent="SafeMargin/Content/Pages/CloneSection/Scroll/CloneBody"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="CloneFooter" type="Label" parent="SafeMargin/Content/Pages/CloneSection/Scroll/CloneBody"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="RealizationDialog" type="AcceptDialog" parent="."]
+unique_name_in_owner = true
+size = Vector2i(520, 240)
+ok_button_text = "ОК"

@@ -136,3 +136,21 @@ Female animation: switch `animation_female_base` to UAL path proven by `DateGirl
 ## D-PE01-05 — Evidence isolation
 
 **Decision:** Use an isolated empty `user://` profile and never delete developer saves/settings. Source/test/docs fixes land on clean `main`; before/after screenshots, collision diagnostics, recordings, and a copy of the player journal publish only on `visual-review/player-experience-01-<date>`.
+
+---
+
+## D-UI-01 — Production UI is scene-authored
+
+**Decision:** Every production screen, popup, modal, overlay, and persistent HUD surface is authored as a `.tscn`. Controller scripts may update data and instantiate reusable row/card scenes, but may not construct presentation trees with `Control.new()`, `Label.new()`, or `Button.new()`.
+
+One-off controls remain declarative children of their owning screen. Repeated runtime entries use `ui/common/` PackedScenes. No `UIManager`, modal stack, or gameplay-state framework is introduced.
+
+## D-UI-02 — Resolution and accessibility scaling are separate
+
+**Decision:** Godot `canvas_items` stretch with a 1920×1080 logical canvas and `expand` aspect handles 1280×720–3840×2160 across 16:9, 16:10, and 21:9. Scene anchors, Containers, safe margins, wrapping, and scrolling own reflow.
+
+The existing 100/125/150% setting remains an accessibility multiplier for theme typography. It must not geometrically scale a fullscreen root, because that moves anchored controls outside the viewport.
+
+## D-UI-03 — Phone on Q; progression from phone
+
+**Decision:** Permanent `phone` InputMap action on **Q** opens `PhoneJournal` in GAMEPLAY. Esc/Q closes. Progression opens from phone header button **ПРОКАЧКА** with a badge when `upgrade_points > 0`. Apartment `ProgressionInteractable` remains a local shortcut to the same modal. Q during minigames stays `minigame_special_1`.

@@ -1,7 +1,250 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://ui/hud/game_hud.gd" id="1_hud"]
+[ext_resource type="Theme" path="res://ui/theme/date_factory_theme.tres" id="2_theme"]
 
 [node name="GameHUD" type="CanvasLayer"]
 layer = 18
 script = ExtResource("1_hud")
+
+[node name="ScaleRoot" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+
+[node name="GameplayRoot" type="Control" parent="ScaleRoot"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ResourcePanel" type="PanelContainer" parent="ScaleRoot/GameplayRoot"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 256.0
+offset_bottom = 148.0
+mouse_filter = 2
+
+[node name="Resources" type="VBoxContainer" parent="ScaleRoot/GameplayRoot/ResourcePanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MoneyLabel" type="Label" parent="ScaleRoot/GameplayRoot/ResourcePanel/Resources"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "$ 0"
+mouse_filter = 2
+
+[node name="AuthorityLabel" type="Label" parent="ScaleRoot/GameplayRoot/ResourcePanel/Resources"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "АВТОРИТЕТ 0"
+mouse_filter = 2
+
+[node name="ExperienceLabel" type="Label" parent="ScaleRoot/GameplayRoot/ResourcePanel/Resources"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ОПЫТНОСТЬ 0"
+mouse_filter = 2
+
+[node name="PointsLabel" type="Label" parent="ScaleRoot/GameplayRoot/ResourcePanel/Resources"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "БАЛЛЫ 0"
+mouse_filter = 2
+
+[node name="ObjectivePanel" type="PanelContainer" parent="ScaleRoot/GameplayRoot"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 92)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -336.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 116.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="ObjectiveContent" type="VBoxContainer" parent="ScaleRoot/GameplayRoot/ObjectivePanel"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="ObjectiveTitle" type="Label" parent="ScaleRoot/GameplayRoot/ObjectivePanel/ObjectiveContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "ЦЕЛЬ"
+horizontal_alignment = 2
+
+[node name="ObjectiveBody" type="Label" parent="ScaleRoot/GameplayRoot/ObjectivePanel/ObjectiveContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+text = "Познакомься с соседкой."
+horizontal_alignment = 2
+autowrap_mode = 2
+
+[node name="Crosshair" type="Control" parent="ScaleRoot/GameplayRoot"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.0
+offset_top = -6.0
+offset_right = 6.0
+offset_bottom = 6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Horizontal" type="ColorRect" parent="ScaleRoot/GameplayRoot/Crosshair"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 5.0
+offset_right = 11.0
+offset_bottom = 7.0
+mouse_filter = 2
+color = Color(0.93, 0.94, 0.95, 0.85)
+
+[node name="Vertical" type="ColorRect" parent="ScaleRoot/GameplayRoot/Crosshair"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 1.0
+offset_right = 7.0
+offset_bottom = 11.0
+mouse_filter = 2
+color = Color(0.93, 0.94, 0.95, 0.85)
+
+[node name="TutorialPanel" type="PanelContainer" parent="ScaleRoot/GameplayRoot"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(460, 80)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -168.0
+offset_right = 230.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="TutorialMargin" type="MarginContainer" parent="ScaleRoot/GameplayRoot/TutorialPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 10
+
+[node name="TutorialLabel" type="Label" parent="ScaleRoot/GameplayRoot/TutorialPanel/TutorialMargin"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+text = "Подсказка"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="NotifyHost" type="MarginContainer" parent="ScaleRoot"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -130.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_right = 24
+
+[node name="NotifyCenter" type="CenterContainer" parent="ScaleRoot/NotifyHost"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="NotifyPanel" type="PanelContainer" parent="ScaleRoot/NotifyHost/NotifyCenter"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(360, 64)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="NotifyLabel" type="Label" parent="ScaleRoot/NotifyHost/NotifyCenter/NotifyPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Уведомление"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="StageCenter" type="CenterContainer" parent="ScaleRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="StageCard" type="PanelContainer" parent="ScaleRoot/StageCenter"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(480, 150)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="StageContent" type="VBoxContainer" parent="ScaleRoot/StageCenter/StageCard"]
+layout_mode = 2
+alignment = 1
+
+[node name="StageTitle" type="Label" parent="ScaleRoot/StageCenter/StageCard/StageContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "СТАДИЯ"
+horizontal_alignment = 1
+
+[node name="StageSubtitle" type="Label" parent="ScaleRoot/StageCenter/StageCard/StageContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+horizontal_alignment = 1
+
+[node name="NotifyTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 2.2
+one_shot = true
+
+[node name="StageTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 3.0
+one_shot = true
+
+[node name="TutorialTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 5.0
+one_shot = true

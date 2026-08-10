@@ -78,6 +78,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _mode != ControlMode.GAMEPLAY:
 		return
+	if event.is_action_pressed("phone"):
+		_open_phone_journal()
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion: InputEventMouseMotion = event as InputEventMouseMotion
 		var sens: float = deg_to_rad(mouse_sensitivity_degrees)
@@ -244,6 +248,16 @@ func _parse_pose_position(pos_v: Variant) -> Vector3:
 	return Vector3(NAN, NAN, NAN)
 
 
+func _open_phone_journal() -> void:
+	var world: Node = get_node_or_null("/root/World")
+	if world != null and world.has_method("open_phone_journal"):
+		world.call("open_phone_journal", self)
+		return
+	var phone: Node = get_tree().get_first_node_in_group("phone_journal") if get_tree() != null else null
+	if phone != null and phone.has_method("open"):
+		phone.call("open", self)
+
+
 func _handle_pause_action() -> void:
 	var pause_menu: Node = get_tree().get_first_node_in_group("pause_menu") if get_tree() != null else null
 	if pause_menu != null and pause_menu.has_method("handle_pause_action"):
@@ -407,9 +421,9 @@ func _ensure_pause_menu_open() -> void:
 		return
 	var pause_menu: Node = tree.get_first_node_in_group("pause_menu")
 	if pause_menu == null:
-		var script_res: Resource = load("res://ui/frontend/pause_menu.gd")
-		if script_res is GDScript:
-			pause_menu = (script_res as GDScript).new()
+		var packed: PackedScene = load("res://ui/frontend/pause_menu.tscn") as PackedScene
+		if packed != null:
+			pause_menu = packed.instantiate()
 			tree.root.add_child(pause_menu)
 	if pause_menu != null and pause_menu.has_method("open_from_pause"):
 		pause_menu.call("open_from_pause")
