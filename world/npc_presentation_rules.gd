@@ -320,7 +320,8 @@ func _find_date_venue() -> Node3D:
 	var venue_paths: Array[NodePath] = [
 		NodePath("Geometry/ApartmentArt/Objects/DiningTable/Interaction"),
 		NodePath("Interactables/DateVenue"),
-	]:
+	]
+	for venue_path: NodePath in venue_paths:
 		var venue: Node = loc.get_node_or_null(venue_path)
 		if venue is Node3D:
 			return venue as Node3D
