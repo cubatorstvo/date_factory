@@ -1,7 +1,7 @@
 extends Node
 ## MODULE 00/24 entry bootstrap. Boots title menu first; World starts after New/Continue/Load.
 
-const TITLE_MENU_SCRIPT: String = "res://ui/frontend/title_menu.gd"
+const TITLE_MENU_SCENE: String = "res://ui/frontend/title_menu.tscn"
 
 
 func _ready() -> void:
@@ -20,12 +20,12 @@ func _boot() -> void:
 		if existing.has_method("show_menu"):
 			existing.call("show_menu")
 		return
-	var script_res: Resource = load(TITLE_MENU_SCRIPT)
-	if not (script_res is GDScript):
-		DfLog.error("MODULE_24", "TitleMenu script missing; fallback World.boot_from_main")
+	var packed: PackedScene = load(TITLE_MENU_SCENE) as PackedScene
+	if packed == null:
+		DfLog.error("MODULE_24", "TitleMenu scene missing; fallback World.boot_from_main")
 		_fallback_boot_world()
 		return
-	var title: Node = (script_res as GDScript).new()
+	var title: Node = packed.instantiate()
 	add_child(title)
 
 
