@@ -154,9 +154,6 @@ size = Vector3(0.46, 0.92, 0.46)
 [sub_resource type="BoxShape3D" id="BoxShape_KitchenCounter"]
 size = Vector3(0.7, 0.95, 0.62)
 
-[sub_resource type="BoxShape3D" id="BoxShape_NeighborDoor"]
-size = Vector3(0.95, 2.15, 0.14)
-
 [sub_resource type="BoxShape3D" id="BoxShape_Trashcan"]
 size = Vector3(0.32, 0.48, 0.32)
 
@@ -371,9 +368,6 @@ visible = false
 [node name="Trashcan" parent="Geometry/ApartmentArt/Furniture" unique_id=1321992873 instance=ExtResource("19_ulflq")]
 transform = Transform3D(6.5778484, 0, 2.394141, 0, 7, 0, -2.394141, 0, 6.5778484, 0.55, 0, -2.1)
 
-[node name="NeighborDoor" parent="Geometry/ApartmentArt/Furniture" unique_id=456612764 instance=ExtResource("16_euyv3")]
-transform = Transform3D(-5, 0, 0, 0, 5, 0, 0, 0, -5, -1.5, 0, 2.42)
-
 [node name="Objects" type="Node3D" parent="Geometry/ApartmentArt" unique_id=1612397107]
 
 [node name="Bed" type="Node3D" parent="Geometry/ApartmentArt/Objects" unique_id=47363582]
@@ -554,13 +548,6 @@ collision_mask = 0
 [node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/KitchenDrawersBody" unique_id=1900100021]
 shape = SubResource("BoxShape_KitchenCounter")
 
-[node name="NeighborDoorBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100024]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.08, 2.42)
-collision_mask = 0
-
-[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/NeighborDoorBody" unique_id=1900100025]
-shape = SubResource("BoxShape_NeighborDoor")
-
 [node name="TrashcanBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100026]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.24, -2.1)
 collision_mask = 0
@@ -663,9 +650,6 @@ transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.6
 
 [node name="HeroSeat" type="Marker3D" parent="Geometry/ApartmentArt/Markers" unique_id=1814633732]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.416, 0, 0.608)
-
-[node name="NeighborDoorAnchor" type="Marker3D" parent="Geometry/ApartmentArt/Markers" unique_id=1780692331]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 1.95)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Geometry/ApartmentArt" unique_id=2070083277]
 environment = SubResource("Environment_6mgtm")
