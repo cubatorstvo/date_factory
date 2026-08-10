@@ -76,8 +76,12 @@ func take_serving() -> Dictionary:
 		return {}
 	var definition: Dictionary = _get_definition(_serving_id)
 	definition["id"] = _serving_id
+	var carried_visual: Node3D = _visual
+	_visual = null
 	_serving_id = &""
-	_clear_visual()
+	if carried_visual != null and is_instance_valid(carried_visual):
+		remove_child(carried_visual)
+		definition["visual"] = carried_visual
 	return definition
 
 

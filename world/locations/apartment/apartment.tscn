@@ -31,7 +31,6 @@
 [ext_resource type="PackedScene" uid="uid://bnltpppsmrin4" path="res://assets/environment/interior/house_interior/meshes/Window_Large1.fbx" id="17_upk33"]
 [ext_resource type="PackedScene" uid="uid://b18c26qc0lwp1" path="res://assets/environment/interior/house_interior/meshes/Curtains_Double.fbx" id="18_08su2"]
 [ext_resource type="PackedScene" uid="uid://cipt6oqfivpgq" path="res://assets/environment/interior/house_interior/meshes/Trashcan_Small1.fbx" id="19_ulflq"]
-[ext_resource type="PackedScene" uid="uid://brgls1jlnxla6" path="res://assets/environment/interior/house_interior/meshes/Plate_2.fbx" id="20_360pb"]
 [ext_resource type="Script" uid="uid://bjq1f2iabv61h" path="res://world/locations/apartment/apartment_place_setting.gd" id="20_b8mu0"]
 [ext_resource type="PackedScene" uid="uid://271jxl6wrhdg" path="res://assets/environment/interior/house_interior/meshes/Fork.fbx" id="21_d4xo1"]
 [ext_resource type="PackedScene" uid="uid://cnf8siygbp4wk" path="res://assets/environment/interior/house_interior/meshes/Spoon.fbx" id="22_7xvut"]
@@ -571,14 +570,6 @@ shape = SubResource("BoxShape_Trashcan")
 
 [node name="Decor" type="Node3D" parent="Geometry/ApartmentArt" unique_id=1057704250]
 script = ExtResource("20_b8mu0")
-
-[node name="DatePlateA" parent="Geometry/ApartmentArt/Decor" unique_id=1114612715 instance=ExtResource("20_360pb")]
-transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 0.099, 0.652, 0.608)
-visible = false
-
-[node name="DatePlateB" parent="Geometry/ApartmentArt/Decor" unique_id=70385909 instance=ExtResource("20_360pb")]
-transform = Transform3D(-8, 0, -6.993822e-07, 0, 8, 0, 6.993822e-07, 0, -8, 0.699, 0.652, 0.608)
-visible = false
 
 [node name="DateFork" parent="Geometry/ApartmentArt/Decor" unique_id=947612755 instance=ExtResource("21_d4xo1")]
 transform = Transform3D(9.553427e-15, 2.1855695e-07, 5, 5, -2.1855695e-07, 0, 2.1855695e-07, 5, -2.1855695e-07, 0.099, 0.663, 0.776163)

@@ -4,9 +4,6 @@ extends Interactable
 
 const LAYER_INTERACTABLE: int = 4
 const DATING_UI_SCENE: String = "res://ui/dating/dating_ui.tscn"
-const SERVING_PAIR_SCENE: String = (
-	"res://world/locations/apartment/apartment_serving_pair.tscn"
-)
 
 @export var prompt_text: String = "Стол для свидания"
 
@@ -64,13 +61,9 @@ func _try_place_carried_meal(player: Node) -> bool:
 	var serving: Dictionary = carrier.call("take_serving")
 	if serving.is_empty():
 		return false
-	var packed: PackedScene = load(SERVING_PAIR_SCENE) as PackedScene
-	if packed == null:
-		push_error("[DateVenue] serving pair scene missing")
-		return true
-	var instance: Node = packed.instantiate()
-	if not (instance is Node3D):
-		instance.free()
+	var pair: Node3D = serving.get("visual") as Node3D
+	if pair == null or not is_instance_valid(pair):
+		push_error("[DateVenue] carried serving visual missing")
 		return true
 	var anchor: Node3D = get_node_or_null("MealAnchor") as Node3D
 	if anchor == null:
@@ -81,10 +74,11 @@ func _try_place_carried_meal(player: Node) -> bool:
 	var previous: Node3D = _placed_servings.get(category) as Node3D
 	if previous != null and is_instance_valid(previous):
 		previous.queue_free()
-	var pair: Node3D = instance as Node3D
 	pair.name = "PlacedDrinkPair" if category == &"drink" else "PlacedFoodPair"
 	anchor.add_child(pair)
-	if not pair.has_method("configure") or not bool(pair.call("configure", serving, false)):
+	pair.position = Vector3.ZERO
+	pair.rotation_degrees = Vector3.ZERO
+	if not pair.has_method("set_carried") or not bool(pair.call("set_carried", false)):
 		pair.queue_free()
 		return true
 	_placed_servings[category] = pair

@@ -2,8 +2,8 @@ extends Node3D
 class_name ApartmentServingPair
 ## Visual pair used both in the player's hands and on the dining table.
 
-const PLATE_SCENE: String = (
-	"res://assets/environment/interior/house_interior/meshes/Plate_2.fbx"
+const FOOD_PLATE_SCENE: String = (
+	"res://world/locations/apartment/apartment_food_plate.tscn"
 )
 const CARRIED_LEFT_POSITION: Vector3 = Vector3(-0.18, 0.0, 0.0)
 const CARRIED_RIGHT_POSITION: Vector3 = Vector3(0.18, 0.0, 0.0)
@@ -12,18 +12,36 @@ const TABLE_RIGHT_PLATE_POSITION: Vector3 = Vector3(0.299, -0.048, -0.002)
 const TABLE_LEFT_DRINK_POSITION: Vector3 = Vector3(-0.18, -0.048, 0.11)
 const TABLE_RIGHT_DRINK_POSITION: Vector3 = Vector3(0.18, -0.048, -0.11)
 
+var _category: StringName = &""
+
+
 func configure(definition: Dictionary, carried: bool) -> bool:
 	if definition.is_empty():
+		return false
+	_category = definition.get("category", &"")
+	if not set_carried(carried):
 		return false
 	var left: Node3D = get_node_or_null("LeftServing") as Node3D
 	var right: Node3D = get_node_or_null("RightServing") as Node3D
 	if left == null or right == null:
 		return false
-	var category: StringName = definition.get("category", &"")
+	_clear_anchor(left)
+	_clear_anchor(right)
+	return (
+		_build_serving(left, definition, _category)
+		and _build_serving(right, definition, _category)
+	)
+
+
+func set_carried(carried: bool) -> bool:
+	var left: Node3D = get_node_or_null("LeftServing") as Node3D
+	var right: Node3D = get_node_or_null("RightServing") as Node3D
+	if left == null or right == null or _category == &"":
+		return false
 	if carried:
 		left.position = CARRIED_LEFT_POSITION
 		right.position = CARRIED_RIGHT_POSITION
-	elif category == &"drink":
+	elif _category == &"drink":
 		left.position = TABLE_LEFT_DRINK_POSITION
 		right.position = TABLE_RIGHT_DRINK_POSITION
 	else:
@@ -31,12 +49,7 @@ func configure(definition: Dictionary, carried: bool) -> bool:
 		right.position = TABLE_RIGHT_PLATE_POSITION
 	rotation_degrees = Vector3.ZERO
 	scale = Vector3(0.78, 0.78, 0.78) if carried else Vector3.ONE
-	_clear_anchor(left)
-	_clear_anchor(right)
-	return (
-		_build_serving(left, definition, category)
-		and _build_serving(right, definition, category)
-	)
+	return true
 
 
 func _build_serving(
@@ -45,18 +58,18 @@ func _build_serving(
 	category: StringName,
 ) -> bool:
 	if category == &"food":
-		var plate: Node3D = _instantiate_scene(PLATE_SCENE)
+		var plate: Node3D = _instantiate_scene(FOOD_PLATE_SCENE)
 		if plate == null:
 			return false
 		anchor.add_child(plate)
-		plate.scale = Vector3(8.0, 8.0, 8.0)
+		if not plate.has_method("set_food"):
+			return false
+		return bool(plate.call("set_food", str(definition.get("scene", ""))))
 	var item_scene: String = str(definition.get("scene", ""))
 	var item: Node3D = _instantiate_scene(item_scene)
 	if item == null:
 		return false
 	anchor.add_child(item)
-	if category == &"food":
-		item.position = Vector3(0.0, 0.035, 0.0)
 	return true
 
 

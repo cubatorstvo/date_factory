@@ -4,8 +4,6 @@ extends Node3D
 ## Keeps Decor node script attachment safe without wiring old dating APIs.
 
 const PLACE_SETTING_NAMES: PackedStringArray = PackedStringArray([
-	"DatePlateA",
-	"DatePlateB",
 	"DateGlassA",
 	"DateGlassB",
 ])
