@@ -1,0 +1,10 @@
+---
+description: Only main and legacy-v1 branches; do not create new branches
+alwaysApply: true
+---
+
+# Git branches
+
+Разрешены только `main` и `legacy-v1`.
+
+Существующие ветки можно оставить. **Новые ветки не создавать** — вся работа только на `main`.
