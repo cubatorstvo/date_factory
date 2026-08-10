@@ -574,9 +574,11 @@ script = ExtResource("20_b8mu0")
 
 [node name="DatePlateA" parent="Geometry/ApartmentArt/Decor" unique_id=1114612715 instance=ExtResource("20_360pb")]
 transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 0.099, 0.652, 0.608)
+visible = false
 
 [node name="DatePlateB" parent="Geometry/ApartmentArt/Decor" unique_id=70385909 instance=ExtResource("20_360pb")]
 transform = Transform3D(-8, 0, -6.993822e-07, 0, 8, 0, 6.993822e-07, 0, -8, 0.699, 0.652, 0.608)
+visible = false
 
 [node name="DateFork" parent="Geometry/ApartmentArt/Decor" unique_id=947612755 instance=ExtResource("21_d4xo1")]
 transform = Transform3D(9.553427e-15, 2.1855695e-07, 5, 5, -2.1855695e-07, 0, 2.1855695e-07, 5, -2.1855695e-07, 0.099, 0.663, 0.776163)
