@@ -30,7 +30,10 @@ func _run_async() -> void:
 	await _apply_window()
 	UiScaleHelper.set_ui_scale_percent(_ui_scale)
 	_res_label = "%dx%d" % [_width, _height]
-	_capture.setup(self, _out_dir, _res_label, _mode)
+	var capture_label: String = _res_label
+	if _mode == "gallery":
+		capture_label = "%s_ui%d" % [_res_label, _ui_scale]
+	_capture.setup(self, _out_dir, capture_label, _mode)
 	print("[VisualPlaytest] mode=%s run_id=%s out=%s res=%s ui=%d" % [
 		_mode, _run_id, _out_dir, _res_label, _ui_scale,
 	])
@@ -100,9 +103,9 @@ func _run_layout() -> void:
 	var menu: TitleMenu = null
 	if packed != null:
 		menu = packed.instantiate() as TitleMenu
-	else:
-		menu = TitleMenu.new()
-		_notes.append("title_menu.tscn missing; used TitleMenu.new()")
+	if menu == null:
+		_notes.append("title_menu.tscn missing")
+		return
 	add_child(menu)
 	if menu.has_method("show_menu"):
 		menu.show_menu()
@@ -113,7 +116,12 @@ func _run_layout() -> void:
 	_control_rows.append_array(_auditor.control_snapshot(menu))
 
 	# Nice-to-have: settings + save/load.
-	var settings: SettingsPanel = SettingsPanel.new()
+	var settings_scene: PackedScene = load("res://ui/frontend/settings_panel.tscn") as PackedScene
+	var settings: SettingsPanel = settings_scene.instantiate() as SettingsPanel if settings_scene != null else null
+	if settings == null:
+		_notes.append("settings_panel.tscn missing")
+		menu.queue_free()
+		return
 	menu.add_child(settings)
 	settings.open()
 	var path_settings: String = await _capture.capture(_shot_name("010_settings"))
@@ -123,7 +131,12 @@ func _run_layout() -> void:
 	settings.close(false)
 	await get_tree().process_frame
 
-	var save_panel: SaveLoadPanel = SaveLoadPanel.new()
+	var save_scene: PackedScene = load("res://ui/frontend/save_load_panel.tscn") as PackedScene
+	var save_panel: SaveLoadPanel = save_scene.instantiate() as SaveLoadPanel if save_scene != null else null
+	if save_panel == null:
+		_notes.append("save_load_panel.tscn missing")
+		menu.queue_free()
+		return
 	menu.add_child(save_panel)
 	save_panel.open_load()
 	var path_save: String = await _capture.capture(_shot_name("030_save"))

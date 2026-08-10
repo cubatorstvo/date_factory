@@ -179,7 +179,7 @@ func _test_calibration_constants() -> void:
 	_ok(is_equal_approx(float(conf["target_center"]), 0.48), "65 CONF center .48")
 	_ok(is_equal_approx(float(conf["target_width"]), 0.16), "65 CONF width .16")
 	_ok(is_equal_approx(float(conf["pointer_speed"]), 0.85), "65 CONF speed .85")
-	var mg: CloneCalibrationMinigame = CloneCalibrationMinigame.new()
+	var mg: CloneCalibrationMinigame = _make_calibration_minigame()
 	add_child(mg)
 	mg.start(null)
 	var c0: Dictionary = mg.get_pass_constants(0)
@@ -188,7 +188,7 @@ func _test_calibration_constants() -> void:
 
 
 func _test_pointer_ping_pong() -> void:
-	var mg: CloneCalibrationMinigame = CloneCalibrationMinigame.new()
+	var mg: CloneCalibrationMinigame = _make_calibration_minigame()
 	add_child(mg)
 	mg.start(null)
 	mg.continue_intro()
@@ -215,7 +215,7 @@ func _test_pointer_ping_pong() -> void:
 
 
 func _test_miss_retries_same_pass() -> void:
-	var mg: CloneCalibrationMinigame = CloneCalibrationMinigame.new()
+	var mg: CloneCalibrationMinigame = _make_calibration_minigame()
 	add_child(mg)
 	mg.start(null)
 	mg.continue_intro()
@@ -228,7 +228,7 @@ func _test_miss_retries_same_pass() -> void:
 
 
 func _test_success_advances_pass() -> void:
-	var mg: CloneCalibrationMinigame = CloneCalibrationMinigame.new()
+	var mg: CloneCalibrationMinigame = _make_calibration_minigame()
 	add_child(mg)
 	mg.start(null)
 	mg.continue_intro()
@@ -567,3 +567,8 @@ func _test_boundaries_overload_cap() -> void:
 	)
 	_gd.call("force_clear_attempt")
 	_ok(ResourceLoader.exists("res://data/content/girls/girl_final_target.tres"), "68 MODULE21 final target content")
+
+
+func _make_calibration_minigame() -> CloneCalibrationMinigame:
+	var packed: PackedScene = load("res://game/first_clone/clone_calibration_minigame.tscn") as PackedScene
+	return packed.instantiate() as CloneCalibrationMinigame if packed != null else null

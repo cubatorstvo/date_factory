@@ -80,7 +80,8 @@ func _build_harness() -> void:
 	_controller = FinalDateController.new()
 	_controller.name = "FinalDateController"
 	_location.add_child(_controller)
-	_phone = PhoneJournal.new()
+	var packed_phone: PackedScene = load("res://ui/phone/phone_journal.tscn") as PackedScene
+	_phone = packed_phone.instantiate() as PhoneJournal if packed_phone != null else null
 	add_child(_phone)
 
 

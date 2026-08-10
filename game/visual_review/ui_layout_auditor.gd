@@ -76,6 +76,8 @@ func _audit_control(ctrl: Control, viewport_rect: Rect2, essential: bool) -> Arr
 	if gr.size.x <= 0.0 or gr.size.y <= 0.0:
 		return defects
 	var outside: bool = _is_outside(gr, viewport_rect, OUTSIDE_PX)
+	if outside and _is_scroll_content(ctrl):
+		return defects
 	if outside and essential:
 		defects.append(_defect(
 			"ERROR",
@@ -91,6 +93,15 @@ func _audit_control(ctrl: Control, viewport_rect: Rect2, essential: bool) -> Arr
 			{"global_rect": _rect_dict(gr), "viewport": _rect_dict(viewport_rect)},
 		))
 	return defects
+
+
+func _is_scroll_content(ctrl: Control) -> bool:
+	var parent: Node = ctrl.get_parent()
+	while parent != null:
+		if parent is ScrollContainer:
+			return true
+		parent = parent.get_parent()
+	return false
 
 
 func _check_centered_panel(panel: Control, viewport_rect: Rect2) -> Array:

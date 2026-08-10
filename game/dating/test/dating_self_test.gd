@@ -642,8 +642,8 @@ func _test_phone_labels() -> void:
 	_dc.call("continue_arrival")
 	_dc.call("select_greeting", &"dating_greeting_test_simple")
 	_dc.call("select_action", &"action_test_care")
-	var journal_script: Script = load("res://ui/phone/phone_journal.gd") as Script
-	var journal: Node = journal_script.new()
+	var journal_scene: PackedScene = load("res://ui/phone/phone_journal.tscn") as PackedScene
+	var journal: Node = journal_scene.instantiate()
 	add_child(journal)
 	var label_g: String = journal.call("_resolve_reaction_source_label", &"dating_greeting_test_simple") as String
 	var label_a: String = journal.call("_resolve_reaction_source_label", &"action_test_care") as String

@@ -416,7 +416,7 @@ func _test_contact_clears_cooldown() -> void:
 func _test_phone_only_discovered() -> void:
 	_reset()
 	_gd.call("discover_girl", &"girl_test_discovery")
-	var phone: PhoneJournal = PhoneJournal.new()
+	var phone: PhoneJournal = _make_phone()
 	add_child(phone)
 	await get_tree().process_frame
 	phone.open()
@@ -430,7 +430,7 @@ func _test_phone_only_discovered() -> void:
 func _test_phone_contact_state() -> void:
 	_reset()
 	_gd.call("discover_girl", &"girl_test_discovery")
-	var phone: PhoneJournal = PhoneJournal.new()
+	var phone: PhoneJournal = _make_phone()
 	add_child(phone)
 	await get_tree().process_frame
 	phone.open()
@@ -450,7 +450,7 @@ func _test_phone_contact_state() -> void:
 func _test_phone_clues() -> void:
 	_reset()
 	_gd.call("discover_girl", &"girl_test_discovery")
-	var phone: PhoneJournal = PhoneJournal.new()
+	var phone: PhoneJournal = _make_phone()
 	add_child(phone)
 	await get_tree().process_frame
 	phone.open()
@@ -466,7 +466,7 @@ func _test_phone_clues() -> void:
 func _test_trait_hidden() -> void:
 	_reset()
 	_gd.call("discover_girl", &"girl_test_discovery")
-	var phone: PhoneJournal = PhoneJournal.new()
+	var phone: PhoneJournal = _make_phone()
 	add_child(phone)
 	await get_tree().process_frame
 	phone.open()
@@ -482,7 +482,7 @@ func _test_trait_reveal() -> void:
 	_reset()
 	_gd.call("discover_girl", &"girl_test_discovery")
 	_gs.call("reveal_primary_trait", &"girl_test_discovery")
-	var phone: PhoneJournal = PhoneJournal.new()
+	var phone: PhoneJournal = _make_phone()
 	add_child(phone)
 	await get_tree().process_frame
 	phone.open()
@@ -552,7 +552,7 @@ func _test_phone_control_mode() -> void:
 	add_child(player)
 	await get_tree().process_frame
 	player.enter_gameplay()
-	var phone: PhoneJournal = PhoneJournal.new()
+	var phone: PhoneJournal = _make_phone()
 	add_child(phone)
 	await get_tree().process_frame
 	phone.open(player)
@@ -603,6 +603,11 @@ func _test_contentdb_validation() -> void:
 
 func _build_idx(cat: ContentCatalog) -> Dictionary:
 	return _ContentDBScript.build_indexes(cat)
+
+
+func _make_phone() -> PhoneJournal:
+	var packed: PackedScene = load("res://ui/phone/phone_journal.tscn") as PackedScene
+	return packed.instantiate() as PhoneJournal if packed != null else null
 
 
 func _test_character_regression() -> void:

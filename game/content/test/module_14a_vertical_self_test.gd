@@ -111,8 +111,8 @@ func _test_validate_all() -> void:
 
 func _test_phone_status_and_story() -> void:
 	_reset()
-	var journal_script: Script = load("res://ui/phone/phone_journal.gd") as Script
-	var journal: PhoneJournal = journal_script.new() as PhoneJournal
+	var journal_scene: PackedScene = load("res://ui/phone/phone_journal.tscn") as PackedScene
+	var journal: PhoneJournal = journal_scene.instantiate() as PhoneJournal
 	add_child(journal)
 	await get_tree().process_frame
 	journal.open()

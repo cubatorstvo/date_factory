@@ -29,13 +29,23 @@ DEFAULT_LAYOUT_RESOLUTIONS = [
     "1366x768",
     "1600x900",
     "1920x1080",
+    "1920x1200",
     "2560x1440",
     "2560x1080",
+    "3440x1440",
+    "3840x2160",
 ]
 
 DEFAULT_GALLERY_RESOLUTIONS = [
     "1280x720",
+    "1366x768",
+    "1600x900",
     "1920x1080",
+    "1920x1200",
+    "2560x1440",
+    "2560x1080",
+    "3440x1440",
+    "3840x2160",
 ]
 
 DEFAULT_PLAYTHROUGH_RESOLUTIONS = [
@@ -43,6 +53,7 @@ DEFAULT_PLAYTHROUGH_RESOLUTIONS = [
 ]
 
 LAYOUT_UI_SCALES_AT_1280 = (100, 125, 150)
+GALLERY_UI_SCALES_AT_1280 = (100, 150)
 
 
 def repo_root() -> Path:
@@ -359,7 +370,11 @@ def build_gallery_jobs(resolutions: list[str]) -> list[tuple[str, int, int, int]
     jobs: list[tuple[str, int, int, int]] = []
     for res in resolutions:
         w, h = parse_resolution(res)
-        jobs.append((res, w, h, 100))
+        if res == "1280x720":
+            for scale in GALLERY_UI_SCALES_AT_1280:
+                jobs.append((res, w, h, scale))
+        else:
+            jobs.append((res, w, h, 100))
     return jobs
 
 

@@ -31,6 +31,10 @@ func run() -> void:
 
 
 func _shot(shot_id: String) -> bool:
+	var tree: SceneTree = host.get_tree() if host != null else null
+	if tree != null:
+		fixtures.dismiss_accept_dialogs(tree.root)
+		await tree.process_frame
 	var path: String = await capture.capture(shot_id)
 	if path.is_empty():
 		stub_missing.append("%s (capture failed)" % shot_id)
@@ -44,8 +48,9 @@ func _capture_frontend() -> void:
 	var menu: TitleMenu = null
 	if packed != null:
 		menu = packed.instantiate() as TitleMenu
-	else:
-		menu = TitleMenu.new()
+	if menu == null:
+		stub_missing.append("000_main_menu (scene missing)")
+		return
 	host.add_child(menu)
 	if menu.has_method("show_menu"):
 		menu.show_menu()
@@ -53,7 +58,12 @@ func _capture_frontend() -> void:
 	defects.append_array(auditor.audit_title_menu(menu))
 	control_rows.append_array(auditor.control_snapshot(menu))
 
-	var settings: SettingsPanel = SettingsPanel.new()
+	var settings_scene: PackedScene = load("res://ui/frontend/settings_panel.tscn") as PackedScene
+	var settings: SettingsPanel = settings_scene.instantiate() as SettingsPanel if settings_scene != null else null
+	if settings == null:
+		stub_missing.append("010_settings (scene missing)")
+		menu.queue_free()
+		return
 	menu.add_child(settings)
 	settings.open()
 	await _shot("010_settings")
@@ -62,7 +72,12 @@ func _capture_frontend() -> void:
 	settings.queue_free()
 	await host.get_tree().process_frame
 
-	var load_panel: SaveLoadPanel = SaveLoadPanel.new()
+	var save_load_scene: PackedScene = load("res://ui/frontend/save_load_panel.tscn") as PackedScene
+	var load_panel: SaveLoadPanel = save_load_scene.instantiate() as SaveLoadPanel if save_load_scene != null else null
+	if load_panel == null:
+		stub_missing.append("020_load (scene missing)")
+		menu.queue_free()
+		return
 	menu.add_child(load_panel)
 	load_panel.open_load()
 	await _shot("020_load")
@@ -71,7 +86,11 @@ func _capture_frontend() -> void:
 	load_panel.queue_free()
 	await host.get_tree().process_frame
 
-	var save_panel: SaveLoadPanel = SaveLoadPanel.new()
+	var save_panel: SaveLoadPanel = save_load_scene.instantiate() as SaveLoadPanel if save_load_scene != null else null
+	if save_panel == null:
+		stub_missing.append("030_save (scene missing)")
+		menu.queue_free()
+		return
 	menu.add_child(save_panel)
 	if save_panel.has_method("open_save"):
 		save_panel.open_save()

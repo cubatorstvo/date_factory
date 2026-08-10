@@ -6,8 +6,8 @@ extends RefCounted
 
 
 const HELPERS_PATH: String = "res://game/qa/test/full_game_integration_helpers.gd"
-const CLONE_TERMINAL_UI: String = "res://game/clone_incremental/clone_terminal_ui.gd"
-const GLOBAL_TERMINAL_UI: String = "res://game/late_game/global_expansion_terminal_ui.gd"
+const CLONE_TERMINAL_UI: String = "res://game/clone_incremental/clone_terminal_ui.tscn"
+const GLOBAL_TERMINAL_UI: String = "res://game/late_game/global_expansion_terminal_ui.tscn"
 const PROGRESSION_SCENE: String = "res://ui/progression/progression_ui.tscn"
 const DATING_SCENE: String = "res://ui/dating/dating_ui.tscn"
 const PAUSE_SCENE: String = "res://ui/frontend/pause_menu.tscn"
@@ -173,8 +173,8 @@ func open_pause_menu(host: Node) -> PauseMenu:
 	var menu: PauseMenu = null
 	if packed != null:
 		menu = packed.instantiate() as PauseMenu
-	else:
-		menu = PauseMenu.new()
+	if menu == null:
+		return null
 	host.add_child(menu)
 	if menu.has_method("open_from_pause"):
 		menu.open_from_pause()
@@ -200,12 +200,12 @@ func open_clone_terminal(host: Node) -> CanvasLayer:
 	# GALLERY FIXTURE ONLY — instance terminal UI shell.
 	if host == null:
 		return null
-	var script: Script = load(CLONE_TERMINAL_UI) as Script
-	if script == null:
+	var packed: PackedScene = load(CLONE_TERMINAL_UI) as PackedScene
+	if packed == null:
 		return null
-	var layer: CanvasLayer = CanvasLayer.new()
-	layer.set_script(script)
-	layer.name = "CloneTerminalUI"
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return null
 	host.add_child(layer)
 	if layer.has_method("open"):
 		layer.call("open", get_player(), Callable())
@@ -216,12 +216,12 @@ func open_global_terminal(host: Node) -> CanvasLayer:
 	# GALLERY FIXTURE ONLY — instance global expansion terminal UI shell.
 	if host == null:
 		return null
-	var script: Script = load(GLOBAL_TERMINAL_UI) as Script
-	if script == null:
+	var packed: PackedScene = load(GLOBAL_TERMINAL_UI) as PackedScene
+	if packed == null:
 		return null
-	var layer: CanvasLayer = CanvasLayer.new()
-	layer.set_script(script)
-	layer.name = "GlobalExpansionTerminalUI"
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return null
 	host.add_child(layer)
 	if layer.has_method("open"):
 		layer.call("open", get_player(), Callable())
@@ -400,6 +400,15 @@ func dismiss_blocking_overlays(host: Node) -> void:
 	var dc: Node = tree.root.get_node_or_null("/root/DatingCore")
 	if dc != null and dc.has_method("force_clear_session"):
 		dc.call("force_clear_session")
+
+
+func dismiss_accept_dialogs(root: Node) -> void:
+	if root == null:
+		return
+	if root is AcceptDialog:
+		(root as AcceptDialog).hide()
+	for child: Node in root.get_children():
+		dismiss_accept_dialogs(child)
 
 
 func free_ui(node: Node) -> void:

@@ -420,8 +420,8 @@ func _test_zero_delta() -> void:
 
 
 func _phone_detail(girl_id: StringName) -> String:
-	var journal_script: Script = load("res://ui/phone/phone_journal.gd") as Script
-	var journal: PhoneJournal = journal_script.new() as PhoneJournal
+	var journal_scene: PackedScene = load("res://ui/phone/phone_journal.tscn") as PackedScene
+	var journal: PhoneJournal = journal_scene.instantiate() as PhoneJournal
 	add_child(journal)
 	journal.open()
 	journal.select_girl_by_id(girl_id)

@@ -104,8 +104,9 @@ func _p01_title() -> void:
 	var menu: TitleMenu = null
 	if packed != null:
 		menu = packed.instantiate() as TitleMenu
-	else:
-		menu = TitleMenu.new()
+	if menu == null:
+		_mark(Checkpoint.P01_TITLE, false, "title menu scene missing")
+		return
 	host.add_child(menu)
 	if menu.has_method("show_menu"):
 		menu.show_menu()

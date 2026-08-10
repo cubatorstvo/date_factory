@@ -49,10 +49,14 @@ func _open_ui(ch: GameTypes.PlayerCharacteristic) -> void:
 	if _ui != null and is_instance_valid(_ui):
 		_ui.queue_free()
 		_ui = null
-	var script: Script = load("res://ui/progression/progression_ui.gd") as Script
-	_ok(script != null, "progression_ui.gd loads")
-	var layer := CanvasLayer.new()
-	layer.set_script(script)
+	var packed: PackedScene = load("res://ui/progression/progression_ui.tscn") as PackedScene
+	_ok(packed != null, "progression_ui.tscn loads")
+	if packed == null:
+		return
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	_ok(layer != null, "progression_ui.tscn instantiates")
+	if layer == null:
+		return
 	add_child(layer)
 	_ui = layer
 	layer.call("open", null, Callable(), ch)

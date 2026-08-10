@@ -513,8 +513,8 @@ func _test_stage4_scientist_safety_and_phone() -> void:
 		_ok(try_rival != null, "Stage4 story rival present safely")
 		_ok(progress.story_girl_id == StoryIds.GIRL_SCIENTIST, "Stage4 story girl id scientist")
 		_ok(progress.story_rival_id == StoryIds.RIVAL_SCIENTIST, "Stage4 story rival id scientist")
-	var journal_script: Script = load("res://ui/phone/phone_journal.gd") as Script
-	var journal: PhoneJournal = journal_script.new() as PhoneJournal
+	var journal_scene: PackedScene = load("res://ui/phone/phone_journal.tscn") as PackedScene
+	var journal: PhoneJournal = journal_scene.instantiate() as PhoneJournal
 	add_child(journal)
 	await get_tree().process_frame
 	journal.open()

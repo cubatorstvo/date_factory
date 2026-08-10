@@ -453,8 +453,8 @@ func _test_reset_salary() -> void:
 
 func _test_phone_salary_section() -> void:
 	_reset()
-	var journal_script: Script = load("res://ui/phone/phone_journal.gd") as Script
-	var journal: PhoneJournal = journal_script.new() as PhoneJournal
+	var journal_scene: PackedScene = load("res://ui/phone/phone_journal.tscn") as PackedScene
+	var journal: PhoneJournal = journal_scene.instantiate() as PhoneJournal
 	add_child(journal)
 	journal.open()
 	_ok(not journal.has_salary_section_visible(), "phone salary hidden when locked")
@@ -462,7 +462,7 @@ func _test_phone_salary_section() -> void:
 	journal.queue_free()
 	await get_tree().process_frame
 	_unlock_salary(3)
-	journal = journal_script.new() as PhoneJournal
+	journal = journal_scene.instantiate() as PhoneJournal
 	add_child(journal)
 	journal.open()
 	_ok(journal.has_salary_section_visible(), "phone salary visible when unlocked")

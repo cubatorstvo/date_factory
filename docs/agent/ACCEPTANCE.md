@@ -54,3 +54,35 @@ The PE01 RC run is **34/35**. `world_location` fails unchanged from baseline `86
 ## Verdict
 
 **READY** — PE01 critical route. The independent QA report is published with review artifacts; the unrelated City/Cafe RC debt remains explicitly tracked above.
+
+---
+
+# ADAPTIVE SCENE UI — Acceptance
+
+## Player-visible question
+
+Can every production UI surface be adjusted in the Godot scene editor and remain readable, centered, reachable, and unclipped from 1280×720 through 3840×2160 on 16:9, 16:10, and 21:9 displays?
+
+## DoD
+
+- [x] Every production screen/popup/overlay has a `.tscn`; repeated runtime cards/rows use reusable PackedScenes
+- [x] Production UI controllers contain no programmatic presentation-tree construction
+- [x] Fullscreen roots are never geometrically scaled for the 100/125/150% setting
+- [x] Long content wraps or scrolls; safe margins remain inside the viewport
+- [x] Resolution matrix and accessibility worst cases pass layout audit
+- [x] Normal title, gameplay HUD/Phone, modal, minigame, save/settings routes still work
+- [x] Focused suites and RC gate pass; engine logs and screenshots are inspected
+- [x] Save schema and gameplay rules remain unchanged
+- [ ] User playtest accepts the result
+
+## Evidence
+
+- Scene contract: `UI_SCENE_CONTRACT: ALL PASS (366)`
+- Layout matrix: `_review/visual_playtest/adaptive_scene_ui_layout_final/` — 33 shots, 0 errors, 0 warnings
+- Full gallery: `_review/visual_playtest/adaptive_scene_ui_gallery_matrix/` — 520 shots, 0 errors, 0 warnings
+- Normal route: `_review/visual_playtest/adaptive_scene_ui_playthrough/` — 22/22 checkpoints, 0 unmet, 0 errors, 0 warnings
+- Full-game integration: 157 PASS; release integration: 21 PASS
+
+## Verdict
+
+**READY FOR USER PLAYTEST** — implementation, automated gates, runtime logs, and visual matrices pass; final user acceptance remains pending.
