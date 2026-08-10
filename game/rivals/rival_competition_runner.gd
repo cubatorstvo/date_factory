@@ -7,6 +7,11 @@ extends Node
 
 signal hostile_acquisition_requested(rival_id: StringName)
 
+const SLAP_SCENE: String = "res://minigames/slap/slap_minigame.tscn"
+const DANCE_SCENE: String = "res://minigames/dance/dance_minigame.tscn"
+const SIGMA_SCENE: String = "res://minigames/sigma/sigma_minigame.tscn"
+const MONEY_SCENE: String = "res://minigames/money/money_minigame.tscn"
+
 var _active: CanvasLayer = null
 var _busy: bool = false
 var _submitted: bool = false
@@ -130,9 +135,13 @@ func _start_slap(request: RivalCompetitionRequest) -> void:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_slap_perks()
 	_prepare_player_mode(encounters, Input.MOUSE_MODE_CAPTURED)
-	_active = SlapMinigame.new()
-	get_tree().root.add_child(_active)
-	(_active as SlapMinigame).setup(request, is_story, perks)
+	var slap: SlapMinigame = _instantiate_minigame(SLAP_SCENE) as SlapMinigame
+	if slap == null:
+		_abort_start("slap scene missing or invalid")
+		return
+	_active = slap
+	get_tree().root.add_child(slap)
+	slap.setup(request, is_story, perks)
 	_set_minigame_duck(true)
 	if not _active.match_finished.is_connected(_on_match_finished):
 		_active.match_finished.connect(_on_match_finished)
@@ -150,7 +159,10 @@ func _start_dance(request: RivalCompetitionRequest) -> void:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_dance_perks()
 	_prepare_player_mode(encounters, Input.MOUSE_MODE_CAPTURED)
-	var dance: DanceMinigame = DanceMinigame.new()
+	var dance: DanceMinigame = _instantiate_minigame(DANCE_SCENE) as DanceMinigame
+	if dance == null:
+		_abort_start("dance scene missing or invalid")
+		return
 	_active = dance
 	get_tree().root.add_child(dance)
 	dance.setup(request, is_story, perks)
@@ -171,7 +183,10 @@ func _start_sigma(request: RivalCompetitionRequest) -> void:
 		is_story = def.is_story
 	var perks: Dictionary = _snapshot_sigma_perks()
 	_prepare_player_mode(encounters, Input.MOUSE_MODE_CAPTURED)
-	var sigma: SigmaMinigame = SigmaMinigame.new()
+	var sigma: SigmaMinigame = _instantiate_minigame(SIGMA_SCENE) as SigmaMinigame
+	if sigma == null:
+		_abort_start("sigma scene missing or invalid")
+		return
 	_active = sigma
 	get_tree().root.add_child(sigma)
 	sigma.setup(request, is_story, perks)
@@ -191,13 +206,33 @@ func _start_money(request: RivalCompetitionRequest) -> void:
 	if def != null:
 		is_story = def.is_story
 	_prepare_player_mode(encounters, Input.MOUSE_MODE_VISIBLE)
-	var money: MoneyMinigame = MoneyMinigame.new()
+	var money: MoneyMinigame = _instantiate_minigame(MONEY_SCENE) as MoneyMinigame
+	if money == null:
+		_abort_start("money scene missing or invalid")
+		return
 	_active = money
 	get_tree().root.add_child(money)
 	money.setup(request, is_story)
 	_set_minigame_duck(true)
 	if not money.match_finished.is_connected(_on_match_finished):
 		money.match_finished.connect(_on_match_finished)
+
+
+func _instantiate_minigame(scene_path: String) -> CanvasLayer:
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
+		return null
+	return packed.instantiate() as CanvasLayer
+
+
+func _abort_start(message: String) -> void:
+	push_error("[RivalCompetitionRunner] %s" % message)
+	_restore_player()
+	_cleanup_active()
+	_busy = false
+	_current_request = null
+	if _exhibition_mode:
+		_clear_exhibition_state()
 
 
 func _prepare_player_mode(

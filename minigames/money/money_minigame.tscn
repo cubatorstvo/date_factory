@@ -1,6 +1,127 @@
-﻿[gd_scene format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://minigames/money/money_minigame.gd" id="1_money"]
+[ext_resource type="Theme" path="res://ui/theme/date_factory_theme.tres" id="2_theme"]
 
 [node name="MoneyMinigame" type="CanvasLayer"]
 script = ExtResource("1_money")
+
+[node name="Root" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+
+[node name="Title" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 28.0
+offset_bottom = 72.0
+grow_horizontal = 2
+theme_type_variation = &"TitleLabel"
+text = "Денежное противостояние"
+horizontal_alignment = 1
+
+[node name="SafeMargin" type="MarginContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Bottom" type="VBoxContainer" parent="Root/SafeMargin"]
+layout_mode = 2
+size_flags_vertical = 8
+alignment = 1
+
+[node name="Panel" type="PanelContainer" parent="Root/SafeMargin/Bottom"]
+custom_minimum_size = Vector2(800, 360)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Margin" type="MarginContainer" parent="Root/SafeMargin/Bottom/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Content" type="VBoxContainer" parent="Root/SafeMargin/Bottom/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ScoreLabel" type="Label" parent="Root/SafeMargin/Bottom/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+horizontal_alignment = 1
+
+[node name="LotLabel" type="Label" parent="Root/SafeMargin/Bottom/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+horizontal_alignment = 1
+
+[node name="MoneyLabel" type="Label" parent="Root/SafeMargin/Bottom/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="BidLabel" type="Label" parent="Root/SafeMargin/Bottom/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="TellLabel" type="Label" parent="Root/SafeMargin/Bottom/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+horizontal_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="Root/SafeMargin/Bottom/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="FeedbackLabel" type="Label" parent="Root/SafeMargin/Bottom/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+horizontal_alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="Root/SafeMargin/Bottom/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="StopButton" type="Button" parent="Root/SafeMargin/Bottom/Panel/Margin/Content/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ОТСТУПИТЬ"
+
+[node name="RaiseButton" type="Button" parent="Root/SafeMargin/Bottom/Panel/Margin/Content/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="OutbidButton" type="Button" parent="Root/SafeMargin/Bottom/Panel/Margin/Content/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BuyoutButton" type="Button" parent="Root/SafeMargin/Bottom/Panel/Margin/Content/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3

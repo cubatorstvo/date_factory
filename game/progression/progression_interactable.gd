@@ -4,7 +4,7 @@ extends Interactable
 ## Opens coherent perk tree with optional preselected characteristic tab.
 
 const LAYER_INTERACTABLE: int = 4
-const MODAL_SCRIPT: String = "res://ui/progression/progression_ui.gd"
+const MODAL_SCENE: String = "res://ui/progression/progression_ui.tscn"
 
 @export var prompt_text: String = "Самооценка"
 @export var characteristic: GameTypes.PlayerCharacteristic = GameTypes.PlayerCharacteristic.MUSCLE
@@ -45,13 +45,13 @@ func _ensure_collision() -> void:
 
 func _open_modal(player: Node) -> void:
 	_close_modal(player)
-	var script: Script = load(MODAL_SCRIPT) as Script
-	if script == null:
-		push_error("[ProgressionInteractable] modal script missing")
+	var packed: PackedScene = load(MODAL_SCENE) as PackedScene
+	if packed == null:
+		push_error("[ProgressionInteractable] modal scene missing")
 		return
-	var layer := CanvasLayer.new()
-	layer.set_script(script)
-	layer.name = "ProgressionUI"
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return
 	add_child(layer)
 	_modal = layer
 	if layer.has_method("open"):

@@ -5,13 +5,13 @@ extends Interactable
 
 const LAYER_INTERACTABLE: int = 4
 const FALLBACK_HIDE_SECONDS: float = 2.2
+const NOTICE_SCENE: String = "res://ui/common/transient_notice.tscn"
 
 @export_multiline var text: String = ""
 @export var prompt: String = ""
 @export var hide_seconds: float = FALLBACK_HIDE_SECONDS
 
-var _fallback_layer: CanvasLayer = null
-var _fallback_timer: Timer = null
+var _fallback_layer: TransientNotice = null
 
 
 func _ready() -> void:
@@ -76,35 +76,16 @@ func _find_game_hud() -> Node:
 
 func _show_fallback_label(message: String) -> void:
 	if _fallback_layer == null or not is_instance_valid(_fallback_layer):
-		_fallback_layer = CanvasLayer.new()
+		var packed: PackedScene = load(NOTICE_SCENE) as PackedScene
+		if packed == null:
+			return
+		_fallback_layer = packed.instantiate() as TransientNotice
+		if _fallback_layer == null:
+			return
 		_fallback_layer.name = "FlavorFallbackToast"
-		_fallback_layer.layer = 60
-		var label := Label.new()
-		label.name = "Message"
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-		label.offset_left = -280.0
-		label.offset_right = 280.0
-		label.offset_top = -120.0
-		label.offset_bottom = -48.0
-		label.add_theme_font_size_override("font_size", 18)
-		label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.92))
-		_fallback_layer.add_child(label)
-		_fallback_timer = Timer.new()
-		_fallback_timer.name = "HideTimer"
-		_fallback_timer.one_shot = true
-		_fallback_timer.timeout.connect(_hide_fallback_label)
-		_fallback_layer.add_child(_fallback_timer)
 		add_child(_fallback_layer)
-	var msg_label: Label = _fallback_layer.get_node_or_null("Message") as Label
-	if msg_label != null:
-		msg_label.text = message
-	_fallback_layer.visible = true
-	if _fallback_timer != null:
-		var seconds: float = hide_seconds if hide_seconds > 0.0 else FALLBACK_HIDE_SECONDS
-		_fallback_timer.start(seconds)
+	var seconds: float = hide_seconds if hide_seconds > 0.0 else FALLBACK_HIDE_SECONDS
+	_fallback_layer.show_message(message, seconds)
 
 
 func _hide_fallback_label() -> void:

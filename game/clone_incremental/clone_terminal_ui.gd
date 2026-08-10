@@ -3,42 +3,57 @@ extends CanvasLayer
 ## Presentation over CloneIncrementalStatus / get_status. Simulation continues while open.
 
 
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
-const TITLE_FONT_SIZE: int = 22
-const HEADER_FONT_SIZE: int = 18
-const BODY_FONT_SIZE: int = 16
-
-
 var _player: Node = null
 var _on_closed: Callable = Callable()
-var _root: Control = null
-var _totals_label: Label = null
-var _work_count_label: Label = null
-var _work_rate_label: Label = null
-var _dating_count_label: Label = null
-var _dating_rate_label: Label = null
-var _countdown_label: Label = null
-var _work_minus: Button = null
-var _work_plus: Button = null
-var _work_all: Button = null
-var _dating_minus: Button = null
-var _dating_plus: Button = null
-var _dating_all: Button = null
-var _prod_btn: Button = null
-var _work_btn: Button = null
-var _dating_btn: Button = null
-var _prod_label: Label = null
-var _work_label: Label = null
-var _dating_label: Label = null
-var _refresh_timer: Timer = null
+@onready var _root: Control = %Root
+@onready var _totals_label: Label = %TotalsLabel
+@onready var _work_count_label: Label = %WorkCountLabel
+@onready var _work_rate_label: Label = %WorkRateLabel
+@onready var _dating_count_label: Label = %DatingCountLabel
+@onready var _dating_rate_label: Label = %DatingRateLabel
+@onready var _countdown_label: Label = %CountdownLabel
+@onready var _work_minus: Button = %WorkMinus
+@onready var _work_plus: Button = %WorkPlus
+@onready var _work_all: Button = %WorkAll
+@onready var _dating_minus: Button = %DatingMinus
+@onready var _dating_plus: Button = %DatingPlus
+@onready var _dating_all: Button = %DatingAll
+@onready var _prod_btn: Button = %ProdButton
+@onready var _work_btn: Button = %WorkButton
+@onready var _dating_btn: Button = %DatingButton
+@onready var _prod_label: Label = %ProdLabel
+@onready var _work_label: Label = %WorkLabel
+@onready var _dating_label: Label = %DatingLabel
+@onready var _refresh_timer: Timer = %RefreshTimer
 var _signals_connected: bool = false
+
+
+func _ready() -> void:
+	UiScaleHelper.apply_to_control(_root)
+	_work_minus.pressed.connect(func() -> void: _ci_call("unassign_one_from_work"))
+	_work_plus.pressed.connect(func() -> void: _ci_call("assign_one_to_work"))
+	_work_all.pressed.connect(func() -> void: _ci_call("assign_all_free_to_work"))
+	_dating_minus.pressed.connect(func() -> void: _ci_call("unassign_one_from_dating"))
+	_dating_plus.pressed.connect(func() -> void: _ci_call("assign_one_to_dating"))
+	_dating_all.pressed.connect(func() -> void: _ci_call("assign_all_free_to_dating"))
+	_prod_btn.pressed.connect(func() -> void:
+		_buy(CloneIncrementalTypes.UpgradeType.PRODUCTION_SPEED)
+	)
+	_work_btn.pressed.connect(func() -> void:
+		_buy(CloneIncrementalTypes.UpgradeType.WORK_EFFICIENCY)
+	)
+	_dating_btn.pressed.connect(func() -> void:
+		_buy(CloneIncrementalTypes.UpgradeType.DATING_EFFICIENCY)
+	)
+	%CloseButton.pressed.connect(close)
+	_refresh_timer.timeout.connect(_refresh_countdown_only)
+	_refresh_timer.start()
 
 
 func open(player: Node, on_closed: Callable = Callable()) -> void:
 	_player = player
 	_on_closed = on_closed
 	layer = 45
-	_build_ui()
 	_connect_game_signals()
 	_refresh()
 	visible = true
@@ -68,196 +83,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		close()
 		get_viewport().set_input_as_handled()
-
-
-func _build_ui() -> void:
-	for child in get_children():
-		child.queue_free()
-	_root = Control.new()
-	_root.name = "Root"
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_root.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_root)
-
-	var theme_res: Resource = null
-	if ResourceLoader.exists(THEME_PATH):
-		theme_res = load(THEME_PATH)
-	if theme_res is Theme:
-		_root.theme = theme_res as Theme
-
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.04, 0.05, 0.68)
-	_root.add_child(dim)
-
-	var panel := PanelContainer.new()
-	panel.name = "Panel"
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(560, 620)
-	_apply_panel_style(panel)
-	_root.add_child(panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_bottom", 14)
-	panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-
-	var title := Label.new()
-	title.text = CloneIncrementalTypes.TERMINAL_TITLE
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
-	title.add_theme_color_override("font_color", Color(0.95, 0.95, 0.92))
-	vbox.add_child(title)
-
-	_totals_label = Label.new()
-	_totals_label.name = "TotalsLabel"
-	_totals_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_totals_label.add_theme_font_size_override("font_size", HEADER_FONT_SIZE)
-	_totals_label.add_theme_color_override("font_color", Color(0.98, 0.92, 0.55))
-	vbox.add_child(_totals_label)
-
-	vbox.add_child(_make_section_header("РАБОТА"))
-	_work_count_label = _make_body_label()
-	vbox.add_child(_work_count_label)
-	_work_rate_label = _make_body_label()
-	vbox.add_child(_work_rate_label)
-	vbox.add_child(_make_assign_row(true))
-
-	vbox.add_child(_make_section_header("СВИДАНИЯ"))
-	_dating_count_label = _make_body_label()
-	vbox.add_child(_dating_count_label)
-	_dating_rate_label = _make_body_label()
-	vbox.add_child(_dating_rate_label)
-	vbox.add_child(_make_assign_row(false))
-
-	vbox.add_child(_make_section_header("NEXT CLONE"))
-	_countdown_label = _make_body_label()
-	_countdown_label.add_theme_font_size_override("font_size", HEADER_FONT_SIZE)
-	vbox.add_child(_countdown_label)
-
-	vbox.add_child(_make_section_header("UPGRADES"))
-	_prod_label = _make_body_label()
-	vbox.add_child(_prod_label)
-	_prod_btn = Button.new()
-	_prod_btn.custom_minimum_size = Vector2(0, 34)
-	_prod_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_prod_btn.pressed.connect(func() -> void:
-		_buy(CloneIncrementalTypes.UpgradeType.PRODUCTION_SPEED)
-	)
-	vbox.add_child(_prod_btn)
-
-	_work_label = _make_body_label()
-	vbox.add_child(_work_label)
-	_work_btn = Button.new()
-	_work_btn.custom_minimum_size = Vector2(0, 34)
-	_work_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_work_btn.pressed.connect(func() -> void:
-		_buy(CloneIncrementalTypes.UpgradeType.WORK_EFFICIENCY)
-	)
-	vbox.add_child(_work_btn)
-
-	_dating_label = _make_body_label()
-	vbox.add_child(_dating_label)
-	_dating_btn = Button.new()
-	_dating_btn.custom_minimum_size = Vector2(0, 34)
-	_dating_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_dating_btn.pressed.connect(func() -> void:
-		_buy(CloneIncrementalTypes.UpgradeType.DATING_EFFICIENCY)
-	)
-	vbox.add_child(_dating_btn)
-
-	var close_btn := Button.new()
-	close_btn.text = "Закрыть"
-	close_btn.custom_minimum_size = Vector2(0, 36)
-	close_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	close_btn.pressed.connect(close)
-	vbox.add_child(close_btn)
-
-	_refresh_timer = Timer.new()
-	_refresh_timer.wait_time = 0.25
-	_refresh_timer.one_shot = false
-	_refresh_timer.timeout.connect(_refresh_countdown_only)
-	add_child(_refresh_timer)
-	_refresh_timer.start()
-
-
-func _make_section_header(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", HEADER_FONT_SIZE)
-	label.add_theme_color_override("font_color", Color(0.85, 0.88, 0.9))
-	return label
-
-
-func _make_body_label() -> Label:
-	var label := Label.new()
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	label.add_theme_color_override("font_color", Color(0.92, 0.92, 0.9))
-	return label
-
-
-func _apply_panel_style(panel: PanelContainer) -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.12, 0.15, 0.94)
-	style.border_color = Color(0.35, 0.4, 0.45, 0.85)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(4)
-	style.content_margin_left = 4
-	style.content_margin_right = 4
-	style.content_margin_top = 4
-	style.content_margin_bottom = 4
-	panel.add_theme_stylebox_override("panel", style)
-
-
-func _make_assign_row(is_work: bool) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	var minus := Button.new()
-	minus.text = "-"
-	minus.custom_minimum_size = Vector2(40, 32)
-	var plus := Button.new()
-	plus.text = "+"
-	plus.custom_minimum_size = Vector2(40, 32)
-	var all_btn := Button.new()
-	all_btn.text = "Все свободные"
-	all_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if is_work:
-		_work_minus = minus
-		_work_plus = plus
-		_work_all = all_btn
-		minus.pressed.connect(func() -> void:
-			_ci_call("unassign_one_from_work")
-		)
-		plus.pressed.connect(func() -> void:
-			_ci_call("assign_one_to_work")
-		)
-		all_btn.pressed.connect(func() -> void:
-			_ci_call("assign_all_free_to_work")
-		)
-	else:
-		_dating_minus = minus
-		_dating_plus = plus
-		_dating_all = all_btn
-		minus.pressed.connect(func() -> void:
-			_ci_call("unassign_one_from_dating")
-		)
-		plus.pressed.connect(func() -> void:
-			_ci_call("assign_one_to_dating")
-		)
-		all_btn.pressed.connect(func() -> void:
-			_ci_call("assign_all_free_to_dating")
-		)
-	row.add_child(minus)
-	row.add_child(plus)
-	row.add_child(all_btn)
-	return row
 
 
 func _ci_call(method: String) -> void:

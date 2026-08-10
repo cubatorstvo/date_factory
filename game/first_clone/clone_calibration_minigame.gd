@@ -3,9 +3,6 @@ extends CanvasLayer
 ## One-time 3-pass clone calibration (MODULE 17).
 ## Deterministic track; miss retries same pass; abort creates no clone.
 
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
-const BODY_FONT_SIZE: int = 16
-
 signal calibration_finished()
 signal calibration_aborted()
 signal phase_changed(phase: FirstCloneTypes.CalibrationPhase)
@@ -19,7 +16,9 @@ var _in_miss_feedback: bool = false
 var _player: Node = null
 var _started: bool = false
 var _finished: bool = false
-var _ui_root: Control = null
+@onready var _ui_root: Control = %Root
+@onready var _continue_button: Button = $Root/Panel/MarginContainer/VBox/Buttons/ContinueBtn
+@onready var _abort_button: Button = $Root/Panel/MarginContainer/VBox/Buttons/AbortBtn
 var _last_feedback: String = ""
 var _feedback_timer: float = 0.0
 var _awaiting_feedback_advance: bool = false
@@ -28,6 +27,9 @@ var _awaiting_feedback_advance: bool = false
 func _ready() -> void:
 	layer = 90
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	UiScaleHelper.apply_to_control(_ui_root)
+	_continue_button.pressed.connect(_on_continue_pressed)
+	_abort_button.pressed.connect(_on_abort_pressed)
 	visible = false
 	set_process(false)
 
@@ -85,7 +87,7 @@ func start(player: Node = null) -> bool:
 	elif _player != null and is_instance_valid(_player) and _player.has_method("enter_modal_ui"):
 		_player.call("enter_modal_ui")
 	_set_phase(FirstCloneTypes.CalibrationPhase.INTRO)
-	_build_ui()
+	_ui_root.visible = true
 	visible = true
 	set_process(true)
 	_refresh_ui()
@@ -302,100 +304,7 @@ func _restore_player() -> void:
 func _teardown_ui() -> void:
 	visible = false
 	if _ui_root != null and is_instance_valid(_ui_root):
-		_ui_root.queue_free()
-	_ui_root = null
-
-
-func _build_ui() -> void:
-	_teardown_ui()
-	visible = true
-	var root: Control = Control.new()
-	root.name = "Root"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.process_mode = Node.PROCESS_MODE_ALWAYS
-	_apply_theme(root)
-	add_child(root)
-	_ui_root = root
-	var dim: ColorRect = ColorRect.new()
-	dim.name = "Dim"
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.04, 0.06, 0.58)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.add_child(dim)
-	var panel: PanelContainer = PanelContainer.new()
-	panel.name = "Panel"
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.position = Vector2(-340, -230)
-	panel.size = Vector2(680, 460)
-	root.add_child(panel)
-	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	panel.add_child(margin)
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.name = "VBox"
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-	var title: Label = Label.new()
-	title.name = "Title"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(title)
-	var body: Label = Label.new()
-	body.name = "Body"
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.custom_minimum_size = Vector2(640, 90)
-	body.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	vbox.add_child(body)
-	var track: Control = Control.new()
-	track.name = "Track"
-	track.custom_minimum_size = Vector2(640, 48)
-	vbox.add_child(track)
-	var track_bg: ColorRect = ColorRect.new()
-	track_bg.name = "TrackBg"
-	track_bg.color = Color(0.15, 0.17, 0.2, 1.0)
-	track_bg.position = Vector2(20, 16)
-	track_bg.size = Vector2(600, 16)
-	track.add_child(track_bg)
-	var zone: ColorRect = ColorRect.new()
-	zone.name = "Zone"
-	zone.color = Color(0.25, 0.7, 0.4, 0.75)
-	zone.size = Vector2(40, 16)
-	zone.position = Vector2(20, 16)
-	track.add_child(zone)
-	var pointer: ColorRect = ColorRect.new()
-	pointer.name = "Pointer"
-	pointer.color = Color(0.95, 0.9, 0.35, 1.0)
-	pointer.size = Vector2(6, 28)
-	pointer.position = Vector2(20, 10)
-	track.add_child(pointer)
-	var feedback: Label = Label.new()
-	feedback.name = "Feedback"
-	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	feedback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	feedback.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	vbox.add_child(feedback)
-	var buttons: HBoxContainer = HBoxContainer.new()
-	buttons.name = "Buttons"
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_child(buttons)
-	var cont: Button = Button.new()
-	cont.name = "ContinueBtn"
-	cont.text = "Начать"
-	cont.custom_minimum_size = Vector2(0, 34)
-	cont.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	cont.pressed.connect(_on_continue_pressed)
-	buttons.add_child(cont)
-	var abort_btn: Button = Button.new()
-	abort_btn.name = "AbortBtn"
-	abort_btn.text = "Отмена"
-	abort_btn.custom_minimum_size = Vector2(0, 34)
-	abort_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	abort_btn.pressed.connect(_on_abort_pressed)
-	buttons.add_child(abort_btn)
+		_ui_root.visible = false
 
 
 func _refresh_ui() -> void:
@@ -490,12 +399,3 @@ func _on_continue_pressed() -> void:
 
 func _on_abort_pressed() -> void:
 	abort_calibration()
-
-
-func _apply_theme(root: Control) -> void:
-	if root == null:
-		return
-	if ResourceLoader.exists(THEME_PATH):
-		var theme_res: Resource = load(THEME_PATH)
-		if theme_res is Theme:
-			root.theme = theme_res as Theme

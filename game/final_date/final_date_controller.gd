@@ -9,6 +9,8 @@ signal attempt_failed(reason: FinalDateTypes.FailureReason)
 signal attempt_succeeded()
 signal ending_dismissed()
 
+const FINAL_DATE_UI_SCENE: String = "res://game/final_date/final_date_ui.tscn"
+
 var attempt_active: bool = false
 var phase: FinalDateTypes.Phase = FinalDateTypes.Phase.IDLE
 var connection_score: int = 0
@@ -554,7 +556,14 @@ func _arm_checkpoint(checkpoint_id: StringName, prompt: String) -> void:
 func _ensure_ui() -> void:
 	if _ui != null and is_instance_valid(_ui):
 		return
-	_ui = FinalDateUI.new()
+	var packed: PackedScene = load(FINAL_DATE_UI_SCENE) as PackedScene
+	if packed == null:
+		push_error("[FinalDate] UI scene missing")
+		return
+	_ui = packed.instantiate() as FinalDateUI
+	if _ui == null:
+		push_error("[FinalDate] UI scene type mismatch")
+		return
 	_ui.name = "FinalDateUI"
 	add_child(_ui)
 	if not _ui.option_selected.is_connected(_on_ui_option):

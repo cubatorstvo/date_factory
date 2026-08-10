@@ -9,6 +9,9 @@ signal clone_preview_spawned()
 signal first_clone_assigned(assignment: FirstCloneTypes.Assignment)
 signal first_clone_completed()
 
+const ASSIGNMENT_UI_SCENE: String = "res://game/first_clone/first_clone_assignment_ui.tscn"
+const CALIBRATION_SCENE: String = "res://game/first_clone/clone_calibration_minigame.tscn"
+
 var _sequence_active: bool = false
 var _awaiting_assignment: bool = false
 var _assignment_committed: bool = false
@@ -124,8 +127,14 @@ func start_sequence(player: Node = null) -> bool:
 	_committed_assignment = FirstCloneTypes.Assignment.NONE
 	_player = player
 	_clear_preview()
-	_minigame = CloneCalibrationMinigame.new()
-	_minigame.name = "CloneCalibrationMinigame"
+	var packed: PackedScene = load(CALIBRATION_SCENE) as PackedScene
+	if packed == null:
+		_sequence_active = false
+		return false
+	_minigame = packed.instantiate() as CloneCalibrationMinigame
+	if _minigame == null:
+		_sequence_active = false
+		return false
 	add_child(_minigame)
 	if not _minigame.calibration_finished.is_connected(_on_calibration_finished):
 		_minigame.calibration_finished.connect(_on_calibration_finished)
@@ -402,45 +411,36 @@ func _place_assigned_actor(kind: FirstCloneTypes.Assignment) -> void:
 
 func _open_assignment_ui() -> void:
 	_close_assignment_ui()
-	var layer: CanvasLayer = CanvasLayer.new()
-	layer.name = "FirstCloneAssignmentUI"
-	layer.layer = 92
-	var root: Control = Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	layer.add_child(root)
-	var dim: ColorRect = ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.02, 0.02, 0.03, 0.55)
-	root.add_child(dim)
-	var panel: PanelContainer = PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.position = Vector2(-260, -140)
-	panel.size = Vector2(520, 280)
-	root.add_child(panel)
-	var vbox: VBoxContainer = VBoxContainer.new()
-	panel.add_child(vbox)
-	var title: Label = Label.new()
-	title.text = FirstCloneTypes.ASSIGNMENT_TITLE
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(title)
-	var line: Label = Label.new()
-	line.text = "Клон:\n«%s»" % FirstCloneTypes.CLONE_LINE
-	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(line)
-	var work_btn: Button = Button.new()
+	var packed: PackedScene = load(ASSIGNMENT_UI_SCENE) as PackedScene
+	if packed == null:
+		push_error("[FirstClone] assignment UI scene missing")
+		return
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return
+	var root: Control = layer.get_node_or_null("Root") as Control
+	if root != null:
+		UiScaleHelper.apply_to_control(root)
+	var title: Label = layer.get_node_or_null("Root/SafeMargin/Center/Panel/Margin/Content/Title") as Label
+	if title != null:
+		title.text = FirstCloneTypes.ASSIGNMENT_TITLE
+	var line: Label = layer.get_node_or_null("Root/SafeMargin/Center/Panel/Margin/Content/CloneLine") as Label
+	if line != null:
+		line.text = "Клон:\n«%s»" % FirstCloneTypes.CLONE_LINE
+	var work_btn: Button = layer.find_child("WorkButton", true, false) as Button
+	if work_btn == null:
+		return
 	work_btn.text = FirstCloneTypes.ASSIGNMENT_WORK
 	work_btn.pressed.connect(func() -> void:
 		assign_work()
 	)
-	vbox.add_child(work_btn)
-	var dating_btn: Button = Button.new()
+	var dating_btn: Button = layer.find_child("DatingButton", true, false) as Button
+	if dating_btn == null:
+		return
 	dating_btn.text = FirstCloneTypes.ASSIGNMENT_DATING
 	dating_btn.pressed.connect(func() -> void:
 		assign_dating()
 	)
-	vbox.add_child(dating_btn)
 	add_child(layer)
 	_assignment_ui = layer
 	if _player != null and is_instance_valid(_player):

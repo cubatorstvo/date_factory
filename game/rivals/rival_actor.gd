@@ -5,6 +5,7 @@ extends Interactable
 
 const LAYER_INTERACTABLE: int = 4
 const ABSENT_DELAY_SEC: float = 0.8
+const MESSAGE_DIALOG_SCENE: String = "res://ui/common/message_dialog.tscn"
 
 @export var rival_id: StringName = &""
 
@@ -278,24 +279,24 @@ func _close_encounter_ui() -> void:
 
 func _show_feedback(text: String, player: Node) -> void:
 	_close_feedback(player)
-	var layer := CanvasLayer.new()
+	var packed: PackedScene = load(MESSAGE_DIALOG_SCENE) as PackedScene
+	if packed == null:
+		return
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return
 	layer.name = "RivalFeedbackUI"
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(380, 120)
-	var vbox := VBoxContainer.new()
-	var label := Label.new()
+	var root: Control = layer.get_node_or_null("Root") as Control
+	if root != null:
+		UiScaleHelper.apply_to_control(root)
+	var label: Label = layer.find_child("Message", true, false) as Label
+	var btn: Button = layer.find_child("CloseButton", true, false) as Button
+	if label == null or btn == null:
+		return
 	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var btn := Button.new()
-	btn.text = "Закрыть"
 	btn.pressed.connect(func() -> void:
 		_close_feedback(player)
 	)
-	vbox.add_child(label)
-	vbox.add_child(btn)
-	panel.add_child(vbox)
-	layer.add_child(panel)
 	add_child(layer)
 	_feedback_ui = layer
 	if player != null and player.has_method("enter_modal_ui"):

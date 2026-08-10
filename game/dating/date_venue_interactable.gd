@@ -4,6 +4,9 @@ extends Interactable
 
 const LAYER_INTERACTABLE: int = 4
 const DATING_UI_SCENE: String = "res://ui/dating/dating_ui.tscn"
+const VENUE_PICKER_SCENE: String = "res://game/dating/date_venue_picker.tscn"
+const ACTION_BUTTON_SCENE: String = "res://ui/common/action_button.tscn"
+const MESSAGE_DIALOG_SCENE: String = "res://ui/common/message_dialog.tscn"
 
 @export var prompt_text: String = "Стол для свидания"
 
@@ -110,6 +113,7 @@ func _notify_meal_placed(message: String) -> void:
 	if hud != null and hud.has_method("show_notification"):
 		hud.call("show_notification", message)
 
+
 func _ensure_collision() -> void:
 	var shape_node: CollisionShape3D = get_node_or_null("CollisionShape3D") as CollisionShape3D
 	if shape_node != null:
@@ -137,23 +141,34 @@ func _show_girl_picker(player: Node) -> void:
 	_close_ui(player)
 	var location_id: StringName = _current_location_id()
 	var rows: Array[Dictionary] = _build_rows(location_id)
-	var layer := CanvasLayer.new()
+	var packed: PackedScene = load(VENUE_PICKER_SCENE) as PackedScene
+	if packed == null:
+		return
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return
 	layer.name = "DateVenueUI"
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(420, 280)
-	var vbox := VBoxContainer.new()
-	var title := Label.new()
+	var root: Control = layer.get_node_or_null("Root") as Control
+	if root != null:
+		UiScaleHelper.apply_to_control(root)
+	var title: Label = layer.find_child("Title", true, false) as Label
+	var empty: Label = layer.find_child("EmptyMessage", true, false) as Label
+	var choices: VBoxContainer = layer.find_child("Choices", true, false) as VBoxContainer
+	var cancel: Button = layer.find_child("CloseButton", true, false) as Button
+	if title == null or empty == null or choices == null or cancel == null:
+		return
 	title.text = prompt_text
-	vbox.add_child(title)
 	if rows.is_empty():
-		var empty := Label.new()
 		empty.text = "Нет доступных свиданий здесь."
-		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		vbox.add_child(empty)
+		empty.visible = true
 	else:
+		var action_scene: PackedScene = load(ACTION_BUTTON_SCENE) as PackedScene
 		for row in rows:
-			var btn := Button.new()
+			if action_scene == null:
+				continue
+			var btn: Button = action_scene.instantiate() as Button
+			if btn == null:
+				continue
 			var available: bool = bool(row.get("available", false))
 			btn.text = str(row.get("label", ""))
 			btn.disabled = not available
@@ -162,15 +177,10 @@ func _show_girl_picker(player: Node) -> void:
 				btn.pressed.connect(func() -> void:
 					_start_date(gid, player)
 				)
-			vbox.add_child(btn)
-	var cancel := Button.new()
-	cancel.text = "Закрыть"
+			choices.add_child(btn)
 	cancel.pressed.connect(func() -> void:
 		_close_ui(player)
 	)
-	vbox.add_child(cancel)
-	panel.add_child(vbox)
-	layer.add_child(panel)
 	add_child(layer)
 	_ui = layer
 	_enter_modal(player)
@@ -309,24 +319,27 @@ func _ensure_dating_ui() -> CanvasLayer:
 
 
 func _show_error(text: String, player: Node) -> void:
-	var layer := CanvasLayer.new()
+	var packed: PackedScene = load(MESSAGE_DIALOG_SCENE) as PackedScene
+	if packed == null:
+		return
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return
 	layer.name = "DateVenueErrorUI"
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	var vbox := VBoxContainer.new()
-	var label := Label.new()
+	var root: Control = layer.get_node_or_null("Root") as Control
+	if root != null:
+		UiScaleHelper.apply_to_control(root)
+	var label: Label = layer.find_child("Message", true, false) as Label
+	var btn: Button = layer.find_child("CloseButton", true, false) as Button
+	if label == null or btn == null:
+		return
 	label.text = text
-	var btn := Button.new()
 	btn.text = "OK"
 	btn.pressed.connect(func() -> void:
 		if is_instance_valid(layer):
 			layer.queue_free()
 		_exit_modal(player)
 	)
-	vbox.add_child(label)
-	vbox.add_child(btn)
-	panel.add_child(vbox)
-	layer.add_child(panel)
 	add_child(layer)
 	_enter_modal(player)
 

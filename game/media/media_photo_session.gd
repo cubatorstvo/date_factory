@@ -3,8 +3,7 @@ extends CanvasLayer
 ## Bespoke 3-shot editorial photo session (MODULE 15).
 ## Modal UI built in code. Abort commits nothing.
 
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
-const BODY_FONT_SIZE: int = 16
+const ACTION_BUTTON_SCENE: String = "res://ui/common/action_button.tscn"
 
 signal session_finished()
 signal session_aborted()
@@ -14,7 +13,9 @@ var _phase: MediaTypes.SessionPhase = MediaTypes.SessionPhase.INTRO
 var _player: Node = null
 var _transient_poses: Dictionary = {}
 var _last_feedback: String = ""
-var _ui_root: Control = null
+@onready var _ui_root: Control = %Root
+@onready var _continue_button: Button = $Root/Panel/MarginContainer/VBox/Buttons/ContinueBtn
+@onready var _abort_button: Button = $Root/Panel/MarginContainer/VBox/Buttons/AbortBtn
 var _started: bool = false
 var _finished: bool = false
 var _committed: bool = false
@@ -23,6 +24,9 @@ var _committed: bool = false
 func _ready() -> void:
 	layer = 85
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	UiScaleHelper.apply_to_control(_ui_root)
+	_continue_button.pressed.connect(_on_continue_pressed)
+	_abort_button.pressed.connect(_on_abort_pressed)
 	visible = false
 
 
@@ -60,7 +64,7 @@ func start(player: Node = null) -> bool:
 	if _player != null and is_instance_valid(_player) and _player.has_method("enter_modal_ui"):
 		_player.call("enter_modal_ui")
 	_set_phase(MediaTypes.SessionPhase.INTRO)
-	_build_ui()
+	_ui_root.visible = true
 	visible = true
 	_refresh_ui()
 	return true
@@ -207,89 +211,16 @@ func _restore_player() -> void:
 func _teardown_ui() -> void:
 	visible = false
 	if _ui_root != null and is_instance_valid(_ui_root):
-		_ui_root.queue_free()
-	_ui_root = null
-
-
-func _build_ui() -> void:
-	_teardown_ui()
-	visible = true
-	var root: Control = Control.new()
-	root.name = "Root"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.process_mode = Node.PROCESS_MODE_ALWAYS
-	_apply_theme(root)
-	add_child(root)
-	_ui_root = root
-	var dim: ColorRect = ColorRect.new()
-	dim.name = "Dim"
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.04, 0.04, 0.05, 0.62)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.add_child(dim)
-	var panel: PanelContainer = PanelContainer.new()
-	panel.name = "Panel"
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.position = Vector2(-320, -220)
-	panel.size = Vector2(640, 440)
-	root.add_child(panel)
-	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	panel.add_child(margin)
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.name = "VBox"
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-	var title: Label = Label.new()
-	title.name = "Title"
-	title.text = "ФОТОСЕССИЯ"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(title)
-	var body: Label = Label.new()
-	body.name = "Body"
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.custom_minimum_size = Vector2(600, 80)
-	body.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	vbox.add_child(body)
-	var choices: VBoxContainer = VBoxContainer.new()
-	choices.name = "Choices"
-	choices.add_theme_constant_override("separation", 6)
-	vbox.add_child(choices)
-	var feedback: Label = Label.new()
-	feedback.name = "Feedback"
-	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	feedback.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	vbox.add_child(feedback)
-	var buttons: HBoxContainer = HBoxContainer.new()
-	buttons.name = "Buttons"
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_child(buttons)
-	var cont: Button = Button.new()
-	cont.name = "ContinueBtn"
-	cont.text = "Продолжить"
-	cont.custom_minimum_size = Vector2(0, 34)
-	cont.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	cont.pressed.connect(_on_continue_pressed)
-	buttons.add_child(cont)
-	var abort_btn: Button = Button.new()
-	abort_btn.name = "AbortBtn"
-	abort_btn.text = "Отмена"
-	abort_btn.custom_minimum_size = Vector2(0, 34)
-	abort_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	abort_btn.pressed.connect(_on_abort_pressed)
-	buttons.add_child(abort_btn)
+		_ui_root.visible = false
 
 
 func _refresh_ui() -> void:
 	if _ui_root == null or not is_instance_valid(_ui_root):
 		return
 	var body: Label = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Body") as Label
-	var choices: VBoxContainer = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Choices") as VBoxContainer
+	var choices: VBoxContainer = _ui_root.get_node_or_null(
+		"Panel/MarginContainer/VBox/ChoicesScroll/Choices"
+	) as VBoxContainer
 	var feedback: Label = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Feedback") as Label
 	var cont: Button = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Buttons/ContinueBtn") as Button
 	var abort_btn: Button = _ui_root.get_node_or_null("Panel/MarginContainer/VBox/Buttons/AbortBtn") as Button
@@ -321,7 +252,12 @@ func _refresh_ui() -> void:
 				for entry in get_current_shot_pose_choices():
 					var pose_id: StringName = entry["pose_id"] as StringName
 					var available: bool = bool(entry["available"])
-					var btn: Button = Button.new()
+					var packed: PackedScene = load(ACTION_BUTTON_SCENE) as PackedScene
+					if packed == null:
+						continue
+					var btn: Button = packed.instantiate() as Button
+					if btn == null:
+						continue
 					var label: String = str(entry["label"])
 					var req_app: int = int(entry["required_appearance"])
 					# Spec §86: Appearance gate visible; enable only when available.
@@ -332,7 +268,6 @@ func _refresh_ui() -> void:
 						btn.text = "%s [Внешность %d]" % [label, req_app]
 						btn.disabled = true
 					btn.custom_minimum_size = Vector2(0, 36)
-					btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 					choices.add_child(btn)
 		MediaTypes.SessionPhase.RESULT:
 			if body != null:
@@ -380,12 +315,3 @@ func _play_shutter_presentation() -> void:
 	var audio: Node = get_node_or_null("/root/AudioDirector")
 	if audio != null and audio.has_method("play_sfx"):
 		audio.call("play_sfx", AudioIds.CAMERA_SHUTTER)
-
-
-func _apply_theme(root: Control) -> void:
-	if root == null:
-		return
-	if ResourceLoader.exists(THEME_PATH):
-		var theme_res: Resource = load(THEME_PATH)
-		if theme_res is Theme:
-			root.theme = theme_res as Theme

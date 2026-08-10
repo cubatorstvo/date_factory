@@ -4,6 +4,7 @@ extends RefCounted
 
 
 const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
+const RESULT_OVERLAY_SCENE: String = "res://ui/common/minigame_result_overlay.tscn"
 const RESULT_HOLD_SEC: float = 1.0
 const TRACK_SIDE_MARGIN: float = 48.0
 const MIN_TRACK_WIDTH: float = 240.0
@@ -16,6 +17,7 @@ static func apply_theme(root: Control) -> void:
 		var theme_res: Resource = load(THEME_PATH)
 		if theme_res is Theme:
 			root.theme = theme_res as Theme
+	UiScaleHelper.apply_to_control(root)
 
 
 static func format_score(player_score: int, rival_score: int, target_score: int) -> String:
@@ -66,36 +68,17 @@ static func build_result_overlay(parent: Control, result: RivalCompetitionResult
 	var existing: Node = parent.get_node_or_null("ResultOverlay")
 	if existing != null:
 		existing.queue_free()
-	var overlay: PanelContainer = PanelContainer.new()
-	overlay.name = "ResultOverlay"
-	overlay.set_anchors_preset(Control.PRESET_CENTER)
-	overlay.offset_left = -220.0
-	overlay.offset_right = 220.0
-	overlay.offset_top = -90.0
-	overlay.offset_bottom = 90.0
-	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var packed: PackedScene = load(RESULT_OVERLAY_SCENE) as PackedScene
+	if packed == null:
+		return null
+	var overlay: MinigameResultOverlay = packed.instantiate() as MinigameResultOverlay
+	if overlay == null:
+		return null
 	overlay.z_index = 20
-	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	overlay.add_child(margin)
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-	var title: Label = Label.new()
-	title.name = "OutcomeTitle"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 36)
-	title.add_theme_color_override("font_color", outcome_color(result.outcome))
-	title.text = outcome_title(result.outcome)
-	vbox.add_child(title)
-	var detail: Label = Label.new()
-	detail.name = "OutcomeDetail"
-	detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	detail.add_theme_font_size_override("font_size", 18)
-	detail.text = reason_line(result)
-	vbox.add_child(detail)
+	overlay.configure(
+		outcome_title(result.outcome),
+		reason_line(result),
+		outcome_color(result.outcome)
+	)
 	parent.add_child(overlay)
 	return overlay

@@ -3,7 +3,7 @@ extends Interactable
 ## Physical Global Expansion Terminal entry (MODULE 20).
 ## Scene worker attaches this in production_area.
 
-const MODAL_SCRIPT: String = "res://game/late_game/global_expansion_terminal_ui.gd"
+const MODAL_SCENE: String = "res://game/late_game/global_expansion_terminal_ui.tscn"
 
 var _modal: CanvasLayer = null
 
@@ -53,13 +53,13 @@ func _is_unlocked() -> bool:
 
 func _open_modal(player: Node) -> void:
 	_close_modal(player)
-	var script: Script = load(MODAL_SCRIPT) as Script
-	if script == null:
-		push_error("[GlobalExpansionTerminalInteractable] modal script missing")
+	var packed: PackedScene = load(MODAL_SCENE) as PackedScene
+	if packed == null:
+		push_error("[GlobalExpansionTerminalInteractable] modal scene missing")
 		return
-	var layer := CanvasLayer.new()
-	layer.set_script(script)
-	layer.name = "GlobalExpansionTerminalUI"
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return
 	add_child(layer)
 	_modal = layer
 	if layer.has_method("open"):

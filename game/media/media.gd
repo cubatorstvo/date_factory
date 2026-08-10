@@ -11,6 +11,8 @@ signal incoming_offer_read(girl_id: StringName)
 signal feed_changed()
 signal overload_ready()
 
+const PHOTO_SESSION_SCENE: String = "res://game/media/media_photo_session.tscn"
+
 var _signals_connected: bool = false
 var _overload_ready_emitted: bool = false
 var _active_session: MediaPhotoSession = null
@@ -180,7 +182,12 @@ func start_photo_session(player: Node = null) -> MediaPhotoSession:
 		return null
 	if has_active_photo_session():
 		return _active_session
-	var session: MediaPhotoSession = MediaPhotoSession.new()
+	var packed: PackedScene = load(PHOTO_SESSION_SCENE) as PackedScene
+	if packed == null:
+		return null
+	var session: MediaPhotoSession = packed.instantiate() as MediaPhotoSession
+	if session == null:
+		return null
 	_active_session = session
 	var tree: SceneTree = get_tree()
 	if tree != null and tree.root != null:

@@ -3,7 +3,7 @@ extends Interactable
 ## Physical Clone Terminal entry in laboratory (MODULE 18).
 ## Scene worker attaches this at story_point_clone_terminal.
 
-const MODAL_SCRIPT: String = "res://game/clone_incremental/clone_terminal_ui.gd"
+const MODAL_SCENE: String = "res://game/clone_incremental/clone_terminal_ui.tscn"
 
 var _modal: CanvasLayer = null
 
@@ -46,13 +46,13 @@ func _on_interact(player: Node) -> void:
 
 func _open_modal(player: Node) -> void:
 	_close_modal(player)
-	var script: Script = load(MODAL_SCRIPT) as Script
-	if script == null:
-		push_error("[CloneTerminalInteractable] modal script missing")
+	var packed: PackedScene = load(MODAL_SCENE) as PackedScene
+	if packed == null:
+		push_error("[CloneTerminalInteractable] modal scene missing")
 		return
-	var layer := CanvasLayer.new()
-	layer.set_script(script)
-	layer.name = "CloneTerminalUI"
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return
 	add_child(layer)
 	_modal = layer
 	if layer.has_method("open"):

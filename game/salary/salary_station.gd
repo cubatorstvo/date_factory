@@ -3,8 +3,7 @@ extends Interactable
 ## Physical salary claim station in the mine (MODULE 13).
 ## Manual cycle: 1.5s MODAL_UI progress, then SalaryMine.claim_manual_pending().
 
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
-const BODY_FONT_SIZE: int = 16
+const CYCLE_OVERLAY_SCENE: String = "res://game/salary/salary_cycle_overlay.tscn"
 const _CYCLE_SEC: float = 1.50
 const _RESULT_SEC: float = 0.85
 const _EMPTY_FEEDBACK_SEC: float = 0.7
@@ -73,6 +72,9 @@ func _run_manual_cycle() -> void:
 	if player != null and is_instance_valid(player) and player.has_method("enter_modal_ui"):
 		player.call("enter_modal_ui")
 	var overlay: CanvasLayer = _make_cycle_overlay(snapshot_amount)
+	if overlay == null:
+		_finish_cycle(player, null, false, 0)
+		return
 	var tree: SceneTree = get_tree()
 	if tree == null or tree.root == null:
 		_finish_cycle(player, overlay, false, 0)
@@ -181,70 +183,20 @@ func _wait(seconds: float) -> void:
 
 
 func _make_cycle_overlay(snapshot_amount: int) -> CanvasLayer:
-	var layer: CanvasLayer = CanvasLayer.new()
-	layer.layer = 80
-	layer.name = "SalaryCycleOverlay"
-	layer.process_mode = Node.PROCESS_MODE_ALWAYS
-	var root: Control = Control.new()
-	root.name = "Root"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.process_mode = Node.PROCESS_MODE_ALWAYS
-	_apply_theme(root)
-	layer.add_child(root)
-	var dim: ColorRect = ColorRect.new()
-	dim.name = "Dim"
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.05, 0.04, 0.03, 0.55)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.add_child(dim)
-	var title: Label = Label.new()
-	title.name = "Title"
-	title.text = "ПОЛУЧЕНИЕ ЗАРПЛАТЫ"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.set_anchors_preset(Control.PRESET_CENTER)
-	title.position = Vector2(-220, -60)
-	title.size = Vector2(440, 40)
-	title.add_theme_font_size_override("font_size", 22)
-	root.add_child(title)
-	var amount: Label = Label.new()
-	amount.name = "AmountHint"
+	var packed: PackedScene = load(CYCLE_OVERLAY_SCENE) as PackedScene
+	if packed == null:
+		return null
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return null
+	var root: Control = layer.get_node_or_null("Root") as Control
+	if root != null:
+		UiScaleHelper.apply_to_control(root)
+	var amount: Label = layer.get_node_or_null("Root/AmountHint") as Label
+	if amount == null:
+		return layer
 	amount.text = "$%s" % UiNumberFormat.format_compact(snapshot_amount)
-	amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	amount.set_anchors_preset(Control.PRESET_CENTER)
-	amount.position = Vector2(-120, -20)
-	amount.size = Vector2(240, 28)
-	amount.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	root.add_child(amount)
-	var bar: ProgressBar = ProgressBar.new()
-	bar.name = "Progress"
-	bar.min_value = 0.0
-	bar.max_value = 100.0
-	bar.value = 0.0
-	bar.show_percentage = false
-	bar.set_anchors_preset(Control.PRESET_CENTER)
-	bar.position = Vector2(-160, 20)
-	bar.size = Vector2(320, 18)
-	root.add_child(bar)
-	var result_label: Label = Label.new()
-	result_label.name = "Result"
-	result_label.visible = false
-	result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	result_label.set_anchors_preset(Control.PRESET_CENTER)
-	result_label.position = Vector2(-220, 50)
-	result_label.size = Vector2(440, 36)
-	result_label.add_theme_font_size_override("font_size", 18)
-	root.add_child(result_label)
 	return layer
-
-
-func _apply_theme(root: Control) -> void:
-	if root == null:
-		return
-	if ResourceLoader.exists(THEME_PATH):
-		var theme_res: Resource = load(THEME_PATH)
-		if theme_res is Theme:
-			root.theme = theme_res as Theme
 
 
 func _audio_play_ui(sound_id: StringName) -> void:

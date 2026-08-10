@@ -14,10 +14,8 @@ enum Mode {
 	RESULT,
 }
 
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
-const TITLE_FONT_SIZE: int = 26
-const HEADER_FONT_SIZE: int = 20
-const BODY_FONT_SIZE: int = 17
+const SCENE_PATH: String = "res://ui/rivals/rival_encounter_ui.tscn"
+const CHOICE_CARD_SCENE: String = "res://ui/common/choice_card.tscn"
 const MUTED := Color(0.72, 0.74, 0.76, 1.0)
 const WARNING := Color(0.78, 0.48, 0.38, 1.0)
 const ACCENT := Color(0.95, 0.92, 0.55, 1.0)
@@ -26,13 +24,13 @@ var _mode: Mode = Mode.NONE
 var _player: Node = null
 var _exhibition: bool = false
 var _restore_gameplay_on_close: bool = true
-var _root: Control = null
-var _panel: PanelContainer = null
-var _title: Label = null
-var _subtitle: Label = null
-var _stakes_label: Label = null
-var _list: VBoxContainer = null
-var _close_btn: Button = null
+@onready var _root: Control = %Root
+@onready var _panel: PanelContainer = %Panel
+@onready var _title: Label = %TitleLabel
+@onready var _subtitle: Label = %SubtitleLabel
+@onready var _stakes_label: Label = %StakesLabel
+@onready var _list: VBoxContainer = %ChoiceList
+@onready var _close_btn: Button = %CloseButton
 var _rival_id: StringName = &""
 var _pending_choice: bool = false
 var _on_confirm: Callable = Callable()
@@ -40,10 +38,16 @@ var _invoke_confirm_on_close: bool = false
 
 
 static func create() -> RivalEncounterUI:
-	var ui: RivalEncounterUI = new() as RivalEncounterUI
-	ui.name = "RivalEncounterUI"
-	ui.layer = 48
-	return ui
+	var packed: PackedScene = load(SCENE_PATH) as PackedScene
+	if packed == null:
+		return null
+	return packed.instantiate() as RivalEncounterUI
+
+
+func _ready() -> void:
+	UiScaleHelper.apply_to_control(_root)
+	_close_btn.pressed.connect(_on_close_pressed)
+	visible = false
 
 
 ## Show allowed competitions for the active RivalEncounters session (choose phase).
@@ -207,77 +211,6 @@ func _ensure_tree() -> void:
 		var tree: SceneTree = Engine.get_main_loop() as SceneTree
 		if tree != null:
 			tree.root.add_child(self)
-	_build_shell()
-
-
-func _build_shell() -> void:
-	for child in get_children():
-		child.queue_free()
-	_root = Control.new()
-	_root.name = "Root"
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_root.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_root)
-
-	var theme_res: Resource = null
-	if ResourceLoader.exists(THEME_PATH):
-		theme_res = load(THEME_PATH)
-	if theme_res is Theme:
-		_root.theme = theme_res as Theme
-	else:
-		_root.theme = DateFactoryThemeBuilder.build()
-
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.04, 0.05, 0.72)
-	_root.add_child(dim)
-
-	_panel = PanelContainer.new()
-	_panel.name = "Panel"
-	_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_panel.custom_minimum_size = Vector2(520, 420)
-	_root.add_child(_panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	_panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
-	margin.add_child(vbox)
-
-	_title = Label.new()
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
-	vbox.add_child(_title)
-
-	_subtitle = Label.new()
-	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_subtitle.add_theme_font_size_override("font_size", HEADER_FONT_SIZE)
-	_subtitle.add_theme_color_override("font_color", MUTED)
-	vbox.add_child(_subtitle)
-
-	_stakes_label = Label.new()
-	_stakes_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_stakes_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_stakes_label.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	vbox.add_child(_stakes_label)
-
-	_list = VBoxContainer.new()
-	_list.name = "List"
-	_list.add_theme_constant_override("separation", 8)
-	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(_list)
-
-	_close_btn = Button.new()
-	_close_btn.custom_minimum_size = Vector2(0, 36)
-	_close_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	_close_btn.pressed.connect(_on_close_pressed)
-	vbox.add_child(_close_btn)
 
 
 func _clear_list() -> void:
@@ -316,7 +249,9 @@ func _build_choose(session: RivalEncounterSession) -> void:
 	for ctype_v in allowed:
 		var ctype: GameTypes.CompetitionType = ctype_v as GameTypes.CompetitionType
 		var unlocked: bool = available.has(ctype)
-		_list.add_child(_make_competition_row(ctype, def, rival_name, unlocked))
+		var row: ChoiceCard = _make_competition_row(ctype, def, rival_name, unlocked)
+		if row != null:
+			_list.add_child(row)
 
 
 func _make_competition_row(
@@ -324,44 +259,31 @@ func _make_competition_row(
 	def: RivalDefinition,
 	rival_name: String,
 	unlocked: bool,
-) -> Control:
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
-
-	var name_lbl := Label.new()
-	name_lbl.text = _competition_short_name(ctype)
-	name_lbl.add_theme_font_size_override("font_size", HEADER_FONT_SIZE)
-	box.add_child(name_lbl)
-
-	var detail := Label.new()
-	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	detail.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
+) -> ChoiceCard:
+	var packed: PackedScene = load(CHOICE_CARD_SCENE) as PackedScene
+	if packed == null:
+		return null
+	var card: ChoiceCard = packed.instantiate() as ChoiceCard
+	if card == null:
+		return null
+	var detail_text: String = ""
 	if unlocked:
-		detail.text = _compare_line(ctype, def, rival_name)
-		detail.add_theme_color_override("font_color", MUTED)
+		detail_text = _compare_line(ctype, def, rival_name)
 	else:
-		detail.text = _lock_reason(ctype)
-		detail.add_theme_color_override("font_color", WARNING)
-	box.add_child(detail)
-
+		detail_text = _lock_reason(ctype)
+	card.configure(
+		_competition_short_name(ctype),
+		detail_text,
+		"Выбрать" if unlocked else "Недоступно"
+	)
+	card.detail_label.add_theme_color_override("font_color", MUTED if unlocked else WARNING)
+	card.action_button.disabled = not unlocked
 	if unlocked:
-		var btn := Button.new()
-		btn.text = "Выбрать"
-		btn.custom_minimum_size = Vector2(0, 34)
-		btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		var chosen: GameTypes.CompetitionType = ctype
-		btn.pressed.connect(func() -> void:
+		card.chosen.connect(func() -> void:
 			_on_choose(chosen)
 		)
-		box.add_child(btn)
-	else:
-		var locked_btn := Button.new()
-		locked_btn.text = "Недоступно"
-		locked_btn.disabled = true
-		locked_btn.custom_minimum_size = Vector2(0, 34)
-		locked_btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-		box.add_child(locked_btn)
-	return box
+	return card
 
 
 func _on_choose(ctype: GameTypes.CompetitionType) -> void:

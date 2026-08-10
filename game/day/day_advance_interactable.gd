@@ -6,6 +6,7 @@ extends Interactable
 const _FADE_IN_SEC: float = 0.15
 const _DAY_LABEL_SEC: float = 0.75
 const _FADE_OUT_SEC: float = 0.15
+const OVERLAY_SCENE: String = "res://game/day/day_advance_overlay.tscn"
 
 var _busy: bool = false
 
@@ -46,6 +47,9 @@ func _run_advance(player: Node) -> void:
 	if player != null and is_instance_valid(player) and player.has_method("enter_modal_ui"):
 		player.call("enter_modal_ui")
 	var overlay: CanvasLayer = _make_overlay()
+	if overlay == null:
+		_finish_advance(player, null)
+		return
 	var tree: SceneTree = get_tree()
 	if tree == null or tree.root == null:
 		_finish_advance(player, overlay)
@@ -92,30 +96,13 @@ func _wait(seconds: float) -> void:
 
 
 func _make_overlay() -> CanvasLayer:
-	var layer: CanvasLayer = CanvasLayer.new()
-	layer.layer = 80
-	layer.name = "DayAdvanceOverlay"
-	layer.process_mode = Node.PROCESS_MODE_ALWAYS
-	var root: Control = Control.new()
-	root.name = "Root"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.process_mode = Node.PROCESS_MODE_ALWAYS
-	layer.add_child(root)
-	var fade: ColorRect = ColorRect.new()
-	fade.name = "Fade"
-	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	fade.color = Color(0.02, 0.02, 0.03, 1.0)
-	fade.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.add_child(fade)
-	var label: Label = Label.new()
-	label.name = "DayLabel"
-	label.visible = false
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	label.add_theme_font_size_override("font_size", 42)
-	label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.82, 1.0))
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(label)
+	var packed: PackedScene = load(OVERLAY_SCENE) as PackedScene
+	if packed == null:
+		return null
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return null
+	var root: Control = layer.get_node_or_null("Root") as Control
+	if root != null:
+		UiScaleHelper.apply_to_control(root)
 	return layer

@@ -3,6 +3,7 @@ extends RefCounted
 ## Fullscreen canvas flash — presentation only (MODULE 23 §31–32).
 
 const DEFAULT_LAYER: int = 110
+const SCENE_PATH: String = "res://presentation/vfx/screen_flash.tscn"
 
 
 static func play(
@@ -14,15 +15,18 @@ static func play(
 	if host == null or not is_instance_valid(host):
 		return
 	var dur: float = clampf(duration, 0.05, 0.60)
-	var canvas: CanvasLayer = CanvasLayer.new()
-	canvas.name = "ScreenFlashLayer"
+	var packed: PackedScene = load(SCENE_PATH) as PackedScene
+	if packed == null:
+		return
+	var canvas: CanvasLayer = packed.instantiate() as CanvasLayer
+	if canvas == null:
+		return
 	canvas.layer = layer
-	var rect: ColorRect = ColorRect.new()
-	rect.name = "Flash"
-	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var rect: ColorRect = canvas.get_node_or_null("Flash") as ColorRect
+	if rect == null:
+		canvas.free()
+		return
 	rect.color = color
-	canvas.add_child(rect)
 	host.add_child(canvas)
 	var tween: Tween = canvas.create_tween()
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)

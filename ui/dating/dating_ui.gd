@@ -1,7 +1,7 @@
 extends CanvasLayer
 ## Dating choice UI presentation (MODULE 22) — DatingCore scoring unchanged.
 
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
+const ACTION_BUTTON_SCENE: String = "res://ui/common/action_button.tscn"
 const FREE_REP_REASON: String = "Представительские расходы"
 const PUBLIC_SIG_NOTE: String = "Внешность общественного значения"
 
@@ -30,8 +30,7 @@ func _ready() -> void:
 	_core = get_node_or_null("/root/DatingCore")
 	_relationships = get_node_or_null("/root/Relationships")
 	_ui_number_format = _try_load_number_format()
-	_apply_theme()
-	_apply_local_style()
+	UiScaleHelper.apply_to_control(_root)
 	visible = false
 	set_process_unhandled_input(true)
 	if _core != null:
@@ -299,13 +298,17 @@ func _clear_choices() -> void:
 
 
 func _add_btn(text: String, cb: Callable, enabled: bool = true) -> void:
-	var btn := Button.new()
+	var packed: PackedScene = load(ACTION_BUTTON_SCENE) as PackedScene
+	if packed == null:
+		return
+	var btn: Button = packed.instantiate() as Button
+	if btn == null:
+		return
 	btn.text = text
 	btn.disabled = not enabled
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	btn.custom_minimum_size = Vector2(0, 44)
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn.add_theme_font_size_override("font_size", 15)
 	if enabled:
 		btn.pressed.connect(cb)
 	else:
@@ -444,14 +447,6 @@ func _try_load_number_format() -> GDScript:
 	return null
 
 
-func _apply_theme() -> void:
-	if ResourceLoader.exists(THEME_PATH):
-		var theme_res: Resource = load(THEME_PATH)
-		if theme_res is Theme:
-			_root.theme = theme_res as Theme
-			_panel.theme = theme_res as Theme
-
-
 func _audio_play_ui(sound_id: StringName) -> void:
 	var ad: Node = get_node_or_null("/root/AudioDirector")
 	if ad != null and ad.has_method("play_ui"):
@@ -462,34 +457,3 @@ func _audio_play_sfx(sound_id: StringName) -> void:
 	var ad: Node = get_node_or_null("/root/AudioDirector")
 	if ad != null and ad.has_method("play_sfx"):
 		ad.call("play_sfx", sound_id)
-
-
-func _apply_local_style() -> void:
-	if _root.theme != null:
-		return
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.10, 0.11, 0.13, 0.94)
-	sb.border_color = Color(0.42, 0.44, 0.48, 0.85)
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(4)
-	sb.content_margin_left = 4
-	sb.content_margin_right = 4
-	sb.content_margin_top = 4
-	sb.content_margin_bottom = 4
-	_panel.add_theme_stylebox_override("panel", sb)
-	_girl_name.add_theme_font_size_override("font_size", 20)
-	_girl_name.add_theme_color_override("font_color", Color(0.95, 0.95, 0.93))
-	_phase_label.add_theme_font_size_override("font_size", 14)
-	_phase_label.add_theme_color_override("font_color", Color(0.78, 0.80, 0.72))
-	_relationship_label.add_theme_font_size_override("font_size", 14)
-	_relationship_label.add_theme_color_override("font_color", Color(0.82, 0.84, 0.88))
-	_greeting_note.add_theme_font_size_override("font_size", 13)
-	_greeting_note.add_theme_color_override("font_color", Color(0.70, 0.74, 0.68))
-	_title.add_theme_font_size_override("font_size", 18)
-	_title.add_theme_color_override("font_color", Color(0.96, 0.96, 0.94))
-	_body.add_theme_font_size_override("font_size", 15)
-	_body.add_theme_color_override("font_color", Color(0.88, 0.88, 0.86))
-	_reaction_score.add_theme_font_size_override("font_size", 48)
-	_reaction_score.add_theme_color_override("font_color", Color(0.95, 0.93, 0.75))
-	_reaction_text.add_theme_font_size_override("font_size", 15)
-	_reaction_text.add_theme_color_override("font_color", Color(0.90, 0.90, 0.88))

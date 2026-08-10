@@ -16,22 +16,22 @@ var _pending_result: RivalCompetitionResult = null
 var _request: RivalCompetitionRequest = null
 var _rival_actor: Node3D = null
 
-var _root: Control = null
-var _title_label: Label = null
-var _score_label: Label = null
-var _phase_label: Label = null
-var _hint_label: Label = null
-var _sequence_label: Label = null
-var _feedback_label: Label = null
-var _streak_label: Label = null
-var _pulse: ColorRect = null
+@onready var _root: Control = %Root
+@onready var _title_label: Label = %Title
+@onready var _score_label: Label = %ScoreLabel
+@onready var _phase_label: Label = %PhaseLabel
+@onready var _hint_label: Label = %HintLabel
+@onready var _sequence_label: Label = %SequenceLabel
+@onready var _feedback_label: Label = %FeedbackLabel
+@onready var _streak_label: Label = %StreakLabel
+@onready var _pulse: ColorRect = %Pulse
 var _pulse_base: float = 18.0
 
 
 func _ready() -> void:
 	layer = 80
 	process_mode = Node.PROCESS_MODE_PAUSABLE
-	_build_ui()
+	MinigameShell.apply_theme(_root)
 
 
 func setup(
@@ -203,87 +203,6 @@ func _present_rival_move(move: DanceTiming.DanceMove) -> void:
 	var origin: Vector3 = visual.position
 	tween.tween_property(visual, "position", origin + offset, 0.12)
 	tween.tween_property(visual, "position", origin, 0.18)
-
-
-func _build_ui() -> void:
-	_root = Control.new()
-	_root.name = "Root"
-	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_root)
-	MinigameShell.apply_theme(_root)
-
-	_title_label = Label.new()
-	_title_label.name = "Title"
-	_title_label.text = TITLE_TEXT
-	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_title_label.offset_left = -360.0
-	_title_label.offset_right = 360.0
-	_title_label.offset_top = 28.0
-	_title_label.offset_bottom = 64.0
-	_title_label.add_theme_font_size_override("font_size", 26)
-	_root.add_child(_title_label)
-
-	var panel: PanelContainer = PanelContainer.new()
-	panel.name = "Panel"
-	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	panel.offset_left = -380.0
-	panel.offset_right = 380.0
-	panel.offset_top = -280.0
-	panel.offset_bottom = -24.0
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(panel)
-
-	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	panel.add_child(margin)
-
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-
-	_score_label = Label.new()
-	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_score_label.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(_score_label)
-
-	_phase_label = Label.new()
-	_phase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_phase_label.add_theme_font_size_override("font_size", 28)
-	vbox.add_child(_phase_label)
-
-	var pulse_wrap: CenterContainer = CenterContainer.new()
-	pulse_wrap.custom_minimum_size = Vector2(0.0, 40.0)
-	vbox.add_child(pulse_wrap)
-	_pulse = ColorRect.new()
-	_pulse.color = Color(0.95, 0.85, 0.35, 0.9)
-	_pulse.custom_minimum_size = Vector2(_pulse_base, _pulse_base)
-	pulse_wrap.add_child(_pulse)
-
-	_sequence_label = Label.new()
-	_sequence_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_sequence_label.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(_sequence_label)
-
-	_hint_label = Label.new()
-	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_label.add_theme_font_size_override("font_size", 16)
-	_hint_label.text = "W A S D — направления"
-	vbox.add_child(_hint_label)
-
-	_streak_label = Label.new()
-	_streak_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_streak_label.add_theme_font_size_override("font_size", 16)
-	vbox.add_child(_streak_label)
-
-	_feedback_label = Label.new()
-	_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_feedback_label.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(_feedback_label)
 
 
 func _refresh_ui() -> void:

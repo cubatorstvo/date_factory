@@ -7,8 +7,8 @@ const SEEN_RADIUS: float = 4.0
 const LAYER_WORLD: int = 1
 const LAYER_INTERACTABLE: int = 4
 const LAYER_CHARACTERS: int = 8
-const THEME_PATH: String = "res://ui/theme/date_factory_theme.tres"
-const BODY_FONT_SIZE: int = 16
+const MODAL_SCENE: String = "res://game/girls/girl_modal.tscn"
+const ACTION_BUTTON_SCENE: String = "res://ui/common/action_button.tscn"
 
 @export var girl_id: StringName = &""
 
@@ -232,45 +232,17 @@ func _show_locked_experience(begin: Dictionary, player: Node) -> void:
 
 func _show_story_lock_feedback(text: String, player: Node) -> void:
 	_close_choice_ui(player)
-	var layer := CanvasLayer.new()
+	var layer: CanvasLayer = _make_modal("ПОКА НЕДОСТУПНО", text)
+	if layer == null:
+		return
 	layer.name = "StoryLockFeedbackUI"
-	var root := Control.new()
-	root.name = "Root"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	_apply_theme(root)
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(420, 160)
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
-	var title := Label.new()
-	title.text = "ПОКА НЕДОСТУПНО"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 18)
-	var label := Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	var btn := Button.new()
+	var btn: Button = layer.find_child("CloseButton", true, false) as Button
+	if btn == null:
+		return
 	btn.text = "Закрыть"
-	btn.custom_minimum_size = Vector2(0, 34)
-	btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	btn.pressed.connect(func() -> void:
 		_close_locked_ui(player)
 	)
-	vbox.add_child(title)
-	vbox.add_child(label)
-	vbox.add_child(btn)
-	margin.add_child(vbox)
-	panel.add_child(margin)
-	root.add_child(panel)
-	layer.add_child(root)
 	add_child(layer)
 	_locked_ui = layer
 	_enter_modal(player)
@@ -278,32 +250,22 @@ func _show_story_lock_feedback(text: String, player: Node) -> void:
 
 func _show_approach_choices(begin: Dictionary, player: Node) -> void:
 	_close_choice_ui(player)
-	var layer := CanvasLayer.new()
+	var layer: CanvasLayer = _make_modal("ЗНАКОМСТВО", str(begin.get("setup_text", "")))
+	if layer == null:
+		return
 	layer.name = "DiscoveryChoiceUI"
-	var root := Control.new()
-	root.name = "Root"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	_apply_theme(root)
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(480, 320)
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	var setup := Label.new()
-	setup.text = str(begin.get("setup_text", ""))
-	setup.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	setup.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	vbox.add_child(setup)
+	var choices: VBoxContainer = layer.find_child("Choices", true, false) as VBoxContainer
+	if choices == null:
+		return
+	var action_scene: PackedScene = load(ACTION_BUTTON_SCENE) as PackedScene
 	var approaches: Array = begin.get("approaches", []) as Array
 	for entry in approaches:
 		var info: Dictionary = entry as Dictionary
-		var btn := Button.new()
+		if action_scene == null:
+			continue
+		var btn: Button = action_scene.instantiate() as Button
+		if btn == null:
+			continue
 		var approach_text: String = str(info.get("label", ""))
 		var available: bool = bool(info.get("available", false))
 		var req_line: String = "Требование: нет"
@@ -314,27 +276,21 @@ func _show_approach_choices(begin: Dictionary, player: Node) -> void:
 		btn.text = "%s\n%s\n%s" % [approach_text, req_line, avail_line]
 		btn.disabled = not available
 		btn.custom_minimum_size = Vector2(0, 64)
-		btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 		var aid: StringName = info.get("id", &"") as StringName
 		btn.pressed.connect(func() -> void:
 			_resolve_choice(aid, player)
 		)
-		vbox.add_child(btn)
-	var cancel := Button.new()
+		choices.add_child(btn)
+	var cancel: Button = layer.find_child("CloseButton", true, false) as Button
+	if cancel == null:
+		return
 	cancel.text = "Отмена"
-	cancel.custom_minimum_size = Vector2(0, 34)
-	cancel.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	cancel.pressed.connect(func() -> void:
 		var gd: Node = get_node_or_null("/root/GirlDiscovery")
 		if gd != null:
 			gd.call("force_clear_attempt")
 		_close_choice_ui(player)
 	)
-	vbox.add_child(cancel)
-	margin.add_child(vbox)
-	panel.add_child(margin)
-	root.add_child(panel)
-	layer.add_child(root)
 	add_child(layer)
 	_choice_ui = layer
 	_enter_modal(player)
@@ -374,43 +330,39 @@ func _show_result_banner(result: Dictionary, player: Node) -> void:
 		text += "\n\nПовтор: через %d дн." % days
 	else:
 		return
-	var layer := CanvasLayer.new()
-	var root := Control.new()
-	root.name = "Root"
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	_apply_theme(root)
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(420, 180)
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
-	var label := Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	var btn := Button.new()
+	var layer: CanvasLayer = _make_modal("РЕЗУЛЬТАТ", text)
+	if layer == null:
+		return
+	var btn: Button = layer.find_child("CloseButton", true, false) as Button
+	if btn == null:
+		return
 	btn.text = "OK"
-	btn.custom_minimum_size = Vector2(0, 34)
-	btn.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	btn.pressed.connect(func() -> void:
 		if is_instance_valid(layer):
 			layer.queue_free()
 		_exit_modal(player)
 	)
-	vbox.add_child(label)
-	vbox.add_child(btn)
-	margin.add_child(vbox)
-	panel.add_child(margin)
-	root.add_child(panel)
-	layer.add_child(root)
 	add_child(layer)
 	_enter_modal(player)
+
+
+func _make_modal(title_text: String, body_text: String) -> CanvasLayer:
+	var packed: PackedScene = load(MODAL_SCENE) as PackedScene
+	if packed == null:
+		return null
+	var layer: CanvasLayer = packed.instantiate() as CanvasLayer
+	if layer == null:
+		return null
+	var root: Control = layer.get_node_or_null("Root") as Control
+	if root != null:
+		UiScaleHelper.apply_to_control(root)
+	var title: Label = layer.find_child("Title", true, false) as Label
+	var body: Label = layer.find_child("Body", true, false) as Label
+	if title != null:
+		title.text = title_text
+	if body != null:
+		body.text = body_text
+	return layer
 
 
 func _close_choice_ui(player: Node) -> void:
@@ -435,15 +387,6 @@ func _enter_modal(player: Node) -> void:
 func _exit_modal(player: Node) -> void:
 	if player != null and player.has_method("enter_gameplay"):
 		player.call("enter_gameplay")
-
-
-func _apply_theme(root: Control) -> void:
-	if root == null:
-		return
-	if ResourceLoader.exists(THEME_PATH):
-		var theme_res: Resource = load(THEME_PATH)
-		if theme_res is Theme:
-			root.theme = theme_res as Theme
 
 
 func _audio_play_ui(sound_id: StringName) -> void:

@@ -18,20 +18,20 @@ var _request: RivalCompetitionRequest = null
 var _rival_actor: Node3D = null
 var _ignore_first_mouse: bool = true
 
-var _root: Control = null
-var _title_label: Label = null
-var _score_label: Label = null
-var _phase_label: Label = null
-var _hint_label: Label = null
-var _special_label: Label = null
-var _feedback_label: Label = null
-var _progress_label: Label = null
-var _pressure_label: Label = null
-var _track_wrap: Control = null
-var _track: ColorRect = null
-var _normal_zone: ColorRect = null
-var _perfect_zone: ColorRect = null
-var _indicator: ColorRect = null
+@onready var _root: Control = %Root
+@onready var _title_label: Label = %Title
+@onready var _score_label: Label = %ScoreLabel
+@onready var _phase_label: Label = %PhaseLabel
+@onready var _hint_label: Label = %HintLabel
+@onready var _special_label: Label = %SpecialLabel
+@onready var _feedback_label: Label = %FeedbackLabel
+@onready var _progress_label: Label = %ProgressLabel
+@onready var _pressure_label: Label = %PressureLabel
+@onready var _track_wrap: Control = %TrackWrap
+@onready var _track: ColorRect = %Track
+@onready var _normal_zone: ColorRect = %NormalZone
+@onready var _perfect_zone: ColorRect = %PerfectZone
+@onready var _indicator: ColorRect = %Indicator
 var _track_width: float = TRACK_DESIGNED
 var _was_in_zone: bool = false
 
@@ -39,7 +39,7 @@ var _was_in_zone: bool = false
 func _ready() -> void:
 	layer = 80
 	process_mode = Node.PROCESS_MODE_PAUSABLE
-	_build_ui()
+	MinigameShell.apply_theme(_root)
 
 
 func setup(
@@ -206,108 +206,6 @@ func _present_rival(alias: StringName) -> void:
 	if alias != &"idle" and _rival_actor.has_method("play_semantic"):
 		if bool(_rival_actor.call("has_animation", &"gesture")):
 			_rival_actor.call("play_semantic", &"gesture")
-
-
-func _build_ui() -> void:
-	_root = Control.new()
-	_root.name = "Root"
-	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_root)
-	MinigameShell.apply_theme(_root)
-
-	_title_label = Label.new()
-	_title_label.name = "Title"
-	_title_label.text = TITLE_TEXT
-	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_title_label.offset_left = -320.0
-	_title_label.offset_right = 320.0
-	_title_label.offset_top = 28.0
-	_title_label.offset_bottom = 64.0
-	_title_label.add_theme_font_size_override("font_size", 26)
-	_root.add_child(_title_label)
-
-	var panel: PanelContainer = PanelContainer.new()
-	panel.name = "Panel"
-	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	panel.offset_left = -340.0
-	panel.offset_right = 340.0
-	panel.offset_top = -300.0
-	panel.offset_bottom = -20.0
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(panel)
-
-	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	panel.add_child(margin)
-
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 6)
-	margin.add_child(vbox)
-
-	_score_label = Label.new()
-	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_score_label.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(_score_label)
-
-	_phase_label = Label.new()
-	_phase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_phase_label.add_theme_font_size_override("font_size", 24)
-	vbox.add_child(_phase_label)
-
-	_track_wrap = Control.new()
-	_track_wrap.custom_minimum_size = Vector2(_track_width, 48.0)
-	vbox.add_child(_track_wrap)
-
-	_track = ColorRect.new()
-	_track.color = Color(0.12, 0.12, 0.14, 0.92)
-	_track.position = Vector2.ZERO
-	_track.size = Vector2(_track_width, 40.0)
-	_track_wrap.add_child(_track)
-
-	_normal_zone = ColorRect.new()
-	_normal_zone.color = Color(0.35, 0.55, 0.75, 0.55)
-	_track.add_child(_normal_zone)
-
-	_perfect_zone = ColorRect.new()
-	_perfect_zone.color = Color(0.92, 0.92, 0.95, 0.85)
-	_track.add_child(_perfect_zone)
-
-	_indicator = ColorRect.new()
-	_indicator.color = Color(0.95, 0.55, 0.20, 1.0)
-	_indicator.size = Vector2(6.0, 40.0)
-	_track.add_child(_indicator)
-
-	_pressure_label = Label.new()
-	_pressure_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_pressure_label.add_theme_font_size_override("font_size", 15)
-	vbox.add_child(_pressure_label)
-
-	_progress_label = Label.new()
-	_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_progress_label.add_theme_font_size_override("font_size", 15)
-	vbox.add_child(_progress_label)
-
-	_hint_label = Label.new()
-	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_label.add_theme_font_size_override("font_size", 16)
-	_hint_label.text = "Мышь — удерживать давление"
-	vbox.add_child(_hint_label)
-
-	_special_label = Label.new()
-	_special_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_special_label.add_theme_font_size_override("font_size", 15)
-	_special_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(_special_label)
-
-	_feedback_label = Label.new()
-	_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_feedback_label.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(_feedback_label)
 
 
 func _refresh_ui() -> void:

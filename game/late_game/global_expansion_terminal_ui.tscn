@@ -1,0 +1,220 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://game/late_game/global_expansion_terminal_ui.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme/date_factory_theme.tres" id="2_theme"]
+
+[node name="GlobalExpansionTerminalUI" type="CanvasLayer"]
+layer = 46
+script = ExtResource("1_script")
+
+[node name="Root" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme = ExtResource("2_theme")
+
+[node name="Dim" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.04, 0.06, 0.7)
+
+[node name="SafeMargin" type="MarginContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Center" type="CenterContainer" parent="Root/SafeMargin"]
+layout_mode = 2
+
+[node name="Panel" type="PanelContainer" parent="Root/SafeMargin/Center"]
+custom_minimum_size = Vector2(660, 820)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/SafeMargin/Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="Content" type="VBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "ГЛОБАЛЬНОЕ РАСШИРЕНИЕ"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Form" type="VBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="ReachHeader" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ОХВАТ ЗЕМЛИ"
+
+[node name="ReachLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+theme_override_colors/font_color = Color(0.98, 0.92, 0.55, 1)
+horizontal_alignment = 1
+
+[node name="ReachBar" type="ProgressBar" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="TotalsLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="WorkHeader" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "РАБОТА"
+
+[node name="WorkCountLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="WorkRateLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="WorkAssign" type="HBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WorkMinus" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/WorkAssign"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 36)
+layout_mode = 2
+text = "-"
+
+[node name="WorkPlus" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/WorkAssign"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 36)
+layout_mode = 2
+text = "+"
+
+[node name="WorkAll" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/WorkAssign"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Все свободные"
+
+[node name="DatingHeader" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "СВИДАНИЯ"
+
+[node name="DatingCountLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="DatingRateLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="DatingAssign" type="HBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DatingMinus" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/DatingAssign"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 36)
+layout_mode = 2
+text = "-"
+
+[node name="DatingPlus" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/DatingAssign"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 36)
+layout_mode = 2
+text = "+"
+
+[node name="DatingAll" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/DatingAssign"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Все свободные"
+
+[node name="NextHeader" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "NEXT CLONE"
+
+[node name="CountdownLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+
+[node name="UpgradesHeader" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "GLOBAL UPGRADES"
+
+[node name="ProdLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="ProdButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="WorkLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="WorkButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="DatingLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="DatingButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CloseButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "Закрыть"
+
+[node name="RefreshTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.25
