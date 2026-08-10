@@ -28,7 +28,7 @@ script = ExtResource("3_camfb")
 
 [node name="InteractionQuery" type="RayCast3D" parent="CameraPivot/Camera" unique_id=458480546]
 target_position = Vector3(0, 0, -2.5)
-collision_mask = 5
+collision_mask = 4
 collide_with_areas = true
 script = ExtResource("2_exd8k")
 
