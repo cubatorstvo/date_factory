@@ -154,7 +154,7 @@ func _show_finish(result: DatingResult) -> void:
 			% [_format_signed(rel.relationship_before), _format_signed(rel.relationship_after)]
 		)
 		if rel.experience_gained > 0:
-			lines.append("Опытность +%d" % rel.experience_gained)
+			lines.append("Покоренных сердец +%d" % rel.experience_gained)
 		if rel.upgrade_points_gained > 0:
 			lines.append("Балл прокачки +%d" % rel.upgrade_points_gained)
 		var rel_delta: int = int(rel.relationship_after) - int(rel.relationship_before)

@@ -120,7 +120,7 @@ func _test_phone_status_and_story() -> void:
 	_ok(status.contains("День:"), "phone status day")
 	_ok(status.contains("Деньги:"), "phone status money")
 	_ok(status.contains("Авторитет:"), "phone status authority")
-	_ok(status.contains("Опытность:"), "phone status experience")
+	_ok(status.contains("Покоренных сердец:"), "phone status experience")
 	_ok(status.contains("Баллы прокачки:"), "phone status upgrade points")
 	var story_text: String = journal.get_story_text()
 	_ok(story_text.contains("Ухажёр:"), "phone story rival line")

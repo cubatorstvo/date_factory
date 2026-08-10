@@ -75,10 +75,11 @@ PersistentUI          # world/persistent_ui.tscn
 ```text
 $ <money>
 АВТОРИТЕТ N
-ОПЫТНОСТЬ N
+ПОКОРЕННЫХ СЕРДЕЦ N
 БАЛЛЫ N
 ```
 
+Code mapping: HUD/phone label **Покоренных сердец** displays `GameState` **`experience`** (`get_experience` / `add_experience`). Identifier unchanged.
 No relationship / Attention / GameDay / late rates / clone counts on HUD.
 
 ### Visibility

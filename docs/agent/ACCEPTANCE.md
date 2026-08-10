@@ -86,3 +86,41 @@ Can every production UI surface be adjusted in the Godot scene editor and remain
 ## Verdict
 
 **READY FOR USER PLAYTEST** — implementation, automated gates, runtime logs, and visual matrices pass; final user acceptance remains pending.
+
+---
+
+# OPENING EVENING SCENE — Acceptance
+
+## Player-visible question
+
+Can a player choose New Game, watch the authored late-evening card-game scene, regain first-person control only after the Neighbor leaves, see `Уже поздно. Ложись спать.`, interact with the bed, and then enter the unchanged old prologue?
+
+## DoD
+
+- [x] New Game routes through the opening; Continue and Load retain their existing direct paths
+- [x] Exact scripted dialogue and natural pauses run for roughly 1.5–2 minutes including the walk to bed
+- [x] The card reads `ПОКОРЁННЫХ СЕРДЕЦ: ____`; zero and internal monologue never appear
+- [x] Neighbor uses the production female appearance and seated/gesture/walk semantic animation fallbacks
+- [x] Player input is locked before departure and restored afterward
+- [x] Only the sleep objective and bed interaction are available after departure
+- [x] Bed fade invokes existing `start_new_game` exactly once; old prologue, Story, and save schema are unchanged
+- [x] Focused, UI contract, save, and world-save smoke tests pass; live runtime logs contain 0 script/runtime errors and gameplay screenshots were opened
+- [ ] User playtest accepts the result
+
+## Evidence
+
+- `OPENING_SCENE_SELF_TEST_PASSED passed=20`
+- `UI_SCENE_CONTRACT: ALL PASS (366)`
+- `MODULE_24_SAVE_IO_TEST: ALL PASS (138)`
+- `MODULE_24_WORLD_TEST: ALL PASS (28)`
+- Live production route: Main Menu → New Game → evening → first-person handoff → bed → old prologue; debugger errors: 0
+- Opened frames: table dialogue, empty heart card, sleep objective, retained physical card, old `Познакомься с соседкой.` prologue
+- Startup/runtime reports `save_schema=1`; no save schema or Story files changed
+
+## Known pre-existing regression
+
+`world_location_test.tscn` cannot compile because its existing test script references the missing `PhoneInteractable` type. `apartment_onboarding_physics_test.tscn` also retains two existing expectation failures for `NeighborDoorBody` and `Interactables/Phone`. Opening-scene focused coverage instantiates the same production apartment successfully; these unrelated test debts are outside OPENING-01 ownership.
+
+## Verdict
+
+**READY FOR USER PLAYTEST** — implementation, focused gates, live handoff, runtime logs, and visual evidence pass. No independent subagent QA was used by explicit user instruction.

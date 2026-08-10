@@ -531,7 +531,7 @@ func _test_phone_story_and_clone_section() -> void:
 	var story_done: String = phone.get_story_text()
 	# MODULE 20 §§57–59 — after first clone Phone switches to President hunt.
 	_ok(story_done.contains("Президент"), "phone President title after clone")
-	_ok(story_done.contains("Опытность:"), "phone President XP line")
+	_ok(story_done.contains("Покоренных сердец:"), "phone President XP line")
 	_ok(story_done.contains("Автоматические свидания расширяют твой земной статус."), "phone President XP hint")
 	_ok(not story_done.contains("Автоматизация запущена."), "phone no M18 automation handoff")
 	_gs.call("add_experience", 10)

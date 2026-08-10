@@ -1487,7 +1487,7 @@ Functional, not final credits art.
 Optional but recommended functional summary:
 
 ```text
-Опытность: X
+Покоренных сердец: X
 Авторитет: X
 Клонов: X
 Охват Земли: 100

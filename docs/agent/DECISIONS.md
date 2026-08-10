@@ -154,3 +154,34 @@ The existing 100/125/150% setting remains an accessibility multiplier for theme 
 ## D-UI-03 — Phone on Q; progression from phone
 
 **Decision:** Permanent `phone` InputMap action on **Q** opens `PhoneJournal` in GAMEPLAY. Esc/Q closes. Progression opens from phone header button **ПРОКАЧКА** with a badge when `upgrade_points > 0`. Apartment `ProgressionInteractable` remains a local shortcut to the same modal. Q during minigames stays `minigame_special_1`.
+
+## D-UI-04 — Player label «Покоренных сердец»
+
+**Decision:** Player-facing Russian name for the former «Опытность» stat is **Покоренных сердец**.
+
+**Code mapping (unchanged identifiers):**
+- GameState field / save key: `experience`
+- getters/setters: `get_experience`, `add_experience`
+- related: `required_experience` on girl defs, `experience_gained` on relationship results, `late_experience_granted`
+
+Do not rename code identifiers; only UI strings and product docs use the new label.
+
+---
+
+## D-OPENING-01 — Separate pre-prologue evening
+
+**Decision:** New Game opens a standalone first-person evening scene before `SaveSystem.start_new_game`. The bed completion signal then invokes the existing new-game path exactly once. Continue/Load and the old Neighbor prologue are unchanged.
+
+**Why:** This delivers the supplied opening as an isolated production scene while deliberately deferring the known narrative contradiction with the old prologue to the user's next stage.
+
+## D-OPENING-02 — No new cinematic framework or save state
+
+**Decision:** One scene-local controller owns the fixed dialogue timeline, camera/card presentation, Neighbor departure, input handoff, and fade. It reuses the production apartment scene, Player, CharacterActor, Neighbor appearance, and semantic animation aliases. No dialogue engine, quest state, opening-seen flag, GameState field, or save-schema change is introduced.
+
+## D-OPENING-03 — First-person staging and user acceptance
+
+**Decision:** The seated portion uses a fixed first-person camera with scene-authored subtitles/card overlay. After Neighbor leaves, the existing FPS Player takes over and walks to the bed. No subagents are used in this chat; self-verification can reach only `READY FOR USER PLAYTEST`.
+
+## D-OPENING-04 — Verification boundary
+
+**Decision:** OPENING-01 acceptance uses the focused 20-check contract, existing UI/save/world-save suites, and the live production handoff with opened gameplay frames. Existing `world_location` and apartment-onboarding test debt is recorded but not repaired because it predates the opening, tests missing Phone/collider assumptions, and lies outside the isolated pre-prologue scope.

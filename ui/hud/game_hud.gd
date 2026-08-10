@@ -359,7 +359,7 @@ func _refresh_resources() -> void:
 	var points: int = int(gs.call("get_upgrade_points"))
 	_money_label.text = UiNumberFormat.format_money(money)
 	_authority_label.text = "АВТОРИТЕТ %d" % authority
-	_experience_label.text = "ОПЫТНОСТЬ %d" % experience
+	_experience_label.text = "ПОКОРЕННЫХ СЕРДЕЦ %d" % experience
 	_points_label.text = "БАЛЛЫ %d" % points
 
 
@@ -376,7 +376,7 @@ func _on_authority_changed(_new_value: int, delta: int) -> void:
 func _on_experience_changed(_new_value: int, delta: int) -> void:
 	_refresh_resources()
 	if delta != 0:
-		_enqueue_grouped("Опытность %s" % UiNumberFormat.format_signed(delta))
+		_enqueue_grouped("Покоренных сердец %s" % UiNumberFormat.format_signed(delta))
 
 
 func _on_upgrade_points_changed(_new_value: int, delta: int) -> void:

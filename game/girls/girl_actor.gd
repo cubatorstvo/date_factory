@@ -227,7 +227,7 @@ func _on_contact_added(gid: StringName) -> void:
 func _show_locked_experience(begin: Dictionary, player: Node) -> void:
 	var req: int = int(begin.get("required_experience", 0))
 	var cur: int = int(begin.get("experience", 0))
-	_show_story_lock_feedback("Нужна Опытность: %s\nСейчас: %s" % [req, cur], player)
+	_show_story_lock_feedback("Нужно покоренных сердец: %s\nСейчас: %s" % [req, cur], player)
 
 
 func _show_story_lock_feedback(text: String, player: Node) -> void:

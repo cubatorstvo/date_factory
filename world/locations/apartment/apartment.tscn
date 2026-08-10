@@ -560,9 +560,11 @@ script = ExtResource("20_b8mu0")
 
 [node name="DateFork" parent="Geometry/ApartmentArt/Decor" unique_id=947612755 instance=ExtResource("21_d4xo1")]
 transform = Transform3D(-2.1855695e-07, 8.4703295e-22, -5, 0, 5, 8.4703295e-22, 5, 3.7024986e-29, -2.1855695e-07, 0.099, 0.663, 0.776163)
+visible = false
 
 [node name="DateSpoon" parent="Geometry/ApartmentArt/Decor" unique_id=1545009017 instance=ExtResource("22_7xvut")]
 transform = Transform3D(-2.1855695e-07, -8.4703295e-22, -5, 0, 5, -8.4703295e-22, 5, -3.7024986e-29, -2.1855695e-07, 0.099, 0.673, 0.439837)
+visible = false
 
 [node name="KitchenApple" parent="Geometry/ApartmentArt/Decor" unique_id=693595928 instance=ExtResource("25_si6qv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3315465, 0.9623637, -2.05)
@@ -578,9 +580,11 @@ visible = false
 
 [node name="DateForkB" parent="Geometry/ApartmentArt/Decor" unique_id=310531084 instance=ExtResource("21_d4xo1")]
 transform = Transform3D(-2.1855695e-07, 8.4703295e-22, 5, 0, 5, -8.4703295e-22, -5, -3.7024986e-29, -2.1855695e-07, 0.699, 0.663, 0.439837)
+visible = false
 
 [node name="DateSpoonB" parent="Geometry/ApartmentArt/Decor" unique_id=892091136 instance=ExtResource("22_7xvut")]
 transform = Transform3D(-2.1855695e-07, -8.4703295e-22, 5, 0, 5, 8.4703295e-22, -5, 3.7024986e-29, -2.1855695e-07, 0.699, 0.673, 0.776163)
+visible = false
 
 [node name="Lights" type="Node3D" parent="Geometry/ApartmentArt" unique_id=898367005]
 

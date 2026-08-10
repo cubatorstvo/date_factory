@@ -1695,7 +1695,7 @@ Reward {
 Примеры:
 
 - Rival `authority_reward` — явное поле.
-- Girl completion всегда даёт Опытность по правилам MODULE 10.
+- Girl completion всегда даёт «Покоренных сердец» по правилам MODULE 10.
 - Stage unlocks реализует Story Module.
 - Деньги выдаёт Salary Mine.
 

@@ -607,7 +607,7 @@ func _refresh_top_bar() -> void:
 		experience_value = int(gs.call("get_experience"))
 		upgrade_points_value = int(gs.call("get_upgrade_points"))
 	if _top_bar_label != null:
-		_top_bar_label.text = "День %d · %s · Авторитет %d · Опытность %d · Баллы %d" % [
+		_top_bar_label.text = "День %d · %s · Авторитет %d · Покоренных сердец %d · Баллы %d" % [
 			day_value,
 			UiNumberFormat.format_money(money_value),
 			authority_value,
@@ -618,7 +618,7 @@ func _refresh_top_bar() -> void:
 	api_lines.append("День: %d" % day_value)
 	api_lines.append("Деньги: %d" % money_value)
 	api_lines.append("Авторитет: %d" % authority_value)
-	api_lines.append("Опытность: %d" % experience_value)
+	api_lines.append("Покоренных сердец: %d" % experience_value)
 	api_lines.append("Баллы прокачки: %d" % upgrade_points_value)
 	_status_api_text = "\n".join(api_lines)
 
@@ -779,7 +779,7 @@ func _stage5_story_text() -> String:
 	lines.append("Президент")
 	lines.append("")
 	if experience < 10:
-		lines.append("Опытность: %d / 10" % experience)
+		lines.append("Покоренных сердец: %d / 10" % experience)
 		lines.append("")
 		lines.append("Автоматические свидания расширяют твой земной статус.")
 	elif not rival_defeated:

@@ -45,3 +45,16 @@ One writer owns both apartment scenes sequentially. Donor remains read-only. No 
 | UI-SCENES | Current GPT Sol agent | complete | `ui/**`, production UI controllers and entry points, `minigames/**`, focused UI tests/tools/docs, display stretch keys in `project.godot` | gameplay formulas, Story/balance/content, save schema, donor |
 
 User instruction for this chat: no subagents. All implementation and verification are performed by the current agent; final acceptance includes the user's independent playtest.
+
+---
+
+# File ownership — Opening Evening Scene
+
+**Status:** implementation complete; user playtest pending
+**Spec:** `C:\Users\User\Downloads\DATE_FACTORY_OPENING_SCENE_RU.md`
+
+| Task id | Agent | Status | Writable paths | Read-only dependencies | Forbidden paths |
+|---|---|---|---|---|---|
+| OPENING-01 | Current GPT Sol agent | complete — focused 20 PASS; live New Game → bed → old prologue verified | `game/opening/**`, `ui/frontend/title_menu.gd`, focused tests, this milestone's `docs/agent/**` sections | apartment scene, Player, CharacterActor, ContentDB Neighbor appearance, SaveSystem/World APIs | Story stages, GameState/save schema, Neighbor discovery/content, donor |
+
+User instruction for this chat: no subagents. The existing old prologue remains unchanged and starts only after the opening bed interaction.

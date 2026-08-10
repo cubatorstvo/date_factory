@@ -337,7 +337,7 @@ func _test_phone_stage5_to_finale() -> void:
 	phone.open(null)
 	var s5_xp: String = phone.get_story_text()
 	_ok(s5_xp.contains("Президент"), "phone §57 title")
-	_ok(s5_xp.contains("Опытность: 0 / 10"), "phone §57 xp")
+	_ok(s5_xp.contains("Покоренных сердец: 0 / 10"), "phone §57 xp")
 	phone.close()
 	# §60 STAGE_6 Reach.
 	_enter_stage6()

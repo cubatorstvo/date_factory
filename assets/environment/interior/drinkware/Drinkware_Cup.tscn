@@ -1,6 +1,5 @@
 [gd_scene format=4 uid="uid://cjlrdypkw0l5m"]
 
-[ext_resource type="PackedScene" uid="uid://bfqu61lid4lfq" path="res://assets/environment/interior/drinkware/meshes/Prop_Mug.gltf" id="1_shgwb"]
 [ext_resource type="Texture2D" uid="uid://dtqf31r8r14yi" path="res://assets/environment/interior/drinkware/meshes/T_Trim_03_BaseColor.png" id="2_6qsmd"]
 [ext_resource type="Texture2D" uid="uid://bngjj01tycds7" path="res://assets/environment/interior/drinkware/meshes/T_Trim_03_ORM.png" id="3_7lw57"]
 [ext_resource type="Texture2D" uid="uid://5w1y54rb2drv" path="res://assets/environment/interior/drinkware/meshes/T_Trim_03_Normal.png" id="4_hac2d"]
@@ -54,7 +53,7 @@ shadow_mesh = SubResource("ArrayMesh_kmovw")
 
 [node name="Drinkware_Cup" type="Node3D" unique_id=163614216]
 
-[node name="Mesh" type="Node3D" parent="." unique_id=1873813758 instance=ExtResource("1_shgwb")]
+[node name="Mesh" type="Node3D" parent="." unique_id=1873813758]
 transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0, 0)
 
 [node name="Prop_Mug" type="MeshInstance3D" parent="Mesh" unique_id=340441273]

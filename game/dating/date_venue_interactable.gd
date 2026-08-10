@@ -85,11 +85,23 @@ func _try_place_carried_meal(player: Node) -> bool:
 		pair.queue_free()
 		return true
 	_placed_servings[category] = pair
+	if category == &"food":
+		_set_apartment_cutlery_visible(true)
 	var noun: String = "два напитка" if category == &"drink" else "две порции"
 	_notify_meal_placed(
 		"На столе: %s — %s" % [noun, str(serving.get("name", "угощение"))]
 	)
 	return true
+
+
+func _set_apartment_cutlery_visible(show: bool) -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var place_setting: Node = tree.get_first_node_in_group("apartment_place_setting")
+	if place_setting != null and place_setting.has_method("set_cutlery_for_food"):
+		place_setting.call("set_cutlery_for_food", show)
+
 
 
 func _get_meal_carrier(player: Node) -> Node:

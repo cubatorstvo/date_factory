@@ -1,0 +1,214 @@
+[gd_scene format=3 uid="uid://2ufnlteuwtna"]
+
+[ext_resource type="Script" uid="uid://3wamdnbupule" path="res://game/opening/opening_scene.gd" id="1_ddusx"]
+[ext_resource type="PackedScene" uid="uid://dhn7jqyw3j1m3" path="res://characters/framework/character_actor.tscn" id="2_bvbmn"]
+[ext_resource type="PackedScene" uid="uid://cjlrdypkw0l5m" path="res://assets/environment/interior/drinkware/Drinkware_Cup.tscn" id="4_iabee"]
+[ext_resource type="Script" uid="uid://dkmwvdfqgqdrd" path="res://game/opening/opening_bed_interactable.gd" id="5_5qutl"]
+[ext_resource type="PackedScene" uid="uid://hcahofhtjakd" path="res://world/locations/apartment/apartment.tscn" id="6_gkbey"]
+[ext_resource type="PackedScene" uid="uid://djdethq0bcjro" path="res://characters/player/player.tscn" id="8_bwqoo"]
+[ext_resource type="Theme" uid="uid://ofdy4bkpry37" path="res://ui/theme/date_factory_theme.tres" id="10_3nu4x"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2q8kj"]
+albedo_color = Color(0.96, 0.91, 0.82, 1)
+roughness = 0.88
+
+[sub_resource type="BoxMesh" id="BoxMesh_x762h"]
+size = Vector3(0.34, 0.012, 0.24)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2mrkk"]
+albedo_color = Color(0.72, 0.18, 0.2, 1)
+roughness = 0.82
+
+[sub_resource type="BoxMesh" id="BoxMesh_53141"]
+size = Vector3(0.34, 0.045, 0.24)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_vc7yo"]
+size = Vector3(2.05, 0.72, 1.05)
+
+[node name="OpeningScene" type="Node3D" unique_id=2091833551]
+script = ExtResource("1_ddusx")
+
+[node name="Actors" type="Node3D" parent="." unique_id=1809255274]
+
+[node name="Neighbor" parent="Actors" unique_id=1153646680 instance=ExtResource("2_bvbmn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.651, 0.05, 0.608)
+
+[node name="Props" type="Node3D" parent="." unique_id=1820236614]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.17655593, 0)
+
+[node name="HeroCup" parent="Props" unique_id=163614216 instance=ExtResource("4_iabee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.62, 0.82, 0.36)
+
+[node name="NeighborCup" parent="Props" unique_id=1205282703 instance=ExtResource("4_iabee")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.18, 0.82, 0.82)
+
+[node name="HeartCard" type="Node3D" parent="Props" unique_id=1298641766]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.825, 0.608)
+
+[node name="CardBody" type="MeshInstance3D" parent="Props/HeartCard" unique_id=485527533]
+material_override = SubResource("StandardMaterial3D_2q8kj")
+mesh = SubResource("BoxMesh_x762h")
+
+[node name="CardText" type="Label3D" parent="Props/HeartCard" unique_id=1686381445]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.012, 0)
+pixel_size = 0.0014
+modulate = Color(0.12, 0.08, 0.07, 1)
+text = "ПОКОРЁННЫХ\\nСЕРДЕЦ: ____"
+font_size = 24
+outline_size = 3
+
+[node name="QuestionDeck" type="Node3D" parent="Props" unique_id=1485377643]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.825, 0.9)
+
+[node name="DeckBody" type="MeshInstance3D" parent="Props/QuestionDeck" unique_id=241779259]
+material_override = SubResource("StandardMaterial3D_2mrkk")
+mesh = SubResource("BoxMesh_53141")
+
+[node name="DeckText" type="Label3D" parent="Props/QuestionDeck" unique_id=269217015]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.026, 0)
+pixel_size = 0.0015
+modulate = Color(0.28, 0.08, 0.09, 1)
+text = "ВОПРОСЫ"
+font_size = 22
+outline_size = 2
+
+[node name="Staging" type="Node3D" parent="." unique_id=1863065928]
+
+[node name="NeighborExitA" type="Marker3D" parent="Staging" unique_id=948658706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.05, 0.65)
+
+[node name="NeighborExitB" type="Marker3D" parent="Staging" unique_id=1881886437]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.05, 0.25)
+
+[node name="CinematicCamera" type="Camera3D" parent="." unique_id=1957435]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 1.28, 0.608)
+fov = 62.0
+
+[node name="OpeningBed" type="Area3D" parent="." unique_id=1437884569]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.36, -1.55)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_5qutl")
+prompt_action = "Лечь спать"
+interaction_enabled = false
+
+[node name="Collision" type="CollisionShape3D" parent="OpeningBed" unique_id=506303554]
+shape = SubResource("BoxShape3D_vc7yo")
+
+[node name="ApartmentSet" parent="." unique_id=772458437 instance=ExtResource("6_gkbey")]
+
+[node name="OpeningPlayer" parent="." unique_id=670911453 instance=ExtResource("8_bwqoo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.05, 1.5)
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1275059537]
+layer = 20
+
+[node name="Subtitles" type="PanelContainer" parent="UI" unique_id=1263011914]
+visible = false
+anchors_preset = -1
+anchor_left = 0.16
+anchor_top = 0.72
+anchor_right = 0.84
+anchor_bottom = 0.94
+mouse_filter = 2
+theme = ExtResource("10_3nu4x")
+
+[node name="Margin" type="MarginContainer" parent="UI/Subtitles" unique_id=641387602]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 22
+
+[node name="VBox" type="VBoxContainer" parent="UI/Subtitles/Margin" unique_id=777482485]
+layout_mode = 2
+alignment = 1
+
+[node name="Speaker" type="Label" parent="UI/Subtitles/Margin/VBox" unique_id=1310643383]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+
+[node name="Dialogue" type="Label" parent="UI/Subtitles/Margin/VBox" unique_id=1705278822]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="CardPanel" type="PanelContainer" parent="UI" unique_id=195193115]
+visible = false
+anchors_preset = -1
+anchor_left = 0.29
+anchor_top = 0.18
+anchor_right = 0.71
+anchor_bottom = 0.66
+mouse_filter = 2
+theme = ExtResource("10_3nu4x")
+
+[node name="Margin" type="MarginContainer" parent="UI/CardPanel" unique_id=599951895]
+layout_mode = 2
+theme_override_constants/margin_left = 44
+theme_override_constants/margin_top = 44
+theme_override_constants/margin_right = 44
+theme_override_constants/margin_bottom = 44
+
+[node name="CardCopy" type="Label" parent="UI/CardPanel/Margin" unique_id=1318392565]
+layout_mode = 2
+theme_override_font_sizes/font_size = 42
+text = "ПОКОРЁННЫХ СЕРДЕЦ: ____"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ObjectivePanel" type="PanelContainer" parent="UI" unique_id=801533501]
+visible = false
+anchors_preset = -1
+anchor_left = 0.025
+anchor_top = 0.04
+anchor_right = 0.4
+anchor_bottom = 0.2
+mouse_filter = 2
+theme = ExtResource("10_3nu4x")
+
+[node name="Margin" type="MarginContainer" parent="UI/ObjectivePanel" unique_id=2031317631]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="UI/ObjectivePanel/Margin" unique_id=1565847207]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UI/ObjectivePanel/Margin/VBox" unique_id=1917297832]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "ЦЕЛЬ"
+
+[node name="Objective" type="Label" parent="UI/ObjectivePanel/Margin/VBox" unique_id=1300344962]
+layout_mode = 2
+theme_override_font_sizes/font_size = 27
+autowrap_mode = 2
+
+[node name="Crosshair" type="ColorRect" parent="UI" unique_id=1593241532]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 2.0
+offset_bottom = 2.0
+mouse_filter = 2
+color = Color(0.96, 0.91, 0.82, 0.92)
+
+[node name="Fade" type="ColorRect" parent="UI" unique_id=460335479]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.02, 0.015, 0.012, 1)

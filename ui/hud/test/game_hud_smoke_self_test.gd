@@ -39,7 +39,7 @@ func _ready() -> void:
 	var up_lab: Label = _find_label(hud1, "PointsLabel")
 	_ok(money_lab != null and money_lab.text == "$ 12.4K", "money label compact (got %s)" % (money_lab.text if money_lab else "null"))
 	_ok(auth_lab != null and auth_lab.text == "АВТОРИТЕТ 3", "authority label")
-	_ok(xp_lab != null and xp_lab.text == "ОПЫТНОСТЬ 2", "experience label")
+	_ok(xp_lab != null and xp_lab.text == "ПОКОРЕННЫХ СЕРДЕЦ 2", "experience label")
 	_ok(up_lab != null and up_lab.text == "БАЛЛЫ 2", "points label")
 	var gameplay_root: CanvasItem = hud1.get_node_or_null("ScaleRoot/GameplayRoot") as CanvasItem
 	_ok(gameplay_root != null and gameplay_root.visible, "HUD visible in GAMEPLAY")

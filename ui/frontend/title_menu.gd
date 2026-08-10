@@ -5,6 +5,7 @@ class_name TitleMenu
 const PAUSE_MENU_SCENE: String = "res://ui/frontend/pause_menu.tscn"
 const SAVE_LOAD_SCENE: String = "res://ui/frontend/save_load_panel.tscn"
 const SETTINGS_SCENE: String = "res://ui/frontend/settings_panel.tscn"
+const OPENING_SCENE: String = "res://game/opening/opening_scene.tscn"
 
 signal game_started
 
@@ -14,6 +15,7 @@ signal game_started
 @onready var _version_label: Label = %VersionLabel
 @onready var _confirm_dialog: ConfirmationDialogView = %ConfirmationDialog
 var _busy: bool = false
+var _opening_scene: OpeningScene = null
 
 
 func _ready() -> void:
@@ -89,14 +91,55 @@ func _on_new_game() -> void:
 
 
 func _start_new_game() -> void:
+	if _busy:
+		return
 	_busy = true
+	var packed: PackedScene = load(OPENING_SCENE) as PackedScene
+	if packed == null:
+		_restore_after_opening_failure("Начальная сцена недоступна.")
+		return
+	_opening_scene = packed.instantiate() as OpeningScene
+	if _opening_scene == null:
+		_restore_after_opening_failure("Не удалось открыть начальную сцену.")
+		return
+	_opening_scene.completed.connect(_on_opening_completed, CONNECT_ONE_SHOT)
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.root == null:
+		_opening_scene.free()
+		_opening_scene = null
+		_restore_after_opening_failure("Не удалось открыть начальную сцену.")
+		return
+	visible = false
+	_set_hud_title_suppressed(true)
+	var world: Node = get_node_or_null("/root/World")
+	if world != null and world.has_method("get_player"):
+		var existing_player: Node = world.call("get_player") as Node
+		if existing_player != null and existing_player.has_method("enter_modal_ui"):
+			existing_player.call("enter_modal_ui")
+	tree.root.add_child(_opening_scene)
+
+
+func _on_opening_completed() -> void:
+	if not _busy:
+		return
 	var ok: bool = FrontendSaveApi.start_new_game()
+	if _opening_scene != null and is_instance_valid(_opening_scene):
+		_opening_scene.queue_free()
+	_opening_scene = null
 	_busy = false
 	if ok:
 		_enter_gameplay()
 	else:
-		_status_label.text = "Не удалось начать новую игру."
-		_audio_ui(AudioIds.UI_DENIED)
+		_restore_after_opening_failure("Не удалось начать новую игру.")
+
+
+func _restore_after_opening_failure(message: String) -> void:
+	_busy = false
+	visible = true
+	_status_label.text = message
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_set_hud_title_suppressed(true)
+	_audio_ui(AudioIds.UI_DENIED)
 
 
 func _on_load() -> void:

@@ -533,7 +533,7 @@ func _ending_summary() -> String:
 	if gs == null:
 		return ""
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("Опытность: %d" % int(gs.call("get_experience")))
+	lines.append("Покоренных сердец: %d" % int(gs.call("get_experience")))
 	lines.append("Авторитет: %d" % int(gs.call("get_authority")))
 	lines.append("Клонов: %d" % int(gs.call("get_total_clones")))
 	lines.append("Охват Земли: %d" % int(gs.call("get_world_reach")))
