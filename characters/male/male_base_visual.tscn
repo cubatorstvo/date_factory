@@ -404,6 +404,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.6288311, -0.01)
 mesh = SubResource("ArrayMesh_wajqr")
 
 [node name="Hair_02" type="Node3D" parent="HairRoot" unique_id=1028639662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04039669, -0.009684622)
 visible = false
 
 [node name="Hair_SimpleParted" parent="HairRoot/Hair_02" unique_id=943319297 instance=ExtResource("6_q2h5w")]
@@ -413,6 +414,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.002285689, -1.650141, -0.0
 mesh = SubResource("ArrayMesh_4tkj4")
 
 [node name="Hair_03" type="Node3D" parent="HairRoot" unique_id=1049315615]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.011549234, 0)
 visible = false
 
 [node name="Hair_Long" parent="HairRoot/Hair_03" unique_id=1465854092 instance=ExtResource("7_rejm7")]
@@ -422,6 +424,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5390493, 0)
 mesh = SubResource("ArrayMesh_6vxer")
 
 [node name="Hair_04" type="Node3D" parent="HairRoot" unique_id=601834865]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.016333103, 0)
 visible = false
 
 [node name="Hair_Buns" parent="HairRoot/Hair_04" unique_id=945223205 instance=ExtResource("10_ca18k")]
@@ -446,7 +449,7 @@ material_override = SubResource("StandardMaterial3D_dfei6")
 mesh = SubResource("BoxMesh_ivq7b")
 
 [node name="LeftSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_00" unique_id=447016871]
-transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.18495262, 0.022438034)
+transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.31808627, 0.022438027)
 visible = false
 bone_name = "LeftUpperArm"
 bone_idx = 8
@@ -460,7 +463,7 @@ material_override = SubResource("StandardMaterial3D_qeaw8")
 mesh = SubResource("CapsuleMesh_altx7")
 
 [node name="RightSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_00" unique_id=584554765]
-transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.18495262, 0.022438034)
+transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.31808627, 0.022438027)
 visible = false
 bone_name = "RightUpperArm"
 bone_idx = 32
@@ -490,7 +493,7 @@ material_override = SubResource("StandardMaterial3D_6lnhm")
 mesh = SubResource("BoxMesh_0xh4u")
 
 [node name="LeftSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_02" unique_id=669802838]
-transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.18495262, 0.022438034)
+transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.31808627, 0.022438027)
 visible = false
 bone_name = "LeftUpperArm"
 bone_idx = 8
@@ -504,7 +507,7 @@ material_override = SubResource("StandardMaterial3D_a22os")
 mesh = SubResource("CapsuleMesh_dxwtw")
 
 [node name="RightSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_02" unique_id=897527791]
-transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.18495262, 0.022438034)
+transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.31808627, 0.022438027)
 visible = false
 bone_name = "RightUpperArm"
 bone_idx = 32
@@ -526,7 +529,7 @@ material_override = SubResource("StandardMaterial3D_jyrju")
 mesh = SubResource("BoxMesh_q2h5w")
 
 [node name="HoodAttachment" type="BoneAttachment3D" parent="TopRoot/Top_03" unique_id=1204690570]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2913108, -0.053010833)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42444444, -0.05301084)
 bone_name = "Head"
 bone_idx = 6
 use_external_skeleton = true
@@ -538,7 +541,7 @@ material_override = SubResource("StandardMaterial3D_xetmf")
 mesh = SubResource("BoxMesh_dfei6")
 
 [node name="LeftSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_03" unique_id=102335300]
-transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.18495262, 0.022438034)
+transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, 0.2411279, 0.31808627, 0.022438027)
 visible = false
 bone_name = "LeftUpperArm"
 bone_idx = 8
@@ -552,7 +555,7 @@ material_override = SubResource("StandardMaterial3D_uvg1v")
 mesh = SubResource("CapsuleMesh_u7783")
 
 [node name="RightSleeveAttachment" type="BoneAttachment3D" parent="TopRoot/Top_03" unique_id=2066396635]
-transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.18495262, 0.022438034)
+transform = Transform3D(0, -1, 0, 0, 0, -1, 1, 0, 0, -0.2411279, 0.31808627, 0.022438027)
 visible = false
 bone_name = "RightUpperArm"
 bone_idx = 32
