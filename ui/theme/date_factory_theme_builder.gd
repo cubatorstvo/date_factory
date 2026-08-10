@@ -11,6 +11,11 @@ const BUTTON_BG := Color(0.14, 0.16, 0.19, 0.94)
 const BUTTON_HOVER := Color(0.20, 0.23, 0.27, 0.96)
 const BUTTON_PRESSED := Color(0.11, 0.13, 0.16, 0.96)
 const BUTTON_DISABLED := Color(0.12, 0.12, 0.14, 0.7)
+const FONT_CAPTION: int = 14
+const FONT_BODY: int = 18
+const FONT_HEADER: int = 24
+const FONT_TITLE: int = 36
+const FONT_DISPLAY: int = 48
 
 
 static func build() -> Theme:
@@ -23,6 +28,18 @@ static func build() -> Theme:
 	theme.set_font_size("font_size", "Button", 18)
 	theme.set_font_size("font_size", "RichTextLabel", 18)
 	theme.set_font_size("font_size", "LineEdit", 18)
+	theme.set_type_variation(&"CaptionLabel", &"Label")
+	theme.set_font_size(&"font_size", &"CaptionLabel", FONT_CAPTION)
+	theme.set_type_variation(&"HeaderLabel", &"Label")
+	theme.set_font_size(&"font_size", &"HeaderLabel", FONT_HEADER)
+	theme.set_type_variation(&"TitleLabel", &"Label")
+	theme.set_font_size(&"font_size", &"TitleLabel", FONT_TITLE)
+	theme.set_type_variation(&"DisplayLabel", &"Label")
+	theme.set_font_size(&"font_size", &"DisplayLabel", FONT_DISPLAY)
+	theme.set_type_variation(&"CaptionButton", &"Button")
+	theme.set_font_size(&"font_size", &"CaptionButton", FONT_CAPTION)
+	theme.set_type_variation(&"HeaderButton", &"Button")
+	theme.set_font_size(&"font_size", &"HeaderButton", FONT_HEADER)
 	theme.set_color("font_color", "Button", TEXT)
 	theme.set_color("font_hover_color", "Button", Color(1, 1, 1, 1))
 	theme.set_color("font_pressed_color", "Button", TEXT)

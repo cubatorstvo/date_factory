@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Theme" path="res://ui/theme/date_factory_theme.tres" id="1_theme"]
+
+[node name="BodyLabel" type="Label"]
+size_flags_horizontal = 3
+theme = ExtResource("1_theme")
+text = "Текст"
+autowrap_mode = 2

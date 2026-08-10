@@ -9,6 +9,7 @@ signal travel_rejected(target_location_id: StringName, reason: WorldTypes.WorldT
 const PLAYER_SCENE_PATH := "res://characters/player/player.tscn"
 const PHONE_SCENE_PATH := "res://ui/phone/phone_journal.tscn"
 const HUD_SCENE_PATH := "res://ui/hud/game_hud.tscn"
+const PERSISTENT_UI_SCENE_PATH := "res://world/persistent_ui.tscn"
 const HOST_NAME := "WorldHost"
 const START_LOCATION := &"apartment"
 const DEFAULT_SPAWN := &"spawn_default"
@@ -117,10 +118,13 @@ func ensure_host() -> void:
 		_host.add_child(_location_root)
 	_persistent_ui = _host.get_node_or_null("PersistentUI") as CanvasLayer
 	if _persistent_ui == null:
-		_persistent_ui = CanvasLayer.new()
-		_persistent_ui.name = "PersistentUI"
-		_persistent_ui.layer = 20
-		_host.add_child(_persistent_ui)
+		var packed_ui: PackedScene = load(PERSISTENT_UI_SCENE_PATH) as PackedScene
+		if packed_ui != null:
+			_persistent_ui = packed_ui.instantiate() as CanvasLayer
+			if _persistent_ui != null:
+				_host.add_child(_persistent_ui)
+		else:
+			push_error("[World] persistent UI scene missing")
 	_ensure_player()
 	_ensure_phone()
 	_ensure_game_hud()
