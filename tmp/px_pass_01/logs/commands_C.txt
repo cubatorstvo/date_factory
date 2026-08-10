@@ -1,7 +1,0 @@
-utc=2026-08-09T19:06:23Z
-pid=12552
-APPDATA=C:\Users\User\Documents\GodotProjects\date_factory\tmp\px_pass_01\userdata_C
-godot=C:\Users\User\Downloads\Godot_v4.7.1-stable_win64\Godot_v4.7.1-stable_win64_console.exe
-args=--path C:\Users\User\Documents\GodotProjects\date_factory --resolution 1920x1080 --windowed
-log=C:\Users\User\Documents\GodotProjects\date_factory\tmp\px_pass_01\logs\godot_C_20260809_220623.log
-ui_scale_intent=100% via empty isolated profile

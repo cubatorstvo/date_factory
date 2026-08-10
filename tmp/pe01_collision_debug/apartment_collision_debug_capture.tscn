@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://tmp/pe01_collision_debug/apartment_collision_debug_capture.gd" id="1_cap"]
-
-[node name="ApartmentCollisionDebugCapture" type="Node"]
-script = ExtResource("1_cap")
