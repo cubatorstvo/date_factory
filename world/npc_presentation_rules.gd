@@ -109,7 +109,7 @@ func validate_cafe_date_clearance() -> Array[String]:
 		return errors
 	var venue: Node3D = _find_date_venue()
 	if venue == null:
-		errors.append("missing Interactables/DateVenue while date active")
+		errors.append("missing date venue interaction while date active")
 		return errors
 	var venue_pos: Vector3 = venue.global_position
 	for actor in get_ordinary_actors():
@@ -317,9 +317,13 @@ func _find_date_venue() -> Node3D:
 	var loc: Node = _find_location_root()
 	if loc == null:
 		return null
-	var venue: Node = loc.get_node_or_null("Interactables/DateVenue")
-	if venue is Node3D:
-		return venue as Node3D
+	var venue_paths: Array[NodePath] = [
+		NodePath("Geometry/ApartmentArt/Objects/DiningTable/Interaction"),
+		NodePath("Interactables/DateVenue"),
+	]:
+		var venue: Node = loc.get_node_or_null(venue_path)
+		if venue is Node3D:
+			return venue as Node3D
 	for n in loc.find_children("*", "DateVenueInteractable", true, false):
 		if n is Node3D:
 			return n as Node3D

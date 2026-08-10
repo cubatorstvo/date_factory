@@ -4,7 +4,10 @@ func _ready() -> void:
 	var root: Node3D = packed.instantiate() as Node3D
 	add_child(root)
 	await get_tree().process_frame
-	for path in ["Furniture/Wardrobe", "Furniture/ExitDoor"]:
+	for path in [
+		"Geometry/ApartmentArt/Furniture/Wardrobe",
+		"Geometry/ApartmentArt/Objects/ExitDoor/Visual",
+	]:
 		var n: Node3D = root.get_node(path) as Node3D
 		print("NODE %s global=%s" % [path, n.global_transform])
 		for m_any in n.find_children("*", "MeshInstance3D", true, false):
@@ -25,7 +28,10 @@ func _ready() -> void:
 				mi.get_path(), local, waabb.size.x, waabb.size.y, waabb.size.z, waabb.position.y, waabb.end.y, waabb.position.x, waabb.end.x, waabb.position.z, waabb.end.z
 			])
 	# Also print overlay-equivalent box from collider
-	for path2 in ["Colliders/WardrobeBody", "Colliders/ExitDoorBody"]:
+	for path2 in [
+		"Geometry/ApartmentArt/Colliders/WardrobeBody",
+		"Geometry/ApartmentArt/Objects/ExitDoor/Physics",
+	]:
 		var body: StaticBody3D = root.get_node(path2) as StaticBody3D
 		var shape: CollisionShape3D = body.get_node("Shape") as CollisionShape3D
 		var box: BoxShape3D = shape.shape as BoxShape3D

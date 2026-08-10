@@ -4,19 +4,19 @@ extends Node
 
 const PLAYER_RADIUS: float = 0.32
 const FORWARD_CLEAR_M: float = 1.5
-const ESSENTIAL_COLLIDERS: Array[String] = [
-	"BedBody",
-	"NightStandBody",
-	"WardrobeBody",
-	"DiningTableBody",
-	"DiningChairNorthBody",
-	"DiningChairSouthBody",
-	"FridgeBody",
-	"OvenBody",
-	"KitchenSinkBody",
-	"KitchenDrawersBody",
-	"ExitDoorBody",
-	"NeighborDoorBody",
+const ESSENTIAL_COLLIDER_PATHS: Array[String] = [
+	"Geometry/ApartmentArt/Objects/Bed/Physics",
+	"Geometry/ApartmentArt/Colliders/NightStandBody",
+	"Geometry/ApartmentArt/Colliders/WardrobeBody",
+	"Geometry/ApartmentArt/Objects/DiningTable/Physics",
+	"Geometry/ApartmentArt/Colliders/DiningChairNorthBody",
+	"Geometry/ApartmentArt/Colliders/DiningChairSouthBody",
+	"Geometry/ApartmentArt/Objects/Fridge/Physics",
+	"Geometry/ApartmentArt/Colliders/OvenBody",
+	"Geometry/ApartmentArt/Colliders/KitchenSinkBody",
+	"Geometry/ApartmentArt/Colliders/KitchenDrawersBody",
+	"Geometry/ApartmentArt/Objects/ExitDoor/Physics",
+	"Geometry/ApartmentArt/Colliders/NeighborDoorBody",
 ]
 
 var _failed: int = 0
@@ -120,20 +120,16 @@ func _test_spawn_orientation_and_clearance(loc: WorldLocation) -> void:
 
 
 func _test_furniture_colliders(loc: WorldLocation) -> void:
-	var colliders: Node = loc.get_node_or_null("Geometry/ApartmentArt/Colliders")
-	_ok(colliders != null, "ApartmentArt/Colliders present")
-	if colliders == null:
-		return
-	for body_name in ESSENTIAL_COLLIDERS:
-		var body: Node = colliders.get_node_or_null(body_name)
-		_ok(body is StaticBody3D, "collider %s is StaticBody3D" % body_name)
+	for collider_path in ESSENTIAL_COLLIDER_PATHS:
+		var body: Node = loc.get_node_or_null(collider_path)
+		_ok(body is StaticBody3D, "collider %s is StaticBody3D" % collider_path)
 		if body == null:
 			continue
 		var shape_node: Node = body.get_node_or_null("Shape")
-		_ok(shape_node is CollisionShape3D, "collider %s has Shape" % body_name)
+		_ok(shape_node is CollisionShape3D, "collider %s has Shape" % collider_path)
 		if shape_node is CollisionShape3D:
 			var cs: CollisionShape3D = shape_node as CollisionShape3D
-			_ok(cs.shape is BoxShape3D, "collider %s uses BoxShape3D" % body_name)
+			_ok(cs.shape is BoxShape3D, "collider %s uses BoxShape3D" % collider_path)
 
 
 func _test_neighbor_anchor(loc: WorldLocation) -> void:
@@ -159,7 +155,9 @@ func _test_neighbor_anchor(loc: WorldLocation) -> void:
 
 
 func _test_city_exit_story_lock(loc: WorldLocation) -> void:
-	var exit_node: Node = loc.get_node_or_null("Transitions/ToCity")
+	var exit_node: Node = loc.get_node_or_null(
+		"Geometry/ApartmentArt/Objects/ExitDoor/Interaction"
+	)
 	_ok(exit_node is WorldTransition, "ToCity WorldTransition present")
 	if not (exit_node is WorldTransition):
 		return
@@ -173,11 +171,11 @@ func _test_city_exit_story_lock(loc: WorldLocation) -> void:
 func _test_early_interactables(loc: WorldLocation) -> void:
 	for path in [
 		"Interactables/Phone",
-		"Interactables/DayAdvance",
+		"Geometry/ApartmentArt/Objects/Bed/Interaction",
 		"Interactables/ProgressionSelfAssessment",
-		"Interactables/Fridge",
-		"Interactables/Window",
-		"Transitions/ToCity",
+		"Geometry/ApartmentArt/Objects/Fridge/Interaction",
+		"Geometry/ApartmentArt/Objects/Window/Interaction",
+		"Geometry/ApartmentArt/Objects/ExitDoor/Interaction",
 	]:
 		var node: Node = loc.get_node_or_null(path)
 		_ok(node is Area3D, "%s Area3D present" % path)

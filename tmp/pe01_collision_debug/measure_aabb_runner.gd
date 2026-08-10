@@ -5,7 +5,13 @@ func _ready() -> void:
 	add_child(root)
 	await get_tree().process_frame
 	await get_tree().process_frame
-	for path in ["Furniture/Wardrobe", "Furniture/ExitDoor", "Furniture/NeighborDoor", "Furniture/NightStand", "Furniture/Bed"]:
+	for path in [
+		"Geometry/ApartmentArt/Furniture/Wardrobe",
+		"Geometry/ApartmentArt/Objects/ExitDoor/Visual",
+		"Geometry/ApartmentArt/Furniture/NeighborDoor",
+		"Geometry/ApartmentArt/Furniture/NightStand",
+		"Geometry/ApartmentArt/Objects/Bed/Visual",
+	]:
 		var n: Node3D = root.get_node_or_null(path) as Node3D
 		if n == null:
 			print("MISSING ", path)

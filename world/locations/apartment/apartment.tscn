@@ -9,7 +9,7 @@
 [ext_resource type="Script" uid="uid://dcyha34n8uvfk" path="res://world/phone_interactable.gd" id="6_phone"]
 [ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="7_h50ke"]
 [ext_resource type="Script" uid="uid://cb572kponqf7p" path="res://game/progression/progression_interactable.gd" id="8_pw7ec"]
-[ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="9_pw7ec"]
+[ext_resource type="PackedScene" path="res://core/interaction_area.tscn" id="9_pw7ec"]
 [ext_resource type="Script" uid="uid://cwbexew6cgj2y" path="res://world/locations/apartment/apartment_fridge_interactable.gd" id="10_fridge"]
 [ext_resource type="Script" uid="uid://4svwuwf0d6n2" path="res://world/locations/apartment/apartment_window_interactable.gd" id="11_window"]
 
@@ -376,7 +376,19 @@ material = SubResource("StandardMaterial3D_1xvmk")
 
 [node name="Furniture" type="Node3D" parent="Geometry/ApartmentArt" unique_id=186986752]
 
-[node name="Bed" parent="Geometry/ApartmentArt/Furniture" unique_id=1613490385 instance=ExtResource("1_soanb")]
+[node name="Objects" type="Node3D" parent="Geometry/ApartmentArt"]
+
+[node name="Bed" type="Node3D" parent="Geometry/ApartmentArt/Objects"]
+
+[node name="DiningTable" type="Node3D" parent="Geometry/ApartmentArt/Objects"]
+
+[node name="Fridge" type="Node3D" parent="Geometry/ApartmentArt/Objects"]
+
+[node name="Window" type="Node3D" parent="Geometry/ApartmentArt/Objects"]
+
+[node name="ExitDoor" type="Node3D" parent="Geometry/ApartmentArt/Objects"]
+
+[node name="Visual" parent="Geometry/ApartmentArt/Objects/Bed" unique_id=1613490385 instance=ExtResource("1_soanb")]
 transform = Transform3D(-2.1855695e-07, 0, -5, 0, 5, 0, 5, 0, -2.1855695e-07, 1.55, 0, -1.55)
 
 [node name="NightStand" parent="Geometry/ApartmentArt/Furniture" unique_id=866988902 instance=ExtResource("2_r1gkd")]
@@ -389,7 +401,7 @@ transform = Transform3D(-3.496911e-07, 0, -8, 0, 8, 0, 8, 0, -3.496911e-07, 2.15
 transform = Transform3D(-5.3, 0, -4.6334074e-07, 0, 5.3, 0, 4.6334074e-07, 0, -5.3, 1.4, 0, 1.7)
 visible = false
 
-[node name="DiningTable" parent="Geometry/ApartmentArt/Furniture" unique_id=1503664339 instance=ExtResource("5_qnc1n")]
+[node name="Visual" parent="Geometry/ApartmentArt/Objects/DiningTable" unique_id=1503664339 instance=ExtResource("5_qnc1n")]
 transform = Transform3D(-2.491549e-07, 0, 5.7, 0, 5.7, 0, -5.7, 0, -2.491549e-07, 0.39855757, 0, 0.60784817)
 
 [node name="DiningChairNorth" parent="Geometry/ApartmentArt/Furniture" unique_id=26427678 instance=ExtResource("6_peumt")]
@@ -402,7 +414,7 @@ transform = Transform3D(7.3435126e-07, 0, -5.6, 0, 5.6, 0, 5.6, 0, 7.3435126e-07
 transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 1.4, 0.02, 1.6)
 visible = false
 
-[node name="Fridge" parent="Geometry/ApartmentArt/Furniture" unique_id=218485137 instance=ExtResource("8_a7vfm")]
+[node name="Visual" parent="Geometry/ApartmentArt/Objects/Fridge" unique_id=218485137 instance=ExtResource("8_a7vfm")]
 transform = Transform3D(5.8, 0, 0, 0, 5.8, 0, 0, 0, 5.8, -2.05, 0, -2.15)
 
 [node name="Oven" parent="Geometry/ApartmentArt/Furniture" unique_id=2076744371 instance=ExtResource("9_1xvmk")]
@@ -429,13 +441,13 @@ visible = false
 transform = Transform3D(-1.8358783e-07, 0, 4.2, 0, 4.2, 0, -4.2, 0, -1.8358783e-07, 2, 0, 1.8)
 visible = false
 
-[node name="ExitDoor" parent="Geometry/ApartmentArt/Furniture" unique_id=813475045 instance=ExtResource("16_euyv3")]
+[node name="Visual" parent="Geometry/ApartmentArt/Objects/ExitDoor" unique_id=813475045 instance=ExtResource("16_euyv3")]
 transform = Transform3D(0, 0, 5, 0, 5, 0, -5, 0, 0, -2.42, 0, 0.25)
 
-[node name="Window" parent="Geometry/ApartmentArt/Furniture" unique_id=1194670925 instance=ExtResource("17_upk33")]
+[node name="Visual" parent="Geometry/ApartmentArt/Objects/Window" unique_id=1194670925 instance=ExtResource("17_upk33")]
 transform = Transform3D(8, 0, 0, 0, 8, 0, 0, 0, 8, 1.15, 1.05, -2.42)
 
-[node name="Curtains" parent="Geometry/ApartmentArt/Furniture" unique_id=954976095 instance=ExtResource("18_08su2")]
+[node name="Curtains" parent="Geometry/ApartmentArt/Objects/Window" unique_id=954976095 instance=ExtResource("18_08su2")]
 transform = Transform3D(4.5, 0, 0, 0, 4.5, 0, 0, 0, 4.5, 1.15, 0, -2.38)
 
 [node name="Trashcan" parent="Geometry/ApartmentArt/Furniture" unique_id=1321992873 instance=ExtResource("19_ulflq")]
@@ -446,11 +458,11 @@ transform = Transform3D(-5, 0, 0, 0, 5, 0, 0, 0, -5, -1.5, 0, 2.42)
 
 [node name="Colliders" type="Node3D" parent="Geometry/ApartmentArt" unique_id=1900100001]
 
-[node name="BedBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100002]
+[node name="Physics" type="StaticBody3D" parent="Geometry/ApartmentArt/Objects/Bed" unique_id=1900100002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.26, -1.55)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/BedBody" unique_id=1900100003]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/Bed/Physics" unique_id=1900100003]
 shape = SubResource("BoxShape_Bed")
 
 [node name="NightStandBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100004]
@@ -467,11 +479,11 @@ collision_mask = 0
 [node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/WardrobeBody" unique_id=1900100007]
 shape = SubResource("BoxShape_Wardrobe")
 
-[node name="DiningTableBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100008]
+[node name="Physics" type="StaticBody3D" parent="Geometry/ApartmentArt/Objects/DiningTable" unique_id=1900100008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.399, 0.39, 0.608)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/DiningTableBody" unique_id=1900100009]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Physics" unique_id=1900100009]
 shape = SubResource("BoxShape_DiningTable")
 
 [node name="DiningChairNorthBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100010]
@@ -488,11 +500,11 @@ collision_mask = 0
 [node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/DiningChairSouthBody" unique_id=1900100013]
 shape = SubResource("BoxShape_DiningChair")
 
-[node name="FridgeBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100014]
+[node name="Physics" type="StaticBody3D" parent="Geometry/ApartmentArt/Objects/Fridge" unique_id=1900100014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 0.93, -2.15)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/FridgeBody" unique_id=1900100015]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/Fridge/Physics" unique_id=1900100015]
 shape = SubResource("BoxShape_Fridge")
 
 [node name="OvenBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100016]
@@ -516,11 +528,11 @@ collision_mask = 0
 [node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/KitchenDrawersBody" unique_id=1900100021]
 shape = SubResource("BoxShape_KitchenCounter")
 
-[node name="ExitDoorBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100022]
+[node name="Physics" type="StaticBody3D" parent="Geometry/ApartmentArt/Objects/ExitDoor" unique_id=1900100022]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.43, 1.03, 0.684)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Colliders/ExitDoorBody" unique_id=1900100023]
+[node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/ExitDoor/Physics" unique_id=1900100023]
 shape = SubResource("BoxShape_ExitDoor")
 
 [node name="NeighborDoorBody" type="StaticBody3D" parent="Geometry/ApartmentArt/Colliders" unique_id=1900100024]
@@ -695,50 +707,50 @@ visible = false
 mesh = SubResource("PhoneMesh")
 surface_material_override/0 = SubResource("PhoneMat")
 
-[node name="DayAdvance" type="Area3D" parent="Interactables" unique_id=25707921]
+[node name="Interaction" type="Area3D" parent="Geometry/ApartmentArt/Objects/Bed" unique_id=25707921]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.9, -1.55)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("5_nwbdb")
 
-[node name="Collision" type="CollisionShape3D" parent="Interactables/DayAdvance" unique_id=1969438262]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/Bed/Interaction" unique_id=1969438262]
 shape = SubResource("BoxShape3D_qrmkd")
 
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/DayAdvance" unique_id=67764247]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/ApartmentArt/Objects/Bed/Interaction" unique_id=67764247]
 visible = false
 material_override = SubResource("StandardMaterial3D_nwbdb")
 mesh = SubResource("BoxMesh_yeam2")
 
-[node name="Label" type="Label3D" parent="Interactables/DayAdvance" unique_id=209507003]
+[node name="Label" type="Label3D" parent="Geometry/ApartmentArt/Objects/Bed/Interaction" unique_id=209507003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
 visible = false
 modulate = Color(0.95, 0.88, 0.75, 1)
 text = "ДЕНЬ"
 
-[node name="DateVenue" type="Area3D" parent="Interactables" unique_id=636659215]
+[node name="Interaction" type="Area3D" parent="Geometry/ApartmentArt/Objects/DiningTable" unique_id=636659215]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.7, 0.61)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("7_h50ke")
 
-[node name="Mesh" type="MeshInstance3D" parent="Interactables/DateVenue" unique_id=1209145303]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=1209145303]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
 visible = false
 mesh = SubResource("BoxMesh_m8kc2")
 
-[node name="Label" type="Label3D" parent="Interactables/DateVenue" unique_id=1519297154]
+[node name="Label" type="Label3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=1519297154]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 visible = false
 billboard = 1
 text = "Стол для свидания"
 font_size = 28
 
-[node name="Collision" type="CollisionShape3D" parent="Interactables/DateVenue" unique_id=302647249]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=302647249]
 shape = SubResource("BoxShape3D_m8kc2")
 
-[node name="MealAnchor" type="Node3D" parent="Interactables/DateVenue" unique_id=467541846]
+[node name="MealAnchor" type="Node3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=467541846]
 
 [node name="ProgressionSelfAssessment" type="Area3D" parent="Interactables" unique_id=67378799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1, 0.95)
@@ -762,26 +774,14 @@ font_size = 28
 [node name="Collision" type="CollisionShape3D" parent="Interactables/ProgressionSelfAssessment" unique_id=1771537736]
 shape = SubResource("BoxShape3D_2h5qe")
 
-[node name="Fridge" parent="Interactables" unique_id=695661774 instance=ExtResource("9_pw7ec")]
+[node name="Interaction" parent="Geometry/ApartmentArt/Objects/Fridge" unique_id=695661774 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 1, -2.15)
 script = ExtResource("10_fridge")
 
-[node name="Mesh" parent="Interactables/Fridge" index="1" unique_id=1246067171]
-visible = false
-
-[node name="Label" parent="Interactables/Fridge" index="2" unique_id=931679821]
-visible = false
-
-[node name="Window" parent="Interactables" unique_id=2011150761 instance=ExtResource("9_pw7ec")]
+[node name="Interaction" parent="Geometry/ApartmentArt/Objects/Window" unique_id=2011150761 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 1.4, -2.2)
 script = ExtResource("11_window")
-curtains_path = NodePath("../../Geometry/ApartmentArt/Furniture/Curtains")
-
-[node name="Mesh" parent="Interactables/Window" index="1" unique_id=1246067171]
-visible = false
-
-[node name="Label" parent="Interactables/Window" index="2" unique_id=931679821]
-visible = false
+curtains_path = NodePath("../Curtains")
 
 [node name="ScenicGags" type="Node3D" parent="Interactables" unique_id=1814693174]
 
@@ -833,9 +833,7 @@ text = "ПЛАН C
 3. Не объяснить всё сразу"
 font_size = 14
 
-[node name="Transitions" type="Node3D" parent="." unique_id=110350777]
-
-[node name="ToCity" type="Area3D" parent="Transitions" unique_id=1814766071]
+[node name="Interaction" type="Area3D" parent="Geometry/ApartmentArt/Objects/ExitDoor" unique_id=1814766071]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, 1.1, 0.25)
 collision_layer = 4
 collision_mask = 0
@@ -844,13 +842,10 @@ script = ExtResource("2_transition")
 target_location_id = &"city_hub"
 display_name = "Выйти в город"
 
-[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity" unique_id=1872774995]
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/ExitDoor/Interaction" unique_id=1872774995]
 shape = SubResource("TransitionShape")
 
-[node name="Mesh" type="MeshInstance3D" parent="Transitions/ToCity" unique_id=835514611]
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/ApartmentArt/Objects/ExitDoor/Interaction" unique_id=835514611]
 visible = false
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
-
-[editable path="Interactables/Fridge"]
-[editable path="Interactables/Window"]

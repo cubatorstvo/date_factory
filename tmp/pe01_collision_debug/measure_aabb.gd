@@ -5,7 +5,12 @@ func _initialize() -> void:
 	root_node.add_child(root)
 	await process_frame
 	await process_frame
-	for path in ["Furniture/Wardrobe", "Furniture/ExitDoor", "Furniture/NeighborDoor", "Furniture/NightStand"]:
+	for path in [
+		"Geometry/ApartmentArt/Furniture/Wardrobe",
+		"Geometry/ApartmentArt/Objects/ExitDoor/Visual",
+		"Geometry/ApartmentArt/Furniture/NeighborDoor",
+		"Geometry/ApartmentArt/Furniture/NightStand",
+	]:
 		var n: Node3D = root.get_node_or_null(path) as Node3D
 		if n == null:
 			print("MISSING ", path)

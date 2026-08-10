@@ -5,8 +5,14 @@ func _ready() -> void:
 	add_child(root)
 	await get_tree().process_frame
 	for pair in [
-		["Furniture/Wardrobe", "Colliders/WardrobeBody"],
-		["Furniture/ExitDoor", "Colliders/ExitDoorBody"],
+		[
+			"Geometry/ApartmentArt/Furniture/Wardrobe",
+			"Geometry/ApartmentArt/Colliders/WardrobeBody",
+		],
+		[
+			"Geometry/ApartmentArt/Objects/ExitDoor/Visual",
+			"Geometry/ApartmentArt/Objects/ExitDoor/Physics",
+		],
 	]:
 		var mesh_n: Node3D = root.get_node(pair[0]) as Node3D
 		var body: StaticBody3D = root.get_node(pair[1]) as StaticBody3D
