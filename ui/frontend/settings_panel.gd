@@ -18,6 +18,7 @@ var _fov_slider: HSlider = null
 var _ui_scale_buttons: Dictionary = {}
 var _fullscreen_btn: CheckButton = null
 var _vsync_btn: CheckButton = null
+var _show_fps_btn: CheckButton = null
 var _building: bool = false
 
 
@@ -163,6 +164,14 @@ func _build_ui() -> void:
 		_working["vsync"] = on
 	)
 	form.add_child(_vsync_btn)
+	_show_fps_btn = CheckButton.new()
+	_show_fps_btn.text = "Показывать FPS"
+	_show_fps_btn.toggled.connect(func(on: bool) -> void:
+		if _building:
+			return
+		_working["show_fps"] = on
+	)
+	form.add_child(_show_fps_btn)
 
 	var reset_tut := Button.new()
 	reset_tut.text = "Сбросить подсказки"
@@ -263,6 +272,8 @@ func _sync_controls_from_working() -> void:
 		_fullscreen_btn.button_pressed = bool(_working.get("fullscreen", false))
 	if _vsync_btn != null:
 		_vsync_btn.button_pressed = bool(_working.get("vsync", true))
+	if _show_fps_btn != null:
+		_show_fps_btn.button_pressed = bool(_working.get("show_fps", true))
 	_building = false
 
 

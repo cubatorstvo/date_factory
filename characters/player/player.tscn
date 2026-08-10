@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bcob6wb14b24t" path="res://characters/player/player.gd" id="1_xxgcw"]
 [ext_resource type="Script" uid="uid://cfno4k7qekdfi" path="res://characters/player/player_interaction.gd" id="2_exd8k"]
 [ext_resource type="Script" uid="uid://b4afes6p1gmg5" path="res://characters/player/camera_feedback.gd" id="3_camfb"]
+[ext_resource type="PackedScene" path="res://ui/hud/fps_counter.tscn" id="4_fps"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5dc8e"]
 radius = 0.32
@@ -30,6 +31,8 @@ target_position = Vector3(0, 0, -2.5)
 collision_mask = 5
 collide_with_areas = true
 script = ExtResource("2_exd8k")
+
+[node name="FpsCounter" parent="." instance=ExtResource("4_fps")]
 
 [node name="FpsHud" type="CanvasLayer" parent="." unique_id=563788551]
 process_mode = 3

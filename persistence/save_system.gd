@@ -360,6 +360,7 @@ func load_settings() -> void:
 	_settings["vsync"] = bool(cfg.get_value("display", "vsync", defaults["vsync"]))
 	_settings["fov"] = float(cfg.get_value("display", "fov", defaults["fov"]))
 	_settings["ui_scale"] = float(cfg.get_value("display", "ui_scale", defaults["ui_scale"]))
+	_settings["show_fps"] = bool(cfg.get_value("display", "show_fps", defaults["show_fps"]))
 	var seen_v: Variant = cfg.get_value("tutorial", "seen", [])
 	var seen: Array = []
 	if seen_v is PackedStringArray:
@@ -385,6 +386,7 @@ func save_settings() -> bool:
 	cfg.set_value("display", "vsync", bool(_settings["vsync"]))
 	cfg.set_value("display", "fov", float(_settings["fov"]))
 	cfg.set_value("display", "ui_scale", float(_settings["ui_scale"]))
+	cfg.set_value("display", "show_fps", bool(_settings["show_fps"]))
 	var packed := PackedStringArray()
 	var seen: Array = get_tutorial_seen_ids()
 	for item in seen:
@@ -737,6 +739,7 @@ func _default_settings() -> Dictionary:
 		"vsync": true,
 		"fov": 75.0,
 		"ui_scale": 1.0,
+		"show_fps": true,
 		"tutorial_seen": [],
 	}
 
@@ -766,6 +769,7 @@ func _clamp_settings() -> void:
 		_settings["ui_scale"] = 1.0
 	_settings["fullscreen"] = bool(_settings["fullscreen"])
 	_settings["vsync"] = bool(_settings["vsync"])
+	_settings["show_fps"] = bool(_settings["show_fps"])
 
 
 func _apply_boot_settings() -> void:
