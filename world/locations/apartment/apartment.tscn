@@ -11,6 +11,8 @@
 [ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="7_h50ke"]
 [ext_resource type="Script" uid="uid://cb572kponqf7p" path="res://game/progression/progression_interactable.gd" id="8_pw7ec"]
 [ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="9_pw7ec"]
+[ext_resource type="Script" uid="uid://cwbexew6cgj2y" path="res://world/locations/apartment/apartment_fridge_interactable.gd" id="10_fridge"]
+[ext_resource type="Script" uid="uid://4svwuwf0d6n2" path="res://world/locations/apartment/apartment_window_interactable.gd" id="11_window"]
 
 [sub_resource type="Environment" id="Environment_pw7ec"]
 background_mode = 1
@@ -299,6 +301,8 @@ font_size = 28
 [node name="Collision" type="CollisionShape3D" parent="Interactables/DateVenue" unique_id=302647249]
 shape = SubResource("BoxShape3D_m8kc2")
 
+[node name="MealAnchor" type="Node3D" parent="Interactables/DateVenue" unique_id=467541846]
+
 [node name="ProgressionSelfAssessment" type="Area3D" parent="Interactables" unique_id=67378799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1, 0.95)
 collision_layer = 4
@@ -321,59 +325,25 @@ font_size = 28
 [node name="Collision" type="CollisionShape3D" parent="Interactables/ProgressionSelfAssessment" unique_id=1771537736]
 shape = SubResource("BoxShape3D_2h5qe")
 
-[node name="FlavorMirror" parent="Interactables" unique_id=1242682029 instance=ExtResource("9_pw7ec")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1.2, 0.15)
-text = "ОТРАЖЕНИЕ
-Статус: пока оригинал."
-
-[node name="Mesh" parent="Interactables/FlavorMirror" index="1" unique_id=1246067171]
-visible = false
-
-[node name="Label" parent="Interactables/FlavorMirror" index="2" unique_id=931679821]
-visible = false
-
-[node name="FlavorWardrobe" parent="Interactables" unique_id=420890977 instance=ExtResource("9_pw7ec")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 1, 1.15)
-text = "ГАРДЕРОБ
-Некоторые вещи уже выглядят как решение."
-
-[node name="Mesh" parent="Interactables/FlavorWardrobe" index="1" unique_id=1246067171]
-visible = false
-
-[node name="Label" parent="Interactables/FlavorWardrobe" index="2" unique_id=931679821]
-visible = false
-
-[node name="FlavorFridge" parent="Interactables" unique_id=695661774 instance=ExtResource("9_pw7ec")]
+[node name="Fridge" parent="Interactables" unique_id=695661774 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 1, -2.15)
-text = "ХОЛОДИЛЬНИК
-Внутри находится еда и ни одного социального обязательства."
+script = ExtResource("10_fridge")
 
-[node name="Mesh" parent="Interactables/FlavorFridge" index="1" unique_id=1246067171]
+[node name="Mesh" parent="Interactables/Fridge" index="1" unique_id=1246067171]
 visible = false
 
-[node name="Label" parent="Interactables/FlavorFridge" index="2" unique_id=931679821]
+[node name="Label" parent="Interactables/Fridge" index="2" unique_id=931679821]
 visible = false
 
-[node name="FlavorWindow" parent="Interactables" unique_id=2011150761 instance=ExtResource("9_pw7ec")]
+[node name="Window" parent="Interactables" unique_id=2011150761 instance=ExtResource("9_pw7ec")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 1.4, -2.2)
-text = "ОКНО
-Город пока не подозревает о производственном плане."
+script = ExtResource("11_window")
+curtains_path = NodePath("../../Geometry/DonorApartment/Furniture/Curtains")
 
-[node name="Mesh" parent="Interactables/FlavorWindow" index="1" unique_id=1246067171]
+[node name="Mesh" parent="Interactables/Window" index="1" unique_id=1246067171]
 visible = false
 
-[node name="Label" parent="Interactables/FlavorWindow" index="2" unique_id=931679821]
-visible = false
-
-[node name="FlavorChair" parent="Interactables" unique_id=1483552862 instance=ExtResource("9_pw7ec")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 0.55, 0.61)
-text = "СТУЛ
-Пахнет ламинатом и надеждами."
-
-[node name="Mesh" parent="Interactables/FlavorChair" index="1" unique_id=1246067171]
-visible = false
-
-[node name="Label" parent="Interactables/FlavorChair" index="2" unique_id=931679821]
+[node name="Label" parent="Interactables/Window" index="2" unique_id=931679821]
 visible = false
 
 [node name="ScenicGags" type="Node3D" parent="Interactables" unique_id=1814693174]
@@ -445,8 +415,5 @@ visible = false
 mesh = SubResource("TransitionMesh")
 surface_material_override/0 = SubResource("TransitionMat")
 
-[editable path="Interactables/FlavorMirror"]
-[editable path="Interactables/FlavorWardrobe"]
-[editable path="Interactables/FlavorFridge"]
-[editable path="Interactables/FlavorWindow"]
-[editable path="Interactables/FlavorChair"]
+[editable path="Interactables/Fridge"]
+[editable path="Interactables/Window"]

@@ -10,6 +10,7 @@ const DATING_UI_SCENE: String = "res://ui/dating/dating_ui.tscn"
 var _ui: CanvasLayer = null
 var _dating_ui: CanvasLayer = null
 var _active_player: Node = null
+var _placed_meal: Node3D = null
 
 
 func _ready() -> void:
@@ -22,12 +23,23 @@ func _ready() -> void:
 
 
 func get_interaction_prompt(player: Node) -> String:
+	var carrier: Node = _get_meal_carrier(player)
+	if (
+		_current_location_id() == &"apartment"
+		and carrier != null
+		and carrier.has_method("has_meal")
+		and bool(carrier.call("has_meal"))
+	):
+		var dish_name: String = str(carrier.call("get_meal_name"))
+		return "[E] Поставить на стол: %s" % dish_name
 	prompt_action = prompt_text
 	return super.get_interaction_prompt(player)
 
 
 func _on_interact(player: Node) -> void:
 	_active_player = player
+	if _try_place_carried_meal(player):
+		return
 	var overload: Node = get_node_or_null("/root/DatingOverload")
 	if overload != null and overload.has_method("can_start_personal_date"):
 		if bool(overload.call("is_started")) and not bool(overload.call("can_start_personal_date")):
@@ -35,6 +47,63 @@ func _on_interact(player: Node) -> void:
 			return
 	_show_girl_picker(player)
 
+
+func _try_place_carried_meal(player: Node) -> bool:
+	if _current_location_id() != &"apartment":
+		return false
+	var carrier: Node = _get_meal_carrier(player)
+	if carrier == null or not carrier.has_method("has_meal"):
+		return false
+	if not bool(carrier.call("has_meal")):
+		return false
+	var meal: Dictionary = carrier.call("take_meal")
+	if meal.is_empty():
+		return false
+	var scene_path: String = str(meal.get("scene", ""))
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
+		push_error("[DateVenue] meal scene missing: %s" % scene_path)
+		return true
+	var instance: Node = packed.instantiate()
+	if not (instance is Node3D):
+		instance.free()
+		return true
+	var anchor: Node3D = get_node_or_null("MealAnchor") as Node3D
+	if anchor == null:
+		anchor = Node3D.new()
+		anchor.name = "MealAnchor"
+		add_child(anchor)
+	if _placed_meal != null and is_instance_valid(_placed_meal):
+		_placed_meal.queue_free()
+	_placed_meal = instance as Node3D
+	anchor.add_child(_placed_meal)
+	_placed_meal.position = Vector3.ZERO
+	_placed_meal.rotation_degrees = Vector3.ZERO
+	_placed_meal.scale = Vector3.ONE
+	_notify_meal_placed("На столе: %s" % str(meal.get("name", "блюдо")))
+	return true
+
+
+func _get_meal_carrier(player: Node) -> Node:
+	if player == null or not player.has_method("get_camera"):
+		return null
+	var camera: Camera3D = player.call("get_camera") as Camera3D
+	if camera == null:
+		return null
+	return camera.get_node_or_null("ApartmentMealCarrier")
+
+
+func _notify_meal_placed(message: String) -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var hud: Node = tree.get_first_node_in_group("game_hud")
+	if hud == null:
+		var world: Node = get_node_or_null("/root/World")
+		if world != null and world.has_method("get_game_hud"):
+			hud = world.call("get_game_hud") as Node
+	if hud != null and hud.has_method("show_notification"):
+		hud.call("show_notification", message)
 
 func _ensure_collision() -> void:
 	var shape_node: CollisionShape3D = get_node_or_null("CollisionShape3D") as CollisionShape3D

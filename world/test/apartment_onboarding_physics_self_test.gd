@@ -175,8 +175,8 @@ func _test_early_interactables(loc: WorldLocation) -> void:
 		"Interactables/Phone",
 		"Interactables/DayAdvance",
 		"Interactables/ProgressionSelfAssessment",
-		"Interactables/FlavorWardrobe",
-		"Interactables/FlavorFridge",
+		"Interactables/Fridge",
+		"Interactables/Window",
 		"Transitions/ToCity",
 	]:
 		var node: Node = loc.get_node_or_null(path)

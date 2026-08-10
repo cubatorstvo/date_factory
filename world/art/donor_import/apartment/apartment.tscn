@@ -28,6 +28,7 @@
 [ext_resource type="PackedScene" uid="uid://hn6p05ki7bm1" path="res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx" id="26_kc7ps"]
 [ext_resource type="PackedScene" uid="uid://bl7xgtsut762s" path="res://assets/environment/interior/house_interior/meshes/Light_Floor2.fbx" id="27_8fvko"]
 [ext_resource type="PackedScene" uid="uid://bi21k301iv0qr" path="res://assets/environment/interior/drinkware/Drinkware_CheapGlass.tscn" id="28_xqffd"]
+[ext_resource type="PackedScene" uid="uid://by6do7d40saoi" path="res://assets/environment/city/downtown_megakit/meshes/Brick_InteriorWall_4.gltf" id="29_neighbor_wall"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soanb"]
 albedo_color = Color(0.24, 0.16, 0.11, 1)
@@ -149,10 +150,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.15, 1.15, -2.42)
 size = Vector3(2.5, 1.6, 0.06)
 material = SubResource("StandardMaterial3D_nbnpt")
 
-[node name="RomanceAccent" type="CSGBox3D" parent="Architecture" unique_id=385242680]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 1.5, -2.42)
-size = Vector3(0.85, 0.85, 0.06)
-material = SubResource("StandardMaterial3D_a7vfm")
+[node name="NeighborBuildingWall" parent="Architecture" instance=ExtResource("29_neighbor_wall")]
+transform = Transform3D(0.85, 0, 0, 0, 0.58, 0, 0, 0, 1, 1.15, 0.05, -2.25)
 
 [node name="Ceiling" type="CSGBox3D" parent="Architecture" unique_id=340093988]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
