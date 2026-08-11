@@ -7,6 +7,7 @@ enum ControlMode {
 	MODAL_UI,
 	MINIGAME,
 	PAUSED,
+	DIALOGUE,
 }
 
 signal control_mode_changed(mode: ControlMode)
@@ -76,18 +77,26 @@ func _unhandled_input(event: InputEvent) -> void:
 		_handle_pause_action()
 		get_viewport().set_input_as_handled()
 		return
-	if _mode != ControlMode.GAMEPLAY:
+	if _mode != ControlMode.GAMEPLAY and _mode != ControlMode.DIALOGUE:
 		return
-	if event.is_action_pressed("phone"):
-		_open_phone_journal()
-		get_viewport().set_input_as_handled()
-		return
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if (
+		event is InputEventMouseMotion
+		and (
+			Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+			or _mode == ControlMode.DIALOGUE
+		)
+	):
 		var motion: InputEventMouseMotion = event as InputEventMouseMotion
 		var sens: float = deg_to_rad(mouse_sensitivity_degrees)
 		rotate_y(-motion.relative.x * sens)
 		_pitch = clampf(_pitch - motion.relative.y * sens, -deg_to_rad(pitch_limit_degrees), deg_to_rad(pitch_limit_degrees))
 		_camera_pivot.rotation.x = _pitch
+	if _mode == ControlMode.DIALOGUE:
+		return
+	if event.is_action_pressed("phone"):
+		_open_phone_journal()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("interact"):
 		var target: Area3D = get_interaction_target()
 		# Emit teaching evidence before Interactable side effects (Neighbor modal, etc.).
@@ -151,6 +160,10 @@ func enter_gameplay() -> void:
 
 func enter_modal_ui() -> void:
 	set_control_mode(ControlMode.MODAL_UI)
+
+
+func enter_dialogue() -> void:
+	set_control_mode(ControlMode.DIALOGUE)
 
 
 func enter_minigame(mouse_mode: Input.MouseMode = Input.MOUSE_MODE_VISIBLE) -> void:
@@ -288,7 +301,7 @@ func _apply_mode_side_effects() -> void:
 	if not gameplay:
 		_prompt_label.visible = false
 	match _mode:
-		ControlMode.GAMEPLAY:
+		ControlMode.GAMEPLAY, ControlMode.DIALOGUE:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		ControlMode.MODAL_UI, ControlMode.PAUSED:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -313,9 +326,12 @@ func _on_interaction_target_changed(target: Area3D) -> void:
 
 func _update_focus_safety() -> void:
 	var focused: bool = DisplayServer.window_is_focused()
-	if _was_window_focused and not focused and _mode == ControlMode.GAMEPLAY:
+	var captures_look: bool = (
+		_mode == ControlMode.GAMEPLAY or _mode == ControlMode.DIALOGUE
+	)
+	if _was_window_focused and not focused and captures_look:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	elif focused and not _was_window_focused and _mode == ControlMode.GAMEPLAY:
+	elif focused and not _was_window_focused and captures_look:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_was_window_focused = focused
 

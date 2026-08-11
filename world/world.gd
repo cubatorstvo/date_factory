@@ -313,7 +313,16 @@ func get_location_access(location_id: StringName) -> WorldAccessResult:
 		result.has_required_feature = true
 		result.required_feature = feature_v as StoryTypes.StoryFeature
 	var story: Node = get_node_or_null("/root/Story")
-	if result.has_required_feature:
+	var prologue_city_access: bool = false
+	if (
+		gs != null
+		and location_id == &"city_hub"
+		and result.current_stage == GameTypes.GameStage.PROLOGUE
+	):
+		prologue_city_access = bool(
+			gs.call("get_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED)
+		)
+	if result.has_required_feature and not prologue_city_access:
 		if story == null or not story.has_method("is_feature_unlocked"):
 			result.status = WorldTypes.WorldAccessStatus.LOCKED_STORY
 			result.message = "Пока недоступно по сюжету"

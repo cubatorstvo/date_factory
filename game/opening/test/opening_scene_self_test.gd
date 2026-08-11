@@ -35,8 +35,15 @@ func _run_opening_contract() -> void:
 	_ok(opening.is_cinematic_look_enabled(), "free-look enabled while seated")
 	var skip_hint: Label = opening.get_node("UI/Subtitles/Margin/VBox/SkipHint") as Label
 	_ok(skip_hint != null and skip_hint.text == "Любая кнопка — дальше", "dialogue skip hint present")
+	_ok(not opening.has_node("Props/QuestionDeck"), "separate question box removed")
+	var card_1: Node3D = opening.get_node("Props/QuestionCard1") as Node3D
+	var card_2: Node3D = opening.get_node("Props/QuestionCard2") as Node3D
 	var card_prop: Node3D = opening.get_node("Props/HeartCard") as Node3D
-	_ok(card_prop != null and card_prop.visible, "same physical card begins on table")
+	_ok(card_1 != null and card_2 != null and card_prop != null, "three physical cards form the deck")
+	for card: Node3D in [card_1, card_2, card_prop]:
+		var label: Label3D = card.get_node_or_null("CardText") as Label3D
+		_ok(label != null and label.text == OpeningScene.CARD_BACK_COPY, "stack card shows question back")
+	_ok(card_prop.visible, "same physical heart card begins in the stack")
 	var camera: Camera3D = opening.get_node("CinematicCamera") as Camera3D
 	var rotation_before: Vector3 = camera.rotation
 	var look_event: InputEventMouseMotion = InputEventMouseMotion.new()
@@ -67,6 +74,12 @@ func _run_opening_contract() -> void:
 	_ok(not opening.is_player_control_enabled(), "movement remains locked until player stands")
 	_ok(opening.is_card_in_hand(), "physical table card is held while seated")
 	_ok(card_prop.get_parent() == opening.get_node("Props"), "held seated card is not camera-parented")
+	var discard_1: Marker3D = opening.get_node("Staging/DiscardPile/Card1") as Marker3D
+	var discard_2: Marker3D = opening.get_node("Staging/DiscardPile/Card2") as Marker3D
+	_ok(card_1.global_position.distance_to(discard_1.global_position) < 0.001, "first read card reaches discard pile")
+	_ok(card_2.global_position.distance_to(discard_2.global_position) < 0.001, "second read card reaches discard pile")
+	var heart_label: Label3D = card_prop.get_node_or_null("CardText") as Label3D
+	_ok(heart_label != null and heart_label.text == OpeningScene.CARD_DISPLAY_COPY, "last question becomes the heart card")
 	var stand_prompt: Control = opening.get_node("UI/StandPrompt") as Control
 	_ok(stand_prompt.visible, "E stand prompt is visible during departure")
 	opening.request_stand()
@@ -79,6 +92,19 @@ func _run_opening_contract() -> void:
 	_ok(opening.is_player_control_enabled(), "FPS movement restored when player stands")
 	_ok(opening.get_objective_text() == OpeningScene.SLEEP_OBJECTIVE, "sleep objective exact")
 	_ok(card_prop.visible and card_prop.get_parent() == opening.get_node("OpeningPlayer"), "same physical card remains carried by player")
+	var opening_player: PlayerController = opening.get_node("OpeningPlayer") as PlayerController
+	var dialogue_position: Vector3 = opening_player.global_position
+	var dialogue_yaw: float = opening_player.rotation.y
+	opening_player.enter_dialogue()
+	opening_player.velocity = Vector3(2.0, 0.0, 0.0)
+	var dialogue_look: InputEventMouseMotion = InputEventMouseMotion.new()
+	dialogue_look.relative = Vector2(20.0, 0.0)
+	opening_player._unhandled_input(dialogue_look)
+	opening_player._physics_process(0.1)
+	_ok(opening_player.get_control_mode() == PlayerController.ControlMode.DIALOGUE, "dialogue mode active")
+	_ok(opening_player.rotation.y != dialogue_yaw, "dialogue mode keeps mouse-look")
+	_ok(opening_player.global_position == dialogue_position and opening_player.velocity == Vector3.ZERO, "dialogue mode blocks movement")
+	opening_player.enter_gameplay()
 	var bed: OpeningBedInteractable = opening.get_node("OpeningBed") as OpeningBedInteractable
 	_ok(bed != null and bed.interaction_enabled, "bed enabled only after handoff")
 

@@ -2,25 +2,12 @@
 
 [ext_resource type="Script" uid="uid://3wamdnbupule" path="res://game/opening/opening_scene.gd" id="1_ddusx"]
 [ext_resource type="PackedScene" uid="uid://dhn7jqyw3j1m3" path="res://characters/framework/character_actor.tscn" id="2_bvbmn"]
+[ext_resource type="PackedScene" uid="uid://bes7vo8tfvfkf" path="res://game/opening/heart_card.tscn" id="4_cub6b"]
 [ext_resource type="PackedScene" uid="uid://cjlrdypkw0l5m" path="res://assets/environment/interior/drinkware/Drinkware_Cup.tscn" id="4_iabee"]
 [ext_resource type="Script" uid="uid://dkmwvdfqgqdrd" path="res://game/opening/opening_bed_interactable.gd" id="5_5qutl"]
 [ext_resource type="PackedScene" uid="uid://hcahofhtjakd" path="res://world/locations/apartment/apartment.tscn" id="6_gkbey"]
 [ext_resource type="PackedScene" uid="uid://djdethq0bcjro" path="res://characters/player/player.tscn" id="8_bwqoo"]
 [ext_resource type="Theme" uid="uid://ofdy4bkpry37" path="res://ui/theme/date_factory_theme.tres" id="10_3nu4x"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2q8kj"]
-albedo_color = Color(0.96, 0.91, 0.82, 1)
-roughness = 0.88
-
-[sub_resource type="BoxMesh" id="BoxMesh_x762h"]
-size = Vector3(0.34, 0.012, 0.24)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2mrkk"]
-albedo_color = Color(0.72, 0.18, 0.2, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="BoxMesh_53141"]
-size = Vector3(0.34, 0.045, 0.24)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_vc7yo"]
 size = Vector3(2.05, 0.72, 1.05)
@@ -42,36 +29,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.62, 0.82, 0.36)
 [node name="NeighborCup" parent="Props" unique_id=1205282703 instance=ExtResource("4_iabee")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.18, 0.82, 0.82)
 
-[node name="HeartCard" type="Node3D" parent="Props" unique_id=1298641766]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.825, 0.608)
-
-[node name="CardBody" type="MeshInstance3D" parent="Props/HeartCard" unique_id=485527533]
-material_override = SubResource("StandardMaterial3D_2q8kj")
-mesh = SubResource("BoxMesh_x762h")
-
-[node name="CardText" type="Label3D" parent="Props/HeartCard" unique_id=1686381445]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.012, 0)
-pixel_size = 0.0014
-modulate = Color(0.12, 0.08, 0.07, 1)
-text = "ПОКОРЁННЫХ
-СЕРДЕЦ: ____"
-font_size = 24
-outline_size = 3
-
-[node name="QuestionDeck" type="Node3D" parent="Props" unique_id=1485377643]
+[node name="HeartCard" parent="Props" unique_id=700885370 instance=ExtResource("4_cub6b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.825, 0.9)
 
-[node name="DeckBody" type="MeshInstance3D" parent="Props/QuestionDeck" unique_id=241779259]
-material_override = SubResource("StandardMaterial3D_2mrkk")
-mesh = SubResource("BoxMesh_53141")
+[node name="QuestionCard1" parent="Props" unique_id=961097834 instance=ExtResource("4_cub6b")]
+transform = Transform3D(0.99939084, 0, 0.034899496, 0, 1, 0, -0.034899496, 0, 0.99939084, 0.416, 0.853, 0.884)
 
-[node name="DeckText" type="Label3D" parent="Props/QuestionDeck" unique_id=269217015]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.026, 0)
-pixel_size = 0.0015
-modulate = Color(0.28, 0.08, 0.09, 1)
-text = "ВОПРОСЫ"
-font_size = 22
-outline_size = 2
+[node name="QuestionCard2" parent="Props" unique_id=749595685 instance=ExtResource("4_cub6b")]
+transform = Transform3D(0.99939084, 0, -0.034899496, 0, 1, 0, 0.034899496, 0, 0.99939084, 0.408, 0.839, 0.892)
 
 [node name="Staging" type="Node3D" parent="." unique_id=1863065928]
 
@@ -83,6 +48,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.05, 0.25)
 
 [node name="CardHoldPose" type="Marker3D" parent="Staging" unique_id=386702283]
 transform = Transform3D(-0.13917308, 0.49513403, 0.8575973, 0, 0.8660254, -0.5, -0.99026805, -0.06958654, -0.12052742, 0.82, 1.02, 0.68)
+
+[node name="NeighborReadPose" type="Marker3D" parent="Staging" unique_id=1522592963]
+transform = Transform3D(-0.11894983, -0.49645016, -0.8598769, 0, 0.8660254, -0.5, 0.9929003, -0.059474915, -0.103013575, -0.05, 1.05, 0.68)
+
+[node name="DiscardPile" type="Node3D" parent="Staging" unique_id=235070691]
+
+[node name="Card1" type="Marker3D" parent="Staging/DiscardPile" unique_id=637510395]
+transform = Transform3D(0.9975641, 0, -0.06975647, 0, 1, 0, 0.06975647, 0, 0.9975641, 0.18, 0.64844406, 0.88)
+
+[node name="Card2" type="Marker3D" parent="Staging/DiscardPile" unique_id=885704939]
+transform = Transform3D(0.9986295, 0, 0.05233596, 0, 1, 0, -0.05233596, 0, 0.9986295, 0.18, 0.66244406, 0.88)
 
 [node name="CinematicCamera" type="Camera3D" parent="." unique_id=1957435]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 1.28, 0.608)

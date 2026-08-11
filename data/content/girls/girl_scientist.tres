@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="GirlDefinition" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="GirlDefinition" format=3 uid="uid://dp0u8aixcdenc"]
 
-[ext_resource type="Script" path="res://data/definitions/girl_definition.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://cniyfngarr215" path="res://data/definitions/girl_definition.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")
@@ -9,9 +9,8 @@ display_name = "Учёная"
 is_story = true
 has_story_stage = true
 story_stage = 4
-primary_trait = 0
 secondary_trait = 3
-required_experience = 4
+required_experience = 3
 discovery_situation_id = &"discovery_situation_scientist_lab_gate"
 appearance_profile_id = &"appearance_female_scientist"
 dating_pool_ids = Array[StringName]([&"date_pool_cafe_common", &"date_pool_scientist"])

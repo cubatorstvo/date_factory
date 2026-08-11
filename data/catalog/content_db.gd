@@ -807,7 +807,7 @@ static func _validate_stages(catalog: ContentCatalog, errors: Array[String]) -> 
 		if def.display_name.strip_edges() == "":
 			errors.append("stage %s empty display_name" % def.stage)
 	var expected_girl: Dictionary = {
-		GameTypes.GameStage.PROLOGUE: StoryIds.GIRL_NEIGHBOR,
+		GameTypes.GameStage.PROLOGUE: &"",
 		GameTypes.GameStage.STAGE_1: StoryIds.GIRL_ACTRESS,
 		GameTypes.GameStage.STAGE_2: StoryIds.GIRL_MINE_BOSS,
 		GameTypes.GameStage.STAGE_3: StoryIds.GIRL_MAGAZINE_EDITOR,
@@ -837,7 +837,7 @@ static func _validate_stages(catalog: ContentCatalog, errors: Array[String]) -> 
 		GameTypes.GameStage.FINALE: false,
 	}
 	var expected_mode: Dictionary = {
-		GameTypes.GameStage.PROLOGUE: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
+		GameTypes.GameStage.PROLOGUE: StoryTypes.StageCompletionMode.EXTERNAL_MILESTONE,
 		GameTypes.GameStage.STAGE_1: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
 		GameTypes.GameStage.STAGE_2: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
 		GameTypes.GameStage.STAGE_3: StoryTypes.StageCompletionMode.GIRL_COMPLETED,
@@ -869,6 +869,11 @@ static func _validate_stages(catalog: ContentCatalog, errors: Array[String]) -> 
 			errors.append("stage %s requires_story_rival expected %s" % [st, expected_requires_rival[st]])
 		if sdef.completion_mode != expected_mode[st]:
 			errors.append("stage %s completion_mode expected %s got %s" % [st, expected_mode[st], sdef.completion_mode])
+		if (
+			sdef.completion_mode == StoryTypes.StageCompletionMode.EXTERNAL_MILESTONE
+			and String(sdef.completion_flag_id) == ""
+		):
+			errors.append("stage %s missing completion_flag_id" % st)
 		if sdef.next_stage != expected_next[st]:
 			errors.append("stage %s next_stage expected %s got %s" % [st, expected_next[st], sdef.next_stage])
 		# Reserved story IDs may lack GirlDefinition/RivalDefinition — do not require existence.

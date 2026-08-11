@@ -4,6 +4,7 @@ extends Resource
 
 @export var id: StringName = &""
 @export var display_name: String = ""
+@export var romance_available: bool = true
 @export var is_story: bool = false
 @export var has_story_stage: bool = false
 @export var story_stage: GameTypes.GameStage = GameTypes.GameStage.PROLOGUE

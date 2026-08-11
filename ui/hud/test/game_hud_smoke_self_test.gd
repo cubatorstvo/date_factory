@@ -37,10 +37,17 @@ func _ready() -> void:
 	var auth_lab: Label = _find_label(hud1, "AuthorityLabel")
 	var xp_lab: Label = _find_label(hud1, "ExperienceLabel")
 	var up_lab: Label = _find_label(hud1, "PointsLabel")
-	_ok(money_lab != null and money_lab.text == "$ 12.4K", "money label compact (got %s)" % (money_lab.text if money_lab else "null"))
+	_ok(money_lab != null and money_lab.text == "$ 12.49K", "money label compact (got %s)" % (money_lab.text if money_lab else "null"))
 	_ok(auth_lab != null and auth_lab.text == "АВТОРИТЕТ 3", "authority label")
 	_ok(xp_lab != null and xp_lab.text == "ПОКОРЕННЫХ СЕРДЕЦ 2", "experience label")
 	_ok(up_lab != null and up_lab.text == "БАЛЛЫ 2", "points label")
+	_ok(money_lab != null and money_lab.visible, "money visible from start")
+	_ok(auth_lab != null and not auth_lab.visible, "authority remains hidden")
+	_ok(xp_lab != null and not xp_lab.visible, "hearts hidden before card")
+	_ok(up_lab != null and not up_lab.visible, "points remain hidden")
+	gs.call("set_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED, true)
+	await get_tree().process_frame
+	_ok(xp_lab != null and xp_lab.visible, "card reveals hearts row")
 	var gameplay_root: CanvasItem = hud1.get_node_or_null("ScaleRoot/GameplayRoot") as CanvasItem
 	_ok(gameplay_root != null and gameplay_root.visible, "HUD visible in GAMEPLAY")
 	var player: PlayerController = world.call("get_player") as PlayerController

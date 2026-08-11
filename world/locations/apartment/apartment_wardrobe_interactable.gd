@@ -49,6 +49,20 @@ func _on_outfit_selected(item_id: StringName) -> void:
 		return
 	var definition: Dictionary = catalog.call("get_definition", item_id)
 	_notify("Надето: %s" % str(definition.get("name", "образ")))
+	_mark_tutorial_outfit_ready()
+
+
+func _mark_tutorial_outfit_ready() -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return
+	if int(gs.call("get_stage")) != int(GameTypes.GameStage.PROLOGUE):
+		return
+	if not bool(
+		gs.call("get_story_flag", StoryIds.FLAG_NEIGHBOR_BRIEFING_COMPLETE)
+	):
+		return
+	gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_OUTFIT_READY, true)
 
 
 func _on_menu_closed() -> void:

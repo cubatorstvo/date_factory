@@ -13,6 +13,13 @@ signal completed
 signal phase_changed(phase: int)
 
 const CARD_COPY: String = "ПОКОРЁННЫХ СЕРДЕЦ: ____"
+const CARD_DISPLAY_COPY: String = "ПОКОРЁННЫХ\nСЕРДЕЦ: ____"
+const CARD_BACK_COPY: String = "ВОПРОСЫ"
+const QUESTION_CARD_COPY: Array[String] = [
+	"СКОЛЬКО СТРАН\nТЫ ПОСЕТИЛ?",
+	"САМАЯ БЕСПОЛЕЗНАЯ\nПОКУПКА?",
+	"СКОЛЬКО СЕРДЕЦ\nТЫ ПОКОРИЛ?",
+]
 const SLEEP_OBJECTIVE: String = "Уже поздно. Ложись спать."
 const CINEMATIC_PITCH_LIMIT_DEGREES: float = 70.0
 const DIALOGUE_COPY: Array[String] = [
@@ -40,8 +47,18 @@ const DIALOGUE_COPY: Array[String] = [
 @onready var _neighbor_exit_a: Marker3D = $Staging/NeighborExitA
 @onready var _neighbor_exit_b: Marker3D = $Staging/NeighborExitB
 @onready var _card_hold_pose: Marker3D = $Staging/CardHoldPose
+@onready var _neighbor_read_pose: Marker3D = $Staging/NeighborReadPose
+@onready var _discard_card_poses: Array[Marker3D] = [
+	$Staging/DiscardPile/Card1 as Marker3D,
+	$Staging/DiscardPile/Card2 as Marker3D,
+]
 @onready var _card_carry_pose: Marker3D = $OpeningPlayer/CardCarryPose
 @onready var _bed: OpeningBedInteractable = $OpeningBed
+@onready var _question_cards: Array[Node3D] = [
+	$Props/QuestionCard1 as Node3D,
+	$Props/QuestionCard2 as Node3D,
+	$Props/HeartCard as Node3D,
+]
 @onready var _card_prop: Node3D = $Props/HeartCard
 @onready var _subtitle_panel: Control = $UI/Subtitles
 @onready var _speaker_label: Label = $UI/Subtitles/Margin/VBox/Speaker
@@ -69,6 +86,7 @@ func _ready() -> void:
 	_isolate_apartment()
 	_prepare_neighbor()
 	_prepare_player()
+	_prepare_cards()
 	_prepare_ui()
 	if not _bed.sleep_requested.is_connected(_on_sleep_requested):
 		_bed.sleep_requested.connect(_on_sleep_requested)
@@ -137,6 +155,11 @@ func _isolate_apartment() -> void:
 	if _apartment_set == null:
 		return
 	_disable_apartment_areas(_apartment_set)
+	var morning_card: Node3D = _apartment_set.get_node_or_null(
+		"Interactables/MorningHeartCard"
+	) as Node3D
+	if morning_card != null:
+		morning_card.visible = false
 	for path in ["NpcSpawns", "PlayerSpawns", "StoryEventPoints"]:
 		var node: Node = _apartment_set.get_node_or_null(path)
 		if node != null:
@@ -192,6 +215,56 @@ func _prepare_player() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
+func _prepare_cards() -> void:
+	for card: Node3D in _question_cards:
+		if card == null:
+			continue
+		card.visible = true
+		_set_card_text(card, CARD_BACK_COPY)
+
+
+func _set_card_text(card: Node3D, copy: String) -> void:
+	if card == null:
+		return
+	var label: Label3D = card.get_node_or_null("CardText") as Label3D
+	if label != null:
+		label.text = copy
+
+
+func _draw_question_card(index: int) -> void:
+	if index < 0 or index >= _question_cards.size() or _neighbor_read_pose == null:
+		return
+	var card: Node3D = _question_cards[index]
+	_set_card_text(card, QUESTION_CARD_COPY[index])
+	var tween: Tween = create_tween()
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(
+		card,
+		"global_transform",
+		_neighbor_read_pose.global_transform,
+		_scaled_duration(0.75)
+	)
+	await tween.finished
+
+
+func _discard_question_card(index: int) -> void:
+	if index < 0 or index >= _discard_card_poses.size():
+		return
+	var card: Node3D = _question_cards[index]
+	var discard_pose: Marker3D = _discard_card_poses[index]
+	if card == null or discard_pose == null:
+		return
+	var tween: Tween = create_tween()
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(
+		card,
+		"global_transform",
+		discard_pose.global_transform,
+		_scaled_duration(0.65)
+	)
+	await tween.finished
+
+
 func _prepare_ui() -> void:
 	_subtitle_panel.visible = false
 	_stand_prompt.visible = false
@@ -209,19 +282,24 @@ func _run_sequence() -> void:
 	await _fade_to(0.0, 1.5)
 	await _wait(3.0)
 
+	await _draw_question_card(0)
 	await _show_line("СОСЕДКА", DIALOGUE_COPY[0], 4.5, true)
 	await _show_line("ГЕРОЙ", DIALOGUE_COPY[1], 2.8)
 	await _show_line("СОСЕДКА", DIALOGUE_COPY[2], 3.2, true)
+	await _discard_question_card(0)
 	await _wait(2.0)
 
+	await _draw_question_card(1)
 	await _show_line("СОСЕДКА", DIALOGUE_COPY[3], 4.5, true)
 	await _show_line("ГЕРОЙ", DIALOGUE_COPY[4], 3.2)
 	await _show_line("СОСЕДКА", DIALOGUE_COPY[5], 3.6, true)
 	await _show_line("ГЕРОЙ", DIALOGUE_COPY[6], 3.6)
 	_hide_subtitles()
+	await _discard_question_card(1)
 	await _wait(2.5)
 
 	await _show_line("СОСЕДКА", DIALOGUE_COPY[7], 3.5, true)
+	await _draw_question_card(2)
 	await _show_line("СОСЕДКА", "«%s»" % DIALOGUE_COPY[8], 4.8)
 	_hide_subtitles()
 	await _give_card()
@@ -320,6 +398,7 @@ func _stand_up() -> void:
 func _give_card() -> void:
 	if _card_prop == null or _card_hold_pose == null:
 		return
+	_set_card_text(_card_prop, CARD_DISPLAY_COPY)
 	_cinematic_look_enabled = false
 	var card_tween: Tween = create_tween()
 	card_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

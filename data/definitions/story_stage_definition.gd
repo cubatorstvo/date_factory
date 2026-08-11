@@ -8,5 +8,6 @@ extends Resource
 @export var story_rival_id: StringName = &""
 @export var requires_story_rival: bool = false
 @export var completion_mode: StoryTypes.StageCompletionMode = StoryTypes.StageCompletionMode.GIRL_COMPLETED
+@export var completion_flag_id: StringName = &""
 @export var next_stage: GameTypes.GameStage = GameTypes.GameStage.PROLOGUE
 @export var notes: String = ""

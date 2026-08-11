@@ -15,7 +15,9 @@ const PUBLIC_SIG_NOTE: String = "Внешность общественного �
 @onready var _body: Label = $Root/Panel/Margin/VBox/Center/SetupText
 @onready var _reaction_score: Label = $Root/Panel/Margin/VBox/Center/ReactionScore
 @onready var _reaction_text: Label = $Root/Panel/Margin/VBox/Center/ReactionText
-@onready var _choices: VBoxContainer = $Root/Panel/Margin/VBox/Choices
+@onready var _choices: VBoxContainer = (
+	$Root/Panel/Margin/VBox/ChoiceScroll/Choices
+)
 
 var _core: Node = null
 var _relationships: Node = null
@@ -24,6 +26,8 @@ var _reaction_hold: bool = false
 var _pending_finish: DatingResult = null
 var _showing_finish: bool = false
 var _ui_number_format: GDScript = null
+var _choice_buttons: Array[Button] = []
+var _selected_choice_index: int = -1
 
 
 func _ready() -> void:
@@ -36,6 +40,7 @@ func _ready() -> void:
 	if _core != null:
 		_core.connect("phase_changed", _on_phase_changed)
 		_core.connect("reaction_presented", _on_reaction)
+		_core.connect("tutorial_correction_presented", _on_tutorial_correction)
 		_core.connect("date_finished", _on_finished)
 	if _relationships != null and _relationships.has_signal("date_result_applied"):
 		if not _relationships.is_connected("date_result_applied", _on_date_result_applied):
@@ -52,6 +57,74 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if _showing_finish:
 			get_viewport().set_input_as_handled()
+			return
+	if _handle_choice_input(event):
+		get_viewport().set_input_as_handled()
+
+
+func _handle_choice_input(event: InputEvent) -> bool:
+	if event is InputEventKey:
+		var key_event: InputEventKey = event as InputEventKey
+		if key_event.pressed and not key_event.echo:
+			match key_event.keycode:
+				KEY_1:
+					return _activate_choice(0)
+				KEY_2:
+					return _activate_choice(1)
+				KEY_3:
+					return _activate_choice(2)
+				KEY_4:
+					return _activate_choice(3)
+	if event is InputEventMouseButton:
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			return _move_choice(-1)
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			return _move_choice(1)
+	if event.is_action_pressed("ui_up"):
+		return _move_choice(-1)
+	if event.is_action_pressed("ui_down"):
+		return _move_choice(1)
+	if event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
+		return _activate_choice(_selected_choice_index)
+	return false
+
+
+func _move_choice(direction: int) -> bool:
+	if _choice_buttons.is_empty() or direction == 0:
+		return false
+	var start: int = _selected_choice_index
+	if start < 0:
+		start = 0 if direction > 0 else _choice_buttons.size() - 1
+	for offset: int in range(1, _choice_buttons.size() + 1):
+		var index: int = wrapi(start + direction * offset, 0, _choice_buttons.size())
+		if _select_choice(index):
+			return true
+	return false
+
+
+func _select_choice(index: int) -> bool:
+	if index < 0 or index >= _choice_buttons.size():
+		return false
+	var button: Button = _choice_buttons[index]
+	if button == null or not is_instance_valid(button) or button.disabled:
+		return false
+	_selected_choice_index = index
+	button.grab_focus()
+	return true
+
+
+func _activate_choice(index: int) -> bool:
+	if not _select_choice(index):
+		return false
+	var button: Button = _choice_buttons[index]
+	button.pressed.emit()
+	return true
+
+
+func _on_choice_focus_entered(index: int) -> void:
+	if index >= 0 and index < _choice_buttons.size():
+		_selected_choice_index = index
 
 
 func open_for_active_date() -> void:
@@ -81,6 +154,28 @@ func _on_reaction(reaction: int, result_text: String) -> void:
 	if not visible and _pending_finish == null:
 		visible = true
 	_show_reaction(reaction, result_text)
+
+
+func _on_tutorial_correction(explanation: String) -> void:
+	_reaction_hold = true
+	visible = true
+	_update_header()
+	_title.text = "СОВЕТ СОСЕДКИ"
+	_body.text = ""
+	_greeting_note.visible = false
+	_reaction_score.visible = false
+	_reaction_text.visible = true
+	_reaction_text.text = "СОСЕДКА:\n%s" % explanation
+	_clear_choices()
+	_add_btn("Попробовать ещё раз", _on_continue_after_tutorial_correction)
+
+
+func _on_continue_after_tutorial_correction() -> void:
+	_audio_play_ui(AudioIds.UI_CLICK)
+	_reaction_hold = false
+	_reaction_text.visible = false
+	_reaction_text.text = ""
+	_refresh()
 
 
 func _on_date_result_applied(rel_result: RelationshipDateResult) -> void:
@@ -142,6 +237,18 @@ func _show_finish(result: DatingResult) -> void:
 	_reaction_score.visible = false
 	_reaction_text.visible = false
 	var lines: PackedStringArray = PackedStringArray()
+	if result.tutorial_mode:
+		_title.text = "ОБУЧЕНИЕ ЗАВЕРШЕНО"
+		lines.append("Итог учебного свидания: %s" % _format_signed(result.date_delta))
+		lines.append("")
+		lines.append("СОСЕДКА:")
+		lines.append("Это всё, что я знаю про свидания. У меня куча дел — дальше действуй сам.")
+		_body.text = "\n".join(lines)
+		_clear_choices()
+		_add_btn("Закончить обучение", _on_close_finished)
+		visible = true
+		_last_rel_result = null
+		return
 	lines.append("Свидание: %s" % _format_signed(result.primary_total))
 	lines.append("Вечер: %s" % _format_signed(result.secondary_reaction))
 	lines.append("Итого: %s" % _format_signed(result.date_delta))
@@ -168,8 +275,15 @@ func _show_finish(result: DatingResult) -> void:
 
 
 func _on_close_finished() -> void:
+	var tutorial_complete: bool = false
 	if _core != null:
+		var session: DatingSession = _core.call("get_session") as DatingSession
+		tutorial_complete = session != null and session.tutorial_mode and session.finished
 		_core.call("close_finished_date")
+	if tutorial_complete:
+		var gs: Node = get_node_or_null("/root/GameState")
+		if gs != null:
+			gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE, true)
 	close_ui()
 
 
@@ -293,6 +407,8 @@ func _maybe_second_outfit() -> void:
 
 
 func _clear_choices() -> void:
+	_choice_buttons.clear()
+	_selected_choice_index = -1
 	for child in _choices.get_children():
 		child.queue_free()
 
@@ -304,16 +420,22 @@ func _add_btn(text: String, cb: Callable, enabled: bool = true) -> void:
 	var btn: Button = packed.instantiate() as Button
 	if btn == null:
 		return
-	btn.text = text
+	var choice_index: int = _choice_buttons.size()
+	btn.text = "%d — %s" % [choice_index + 1, text]
 	btn.disabled = not enabled
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	btn.custom_minimum_size = Vector2(0, 44)
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.focus_mode = Control.FOCUS_ALL
 	if enabled:
 		btn.pressed.connect(cb)
 	else:
 		btn.modulate = Color(0.75, 0.72, 0.7, 1.0)
 	_choices.add_child(btn)
+	_choice_buttons.append(btn)
+	btn.focus_entered.connect(_on_choice_focus_entered.bind(choice_index))
+	if _selected_choice_index < 0:
+		_select_choice(choice_index)
 
 
 func _update_header() -> void:

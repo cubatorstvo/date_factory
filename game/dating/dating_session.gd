@@ -5,6 +5,7 @@ extends RefCounted
 var date_id: int = 0
 var girl_id: StringName = &""
 var location_id: StringName = &""
+var tutorial_mode: bool = false
 var phase: DatingTypes.Phase = DatingTypes.Phase.ARRIVAL
 
 var greeting_ids: Array[StringName] = []

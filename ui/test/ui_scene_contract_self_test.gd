@@ -11,7 +11,12 @@ const SCENE_REQUIREMENTS: Dictionary = {
 	"res://ui/phone/phone_journal.tscn": ["SafeMargin"],
 	"res://ui/progression/progression_ui.tscn": ["Root"],
 	"res://ui/rivals/rival_encounter_ui.tscn": ["Root"],
-	"res://ui/dating/dating_ui.tscn": ["Root"],
+	"res://ui/dating/dating_ui.tscn": [
+		"Root",
+		"Root/Panel",
+		"Root/Panel/Margin/VBox/ChoiceScroll/Choices",
+		"Root/Panel/Margin/VBox/InputHint",
+	],
 	"res://minigames/slap/slap_minigame.tscn": ["Root"],
 	"res://minigames/dance/dance_minigame.tscn": ["Root"],
 	"res://minigames/sigma/sigma_minigame.tscn": ["Root"],
@@ -75,6 +80,7 @@ var _failed: int = 0
 
 func _ready() -> void:
 	_test_scene_contracts()
+	_test_compact_dating_contract()
 	_test_controller_sources()
 	if _failed == 0:
 		print("UI_SCENE_CONTRACT: ALL PASS (%d)" % _passed)
@@ -98,6 +104,27 @@ func _test_scene_contracts() -> void:
 			var node_path: NodePath = NodePath(str(node_path_value))
 			_ok(instance.get_node_or_null(node_path) != null, "%s has %s" % [scene_path, node_path])
 		instance.free()
+
+
+func _test_compact_dating_contract() -> void:
+	var packed: PackedScene = load("res://ui/dating/dating_ui.tscn") as PackedScene
+	if packed == null:
+		return
+	var instance: CanvasLayer = packed.instantiate() as CanvasLayer
+	if instance == null:
+		return
+	var root: Control = instance.get_node_or_null("Root") as Control
+	var dim: ColorRect = instance.get_node_or_null("Root/Dim") as ColorRect
+	var panel: PanelContainer = instance.get_node_or_null("Root/Panel") as PanelContainer
+	var hint: Label = instance.get_node_or_null(
+		"Root/Panel/Margin/VBox/InputHint"
+	) as Label
+	_ok(root != null and root.mouse_filter == Control.MOUSE_FILTER_IGNORE, "dating root preserves camera mouse motion")
+	_ok(dim != null and not dim.visible, "dating UI has no fullscreen dim")
+	_ok(panel != null and panel.anchor_right <= 0.401, "dating panel leaves screen center clear")
+	_ok(panel != null and panel.anchor_bottom - panel.anchor_top <= 0.63, "dating panel stays compact vertically")
+	_ok(hint != null and hint.text.contains("1–4") and hint.text.contains("E"), "dating input hint present")
+	instance.free()
 
 
 func _test_controller_sources() -> void:

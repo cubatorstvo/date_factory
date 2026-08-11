@@ -7,6 +7,7 @@ extends RefCounted
 var date_id: int = 0
 var girl_id: StringName = &""
 var location_id: StringName = &""
+var tutorial_mode: bool = false
 var greeting_id: StringName = &""
 var greeting_reaction: int = 0
 var central_event_ids: Array[StringName] = []

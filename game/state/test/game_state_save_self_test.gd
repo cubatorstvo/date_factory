@@ -218,7 +218,7 @@ func _test_gamestate_exhaustive_roundtrip() -> void:
 	_ok(typeof(parsed) == TYPE_DICTIONARY, "export JSON roundtrip parses")
 	var snapshot_before: Dictionary = exported.duplicate(true)
 	_gs.call("reset_for_new_game")
-	_ok(int(_gs.call("get_money")) == 0, "reset cleared money before restore")
+	_ok(int(_gs.call("get_money")) == 90, "reset restored configured starting money")
 	var restore_ok: bool = bool(_gs.call("restore_save_state", parsed as Dictionary))
 	_ok(restore_ok, "restore_save_state succeeds")
 	_ok(bool(_day.call("restore_day", day_before)), "restore_day after gs")

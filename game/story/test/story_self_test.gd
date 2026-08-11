@@ -186,7 +186,8 @@ func _test_reset() -> void:
 	_ok(_stage() == int(GameTypes.GameStage.PROLOGUE), "44 stage PROLOGUE")
 	_ok(not _feat(StoryTypes.StoryFeature.SOCIAL_ACCESS), "44 SOCIAL false")
 	var prog: StoryStageProgress = _story.call("get_current_progress") as StoryStageProgress
-	_ok(prog != null and prog.story_girl_id == StoryIds.GIRL_NEIGHBOR, "44 story girl neighbor")
+	_ok(prog != null and String(prog.story_girl_id) == "", "44 no romantic prologue girl")
+	_ok(prog != null and prog.objective_id == &"pick_up_card", "44 card objective")
 	_ok(prog != null and prog.rival_required == false, "44 rival not required")
 
 
@@ -196,6 +197,13 @@ func _test_catalog_exactness() -> void:
 	_ok(stages.size() == 8, "62 exactly 8 stages")
 	var v: Dictionary = _db.call("validate_all") as Dictionary
 	_ok(bool(v.get("ok", false)), "62 ContentDB validate_all ok")
+	var s0: StoryStageDefinition = _db.call("get_stage", GameTypes.GameStage.PROLOGUE) as StoryStageDefinition
+	_ok(
+		s0 != null
+		and s0.completion_mode == StoryTypes.StageCompletionMode.EXTERNAL_MILESTONE
+		and s0.completion_flag_id == StoryIds.FLAG_TUTORIAL_DATE_COMPLETE,
+		"62 prologue tutorial milestone",
+	)
 	var s1: StoryStageDefinition = _db.call("get_stage", GameTypes.GameStage.STAGE_1) as StoryStageDefinition
 	_ok(s1 != null and s1.requires_story_rival and s1.story_rival_id == StoryIds.RIVAL_ACTRESS, "62 stage1 rival")
 	var s6: StoryStageDefinition = _db.call("get_stage", GameTypes.GameStage.STAGE_6) as StoryStageDefinition
@@ -219,9 +227,9 @@ func _test_catalog_exactness() -> void:
 func _test_neighbor_completion() -> void:
 	_reset()
 	_reset_trackers()
-	_gs.call("mark_girl_conquered", StoryIds.GIRL_NEIGHBOR)
-	_ok(bool(_story.call("reconcile_current_stage")), "45 neighbor reconcile advances")
-	_ok(_stage() == int(GameTypes.GameStage.STAGE_1), "45 STAGE_1")
+	_gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE, true)
+	_ok(_stage() == int(GameTypes.GameStage.STAGE_1), "45 tutorial milestone advances")
+	_ok(not bool(_gs.call("is_girl_conquered", StoryIds.GIRL_NEIGHBOR)), "45 Neighbor not conquered")
 	_ok(_feat(StoryTypes.StoryFeature.SOCIAL_ACCESS), "45 SOCIAL true")
 	_ok(not _feat(StoryTypes.StoryFeature.PUBLIC_CITY_ACCESS), "45 no PUBLIC yet")
 	_ok(_features_unlocked.has(int(StoryTypes.StoryFeature.SOCIAL_ACCESS)), "45 feature signal")
@@ -311,12 +319,11 @@ func _test_wrong_story_ids() -> void:
 
 func _test_one_event_one_stage() -> void:
 	_reset()
-	_gs.call("mark_girl_conquered", StoryIds.GIRL_NEIGHBOR)
+	_gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE, true)
+	_ok(_stage() == int(GameTypes.GameStage.STAGE_1), "53 tutorial gives only STAGE_1")
 	_gs.call("mark_girl_conquered", StoryIds.GIRL_ACTRESS)
 	_gs.call("mark_rival_defeated", StoryIds.RIVAL_ACTRESS)
-	_ok(bool(_story.call("reconcile_current_stage")), "53 first reconcile")
-	_ok(_stage() == int(GameTypes.GameStage.STAGE_1), "53 only STAGE_1")
-	_ok(bool(_story.call("reconcile_current_stage")), "53 second reconcile")
+	_ok(bool(_story.call("reconcile_current_stage")), "53 later reconcile")
 	_ok(_stage() == int(GameTypes.GameStage.STAGE_2), "53 then STAGE_2")
 
 
@@ -426,8 +433,7 @@ func _test_no_mutation_leakage() -> void:
 func _test_signal_order() -> void:
 	_reset()
 	_reset_trackers()
-	_gs.call("mark_girl_conquered", StoryIds.GIRL_NEIGHBOR)
-	_story.call("reconcile_current_stage")
+	_gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE, true)
 	var idx_completed: int = _signal_order.find("stage_completed")
 	var idx_changed: int = _signal_order.find("stage_changed")
 	var idx_started: int = _signal_order.find("stage_started")
@@ -441,7 +447,9 @@ func _test_real_signal_integration() -> void:
 	_reset()
 	_reset_trackers()
 	_emit_girl_completed(StoryIds.GIRL_NEIGHBOR)
-	_ok(_stage() == int(GameTypes.GameStage.STAGE_1), "43 girl_completed signal advances")
+	_ok(_stage() == int(GameTypes.GameStage.PROLOGUE), "43 Neighbor heart cannot advance")
+	_gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE, true)
+	_ok(_stage() == int(GameTypes.GameStage.STAGE_1), "43 tutorial flag advances")
 	_emit_rival_won(StoryIds.RIVAL_ACTRESS)
 	_ok(_stage() == int(GameTypes.GameStage.STAGE_1), "43 rival alone no advance")
 	_emit_girl_completed(StoryIds.GIRL_ACTRESS)

@@ -27,6 +27,9 @@ signal media_attention_changed(new_value: int, delta: int)
 signal state_reset()
 signal state_restored()
 
+## New-game tuning value; intentionally not part of the save payload.
+var starting_money: int = 90
+
 var _stage: GameTypes.GameStage = GameTypes.GameStage.PROLOGUE
 var _money: int = 0
 var _authority: int = 0
@@ -103,7 +106,7 @@ func _ready() -> void:
 
 func reset_for_new_game() -> void:
 	_stage = GameTypes.GameStage.PROLOGUE
-	_money = 0
+	_money = maxi(0, starting_money)
 	_authority = 0
 	_experience = 0
 	_upgrade_points = 0

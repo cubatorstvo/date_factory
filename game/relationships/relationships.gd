@@ -45,6 +45,8 @@ func _on_state_reset() -> void:
 
 
 func _on_date_finished(result: DatingResult) -> void:
+	if result != null and result.tutorial_mode:
+		return
 	if not _auto_apply_enabled:
 		return
 	apply_date_result(result)
@@ -73,6 +75,11 @@ func clear_applied_date_ids() -> void:
 
 func apply_date_result(result: DatingResult) -> RelationshipDateResult:
 	var out := RelationshipDateResult.new()
+	if result != null and result.tutorial_mode:
+		out.ok = false
+		out.error = RelationshipTypes.ERR_INVALID_RESULT
+		out.girl_id = result.girl_id
+		return out
 	var validation: Dictionary = _validate_dating_result(result)
 	if not bool(validation.get("ok", false)):
 		out.ok = false
@@ -165,6 +172,15 @@ func get_date_availability(girl_id: StringName) -> Dictionary:
 		return {"status": RelationshipTypes.AVAIL_UNKNOWN_GIRL, "cooldown_days": 0}
 	if String(girl_id) == "" or not _girl_exists(girl_id):
 		return {"status": RelationshipTypes.AVAIL_UNKNOWN_GIRL, "cooldown_days": 0}
+	var db: Node = get_node_or_null("/root/ContentDB")
+	var girl: GirlDefinition = null
+	if db != null:
+		girl = db.call("get_girl", girl_id) as GirlDefinition
+	if girl != null and not girl.romance_available:
+		return {
+			"status": RelationshipTypes.AVAIL_NOT_ROMANCEABLE,
+			"cooldown_days": 0,
+		}
 	if not bool(gs.call("has_girl_contact", girl_id)):
 		return {"status": RelationshipTypes.AVAIL_NO_CONTACT, "cooldown_days": 0}
 	var cd: int = int(gs.call("get_girl_date_cooldown_days_remaining", girl_id))

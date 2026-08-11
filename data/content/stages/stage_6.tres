@@ -1,14 +1,12 @@
-[gd_resource type="Resource" script_class="StoryStageDefinition" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="StoryStageDefinition" format=3 uid="uid://dt3jr3e72ar5e"]
 
-[ext_resource type="Script" path="res://data/definitions/story_stage_definition.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://btiwo7ydx7lu4" path="res://data/definitions/story_stage_definition.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")
 stage = 6
 display_name = "Стадия 6"
-story_girl_id = &""
-story_rival_id = &""
-requires_story_rival = false
 completion_mode = 1
+completion_flag_id = &"story_world_expansion_complete"
 next_stage = 7
 notes = "External world-expansion milestone."

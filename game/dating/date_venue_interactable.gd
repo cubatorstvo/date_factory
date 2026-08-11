@@ -7,6 +7,15 @@ const DATING_UI_SCENE: String = "res://ui/dating/dating_ui.tscn"
 const VENUE_PICKER_SCENE: String = "res://game/dating/date_venue_picker.tscn"
 const ACTION_BUTTON_SCENE: String = "res://ui/common/action_button.tscn"
 const MESSAGE_DIALOG_SCENE: String = "res://ui/common/message_dialog.tscn"
+const APARTMENT_SERVING_SCENE: String = (
+	"res://world/locations/apartment/apartment_serving_pair.tscn"
+)
+const APARTMENT_CATALOG_SCRIPT: String = (
+	"res://world/locations/apartment/apartment_fridge_catalog.gd"
+)
+const TUTORIAL_HERO_SEAT_PATH: NodePath = ^"../../../Markers/HeroSeat"
+const TUTORIAL_GIRL_SEAT_PATH: NodePath = ^"../../../Markers/GirlSeat"
+const TUTORIAL_SEATED_EYE_HEIGHT: float = 1.20
 
 @export var prompt_text: String = "Стол для свидания"
 
@@ -14,6 +23,10 @@ var _ui: CanvasLayer = null
 var _dating_ui: CanvasLayer = null
 var _active_player: Node = null
 var _placed_servings: Dictionary = {}
+var _tutorial_in_progress: bool = false
+var _tutorial_player_transform: Transform3D = Transform3D.IDENTITY
+var _tutorial_camera_pivot_transform: Transform3D = Transform3D.IDENTITY
+var _tutorial_player_pose_saved: bool = false
 
 
 func _ready() -> void:
@@ -23,6 +36,7 @@ func _ready() -> void:
 	monitoring = false
 	monitorable = true
 	_ensure_collision()
+	call_deferred("_restore_tutorial_servings")
 
 
 func get_interaction_prompt(player: Node) -> String:
@@ -37,6 +51,11 @@ func get_interaction_prompt(player: Node) -> String:
 		var category: StringName = carrier.call("get_serving_category")
 		var noun: String = "два напитка" if category == &"drink" else "две порции"
 		return "[E] Поставить %s на стол: %s" % [noun, serving_name]
+	if _is_tutorial_preparation_active():
+		var missing: PackedStringArray = _tutorial_missing_items()
+		if missing.is_empty():
+			return "[E] Начать обучающее свидание"
+		return "[E] Подготовка: не хватает — %s" % ", ".join(missing)
 	prompt_action = prompt_text
 	return super.get_interaction_prompt(player)
 
@@ -44,6 +63,13 @@ func get_interaction_prompt(player: Node) -> String:
 func _on_interact(player: Node) -> void:
 	_active_player = player
 	if _try_place_carried_meal(player):
+		return
+	if _is_tutorial_preparation_active():
+		var missing: PackedStringArray = _tutorial_missing_items()
+		if not missing.is_empty():
+			_show_error("Сначала подготовь: %s." % ", ".join(missing), player)
+			return
+		_start_tutorial_date(player)
 		return
 	var overload: Node = get_node_or_null("/root/DatingOverload")
 	if overload != null and overload.has_method("can_start_personal_date"):
@@ -79,12 +105,13 @@ func _try_place_carried_meal(player: Node) -> bool:
 		previous.queue_free()
 	pair.name = "PlacedDrinkPair" if category == &"drink" else "PlacedFoodPair"
 	anchor.add_child(pair)
-	pair.position = Vector3.ZERO
+	pair.position = _serving_offset(category)
 	pair.rotation_degrees = Vector3.ZERO
 	if not pair.has_method("set_carried") or not bool(pair.call("set_carried", false)):
 		pair.queue_free()
 		return true
 	_placed_servings[category] = pair
+	_mark_tutorial_serving_ready(category)
 	if category == &"food":
 		_set_apartment_cutlery_visible(true)
 	var noun: String = "два напитка" if category == &"drink" else "две порции"
@@ -92,6 +119,70 @@ func _try_place_carried_meal(player: Node) -> bool:
 		"На столе: %s — %s" % [noun, str(serving.get("name", "угощение"))]
 	)
 	return true
+
+
+func _serving_offset(category: StringName) -> Vector3:
+	return Vector3(0.0, 0.0, 0.20) if category == &"drink" else Vector3(0.0, 0.0, -0.16)
+
+
+func _restore_tutorial_servings() -> void:
+	if _current_location_id() != &"apartment":
+		return
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return
+	if bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_FOOD_READY)):
+		_restore_tutorial_serving(&"fried_egg", &"food")
+	if bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_DRINK_READY)):
+		_restore_tutorial_serving(&"water", &"drink")
+
+
+func _restore_tutorial_serving(item_id: StringName, category: StringName) -> void:
+	var existing: Node3D = _placed_servings.get(category) as Node3D
+	if existing != null and is_instance_valid(existing):
+		return
+	var catalog: GDScript = load(APARTMENT_CATALOG_SCRIPT) as GDScript
+	var packed: PackedScene = load(APARTMENT_SERVING_SCENE) as PackedScene
+	if catalog == null or packed == null:
+		return
+	var definition: Dictionary = catalog.call("get_definition", item_id) as Dictionary
+	var pair: Node3D = packed.instantiate() as Node3D
+	if pair == null or definition.is_empty():
+		if pair != null:
+			pair.free()
+		return
+	if not pair.has_method("configure") or not bool(pair.call("configure", definition, false)):
+		pair.free()
+		return
+	var anchor: Node3D = get_node_or_null("MealAnchor") as Node3D
+	if anchor == null:
+		anchor = Node3D.new()
+		anchor.name = "MealAnchor"
+		add_child(anchor)
+	pair.name = "PlacedDrinkPair" if category == &"drink" else "PlacedFoodPair"
+	anchor.add_child(pair)
+	pair.position = _serving_offset(category)
+	_placed_servings[category] = pair
+	if category == &"food":
+		_set_apartment_cutlery_visible(true)
+
+
+func _mark_tutorial_serving_ready(category: StringName) -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return
+	if int(gs.call("get_stage")) != int(GameTypes.GameStage.PROLOGUE):
+		return
+	if not bool(
+		gs.call("get_story_flag", StoryIds.FLAG_NEIGHBOR_BRIEFING_COMPLETE)
+	):
+		return
+	var flag_id: StringName = StoryIds.FLAG_TUTORIAL_FOOD_READY
+	if category == &"drink":
+		flag_id = StoryIds.FLAG_TUTORIAL_DRINK_READY
+	elif category != &"food":
+		return
+	gs.call("set_story_flag", flag_id, true)
 
 
 func _set_apartment_cutlery_visible(show: bool) -> void:
@@ -241,6 +332,118 @@ func _build_rows(location_id: StringName) -> Array[Dictionary]:
 	return out
 
 
+func _is_tutorial_preparation_active() -> bool:
+	if _current_location_id() != &"apartment":
+		return false
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null or int(gs.call("get_stage")) != int(GameTypes.GameStage.PROLOGUE):
+		return false
+	return (
+		bool(gs.call("get_story_flag", StoryIds.FLAG_NEIGHBOR_BRIEFING_COMPLETE))
+		and not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE))
+	)
+
+
+func _tutorial_missing_items() -> PackedStringArray:
+	var missing: PackedStringArray = PackedStringArray()
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return missing
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_FOOD_READY)):
+		missing.append("еда")
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_DRINK_READY)):
+		missing.append("напитки")
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_OUTFIT_READY)):
+		missing.append("одежда")
+	return missing
+
+
+func _start_tutorial_date(player: Node) -> void:
+	var dc: Node = get_node_or_null("/root/DatingCore")
+	if dc == null:
+		_show_error("Обучение сейчас недоступно.", player)
+		return
+	var request := DatingStartRequest.new()
+	request.girl_id = StoryIds.GIRL_NEIGHBOR
+	request.location_id = &"apartment"
+	request.greeting_ids = [&"dating_greeting_simple"]
+	request.farewell_id = &"dating_farewell_early_common"
+	request.forced_event_ids = NeighborTutorialCatalog.FORCED_EVENT_IDS.duplicate()
+	request.tutorial_mode = true
+	var start: Dictionary = dc.call("start_date", request) as Dictionary
+	if not bool(start.get("ok", false)):
+		_show_error("Не удалось начать обучающее свидание.", player)
+		return
+	_tutorial_in_progress = true
+	_seat_tutorial_player(player)
+	_set_tutorial_neighbor_visible(true)
+	var ui: CanvasLayer = _ensure_dating_ui()
+	if ui != null and ui.has_method("open_for_active_date"):
+		ui.call("open_for_active_date")
+	_enter_dialogue(player)
+	if dc.has_signal("date_finished"):
+		if not dc.is_connected("date_finished", _on_date_finished):
+			dc.connect("date_finished", _on_date_finished)
+
+
+func _seat_tutorial_player(player: Node) -> void:
+	var controller: PlayerController = player as PlayerController
+	var seat: Marker3D = get_node_or_null(TUTORIAL_HERO_SEAT_PATH) as Marker3D
+	if controller == null or seat == null:
+		push_error("[DateVenue] tutorial HeroSeat missing")
+		return
+	var camera_pivot: Node3D = controller.get_node_or_null("CameraPivot") as Node3D
+	_tutorial_player_transform = controller.global_transform
+	if camera_pivot != null:
+		_tutorial_camera_pivot_transform = camera_pivot.transform
+	_tutorial_player_pose_saved = true
+	controller.velocity = Vector3.ZERO
+	controller.global_transform = seat.global_transform
+	if camera_pivot != null:
+		camera_pivot.position.y = TUTORIAL_SEATED_EYE_HEIGHT
+		camera_pivot.rotation = Vector3.ZERO
+
+
+func _restore_tutorial_player(player: Node) -> void:
+	if not _tutorial_player_pose_saved:
+		return
+	var controller: PlayerController = player as PlayerController
+	if controller != null:
+		controller.velocity = Vector3.ZERO
+		controller.global_transform = _tutorial_player_transform
+		var camera_pivot: Node3D = controller.get_node_or_null("CameraPivot") as Node3D
+		if camera_pivot != null:
+			camera_pivot.transform = _tutorial_camera_pivot_transform
+	_tutorial_player_pose_saved = false
+
+
+func _set_tutorial_neighbor_visible(show: bool) -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var actor: CharacterActor = tree.root.find_child(
+		"TutorialNeighbor",
+		true,
+		false,
+	) as CharacterActor
+	if actor == null:
+		return
+	actor.visible = show
+	actor.process_mode = Node.PROCESS_MODE_INHERIT if show else Node.PROCESS_MODE_DISABLED
+	if show:
+		var seat: Marker3D = get_node_or_null(TUTORIAL_GIRL_SEAT_PATH) as Marker3D
+		if seat != null:
+			actor.global_transform = seat.global_transform
+			actor.rotate_y(PI)
+		actor.apply_appearance(&"appearance_female_neighbor")
+		var animation: CharacterAnimationController = actor.get_animation_controller()
+		if animation != null:
+			if animation.has_animation(&"sit_idle"):
+				animation.play_loop(&"sit_idle")
+			else:
+				animation.play_semantic(&"idle")
+
+
 func _start_date(girl_id: StringName, player: Node) -> void:
 	var db: Node = get_node_or_null("/root/ContentDB")
 	var rel: Node = get_node_or_null("/root/Relationships")
@@ -272,7 +475,7 @@ func _start_date(girl_id: StringName, player: Node) -> void:
 	var ui: CanvasLayer = _ensure_dating_ui()
 	if ui != null and ui.has_method("open_for_active_date"):
 		ui.call("open_for_active_date")
-	_enter_modal(player)
+	_enter_dialogue(player)
 	var dc: Node = get_node_or_null("/root/DatingCore")
 	if dc != null and dc.has_signal("date_finished"):
 		if not dc.is_connected("date_finished", _on_date_finished):
@@ -299,6 +502,10 @@ func _on_dating_ui_visibility() -> void:
 		return
 	if _dating_ui.visibility_changed.is_connected(_on_dating_ui_visibility):
 		_dating_ui.visibility_changed.disconnect(_on_dating_ui_visibility)
+	if _tutorial_in_progress:
+		_restore_tutorial_player(_active_player)
+		_set_tutorial_neighbor_visible(false)
+		_tutorial_in_progress = false
 	_exit_modal(_active_player)
 	_active_player = null
 
@@ -361,6 +568,13 @@ func _close_ui(player: Node) -> void:
 		_ui.queue_free()
 	_ui = null
 	_exit_modal(player)
+
+
+func _enter_dialogue(player: Node) -> void:
+	if player != null and player.has_method("enter_dialogue"):
+		player.call("enter_dialogue")
+		return
+	_enter_modal(player)
 
 
 func _enter_modal(player: Node) -> void:

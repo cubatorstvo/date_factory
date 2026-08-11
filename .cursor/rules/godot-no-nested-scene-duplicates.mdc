@@ -1,0 +1,13 @@
+---
+description: Prevent duplicate nodes when instancing reusable Godot scenes
+globs: "**/*.tscn"
+alwaysApply: false
+---
+
+# Nested scene instances
+
+- In a parent scene, serialize only the `PackedScene` instance root and its property overrides.
+- Never assign the parent scene as `owner` of descendants already supplied by the nested scene.
+- Never copy child node blocks under an instance path; edit the source scene instead.
+- Put parent-specific additions under a separate wrapper/sibling node.
+- After saving, reopen the parent scene and treat every `incoming node's name clashes` warning as a failed change.

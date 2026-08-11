@@ -35,6 +35,11 @@ func _connect_signals() -> void:
 			gs.connect("state_reset", _on_state_reset)
 		if gs.has_signal("stage_changed") and not gs.is_connected("stage_changed", _on_stage_changed):
 			gs.connect("stage_changed", _on_stage_changed)
+		if (
+			gs.has_signal("story_flag_changed")
+			and not gs.is_connected("story_flag_changed", _on_story_flag_changed)
+		):
+			gs.connect("story_flag_changed", _on_story_flag_changed)
 	_signals_connected = true
 
 
@@ -59,6 +64,11 @@ func get_current_progress() -> StoryStageProgress:
 	progress.story_rival_id = def.story_rival_id
 	progress.rival_required = def.requires_story_rival
 	progress.completion_mode = def.completion_mode
+	progress.completion_flag_id = def.completion_flag_id
+	if def.stage == GameTypes.GameStage.PROLOGUE:
+		var objective: Dictionary = _prologue_objective(gs)
+		progress.objective_id = StringName(str(objective.get("id", "")))
+		progress.objective_text = str(objective.get("text", ""))
 	if String(def.story_rival_id) != "":
 		progress.rival_defeated = bool(gs.call("is_rival_defeated", def.story_rival_id))
 	else:
@@ -67,11 +77,38 @@ func get_current_progress() -> StoryStageProgress:
 		progress.girl_completed = bool(gs.call("is_girl_conquered", def.story_girl_id))
 	else:
 		progress.girl_completed = false
-	progress.external_milestone_complete = bool(
-		gs.call("get_story_flag", StoryIds.FLAG_WORLD_EXPANSION_COMPLETE)
-	)
+	progress.external_milestone_complete = false
+	if (
+		def.completion_mode == StoryTypes.StageCompletionMode.EXTERNAL_MILESTONE
+		and String(def.completion_flag_id) != ""
+	):
+		progress.external_milestone_complete = bool(
+			gs.call("get_story_flag", def.completion_flag_id)
+		)
 	progress.is_complete = _is_definition_complete(def)
 	return progress
+
+
+func _prologue_objective(gs: Node) -> Dictionary:
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED)):
+		return {"id": &"pick_up_card", "text": "Подними карточку у кровати."}
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_NEIGHBOR_BRIEFING_COMPLETE)):
+		return {
+			"id": &"find_neighbor",
+			"text": "Найди соседку возле дома и попроси научить тебя свиданиям.",
+		}
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_FOOD_READY)):
+		return {"id": &"prepare_food", "text": "Подготовь еду для свидания."}
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_DRINK_READY)):
+		return {"id": &"prepare_drink", "text": "Подготовь напитки для свидания."}
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_OUTFIT_READY)):
+		return {"id": &"prepare_outfit", "text": "Выбери одежду у гардероба."}
+	if not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE)):
+		return {
+			"id": &"start_tutorial_date",
+			"text": "Подойди к столу и начни обучающее свидание.",
+		}
+	return {"id": &"tutorial_complete", "text": ""}
 
 
 func reconcile_current_stage() -> bool:
@@ -209,6 +246,15 @@ func _on_state_reset() -> void:
 	stage_objective_changed.emit(get_current_progress())
 
 
+func _on_story_flag_changed(flag_id: StringName, value: bool) -> void:
+	if _advancing:
+		return
+	if flag_id == StoryIds.FLAG_TUTORIAL_DATE_COMPLETE and value:
+		if _try_complete_current_stage():
+			return
+	stage_objective_changed.emit(get_current_progress())
+
+
 func _on_stage_changed(_new_stage: GameTypes.GameStage, _previous_stage: GameTypes.GameStage) -> void:
 	if _advancing:
 		# Gameplay advance emits started/objective after advance_stage returns (spec §14).
@@ -259,7 +305,9 @@ func _is_definition_complete(def: StoryStageDefinition) -> bool:
 		StoryTypes.StageCompletionMode.NONE:
 			return false
 		StoryTypes.StageCompletionMode.EXTERNAL_MILESTONE:
-			return bool(gs.call("get_story_flag", StoryIds.FLAG_WORLD_EXPANSION_COMPLETE))
+			if String(def.completion_flag_id) == "":
+				return false
+			return bool(gs.call("get_story_flag", def.completion_flag_id))
 		StoryTypes.StageCompletionMode.GIRL_COMPLETED:
 			if String(def.story_girl_id) == "":
 				return false

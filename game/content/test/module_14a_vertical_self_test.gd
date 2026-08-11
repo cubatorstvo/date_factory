@@ -384,7 +384,7 @@ func _play_forced_plan(girl_id: StringName, planned: Array[StringName]) -> Datin
 
 
 func _test_plus5_story_girls() -> void:
-	for girl_id in [StoryIds.GIRL_NEIGHBOR, StoryIds.GIRL_ACTRESS, StoryIds.GIRL_MINE_BOSS]:
+	for girl_id in [StoryIds.GIRL_ACTRESS, StoryIds.GIRL_MINE_BOSS]:
 		var reached: bool = false
 		var best_delta: int = -999
 		for seed in range(1, 21):
@@ -414,7 +414,6 @@ func _test_plus5_story_girls() -> void:
 
 func _test_repeat_date_feasibility() -> void:
 	for girl_id in [
-		StoryIds.GIRL_NEIGHBOR,
 		StoryIds.GIRL_ACTRESS,
 		StoryIds.GIRL_MINE_BOSS,
 		&"girl_cafe_laptop",
@@ -483,9 +482,11 @@ func _test_money_softlock() -> void:
 func _test_stage_progression_skeleton() -> void:
 	_reset()
 	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.PROLOGUE), "start PROLOGUE")
-	_gs.call("mark_girl_conquered", StoryIds.GIRL_NEIGHBOR)
-	_ok(bool(_story.call("reconcile_current_stage")), "neighbor -> STAGE_1")
-	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.STAGE_1), "STAGE_1")
+	_gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE, true)
+	_ok(
+		int(_gs.call("get_stage")) == int(GameTypes.GameStage.STAGE_1),
+		"tutorial milestone -> STAGE_1",
+	)
 	_gs.call("mark_rival_defeated", StoryIds.RIVAL_ACTRESS)
 	_ok(int(_gs.call("get_stage")) == int(GameTypes.GameStage.STAGE_1), "rival alone keeps STAGE_1")
 	_gs.call("mark_girl_conquered", StoryIds.GIRL_ACTRESS)
@@ -534,7 +535,10 @@ func _test_reset_cleanliness() -> void:
 		_ok(not bool(_gs.call("has_girl_contact", StoryIds.GIRL_ACTRESS)), "reset no actress contact")
 	_ok(int(_gs.call("get_girl_relationship", StoryIds.GIRL_ACTRESS)) == 0, "reset relationships 0")
 	_ok(int(_gs.call("get_money")) == 0, "reset money 0")
-	_ok(bool(_story.call("should_story_girl_be_present", StoryIds.GIRL_NEIGHBOR)), "reset neighbor present")
+	_ok(
+		not bool(_story.call("should_story_girl_be_present", StoryIds.GIRL_NEIGHBOR)),
+		"friend-only Neighbor is not a story romance spawn",
+	)
 	_ok(not bool(_story.call("should_story_girl_be_present", StoryIds.GIRL_ACTRESS)), "reset actress absent")
 	_ok(not bool(_story.call("should_story_girl_be_present", StoryIds.GIRL_MINE_BOSS)), "reset mine boss absent")
 	_ok(not bool(_story.call("is_feature_unlocked", StoryTypes.StoryFeature.SALARY_MINE)), "reset salary locked")

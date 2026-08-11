@@ -12,6 +12,8 @@
 [ext_resource type="Script" uid="uid://diec1fdonvb3i" path="res://world/actors/stage_actor_anchor.gd" id="8_w30d6"]
 [ext_resource type="Script" uid="uid://fxhdpa52ttr0" path="res://world/npc_presentation_rules.gd" id="9_i4m68"]
 [ext_resource type="Script" uid="uid://0cqhjvkjvf53" path="res://game/media/media_attention_visual.gd" id="9_mavis"]
+[ext_resource type="PackedScene" uid="uid://k627612f6tj5" path="res://game/story/neighbor_mentor.tscn" id="10_2i33n"]
+[ext_resource type="Script" uid="uid://bnmlhw6p2i15p" path="res://game/story/neighbor_mentor.gd" id="11_bbttm"]
 [ext_resource type="PackedScene" uid="uid://ddoirw6x62vam" path="res://world/flavor/flavor_interactable.tscn" id="12_c5lr1"]
 [ext_resource type="PackedScene" uid="uid://dxwi4gmiti7q0" path="res://assets/environment/city/downtown_megakit/meshes/Door_2.gltf" id="21_rt5w2"]
 [ext_resource type="PackedScene" uid="uid://v1jb038ujla4" path="res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf" id="27_l3vvg"]
@@ -490,6 +492,13 @@ rival_id = &"rival_city_headphones"
 
 [node name="NpcPresentationRules" type="Node" parent="NpcSpawns" unique_id=1835509468]
 script = ExtResource("9_i4m68")
+
+[node name="NeighborMentor" type="Area3D" parent="NpcSpawns" unique_id=825001344 instance=ExtResource("10_2i33n")]
+transform = Transform3D(-0.7619391, 0, -0.6476487, 0, 1, 0, 0.6476487, 0, -0.7619391, 27.5, 0.05, 7)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_bbttm")
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1615612912]
 

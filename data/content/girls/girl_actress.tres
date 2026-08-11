@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="GirlDefinition" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="GirlDefinition" format=3 uid="uid://bqvj1at1cbk0a"]
 
-[ext_resource type="Script" path="res://data/definitions/girl_definition.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://cniyfngarr215" path="res://data/definitions/girl_definition.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")
@@ -11,7 +11,6 @@ has_story_stage = true
 story_stage = 1
 primary_trait = 1
 secondary_trait = 3
-required_experience = 1
 discovery_situation_id = &"discovery_situation_actress_waiting"
 appearance_profile_id = &"appearance_female_actress"
 dating_pool_ids = Array[StringName]([&"date_pool_cafe_common", &"date_pool_actress"])

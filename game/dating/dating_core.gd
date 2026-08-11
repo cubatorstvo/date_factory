@@ -9,6 +9,7 @@ signal action_execution_requested(request: DatingActionExecutionRequest)
 signal phase_changed(phase: DatingTypes.Phase)
 signal date_finished(result: DatingResult)
 signal reaction_presented(reaction: int, result_text: String)
+signal tutorial_correction_presented(explanation: String)
 
 var _session: DatingSession = null
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -67,8 +68,10 @@ func start_date(request: DatingStartRequest) -> Dictionary:
 	var girl: GirlDefinition = db.call("get_girl", request.girl_id) as GirlDefinition
 	if girl == null:
 		return _fail(DatingTypes.ERR_NO_GIRL)
+	if not girl.romance_available and not request.tutorial_mode:
+		return _fail(DatingTypes.ERR_NO_CONTACT)
 	var has_contact: bool = bool(gs.call("has_girl_contact", request.girl_id))
-	if not has_contact:
+	if not has_contact and not request.tutorial_mode:
 		return _fail(DatingTypes.ERR_NO_CONTACT)
 	if request.greeting_ids.is_empty():
 		return _fail(DatingTypes.ERR_MISSING_GREETING)
@@ -82,9 +85,7 @@ func start_date(request: DatingStartRequest) -> Dictionary:
 	if request.rng_seed >= 0:
 		_rng.seed = request.rng_seed
 		_rng.state = 0
-	var plan: Dictionary = DatingEventPlanner.plan_central_events(
-		girl, db, request.location_id, request.excluded_event_ids, _rng
-	)
+	var plan: Dictionary = _build_event_plan(request, girl, db)
 	if not bool(plan.get("ok", false)):
 		return _fail(DatingTypes.ERR_INSUFFICIENT_DATE_CONTENT)
 	var session := DatingSession.new()
@@ -92,6 +93,7 @@ func start_date(request: DatingStartRequest) -> Dictionary:
 	_next_date_id += 1
 	session.girl_id = request.girl_id
 	session.location_id = request.location_id
+	session.tutorial_mode = request.tutorial_mode
 	session.greeting_ids = request.greeting_ids.duplicate()
 	session.farewell_id = request.farewell_id
 	var planned_ids: Array = plan.get("event_ids", []) as Array
@@ -106,6 +108,44 @@ func start_date(request: DatingStartRequest) -> Dictionary:
 	arrival_presentation_requested.emit(session.girl_id)
 	phase_changed.emit(session.phase)
 	return {"ok": true, "error": DatingTypes.ERR_OK, "session": session}
+
+
+func _build_event_plan(
+	request: DatingStartRequest,
+	girl: GirlDefinition,
+	db: Node,
+) -> Dictionary:
+	if request.forced_event_ids.is_empty():
+		return DatingEventPlanner.plan_central_events(
+			girl,
+			db,
+			request.location_id,
+			request.excluded_event_ids,
+			_rng,
+		)
+	var ids: Array[StringName] = request.forced_event_ids.duplicate()
+	var categories: Array = []
+	if ids.size() != 3:
+		return {"ok": false}
+	for event_id in ids:
+		var event: DatingEventDefinition = db.call(
+			"get_dating_event",
+			event_id,
+		) as DatingEventDefinition
+		if event == null:
+			return {"ok": false}
+		if not DatingEventPlanner.event_allowed_at_location(
+			event,
+			request.location_id,
+		):
+			return {"ok": false}
+		categories.append(event.category)
+	return {
+		"ok": true,
+		"event_ids": ids,
+		"categories": categories,
+		"error": DatingTypes.ERR_OK,
+	}
 
 
 func continue_arrival() -> Dictionary:
@@ -297,6 +337,20 @@ func _current_actions() -> Array[DatingActionDefinition]:
 
 func _action_availability(action: DatingActionDefinition) -> Dictionary:
 	var gs: Node = get_node("/root/GameState")
+	if _session != null and _session.tutorial_mode:
+		return {
+			"id": action.id,
+			"label": action.label,
+			"available": true,
+			"reason": "",
+			"money_cost": action.money_cost,
+			"effective_cost": 0,
+			"free_via_representation": false,
+			"uses_public_significance": false,
+			"required_perk_id": action.required_perk_id,
+			"characteristic": action.characteristic,
+			"required_level": action.required_characteristic_level,
+		}
 	var available: bool = true
 	var reasons: PackedStringArray = PackedStringArray()
 	var uses_public_sig: bool = false
@@ -358,6 +412,18 @@ func select_action(action_id: StringName) -> Dictionary:
 	var action: DatingActionDefinition = _find_action(action_id)
 	if action == null:
 		return _fail(DatingTypes.ERR_INVALID_CHOICE)
+	var event_id: StringName = _current_event_id()
+	if (
+		_session.tutorial_mode
+		and not NeighborTutorialCatalog.is_correct(event_id, action_id)
+	):
+		var explanation: String = NeighborTutorialCatalog.explanation_for(action_id)
+		tutorial_correction_presented.emit(explanation)
+		return {
+			"ok": true,
+			"error": DatingTypes.ERR_OK,
+			"tutorial_retry": true,
+		}
 	var avail: Dictionary = _action_availability(action)
 	if not bool(avail.get("available", false)):
 		return _fail(DatingTypes.ERR_ACTION_UNAVAILABLE)
@@ -378,7 +444,6 @@ func select_action(action_id: StringName) -> Dictionary:
 				return _fail(DatingTypes.ERR_ACTION_UNAVAILABLE)
 			money_spent = money_cost
 			_session.money_spent_total += money_spent
-	var event_id: StringName = _current_event_id()
 	_session.pending_action = action
 	_session.pending_event_id = event_id
 	_session.pending_money_cost = money_cost
@@ -555,6 +620,7 @@ func _finish_secondary_and_close() -> Dictionary:
 	result.date_id = _session.date_id
 	result.girl_id = _session.girl_id
 	result.location_id = _session.location_id
+	result.tutorial_mode = _session.tutorial_mode
 	result.greeting_id = _session.selected_greeting_id
 	result.greeting_reaction = _session.greeting_reaction
 	result.central_event_ids = _session.central_event_ids.duplicate()

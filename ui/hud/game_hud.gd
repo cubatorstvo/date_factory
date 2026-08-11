@@ -139,6 +139,7 @@ func _hook_signals() -> void:
 		_connect(gs, "state_reset", _on_state_reset)
 		_connect(gs, "world_reach_changed", _on_world_reach_changed)
 		_connect(gs, "girl_contact_added", _on_girl_contact_added)
+		_connect(gs, "story_flag_changed", _on_story_flag_changed)
 	var story: Node = get_node_or_null("/root/Story")
 	if story != null:
 		_connect(story, "feature_unlocked", _on_feature_unlocked)
@@ -361,10 +362,22 @@ func _refresh_resources() -> void:
 	_authority_label.text = "АВТОРИТЕТ %d" % authority
 	_experience_label.text = "ПОКОРЕННЫХ СЕРДЕЦ %d" % experience
 	_points_label.text = "БАЛЛЫ %d" % points
+	_money_label.visible = true
+	_authority_label.visible = false
+	_points_label.visible = false
+	_experience_label.visible = bool(
+		gs.call("get_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED)
+	)
 
 
 func _on_money_changed(_new_value: int, _delta: int) -> void:
 	_refresh_resources()
+
+
+func _on_story_flag_changed(flag_id: StringName, _value: bool) -> void:
+	if flag_id == StoryIds.FLAG_HEART_CARD_CLAIMED:
+		_refresh_resources()
+	_refresh_objective()
 
 
 func _on_authority_changed(_new_value: int, delta: int) -> void:
@@ -779,11 +792,9 @@ func _resolve_objective_text() -> String:
 	var progress: StoryStageProgress = story.call("get_current_progress") as StoryStageProgress
 	if progress == null:
 		return STAGE0_OBJECTIVE_FALLBACK
-	# Stage-0 / prologue: meet Neighbor until contact; then Phone-canonical next date line.
-	# Read-model: StoryStageProgress.story_girl_id + GameState.has_girl_contact /
-	# get_girl_date_cooldown_days_remaining (same copy as Phone girl detail).
+	# Story owns the multi-step morning tutorial objective read-model.
 	if progress.stage == GameTypes.GameStage.PROLOGUE:
-		return _prologue_objective_text(progress)
+		return progress.objective_text
 	var phone_line: String = _objective_from_phone_story()
 	if phone_line.strip_edges() != "":
 		return phone_line
