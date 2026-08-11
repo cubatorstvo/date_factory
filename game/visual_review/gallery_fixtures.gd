@@ -142,7 +142,7 @@ func set_phone_tab(phone: PhoneJournal, tab: PhoneJournal.PhoneTab) -> void:
 		phone.set_tab(tab)
 		return
 	var captions: Dictionary = {
-		PhoneJournal.PhoneTab.STATUS: "СТАТУС",
+		PhoneJournal.PhoneTab.STATUS: "ПРОКАЧКА",
 		PhoneJournal.PhoneTab.STORY: "СЮЖЕТ",
 		PhoneJournal.PhoneTab.GIRLS: "ДЕВУШКИ",
 		PhoneJournal.PhoneTab.MEDIA: "МЕДИА",

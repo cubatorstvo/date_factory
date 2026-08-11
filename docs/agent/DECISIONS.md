@@ -151,9 +151,9 @@ One-off controls remain declarative children of their owning screen. Repeated ru
 
 The existing 100/125/150% setting remains an accessibility multiplier for theme typography. It must not geometrically scale a fullscreen root, because that moves anchored controls outside the viewport.
 
-## D-UI-03 — Phone on Q; progression from phone
+## D-UI-03 — Phone on Q; progression inside phone tab
 
-**Decision:** Permanent `phone` InputMap action on **Q** opens `PhoneJournal` in GAMEPLAY. Esc/Q closes. Progression opens from phone header button **ПРОКАЧКА** with a badge when `upgrade_points > 0`. Apartment `ProgressionInteractable` remains a local shortcut to the same modal. Q during minigames stays `minigame_special_1`.
+**Decision:** Permanent `phone` InputMap action on **Q** opens `PhoneJournal` in GAMEPLAY. Esc/Q closes. Progression lives on the phone **ПРОКАЧКА** tab (former СТАТУС content + embedded perk tree). No separate header **ПРОКАЧКА** button. Tab order: **ДЕВУШКИ → ПРОКАЧКА → СЮЖЕТ** (+ МЕДИА/КЛОНЫ when unlocked). Default open tab is **ДЕВУШКИ**. Apartment wardrobe is clothing shop, not progression. Q during minigames stays `minigame_special_1`.
 
 ## D-UI-04 — Player label «Покоренных сердец»
 
@@ -165,6 +165,10 @@ The existing 100/125/150% setting remains an accessibility multiplier for theme 
 - related: `required_experience` on girl defs, `experience_gained` on relationship results, `late_experience_granted`
 
 Do not rename code identifiers; only UI strings and product docs use the new label.
+
+## D-WARDROBE-01 — Apartment wardrobe clothing shop
+
+**Decision:** Wardrobe Interaction opens a fridge-like single-column clothing menu. Starting outfits: **Повседневный** and **Дешёвый деловой** (unlocked). Additional outfits are purchased with money and equip via story flags (`wardrobe_item_*_owned`, `wardrobe_equipped_*`). Visual mesh swap for the FPS player is deferred until dedicated male outfit assets are wired.
 
 ---
 

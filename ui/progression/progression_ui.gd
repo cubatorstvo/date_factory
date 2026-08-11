@@ -21,6 +21,8 @@ var _player: Node = null
 var _on_closed: Callable = Callable()
 var _selected_char: GameTypes.PlayerCharacteristic = GameTypes.PlayerCharacteristic.MUSCLE
 var _selected_perk_id: StringName = &""
+var _embedded: bool = false
+var _embedded_panel: Control = null
 
 @onready var _root: Control = %Root
 @onready var _points_label: Label = %PointsLabel
@@ -85,6 +87,7 @@ func open(
 	on_closed: Callable = Callable(),
 	characteristic: GameTypes.PlayerCharacteristic = GameTypes.PlayerCharacteristic.MUSCLE,
 ) -> void:
+	_embedded = false
 	_player = player
 	_on_closed = on_closed
 	_selected_char = characteristic
@@ -98,7 +101,49 @@ func open(
 	call_deferred("_focus_first_control")
 
 
+func embed_into(
+	host: Control,
+	player: Node,
+	characteristic: GameTypes.PlayerCharacteristic = GameTypes.PlayerCharacteristic.MUSCLE,
+) -> void:
+	_embedded = true
+	_player = player
+	_on_closed = Callable()
+	_selected_char = characteristic
+	_selected_perk_id = &""
+	process_mode = Node.PROCESS_MODE_INHERIT
+	visible = true
+	var dim: CanvasItem = _root.get_node_or_null("Dim") as CanvasItem
+	if dim != null:
+		dim.visible = false
+	_close_btn.visible = false
+	var title: Label = _root.find_child("Title", true, false) as Label
+	if title != null:
+		title.visible = false
+	var panel: Control = _root.get_node_or_null("SafeMargin/Center/Panel") as Control
+	if panel == null or host == null:
+		push_error("[ProgressionUI] embed host/panel missing")
+		return
+	panel.reparent(host)
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.custom_minimum_size = Vector2(0.0, 480.0)
+	_embedded_panel = panel
+	_root.visible = false
+	_refresh()
+	call_deferred("_focus_first_control")
+
+
+func refresh_embedded() -> void:
+	if _embedded:
+		_refresh()
+
+
 func close() -> void:
+	if _embedded:
+		_teardown_embedded()
+		return
 	_audio_play_ui(AudioIds.UI_BACK)
 	var p: Node = _player
 	var cb: Callable = _on_closed
@@ -113,8 +158,20 @@ func close() -> void:
 		p.call("enter_gameplay")
 
 
+func _teardown_embedded() -> void:
+	_player = null
+	_on_closed = Callable()
+	_selected_perk_id = &""
+	_embedded = false
+	if _embedded_panel != null and is_instance_valid(_embedded_panel):
+		_embedded_panel.queue_free()
+	_embedded_panel = null
+	if is_instance_valid(self):
+		queue_free()
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or _embedded:
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("phone"):
 		close()

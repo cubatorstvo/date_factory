@@ -148,7 +148,7 @@ Architecture: `docs/ui/UI_ARCHITECTURE.md`.
 - MEDIA: Attention, publish, NEW/READ incoming (Open → journal, no schedule), feed newest-first; overload capacity/backlog/Feed Boost when active.
 - Realization modal exact «Проблема не в графике / Проблема в количестве меня» on next Phone open or safe GAMEPLAY; mechanical recognition does not wait for the modal.
 - CLONES read-only rates; assign/upgrades on lab / Global terminals.
-- Progression UI: all 32 perks via apartment Самооценка; no Phone perk purchase.
+- Progression UI: all 32 perks via phone tab **ПРОКАЧКА** (Q); apartment wardrobe is clothing shop.
 - Dating / RivalEncounterUI / minigames (`MinigameShell`) / terminals / FinalDateUI: themed presentation; gameplay remains source of truth; at most one modal owner.
 - STOP before MODULE 23 audio/animation/VFX.
 

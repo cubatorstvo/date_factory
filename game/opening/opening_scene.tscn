@@ -53,7 +53,8 @@ mesh = SubResource("BoxMesh_x762h")
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.012, 0)
 pixel_size = 0.0014
 modulate = Color(0.12, 0.08, 0.07, 1)
-text = "ПОКОРЁННЫХ\\nСЕРДЕЦ: ____"
+text = "ПОКОРЁННЫХ
+СЕРДЕЦ: ____"
 font_size = 24
 outline_size = 3
 
@@ -80,6 +81,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.05, 0.65)
 [node name="NeighborExitB" type="Marker3D" parent="Staging" unique_id=1881886437]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.05, 0.25)
 
+[node name="CardHoldPose" type="Marker3D" parent="Staging" unique_id=386702283]
+transform = Transform3D(-0.13917308, 0.49513403, 0.8575973, 0, 0.8660254, -0.5, -0.99026805, -0.06958654, -0.12052742, 0.82, 1.02, 0.68)
+
 [node name="CinematicCamera" type="Camera3D" parent="." unique_id=1957435]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 1.28, 0.608)
 fov = 62.0
@@ -100,6 +104,9 @@ shape = SubResource("BoxShape3D_vc7yo")
 
 [node name="OpeningPlayer" parent="." unique_id=670911453 instance=ExtResource("8_bwqoo")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.05, 1.5)
+
+[node name="CardCarryPose" type="Marker3D" parent="OpeningPlayer" unique_id=476865386]
+transform = Transform3D(0.99270993, -0.000339441, -0.120527446, -0.060410876, 0.8639158, -0.5, 0.10429528, 0.5036361, 0.8575973, 0.28, 1.2, -0.58)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1275059537]
 layer = 20
@@ -137,30 +144,10 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="CardPanel" type="PanelContainer" parent="UI" unique_id=195193115]
-visible = false
-anchors_preset = -1
-anchor_left = 0.29
-anchor_top = 0.18
-anchor_right = 0.71
-anchor_bottom = 0.66
-mouse_filter = 2
-theme = ExtResource("10_3nu4x")
-
-[node name="Margin" type="MarginContainer" parent="UI/CardPanel" unique_id=599951895]
+[node name="SkipHint" type="Label" parent="UI/Subtitles/Margin/VBox" unique_id=1741915015]
 layout_mode = 2
-theme_override_constants/margin_left = 44
-theme_override_constants/margin_top = 44
-theme_override_constants/margin_right = 44
-theme_override_constants/margin_bottom = 44
-
-[node name="CardCopy" type="Label" parent="UI/CardPanel/Margin" unique_id=1318392565]
-layout_mode = 2
-theme_override_font_sizes/font_size = 42
-text = "ПОКОРЁННЫХ СЕРДЕЦ: ____"
+text = "Любая кнопка — дальше"
 horizontal_alignment = 1
-vertical_alignment = 1
-autowrap_mode = 2
 
 [node name="ObjectivePanel" type="PanelContainer" parent="UI" unique_id=801533501]
 visible = false
@@ -212,3 +199,19 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 color = Color(0.02, 0.015, 0.012, 1)
+
+[node name="StandPrompt" type="PanelContainer" parent="UI" unique_id=451190663]
+visible = false
+anchors_preset = -1
+anchor_left = 0.4
+anchor_top = 0.78
+anchor_right = 0.6
+anchor_bottom = 0.86
+mouse_filter = 2
+theme = ExtResource("10_3nu4x")
+
+[node name="Text" type="Label" parent="UI/StandPrompt" unique_id=417207590]
+layout_mode = 2
+text = "E — Встать"
+horizontal_alignment = 1
+vertical_alignment = 1

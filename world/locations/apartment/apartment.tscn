@@ -15,7 +15,7 @@
 [ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="7_h50ke"]
 [ext_resource type="PackedScene" uid="uid://cfxmpso74c5hh" path="res://assets/environment/interior/house_interior/meshes/Carpet_2.fbx" id="7_nbnpt"]
 [ext_resource type="PackedScene" uid="uid://qhb74e50l1d0" path="res://assets/environment/interior/house_interior/meshes/Kitchen_Fridge.fbx" id="8_a7vfm"]
-[ext_resource type="Script" uid="uid://cb572kponqf7p" path="res://game/progression/progression_interactable.gd" id="8_pw7ec"]
+[ext_resource type="Script" path="res://world/locations/apartment/apartment_wardrobe_interactable.gd" id="8_pw7ec"]
 [ext_resource type="PackedScene" uid="uid://drs6dymd5wh0" path="res://assets/environment/interior/house_interior/meshes/Kitchen_Oven.fbx" id="9_1xvmk"]
 [ext_resource type="PackedScene" path="res://core/interaction_area.tscn" id="9_pw7ec"]
 [ext_resource type="Script" uid="uid://cwbexew6cgj2y" path="res://world/locations/apartment/apartment_fridge_interactable.gd" id="10_fridge"]

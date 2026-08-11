@@ -21,13 +21,13 @@ enum PhoneTab {
 @onready var _detail: RichTextLabel = %GirlDetail
 @onready var _title: Label = %TitleLabel
 @onready var _close_btn: Button = %CloseButton
-@onready var _progression_btn: Button = %ProgressionButton
 @onready var _progression_badge: Label = %ProgressionBadge
+@onready var _progression_host: Control = %ProgressionHost
 var _player: Node = null
 var _is_open: bool = false
 var _listed_ids: Array[StringName] = []
-var _active_tab: PhoneTab = PhoneTab.STATUS
-var _progression_modal: CanvasLayer = null
+var _active_tab: PhoneTab = PhoneTab.GIRLS
+var _embedded_progression: CanvasLayer = null
 
 const PROGRESSION_SCENE: String = "res://ui/progression/progression_ui.tscn"
 
@@ -124,7 +124,7 @@ func open(player: Node = null) -> void:
 func close() -> void:
 	if not _is_open and not visible:
 		return
-	_close_progression_modal()
+	_teardown_embedded_progression()
 	_audio_play_ui(AudioIds.UI_BACK)
 	visible = false
 	_is_open = false
@@ -293,16 +293,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _is_open:
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("phone"):
-		if _has_progression_modal():
-			_close_progression_modal()
-		else:
-			close()
+		close()
 		get_viewport().set_input_as_handled()
 
 
 func _wire_scene() -> void:
 	_close_btn.pressed.connect(close)
-	_progression_btn.pressed.connect(_on_progression_pressed)
 	_list.item_selected.connect(_on_item_selected)
 	_tab_buttons = {
 		PhoneTab.STATUS: %StatusTab,
@@ -324,7 +320,7 @@ func _wire_scene() -> void:
 		button.pressed.connect(_set_active_tab.bind(tab))
 	_salary_advance_btn.pressed.connect(_on_salary_advance_pressed)
 	_overload_boost_btn.pressed.connect(_on_overload_feed_boost_pressed)
-	_set_active_tab(PhoneTab.STATUS)
+	_set_active_tab(PhoneTab.GIRLS)
 	_refresh_progression_badge()
 
 
@@ -340,12 +336,13 @@ func _refresh_progression_badge() -> void:
 		_progression_badge.text = str(points)
 
 
-func _on_progression_pressed() -> void:
-	if not _is_open:
+func _ensure_embedded_progression() -> void:
+	if _has_embedded_progression():
+		if _embedded_progression.has_method("refresh_embedded"):
+			_embedded_progression.call("refresh_embedded")
 		return
-	if _has_progression_modal():
+	if _progression_host == null:
 		return
-	_audio_play_ui(AudioIds.UI_CLICK)
 	var packed: PackedScene = load(PROGRESSION_SCENE) as PackedScene
 	if packed == null:
 		push_error("[PhoneJournal] progression scene missing")
@@ -354,41 +351,34 @@ func _on_progression_pressed() -> void:
 	if layer == null:
 		return
 	add_child(layer)
-	_progression_modal = layer
-	if layer.has_method("open"):
-		# Stay in phone MODAL_UI when progression closes.
-		layer.call("open", _player, Callable(self, "_on_progression_closed"))
+	_embedded_progression = layer
+	if layer.has_method("embed_into"):
+		layer.call("embed_into", _progression_host, _player)
+		if layer.has_signal("purchase_notified"):
+			layer.connect("purchase_notified", _on_embedded_purchase_notified)
 	else:
-		_progression_modal = null
+		_embedded_progression = null
 		layer.queue_free()
 
 
-func _on_progression_closed(_player_ref: Node) -> void:
-	_progression_modal = null
+func _on_embedded_purchase_notified(_message: String) -> void:
 	_refresh_progression_badge()
 	_request_status_refresh()
-	if _is_open and _player != null and _player.has_method("enter_modal_ui"):
-		_player.call("enter_modal_ui")
 
 
-func _has_progression_modal() -> bool:
-	return _progression_modal != null and is_instance_valid(_progression_modal)
+func _has_embedded_progression() -> bool:
+	return _embedded_progression != null and is_instance_valid(_embedded_progression)
 
 
-func _close_progression_modal() -> void:
-	if not _has_progression_modal():
-		_progression_modal = null
+func _teardown_embedded_progression() -> void:
+	if not _has_embedded_progression():
+		_embedded_progression = null
 		return
-	var layer: CanvasLayer = _progression_modal
-	_progression_modal = null
-	if not is_instance_valid(layer):
-		return
-	# Drop callback so teardown does not toggle control mode.
-	layer.set("_on_closed", Callable())
-	layer.set("_player", null)
+	var layer: CanvasLayer = _embedded_progression
+	_embedded_progression = null
 	if layer.has_method("close"):
 		layer.call("close")
-	else:
+	elif is_instance_valid(layer):
 		layer.queue_free()
 
 
@@ -443,6 +433,8 @@ func _show_active_tab() -> void:
 		if page == null:
 			continue
 		page.visible = (key as PhoneTab) == _active_tab
+	if _active_tab == PhoneTab.STATUS and _is_open:
+		_ensure_embedded_progression()
 
 
 func _refresh_tab_visibility() -> void:

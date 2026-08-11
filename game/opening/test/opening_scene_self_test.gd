@@ -31,28 +31,54 @@ func _run_opening_contract() -> void:
 	_ok(opening.has_node("OpeningPlayer"), "existing FPS Player reused")
 	_ok(opening.has_node("Actors/Neighbor"), "Neighbor actor present")
 	_ok(opening.has_node("OpeningBed/Collision"), "bed interaction volume present")
-	_ok(not opening.is_player_control_enabled(), "player input locked during cinematic")
+	_ok(not opening.is_player_control_enabled(), "movement locked during seated cinematic")
+	_ok(opening.is_cinematic_look_enabled(), "free-look enabled while seated")
+	var skip_hint: Label = opening.get_node("UI/Subtitles/Margin/VBox/SkipHint") as Label
+	_ok(skip_hint != null and skip_hint.text == "Любая кнопка — дальше", "dialogue skip hint present")
+	var card_prop: Node3D = opening.get_node("Props/HeartCard") as Node3D
+	_ok(card_prop != null and card_prop.visible, "same physical card begins on table")
+	var camera: Camera3D = opening.get_node("CinematicCamera") as Camera3D
+	var rotation_before: Vector3 = camera.rotation
+	var look_event: InputEventMouseMotion = InputEventMouseMotion.new()
+	look_event.relative = Vector2(18.0, -9.0)
+	opening._input(look_event)
+	_ok(camera.rotation != rotation_before, "mouse motion rotates seated camera")
+	var dialogue_active: bool = await _wait_for_dialogue(opening, 2000)
+	_ok(dialogue_active, "dialogue becomes skippable")
+	if dialogue_active:
+		var skip_event: InputEventMouseButton = InputEventMouseButton.new()
+		skip_event.button_index = MOUSE_BUTTON_LEFT
+		skip_event.pressed = true
+		opening._input(skip_event)
+		_ok(bool(opening.get("_line_skip_requested")), "mouse button requests line skip")
 	_ok(OpeningScene.CARD_COPY == "ПОКОРЁННЫХ СЕРДЕЦ: ____", "card copy has empty field")
 	_ok(not OpeningScene.CARD_COPY.contains("0"), "card never displays numeric zero")
 	_ok(OpeningScene.DIALOGUE_COPY.size() == 12, "all authored dialogue beats present")
 	_ok(not _dialogue_contains_forbidden_copy(), "no internal-monologue or evening-decision copy")
 
-	var reached_interactive: bool = await _wait_for_phase(
-		opening,
-		OpeningScene.Phase.INTERACTIVE,
-		5000
-	)
-	_ok(reached_interactive, "cinematic reaches player handoff")
-	if not reached_interactive:
+	var reached_stand_prompt: bool = await _wait_for_stand_prompt(opening, 5000)
+	_ok(reached_stand_prompt, "departure exposes E stand prompt")
+	if not reached_stand_prompt:
 		_release_runtime_resources(opening)
 		opening.queue_free()
 		await get_tree().process_frame
 		await get_tree().process_frame
 		return
-	_ok(opening.is_player_control_enabled(), "FPS control restored after departure")
+	_ok(not opening.is_player_control_enabled(), "movement remains locked until player stands")
+	_ok(opening.is_card_in_hand(), "physical table card is held while seated")
+	_ok(card_prop.get_parent() == opening.get_node("Props"), "held seated card is not camera-parented")
+	var stand_prompt: Control = opening.get_node("UI/StandPrompt") as Control
+	_ok(stand_prompt.visible, "E stand prompt is visible during departure")
+	opening.request_stand()
+	var reached_interactive: bool = await _wait_for_phase(
+		opening,
+		OpeningScene.Phase.INTERACTIVE,
+		2000
+	)
+	_ok(reached_interactive, "E stand request reaches gameplay handoff")
+	_ok(opening.is_player_control_enabled(), "FPS movement restored when player stands")
 	_ok(opening.get_objective_text() == OpeningScene.SLEEP_OBJECTIVE, "sleep objective exact")
-	var card_prop: Node3D = opening.get_node("Props/HeartCard") as Node3D
-	_ok(card_prop != null and card_prop.visible, "physical card remains in apartment")
+	_ok(card_prop.visible and card_prop.get_parent() == opening.get_node("OpeningPlayer"), "same physical card remains carried by player")
 	var bed: OpeningBedInteractable = opening.get_node("OpeningBed") as OpeningBedInteractable
 	_ok(bed != null and bed.interaction_enabled, "bed enabled only after handoff")
 
@@ -88,6 +114,24 @@ func _release_runtime_resources(opening: OpeningScene) -> void:
 		var cup: Node = opening.get_node_or_null(cup_path)
 		if is_instance_valid(cup):
 			cup.free()
+
+
+func _wait_for_dialogue(opening: OpeningScene, timeout_ms: int) -> bool:
+	var deadline: int = Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() < deadline:
+		if bool(opening.get("_line_active")):
+			return true
+		await get_tree().process_frame
+	return false
+
+
+func _wait_for_stand_prompt(opening: OpeningScene, timeout_ms: int) -> bool:
+	var deadline: int = Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() < deadline:
+		if opening.is_waiting_for_stand():
+			return true
+		await get_tree().process_frame
+	return false
 
 
 func _wait_for_phase(opening: OpeningScene, target: OpeningScene.Phase, timeout_ms: int) -> bool:

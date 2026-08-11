@@ -14,6 +14,7 @@ signal phase_changed(phase: int)
 
 const CARD_COPY: String = "ПОКОРЁННЫХ СЕРДЕЦ: ____"
 const SLEEP_OBJECTIVE: String = "Уже поздно. Ложись спать."
+const CINEMATIC_PITCH_LIMIT_DEGREES: float = 70.0
 const DIALOGUE_COPY: Array[String] = [
 	"Сколько стран ты посетил?",
 	"Три.",
@@ -38,13 +39,14 @@ const DIALOGUE_COPY: Array[String] = [
 @onready var _neighbor: CharacterActor = $Actors/Neighbor
 @onready var _neighbor_exit_a: Marker3D = $Staging/NeighborExitA
 @onready var _neighbor_exit_b: Marker3D = $Staging/NeighborExitB
+@onready var _card_hold_pose: Marker3D = $Staging/CardHoldPose
+@onready var _card_carry_pose: Marker3D = $OpeningPlayer/CardCarryPose
 @onready var _bed: OpeningBedInteractable = $OpeningBed
 @onready var _card_prop: Node3D = $Props/HeartCard
 @onready var _subtitle_panel: Control = $UI/Subtitles
 @onready var _speaker_label: Label = $UI/Subtitles/Margin/VBox/Speaker
 @onready var _dialogue_label: Label = $UI/Subtitles/Margin/VBox/Dialogue
-@onready var _card_panel: Control = $UI/CardPanel
-@onready var _card_label: Label = $UI/CardPanel/Margin/CardCopy
+@onready var _stand_prompt: Control = $UI/StandPrompt
 @onready var _objective_panel: Control = $UI/ObjectivePanel
 @onready var _objective_label: Label = $UI/ObjectivePanel/Margin/VBox/Objective
 @onready var _crosshair: Control = $UI/Crosshair
@@ -52,6 +54,13 @@ const DIALOGUE_COPY: Array[String] = [
 
 var _phase: Phase = Phase.CINEMATIC
 var _completion_emitted: bool = false
+var _line_active: bool = false
+var _line_skip_requested: bool = false
+var _cinematic_look_enabled: bool = true
+var _cinematic_yaw: float = 0.0
+var _cinematic_pitch: float = 0.0
+var _awaiting_stand: bool = false
+var _card_in_hand: bool = false
 
 
 func _ready() -> void:
@@ -69,6 +78,22 @@ func _ready() -> void:
 
 func _input(event: InputEvent) -> void:
 	if _phase == Phase.FINISHED:
+		return
+	if _awaiting_stand and event.is_action_pressed("interact"):
+		request_stand()
+		get_viewport().set_input_as_handled()
+		return
+	if _line_active and _is_dialogue_skip_input(event):
+		_line_skip_requested = true
+		get_viewport().set_input_as_handled()
+		return
+	if (
+		_phase == Phase.CINEMATIC
+		and _cinematic_look_enabled
+		and event is InputEventMouseMotion
+	):
+		_apply_cinematic_look(event as InputEventMouseMotion)
+		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("pause") or event.is_action_pressed("phone"):
 		get_viewport().set_input_as_handled()
@@ -88,6 +113,24 @@ func get_objective_text() -> String:
 
 func is_player_control_enabled() -> bool:
 	return _player != null and _player.get_control_mode() == PlayerController.ControlMode.GAMEPLAY
+
+
+func is_waiting_for_stand() -> bool:
+	return _awaiting_stand
+
+
+func is_card_in_hand() -> bool:
+	return _card_in_hand
+
+
+func is_cinematic_look_enabled() -> bool:
+	return _cinematic_look_enabled
+
+
+func request_stand() -> void:
+	if not _awaiting_stand or _phase != Phase.CINEMATIC:
+		return
+	_stand_up()
 
 
 func _isolate_apartment() -> void:
@@ -144,15 +187,17 @@ func _prepare_player() -> void:
 	if _cinematic_camera != null:
 		_cinematic_camera.current = true
 		_cinematic_camera.look_at(_neighbor.global_position + Vector3(0.0, 1.15, 0.0), Vector3.UP)
+		_cinematic_pitch = _cinematic_camera.rotation.x
+		_cinematic_yaw = _cinematic_camera.rotation.y
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _prepare_ui() -> void:
 	_subtitle_panel.visible = false
-	_card_panel.visible = false
+	_stand_prompt.visible = false
 	_objective_panel.visible = false
 	_crosshair.visible = false
-	_card_prop.visible = false
-	_card_label.text = CARD_COPY
+	_card_prop.visible = true
 	_objective_label.text = ""
 	_fade_rect.visible = true
 	_fade_rect.color = Color(0.02, 0.015, 0.012, 1.0)
@@ -179,9 +224,8 @@ func _run_sequence() -> void:
 	await _show_line("СОСЕДКА", DIALOGUE_COPY[7], 3.5, true)
 	await _show_line("СОСЕДКА", "«%s»" % DIALOGUE_COPY[8], 4.8)
 	_hide_subtitles()
-	_card_panel.visible = true
+	await _give_card()
 	await _wait(8.0)
-	_card_panel.visible = false
 	await _wait(4.0)
 
 	await _show_line("СОСЕДКА", DIALOGUE_COPY[9], 3.5, true)
@@ -190,21 +234,24 @@ func _run_sequence() -> void:
 	await _show_line("СОСЕДКА", DIALOGUE_COPY[10], 5.2)
 	await _show_line("ГЕРОЙ", DIALOGUE_COPY[11], 2.8)
 	_hide_subtitles()
-	await _animate_neighbor_departure()
-	_card_prop.visible = true
-	await _wait(7.0)
-	_handoff_to_player()
+	_awaiting_stand = true
+	_stand_prompt.visible = true
+	call_deferred("_animate_neighbor_departure")
 
 
 func _show_line(speaker: String, copy: String, seconds: float, gesture: bool = false) -> void:
 	_speaker_label.text = speaker
 	_dialogue_label.text = copy
 	_subtitle_panel.visible = true
+	_line_active = true
+	_line_skip_requested = false
 	if gesture and _neighbor != null:
 		var animation: CharacterAnimationController = _neighbor.get_animation_controller()
 		if animation != null and not animation.play_loop(&"seated_gesture"):
 			animation.play_semantic(&"gesture_short")
-	await _wait(seconds)
+	await _wait_or_skip(seconds)
+	_line_active = false
+	_line_skip_requested = false
 	if gesture and _neighbor != null:
 		var animation: CharacterAnimationController = _neighbor.get_animation_controller()
 		if animation != null:
@@ -249,20 +296,95 @@ func _animate_neighbor_departure() -> void:
 	_neighbor.visible = false
 
 
-func _handoff_to_player() -> void:
-	if _phase != Phase.CINEMATIC:
-		return
+func _stand_up() -> void:
+	_awaiting_stand = false
+	_stand_prompt.visible = false
+	_cinematic_look_enabled = false
 	if _cinematic_camera != null:
 		_cinematic_camera.current = false
 	var player_camera: Camera3D = _player.get_camera()
 	if player_camera != null:
 		player_camera.current = true
+	if _card_in_hand and _card_carry_pose != null:
+		var carry_transform: Transform3D = _card_carry_pose.transform
+		_card_prop.reparent(_player, false)
+		_card_prop.transform = carry_transform
 	_player.enter_gameplay()
 	_objective_label.text = SLEEP_OBJECTIVE
 	_objective_panel.visible = true
 	_crosshair.visible = true
 	_bed.interaction_enabled = true
 	_set_phase(Phase.INTERACTIVE)
+
+
+func _give_card() -> void:
+	if _card_prop == null or _card_hold_pose == null:
+		return
+	_cinematic_look_enabled = false
+	var card_tween: Tween = create_tween()
+	card_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	card_tween.tween_property(
+		_card_prop,
+		"global_transform",
+		_card_hold_pose.global_transform,
+		_scaled_duration(0.9)
+	)
+	await card_tween.finished
+	_card_in_hand = true
+	await _turn_head_to_card()
+	_cinematic_look_enabled = true
+
+
+func _turn_head_to_card() -> void:
+	if _cinematic_camera == null or _card_prop == null:
+		return
+	var look_transform: Transform3D = _cinematic_camera.global_transform.looking_at(
+		_card_prop.global_position,
+		Vector3.UP
+	)
+	var target_rotation: Vector3 = look_transform.basis.get_euler()
+	target_rotation.z = 0.0
+	var look_tween: Tween = create_tween()
+	look_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	look_tween.tween_property(
+		_cinematic_camera,
+		"rotation",
+		target_rotation,
+		_scaled_duration(0.65)
+	)
+	await look_tween.finished
+	_cinematic_pitch = _cinematic_camera.rotation.x
+	_cinematic_yaw = _cinematic_camera.rotation.y
+
+
+func _apply_cinematic_look(motion: InputEventMouseMotion) -> void:
+	var sensitivity: float = deg_to_rad(_player.get_mouse_sensitivity_degrees())
+	var pitch_limit: float = deg_to_rad(CINEMATIC_PITCH_LIMIT_DEGREES)
+	_cinematic_yaw -= motion.relative.x * sensitivity
+	_cinematic_pitch = clampf(
+		_cinematic_pitch - motion.relative.y * sensitivity,
+		-pitch_limit,
+		pitch_limit
+	)
+	_cinematic_camera.rotation = Vector3(_cinematic_pitch, _cinematic_yaw, 0.0)
+
+
+func _is_dialogue_skip_input(event: InputEvent) -> bool:
+	if event is InputEventKey:
+		var key_event: InputEventKey = event as InputEventKey
+		return key_event.pressed and not key_event.echo
+	if event is InputEventMouseButton:
+		return (event as InputEventMouseButton).pressed
+	if event is InputEventJoypadButton:
+		return (event as InputEventJoypadButton).pressed
+	return false
+
+
+func _wait_or_skip(seconds: float) -> void:
+	var duration_usec: int = int(_scaled_duration(seconds) * 1000000.0)
+	var deadline_usec: int = Time.get_ticks_usec() + duration_usec
+	while Time.get_ticks_usec() < deadline_usec and not _line_skip_requested:
+		await get_tree().process_frame
 
 
 func _on_sleep_requested() -> void:

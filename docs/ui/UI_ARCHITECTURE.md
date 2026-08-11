@@ -21,7 +21,7 @@ Persistence: `docs/persistence/SAVE_ARCHITECTURE.md`.
 | Number format | static helper | `ui/ui_number_format.gd` (`UiNumberFormat`) |
 | UI scale | runtime helper | `ui/theme/ui_scale_helper.gd` (`UiScaleHelper`) |
 | Tutorials | HUD-owned helper | `ui/tutorial/tutorial_prompt.gd` (`TutorialPrompt`) |
-| Progression modal | apartment Interactable → PackedScene | `ui/progression/progression_ui.tscn` + `.gd` |
+| Progression modal | phone ПРОКАЧКА tab embed / PackedScene | `ui/progression/progression_ui.tscn` + `.gd` |
 | Dating modal | DatingCore presentation | `ui/dating/dating_ui.tscn` + `.gd` |
 | Rival choose/result | presentation over RivalEncounters | `ui/rivals/rival_encounter_ui.tscn` + `.gd` |
 | Minigame overlays | RivalCompetitionRunner | `minigames/*/`, shell `minigames/common/minigame_shell.gd` |
@@ -156,17 +156,17 @@ Tabs (`PhoneTab`):
 
 | Tab | Label | Gate |
 |---|---|---|
-| `STATUS` | СТАТУС | always |
+| `GIRLS` | ДЕВУШКИ | always (default open tab; discovered-only list) |
+| `STATUS` | ПРОКАЧКА | always (stats + embedded perk tree; badge when upgrade points > 0) |
 | `STORY` | СЮЖЕТ | always |
-| `GIRLS` | ДЕВУШКИ | always (discovered-only list) |
 | `MEDIA` | МЕДИА | `StoryFeature.MEDIA_ATTENTION` |
 | `CLONES` | КЛОНЫ | `GameState.get_total_clones() >= 1` |
 
-Hidden tabs redirect to STATUS. No sixth tab: salary lives under STATUS; ПЕРЕГРУЗКА / feed boost live under MEDIA when overload is active.
+Hidden tabs redirect to STATUS. No sixth tab: salary lives under ПРОКАЧКА; ПЕРЕГРУЗКА / feed boost live under MEDIA when overload is active.
 
-Action logic unchanged from MODULE 15–21 APIs (`Media`, `DatingOverload`, `SalaryMine`, `CloneIncremental` read-only rates, Story progress). Phone does **not** purchase perks or assign clones.
+Action logic unchanged from MODULE 15–21 APIs (`Media`, `DatingOverload`, `SalaryMine`, `CloneIncremental` read-only rates, Story progress). Perk purchase runs through the embedded Progression panel on ПРОКАЧКА.
 
-Opens via **Q** (`phone` InputMap) anywhere in GAMEPLAY, or apartment phone Interactable → `PhoneJournal.open` → `MODAL_UI`. Q / Esc closes. Header button **ПРОКАЧКА** opens Progression UI; badge shows available upgrade points.
+Opens via **Q** (`phone` InputMap) anywhere in GAMEPLAY, or apartment phone Interactable → `PhoneJournal.open` → `MODAL_UI`. Q / Esc closes.
 
 ---
 
@@ -179,12 +179,12 @@ ui/progression/progression_modal_ui.gd   # thin extends shim
 ```
 
 Entry:
-- Phone header **ПРОКАЧКА** (primary; available on Q from any location);
-- apartment `ProgressionInteractable` still opens the same modal locally.
+- Phone **ПРОКАЧКА** tab embeds the perk tree (`embed_into`);
+- standalone `ProgressionInteractable` remains available for tests / debug only (apartment wardrobe is clothing).
 
 - All **32** ContentDB perks, four characteristic branches;
 - cost `3^N`, tree prereqs, availability via existing `Progression` API;
-- purchase only through Progression — no Phone perk buy;
+- purchase only through Progression;
 - uses Theme + `UiNumberFormat`; may surface purchase feedback through HUD when present.
 
 ---
