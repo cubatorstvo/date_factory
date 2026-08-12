@@ -1,0 +1,13 @@
+---
+description: Prefer CBM/Serena over broad Search/Read to cut LLM tokens
+alwaysApply: true
+---
+
+# Code intelligence (token-efficient)
+
+- Architecture, dependencies, callers/callees, call chains, impact: use **codebase-memory-mcp** first.
+- GDScript symbol work (definition, references, rename, function body): use **Serena** first; pass `relative_path` when possible.
+- Cursor semantic search / Grep: unknown names, `.tscn`/`.tres`/`.md`/JSON/text, or when CBM/Serena miss.
+- Do not auto-chain CBM then Serena then Search then Read for every question; pick the smallest sufficient tool.
+- Avoid reading whole large files when a symbol or graph answer is enough.
+- Goal: minimize LLM tokens without losing analysis quality.

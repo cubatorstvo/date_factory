@@ -23,6 +23,12 @@ mono_crash.*.json
 .cursor/mcp.json
 .godotiq/
 
+# Serena / CBM local caches (keep .serena/project.yml versioned)
+.serena/project.local.yml
+.serena/cache/
+.serena/logs/
+.codebase-memory/
+
 # MODULE 28 release packaging / local Steam smoke
 build/
 dist/
