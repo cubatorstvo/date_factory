@@ -42,9 +42,9 @@ func _ready() -> void:
 	_ok(xp_lab != null and xp_lab.text == "ПОКОРЕННЫХ СЕРДЕЦ 2", "experience label")
 	_ok(up_lab != null and up_lab.text == "БАЛЛЫ 2", "points label")
 	_ok(money_lab != null and money_lab.visible, "money visible from start")
-	_ok(auth_lab != null and not auth_lab.visible, "authority remains hidden")
+	_ok(auth_lab != null and auth_lab.visible, "authority visible after first gain")
 	_ok(xp_lab != null and not xp_lab.visible, "hearts hidden before card")
-	_ok(up_lab != null and not up_lab.visible, "points remain hidden")
+	_ok(up_lab != null and up_lab.visible, "points visible after first real heart")
 	gs.call("set_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED, true)
 	await get_tree().process_frame
 	_ok(xp_lab != null and xp_lab.visible, "card reveals hearts row")

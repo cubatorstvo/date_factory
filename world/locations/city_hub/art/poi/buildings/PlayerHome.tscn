@@ -1,12 +1,12 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cje54wmvogbi1"]
 
-[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_ftrs2"]
-[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="2_6h15j"]
-[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf" id="3_si75a"]
-[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf" id="4_vedsm"]
-[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="5_sy07o"]
-[ext_resource type="Script" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="6_32dp3"]
-[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx" id="7_0ah84"]
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_ftrs2"]
+[ext_resource type="PackedScene" uid="uid://d0s6yraf4qqrs" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="2_6h15j"]
+[ext_resource type="PackedScene" uid="uid://s2g4cyutq1nv" path="res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf" id="3_si75a"]
+[ext_resource type="PackedScene" uid="uid://v1jb038ujla4" path="res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf" id="4_vedsm"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="5_sy07o"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="6_32dp3"]
+[ext_resource type="PackedScene" uid="uid://hn6p05ki7bm1" path="res://assets/environment/interior/house_interior/meshes/Houseplant_1.fbx" id="7_0ah84"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7a7xj"]
 albedo_color = Color(0.55, 0.45, 0.7, 1)
@@ -51,10 +51,10 @@ reserved_lot_size = Vector2(9, 8)
 
 [node name="VisualRoot" type="Node3D" parent="." unique_id=1571324141]
 
-[node name="Building_Small_1_Inst" type="Node3D" parent="VisualRoot" unique_id=969699209 instance=ExtResource("2_6h15j")]
-transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0, -0.45)
+[node name="Building_Small_1_Inst" parent="VisualRoot" unique_id=969699209 instance=ExtResource("2_6h15j")]
+transform = Transform3D(0.28, 0, 0, 0, 0.28, 0, 0, 0, 0.28, 0, 0, -0.45)
 
-[node name="Brick_Window_Square_Single_Inst" type="Node3D" parent="VisualRoot" unique_id=497083836 instance=ExtResource("3_si75a")]
+[node name="Brick_Window_Square_Single_Inst" parent="VisualRoot" unique_id=497083836 instance=ExtResource("3_si75a")]
 transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -0.55, 0.9, 0.65)
 
 [node name="Awning" type="CSGBox3D" parent="VisualRoot" unique_id=583783452]
@@ -67,7 +67,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.29, 0.95)
 size = Vector3(2.8, 0.04, 0.85)
 material = SubResource("StandardMaterial3D_xtpeh")
 
-[node name="Prop_Planter_Single_Inst" type="Node3D" parent="VisualRoot" unique_id=262268339 instance=ExtResource("4_vedsm")]
+[node name="Prop_Planter_Single_Inst" parent="VisualRoot" unique_id=262268339 instance=ExtResource("4_vedsm")]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, -1.15, 0, 1)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=977175875]
@@ -80,6 +80,7 @@ shape = SubResource("BoxShape3D_2pchm")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=307276303]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_rilr8")
 mesh = SubResource("BoxMesh_d5qmj")
 
@@ -109,14 +110,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
 [node name="InteractionArea" type="Area3D" parent="TenantSlots/Home" unique_id=879908874]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
 script = ExtResource("6_32dp3")
+action_id = &"go_home"
 display_name = "Мой дом"
 action_label = "Войти домой"
-action_id = &"go_home"
 payload = {
 "art_backed": true
 }
-auto_fit_mesh_aabb = false
-aabb_padding = Vector3(0.015, 0.03, 0.015)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Home/InteractionArea" unique_id=344448440]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
@@ -144,12 +143,12 @@ material = SubResource("StandardMaterial3D_26up7")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "HOME"
+text = "ДОМ"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/Home" unique_id=757445375]
 
 [node name="IdentityProps" type="Node3D" parent="TenantSlots/Home" unique_id=361950139]
 
-[node name="Houseplant_1_Inst" type="Node3D" parent="TenantSlots/Home/IdentityProps" unique_id=1491733927 instance=ExtResource("7_0ah84")]
+[node name="Houseplant_1_Inst" parent="TenantSlots/Home/IdentityProps" unique_id=1491733927 instance=ExtResource("7_0ah84")]
 transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, 0.9, 0, 0.85)

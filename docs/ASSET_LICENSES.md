@@ -7,6 +7,22 @@ Character / animation packs: also see `docs/THIRD_PARTY_ASSETS.md` (Quaternius C
 
 ---
 
+## Characters — clothing overlays (project primitives)
+
+Kenney and the imported Quaternius Superhero packs ship **body + hair only** (swimsuit/full-body mesh). DATE FACTORY does not model unique clothing GLBs for v1.0.
+
+| Project path | Role |
+|---|---|
+| `characters/female/female_base_visual.tscn` slots `TopRoot` / `BottomRoot` / `ShoesRoot` / glasses | Neighbor + story girls |
+| `characters/male/male_base_visual.tscn` same slot roots | Opening hero / male NPCs |
+
+- Source: authored BoxMesh / CapsuleMesh overlays bound to PACK_021 bones via `character_variant_controller.gd`
+- License: **CC0** project primitives (no third-party clothing pack)
+- Body mesh remains Quaternius Superhero CC0; overlays cover the swimsuit read so Top/Bottom/Shoes read as clothes
+- Profiles: `data/content/appearances/appearance_female_neighbor.tres`, `appearance_male_base.tres`
+
+---
+
 ## Audio — Music (Abstraction Music Loop Bundle)
 
 | Project path | Role | Donor filename (copy source) |

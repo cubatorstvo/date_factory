@@ -9,6 +9,7 @@ display_name = "Актриса"
 is_story = true
 has_story_stage = true
 story_stage = 1
+required_experience = 3
 primary_trait = 1
 secondary_trait = 3
 discovery_situation_id = &"discovery_situation_actress_waiting"

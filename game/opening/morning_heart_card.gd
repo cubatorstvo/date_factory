@@ -4,8 +4,6 @@ extends Interactable
 
 const READ_POSITION: Vector3 = Vector3(0.24, -0.20, -0.58)
 const READ_ROTATION_DEGREES: Vector3 = Vector3(-58.0, 0.0, -8.0)
-const HUD_POSITION: Vector3 = Vector3(-0.58, 0.34, -0.68)
-const HUD_ROTATION_DEGREES: Vector3 = Vector3(-64.0, 0.0, -12.0)
 
 @onready var _card: Node3D = $HeartCard
 @onready var _collision: CollisionShape3D = $Collision
@@ -48,24 +46,30 @@ func _on_interact(player: Node) -> void:
 	)
 	await read_tween.finished
 	await get_tree().create_timer(1.15).timeout
-	var hud_tween: Tween = create_tween()
-	hud_tween.set_parallel(true)
-	hud_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	hud_tween.tween_property(_card, "position", HUD_POSITION, 0.65)
-	hud_tween.tween_property(
-		_card,
-		"rotation_degrees",
-		HUD_ROTATION_DEGREES,
-		0.65
-	)
-	hud_tween.tween_property(_card, "scale", Vector3.ONE * 0.16, 0.65)
-	await hud_tween.finished
+	var fly_from: Vector2 = _card_screen_position(camera)
+	_card.visible = false
+	var hud: GameHUD = _find_hud()
+	if hud != null:
+		await hud.play_heart_card_fly(fly_from)
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs != null:
 		gs.call("set_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED, true)
 	_card.queue_free()
 	visible = false
 	controller.enter_gameplay()
+
+
+func _find_hud() -> GameHUD:
+	var world: Node = get_node_or_null("/root/World")
+	if world != null and world.has_method("get_game_hud"):
+		return world.call("get_game_hud") as GameHUD
+	return null
+
+
+func _card_screen_position(camera: Camera3D) -> Vector2:
+	if camera == null or _card == null:
+		return get_viewport().get_visible_rect().size * 0.5
+	return camera.unproject_position(_card.global_position)
 
 
 func _sync_from_state() -> void:

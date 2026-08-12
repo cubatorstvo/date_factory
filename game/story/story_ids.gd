@@ -19,11 +19,16 @@ const RIVAL_SCIENTIST: StringName = &"rival_scientist"
 const RIVAL_PRESIDENT: StringName = &"rival_president"
 
 const FLAG_HEART_CARD_CLAIMED: StringName = &"prologue_heart_card_claimed"
+const FLAG_HUD_AUTHORITY_REVEALED: StringName = &"hud_authority_revealed"
+const FLAG_HUD_POINTS_REVEALED: StringName = &"hud_points_revealed"
 const FLAG_NEIGHBOR_BRIEFING_COMPLETE: StringName = &"prologue_neighbor_briefing_complete"
 const FLAG_TUTORIAL_FOOD_READY: StringName = &"prologue_tutorial_food_ready"
 const FLAG_TUTORIAL_DRINK_READY: StringName = &"prologue_tutorial_drink_ready"
 const FLAG_TUTORIAL_OUTFIT_READY: StringName = &"prologue_tutorial_outfit_ready"
 const FLAG_TUTORIAL_DATE_COMPLETE: StringName = &"prologue_tutorial_date_complete"
+const FLAG_TUTORIAL_UPGRADE_POINT: StringName = &"prologue_tutorial_upgrade_point"
+const FLAG_TUTORIAL_UPGRADE_AWAITING_RECLAIM: StringName = &"prologue_tutorial_upgrade_awaiting_reclaim"
+const FLAG_TUTORIAL_UPGRADE_JOKE_DONE: StringName = &"prologue_tutorial_upgrade_joke_done"
 const FLAG_WORLD_EXPANSION_COMPLETE: StringName = &"story_world_expansion_complete"
 
 

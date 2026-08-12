@@ -35,7 +35,7 @@ func _run_all() -> void:
 	_ok(progress.objective_id == &"find_neighbor", "card advances to Neighbor objective")
 	var city_after: WorldAccessResult = world.call("get_location_access", &"city_hub") as WorldAccessResult
 	var cafe_after: WorldAccessResult = world.call("get_location_access", &"cafe") as WorldAccessResult
-	_ok(city_after.status == WorldTypes.WorldAccessStatus.AVAILABLE, "card unlocks city hub")
+	_ok(city_after.status == WorldTypes.WorldAccessStatus.LOCKED_STORY, "city stays locked until SOCIAL_ACCESS")
 	_ok(cafe_after.status == WorldTypes.WorldAccessStatus.LOCKED_STORY, "other social locations stay locked")
 	gs.call("set_story_flag", StoryIds.FLAG_NEIGHBOR_BRIEFING_COMPLETE, true)
 	gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_FOOD_READY, true)
@@ -51,7 +51,7 @@ func _run_all() -> void:
 	var neighbor: GirlDefinition = db.call("get_girl", StoryIds.GIRL_NEIGHBOR) as GirlDefinition
 	var actress: GirlDefinition = db.call("get_girl", StoryIds.GIRL_ACTRESS) as GirlDefinition
 	_ok(neighbor != null and not neighbor.romance_available, "Neighbor is friend-only")
-	_ok(actress != null and actress.required_experience == 0, "first real story girl is reachable at zero hearts")
+	_ok(actress != null and actress.required_experience == 3, "first real story girl needs three hearts")
 	var availability: Dictionary = relationships.call(
 		"get_date_availability",
 		StoryIds.GIRL_NEIGHBOR,

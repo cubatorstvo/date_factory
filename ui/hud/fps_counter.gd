@@ -33,11 +33,11 @@ func _on_settings_applied() -> void:
 
 
 func _refresh_visibility() -> void:
-	var enabled: bool = true
+	var enabled: bool = false
 	var save_system: Node = get_node_or_null("/root/SaveSystem")
 	if save_system != null and save_system.has_method("get_settings"):
 		var settings: Dictionary = save_system.call("get_settings")
-		enabled = bool(settings.get("show_fps", true))
+		enabled = bool(settings.get("show_fps", false))
 	visible = enabled
 	_elapsed = 0.0
 	if visible:

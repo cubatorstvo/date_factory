@@ -231,8 +231,10 @@ func _test_neighbor_completion() -> void:
 	_ok(_stage() == int(GameTypes.GameStage.STAGE_1), "45 tutorial milestone advances")
 	_ok(not bool(_gs.call("is_girl_conquered", StoryIds.GIRL_NEIGHBOR)), "45 Neighbor not conquered")
 	_ok(_feat(StoryTypes.StoryFeature.SOCIAL_ACCESS), "45 SOCIAL true")
+	_ok(_feat(StoryTypes.StoryFeature.DAY_JOB), "45 DAY_JOB true")
 	_ok(not _feat(StoryTypes.StoryFeature.PUBLIC_CITY_ACCESS), "45 no PUBLIC yet")
 	_ok(_features_unlocked.has(int(StoryTypes.StoryFeature.SOCIAL_ACCESS)), "45 feature signal")
+	_ok(_features_unlocked.has(int(StoryTypes.StoryFeature.DAY_JOB)), "45 DAY_JOB signal")
 
 
 func _test_stage1_mapping() -> void:
@@ -353,6 +355,7 @@ func _test_cumulative_features() -> void:
 	_reset()
 	_gs.call("restore_stage", GameTypes.GameStage.STAGE_6)
 	_ok(_feat(StoryTypes.StoryFeature.SOCIAL_ACCESS), "55 SOCIAL")
+	_ok(_feat(StoryTypes.StoryFeature.DAY_JOB), "55 DAY_JOB")
 	_ok(_feat(StoryTypes.StoryFeature.PUBLIC_CITY_ACCESS), "55 PUBLIC")
 	_ok(_feat(StoryTypes.StoryFeature.SALARY_MINE), "55 SALARY")
 	_ok(_feat(StoryTypes.StoryFeature.MEDIA_ATTENTION), "55 MEDIA")

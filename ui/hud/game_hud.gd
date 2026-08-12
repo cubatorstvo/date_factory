@@ -17,9 +17,11 @@ const LOOK_EVIDENCE_PIXELS: float = 48.0
 const LOOK_ARM_DELAY_MS: int = 550
 ## Reject single-frame cursor-capture / warp spikes.
 const LOOK_WARP_REJECT_PIXELS: float = 140.0
+const HEART_FLY_SECONDS: float = 0.7
 
 const FEATURE_COPY := {
 	int(StoryTypes.StoryFeature.SOCIAL_ACCESS): "ОТКРЫТО: СОЦИАЛЬНЫЙ ДОСТУП",
+	int(StoryTypes.StoryFeature.DAY_JOB): "ОТКРЫТО: РАБОТА В ОФИСЕ",
 	int(StoryTypes.StoryFeature.PUBLIC_CITY_ACCESS): "Открыт новый район города",
 	int(StoryTypes.StoryFeature.SALARY_MINE): "ОТКРЫТО: ЗАРПЛАТНАЯ ШАХТА",
 	int(StoryTypes.StoryFeature.MEDIA_ATTENTION): "ОТКРЫТО: МЕДИЙНОЕ ВНИМАНИЕ",
@@ -68,6 +70,7 @@ var _move_accum: float = 0.0
 var _look_accum: float = 0.0
 var _look_evidence_armed: bool = false
 var _look_arm_after_msec: int = 0
+var _heart_fly_active: bool = false
 
 
 func _ready() -> void:
@@ -120,6 +123,32 @@ func show_notification(message: String) -> void:
 
 func get_tutorial_prompt() -> TutorialPrompt:
 	return _tutorials
+
+
+func play_heart_card_fly(from_screen: Vector2) -> void:
+	## 2D flight from the morning card into the hearts HUD row.
+	_heart_fly_active = true
+	_experience_label.visible = false
+	var flyer: PanelContainer = PanelContainer.new()
+	flyer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var label: Label = Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.theme_type_variation = &"HeaderLabel"
+	label.text = "ПОКОРЕННЫХ СЕРДЕЦ 0"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	flyer.add_child(label)
+	_scale_root.add_child(flyer)
+	await get_tree().process_frame
+	var start: Vector2 = from_screen - flyer.size * 0.5
+	flyer.global_position = start
+	var target_rect: Rect2 = _experience_label.get_global_rect()
+	var tween: Tween = create_tween()
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(flyer, "global_position", target_rect.position, HEART_FLY_SECONDS)
+	tween.parallel().tween_property(flyer, "scale", Vector2(0.42, 0.42), HEART_FLY_SECONDS)
+	await tween.finished
+	flyer.queue_free()
+	_heart_fly_active = false
 
 
 func _apply_theme_and_scale() -> void:
@@ -350,6 +379,14 @@ func _update_visibility() -> void:
 		_try_show_next_tutorial()
 
 
+func _ensure_hud_flag(gs: Node, flag_id: StringName) -> void:
+	if gs == null:
+		return
+	if bool(gs.call("get_story_flag", flag_id)):
+		return
+	gs.call("set_story_flag", flag_id, true)
+
+
 func _refresh_resources() -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:
@@ -363,11 +400,20 @@ func _refresh_resources() -> void:
 	_experience_label.text = "ПОКОРЕННЫХ СЕРДЕЦ %d" % experience
 	_points_label.text = "БАЛЛЫ %d" % points
 	_money_label.visible = true
-	_authority_label.visible = false
-	_points_label.visible = false
-	_experience_label.visible = bool(
+	if authority > 0:
+		_ensure_hud_flag(gs, StoryIds.FLAG_HUD_AUTHORITY_REVEALED)
+	if experience > 0:
+		_ensure_hud_flag(gs, StoryIds.FLAG_HUD_POINTS_REVEALED)
+	_authority_label.visible = bool(
+		gs.call("get_story_flag", StoryIds.FLAG_HUD_AUTHORITY_REVEALED)
+	)
+	_points_label.visible = bool(
+		gs.call("get_story_flag", StoryIds.FLAG_HUD_POINTS_REVEALED)
+	)
+	var hearts_claimed: bool = bool(
 		gs.call("get_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED)
 	)
+	_experience_label.visible = hearts_claimed and not _heart_fly_active
 
 
 func _on_money_changed(_new_value: int, _delta: int) -> void:
@@ -375,18 +421,28 @@ func _on_money_changed(_new_value: int, _delta: int) -> void:
 
 
 func _on_story_flag_changed(flag_id: StringName, _value: bool) -> void:
-	if flag_id == StoryIds.FLAG_HEART_CARD_CLAIMED:
+	if (
+		flag_id == StoryIds.FLAG_HEART_CARD_CLAIMED
+		or flag_id == StoryIds.FLAG_HUD_AUTHORITY_REVEALED
+		or flag_id == StoryIds.FLAG_HUD_POINTS_REVEALED
+	):
 		_refresh_resources()
 	_refresh_objective()
 
 
-func _on_authority_changed(_new_value: int, delta: int) -> void:
+func _on_authority_changed(new_value: int, delta: int) -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and new_value > 0:
+		_ensure_hud_flag(gs, StoryIds.FLAG_HUD_AUTHORITY_REVEALED)
 	_refresh_resources()
 	if delta != 0:
 		_enqueue_grouped("Авторитет %s" % UiNumberFormat.format_signed(delta))
 
 
-func _on_experience_changed(_new_value: int, delta: int) -> void:
+func _on_experience_changed(new_value: int, delta: int) -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and new_value > 0:
+		_ensure_hud_flag(gs, StoryIds.FLAG_HUD_POINTS_REVEALED)
 	_refresh_resources()
 	if delta != 0:
 		_enqueue_grouped("Покоренных сердец %s" % UiNumberFormat.format_signed(delta))
@@ -792,8 +848,8 @@ func _resolve_objective_text() -> String:
 	var progress: StoryStageProgress = story.call("get_current_progress") as StoryStageProgress
 	if progress == null:
 		return STAGE0_OBJECTIVE_FALLBACK
-	# Story owns the multi-step morning tutorial objective read-model.
-	if progress.stage == GameTypes.GameStage.PROLOGUE:
+	# Story owns prologue and early-stage objective copy.
+	if progress.objective_text.strip_edges() != "":
 		return progress.objective_text
 	var phone_line: String = _objective_from_phone_story()
 	if phone_line.strip_edges() != "":

@@ -45,7 +45,7 @@ reserved_lot_size = Vector2(6, 7)
 
 [node name="VisualRoot" type="Node3D" parent="." unique_id=105977542]
 
-[node name="Building_Small_1_Inst" type="Node3D" parent="VisualRoot" unique_id=342740020 instance=ExtResource("2_j12mc")]
+[node name="Building_Small_1_Inst" parent="VisualRoot" unique_id=342740020 instance=ExtResource("2_j12mc")]
 transform = Transform3D(0.4333868, 0, 0, 0, 0.4333868, 0, 0, 0, 0.4333868, 0, 0.0051777, -0.45)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=331960913]
@@ -58,6 +58,7 @@ shape = SubResource("BoxShape3D_fin42")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1993458955]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_4a7us")
 mesh = SubResource("BoxMesh_6dm5b")
 
@@ -117,7 +118,7 @@ material = SubResource("StandardMaterial3D_64k1j")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "HOMEWARE"
+text = "ТОВАРЫ"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/Homeware" unique_id=1842744666]

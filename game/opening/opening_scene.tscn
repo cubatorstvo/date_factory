@@ -82,7 +82,7 @@ shape = SubResource("BoxShape3D_vc7yo")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 0.05, 1.5)
 
 [node name="CardCarryPose" type="Marker3D" parent="OpeningPlayer" unique_id=476865386]
-transform = Transform3D(0.99270993, -0.000339441, -0.120527446, -0.060410876, 0.8639158, -0.5, 0.10429528, 0.5036361, 0.8575973, 0.28, 1.2, -0.58)
+transform = Transform3D(0.99270993, -0.000339441, -0.120527446, -0.060410876, 0.8639158, -0.5, 0.10429528, 0.5036361, 0.8575973, 0.38, 0.92, -0.52)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1275059537]
 layer = 20

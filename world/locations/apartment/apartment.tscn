@@ -38,6 +38,7 @@
 [ext_resource type="PackedScene" uid="uid://by6do7d40saoi" path="res://assets/environment/city/downtown_megakit/meshes/Brick_InteriorWall_4.gltf" id="29_neighbor_wall"]
 [ext_resource type="PackedScene" uid="uid://dhn7jqyw3j1m3" path="res://characters/framework/character_actor.tscn" id="36_pa2sr"]
 [ext_resource type="PackedScene" uid="uid://1jvs8v38wbu1" path="res://game/opening/morning_heart_card.tscn" id="38_672kx"]
+[ext_resource type="Script" uid="uid://cytcp3blqgblf" path="res://world/locations/apartment/office_day_job_interactable.gd" id="39_u76iw"]
 
 [sub_resource type="Environment" id="Environment_pw7ec"]
 background_mode = 1
@@ -194,6 +195,9 @@ albedo_color = Color(0.93, 0.91, 0.84, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_c77th"]
 size = Vector3(0.22, 0.01, 0.28)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_672kx"]
+size = Vector3(1.2, 2, 1)
 
 [node name="apartment" type="Node3D" unique_id=772458437]
 script = ExtResource("1_loc")
@@ -737,3 +741,29 @@ font_size = 14
 
 [node name="MorningHeartCard" parent="Interactables" unique_id=364527083 instance=ExtResource("38_672kx")]
 transform = Transform3D(0.96862835, 0.13613184, -0.2079117, -0.1391731, 0.99026805, 0, 0.20588832, 0.028935717, 0.9781476, 1.55, 0.03, -0.55)
+
+[node name="OfficeDayJob" type="Area3D" parent="Interactables" unique_id=2006706245]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.1, 1, 0.55)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("39_u76iw")
+
+[node name="Collision" type="CollisionShape3D" parent="Interactables/OfficeDayJob" unique_id=1271229130]
+shape = SubResource("BoxShape3D_672kx")
+
+[node name="Label" type="Label3D" parent="Interactables/OfficeDayJob" unique_id=617975780]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+billboard = 1
+text = "ОФИС"
+font_size = 28
+
+[node name="Desk" type="CSGBox3D" parent="Interactables/OfficeDayJob" unique_id=1886379698]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.55, 0)
+size = Vector3(1.1, 0.08, 0.55)
+
+[node name="DeskLamp" type="OmniLight3D" parent="Interactables/OfficeDayJob" unique_id=1066227052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+light_color = Color(1, 0.85, 0.65, 1)
+light_energy = 1.2
+omni_range = 3.5

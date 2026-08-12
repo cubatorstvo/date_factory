@@ -75,7 +75,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 2.5, 1.1)
 size = Vector3(3.4, 0.14, 1)
 material = SubResource("StandardMaterial3D_3wq6c")
 
-[node name="Building_Large_2_Inst" type="Node3D" parent="VisualRoot" unique_id=753147132 instance=ExtResource("2_jcmew")]
+[node name="Building_Large_2_Inst" parent="VisualRoot" unique_id=753147132 instance=ExtResource("2_jcmew")]
 transform = Transform3D(0.40553704, 0, 0, 0, 0.40553704, 0, 0, 0, 0.40553704, 0, 0, -1)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=1969054954]
@@ -88,6 +88,7 @@ shape = SubResource("BoxShape3D_sqaw2")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1611781855]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_geutr")
 mesh = SubResource("BoxMesh_gckry")
 
@@ -147,7 +148,7 @@ material = SubResource("StandardMaterial3D_0mxfi")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "JEWELS"
+text = "УКРАШЕНИЯ"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/JewelryShop" unique_id=169382331]
@@ -217,7 +218,7 @@ material = SubResource("StandardMaterial3D_nu07p")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "FASHION"
+text = "ОДЕЖДА"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/ClothingShop" unique_id=2135716768]

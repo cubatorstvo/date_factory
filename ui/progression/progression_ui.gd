@@ -357,6 +357,12 @@ func _on_buy_pressed() -> void:
 	var prog: Node = get_node_or_null("/root/Progression")
 	if prog == null:
 		return
+	var gs: Node = get_node_or_null("/root/GameState")
+	var had_tutorial_point: bool = false
+	if gs != null:
+		had_tutorial_point = bool(
+			gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_UPGRADE_POINT)
+		)
 	var cost_before: int = int(prog.call("get_perk_purchase_cost", _selected_perk_id))
 	var result: int = int(prog.call("purchase_perk", _selected_perk_id))
 	if result == int(Progression.PerkPurchaseResult.SUCCESS):
@@ -364,9 +370,22 @@ func _on_buy_pressed() -> void:
 		var msg: String = "Куплен перк за %d" % cost_before
 		purchase_notified.emit(msg)
 		_try_hud_notify(msg)
+		_mark_tutorial_upgrade_purchase(gs, had_tutorial_point)
 	else:
 		_audio_play_ui(AudioIds.UI_DENIED)
 	_refresh()
+
+
+func _mark_tutorial_upgrade_purchase(gs: Node, had_tutorial_point: bool) -> void:
+	if gs == null or not had_tutorial_point:
+		return
+	# Tutorial point is consumed inside GameState._commit_perk_purchase.
+	if bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_UPGRADE_POINT)):
+		return
+	if bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_UPGRADE_JOKE_DONE)):
+		return
+	gs.call("set_story_flag", StoryIds.FLAG_TUTORIAL_UPGRADE_AWAITING_RECLAIM, true)
+	_try_hud_notify("Поговори с соседкой — она кое-что уточнит.")
 
 
 func _try_hud_notify(message: String) -> void:

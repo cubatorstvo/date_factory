@@ -47,8 +47,8 @@ reserved_lot_size = Vector2(9, 8)
 
 [node name="VisualRoot" type="Node3D" parent="." unique_id=1293134137]
 
-[node name="Building_Medium_2_001_Inst" type="Node3D" parent="VisualRoot" unique_id=1096452688 instance=ExtResource("2_yqxnx")]
-transform = Transform3D(0.53800285, 0, 0, 0, 0.53800285, 0, 0, 0, 0.53800285, 0, 0.0055280584, -0.55)
+[node name="Building_Medium_2_001_Inst" parent="VisualRoot" unique_id=1096452688 instance=ExtResource("2_yqxnx")]
+transform = Transform3D(0.22, 0, 0, 0, 0.22, 0, 0, 0, 0.22, 0, 0.0055280584, -0.55)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=323145983]
 
@@ -60,6 +60,7 @@ shape = SubResource("BoxShape3D_34yin")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1136671395]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_4jj76")
 mesh = SubResource("BoxMesh_7djc6")
 
@@ -119,7 +120,7 @@ material = SubResource("StandardMaterial3D_lrybv")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "GYM"
+text = "ЗАЛ"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/Gym" unique_id=1168201699]

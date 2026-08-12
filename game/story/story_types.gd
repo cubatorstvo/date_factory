@@ -17,6 +17,7 @@ enum StoryFeature {
 	LABORATORY = 4,
 	WORLD_EXPANSION = 5,
 	FINAL_DATE = 6,
+	DAY_JOB = 7,
 }
 
 enum StoryGirlGate {

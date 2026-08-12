@@ -1,12 +1,12 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cb5bjcpqxtqlr"]
 
-[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_adtic"]
-[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf" id="2_v6sw6"]
-[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Table.gltf" id="3_v43ug"]
-[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf" id="4_qs6qp"]
-[ext_resource type="PackedScene" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf" id="5_qgwt5"]
-[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="6_j85ho"]
-[ext_resource type="Script" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="7_81f4p"]
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_adtic"]
+[ext_resource type="PackedScene" uid="uid://c1v3og5i7d5cg" path="res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf" id="2_v6sw6"]
+[ext_resource type="PackedScene" uid="uid://b6mvqkiirr2n1" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Table.gltf" id="3_v43ug"]
+[ext_resource type="PackedScene" uid="uid://b3ey7n6piu71a" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Stool.gltf" id="4_qs6qp"]
+[ext_resource type="PackedScene" uid="uid://cb3pmset78f3x" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Environment/Environment_Counter_Straight.gltf" id="5_qgwt5"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="6_j85ho"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="7_81f4p"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xjt2p"]
 albedo_color = Color(0.95, 0.45, 0.55, 1)
@@ -46,13 +46,12 @@ roughness = 0.55
 script = ExtResource("1_adtic")
 building_id = "cafe_two_hearts"
 district_id = "main_street"
-building_mode = "VenueEntrance"
 reserved_lot_size = Vector2(10, 9)
 
 [node name="VisualRoot" type="Node3D" parent="." unique_id=1706027354]
 
-[node name="Building_Medium_2_001_Inst" type="Node3D" parent="VisualRoot" unique_id=199150597 instance=ExtResource("2_v6sw6")]
-transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, 0, 0, -0.55)
+[node name="Building_Medium_2_001_Inst" parent="VisualRoot" unique_id=199150597 instance=ExtResource("2_v6sw6")]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, -0.55)
 
 [node name="Awning" type="CSGBox3D" parent="VisualRoot" unique_id=945656366]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0.95)
@@ -64,13 +63,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.44, 0.95)
 size = Vector3(2.8, 0.04, 0.85)
 material = SubResource("StandardMaterial3D_dn3t6")
 
-[node name="Environment_Table_Inst" type="Node3D" parent="VisualRoot" unique_id=312039153 instance=ExtResource("3_v43ug")]
+[node name="Environment_Table_Inst" parent="VisualRoot" unique_id=312039153 instance=ExtResource("3_v43ug")]
 transform = Transform3D(0.4727077, 0, 0.08335112, 0, 0.48, 0, -0.08335112, 0, 0.4727077, 1.45, 0, 0.45)
 
-[node name="Environment_Stool_Inst" type="Node3D" parent="VisualRoot" unique_id=1733044670 instance=ExtResource("4_qs6qp")]
+[node name="Environment_Stool_Inst" parent="VisualRoot" unique_id=1733044670 instance=ExtResource("4_qs6qp")]
 transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 1.75, 0, 0.25)
 
-[node name="Environment_Counter_Straight_Inst" type="Node3D" parent="VisualRoot" unique_id=1389080145 instance=ExtResource("5_qgwt5")]
+[node name="Environment_Counter_Straight_Inst" parent="VisualRoot" unique_id=1389080145 instance=ExtResource("5_qgwt5")]
 transform = Transform3D(-2.2729921e-08, 0, 0.52, 0, 0.52, 0, -0.52, 0, -2.2729921e-08, -0.95, 0, 0.35)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=862988982]
@@ -83,6 +82,7 @@ shape = SubResource("BoxShape3D_btrsy")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=378982637]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_4sq0q")
 mesh = SubResource("BoxMesh_5tuh4")
 
@@ -114,14 +114,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
 [node name="InteractionArea" type="Area3D" parent="TenantSlots/Cafe" unique_id=1739930976]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
 script = ExtResource("7_81f4p")
+action_id = &"sit_cafe"
 display_name = "Кафе Two Hearts"
 action_label = "Сесть и ждать свидание"
-action_id = &"sit_cafe"
 payload = {
 "art_backed": true
 }
-auto_fit_mesh_aabb = false
-aabb_padding = Vector3(0.015, 0.03, 0.015)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Cafe/InteractionArea" unique_id=2033107483]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
@@ -149,7 +147,7 @@ material = SubResource("StandardMaterial3D_iday3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "TWO HEARTS"
+text = "КАФЕ"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/Cafe" unique_id=2040874048]

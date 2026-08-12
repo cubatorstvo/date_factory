@@ -1,10 +1,10 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cajc2q1qdop6r"]
 
-[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="1_q7iw4"]
-[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf" id="2_rw8bq"]
-[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf" id="3_3x42r"]
-[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Bookshelf.fbx" id="4_yax5f"]
-[ext_resource type="PackedScene" path="res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx" id="5_vg76p"]
+[ext_resource type="PackedScene" uid="uid://d0s6yraf4qqrs" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="1_q7iw4"]
+[ext_resource type="PackedScene" uid="uid://cjt40k6aw3rfm" path="res://assets/environment/city/downtown_megakit/meshes/Door_1.gltf" id="2_rw8bq"]
+[ext_resource type="PackedScene" uid="uid://s2g4cyutq1nv" path="res://assets/environment/city/downtown_megakit/meshes/Brick_Window_Square_Single.gltf" id="3_3x42r"]
+[ext_resource type="PackedScene" uid="uid://gfwpy40arbgl" path="res://assets/environment/interior/house_interior/meshes/Bookshelf.fbx" id="4_yax5f"]
+[ext_resource type="PackedScene" uid="uid://cl1dn2fqq10wa" path="res://assets/environment/interior/house_interior/meshes/Shelf_1.fbx" id="5_vg76p"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y0t4e"]
 albedo_color = Color(0.45, 0.55, 0.75, 1)
@@ -33,13 +33,13 @@ size = Vector3(3.6, 3.2, 2.4)
 
 [node name="Visuals" type="Node3D" parent="." unique_id=1714163823]
 
-[node name="Building_Small_1_Inst" type="Node3D" parent="Visuals" unique_id=969699209 instance=ExtResource("1_q7iw4")]
+[node name="Building_Small_1_Inst" parent="Visuals" unique_id=969699209 instance=ExtResource("1_q7iw4")]
 transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 0, 0, -0.35)
 
-[node name="Door_1_Inst" type="Node3D" parent="Visuals" unique_id=1811371761 instance=ExtResource("2_rw8bq")]
+[node name="Door_1_Inst" parent="Visuals" unique_id=1811371761 instance=ExtResource("2_rw8bq")]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0.65, 0, 0.55)
 
-[node name="Brick_Window_Square_Single_Inst" type="Node3D" parent="Visuals" unique_id=497083836 instance=ExtResource("3_3x42r")]
+[node name="Brick_Window_Square_Single_Inst" parent="Visuals" unique_id=497083836 instance=ExtResource("3_3x42r")]
 transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, -0.5, 0.9, 0.65)
 
 [node name="Awning" type="CSGBox3D" parent="Visuals" unique_id=59547817]
@@ -52,10 +52,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.29, 0.95)
 size = Vector3(2.8, 0.04, 0.95)
 material = SubResource("StandardMaterial3D_ffnao")
 
-[node name="Bookshelf_Inst" type="Node3D" parent="Visuals" unique_id=556293929 instance=ExtResource("4_yax5f")]
+[node name="Bookshelf_Inst" parent="Visuals" unique_id=556293929 instance=ExtResource("4_yax5f")]
 transform = Transform3D(-0.7, 0, -6.119594e-08, 0, 0.7, 0, 6.119594e-08, 0, -0.7, -0.35, 0.15, 0.1)
 
-[node name="Shelf_1_Inst" type="Node3D" parent="Visuals" unique_id=1422317027 instance=ExtResource("5_vg76p")]
+[node name="Shelf_1_Inst" parent="Visuals" unique_id=1422317027 instance=ExtResource("5_vg76p")]
 transform = Transform3D(-0.65, 0, -5.6824803e-08, 0, 0.65, 0, 5.6824803e-08, 0, -0.65, 0.35, 0.2, 0.2)
 
 [node name="SignBoard" type="CSGBox3D" parent="Visuals" unique_id=642793317]
@@ -72,7 +72,7 @@ material = SubResource("StandardMaterial3D_nau3w")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 0.9)
 shaded = true
 modulate = Color(1, 0.95, 0.9, 1)
-text = "BOOKS"
+text = "КНИГИ"
 font_size = 28
 
 [node name="Collision" type="StaticBody3D" parent="." unique_id=1448050123]

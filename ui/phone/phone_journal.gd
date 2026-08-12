@@ -702,7 +702,30 @@ func _refresh_story_section() -> void:
 	lines.append(stage_name)
 	lines.append("Ухажёр: %s" % rival_text)
 	lines.append("Девушка: %s" % girl_text)
+	if (
+		progress.stage == GameTypes.GameStage.PROLOGUE
+		or progress.stage == GameTypes.GameStage.STAGE_1
+		or progress.stage == GameTypes.GameStage.STAGE_2
+		or progress.stage == GameTypes.GameStage.STAGE_3
+	):
+		var next_step: String = progress.objective_text.strip_edges()
+		if next_step == "":
+			next_step = _early_stage_next_step_fallback(progress)
+		if next_step != "":
+			lines.append("")
+			lines.append("Следующий шаг:")
+			lines.append(next_step)
 	_story_label.text = "\n".join(lines)
+
+
+func _early_stage_next_step_fallback(progress: StoryStageProgress) -> String:
+	if progress == null:
+		return ""
+	if not progress.rival_defeated and String(progress.story_rival_id) != "":
+		return "Сначала разберись с ухажёром."
+	if not progress.girl_completed and String(progress.story_girl_id) != "":
+		return "Найди сюжетную девушку текущей стадии."
+	return ""
 
 
 func _stage_header_fallback(stage: GameTypes.GameStage) -> String:

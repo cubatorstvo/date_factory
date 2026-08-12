@@ -36,6 +36,7 @@ var _persistent_ui: CanvasLayer = null
 var _player: PlayerController = null
 var _phone: PhoneJournal = null
 var _game_hud: GameHUD = null
+var _story_anchor: StoryAnchorHighlight = null
 var _current_location: WorldLocation = null
 var _access_provider: Callable = Callable()
 var _scene_path_overrides: Dictionary = {}
@@ -128,6 +129,7 @@ func ensure_host() -> void:
 	_ensure_player()
 	_ensure_phone()
 	_ensure_game_hud()
+	_ensure_story_anchor()
 
 
 func _ensure_player() -> void:
@@ -198,6 +200,27 @@ func _ensure_game_hud() -> void:
 
 func get_game_hud() -> GameHUD:
 	return _game_hud
+
+
+func _ensure_story_anchor() -> void:
+	if _host == null:
+		return
+	if _story_anchor != null and is_instance_valid(_story_anchor):
+		return
+	var existing: Node = _host.get_node_or_null("StoryAnchorHighlight")
+	if existing is StoryAnchorHighlight:
+		_story_anchor = existing as StoryAnchorHighlight
+		return
+	var packed_script: GDScript = load("res://world/story_anchor_highlight.gd") as GDScript
+	if packed_script == null:
+		return
+	var inst: Node = packed_script.new() as Node
+	if not (inst is StoryAnchorHighlight):
+		inst.free()
+		return
+	_story_anchor = inst as StoryAnchorHighlight
+	_story_anchor.name = "StoryAnchorHighlight"
+	_host.add_child(_story_anchor)
 
 
 func get_player() -> PlayerController:
@@ -313,16 +336,7 @@ func get_location_access(location_id: StringName) -> WorldAccessResult:
 		result.has_required_feature = true
 		result.required_feature = feature_v as StoryTypes.StoryFeature
 	var story: Node = get_node_or_null("/root/Story")
-	var prologue_city_access: bool = false
-	if (
-		gs != null
-		and location_id == &"city_hub"
-		and result.current_stage == GameTypes.GameStage.PROLOGUE
-	):
-		prologue_city_access = bool(
-			gs.call("get_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED)
-		)
-	if result.has_required_feature and not prologue_city_access:
+	if result.has_required_feature:
 		if story == null or not story.has_method("is_feature_unlocked"):
 			result.status = WorldTypes.WorldAccessStatus.LOCKED_STORY
 			result.message = "Пока недоступно по сюжету"
@@ -449,6 +463,8 @@ func _travel_impl(
 		_player.enter_gameplay()
 	_current_location.refresh_feature_gates()
 	location_changed.emit(current_location_id, previous_id)
+	if _story_anchor != null and is_instance_valid(_story_anchor):
+		_story_anchor.call_deferred("refresh")
 	return WorldTypes.WorldTravelResult.SUCCESS
 
 

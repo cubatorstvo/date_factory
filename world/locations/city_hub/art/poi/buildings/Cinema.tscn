@@ -1,10 +1,10 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dv5rwv032uj7u"]
 
-[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_4cgng"]
-[ext_resource type="PackedScene" path="res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf" id="2_q7o5r"]
-[ext_resource type="PackedScene" path="res://assets/environment/factory/kenney_factory/meshes/screen-wide.glb" id="3_mfj04"]
-[ext_resource type="Script" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="4_o332y"]
-[ext_resource type="Script" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="5_4j5wg"]
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_4cgng"]
+[ext_resource type="PackedScene" uid="uid://ivp31mv268c1" path="res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf" id="2_q7o5r"]
+[ext_resource type="PackedScene" uid="uid://6e4dx3o7fe3j" path="res://assets/environment/factory/kenney_factory/meshes/screen-wide.glb" id="3_mfj04"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="4_o332y"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="5_4j5wg"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eh2if"]
 albedo_color = Color(0.12, 0.08, 0.18, 1)
@@ -54,7 +54,7 @@ reserved_lot_size = Vector2(14, 11)
 
 [node name="VisualRoot" type="Node3D" parent="." unique_id=1998556115]
 
-[node name="Building_Large_2_Inst" type="Node3D" parent="VisualRoot" unique_id=780925803 instance=ExtResource("2_q7o5r")]
+[node name="Building_Large_2_Inst" parent="VisualRoot" unique_id=780925803 instance=ExtResource("2_q7o5r")]
 transform = Transform3D(0.32, 0, 0, 0, 0.32, 0, 0, 0, 0.32, 0, 0, -1)
 
 [node name="Marquee" type="CSGBox3D" parent="VisualRoot" unique_id=1529927489]
@@ -72,7 +72,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.85, 0.95)
 size = Vector3(4.6, 0.1, 0.06)
 material = SubResource("StandardMaterial3D_4ywbq")
 
-[node name="screen-wide_Inst" type="Node3D" parent="VisualRoot" unique_id=148367003 instance=ExtResource("3_mfj04")]
+[node name="screen-wide_Inst" parent="VisualRoot" unique_id=148367003 instance=ExtResource("3_mfj04")]
 transform = Transform3D(1.4, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0.4)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=499530829]
@@ -85,6 +85,7 @@ shape = SubResource("BoxShape3D_ku8bh")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=101803816]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_2kf7r")
 mesh = SubResource("BoxMesh_epmsm")
 
@@ -116,14 +117,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.2)
 [node name="InteractionArea" type="Area3D" parent="TenantSlots/Cinema" unique_id=20908478]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.2)
 script = ExtResource("5_4j5wg")
+action_id = &"sit_cinema"
 display_name = "Кинотеатр Leisure"
 action_label = "Сесть и ждать сеанс"
-action_id = &"sit_cinema"
 payload = {
 "art_backed": true
 }
-auto_fit_mesh_aabb = false
-aabb_padding = Vector3(0.015, 0.03, 0.015)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Cinema/InteractionArea" unique_id=760486654]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
@@ -151,7 +150,7 @@ material = SubResource("StandardMaterial3D_rcqkd")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "CINEMA"
+text = "КИНО"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/Cinema" unique_id=285553109]

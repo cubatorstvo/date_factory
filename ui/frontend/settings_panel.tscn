@@ -1,14 +1,14 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://bp8bdyx43gs4p"]
 
-[ext_resource type="Script" path="res://ui/frontend/settings_panel.gd" id="1_settings"]
-[ext_resource type="Theme" path="res://ui/theme/date_factory_theme.tres" id="2_theme"]
+[ext_resource type="Script" uid="uid://4hydylc6dux8" path="res://ui/frontend/settings_panel.gd" id="1_settings"]
+[ext_resource type="Theme" uid="uid://ofdy4bkpry37" path="res://ui/theme/date_factory_theme.tres" id="2_theme"]
 
-[node name="SettingsPanel" type="CanvasLayer"]
+[node name="SettingsPanel" type="CanvasLayer" unique_id=18586582]
 process_mode = 3
 layer = 55
 script = ExtResource("1_settings")
 
-[node name="Root" type="Control" parent="."]
+[node name="Root" type="Control" parent="." unique_id=997618883]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -16,10 +16,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 theme = ExtResource("2_theme")
 
-[node name="Dim" type="ColorRect" parent="Root"]
+[node name="Dim" type="ColorRect" parent="Root" unique_id=1248071200]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,7 +27,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.04, 0.05, 0.07, 0.78)
 
-[node name="SafeMargin" type="MarginContainer" parent="Root"]
+[node name="SafeMargin" type="MarginContainer" parent="Root" unique_id=866760660]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -40,203 +39,189 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="Center" type="CenterContainer" parent="Root/SafeMargin"]
+[node name="Center" type="CenterContainer" parent="Root/SafeMargin" unique_id=29877807]
 layout_mode = 2
 
-[node name="Panel" type="PanelContainer" parent="Root/SafeMargin/Center"]
-custom_minimum_size = Vector2(680, 650)
+[node name="Panel" type="PanelContainer" parent="Root/SafeMargin/Center" unique_id=1408662489]
+custom_minimum_size = Vector2(640, 520)
 layout_mode = 2
 
-[node name="Margin" type="MarginContainer" parent="Root/SafeMargin/Center/Panel"]
+[node name="Margin" type="MarginContainer" parent="Root/SafeMargin/Center/Panel" unique_id=1847935645]
 layout_mode = 2
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 18
 
-[node name="Content" type="VBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin"]
+[node name="Content" type="VBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin" unique_id=1758280335]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+[node name="Title" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content" unique_id=1433751577]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
 text = "НАСТРОЙКИ"
 horizontal_alignment = 1
 
-[node name="Scroll" type="ScrollContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
-custom_minimum_size = Vector2(0, 460)
-layout_mode = 2
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-
-[node name="Form" type="VBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 12
-
-[node name="MasterLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-layout_mode = 2
-text = "Общая громкость"
-
-[node name="MasterSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-max_value = 100.0
-step = 1.0
-
-[node name="MusicLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-layout_mode = 2
-text = "Музыка"
-
-[node name="MusicSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-max_value = 100.0
-step = 1.0
-
-[node name="SfxLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-layout_mode = 2
-text = "Эффекты"
-
-[node name="SfxSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-max_value = 100.0
-step = 1.0
-
-[node name="UiLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-layout_mode = 2
-text = "Интерфейс"
-
-[node name="UiSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-max_value = 100.0
-step = 1.0
-
-[node name="AmbienceLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-layout_mode = 2
-text = "Окружение"
-
-[node name="AmbienceSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-max_value = 100.0
-step = 1.0
-
-[node name="SensitivityLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-layout_mode = 2
-text = "Чувствительность мыши"
-
-[node name="SensitivitySlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-min_value = 1.0
-max_value = 100.0
-step = 1.0
-
-[node name="CameraLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-layout_mode = 2
-text = "Движение камеры"
-
-[node name="CameraSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-max_value = 100.0
-step = 1.0
-
-[node name="FovLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-layout_mode = 2
-text = "Поле зрения (FOV)"
-
-[node name="FovSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-min_value = 60.0
-max_value = 100.0
-step = 1.0
-
-[node name="ScaleLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+[node name="ScaleLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content" unique_id=859231061]
 layout_mode = 2
 text = "Масштаб UI"
 
-[node name="ScaleButtons" type="HBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+[node name="ScaleButtons" type="HBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content" unique_id=1024797795]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Scale100Button" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/ScaleButtons"]
+[node name="Scale100Button" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/ScaleButtons" unique_id=1770096592]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 text = "100%"
 
-[node name="Scale125Button" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/ScaleButtons"]
+[node name="Scale125Button" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/ScaleButtons" unique_id=1812720261]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 text = "125%"
 
-[node name="Scale150Button" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form/ScaleButtons"]
+[node name="Scale150Button" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/ScaleButtons" unique_id=1873192151]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 text = "150%"
 
-[node name="FullscreenButton" type="CheckButton" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+[node name="Scroll" type="ScrollContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content" unique_id=1198472064]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Form" type="VBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll" unique_id=249976705]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="MasterLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1144221027]
+layout_mode = 2
+text = "Общая громкость"
+
+[node name="MasterSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1664390035]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MusicLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=2108809138]
+layout_mode = 2
+text = "Музыка"
+
+[node name="MusicSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1685229383]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SfxLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1242157836]
+layout_mode = 2
+text = "Эффекты"
+
+[node name="SfxSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1438882205]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="UiLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1025615637]
+layout_mode = 2
+text = "Интерфейс"
+
+[node name="UiSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1803365519]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AmbienceLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=528417320]
+layout_mode = 2
+text = "Окружение"
+
+[node name="AmbienceSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=356539397]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SensitivityLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=2012861062]
+layout_mode = 2
+text = "Чувствительность мыши"
+
+[node name="SensitivitySlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=435836289]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 1.0
+value = 1.0
+
+[node name="CameraLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1647148402]
+layout_mode = 2
+text = "Движение камеры"
+
+[node name="CameraSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=590666445]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FovLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=647628889]
+layout_mode = 2
+text = "Поле зрения (FOV)"
+
+[node name="FovSlider" type="HSlider" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=746250980]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 60.0
+value = 60.0
+
+[node name="FullscreenButton" type="CheckButton" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=82642181]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Полноэкранный"
 
-[node name="VsyncButton" type="CheckButton" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+[node name="VsyncButton" type="CheckButton" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=1953575000]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Вертикальная синхронизация"
 
-[node name="ShowFpsButton" type="CheckButton" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+[node name="ShowFpsButton" type="CheckButton" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=688157294]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Показывать FPS"
 
-[node name="ResetTutorialsButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form"]
+[node name="ResetTutorialsButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Scroll/Form" unique_id=895411681]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Сбросить подсказки"
 
-[node name="StatusLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+[node name="StatusLabel" type="Label" parent="Root/SafeMargin/Center/Panel/Margin/Content" unique_id=434620468]
 unique_name_in_owner = true
 layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="Actions" type="HBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content"]
+[node name="Actions" type="HBoxContainer" parent="Root/SafeMargin/Center/Panel/Margin/Content" unique_id=1615244328]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="ApplyButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Actions"]
+[node name="ApplyButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Actions" unique_id=942413490]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Применить"
 
-[node name="DefaultsButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Actions"]
+[node name="DefaultsButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Actions" unique_id=2112275705]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "По умолчанию"
 
-[node name="CancelButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Actions"]
+[node name="CancelButton" type="Button" parent="Root/SafeMargin/Center/Panel/Margin/Content/Actions" unique_id=98835840]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

@@ -367,11 +367,13 @@ girl_id = "girl_appearance_ritual"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.05, -2.5)
 script = ExtResource("6_o5ct1")
 actor_kind = 1
+content_id = &"rival_actress"
 story_stage = 1
 
 [node name="npc_girl_actress" type="Marker3D" parent="NpcSpawns" unique_id=770603830]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.05, -2.5)
 script = ExtResource("6_o5ct1")
+content_id = &"girl_actress"
 story_stage = 1
 
 [node name="npc_girl_magazine_editor" type="Marker3D" parent="NpcSpawns" unique_id=1118534312]

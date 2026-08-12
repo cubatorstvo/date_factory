@@ -75,7 +75,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.35, 1.05)
 size = Vector3(3.2, 0.08, 0.8)
 material = SubResource("StandardMaterial3D_antwd")
 
-[node name="Building_Large_2_Inst" type="Node3D" parent="VisualRoot" unique_id=753147132 instance=ExtResource("2_xnv2p")]
+[node name="Building_Large_2_Inst" parent="VisualRoot" unique_id=753147132 instance=ExtResource("2_xnv2p")]
 transform = Transform3D(0.40553704, 0, 0, 0, 0.40553704, 0, 0, 0, 0.40553704, 0, 0, -1)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=838732898]
@@ -88,6 +88,7 @@ shape = SubResource("BoxShape3D_1t8sc")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=688653804]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_kaxgm")
 mesh = SubResource("BoxMesh_iui34")
 
@@ -147,7 +148,7 @@ material = SubResource("StandardMaterial3D_nfiq2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "FLOWERS"
+text = "ЦВЕТЫ"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/FlowerShop" unique_id=863454843]
@@ -218,7 +219,7 @@ material = SubResource("StandardMaterial3D_07dt5")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "GIFTS"
+text = "ПОДАРКИ"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/GiftShop" unique_id=456209151]

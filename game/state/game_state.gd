@@ -90,6 +90,7 @@ var _dating_overload_personal_dates_completed: int = 0
 var _dating_overload_last_feed_boost_day: int = -1
 var _dating_overload_boost_pending: bool = false
 var _dating_overload_problem_recognized: bool = false
+var _day_job_last_claim_day: int = -1
 
 const CHAR_MIN: int = 0
 const MEDIA_ATTENTION_MIN: int = 0
@@ -165,6 +166,7 @@ func reset_for_new_game() -> void:
 	_dating_overload_last_feed_boost_day = -1
 	_dating_overload_boost_pending = false
 	_dating_overload_problem_recognized = false
+	_day_job_last_claim_day = -1
 	state_reset.emit()
 
 
@@ -511,6 +513,14 @@ func set_dating_overload_last_personal_date_day(day: int) -> void:
 	_dating_overload_last_personal_date_day = day
 
 
+func get_day_job_last_claim_day() -> int:
+	return _day_job_last_claim_day
+
+
+func set_day_job_last_claim_day(day: int) -> void:
+	_day_job_last_claim_day = day
+
+
 func get_dating_overload_personal_dates_completed() -> int:
 	return _dating_overload_personal_dates_completed
 
@@ -648,8 +658,60 @@ func get_experience() -> int:
 	return _experience
 
 
-func get_upgrade_points() -> int:
+func get_real_upgrade_points() -> int:
 	return _upgrade_points
+
+
+func has_tutorial_upgrade_point() -> bool:
+	return get_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_POINT)
+
+
+func get_upgrade_points() -> int:
+	var points: int = _upgrade_points
+	if has_tutorial_upgrade_point():
+		points += 1
+	return points
+
+
+## Temporary Neighbor joke point — story flag only, never permanent _upgrade_points.
+func grant_tutorial_upgrade_point() -> void:
+	if get_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_JOKE_DONE):
+		return
+	if has_tutorial_upgrade_point():
+		return
+	set_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_POINT, true)
+	upgrade_points_changed.emit(get_upgrade_points(), 1)
+
+
+## Revokes tutorial-bought perks and closes the Neighbor upgrade joke.
+func complete_tutorial_upgrade_joke() -> void:
+	if get_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_JOKE_DONE):
+		return
+	var awaiting: bool = get_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_AWAITING_RECLAIM)
+	var had_tutorial_point: bool = has_tutorial_upgrade_point()
+	if awaiting:
+		var perk_ids: Array[StringName] = get_purchased_perk_ids()
+		var db: Node = get_node_or_null("/root/ContentDB")
+		for perk_id in perk_ids:
+			var characteristic: GameTypes.PlayerCharacteristic = (
+				GameTypes.PlayerCharacteristic.MUSCLE
+			)
+			var resolved: bool = false
+			if db != null and db.has_method("get_perk"):
+				var def: Variant = db.call("get_perk", perk_id)
+				if def is PerkDefinition:
+					characteristic = (def as PerkDefinition).characteristic
+					resolved = true
+			if not resolved:
+				_purchased_perks.erase(perk_id)
+				continue
+			_revoke_owned_perk(perk_id, characteristic)
+	if had_tutorial_point:
+		set_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_POINT, false)
+	set_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_AWAITING_RECLAIM, false)
+	set_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_JOKE_DONE, true)
+	if had_tutorial_point:
+		upgrade_points_changed.emit(get_upgrade_points(), -1)
 
 
 func add_experience(amount: int) -> void:
@@ -662,14 +724,14 @@ func add_experience(amount: int) -> void:
 	_experience += amount
 	_upgrade_points += amount
 	experience_changed.emit(_experience, amount)
-	upgrade_points_changed.emit(_upgrade_points, amount)
+	upgrade_points_changed.emit(get_upgrade_points(), amount)
 
 
 func can_spend_upgrade_points(amount: int) -> bool:
 	if amount < 0:
 		push_error("[GameState] can_spend_upgrade_points negative: %s" % amount)
 		return false
-	return _upgrade_points >= amount
+	return get_upgrade_points() >= amount
 
 
 func spend_upgrade_points(amount: int) -> bool:
@@ -678,10 +740,15 @@ func spend_upgrade_points(amount: int) -> bool:
 		return false
 	if amount == 0:
 		return true
-	if _upgrade_points < amount:
+	if not can_spend_upgrade_points(amount):
 		return false
-	_upgrade_points -= amount
-	upgrade_points_changed.emit(_upgrade_points, -amount)
+	var remaining: int = amount
+	if has_tutorial_upgrade_point() and remaining > 0:
+		set_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_POINT, false)
+		remaining -= 1
+	if remaining > 0:
+		_upgrade_points -= remaining
+	upgrade_points_changed.emit(get_upgrade_points(), -amount)
 	return true
 
 
@@ -690,11 +757,14 @@ func restore_upgrade_points(value: int) -> void:
 	if value < 0:
 		push_error("[GameState] restore_upgrade_points negative: %s" % value)
 		return
-	var prev: int = _upgrade_points
-	if prev == value:
+	var prev: int = get_upgrade_points()
+	if _upgrade_points == value:
 		return
 	_upgrade_points = value
-	upgrade_points_changed.emit(_upgrade_points, value - prev)
+	var next: int = get_upgrade_points()
+	if prev == next:
+		return
+	upgrade_points_changed.emit(next, next - prev)
 
 
 # --- Characteristics ---
@@ -794,14 +864,21 @@ func _commit_perk_purchase(
 	if cost < 0:
 		push_error("[GameState] _commit_perk_purchase negative cost: %s" % cost)
 		return false
-	if _upgrade_points < cost:
+	if not can_spend_upgrade_points(cost):
 		return false
 	var prev: int = get_characteristic(characteristic)
 	var next: int = prev + 1
 	if next > CHAR_MAX:
 		push_error("[GameState] _commit_perk_purchase would exceed CHAR_MAX for %s" % characteristic)
 		return false
-	_upgrade_points -= cost
+	var used_tutorial: bool = false
+	var real_cost: int = cost
+	if has_tutorial_upgrade_point() and real_cost > 0:
+		set_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_POINT, false)
+		used_tutorial = true
+		real_cost -= 1
+	if real_cost > 0:
+		_upgrade_points -= real_cost
 	_purchased_perks[perk_id] = true
 	match characteristic:
 		GameTypes.PlayerCharacteristic.MUSCLE:
@@ -814,13 +891,42 @@ func _commit_perk_purchase(
 			_aura = next
 		_:
 			_purchased_perks.erase(perk_id)
-			_upgrade_points += cost
+			if used_tutorial:
+				set_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_POINT, true)
+			if real_cost > 0:
+				_upgrade_points += real_cost
 			push_error("[GameState] _commit_perk_purchase unknown characteristic")
 			return false
 	if cost != 0:
-		upgrade_points_changed.emit(_upgrade_points, -cost)
+		upgrade_points_changed.emit(get_upgrade_points(), -cost)
 	characteristic_changed.emit(characteristic, next, prev)
+	if used_tutorial and not get_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_JOKE_DONE):
+		set_story_flag(StoryIds.FLAG_TUTORIAL_UPGRADE_AWAITING_RECLAIM, true)
 	return true
+
+
+func _revoke_owned_perk(
+	perk_id: StringName,
+	characteristic: GameTypes.PlayerCharacteristic,
+) -> void:
+	if not _purchased_perks.has(perk_id):
+		return
+	_purchased_perks.erase(perk_id)
+	var prev: int = get_characteristic(characteristic)
+	var next: int = maxi(prev - 1, CHAR_MIN)
+	match characteristic:
+		GameTypes.PlayerCharacteristic.MUSCLE:
+			_muscle = next
+		GameTypes.PlayerCharacteristic.APPEARANCE:
+			_appearance = next
+		GameTypes.PlayerCharacteristic.CAPITAL:
+			_capital = next
+		GameTypes.PlayerCharacteristic.AURA:
+			_aura = next
+		_:
+			return
+	if next != prev:
+		characteristic_changed.emit(characteristic, next, prev)
 
 
 # --- Relationships ---
@@ -1501,6 +1607,7 @@ func export_save_state() -> Dictionary:
 		"dating_overload": dating_overload,
 		"clones": clones,
 		"late_game": late_game,
+		"day_job_last_claim_day": _day_job_last_claim_day,
 	}
 
 
@@ -1625,6 +1732,10 @@ func _validate_save_state(data: Dictionary) -> Dictionary:
 	out["dating_overload"] = overload
 	out["clones"] = clones
 	out["late_game"] = late_game
+	var day_job_last: int = -1
+	if data.has("day_job_last_claim_day"):
+		day_job_last = int(data["day_job_last_claim_day"])
+	out["day_job_last_claim_day"] = day_job_last
 	return out
 
 
@@ -1689,6 +1800,7 @@ func _apply_validated_save_state(decoded: Dictionary) -> void:
 	_clone_production_upgrade_level = int(clones["local_upgrade_production"])
 	_clone_work_upgrade_level = int(clones["local_upgrade_work"])
 	_clone_dating_upgrade_level = int(clones["local_upgrade_dating"])
+	_day_job_last_claim_day = int(decoded.get("day_job_last_claim_day", -1))
 	var late_game: Dictionary = decoded["late_game"] as Dictionary
 	_world_reach = int(late_game["world_reach"])
 	_global_production_upgrade_level = int(late_game["global_upgrade_production"])

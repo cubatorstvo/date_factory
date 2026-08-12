@@ -20,7 +20,7 @@ const EVIDENCE_BASED: Dictionary = {
 
 const COPY := {
 	PromptId.FIRST_MOVEMENT: "WASD — движение\nМышь — обзор\nE — взаимодействие",
-	PromptId.FIRST_PHONE: "Телефон хранит сюжет, девушек и текущие системы.",
+	PromptId.FIRST_PHONE: "Q — телефон. Там сюжет, девушки и прокачка.",
 	PromptId.FIRST_RIVAL: "Самец выбирает или предлагает состязание.\nСравни характеристики до начала.",
 	PromptId.FIRST_DATE: "Требования действий видны заранее.\nПосле выбора реакция всегда показывает +1 / 0 / -1.",
 	PromptId.FIRST_UPGRADE_POINT: "Каждый прирост «Покоренных сердец» даёт 1 Балл прокачки.",

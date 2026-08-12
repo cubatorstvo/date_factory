@@ -140,7 +140,7 @@ func _sync_controls_from_working() -> void:
 	if _vsync_btn != null:
 		_vsync_btn.button_pressed = bool(_working.get("vsync", true))
 	if _show_fps_btn != null:
-		_show_fps_btn.button_pressed = bool(_working.get("show_fps", true))
+		_show_fps_btn.button_pressed = bool(_working.get("show_fps", false))
 	_building = false
 
 

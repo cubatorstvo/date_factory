@@ -242,7 +242,7 @@ func _show_finish(result: DatingResult) -> void:
 		lines.append("Итог учебного свидания: %s" % _format_signed(result.date_delta))
 		lines.append("")
 		lines.append("СОСЕДКА:")
-		lines.append("Это всё, что я знаю про свидания. У меня куча дел — дальше действуй сам.")
+		lines.append("Со свиданием разобрались. Подойди ко мне — расскажу про баллы прокачки.")
 		_body.text = "\n".join(lines)
 		_clear_choices()
 		_add_btn("Закончить обучение", _on_close_finished)

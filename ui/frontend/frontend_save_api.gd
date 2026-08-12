@@ -160,7 +160,7 @@ static func default_settings() -> Dictionary:
 		"vsync": true,
 		"fov": 75.0,
 		"ui_scale": 1.0,
-		"show_fps": true,
+		"show_fps": false,
 		"tutorial_seen": [],
 	}
 

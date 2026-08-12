@@ -72,7 +72,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 1.35)
 size = Vector3(5.4, 0.06, 0.08)
 material = SubResource("StandardMaterial3D_0pejv")
 
-[node name="Building_Small_1_Inst" type="Node3D" parent="VisualRoot" unique_id=342740020 instance=ExtResource("2_52agv")]
+[node name="Building_Small_1_Inst" parent="VisualRoot" unique_id=342740020 instance=ExtResource("2_52agv")]
 transform = Transform3D(0.49532166, 0, 0, 0, 0.49532166, 0, 0, 0, 0.49532166, 0, 0.00591764, -0.45)
 
 [node name="CollisionRoot" type="Node3D" parent="." unique_id=1057726132]
@@ -85,6 +85,7 @@ shape = SubResource("BoxShape3D_pfero")
 
 [node name="LotBounds" type="MeshInstance3D" parent="." unique_id=799590718]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_6h14x")
 mesh = SubResource("BoxMesh_5disl")
 
@@ -144,7 +145,7 @@ material = SubResource("StandardMaterial3D_kus58")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
 shaded = true
 modulate = Color(1, 0.96, 0.9, 1)
-text = "ARCADE"
+text = "АРКАДА"
 font_size = 22
 
 [node name="LocalLights" type="Node3D" parent="TenantSlots/Arcade" unique_id=1620687316]
