@@ -1,0 +1,270 @@
+[gd_scene format=3 uid="uid://dlgydal4bvynp"]
+
+[ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_w567w"]
+[ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="2_lki7w"]
+[ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="3_j82hc"]
+[ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="4_ybpwi"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vybiu"]
+albedo_color = Color(0.72, 0.72, 0.74, 1)
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_47oqn"]
+albedo_color = Color(0.9, 0.92, 0.95, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q1oja"]
+albedo_color = Color(0.78, 0.8, 0.84, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4me24"]
+albedo_color = Color(0.35, 0.35, 0.38, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n7ug3"]
+albedo_color = Color(0.25, 0.22, 0.18, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2evv3"]
+albedo_color = Color(0.55, 0.35, 0.75, 1)
+roughness = 0.35
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_aqt5x"]
+albedo_color = Color(0.3, 0.55, 0.7, 1)
+roughness = 0.25
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6hwfq"]
+albedo_color = Color(0.85, 0.55, 0.25, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k3rpw"]
+albedo_color = Color(0.85, 0.55, 0.25, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2n6hx"]
+albedo_color = Color(0.2, 0.45, 0.4, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yfp1w"]
+albedo_color = Color(0.45, 0.35, 0.28, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jr6xq"]
+albedo_color = Color(0.4, 0.3, 0.24, 1)
+roughness = 0.8
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_k1ao8"]
+size = Vector3(1.5, 1, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_g3rom"]
+size = Vector3(1.4, 2.1, 0.8)
+
+[node name="museum" type="Node3D" unique_id=857593852]
+script = ExtResource("1_w567w")
+location_id = &"museum"
+
+[node name="Geometry" type="Node3D" parent="." unique_id=313718941]
+
+[node name="Floor" type="CSGBox3D" parent="Geometry" unique_id=1053082570]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+use_collision = true
+size = Vector3(10, 0.2, 9)
+material = SubResource("StandardMaterial3D_vybiu")
+
+[node name="Ceiling" type="CSGBox3D" parent="Geometry" unique_id=474585138]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+use_collision = true
+size = Vector3(10, 0.15, 9)
+material = SubResource("StandardMaterial3D_47oqn")
+
+[node name="WallN" type="CSGBox3D" parent="Geometry" unique_id=564706172]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, -4.5)
+use_collision = true
+size = Vector3(10, 3.3, 0.2)
+material = SubResource("StandardMaterial3D_q1oja")
+
+[node name="WallSL" type="CSGBox3D" parent="Geometry" unique_id=88401686]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 1.65, 4.5)
+use_collision = true
+size = Vector3(4.2, 3.3, 0.2)
+material = SubResource("StandardMaterial3D_q1oja")
+
+[node name="WallSR" type="CSGBox3D" parent="Geometry" unique_id=1106513243]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 1.65, 4.5)
+use_collision = true
+size = Vector3(4.2, 3.3, 0.2)
+material = SubResource("StandardMaterial3D_q1oja")
+
+[node name="DoorTop" type="CSGBox3D" parent="Geometry" unique_id=560278274]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.85, 4.5)
+use_collision = true
+size = Vector3(1.6, 0.9, 0.2)
+material = SubResource("StandardMaterial3D_q1oja")
+
+[node name="WallE" type="CSGBox3D" parent="Geometry" unique_id=1112775857]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.65, 0)
+use_collision = true
+size = Vector3(0.2, 3.3, 9)
+material = SubResource("StandardMaterial3D_q1oja")
+
+[node name="WallW" type="CSGBox3D" parent="Geometry" unique_id=1461933803]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.65, 0)
+use_collision = true
+size = Vector3(0.2, 3.3, 9)
+material = SubResource("StandardMaterial3D_q1oja")
+
+[node name="Pedestal0" type="CSGBox3D" parent="Geometry" unique_id=1576964517]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.45, -1.8)
+use_collision = true
+size = Vector3(0.9, 0.9, 0.9)
+material = SubResource("StandardMaterial3D_4me24")
+
+[node name="Plaque0" type="CSGBox3D" parent="Geometry" unique_id=943208535]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.35, -1.25)
+use_collision = true
+size = Vector3(0.55, 0.25, 0.06)
+material = SubResource("StandardMaterial3D_n7ug3")
+
+[node name="Sculpture0" type="CSGTorus3D" parent="Geometry" unique_id=1608941236]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 1.25, -1.8)
+use_collision = true
+inner_radius = 0.18
+outer_radius = 0.45
+material = SubResource("StandardMaterial3D_2evv3")
+
+[node name="Pedestal1" type="CSGBox3D" parent="Geometry" unique_id=967739855]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, -2.4)
+use_collision = true
+size = Vector3(0.9, 0.9, 0.9)
+material = SubResource("StandardMaterial3D_4me24")
+
+[node name="Plaque1" type="CSGBox3D" parent="Geometry" unique_id=170975111]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, -1.8500001)
+use_collision = true
+size = Vector3(0.55, 0.25, 0.06)
+material = SubResource("StandardMaterial3D_n7ug3")
+
+[node name="Sculpture1" type="CSGSphere3D" parent="Geometry" unique_id=1361663685]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, -2.4)
+use_collision = true
+radius = 0.4
+material = SubResource("StandardMaterial3D_aqt5x")
+
+[node name="Pedestal2" type="CSGBox3D" parent="Geometry" unique_id=2013053455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0.45, -1.5)
+use_collision = true
+size = Vector3(0.9, 0.9, 0.9)
+material = SubResource("StandardMaterial3D_4me24")
+
+[node name="Plaque2" type="CSGBox3D" parent="Geometry" unique_id=2135916042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0.35, -0.95)
+use_collision = true
+size = Vector3(0.55, 0.25, 0.06)
+material = SubResource("StandardMaterial3D_n7ug3")
+
+[node name="Sculpture2_a" type="CSGBox3D" parent="Geometry" unique_id=664789724]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 1.2, -1.5)
+use_collision = true
+size = Vector3(0.25, 0.9, 0.25)
+material = SubResource("StandardMaterial3D_6hwfq")
+
+[node name="Sculpture2_b" type="CSGBox3D" parent="Geometry" unique_id=1436091499]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.45, -1.4)
+use_collision = true
+size = Vector3(0.7, 0.18, 0.18)
+material = SubResource("StandardMaterial3D_k3rpw")
+
+[node name="Pedestal3" type="CSGBox3D" parent="Geometry" unique_id=1089509991]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.45, 1.2)
+use_collision = true
+size = Vector3(0.9, 0.9, 0.9)
+material = SubResource("StandardMaterial3D_4me24")
+
+[node name="Plaque3" type="CSGBox3D" parent="Geometry" unique_id=180582246]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.35, 1.75)
+use_collision = true
+size = Vector3(0.55, 0.25, 0.06)
+material = SubResource("StandardMaterial3D_n7ug3")
+
+[node name="Sculpture3" type="CSGCylinder3D" parent="Geometry" unique_id=1853430877]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.2, 1.2)
+use_collision = true
+radius = 0.15
+height = 0.9
+sides = 10
+material = SubResource("StandardMaterial3D_2n6hx")
+
+[node name="DateBench" type="CSGBox3D" parent="Geometry" unique_id=1216834532]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.4, 1.8)
+use_collision = true
+size = Vector3(1.5, 0.12, 0.55)
+material = SubResource("StandardMaterial3D_yfp1w")
+
+[node name="DateBenchBack" type="CSGBox3D" parent="Geometry" unique_id=1473632260]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.7, 1.55)
+use_collision = true
+size = Vector3(1.5, 0.5, 0.1)
+material = SubResource("StandardMaterial3D_jr6xq")
+
+[node name="Lights" type="Node3D" parent="." unique_id=418937236]
+
+[node name="Spot0" type="SpotLight3D" parent="Lights" unique_id=2145860038]
+transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, -2.8, 3, -1.1999999)
+light_color = Color(0.85, 0.92, 1, 1)
+light_energy = 1.1
+spot_angle = 28.0
+
+[node name="Spot1" type="SpotLight3D" parent="Lights" unique_id=377715826]
+transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, 0, 3, -1.8000001)
+light_color = Color(0.85, 0.92, 1, 1)
+light_energy = 1.1
+spot_angle = 28.0
+
+[node name="Spot2" type="SpotLight3D" parent="Lights" unique_id=491514954]
+transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, 2.8, 3, -0.9)
+light_color = Color(0.85, 0.92, 1, 1)
+light_energy = 1.1
+spot_angle = 28.0
+
+[node name="Spot3" type="SpotLight3D" parent="Lights" unique_id=283310923]
+transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, -1.5, 3, 1.8000001)
+light_color = Color(0.85, 0.92, 1, 1)
+light_energy = 1.1
+spot_angle = 28.0
+
+[node name="CoolFill" type="OmniLight3D" parent="Lights" unique_id=2130295459]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, 0.5)
+light_color = Color(0.75, 0.85, 1, 1)
+light_energy = 0.35
+omni_range = 9.0
+
+[node name="PlayerSpawns" type="Node3D" parent="." unique_id=735548110]
+
+[node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=1453251491]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.05, 3.5)
+script = ExtResource("2_lki7w")
+
+[node name="Interactables" type="Node3D" parent="." unique_id=1543923349]
+
+[node name="DateVenue" type="Area3D" parent="Interactables" unique_id=481871900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.45, 1.9)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("3_j82hc")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactables/DateVenue" unique_id=603774769]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_k1ao8")
+
+[node name="Transitions" type="Node3D" parent="." unique_id=272295386]
+
+[node name="ToCity" type="Area3D" parent="Transitions" unique_id=1141662670]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 4.25)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("4_ybpwi")
+target_location_id = &"city_hub"
+display_name = "На улицу"
+
+[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity" unique_id=1632124518]
+shape = SubResource("BoxShape3D_g3rom")

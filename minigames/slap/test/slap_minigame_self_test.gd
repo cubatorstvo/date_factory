@@ -94,6 +94,7 @@ func _run_sync_tests() -> void:
 	_test_perks()
 	_test_specials_exclusive()
 	_test_result_once()
+	_test_natural_finish_emits()
 
 
 func _test_formulas() -> void:
@@ -358,6 +359,37 @@ func _test_result_once() -> void:
 	_ok(r1 != null, "111 result exists")
 	m.set_pointer(0.5)
 	_ok(not m.press_primary(), "111 input disabled after end")
+
+
+func _test_natural_finish_emits() -> void:
+	var packed: PackedScene = load("res://minigames/slap/slap_minigame.tscn") as PackedScene
+	_ok(packed != null, "natural finish scene")
+	if packed == null:
+		return
+	var mg: SlapMinigame = packed.instantiate() as SlapMinigame
+	_ok(mg != null, "natural finish instance")
+	if mg == null:
+		return
+	add_child(mg)
+	var match_state: SlapMatch = _new_match()
+	while not match_state.ended:
+		_hit_perfect(match_state)
+		if match_state.ended:
+			break
+		_hit_perfect(match_state)
+	_ok(match_state.ended, "natural finish match ended")
+	mg.setup_match(match_state)
+	mg.auto_tick = false
+	mg._feedback_timer = SlapMinigame.FEEDBACK_HOLD
+	var got: Array = []
+	mg.match_finished.connect(func(result: RivalCompetitionResult) -> void:
+		got.append(result)
+	)
+	mg._process(SlapMinigame.FEEDBACK_HOLD + 0.01)
+	_ok(got.is_empty(), "natural finish waits overlay hold")
+	mg._process(MinigameShell.RESULT_HOLD_SEC + 0.01)
+	_ok(got.size() == 1, "natural finish emits match_finished")
+	mg.queue_free()
 
 
 func _load_rival_fixture(path: String) -> void:

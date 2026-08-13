@@ -20,3 +20,5 @@ dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_gre
 dating_farewell_id = &"dating_farewell_transport_common"
 speech_style_note = "Вежливая и строгая. Не требует роскоши ради роскоши, но замечает две плохие детали быстрее одной выдающейся."
 clue_notes = Array[String](["Перевешивает дорогой пиджак, потому что плечики не соответствуют ткани.", "Одну ошибку исправляет молча. Вторую уже записывает как систему.", "Называет порядок вещей формой уважения к самим вещам."])
+leisure_format_ids = Array[StringName]([&"entertainment", &"calm"])
+relationship_span = 5

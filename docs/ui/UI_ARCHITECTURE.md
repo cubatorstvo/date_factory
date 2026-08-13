@@ -195,7 +195,7 @@ Entry:
 |---|---|---|
 | DatingUI | `ui/dating/` | MODAL_UI; requirements before choice; greeting non-scoring; reaction `+1/0/-1`; result breakdown; Theme |
 | RivalEncounterUI | `ui/rivals/` | choose / result / exhibition stakes; Authority stakes for normal path; exhibition shows no Authority consequence |
-| Minigames | `minigames/slap|dance|sigma|money/` | `ControlMode.MINIGAME`; shared `MinigameShell` Theme + score/result presentation; formulas untouched |
+| Minigames | `minigames/slap|dance|sigma|money/` | `ControlMode.MINIGAME`; shared `MinigameShell` Theme + score/result presentation; after `ended` show result then `match_finished` closes (ESC skips hold); live fight is not aborted by ESC; formulas untouched |
 | Clone Terminal | `game/clone_incremental/clone_terminal_ui.tscn` | assign Work/Dating + local upgrades; Theme |
 | Global Terminal | `game/late_game/global_expansion_terminal_ui.tscn` | Reach, rates, global upgrades; Theme |
 | FinalDateUI | `game/final_date/final_date_ui.tscn` | staged choices, fail→retry, success ending + Continue; Theme + compact numbers |

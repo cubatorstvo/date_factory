@@ -36,6 +36,7 @@ func _ready() -> void:
 func _run_all() -> void:
 	_test_settings_persist()
 	_test_roundtrip_slot()
+	_test_hour_roundtrip_and_legacy()
 	_test_fractions_survive()
 	_test_backup_recovery()
 	_test_unsupported_schema()
@@ -140,8 +141,10 @@ func _test_roundtrip_slot() -> void:
 	_ensure_saveable_world()
 	_seed_midgame()
 	_ok(bool(_ss.call("can_save_now")), "can_save_now before manual save")
+	_day.call("restore_hour", 18)
 	var money_before: int = int(_gs.call("get_money"))
 	var day_before: int = int(_day.call("get_current_day"))
+	var hour_before: int = int(_day.call("get_current_hour"))
 	var stage_before: int = int(_gs.call("get_stage"))
 	var result: SaveResult = _ss.call("save_slot", SaveTypes.Slot.MANUAL_1) as SaveResult
 	_ok(result != null and result.ok, "save_slot MANUAL_1")
@@ -153,6 +156,7 @@ func _test_roundtrip_slot() -> void:
 	# Mutate heavily.
 	_gs.call("add_money", 99999)
 	_day.call("restore_day", 99)
+	_day.call("restore_hour", 3)
 	_gs.call("restore_stage", GameTypes.GameStage.STAGE_5)
 	_ci.call(
 		"restore_runtime_state",
@@ -162,7 +166,41 @@ func _test_roundtrip_slot() -> void:
 	_ok(load_r != null and load_r.ok, "load_slot MANUAL_1")
 	_ok(int(_gs.call("get_money")) == money_before, "money restored")
 	_ok(int(_day.call("get_current_day")) == day_before, "day restored")
+	_ok(int(_day.call("get_current_hour")) == hour_before, "hour restored")
 	_ok(int(_gs.call("get_stage")) == stage_before, "stage restored")
+
+
+func _test_hour_roundtrip_and_legacy() -> void:
+	_ensure_saveable_world()
+	_seed_midgame()
+	_ok(bool(_day.call("restore_hour", 21)), "restore_hour 21 before save")
+	var save_r: SaveResult = _ss.call("save_slot", SaveTypes.Slot.MANUAL_1) as SaveResult
+	_ok(save_r != null and save_r.ok, "save hour slot")
+	_ok(bool(_day.call("restore_hour", 9)), "mutate hour after save")
+	var load_r: SaveResult = _ss.call("load_slot", SaveTypes.Slot.MANUAL_1) as SaveResult
+	_ok(load_r != null and load_r.ok, "load hour slot")
+	_ok(int(_day.call("get_current_hour")) == 21, "hour 21 roundtrip")
+	var path: String = SaveTypes.slot_path(SaveTypes.Slot.MANUAL_1)
+	var raw: String = FileAccess.get_file_as_string(path)
+	_ok(raw.contains("current_hour"), "saved payload has current_hour")
+	var stripped: String = raw
+	var trailing: RegEx = RegEx.new()
+	trailing.compile(",\\s*\"current_hour\"\\s*:\\s*\\d+")
+	stripped = trailing.sub(raw, "", false)
+	if stripped == raw:
+		var leading: RegEx = RegEx.new()
+		leading.compile("\"current_hour\"\\s*:\\s*\\d+\\s*,")
+		stripped = leading.sub(raw, "", false)
+	_ok(stripped != raw and not stripped.contains("current_hour"), "stripped current_hour")
+	var out: FileAccess = FileAccess.open(path, FileAccess.WRITE)
+	_ok(out != null, "rewrite legacy hour save")
+	if out != null:
+		out.store_string(stripped)
+		out.close()
+	_ok(bool(_day.call("restore_hour", 15)), "mutate hour before legacy load")
+	var load_legacy: SaveResult = _ss.call("load_slot", SaveTypes.Slot.MANUAL_1) as SaveResult
+	_ok(load_legacy != null and load_legacy.ok, "legacy hour load ok")
+	_ok(int(_day.call("get_current_hour")) == 8, "missing hour defaults 8")
 
 
 func _test_fractions_survive() -> void:

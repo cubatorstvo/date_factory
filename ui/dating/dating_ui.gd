@@ -50,12 +50,13 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+		if _showing_finish:
+			get_viewport().set_input_as_handled()
+			_on_close_finished()
+			return
 		# Active date must not be aborted by ESC.
 		if _core != null and bool(_core.call("is_date_active")):
-			get_viewport().set_input_as_handled()
-			return
-		if _showing_finish:
 			get_viewport().set_input_as_handled()
 			return
 	if _handle_choice_input(event):
@@ -251,6 +252,11 @@ func _show_finish(result: DatingResult) -> void:
 		return
 	lines.append("Свидание: %s" % _format_signed(result.primary_total))
 	lines.append("Вечер: %s" % _format_signed(result.secondary_reaction))
+	lines.append("Черты: %s" % _format_signed(result.trait_delta))
+	lines.append("Качество места: %s" % _format_signed(result.venue_quality_bonus))
+	lines.append("Предпочтение места: %s" % _format_signed(result.leisure_preference_bonus))
+	lines.append("Подготовка квартиры: %s" % _format_signed(result.apartment_prep_penalty))
+	lines.append("Наряд: %s" % _format_signed(result.outfit_bonus))
 	lines.append("Итого: %s" % _format_signed(result.date_delta))
 	var rel: RelationshipDateResult = _last_rel_result
 	if rel == null and _relationships != null:

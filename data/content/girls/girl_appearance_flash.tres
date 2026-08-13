@@ -20,3 +20,5 @@ dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_gre
 dating_farewell_id = &"dating_farewell_walk_common"
 speech_style_note = "Говорит коротко и с прицелом на кадр; тихая удача интересует её меньше замеченной сцены."
 clue_notes = Array[String](["Перед фотографией сначала смотрит, кто окажется на заднем плане.", "Когда кто-то занимает нужное место, не меняет план — меняет человека.", "Тихая удачная сцена интересует её меньше, чем публичная сцена, которую заметили остальные."])
+leisure_format_ids = Array[StringName]([&"entertainment", &"play"])
+relationship_span = 5

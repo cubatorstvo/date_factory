@@ -106,12 +106,13 @@ func _process(delta: float) -> void:
 		if _result_hold <= 0.0:
 			_try_emit_finished(false)
 		return
-	if match_state == null or match_state.ended:
-		_try_emit_finished(false)
-		return
 	if _feedback_timer > 0.0:
 		_feedback_timer = maxf(0.0, _feedback_timer - delta)
 		_refresh_ui()
+		if match_state == null or not match_state.ended or _feedback_timer > 0.0:
+			return
+	if match_state == null or match_state.ended:
+		_try_emit_finished(false)
 		return
 	if auto_tick:
 		var before_feedback: SlapMatch.Feedback = match_state.last_feedback
@@ -136,6 +137,14 @@ func _process(delta: float) -> void:
 			_present_camera_impulse(before_phase, SlapTiming.Result.MISS)
 	_refresh_ui()
 	_try_emit_finished(false)
+
+
+func _input(event: InputEvent) -> void:
+	if match_state == null or not match_state.ended or _finished_emitted:
+		return
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+		force_finish_emit()
+		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:

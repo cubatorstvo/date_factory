@@ -21,6 +21,7 @@ var _awaiting_result: bool = false
 
 
 func _ready() -> void:
+	_bind_content_id()
 	prompt_action = "Вызвать"
 	collision_layer = LAYER_INTERACTABLE
 	collision_mask = 0
@@ -39,6 +40,16 @@ func _ready() -> void:
 		if encounters.has_signal("encounter_finished") and not encounters.is_connected("encounter_finished", _on_encounter_finished):
 			encounters.connect("encounter_finished", _on_encounter_finished)
 	_refresh_interaction()
+
+
+func _bind_content_id() -> void:
+	if String(rival_id) != "":
+		return
+	var marker: Node = get_parent()
+	if marker is NpcSpawnPoint:
+		rival_id = (marker as NpcSpawnPoint).bound_content_id()
+	elif marker != null:
+		rival_id = NpcSpawnPoint.content_id_from_npc_name(marker.name)
 
 
 func has_animation(alias: StringName) -> bool:

@@ -19,3 +19,5 @@ extends Resource
 @export var dating_farewell_id: StringName = &""
 @export var speech_style_note: String = ""
 @export var clue_notes: Array[String] = []
+@export var leisure_format_ids: Array[StringName] = []
+@export var relationship_span: int = 5

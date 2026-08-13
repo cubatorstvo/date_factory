@@ -96,8 +96,8 @@ const CHAR_MIN: int = 0
 const MEDIA_ATTENTION_MIN: int = 0
 const MEDIA_ATTENTION_MAX: int = 100
 const CHAR_MAX: int = 10
-const RELATIONSHIP_MIN: int = -5
-const RELATIONSHIP_MAX: int = 5
+const RELATIONSHIP_MIN: int = -10
+const RELATIONSHIP_MAX: int = 10
 
 
 func _ready() -> void:

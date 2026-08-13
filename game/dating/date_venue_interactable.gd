@@ -16,6 +16,9 @@ const APARTMENT_CATALOG_SCRIPT: String = (
 const TUTORIAL_HERO_SEAT_PATH: NodePath = ^"../../../Markers/HeroSeat"
 const TUTORIAL_GIRL_SEAT_PATH: NodePath = ^"../../../Markers/GirlSeat"
 const TUTORIAL_SEATED_EYE_HEIGHT: float = 1.20
+const HERO_SEAT_NAME: String = "HeroSeat"
+const GIRL_SEAT_NAME: String = "GirlSeat"
+const DATE_GIRL_NODE_NAME: String = "DateOccupantGirl"
 
 @export var prompt_text: String = "Стол для свидания"
 
@@ -27,6 +30,11 @@ var _tutorial_in_progress: bool = false
 var _tutorial_player_transform: Transform3D = Transform3D.IDENTITY
 var _tutorial_camera_pivot_transform: Transform3D = Transform3D.IDENTITY
 var _tutorial_player_pose_saved: bool = false
+var _date_girl_spawned: CharacterActor = null
+var _date_girl_reused: Node3D = null
+var _date_girl_saved_transform: Transform3D = Transform3D.IDENTITY
+var _date_girl_saved_visible: bool = true
+var _date_girl_saved_process_mode: Node.ProcessMode = Node.PROCESS_MODE_INHERIT
 
 
 func _ready() -> void:
@@ -56,6 +64,9 @@ func get_interaction_prompt(player: Node) -> String:
 		if missing.is_empty():
 			return "[E] Начать обучающее свидание"
 		return "[E] Подготовка: не хватает — %s" % ", ".join(missing)
+	var pending_prompt: String = _pending_appointment_prompt()
+	if pending_prompt != "":
+		return pending_prompt
 	prompt_action = prompt_text
 	return super.get_interaction_prompt(player)
 
@@ -76,6 +87,8 @@ func _on_interact(player: Node) -> void:
 		if bool(overload.call("is_started")) and not bool(overload.call("can_start_personal_date")):
 			_show_error(DatingOverloadTypes.DATE_VENUE_CAPACITY_MESSAGE, player)
 			return
+	if _try_pending_appointment(player):
+		return
 	_show_girl_picker(player)
 
 
@@ -112,6 +125,7 @@ func _try_place_carried_meal(player: Node) -> bool:
 		return true
 	_placed_servings[category] = pair
 	_mark_tutorial_serving_ready(category)
+	_sync_apartment_prepared_flag()
 	if category == &"food":
 		_set_apartment_cutlery_visible(true)
 	var noun: String = "два напитка" if category == &"drink" else "две порции"
@@ -375,22 +389,16 @@ func _start_tutorial_date(player: Node) -> void:
 		_show_error("Не удалось начать обучающее свидание.", player)
 		return
 	_tutorial_in_progress = true
-	_seat_tutorial_player(player)
-	_set_tutorial_neighbor_visible(true)
-	var ui: CanvasLayer = _ensure_dating_ui()
-	if ui != null and ui.has_method("open_for_active_date"):
-		ui.call("open_for_active_date")
-	_enter_dialogue(player)
-	if dc.has_signal("date_finished"):
-		if not dc.is_connected("date_finished", _on_date_finished):
-			dc.connect("date_finished", _on_date_finished)
+	_occupy_date_seats(player, StoryIds.GIRL_NEIGHBOR)
+	_advance_arrival_to_greeting()
+	_open_active_date_session(player)
 
 
 func _seat_tutorial_player(player: Node) -> void:
 	var controller: PlayerController = player as PlayerController
-	var seat: Marker3D = get_node_or_null(TUTORIAL_HERO_SEAT_PATH) as Marker3D
+	var seat: Marker3D = _find_seat_marker(HERO_SEAT_NAME)
 	if controller == null or seat == null:
-		push_error("[DateVenue] tutorial HeroSeat missing")
+		push_error("[DateVenue] HeroSeat missing")
 		return
 	var camera_pivot: Node3D = controller.get_node_or_null("CameraPivot") as Node3D
 	_tutorial_player_transform = controller.global_transform
@@ -431,7 +439,7 @@ func _set_tutorial_neighbor_visible(show: bool) -> void:
 	actor.visible = show
 	actor.process_mode = Node.PROCESS_MODE_INHERIT if show else Node.PROCESS_MODE_DISABLED
 	if show:
-		var seat: Marker3D = get_node_or_null(TUTORIAL_GIRL_SEAT_PATH) as Marker3D
+		var seat: Marker3D = _find_seat_marker(GIRL_SEAT_NAME)
 		if seat != null:
 			actor.global_transform = seat.global_transform
 			actor.rotate_y(PI)
@@ -442,6 +450,268 @@ func _set_tutorial_neighbor_visible(show: bool) -> void:
 				animation.play_loop(&"sit_idle")
 			else:
 				animation.play_semantic(&"idle")
+
+
+func _occupy_date_seats(player: Node, girl_id: StringName) -> void:
+	_seat_tutorial_player(player)
+	_present_date_girl(girl_id)
+
+
+func _advance_arrival_to_greeting() -> void:
+	var dc: Node = get_node_or_null("/root/DatingCore")
+	if dc == null or not dc.has_method("continue_arrival"):
+		return
+	if not bool(dc.call("is_date_active")):
+		return
+	var session: Variant = dc.call("get_session")
+	if session is DatingSession and (session as DatingSession).phase == DatingTypes.Phase.ARRIVAL:
+		dc.call("continue_arrival")
+
+
+func _open_active_date_session(player: Node) -> void:
+	var ui: CanvasLayer = _ensure_dating_ui()
+	if ui != null and ui.has_method("open_for_active_date"):
+		ui.call("open_for_active_date")
+	_enter_dialogue(player)
+	var dc: Node = get_node_or_null("/root/DatingCore")
+	if dc != null and dc.has_signal("date_finished"):
+		if not dc.is_connected("date_finished", _on_date_finished):
+			dc.connect("date_finished", _on_date_finished)
+
+
+func _active_session_girl_id() -> StringName:
+	var dc: Node = get_node_or_null("/root/DatingCore")
+	if dc == null or not dc.has_method("get_session"):
+		return &""
+	var session: Variant = dc.call("get_session")
+	if session is DatingSession:
+		return (session as DatingSession).girl_id
+	return &""
+
+
+func _location_root() -> Node:
+	var world: Node = get_node_or_null("/root/World")
+	if world != null and world.has_method("get_current_location"):
+		var loc: Node = world.call("get_current_location") as Node
+		if loc != null:
+			return loc
+	return self
+
+
+func _find_seat_marker(seat_name: String) -> Marker3D:
+	var relative: NodePath = TUTORIAL_HERO_SEAT_PATH
+	if seat_name == GIRL_SEAT_NAME:
+		relative = TUTORIAL_GIRL_SEAT_PATH
+	var local: Marker3D = get_node_or_null(relative) as Marker3D
+	if local != null:
+		return local
+	var root: Node = _location_root()
+	if root == null:
+		return null
+	return root.find_child(seat_name, true, false) as Marker3D
+
+
+func _find_existing_date_girl(girl_id: StringName) -> Node3D:
+	var root: Node = _location_root()
+	if root == null:
+		return null
+	if girl_id == StoryIds.GIRL_NEIGHBOR:
+		var neighbor: Node = root.find_child("TutorialNeighbor", true, false)
+		if neighbor == null:
+			var tree: SceneTree = get_tree()
+			if tree != null:
+				neighbor = tree.root.find_child("TutorialNeighbor", true, false)
+		if neighbor is CharacterActor:
+			return neighbor as CharacterActor
+	var girls: Array[Node] = root.find_children("*", "GirlActor", true, false)
+	for node in girls:
+		var girl: GirlActor = node as GirlActor
+		if girl != null and girl.girl_id == girl_id:
+			return girl
+	return null
+
+
+func _present_date_girl(girl_id: StringName) -> void:
+	_clear_presented_date_girl()
+	var seat: Marker3D = _find_seat_marker(GIRL_SEAT_NAME)
+	if seat == null:
+		push_warning("[DateVenue] GirlSeat missing; date continues without girl occupancy")
+		return
+	var existing: Node3D = _find_existing_date_girl(girl_id)
+	if existing != null:
+		_date_girl_reused = existing
+		_date_girl_saved_transform = existing.global_transform
+		_date_girl_saved_visible = existing.visible
+		_date_girl_saved_process_mode = existing.process_mode
+		if existing.name == "TutorialNeighbor":
+			_set_tutorial_neighbor_visible(true)
+			return
+		existing.visible = true
+		existing.process_mode = Node.PROCESS_MODE_INHERIT
+		existing.global_transform = seat.global_transform
+		existing.rotate_y(PI)
+		_play_sit_idle(existing)
+		return
+	var profile_id: StringName = &"appearance_female_base"
+	var db: Node = get_node_or_null("/root/ContentDB")
+	if db != null and db.has_method("get_girl"):
+		var def: GirlDefinition = db.call("get_girl", girl_id) as GirlDefinition
+		if def != null and String(def.appearance_profile_id) != "":
+			profile_id = def.appearance_profile_id
+	var parent: Node = seat.get_parent()
+	if parent == null:
+		parent = _location_root()
+	var spawned: CharacterActor = CharacterFactory.create(profile_id, girl_id, parent)
+	if spawned == null:
+		push_error("[DateVenue] failed to spawn date girl")
+		return
+	spawned.name = DATE_GIRL_NODE_NAME
+	spawned.global_transform = seat.global_transform
+	spawned.rotate_y(PI)
+	_play_sit_idle(spawned)
+	_date_girl_spawned = spawned
+
+
+func _play_sit_idle(host: Node) -> void:
+	var girl: GirlActor = host as GirlActor
+	if girl != null:
+		if girl.has_animation(&"sit_idle"):
+			girl.play_semantic(&"sit_idle")
+			return
+		host = girl.get_character_actor()
+	var actor: CharacterActor = host as CharacterActor
+	if actor == null:
+		return
+	var animation: CharacterAnimationController = actor.get_animation_controller()
+	if animation == null:
+		return
+	if animation.has_animation(&"sit_idle"):
+		animation.play_loop(&"sit_idle")
+	else:
+		animation.play_semantic(&"idle")
+
+
+func _clear_presented_date_girl() -> void:
+	if _date_girl_spawned != null and is_instance_valid(_date_girl_spawned):
+		_date_girl_spawned.queue_free()
+	_date_girl_spawned = null
+	if _date_girl_reused != null and is_instance_valid(_date_girl_reused):
+		if _date_girl_reused.name == "TutorialNeighbor":
+			_set_tutorial_neighbor_visible(false)
+		else:
+			_date_girl_reused.global_transform = _date_girl_saved_transform
+			_date_girl_reused.visible = _date_girl_saved_visible
+			_date_girl_reused.process_mode = _date_girl_saved_process_mode
+	_date_girl_reused = null
+
+
+func _restore_date_occupancy(player: Node) -> void:
+	_restore_tutorial_player(player)
+	_clear_presented_date_girl()
+
+
+func _pending_appointment_prompt() -> String:
+	var rel: Node = get_node_or_null("/root/Relationships")
+	if rel == null or not rel.has_method("peek_pending_date_status"):
+		return ""
+	var status: Dictionary = rel.call("peek_pending_date_status", _current_location_id()) as Dictionary
+	if not bool(status.get("here", false)):
+		return ""
+	if bool(status.get("too_early", false)):
+		if _can_skip_to_pending_home_date():
+			return "[E] Промотать до начала свидания"
+		return "[E] %s" % str(status.get("message", "Приходи позже."))
+	if bool(status.get("ready", false)):
+		return "[E] Начать свидание"
+	return ""
+
+
+func _has_food_and_drink_on_table() -> bool:
+	var food: Node3D = _placed_servings.get(&"food") as Node3D
+	var drink: Node3D = _placed_servings.get(&"drink") as Node3D
+	return food != null and is_instance_valid(food) and drink != null and is_instance_valid(drink)
+
+
+func _is_home_table_prepared() -> bool:
+	if _current_location_id() != &"apartment":
+		return false
+	if _has_food_and_drink_on_table():
+		return true
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and gs.has_method("get_story_flag"):
+		return bool(gs.call("get_story_flag", DateVenueCatalog.PREPARED_FLAG))
+	return false
+
+
+func _sync_apartment_prepared_flag() -> void:
+	if _current_location_id() != &"apartment":
+		return
+	if not _has_food_and_drink_on_table():
+		return
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and gs.has_method("set_story_flag"):
+		gs.call("set_story_flag", DateVenueCatalog.PREPARED_FLAG, true)
+
+
+func _can_skip_to_pending_home_date() -> bool:
+	return _current_location_id() == &"apartment" and _is_home_table_prepared()
+
+
+func _skip_clock_to_pending(peek: Dictionary) -> void:
+	var day: Node = get_node_or_null("/root/GameDay")
+	if day == null:
+		return
+	var appt_day: int = int(peek.get("day", 0))
+	var appt_hour: int = int(peek.get("hour", 0))
+	if appt_day < 1 or not Relationships.DATE_INVITE_HOURS.has(appt_hour):
+		return
+	if day.has_method("get_current_day") and day.has_method("advance_day"):
+		while int(day.call("get_current_day")) < appt_day:
+			day.call("advance_day")
+	var now_hour: int = 0
+	if day.has_method("get_current_hour"):
+		now_hour = int(day.call("get_current_hour"))
+	if now_hour >= appt_hour:
+		return
+	if day.has_method("wait_until_hour"):
+		day.call("wait_until_hour", appt_hour)
+
+
+func _try_pending_appointment(player: Node) -> bool:
+	var rel: Node = get_node_or_null("/root/Relationships")
+	if rel == null or not rel.has_method("try_start_pending_date_at"):
+		return false
+	var peek: Dictionary = {}
+	if rel.has_method("peek_pending_date_status"):
+		peek = rel.call("peek_pending_date_status", _current_location_id()) as Dictionary
+		if not bool(peek.get("has", false)):
+			return false
+		if not bool(peek.get("here", false)):
+			return false
+		if bool(peek.get("too_early", false)):
+			if _can_skip_to_pending_home_date():
+				_skip_clock_to_pending(peek)
+			else:
+				var wait_msg: String = str(peek.get("message", "")).strip_edges()
+				if wait_msg == "":
+					wait_msg = "Приходи позже."
+				_show_error(wait_msg, player)
+				return true
+	var start: Dictionary = rel.call("try_start_pending_date_at", _current_location_id()) as Dictionary
+	if not bool(start.get("ok", false)):
+		var msg: String = str(start.get("message", "")).strip_edges()
+		if msg == "":
+			var err: StringName = start.get("error", &"") as StringName
+			msg = DatingTypes.user_message(err)
+		if msg == "":
+			msg = "Не удалось начать свидание."
+		_show_error(msg, player)
+		return true
+	_close_ui(player)
+	_occupy_date_seats(player, _active_session_girl_id())
+	_advance_arrival_to_greeting()
+	_open_active_date_session(player)
+	return true
 
 
 func _start_date(girl_id: StringName, player: Node) -> void:
@@ -472,15 +742,9 @@ func _start_date(girl_id: StringName, player: Node) -> void:
 		_show_error(msg, player)
 		return
 	_close_ui(player)
-	var ui: CanvasLayer = _ensure_dating_ui()
-	if ui != null and ui.has_method("open_for_active_date"):
-		ui.call("open_for_active_date")
-	_enter_dialogue(player)
-	var dc: Node = get_node_or_null("/root/DatingCore")
-	if dc != null and dc.has_signal("date_finished"):
-		if not dc.is_connected("date_finished", _on_date_finished):
-			dc.connect("date_finished", _on_date_finished)
-
+	_occupy_date_seats(player, girl_id)
+	_advance_arrival_to_greeting()
+	_open_active_date_session(player)
 
 func _on_date_finished(_result: DatingResult) -> void:
 	var dc: Node = get_node_or_null("/root/DatingCore")
@@ -502,10 +766,8 @@ func _on_dating_ui_visibility() -> void:
 		return
 	if _dating_ui.visibility_changed.is_connected(_on_dating_ui_visibility):
 		_dating_ui.visibility_changed.disconnect(_on_dating_ui_visibility)
-	if _tutorial_in_progress:
-		_restore_tutorial_player(_active_player)
-		_set_tutorial_neighbor_visible(false)
-		_tutorial_in_progress = false
+	_restore_date_occupancy(_active_player)
+	_tutorial_in_progress = false
 	_exit_modal(_active_player)
 	_active_player = null
 

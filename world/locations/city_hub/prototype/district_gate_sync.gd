@@ -14,7 +14,19 @@ func _ready() -> void:
 	if gs != null and gs.has_signal("stage_changed"):
 		if not gs.stage_changed.is_connected(_on_stage_changed):
 			gs.stage_changed.connect(_on_stage_changed)
+	_ensure_interact_bind()
 	call_deferred("refresh_gates")
+
+
+func _ensure_interact_bind() -> void:
+	if get_node_or_null("CityInteractBind") != null:
+		return
+	var script: GDScript = load("res://world/locations/city_hub/prototype/city_interact_bind.gd") as GDScript
+	if script == null:
+		return
+	var bind: Node = script.new() as Node
+	bind.name = "CityInteractBind"
+	add_child(bind)
 
 
 func _on_feature_unlocked(_feature: StoryTypes.StoryFeature) -> void:

@@ -45,6 +45,7 @@ var _pitch: float = 0.0
 var _minigame_mouse_mode: Input.MouseMode = Input.MOUSE_MODE_VISIBLE
 var _was_window_focused: bool = true
 var _mode_before_pause: ControlMode = ControlMode.GAMEPLAY
+var _hovered_outline: Node = null
 
 
 func _ready() -> void:
@@ -74,6 +75,8 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
+		if _mode == ControlMode.MODAL_UI or _mode == ControlMode.DIALOGUE:
+			return
 		_handle_pause_action()
 		get_viewport().set_input_as_handled()
 		return
@@ -300,6 +303,7 @@ func _apply_mode_side_effects() -> void:
 	_crosshair.visible = false
 	if not gameplay:
 		_prompt_label.visible = false
+		_apply_interact_outline_hover(null)
 	match _mode:
 		ControlMode.GAMEPLAY, ControlMode.DIALOGUE:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -312,6 +316,7 @@ func _apply_mode_side_effects() -> void:
 
 func _on_interaction_target_changed(target: Area3D) -> void:
 	interaction_target_changed.emit(target)
+	_apply_interact_outline_hover(target if _mode == ControlMode.GAMEPLAY else null)
 	if _mode != ControlMode.GAMEPLAY:
 		_prompt_label.visible = false
 		return
@@ -322,6 +327,18 @@ func _on_interaction_target_changed(target: Area3D) -> void:
 	var raw_prompt: String = str(target.call("get_interaction_prompt", self))
 	_prompt_label.text = _format_player_prompt(raw_prompt, target)
 	_prompt_label.visible = _prompt_label.text.strip_edges() != ""
+
+
+func _apply_interact_outline_hover(target: Area3D) -> void:
+	if _hovered_outline != null and is_instance_valid(_hovered_outline) and _hovered_outline.has_method("set_hovered"):
+		_hovered_outline.call("set_hovered", false)
+	_hovered_outline = null
+	if target == null:
+		return
+	var outline: Node = target.get_node_or_null("InteractOutline")
+	if outline != null and outline.has_method("set_hovered"):
+		outline.call("set_hovered", true)
+		_hovered_outline = outline
 
 
 func _update_focus_safety() -> void:

@@ -1,0 +1,413 @@
+[gd_scene format=3 uid="uid://cklhrjw4sgp5d"]
+
+[ext_resource type="Script" uid="uid://p3q3lkptcsp5" path="res://world/world_location.gd" id="1_tnw5u"]
+[ext_resource type="Script" uid="uid://pncvtijps7pn" path="res://world/player_spawn_point.gd" id="2_2uqn5"]
+[ext_resource type="Script" uid="uid://dkptytt8vlj04" path="res://game/dating/date_venue_interactable.gd" id="3_2owe4"]
+[ext_resource type="Script" uid="uid://7bi5wgh3opec" path="res://world/world_transition.gd" id="4_c73iu"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_em5y2"]
+albedo_color = Color(0.28, 0.08, 0.1, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q1yju"]
+albedo_color = Color(0.08, 0.08, 0.1, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ndfwl"]
+albedo_color = Color(0.12, 0.12, 0.16, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pwj8c"]
+albedo_color = Color(0.7, 0.85, 1, 1)
+roughness = 0.2
+emission_enabled = true
+emission = Color(0.6, 0.8, 1, 1)
+emission_energy_multiplier = 2.2
+
+[sub_resource type="QuadMesh" id="QuadMesh_8i1c2"]
+size = Vector2(7.5, 3.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hbx0p"]
+albedo_color = Color(0.05, 0.05, 0.06, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oua3d"]
+albedo_color = Color(0.35, 0.08, 0.1, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tsom5"]
+albedo_color = Color(0.18, 0.08, 0.1, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xjmyk"]
+albedo_color = Color(0.9, 0.75, 0.4, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(1, 0.7, 0.3, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c3qwd"]
+albedo_color = Color(0.9, 0.75, 0.4, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(1, 0.7, 0.3, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pxuwi"]
+albedo_color = Color(0.9, 0.75, 0.4, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(1, 0.7, 0.3, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lpt0f"]
+albedo_color = Color(0.9, 0.75, 0.4, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(1, 0.7, 0.3, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_40fy1"]
+albedo_color = Color(0.9, 0.75, 0.4, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(1, 0.7, 0.3, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k3ln7"]
+albedo_color = Color(0.9, 0.75, 0.4, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(1, 0.7, 0.3, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xcg7p"]
+size = Vector3(1.2, 1.2, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kwf30"]
+size = Vector3(1.4, 2.1, 0.8)
+
+[node name="cinema" type="Node3D" unique_id=199231903]
+script = ExtResource("1_tnw5u")
+location_id = &"cinema"
+
+[node name="Geometry" type="Node3D" parent="." unique_id=1619948182]
+
+[node name="Floor" type="CSGBox3D" parent="Geometry" unique_id=447836110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+use_collision = true
+size = Vector3(10, 0.2, 12)
+material = SubResource("StandardMaterial3D_em5y2")
+
+[node name="Ceiling" type="CSGBox3D" parent="Geometry" unique_id=2005212673]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+use_collision = true
+size = Vector3(10, 0.15, 12)
+material = SubResource("StandardMaterial3D_q1yju")
+
+[node name="WallN" type="CSGBox3D" parent="Geometry" unique_id=1209612418]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, -6)
+use_collision = true
+size = Vector3(10, 3.9, 0.25)
+material = SubResource("StandardMaterial3D_ndfwl")
+
+[node name="WallS" type="CSGBox3D" parent="Geometry" unique_id=1344348694]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 1.95, 6)
+use_collision = true
+size = Vector3(4.4, 3.9, 0.25)
+material = SubResource("StandardMaterial3D_ndfwl")
+
+[node name="WallSR" type="CSGBox3D" parent="Geometry" unique_id=868108111]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 1.95, 6)
+use_collision = true
+size = Vector3(4.4, 3.9, 0.25)
+material = SubResource("StandardMaterial3D_ndfwl")
+
+[node name="DoorTop" type="CSGBox3D" parent="Geometry" unique_id=177035327]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 6)
+use_collision = true
+size = Vector3(1.6, 1.2, 0.25)
+material = SubResource("StandardMaterial3D_ndfwl")
+
+[node name="WallE" type="CSGBox3D" parent="Geometry" unique_id=1962544847]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.95, 0)
+use_collision = true
+size = Vector3(0.25, 3.9, 12)
+material = SubResource("StandardMaterial3D_ndfwl")
+
+[node name="WallW" type="CSGBox3D" parent="Geometry" unique_id=68963737]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.95, 0)
+use_collision = true
+size = Vector3(0.25, 3.9, 12)
+material = SubResource("StandardMaterial3D_ndfwl")
+
+[node name="Screen" type="MeshInstance3D" parent="Geometry" unique_id=1329215629]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -5.7)
+material_override = SubResource("StandardMaterial3D_pwj8c")
+mesh = SubResource("QuadMesh_8i1c2")
+
+[node name="ScreenFrame" type="CSGBox3D" parent="Geometry" unique_id=2002858076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -5.85)
+use_collision = true
+size = Vector3(8, 3.6, 0.15)
+material = SubResource("StandardMaterial3D_hbx0p")
+
+[node name="Seat_0_0" type="CSGBox3D" parent="Geometry" unique_id=1616693766]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.35, -1.2)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_0_0" type="CSGBox3D" parent="Geometry" unique_id=1020942970]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.85, -0.9)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_0_1" type="CSGBox3D" parent="Geometry" unique_id=311270823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.35, -1.2)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_0_1" type="CSGBox3D" parent="Geometry" unique_id=817757284]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.85, -0.9)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_0_3" type="CSGBox3D" parent="Geometry" unique_id=1458855657]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.35, -1.2)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_0_3" type="CSGBox3D" parent="Geometry" unique_id=241764503]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.85, -0.9)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_0_4" type="CSGBox3D" parent="Geometry" unique_id=760454119]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.35, -1.2)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_0_4" type="CSGBox3D" parent="Geometry" unique_id=1255101830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.85, -0.9)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_1_0" type="CSGBox3D" parent="Geometry" unique_id=1995168453]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.35, 0.5)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_1_0" type="CSGBox3D" parent="Geometry" unique_id=1547231399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.85, 0.8)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_1_1" type="CSGBox3D" parent="Geometry" unique_id=206652066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.35, 0.5)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_1_1" type="CSGBox3D" parent="Geometry" unique_id=777159339]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.85, 0.8)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_1_3" type="CSGBox3D" parent="Geometry" unique_id=1940217348]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.35, 0.5)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_1_3" type="CSGBox3D" parent="Geometry" unique_id=897951705]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.85, 0.8)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_1_4" type="CSGBox3D" parent="Geometry" unique_id=1719588777]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.35, 0.5)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_1_4" type="CSGBox3D" parent="Geometry" unique_id=1943320218]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.85, 0.8)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_2_0" type="CSGBox3D" parent="Geometry" unique_id=1920253321]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.35, 2.2)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_2_0" type="CSGBox3D" parent="Geometry" unique_id=758587886]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.85, 2.5)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_2_1" type="CSGBox3D" parent="Geometry" unique_id=99673717]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.35, 2.2)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_2_1" type="CSGBox3D" parent="Geometry" unique_id=1125171353]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.85, 2.5)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_2_3" type="CSGBox3D" parent="Geometry" unique_id=1932512897]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.35, 2.2)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_2_3" type="CSGBox3D" parent="Geometry" unique_id=980665401]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.85, 2.5)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Seat_2_4" type="CSGBox3D" parent="Geometry" unique_id=1208674512]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.35, 2.2)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.85)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="SeatBack_2_4" type="CSGBox3D" parent="Geometry" unique_id=1833483910]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.85, 2.5)
+use_collision = true
+size = Vector3(0.9, 0.7, 0.15)
+material = SubResource("StandardMaterial3D_oua3d")
+
+[node name="Aisle" type="CSGBox3D" parent="Geometry" unique_id=734712209]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.5)
+size = Vector3(1.2, 0.04, 8.5)
+material = SubResource("StandardMaterial3D_tsom5")
+
+[node name="Sconce_-4_4_-3_0" type="CSGBox3D" parent="Geometry" unique_id=428488206]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4, 2.4, -3)
+size = Vector3(0.15, 0.35, 0.25)
+material = SubResource("StandardMaterial3D_xjmyk")
+
+[node name="Sconce_-4_4_0_5" type="CSGBox3D" parent="Geometry" unique_id=2005476317]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4, 2.4, 0.5)
+size = Vector3(0.15, 0.35, 0.25)
+material = SubResource("StandardMaterial3D_c3qwd")
+
+[node name="Sconce_-4_4_3_5" type="CSGBox3D" parent="Geometry" unique_id=1154407957]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4, 2.4, 3.5)
+size = Vector3(0.15, 0.35, 0.25)
+material = SubResource("StandardMaterial3D_pxuwi")
+
+[node name="Sconce_4_4_-3_0" type="CSGBox3D" parent="Geometry" unique_id=545963651]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 2.4, -3)
+size = Vector3(0.15, 0.35, 0.25)
+material = SubResource("StandardMaterial3D_lpt0f")
+
+[node name="Sconce_4_4_0_5" type="CSGBox3D" parent="Geometry" unique_id=936213178]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 2.4, 0.5)
+size = Vector3(0.15, 0.35, 0.25)
+material = SubResource("StandardMaterial3D_40fy1")
+
+[node name="Sconce_4_4_3_5" type="CSGBox3D" parent="Geometry" unique_id=1867506569]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 2.4, 3.5)
+size = Vector3(0.15, 0.35, 0.25)
+material = SubResource("StandardMaterial3D_k3ln7")
+
+[node name="Lights" type="Node3D" parent="." unique_id=1065982407]
+
+[node name="SconceLight_-4_4_-3_0" type="OmniLight3D" parent="Lights" unique_id=1425126923]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.96, 2.4, -3)
+light_color = Color(1, 0.7, 0.4, 1)
+light_energy = 0.35
+omni_range = 3.5
+
+[node name="SconceLight_-4_4_0_5" type="OmniLight3D" parent="Lights" unique_id=1458592734]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.96, 2.4, 0.5)
+light_color = Color(1, 0.7, 0.4, 1)
+light_energy = 0.35
+omni_range = 3.5
+
+[node name="SconceLight_-4_4_3_5" type="OmniLight3D" parent="Lights" unique_id=1567475995]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.96, 2.4, 3.5)
+light_color = Color(1, 0.7, 0.4, 1)
+light_energy = 0.35
+omni_range = 3.5
+
+[node name="SconceLight_4_4_-3_0" type="OmniLight3D" parent="Lights" unique_id=127401230]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.96, 2.4, -3)
+light_color = Color(1, 0.7, 0.4, 1)
+light_energy = 0.35
+omni_range = 3.5
+
+[node name="SconceLight_4_4_0_5" type="OmniLight3D" parent="Lights" unique_id=418759985]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.96, 2.4, 0.5)
+light_color = Color(1, 0.7, 0.4, 1)
+light_energy = 0.35
+omni_range = 3.5
+
+[node name="SconceLight_4_4_3_5" type="OmniLight3D" parent="Lights" unique_id=1626339748]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.96, 2.4, 3.5)
+light_color = Color(1, 0.7, 0.4, 1)
+light_energy = 0.35
+omni_range = 3.5
+
+[node name="ScreenGlow" type="OmniLight3D" parent="Lights" unique_id=1424470772]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -4)
+light_color = Color(0.6, 0.8, 1, 1)
+light_energy = 0.8
+omni_range = 8.0
+
+[node name="Fill" type="OmniLight3D" parent="Lights" unique_id=359670392]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 2)
+light_color = Color(0.5, 0.5, 0.65, 1)
+light_energy = 0.15
+omni_range = 10.0
+
+[node name="PlayerSpawns" type="Node3D" parent="." unique_id=2142312023]
+
+[node name="spawn_default" type="Marker3D" parent="PlayerSpawns" unique_id=1882664578]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.05, 4.8)
+script = ExtResource("2_2uqn5")
+
+[node name="Interactables" type="Node3D" parent="." unique_id=1187912024]
+
+[node name="DateVenue" type="Area3D" parent="Interactables" unique_id=1902892613]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.7, 0.5)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("3_2owe4")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactables/DateVenue" unique_id=217184242]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_xcg7p")
+
+[node name="Transitions" type="Node3D" parent="." unique_id=3521871]
+
+[node name="ToCity" type="Area3D" parent="Transitions" unique_id=804706618]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5.7)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("4_c73iu")
+target_location_id = &"city_hub"
+display_name = "На улицу"
+
+[node name="Collision" type="CollisionShape3D" parent="Transitions/ToCity" unique_id=761563512]
+shape = SubResource("BoxShape3D_kwf30")

@@ -125,6 +125,9 @@ func _run_all() -> void:
 	_test_e2e_negative()
 	_test_exclusions_on_repeat()
 	_test_availability_states()
+	_test_date_invite()
+	_test_pending_21_ready_at_2110()
+	_test_date_bonus_span()
 	_test_reset()
 	_gs.call("reset_for_new_game")
 	_dc.call("force_clear_session")
@@ -139,7 +142,11 @@ func _test_clamp_positive() -> void:
 	_ok(r.relationship_after == 5, "98 after 5")
 	_ok(r.applied_delta == 1, "98 applied +1")
 	_gs.call("set_girl_relationship", &"girl_test_dating_kind", 8)
-	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == 5, "98 set clamps to 5")
+	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == 8, "98 GameState allows to 10")
+	var r_span: RelationshipDateResult = _rel.call(
+		"apply_date_result", _make_result(&"girl_test_dating_kind", 5)
+	) as RelationshipDateResult
+	_ok(r_span.ok and r_span.relationship_after == 5, "98 apply clamps to girl span 5")
 
 
 func _test_clamp_negative() -> void:
@@ -151,7 +158,11 @@ func _test_clamp_negative() -> void:
 	_ok(r.relationship_after == -5, "99 after -5")
 	_ok(r.applied_delta == -1, "99 applied -1")
 	_gs.call("set_girl_relationship", &"girl_test_dating_kind", -12)
-	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == -5, "99 set clamps to -5")
+	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == -10, "99 GameState clamps to -10")
+	var r_span_n: RelationshipDateResult = _rel.call(
+		"apply_date_result", _make_result(&"girl_test_dating_kind", -5)
+	) as RelationshipDateResult
+	_ok(r_span_n.ok and r_span_n.relationship_after == -5, "99 apply clamps to girl span -5")
 
 
 func _test_first_plus5_reward() -> void:
@@ -386,8 +397,13 @@ func _test_invalid_result() -> void:
 	_reset()
 	_contact()
 	var dr: DatingResult = _make_result(&"girl_test_dating_kind", 6)
-	var r: RelationshipDateResult = _rel.call("apply_date_result", dr) as RelationshipDateResult
-	_ok(not r.ok, "117 reject delta 6")
+	var r_ok_bonus: RelationshipDateResult = _rel.call("apply_date_result", dr) as RelationshipDateResult
+	_ok(r_ok_bonus.ok and r_ok_bonus.relationship_after == 5, "117 bonus delta 6 applies with span clamp")
+	_reset()
+	_contact()
+	var bad: DatingResult = _make_result(&"girl_test_dating_kind", 99)
+	var r: RelationshipDateResult = _rel.call("apply_date_result", bad) as RelationshipDateResult
+	_ok(not r.ok, "117 reject delta 99")
 	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == 0, "117 no mutation")
 
 
@@ -530,8 +546,10 @@ func _test_e2e_perfect() -> void:
 		&"action_test_simplicity",
 		&"action_test_farewell_care",
 	])
-	_ok(result != null and result.date_delta == 5, "127 date_delta +5")
-	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == 5, "127 rel 5")
+	_ok(result != null and result.trait_delta == 5, "127 trait_delta +5")
+	_ok(result != null and result.venue_quality_bonus == 1, "127 cafe quality +1")
+	_ok(result != null and result.date_delta == 6, "127 date_delta +6 with cafe")
+	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == 5, "127 rel span-clamped 5")
 	_ok(bool(_gs.call("is_girl_conquered", &"girl_test_dating_kind")), "127 conquered")
 	_ok(int(_gs.call("get_experience")) == 1, "127 xp")
 	_ok(int(_gs.call("get_upgrade_points")) == 1, "127 up")
@@ -554,8 +572,10 @@ func _test_e2e_negative() -> void:
 	_dc.call("select_action", &"action_test_farewell_dislike")
 	var s: DatingSession = _dc.call("get_session") as DatingSession
 	var neg: DatingResult = s.result if s != null else null
-	_ok(neg != null and neg.date_delta == -5, "128 delta -5")
-	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == -3, "128 rel -3")
+	_ok(neg != null and neg.trait_delta == -5, "128 trait -5")
+	_ok(neg != null and neg.venue_quality_bonus == 1, "128 cafe quality +1")
+	_ok(neg != null and neg.date_delta == -4, "128 delta -4 with cafe")
+	_ok(int(_gs.call("get_girl_relationship", &"girl_test_dating_kind")) == -2, "128 rel -2")
 	_ok(int(_gs.call("get_experience")) == 0, "128 no xp")
 
 
@@ -592,6 +612,170 @@ func _test_availability_states() -> void:
 	_ok(a3.get("status", &"") == RelationshipTypes.AVAIL_AVAILABLE, "133 conquered available")
 	var a4: Dictionary = _rel.call("get_date_availability", &"no_such_girl_xyz") as Dictionary
 	_ok(a4.get("status", &"") == RelationshipTypes.AVAIL_UNKNOWN_GIRL, "133 unknown")
+
+
+func _test_date_invite() -> void:
+	_reset()
+	var day: Node = get_node_or_null("/root/GameDay")
+	_ok(_rel.has_method("get_date_invite_venues"), "invite venues api")
+	_ok(_rel.has_method("get_date_invite_hours"), "invite hours api")
+	_ok(_rel.has_method("confirm_date_invite"), "invite confirm api")
+	var hours: Array = _rel.call("get_date_invite_hours") as Array
+	_ok(hours.size() == 4, "invite hours count")
+	if hours.size() >= 4:
+		var first: Dictionary = hours[0] as Dictionary
+		_ok(int(first.get("hour", 0)) == 12, "first invite hour 12")
+		_ok(str(first.get("label", "")) == "12:00", "hour label 12:00")
+		_ok(not bool(first.get("next_day", true)), "12 next_day false at 8")
+	if day != null:
+		day.call("restore_hour", 18)
+	var hours_late: Array = _rel.call("get_date_invite_hours") as Array
+	if hours_late.size() >= 4:
+		var h12: Dictionary = hours_late[0] as Dictionary
+		var h18: Dictionary = hours_late[2] as Dictionary
+		var h21: Dictionary = hours_late[3] as Dictionary
+		_ok(bool(h12.get("next_day", false)), "12 next_day after 18")
+		_ok(bool(h18.get("next_day", false)), "18 next_day at 18")
+		_ok(not bool(h21.get("next_day", true)), "21 same day after 18")
+	if day != null:
+		day.call("restore_hour", 8)
+	var venues: Array = _rel.call("get_date_invite_venues") as Array
+	_ok(venues.size() == 8, "invite venues count 8")
+	var by_loc: Dictionary = {}
+	for row_v in venues:
+		var row: Dictionary = row_v as Dictionary
+		by_loc[row.get("location_id", &"")] = row
+	_ok(by_loc.has(&"apartment") and by_loc.has(&"cafe") and by_loc.has(&"restaurant"), "core venues")
+	_ok(by_loc.has(&"park") and by_loc.has(&"cinema") and by_loc.has(&"arcade"), "thematic venues a")
+	_ok(by_loc.has(&"museum") and by_loc.has(&"planetarium"), "thematic venues b")
+	if by_loc.has(&"apartment"):
+		var home: Dictionary = by_loc[&"apartment"] as Dictionary
+		_ok(str(home.get("label", "")) == "Дома", "home label")
+		_ok(int(home.get("cost", -1)) == 0, "home cost 0")
+		_ok(bool(home.get("available", false)), "home available")
+	if by_loc.has(&"cafe"):
+		var cafe: Dictionary = by_loc[&"cafe"] as Dictionary
+		_ok(str(cafe.get("label", "")) == "Кафе", "cafe label")
+		_ok(int(cafe.get("cost", -1)) == 30, "cafe cost 30")
+		_ok(bool(cafe.get("available", false)), "cafe available for invite")
+	if by_loc.has(&"restaurant"):
+		_ok(int((by_loc[&"restaurant"] as Dictionary).get("cost", -1)) == 100, "restaurant cost 100")
+	if by_loc.has(&"park"):
+		_ok(int((by_loc[&"park"] as Dictionary).get("cost", -1)) == 40, "park cost 40")
+	var empty: Dictionary = _rel.call("confirm_date_invite", &"", &"apartment", 12) as Dictionary
+	_ok(not bool(empty.get("ok", true)), "empty girl fail")
+	var no_contact: Dictionary = _rel.call(
+		"confirm_date_invite", &"girl_test_dating_kind", &"apartment", 12
+	) as Dictionary
+	_ok(not bool(no_contact.get("ok", true)), "no contact fail")
+	_ok(no_contact.get("error", &"") == DatingTypes.ERR_NO_CONTACT, "no contact error")
+	var final_t: Dictionary = _rel.call(
+		"confirm_date_invite", StoryIds.GIRL_FINAL_TARGET, &"apartment", 12
+	) as Dictionary
+	_ok(not bool(final_t.get("ok", true)), "final target skip")
+	_contact()
+	var bad_hour: Dictionary = _rel.call(
+		"confirm_date_invite", &"girl_test_dating_kind", &"apartment", 10
+	) as Dictionary
+	_ok(not bool(bad_hour.get("ok", true)), "bad hour fail")
+	_ok(bad_hour.get("error", &"") == DatingTypes.ERR_INVALID_HOUR, "bad hour error")
+	var bad_loc: Dictionary = _rel.call(
+		"confirm_date_invite", &"girl_test_dating_kind", &"gym", 12
+	) as Dictionary
+	_ok(not bool(bad_loc.get("ok", true)), "bad location fail")
+	var money_home_before: int = int(_gs.call("get_money"))
+	var home_try: Dictionary = _rel.call(
+		"confirm_date_invite", &"girl_test_dating_kind", &"apartment", 12
+	) as Dictionary
+	_ok(bool(home_try.get("ok", false)), "home invite books without travel")
+	_ok(int(_gs.call("get_money")) == money_home_before, "home invite cost 0")
+	_ok(bool(home_try.get("pending", false)), "home invite pending")
+	var pending_home: Dictionary = _rel.call("get_pending_date_invite") as Dictionary
+	_ok(pending_home.get("location_id", &"") == &"apartment", "pending home location")
+	_ok(_dc.call("get_session") == null or not bool(_dc.call("is_date_active")), "no date session yet")
+	var cafe_blocked: Dictionary = _rel.call(
+		"confirm_date_invite", &"girl_test_dating_kind", &"cafe", 12
+	) as Dictionary
+	_ok(not bool(cafe_blocked.get("ok", true)), "second invite blocked while pending")
+	_ok(cafe_blocked.get("error", &"") == DatingTypes.ERR_INVITE_PENDING, "pending error")
+	_reset()
+	_contact()
+	_gs.call("restore_stage", GameTypes.GameStage.STAGE_1)
+	var money_now: int = int(_gs.call("get_money"))
+	if money_now > 29:
+		_gs.call("spend_money", money_now - 29)
+	var money_poor: int = int(_gs.call("get_money"))
+	var poor: Dictionary = _rel.call(
+		"confirm_date_invite", &"girl_test_dating_kind", &"cafe", 12
+	) as Dictionary
+	_ok(not bool(poor.get("ok", true)), "cafe unaffordable fail")
+	_ok(poor.get("error", &"") == DatingTypes.ERR_CANNOT_AFFORD, "cafe unaffordable error")
+	_ok(int(_gs.call("get_money")) == money_poor, "cafe unaffordable money unchanged")
+	_reset()
+	_contact()
+	_gs.call("restore_stage", GameTypes.GameStage.STAGE_1)
+	var money_cafe_before: int = int(_gs.call("get_money"))
+	var cafe_try: Dictionary = _rel.call(
+		"confirm_date_invite", &"girl_test_dating_kind", &"cafe", 15
+	) as Dictionary
+	_ok(bool(cafe_try.get("ok", false)), "cafe invite books")
+	_ok(int(_gs.call("get_money")) == money_cafe_before - 30, "cafe cost 30")
+	_ok(bool(cafe_try.get("pending", false)), "cafe booked pending")
+	var pending_ok: Dictionary = _rel.call("get_pending_date_invite") as Dictionary
+	_ok(pending_ok.get("location_id", &"") == &"cafe", "pending cafe after paid invite")
+	_ok(_dc.call("get_session") == null or not bool(_dc.call("is_date_active")), "paid invite no session")
+	var day_node: Node = get_node_or_null("/root/GameDay")
+	if day_node != null:
+		_ok(int(day_node.call("get_current_hour")) == 8, "invite does not jump hour")
+
+
+func _test_pending_21_ready_at_2110() -> void:
+	_reset()
+	_contact()
+	var day: Node = get_node_or_null("/root/GameDay")
+	if day == null:
+		return
+	day.call("restore_hour", 8)
+	day.call("restore_minute", 0)
+	var booked: Dictionary = _rel.call(
+		"confirm_date_invite", &"girl_test_dating_kind", &"apartment", 21
+	) as Dictionary
+	_ok(bool(booked.get("ok", false)), "book 21:00 home")
+	day.call("restore_hour", 21)
+	day.call("restore_minute", 10)
+	var peek: Dictionary = _rel.call("peek_pending_date_status", &"apartment") as Dictionary
+	_ok(bool(peek.get("ready", false)), "21:10 ready for 21:00")
+	_ok(not bool(peek.get("too_early", true)), "21:10 not too early")
+	var started: Dictionary = _rel.call("try_start_pending_date_at", &"apartment") as Dictionary
+	var err: StringName = started.get("error", &"") as StringName
+	_ok(err != DatingTypes.ERR_DATE_TOO_EARLY, "21:10 not TOO_EARLY")
+	_ok(err != DatingTypes.ERR_DATE_MISSED, "21:10 not DATE_MISSED")
+	_ok(err != DatingTypes.ERR_NO_PENDING, "21:10 pending still there")
+	if bool(_dc.call("is_date_active")):
+		_dc.call("force_clear_session")
+	day.call("restore_hour", 8)
+	day.call("restore_minute", 0)
+
+
+func _test_date_bonus_span() -> void:
+	_reset()
+	_contact()
+	var girl: GirlDefinition = _db.call("get_girl", &"girl_test_dating_kind") as GirlDefinition
+	_ok(girl != null and int(girl.relationship_span) == 5, "test girl span 5")
+	girl.relationship_span = 10
+	_gs.call("set_girl_relationship", &"girl_test_dating_kind", 8)
+	var r10: RelationshipDateResult = _rel.call(
+		"apply_date_result", _make_result(&"girl_test_dating_kind", 5)
+	) as RelationshipDateResult
+	_ok(r10.ok and r10.relationship_after == 10, "span10 apply to 10")
+	_ok(r10.newly_conquered, "span10 conquer at 10")
+	girl.relationship_span = 5
+	_ok(DateVenueCatalog.quality_bonus(&"apartment") == 0, "apartment quality stub 0")
+	_ok(DateVenueCatalog.quality_bonus(&"restaurant") == 2, "restaurant quality 2")
+	_ok(DateVenueCatalog.invite_cost(&"park") == 40, "park invite 40")
+	_ok(DateVenueCatalog.outfit_bonus(&"luxury") == 2, "luxury outfit +2")
+	_ok(DateVenueCatalog.outfit_bonus(&"unknown") == 0, "unknown outfit 0")
+	_ok(ApartmentWardrobeCatalog.ITEMS.size() == 3, "wardrobe 3 outfits")
 
 
 func _test_reset() -> void:

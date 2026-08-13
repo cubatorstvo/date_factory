@@ -58,7 +58,12 @@ static func event_allowed_at_location(ev: DatingEventDefinition, location_id: St
 		return false
 	if ev.allowed_location_ids.is_empty():
 		return true
-	return ev.allowed_location_ids.has(location_id)
+	if ev.allowed_location_ids.has(location_id):
+		return true
+	# Cafe-authored events also run at apartment, restaurant, and thematic invite venues.
+	if ev.allowed_location_ids.has(&"cafe") and DateVenueCatalog.CAFE_COMPAT_LOCATIONS.has(location_id):
+		return true
+	return false
 
 
 static func filter_events_for_slot(

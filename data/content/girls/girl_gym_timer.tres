@@ -20,3 +20,5 @@ dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_gre
 dating_farewell_id = &"dating_farewell_transport_common"
 speech_style_note = "Любит риск, но уважает человека, который рискует последовательно, а не меняет личность после каждого подхода."
 clue_notes = Array[String](["Каждые шестьдесят секунд выбирает следующий снаряд чуть опаснее предыдущего.", "Проигрыш её веселит, если попытка была настоящей.", "Не любит, когда человек после одной ошибки полностью меняет стиль."])
+leisure_format_ids = Array[StringName]([&"play", &"unusual"])
+relationship_span = 5

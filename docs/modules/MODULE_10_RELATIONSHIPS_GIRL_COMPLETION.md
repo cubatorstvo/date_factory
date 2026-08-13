@@ -2322,6 +2322,24 @@ first +5
 
 и отсутствие повторной награды.
 
+---
+
+# ADDENDUM — Date bonuses (2026-08-13)
+
+Канон: `docs/gdd/10_date_venues_outfits.md`.
+
+Clamp и порог освоения берутся из `GirlDefinition.relationship_span` (5 или 10), не из глобального `[-5, +5]`.
+
+```text
+span = girl.relationship_span
+new = clamp(old + date_delta, -span, +span)
+conquered when after == span and not yet conquered
+```
+
+`GameState.RELATIONSHIP_MIN/MAX` = `-10` / `10` (хранение). Схема сейва не бампается.
+
+`get_date_invite_venues` возвращает 8 мест, все доступны для приглашения. `confirm_date_invite` списывает стоимость и бронирует слот; игрок сам приходит к месту. Подготовка квартиры с приглашения снята.
+
 ## Repeat dates
 
 Подтвердить:

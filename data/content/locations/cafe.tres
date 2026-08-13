@@ -5,6 +5,6 @@
 [resource]
 script = ExtResource("1_script")
 id = &"cafe"
-display_name = "Ресторан / кафе"
+display_name = "Кафе"
 description = "Место для свиданий и встреч."
 scene_path = "res://world/locations/cafe/cafe.tscn"

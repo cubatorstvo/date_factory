@@ -20,3 +20,5 @@ dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_gre
 dating_farewell_id = &"dating_farewell_transport_common"
 speech_style_note = "Организованная, замечает статус и качество, но быстро теряет уважение к человеку с одной-единственной сильной кнопкой."
 clue_notes = Array[String](["Раздаёт бейджи по уровням доступа раньше, чем люди успевают представиться.", "Если один аргумент сработал дважды, на третий раз просит другой.", "Уважает хороший костюм, но ещё больше — человека, который умеет менять тактику."])
+leisure_format_ids = Array[StringName]([&"culture", &"play"])
+relationship_span = 5

@@ -33,12 +33,19 @@ layout_mode = 0
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 256.0
-offset_bottom = 148.0
+offset_bottom = 184.0
 mouse_filter = 2
 
 [node name="Resources" type="VBoxContainer" parent="ScaleRoot/GameplayRoot/ResourcePanel"]
 layout_mode = 2
 theme_override_constants/separation = 4
+
+[node name="ClockLabel" type="Label" parent="ScaleRoot/GameplayRoot/ResourcePanel/Resources"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "День 1 · 08:00"
+mouse_filter = 2
 
 [node name="MoneyLabel" type="Label" parent="ScaleRoot/GameplayRoot/ResourcePanel/Resources"]
 unique_name_in_owner = true

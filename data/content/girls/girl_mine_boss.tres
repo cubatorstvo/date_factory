@@ -19,3 +19,5 @@ dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_gre
 dating_farewell_id = &"dating_farewell_early_common"
 speech_style_note = "Говорит как человек, который привык принимать решения на шумном производстве; скучает от чрезмерно безопасных планов."
 clue_notes = Array[String](["На табличку «Опасно» смотрит скорее как на описание маршрута.", "Медленные и полностью безопасные решения её заметно утомляют.", "Уважает, когда человек выбрал риск и не меняет решение через десять секунд."])
+leisure_format_ids = Array[StringName]([&"play", &"calm"])
+relationship_span = 10

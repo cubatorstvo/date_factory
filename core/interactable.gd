@@ -9,6 +9,25 @@ extends Area3D
 signal interacted(by: Node)
 
 
+func _enter_tree() -> void:
+	call_deferred("_ensure_interact_outline")
+
+
+func _ensure_interact_outline() -> void:
+	if not is_inside_tree() or is_queued_for_deletion():
+		return
+	if Engine.is_editor_hint():
+		return
+	if get_node_or_null("InteractOutline") != null:
+		return
+	var script: GDScript = load("res://world/fx/interact_outline.gd") as GDScript
+	if script == null:
+		return
+	var outline: Node = script.new() as Node
+	outline.name = "InteractOutline"
+	add_child(outline)
+
+
 func can_interact(_player: Node) -> bool:
 	return interaction_enabled and is_inside_tree() and not is_queued_for_deletion()
 

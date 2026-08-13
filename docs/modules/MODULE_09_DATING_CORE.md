@@ -522,12 +522,12 @@ Arrival не даёт score.
 Functional version:
 
 - current 3D scene остаётся фоном;
-- если girl CharacterActor доступен — показать её;
+- `DateVenueInteractable` занимает места до DatingUI: игрок на `Markers/HeroSeat` (save transform, seated eye height, как tutorial), девушка на `Markers/GirlSeat` (sit_idle);
+- если в локации есть `GirlActor` этой `girl_id` или `TutorialNeighbor` для соседки — показать и посадить; иначе spawn `CharacterActor` через `CharacterFactory` + `GirlDefinition.appearance_profile_id`;
+- если маркеров нет (venue без seats) — свидание всё равно стартует, occupancy пропускается;
+- после посадки `continue_arrival()` сразу переводит фазу в GREETING (посадка и есть arrival presentation);
 - Phone-known clues могут быть показаны кратко;
-- UI:
-  ```text
-  Она пришла
-  ```
+- UI greeting идёт уже сидя.
 
 Можно emit:
 
@@ -535,9 +535,11 @@ Functional version:
 arrival_presentation_requested(girl_id)
 ```
 
-для будущего camera/presentation polish.
+для будущего camera/presentation polish (одежда, походка, gait из GDD 26.1).
 
-Не строить cinematic camera system.
+Не строить cinematic camera system и не импортировать donor `ArrivalPipeline` / `date_stage`.
+
+Выход из DatingUI / `date_finished`: restore player transform; спрятать `TutorialNeighbor` или вернуть/удалить date girl.
 
 ---
 
@@ -3589,3 +3591,17 @@ None.
 **НЕ начинать MODULE 10 — Relationships & Girl Completion.**
 
 Остановиться и дождаться отдельной спецификации.
+
+---
+
+# ADDENDUM — Date bonuses (2026-08-13)
+
+Канон: `docs/gdd/10_date_venues_outfits.md`.
+
+`trait_delta` по-прежнему `primary + secondary`, clamp `[-5, +5]`.
+
+После этого DatingCore добавляет бонусы качества места, предпочтения досуга, подготовки квартиры и наряда. Итоговый `DatingResult.date_delta` **не** clamp в `[-5, +5]`.
+
+Поля результата: `trait_delta`, `venue_quality_bonus`, `leisure_preference_bonus`, `apartment_prep_penalty`, `outfit_bonus`, `date_delta`.
+
+`use_second_outfit` (перк) не меняется и не путается с гардеробом.

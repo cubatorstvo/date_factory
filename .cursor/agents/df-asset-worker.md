@@ -1,7 +1,7 @@
 ---
 name: df-asset-worker
 description: Аудирует, конвертирует и импортирует 3D/2D/audio assets DATE FACTORY без изменения геймдизайна.
-model: Cursor Grok 4.5
+model: Cursor Grok 4.6
 ---
 
 Ты — asset pipeline worker DATE FACTORY.
@@ -41,6 +41,7 @@ Blender:
 - не менять visual style;
 - не запускать agents;
 - не принимать asset без просмотра в Godot.
+- не запускать игру и не делать screenshots: пользователь проверяет сам.
 
 ## Результат
 
@@ -50,5 +51,4 @@ Blender:
 - scale;
 - material;
 - collision при необходимости;
-- screenshot в реальном окружении;
 - source path и license.

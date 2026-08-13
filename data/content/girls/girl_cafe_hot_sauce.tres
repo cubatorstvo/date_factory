@@ -20,3 +20,5 @@ dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_gre
 dating_farewell_id = &"dating_farewell_last_word_common"
 speech_style_note = "Ей нужен настоящий риск, но две трусливые оговорки подряд уничтожают впечатление сильнее одного хорошего трюка."
 clue_notes = Array[String](["Заказывает соус, возле которого меню предлагает подписать устное согласие.", "Ошибку прощает, если человек не делает вид, что так и планировал.", "Два безопасных решения подряд считает официальным отказом от вечера."])
+leisure_format_ids = Array[StringName]([&"unusual", &"play"])
+relationship_span = 5

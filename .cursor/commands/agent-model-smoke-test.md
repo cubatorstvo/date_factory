@@ -17,15 +17,15 @@
 
 - agent обнаруживается;
 - YAML корректен;
-- `model` настроен на Cursor Grok 4.5;
+- `model` — последняя доступная Cursor Grok, не более старая версия;
 - agent не меняет файлы;
 - agent не запускает subagents.
 
-Если runtime metadata показывает другую модель:
+Если runtime metadata показывает другую или более старую модель:
 
 - не начинать milestone;
 - записать mismatch;
-- попросить пользователя открыть `.cursor/agents/<agent>.md` в subagent editor и выбрать Cursor Grok 4.5;
+- попросить пользователя открыть `.cursor/agents/<agent>.md` в subagent editor и выбрать последнюю Cursor Grok;
 - повторить smoke-test.
 
 Текстовое заявление worker не заменяет runtime metadata Cursor.

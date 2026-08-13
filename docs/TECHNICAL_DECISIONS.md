@@ -937,5 +937,18 @@ Decision:
 - Save schema remains 1; no gameplay/content/balance changes.
 
 Scope:
-platform/steam/, 	ools/release/, export_presets.cfg, 
-elease/, docs/release/
+`platform/steam/`, `tools/release/`, export_presets.cfg, docs/release/
+
+---
+
+## Date bonuses — venues, outfits, relationship span (2026-08-13)
+
+Context:
+Need place quality, leisure preference, three outfits, and harder story-girl relationship span without a second dating manager.
+
+Decision:
+Reuse DatingCore finish + Relationships invite + World travel + apartment wardrobe flags. Add six canonical date locations. Cafe donor interior stays cafe. No schema bump. Apartment quality stub = 0.
+
+Scope:
+`docs/gdd/10_date_venues_outfits.md`, DatingCore/Relationships/World/wardrobe/girl definitions, six new location scenes.
+

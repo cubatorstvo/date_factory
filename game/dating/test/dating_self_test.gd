@@ -570,7 +570,9 @@ func _test_full_plus_minus() -> void:
 	if result != null:
 		_ok(result.primary_total == 4, "primary_total +4 got %s" % result.primary_total)
 		_ok(result.secondary_reaction == 1, "secondary +1 demanding")
-		_ok(result.date_delta == 5, "date_delta +5")
+		_ok(result.trait_delta == 5, "trait_delta +5")
+		_ok(result.venue_quality_bonus == 1, "cafe quality +1")
+		_ok(result.date_delta == 6, "date_delta +6 with cafe")
 		_ok(result.decision_records.size() == 4, "exactly 4 records")
 	# Exact -5: four disliked tags + DEMANDING with neg>=2
 	_reset()
@@ -589,7 +591,9 @@ func _test_full_plus_minus() -> void:
 	if neg != null:
 		_ok(neg.primary_total == -4, "primary_total -4 got %s" % neg.primary_total)
 		_ok(neg.secondary_reaction == -1, "secondary -1 demanding")
-		_ok(neg.date_delta == -5, "date_delta -5")
+		_ok(neg.trait_delta == -5, "trait_delta -5")
+		_ok(neg.venue_quality_bonus == 1, "neg cafe quality +1")
+		_ok(neg.date_delta == -4, "date_delta -4 with cafe")
 		_ok(neg.decision_records.size() == 4, "neg 4 records")
 	# Relationship/XP untouched across a finished +5 date
 	_reset()
@@ -610,7 +614,8 @@ func _test_full_plus_minus() -> void:
 	_ok(int(_gs.call("get_experience")) == before_xp, "xp untouched")
 	_ok(not bool(_gs.call("is_girl_conquered", &"girl_test_dating_kind")), "not conquered")
 	if plus != null:
-		_ok(plus.date_delta == 5, "full +5")
+		_ok(plus.trait_delta == 5, "full trait +5")
+		_ok(plus.date_delta == 6, "full +6 with cafe")
 
 
 func _test_boundary_untouched() -> void:

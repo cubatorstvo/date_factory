@@ -283,6 +283,10 @@ func start_new_game() -> SaveResult:
 	var day: Node = get_node_or_null("/root/GameDay")
 	if day != null and day.has_method("restore_day"):
 		day.call("restore_day", 1)
+	if day != null and day.has_method("restore_hour"):
+		day.call("restore_hour", 8)
+	if day != null and day.has_method("restore_minute"):
+		day.call("restore_minute", 0)
 	var ci: Node = get_node_or_null("/root/CloneIncremental")
 	if ci != null and ci.has_method("restore_runtime_state"):
 		ci.call(
@@ -492,8 +496,18 @@ func _build_save_payload() -> Dictionary:
 	if gs != null and gs.has_method("export_save_state"):
 		game_state = gs.call("export_save_state") as Dictionary
 	var current_day: int = 1
+	var current_hour: int = 8
+	var current_minute: int = 0
 	if day != null and day.has_method("get_current_day"):
 		current_day = int(day.call("get_current_day"))
+	if day != null and day.has_method("get_current_hour"):
+		current_hour = int(day.call("get_current_hour"))
+	if day != null and day.has_method("get_current_minute"):
+		current_minute = int(day.call("get_current_minute"))
+	var pending_date: Dictionary = {}
+	var rel: Node = get_node_or_null("/root/Relationships")
+	if rel != null and rel.has_method("export_pending_date_invite"):
+		pending_date = rel.call("export_pending_date_invite") as Dictionary
 	var world_state: Dictionary = {"location_id": "", "player": {"position": [0.0, 0.0, 0.0], "yaw": 0.0, "pitch": 0.0}}
 	if world != null and world.has_method("export_world_save_state"):
 		world_state = world.call("export_world_save_state") as Dictionary
@@ -509,7 +523,12 @@ func _build_save_payload() -> Dictionary:
 		"saved_at_unix": int(Time.get_unix_time_from_system()),
 		"game": {
 			"game_state": game_state,
-			"game_day": {"current_day": current_day},
+			"game_day": {
+				"current_day": current_day,
+				"current_hour": current_hour,
+				"current_minute": current_minute,
+				"pending_date": pending_date,
+			},
 		},
 		"world": world_state,
 		"runtime": {
@@ -541,12 +560,35 @@ func _restore_validated_payload(payload: Dictionary) -> bool:
 		return false
 	var day_node: Node = get_node_or_null("/root/GameDay")
 	var day_i: int = int(game_day.get("current_day", 1))
+	var hour_i: int = 8
+	if game_day.has("current_hour"):
+		hour_i = int(game_day.get("current_hour", 8))
 	if day_node != null and day_node.has_method("restore_day"):
 		if not bool(day_node.call("restore_day", day_i)):
 			_is_restoring = false
 			if world != null and world.has_method("suppress_auto_reset_on_state_reset"):
 				world.call("suppress_auto_reset_on_state_reset", false)
 			return false
+	if day_node != null and day_node.has_method("restore_hour"):
+		if not bool(day_node.call("restore_hour", hour_i)):
+			_is_restoring = false
+			if world != null and world.has_method("suppress_auto_reset_on_state_reset"):
+				world.call("suppress_auto_reset_on_state_reset", false)
+			return false
+	var minute_i: int = 0
+	if game_day.has("current_minute"):
+		minute_i = int(game_day.get("current_minute", 0))
+	if day_node != null and day_node.has_method("restore_minute"):
+		if not bool(day_node.call("restore_minute", minute_i)):
+			_is_restoring = false
+			if world != null and world.has_method("suppress_auto_reset_on_state_reset"):
+				world.call("suppress_auto_reset_on_state_reset", false)
+			return false
+	var rel: Node = get_node_or_null("/root/Relationships")
+	if rel != null and rel.has_method("restore_pending_date_invite"):
+		var pending_v: Variant = game_day.get("pending_date", {})
+		var pending_date: Dictionary = pending_v as Dictionary if pending_v is Dictionary else {}
+		rel.call("restore_pending_date_invite", pending_date)
 	var ci: Node = get_node_or_null("/root/CloneIncremental")
 	if ci != null and ci.has_method("restore_runtime_state"):
 		if not bool(ci.call("restore_runtime_state", ci_data)):
@@ -728,7 +770,7 @@ func _ensure_saves_dir() -> void:
 
 func _default_settings() -> Dictionary:
 	return {
-		"master": 1.0,
+		"master": 0.0,
 		"music": 1.0,
 		"sfx": 1.0,
 		"ui": 1.0,

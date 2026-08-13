@@ -20,3 +20,5 @@ dating_greeting_ids = Array[StringName]([])
 dating_farewell_id = &""
 speech_style_note = "Говорит спокойно и буквально. Земной масштаб героя воспринимает не как величие, а как странно длинное введение к одному личному разговору. Её интересует не количество покорённых целей, а то, способен ли герой остаться конкретным человеком, когда больше нечего масштабировать."
 clue_notes = Array[String]([])
+leisure_format_ids = Array[StringName]([&"unusual", &"entertainment"])
+relationship_span = 10

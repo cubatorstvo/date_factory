@@ -27,6 +27,7 @@ var money_spent_total: int = 0
 
 var used_right_to_say_nothing: bool = false
 var used_second_outfit: bool = false
+var apartment_was_prepared: bool = false
 var used_public_significance: bool = false
 var used_representation_expenses: bool = false
 var used_encore: bool = false

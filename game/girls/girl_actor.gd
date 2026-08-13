@@ -23,6 +23,7 @@ var _locked_ui: CanvasLayer = null
 
 
 func _ready() -> void:
+	_bind_content_id()
 	collision_layer = LAYER_INTERACTABLE
 	collision_mask = 0
 	monitoring = false
@@ -128,8 +129,21 @@ func _on_interact(player: Node) -> void:
 			if girl_id == StoryIds.GIRL_PRESIDENT:
 				prereq_text = "Сначала лаборатория должна доказать, что умеет производить больше одного тебя."
 			_show_story_lock_feedback(prereq_text, player)
+		else:
+			play_semantic(&"react_confused")
+			_show_story_lock_feedback("Сейчас познакомиться не получится.", player)
 		return
 	_show_approach_choices(begin, player)
+
+
+func _bind_content_id() -> void:
+	if String(girl_id) != "":
+		return
+	var marker: Node = get_parent()
+	if marker is NpcSpawnPoint:
+		girl_id = (marker as NpcSpawnPoint).bound_content_id()
+	elif marker != null:
+		girl_id = NpcSpawnPoint.content_id_from_npc_name(marker.name)
 
 
 func _refresh_interaction() -> void:

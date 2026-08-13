@@ -121,9 +121,10 @@ func _run_all() -> void:
 
 func _test_contentdb_paths() -> void:
 	var locs: Array = _db.call("list_locations") as Array
-	_ok(locs.size() == 9, "117 locations count 9")
+	_ok(locs.size() == 15, "117 locations count 15")
 	var ids: Array[StringName] = [
-		&"apartment", &"city_hub", &"cafe", &"gym", &"appearance_space",
+		&"apartment", &"city_hub", &"cafe", &"restaurant", &"park", &"cinema",
+		&"arcade", &"museum", &"planetarium", &"gym", &"appearance_space",
 		&"salary_mine", &"laboratory", &"production_area", &"final_location",
 	]
 	for lid in ids:

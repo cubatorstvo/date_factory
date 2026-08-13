@@ -124,3 +124,26 @@ Can a player choose New Game, watch the authored late-evening card-game scene, r
 ## Verdict
 
 **READY FOR USER PLAYTEST** — implementation, focused gates, live handoff, runtime logs, and visual evidence pass. No independent subagent QA was used by explicit user instruction.
+
+---
+
+# DATE BONUSES — Acceptance
+
+## Player-visible question
+
+Can the player invite a girl from the phone to apartment, cafe, restaurant, park, cinema, arcade, museum, or planetarium, buy business/luxury outfits in the wardrobe, and see date results change with place quality, leisure match, apartment prep, and outfit — while apartment quality stays 0?
+
+## DoD
+
+- [x] Eight invite venues with costs 0 / 30 / 40 / 100; cafe/thematic/restaurant locked until `SOCIAL_ACCESS`
+- [x] Separate playable interiors for restaurant + five thematic dates (primitives, not cafe copy)
+- [x] Wardrobe only Повседневный / Деловой $500 / Роскошный $2000
+- [x] Date result includes quality, leisure ±1 on thematic, apartment unprepared −1, outfit 0/1/2
+- [x] Ordinary girls complete at +5; story girls except Neighbor complete at +10
+- [x] Save schema remains 1
+- [ ] User playtest accepts the result
+
+## Verdict
+
+**READY FOR USER PLAYTEST**
+

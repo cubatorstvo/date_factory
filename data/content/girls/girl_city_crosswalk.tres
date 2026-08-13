@@ -20,3 +20,5 @@ dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_gre
 dating_farewell_id = &"dating_farewell_last_word_common"
 speech_style_note = "Любит движение и смену условий. Если решение уже стало привычным, для неё оно почти перестало быть решением."
 clue_notes = Array[String](["Выбирает переход не потому, что он ближе, а потому что на нём сегодня сломан другой светофор.", "После удачного способа сразу спрашивает, какой есть второй.", "Плохо переносит расписание, которое пережило больше одного дня."])
+leisure_format_ids = Array[StringName]([&"calm", &"entertainment"])
+relationship_span = 5

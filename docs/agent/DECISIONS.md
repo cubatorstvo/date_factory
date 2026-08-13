@@ -14,6 +14,8 @@
 
 **Decision:** Transfer `scenes/world/vertical_slice/restaurant.tscn` into current **`cafe`** location. Do **not** create a separate restaurant location. Do **not** invent a new cafe interior from scratch. Rename player-facing labels to cafe where needed; keep internal mesh names if harmless. `CafeTwoHearts` stays city façade/approach only.
 
+**Superseded in part (2026-08-13):** D-DATE-BONUS-01 adds a separate `restaurant` location. Cafe **keeps** the donor restaurant scene and product id `cafe`. Do not duplicate that interior as restaurant.
+
 **Why (TZ lock, overrides researcher caution):** User TZ states the donor «ресторан / кафе» scene must be used **as cafe**, a separate restaurant must not be built, and a good donor venue must be transferred rather than redesigned. Donor has no other production cafe interior — only this vertical-slice venue + facade POI. Product ID/path/ContentDB keys remain `cafe` (not `restaurant`).
 
 **Supersedes:** researcher recommendation “do not transfer restaurant.tscn as cafe / compose new interior”. That would violate TZ §3D and §4 (no reinventing layout when donor venue exists).
@@ -166,9 +168,23 @@ The existing 100/125/150% setting remains an accessibility multiplier for theme 
 
 Do not rename code identifiers; only UI strings and product docs use the new label.
 
+## D-UI-05 — ESC closes dismissable overlays; slap fight closes on complete
+
+**Decision:** ESC (`pause` / `ui_cancel`) closes dismissable overlays the same way their close/back control does: phone (and nested date-invite), terminals, fridge/wardrobe, rival choose UI, confirmation dialogs. In `ControlMode.MODAL_UI` and `DIALOGUE` the player must not swallow ESC before those handlers. After a date result screen, ESC is the same as **Закрыть**.
+
+Exceptions (do not abort):
+- Active date choices (`DatingCore.is_date_active`)
+- Typing in a focused field
+- Live minigame (`match_state.ended == false`) — ESC does not abort; pause menu remains allowed
+- Final date active attempt — existing explicit **Вернуться** only
+
+After a slap fight ends, `_try_emit_finished` must still tick `_feedback_timer`, show the result overlay for `MinigameShell.RESULT_HOLD_SEC`, then emit `match_finished` so `RivalCompetitionRunner._on_match_finished` closes the window and restores gameplay. ESC after `ended` skips remaining hold via `force_finish_emit`.
+
 ## D-WARDROBE-01 — Apartment wardrobe clothing shop
 
 **Decision:** Wardrobe Interaction opens a fridge-like single-column clothing menu. Starting outfits: **Повседневный** and **Дешёвый деловой** (unlocked). Additional outfits are purchased with money and equip via story flags (`wardrobe_item_*_owned`, `wardrobe_equipped_*`). Visual mesh swap for the FPS player is deferred until dedicated male outfit assets are wired.
+
+**Superseded for catalog (2026-08-13):** D-DATE-BONUS-04 replaces the six-item list with three outfits. Shop/equip via story flags and apartment wardrobe menu remain.
 
 ---
 
@@ -189,3 +205,124 @@ Do not rename code identifiers; only UI strings and product docs use the new lab
 ## D-OPENING-04 — Verification boundary
 
 **Decision:** OPENING-01 acceptance uses the focused 20-check contract, existing UI/save/world-save suites, and the live production handoff with opened gameplay frames. Existing `world_location` and apartment-onboarding test debt is recorded but not repaired because it predates the opening, tests missing Phone/collider assumptions, and lies outside the isolated pre-prologue scope.
+
+---
+
+# Phone date invite + HUD clock (2026-08-13)
+
+## D-INVITE-01 — Invite from PhoneJournal, not a new dating manager
+
+**Decision:** Girls with a contact can be invited from Phone → GIRLS detail. Confirming an invite books a pending appointment (`Relationships.confirm_date_invite`). The player walks to the venue and starts the date through `DateVenueInteractable`. Do not add a new autoload. Walk-up without an appointment still uses the girl picker.
+
+**Why:** MODULE 08 ends at «номер получен»; MODULE 09 currently starts only at a venue. The missing player action is calling a girl who already gave her number.
+
+## D-INVITE-02 — Place: apartment free, cafe paid
+
+**Decision:** Invite offers exactly two venues: `apartment` (label «Дома», cost 0) and `cafe` (label «Кафе», cost **30**). Charge via `GameState.can_afford` / `spend_money` only after confirm, only for cafe. If cafe is story-locked (`World.get_location_access`), show it disabled. Do not invent restaurant or other venues. Do not expand dating event catalogs; empty `allowed_location_ids` already allows both places.
+
+**Superseded (2026-08-13):** D-DATE-BONUS-02 expands invite venues to eight places. Apartment remains free; cafe cost **30** stays. Do not drop the phone-invite flow.
+
+**Why:** Starting money is 90; 30 makes cafe a real spend while home remains the free path. Location IDs already exist.
+
+## D-INVITE-03 — GameDay ticks minutes; sleep still jumps to 8:00
+
+**Decision:** `GameDay` keeps `current_hour` (0–23, default **8**) and adds `current_minute` (0–59, default **0**). While the player is in `GAMEPLAY` and no date is active, time advances at **1 real second = 1 game minute**. At 24:00 the day wraps to 00:00 (day +1). Sleep/`advance_day` still jumps to **08:00** and zeroes minutes. Invite confirm does **not** call `wait_until_hour`. Persist `current_minute` (and pending invite) inside existing `game.game_day`; missing keys default to 0 / empty. Do **not** bump `schema_version`.
+
+**Supersedes (2026-08-13, same day):** the “no real-time tick / jump on confirm” reading of this decision.
+
+**Why:** User asked the HUD clock to flow naturally instead of leaping ~3 hours when a date is booked.
+
+## D-INVITE-04 — Confirm books an appointment; player walks there
+
+**Decision:** Confirming an invite spends the venue cost and stores a pending appointment `{girl_id, location_id, hour, day}`. No `wait_until_hour`, no `World.request_travel`, no DatingUI. The player goes to that location and uses `DateVenueInteractable` at/after the booked hour (arrival window **3 hours**, so 21:00 stays valid until 00:00). Too early → wait message. **Exception:** at the apartment table, if food and drinks are already placed, E skips `GameDay` to the booked slot (`wait_until_hour` / `advance_day` as needed) and starts the date. Skip must **not** call `wait_until_hour` when already at or past the slot hour that day — `wait_until_hour(21)` at 21:10 must stay today. Missed window → appointment expires. Skip invite for `girl_final_target`. One pending invite at a time.
+
+**Supersedes (2026-08-13, same day):** “confirm teleports and starts the date now”.
+
+**Why:** User asked not to be teleported into the date.
+
+## Frozen API for workers
+
+`GameDay`:
+- `signal hour_changed(new_hour: int)`
+- `signal minute_changed(new_minute: int)`
+- `get_current_hour() -> int`
+- `get_current_minute() -> int`
+- `wait_until_hour(hour: int) -> void` — next day only if `current_hour > target` (that hour already finished). Same hour with minutes past stays today and snaps to `:00`. Invite must not call it; apartment skip may, but only when `current_hour <` the booked hour.
+- `advance_day()` resets hour to 8, minute to 0, emits `hour_changed`
+- `restore_day` / `restore_hour` / `restore_minute` used by SaveSystem; skip gameplay signals
+- `export` via SaveSystem: `game_day: { current_day, current_hour, current_minute, pending_date }`
+
+`Relationships`:
+- `get_date_invite_venues() -> Array` of `{location_id, label, cost, available, reason}` — all eight venues `available: true`
+- `get_date_invite_hours() -> Array` of `{hour, label, next_day}`
+- `confirm_date_invite(girl_id, location_id, hour, prepare_apartment := false) -> Dictionary` `{ok, error, message, pending}`
+  - books appointment; ignores `prepare_apartment`
+  - does **not** travel or start DatingCore
+- `get_pending_date_invite() -> Dictionary`
+- `try_start_pending_date_at(location_id) -> Dictionary`
+- constants: `VENUE_HOME := &"apartment"`, `VENUE_CAFE := &"cafe"`, `CAFE_DATE_COST := 30`, `DATE_INVITE_HOURS := [12, 15, 18, 21]`, `DATE_ARRIVAL_WINDOW_HOURS := 3`
+
+HUD clock format: `День N · HH:MM` on existing ResourcePanel.
+
+---
+
+# Date bonuses — venues, outfits, difficulty (2026-08-13)
+
+Канон: `docs/gdd/10_date_venues_outfits.md`. Источник TZ: `DATE_FACTORY_DATE_BONUSES_SYSTEM_RU_V2.md`.
+
+## D-DATE-BONUS-01 — Separate restaurant and thematic interiors; cafe stays donor
+
+**Decision:** Add travel locations `restaurant`, `park`, `cinema`, `arcade`, `museum`, `planetarium` to `World.CANONICAL_IDS` + ContentDB. Cafe keeps the donor sushi/restaurant interior and id `cafe`. Restaurant is a new compact CSG/primitive interior — **do not instance, duplicate, or retarget cafe/restaurant_art**. Donor has no production interiors for the five thematic dates; build them from simple forms (CSG + primitives), not city POI facades (`PrototypeCinema` etc. stay city exteriors).
+
+**Supersedes:** D-VB-03 “do not create a separate restaurant location” (cafe-as-donor-scene lock remains).
+
+## D-DATE-BONUS-02 — Invite lists all eight venues
+
+**Decision:** Extend `Relationships.get_date_invite_venues` / `confirm_date_invite`. Costs: apartment 0, cafe 30, thematic 40, restaurant 100. All eight venues are available on the invite (no `SOCIAL_ACCESS` gate on the list). City doors still use existing World access. Apartment prep is **not** a $20 invite toggle — the player prepares the apartment themselves; unprepared home dates still get `-1`. Phone panel instantiates `ui/common/action_button.tscn` rows into a scene-authored `VenueList` — no `Button.new()`. Do not show leisure preference on the invite.
+
+**Supersedes:** D-INVITE-02 two-venue lock.
+
+## D-DATE-BONUS-03 — Place quality + leisure check as DatingCore finish bonuses
+
+**Decision:** After trait `[-5,+5]`, DatingCore adds: venue quality (cafe/thematic +1, restaurant +2, apartment **stub 0**), leisure `+1/-1` only for the five thematic ids, apartment unprepared `-1`. No new autoload. Quality progression for apartment is stubbed (always 0). Event filter: cafe-allowed or empty `allowed_location_ids` also match restaurant + thematic locations.
+
+## D-DATE-BONUS-04 — Three wardrobe outfits
+
+**Decision:** `ApartmentWardrobeCatalog.ITEMS` is only `casual` (free, +0), `business` ($500, +1), `luxury` ($2000, +2). Equipped id feeds `outfit_bonus` at date finish. Unknown owned/equipped flags fall back to casual. FPS mesh swap still deferred.
+
+**Supersedes:** D-WARDROBE-01 six-item catalog.
+
+## D-DATE-BONUS-05 — Per-girl relationship span
+
+**Decision:** `GirlDefinition.relationship_span` is 5 or 10. Neighbor + ordinary = 5, complete at +5. Other `is_story` girls = 10, complete at +10. `GameState.RELATIONSHIP_MIN/MAX = -10/10`. Relationships clamps to the girl’s span. Do not bump `schema_version`.
+
+## Frozen API
+
+`GirlDefinition`:
+- `leisure_format_ids: Array[StringName]` — exactly two of `calm`, `entertainment`, `play`, `culture`, `unusual`
+- `relationship_span: int` — 5 or 10, default 5
+
+`DateVenueCatalog` (new helper script under `game/dating/`, not an autoload):
+- `quality_bonus(location_id) -> int`
+- `leisure_format_for(location_id) -> StringName` (empty if neutral)
+- `invite_cost(location_id) -> int`
+- `is_thematic(location_id) -> bool`
+
+`DatingResult` extra ints: `trait_delta`, `venue_quality_bonus`, `leisure_preference_bonus`, `apartment_prep_penalty`, `outfit_bonus` (`date_delta` = sum).
+
+`Relationships.confirm_date_invite(girl_id, location_id, hour, prepare_apartment := false)` books a pending appointment; `prepare_apartment` is ignored.
+
+`GameState` story flag `apartment_prepared_for_date` consumed when an apartment date starts.
+
+Outfit bonuses: `casual` 0, `business` 1, `luxury` 2 via `ApartmentWardrobeCatalog.get_equipped`.
+
+---
+
+# Date occupancy — sit at table before dialogue (2026-08-13)
+
+## D-DATE-SEAT-01 — Reuse tutorial seats for every DateVenueInteractable start
+
+**Decision:** When a real date starts from `DateVenueInteractable` (tutorial, pending appointment, girl picker), occupy the location’s `HeroSeat` / `GirlSeat` before DatingUI. Player seating is the existing tutorial snap (save transform, sit, eye height 1.20). Girl: show `TutorialNeighbor` for `girl_neighbor`, else reuse a present `GirlActor` with that `girl_id`, else spawn `CharacterActor` via `CharacterFactory` + `GirlDefinition.appearance_profile_id` at `GirlSeat` with `sit_idle`. Closing DatingUI restores the player and clears the date girl. Reuse apartment `Geometry/ApartmentArt/Markers/HeroSeat|GirlSeat`; cafe `restaurant_art` already has the same marker names. Do not add debug capsules. Do not import donor `date_stage` / `ArrivalPipeline`. Home skip-to-date and the 21:00 window stay unchanged.
+
+**Why:** Donor intro walks the girl to `GirlSeat` then auto-starts home dialogue; this repo’s tutorial already snaps both to the table. Regular dates were opening dialogue in the middle of the room with no girl. Occupancy is the functional arrival; cinematic cameras stay MODULE 09 polish.
+

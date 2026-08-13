@@ -18,7 +18,7 @@
 [ext_resource type="PackedScene" uid="uid://bfe078i7ydrc8" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse12.tscn" id="18_5n1u7"]
 [ext_resource type="PackedScene" uid="uid://bg3bgg7s2knek" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse13.tscn" id="19_wi1lw"]
 [ext_resource type="PackedScene" uid="uid://dqrnkr5vg3tmo" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse14.tscn" id="20_n8wqy"]
-[ext_resource type="PackedScene" path="res://world/locations/city_hub/art/poi/core/DistrictGate.tscn" id="21_gate"]
+[ext_resource type="PackedScene" uid="uid://bnfl6w0ur15ub" path="res://world/locations/city_hub/art/poi/core/DistrictGate.tscn" id="21_gate"]
 [ext_resource type="PackedScene" uid="uid://s4tb62sc6ajv" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse15.tscn" id="21_ivjq3"]
 [ext_resource type="PackedScene" uid="uid://csrorqssqslt1" path="res://world/locations/city_hub/prototype/buildings/PrototypeBookstore.tscn" id="22_vh4oc"]
 [ext_resource type="PackedScene" uid="uid://cj3sxuxvfspo6" path="res://world/locations/city_hub/prototype/buildings/PrototypeGym.tscn" id="23_yfxhe"]

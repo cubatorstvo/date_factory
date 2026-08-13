@@ -20,3 +20,5 @@ dating_greeting_ids = Array[StringName]([&"dating_greeting_simple", &"dating_gre
 dating_farewell_id = &"dating_farewell_walk_common"
 speech_style_note = "Мягкая к людям, но совершенно не умеет помогать тихо. Если видит несправедливость, делает добро так, что о нём узнаёт весь квартал."
 clue_notes = Array[String](["Держит зонт над незнакомым человеком, а сама стоит под дождём.", "Когда водитель обрызгал прохожего, объяснила ему проблему через открытую дверь автобуса.", "Фразу «не будем устраивать сцену» воспринимает как описание ещё не начавшейся сцены."])
+leisure_format_ids = Array[StringName]([&"calm", &"unusual"])
+relationship_span = 5

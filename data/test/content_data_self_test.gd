@@ -268,9 +268,10 @@ func _test_competitions() -> void:
 func _test_locations() -> void:
 	var db: Node = get_node("/root/ContentDB")
 	var locs: Array = db.call("list_locations") as Array
-	_ok(locs.size() == 9, "9 locations")
+	_ok(locs.size() == 15, "15 locations")
 	for lid in [
-		&"apartment", &"city_hub", &"cafe", &"gym", &"appearance_space",
+		&"apartment", &"city_hub", &"cafe", &"restaurant", &"park", &"cinema",
+		&"arcade", &"museum", &"planetarium", &"gym", &"appearance_space",
 		&"salary_mine", &"laboratory", &"production_area", &"final_location",
 	]:
 		var def: LocationDefinition = db.call("get_location", lid) as LocationDefinition

@@ -1,5 +1,5 @@
 ---
-description: DATE FACTORY — donor, git, playable scenes, look, scope
+description: DATE FACTORY — donor, git, playable scenes, look, scope, how agents work
 alwaysApply: true
 ---
 
@@ -13,9 +13,20 @@ Only `main` (existing `legacy-v1` may stay). Do not create branches.
 Copy files + dependency closure into this repo; retarget `res://`. No links, submodules, or runtime paths to donor — the game must run if donor is gone.
 Copy assets/helpers. Do not import old domain architecture (dating, girls, traits, bond, staff, crises, clone QA, legacy Game/save) unless asked. Prefer a simpler rewrite.
 
+## How to implement
+Do not only execute the literal ask. Analyze why it is needed, pick the best existing practice, and apply a mechanic already in the project. Assemble from ready systems; do not invent a parallel solution.
+
+## Docs vs code
+Documentation and code must match. Before implementing:
+- Task is not in the docs → add it, then implement.
+- Task is in the docs and matches the request → implement by the docs.
+- Docs and request/code disagree → stop and tell the user; do not silently pick a side.
+
+## User verifies
+The user always checks the result. Agents do not play, screenshot, explore, `verify_project_runs`, or prove READY. Do not invoke `df-qa-worker` unless the user explicitly asks for QA.
+
 ## Playable, not compiled
-Done = normal player route in a running game (enter, use, exit, save/load). Debug-only scenes and placeholders (capsules, void, debug UI, missing mats) are not a result. Broken loop → `NOT READY`.
-Prove with real Godot stdout (not a capture journal) and by opening screenshots — filename is not proof.
+Done = normal player route (enter, use, exit, save/load). Debug-only scenes and placeholders (capsules, void, debug UI, missing mats) are not a result. Broken loop → `NOT READY`.
 
 ## Scenes / look
 Godot 4.7. Compact stylized low-poly, warm local light, no huge empty rooms. Reuse imported packs/GLB before modeling; check scale/pivot/collision; record new pack licenses.
@@ -24,5 +35,8 @@ Don't mass-reorder `.tscn`. After generating a scene, reopen it in Godot.
 ## Scope
 No drive-by architecture, parallel frameworks, GDD changes, or content scale-up before a working POC.
 
+## Subagents
+If a subagent is Cursor Grok, use the latest Cursor Grok version available. Do not pin an older Grok.
+
 ## GodotIQ
-Do not keep CORE in `AGENTS.md`, `.cursorrules`, `CLAUDE.md`, `.windsurfrules`, or copilot-instructions — MCP `serverUseInstructions` is enough. After `install-addon`, delete those injections. Keep `GODOTIQ_RULES.md` as on-demand full ref.
+Do not keep CORE in `AGENTS.md`, `.cursorrules`, `CLAUDE.md`, `.windsurfrules`, or copilot-instructions — MCP `serverUseInstructions` is enough. After `install-addon`, delete those injections. Keep `GODOTIQ_RULES.md` as on-demand full ref. Skip its play/screenshot/explore verification loops unless the user asks.

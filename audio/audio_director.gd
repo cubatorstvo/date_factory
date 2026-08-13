@@ -36,7 +36,7 @@ var _ui_pool: Array[AudioStreamPlayer] = []
 var _sfx_cursor: int = 0
 var _ui_cursor: int = 0
 
-var _master_volume: float = 1.0
+var _master_volume: float = 0.0
 var _music_volume: float = 1.0
 var _sfx_volume: float = 1.0
 var _ui_volume: float = 1.0

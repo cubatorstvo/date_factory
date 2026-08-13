@@ -260,13 +260,27 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 
-[node name="GirlDetail" type="RichTextLabel" parent="SafeMargin/Content/Pages/GirlsSection"]
+[node name="GirlDetailColumn" type="VBoxContainer" parent="SafeMargin/Content/Pages/GirlsSection"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="GirlDetail" type="RichTextLabel" parent="SafeMargin/Content/Pages/GirlsSection/GirlDetailColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 bbcode_enabled = true
 fit_content = false
 scroll_active = true
+
+[node name="InviteDateButton" type="Button" parent="SafeMargin/Content/Pages/GirlsSection/GirlDetailColumn"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "Позвать на свидание"
 
 [node name="MediaSection" type="VBoxContainer" parent="SafeMargin/Content/Pages"]
 unique_name_in_owner = true

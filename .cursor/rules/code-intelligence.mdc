@@ -11,3 +11,5 @@ Enabled MCPs are required, not optional. Do not start with Grep/Read if they can
 - GDScript symbols (def/refs/rename/body) → **Serena** (`relative_path`).
 - Scenes, `.tscn`/`.gd`/`.tres`, editor, runtime → **GodotIQ** (`godotiq_*`).
 - Grep/Read only for docs, JSON, unknown names, or when those miss. One tool, not a chain.
+
+If a required MCP is down, do not work around it. Diagnose why, report the reasons, and stop.

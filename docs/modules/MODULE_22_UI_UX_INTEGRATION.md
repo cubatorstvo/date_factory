@@ -1328,6 +1328,8 @@ Hold:
 0.8–1.2 sec
 ```
 
+Then emit `match_finished` so `RivalCompetitionRunner` closes the overlay and restores `GAMEPLAY`. Do not leave the fight window open after the match has ended. ESC during the result overlay (match already ended) skips remaining hold and closes. Live fight: ESC does not abort.
+
 MODULE23 may add sound/VFX.
 
 Final exhibition rivals use same result visual but no Authority line.
@@ -1994,16 +1996,24 @@ Existing control mode already supports this; preserve.
 
 Exact UX:
 
-Phone / Progression / Terminals:
+Phone / Progression / Terminals / other dismissable overlays (fridge, wardrobe, rival choose, confirmation):
 
 ```text
-ESC → close → GAMEPLAY
+ESC → same as close/back → GAMEPLAY
 ```
+
+Player in `MODAL_UI` / `DIALOGUE` must not consume ESC before those overlays.
 
 Dating active choice:
 
 ```text
 ESC does NOT abort date
+```
+
+Date result screen (`Закрыть` visible):
+
+```text
+ESC → close finished date → GAMEPLAY
 ```
 
 FinalDate active:
@@ -2013,10 +2023,16 @@ ESC does NOT silently abort;
 use explicit Вернуться only on failure/allowed state
 ```
 
-Minigame:
+Minigame live:
 
 ```text
 ESC no gameplay abort
+```
+
+Minigame already ended (result overlay):
+
+```text
+ESC → skip hold → match_finished → close
 ```
 
 Pause menu is not part of MODULE22 unless existing project already has one.

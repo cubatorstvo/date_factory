@@ -32,6 +32,7 @@ const FEATURE_COPY := {
 
 @onready var _scale_root: Control = %ScaleRoot
 @onready var _gameplay_root: Control = %GameplayRoot
+@onready var _clock_label: Label = %ClockLabel
 @onready var _money_label: Label = %MoneyLabel
 @onready var _authority_label: Label = %AuthorityLabel
 @onready var _experience_label: Label = %ExperienceLabel
@@ -189,6 +190,11 @@ func _hook_signals() -> void:
 	var ss: Node = get_node_or_null("/root/SaveSystem")
 	if ss != null:
 		_connect(ss, "settings_applied", _on_settings_applied)
+	var game_day: Node = get_node_or_null("/root/GameDay")
+	if game_day != null:
+		_connect(game_day, "hour_changed", _on_clock_hour_changed)
+		_connect(game_day, "day_advanced", _on_clock_day_advanced)
+		_connect(game_day, "minute_changed", _on_clock_minute_changed)
 	_hooks_ready = true
 
 
@@ -388,6 +394,7 @@ func _ensure_hud_flag(gs: Node, flag_id: StringName) -> void:
 
 
 func _refresh_resources() -> void:
+	_refresh_clock()
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs == null:
 		return
@@ -414,6 +421,34 @@ func _refresh_resources() -> void:
 		gs.call("get_story_flag", StoryIds.FLAG_HEART_CARD_CLAIMED)
 	)
 	_experience_label.visible = hearts_claimed and not _heart_fly_active
+
+func _refresh_clock() -> void:
+	if _clock_label == null:
+		return
+	var day_n: int = 1
+	var hour_n: int = 8
+	var minute_n: int = 0
+	var game_day: Node = get_node_or_null("/root/GameDay")
+	if game_day != null:
+		if game_day.has_method("get_current_day"):
+			day_n = int(game_day.call("get_current_day"))
+		if game_day.has_method("get_current_hour"):
+			hour_n = int(game_day.call("get_current_hour"))
+		if game_day.has_method("get_current_minute"):
+			minute_n = int(game_day.call("get_current_minute"))
+	_clock_label.text = "День %d · %02d:%02d" % [day_n, hour_n, minute_n]
+
+
+func _on_clock_hour_changed(_new_hour: int = 0) -> void:
+	_refresh_clock()
+
+
+func _on_clock_minute_changed(_new_minute: int = 0) -> void:
+	_refresh_clock()
+
+
+func _on_clock_day_advanced(_new_day: int = 0) -> void:
+	_refresh_clock()
 
 
 func _on_money_changed(_new_value: int, _delta: int) -> void:

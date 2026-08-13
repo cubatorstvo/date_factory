@@ -189,7 +189,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or _mode == Mode.NONE:
 		return
 	# Never abort mid-minigame — this UI is hidden while runner owns the screen.
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		if _mode == Mode.CHOOSE and not _exhibition:
 			_cancel_choose()
 		else:

@@ -10,29 +10,13 @@ const ITEMS: Array[Dictionary] = [
 		"default_unlocked": true,
 	},
 	{
-		"id": &"cheap_business",
-		"name": "Дешёвый деловой",
-		"price": 0,
-		"default_unlocked": true,
-	},
-	{
-		"id": &"sport",
-		"name": "Спортивный",
-		"price": 350,
-	},
-	{
-		"id": &"provocative",
-		"name": "Вызывающий",
+		"id": &"business",
+		"name": "Деловой",
 		"price": 500,
 	},
 	{
-		"id": &"expensive_business",
-		"name": "Дорогой деловой",
-		"price": 1200,
-	},
-	{
-		"id": &"evening",
-		"name": "Вечерний",
+		"id": &"luxury",
+		"name": "Роскошный",
 		"price": 2000,
 	},
 ]
@@ -78,6 +62,8 @@ static func get_equipped(game_state: Node) -> StringName:
 		if bool(game_state.call("get_story_flag", _equipped_flag(item_id))):
 			if is_unlocked(game_state, item_id):
 				return item_id
+			# Unknown / locked equipped flag falls back to casual.
+			return DEFAULT_EQUIPPED
 	return DEFAULT_EQUIPPED
 
 

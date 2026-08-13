@@ -76,7 +76,7 @@ ignore_all_files_in_gitignore: true
 # See https://oraios.github.io/serena/02-usage/050_configuration.html#language-server-specific-settings
 ls_specific_settings:
   gdscript:
-    port: 6008
+    port: 6005
     request_timeout: 30.0
 
 # list of workspace folder paths (LSP backend only).
@@ -121,7 +121,8 @@ read_only: false
 # list of tool names to exclude.
 # This extends the existing exclusions (e.g. from the global configuration)
 # Find the list of tools here: https://oraios.github.io/serena/01-about/035_tools.html
-excluded_tools: []
+excluded_tools:
+- open_dashboard
 
 # list of tools to include that would otherwise be disabled (particularly optional tools that are disabled by default).
 # This extends the existing inclusions (e.g. from the global configuration).

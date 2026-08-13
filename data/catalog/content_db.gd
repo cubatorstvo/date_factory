@@ -26,6 +26,12 @@ const CANONICAL_LOCATION_IDS: Array[StringName] = [
 	&"apartment",
 	&"city_hub",
 	&"cafe",
+	&"restaurant",
+	&"park",
+	&"cinema",
+	&"arcade",
+	&"museum",
+	&"planetarium",
 	&"gym",
 	&"appearance_space",
 	&"salary_mine",
@@ -765,8 +771,8 @@ static func _validate_perks(catalog: ContentCatalog, errors: Array[String]) -> v
 
 
 static func _validate_locations(catalog: ContentCatalog, errors: Array[String]) -> void:
-	if catalog.locations.size() != 9:
-		errors.append("locations count %s != 9" % catalog.locations.size())
+	if catalog.locations.size() != 15:
+		errors.append("locations count %s != 15" % catalog.locations.size())
 	var by_id: Dictionary = {}
 	for def in catalog.locations:
 		if def == null:
@@ -955,6 +961,27 @@ static func _validate_girls(catalog: ContentCatalog, errors: Array[String]) -> v
 				errors.append("girl %s empty dating_farewell_id" % sid)
 			elif not farewell_ids.is_empty() and not farewell_ids.has(def.dating_farewell_id):
 				errors.append("girl %s unknown dating_farewell_id %s" % [sid, fid])
+		var span: int = int(def.relationship_span)
+		if span != 5 and span != 10:
+			errors.append("girl %s relationship_span must be 5 or 10" % sid)
+		if not def.leisure_format_ids.is_empty():
+			var allowed_formats: Dictionary = {
+				&"calm": true,
+				&"entertainment": true,
+				&"play": true,
+				&"culture": true,
+				&"unusual": true,
+			}
+			if def.leisure_format_ids.size() != 2:
+				errors.append("girl %s leisure_format_ids must have exactly 2" % sid)
+			var seen_formats: Dictionary = {}
+			for fmt in def.leisure_format_ids:
+				var fid_fmt: StringName = fmt as StringName
+				if not allowed_formats.has(fid_fmt):
+					errors.append("girl %s unknown leisure_format %s" % [sid, String(fid_fmt)])
+				if seen_formats.has(fid_fmt):
+					errors.append("girl %s duplicate leisure_format %s" % [sid, String(fid_fmt)])
+				seen_formats[fid_fmt] = true
 
 
 static func _validate_rivals(catalog: ContentCatalog, errors: Array[String]) -> void:

@@ -96,6 +96,13 @@ func start_date(request: DatingStartRequest) -> Dictionary:
 	session.tutorial_mode = request.tutorial_mode
 	session.greeting_ids = request.greeting_ids.duplicate()
 	session.farewell_id = request.farewell_id
+	if request.location_id == &"apartment" and not request.tutorial_mode:
+		var prepared: bool = false
+		if gs.has_method("get_story_flag"):
+			prepared = bool(gs.call("get_story_flag", DateVenueCatalog.PREPARED_FLAG))
+		session.apartment_was_prepared = prepared
+		if prepared and gs.has_method("set_story_flag"):
+			gs.call("set_story_flag", DateVenueCatalog.PREPARED_FLAG, false)
 	var planned_ids: Array = plan.get("event_ids", []) as Array
 	var ids: Array[StringName] = []
 	for eid in planned_ids:
@@ -611,8 +618,24 @@ func _finish_secondary_and_close() -> Dictionary:
 	for rec in _session.decision_records:
 		primary_total += rec.primary_reaction
 	var secondary: int = SecondaryTraitEvaluator.evaluate(girl.secondary_trait, _session.decision_records)
-	var delta: int = primary_total + secondary
-	delta = clampi(delta, -5, 5)
+	var trait_delta: int = clampi(primary_total + secondary, -5, 5)
+	var venue_quality: int = 0
+	var leisure_bonus: int = 0
+	var apartment_penalty: int = 0
+	var outfit_bonus: int = 0
+	if not _session.tutorial_mode:
+		venue_quality = DateVenueCatalog.quality_bonus(_session.location_id)
+		leisure_bonus = DateVenueCatalog.leisure_preference_bonus(
+			_session.location_id, girl.leisure_format_ids
+		)
+		if _session.location_id == &"apartment" and not _session.apartment_was_prepared:
+			apartment_penalty = -1
+		var gs: Node = get_node_or_null("/root/GameState")
+		var equipped: StringName = ApartmentWardrobeCatalog.get_equipped(gs)
+		outfit_bonus = DateVenueCatalog.outfit_bonus(equipped)
+	var delta: int = (
+		trait_delta + venue_quality + leisure_bonus + apartment_penalty + outfit_bonus
+	)
 	_session.primary_total = primary_total
 	_session.secondary_reaction = secondary
 	_session.date_delta = delta
@@ -627,6 +650,11 @@ func _finish_secondary_and_close() -> Dictionary:
 	result.decision_records = _session.decision_records.duplicate()
 	result.primary_total = primary_total
 	result.secondary_reaction = secondary
+	result.trait_delta = trait_delta
+	result.venue_quality_bonus = venue_quality
+	result.leisure_preference_bonus = leisure_bonus
+	result.apartment_prep_penalty = apartment_penalty
+	result.outfit_bonus = outfit_bonus
 	result.date_delta = delta
 	result.money_spent_total = _session.money_spent_total
 	result.used_right_to_say_nothing = _session.used_right_to_say_nothing
@@ -694,7 +722,7 @@ func _set_phase(phase: DatingTypes.Phase) -> void:
 
 
 func _fail(code: StringName) -> Dictionary:
-	return {"ok": false, "error": code}
+	return {"ok": false, "error": code, "message": DatingTypes.user_message(code)}
 
 
 func _enter_modal_control() -> void:

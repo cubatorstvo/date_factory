@@ -1,13 +1,14 @@
 class_name PhoneJournal
 extends Control
 ## Phone journal presentation shell (MODULE 08–21 logic, MODULE 22 five-tab UI).
-## No Dating CTA / messaging / scheduling / calendar. No gameplay formula changes.
+## Girls tab can open DateInvitePanel when Relationships.can_start_date. No formula changes.
 
 signal opened()
 signal closed()
 
 const CHOICE_CARD_SCENE: String = "res://ui/common/choice_card.tscn"
 const BODY_LABEL_SCENE: String = "res://ui/common/body_label.tscn"
+const INVITE_PANEL_SCENE: String = "res://ui/phone/date_invite_panel.tscn"
 
 enum PhoneTab {
 	STATUS,
@@ -19,11 +20,14 @@ enum PhoneTab {
 
 @onready var _list: ItemList = %GirlsList
 @onready var _detail: RichTextLabel = %GirlDetail
+@onready var _invite_date_btn: Button = %InviteDateButton
 @onready var _title: Label = %TitleLabel
 @onready var _close_btn: Button = %CloseButton
 @onready var _progression_badge: Label = %ProgressionBadge
 @onready var _progression_host: Control = %ProgressionHost
 var _player: Node = null
+var _invite_panel: Control = null
+var _invite_girl_id: StringName = &""
 var _is_open: bool = false
 var _listed_ids: Array[StringName] = []
 var _active_tab: PhoneTab = PhoneTab.GIRLS
@@ -124,6 +128,8 @@ func open(player: Node = null) -> void:
 func close() -> void:
 	if not _is_open and not visible:
 		return
+	if _invite_panel != null and is_instance_valid(_invite_panel) and _invite_panel.has_method("close"):
+		_invite_panel.call("close")
 	_teardown_embedded_progression()
 	_audio_play_ui(AudioIds.UI_BACK)
 	visible = false
@@ -292,7 +298,11 @@ func get_clone_stats_text() -> String:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _is_open:
 		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("phone"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("phone"):
+		if _invite_panel != null and _invite_panel.visible and _invite_panel.has_method("close"):
+			_invite_panel.call("close")
+			get_viewport().set_input_as_handled()
+			return
 		close()
 		get_viewport().set_input_as_handled()
 
@@ -300,6 +310,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _wire_scene() -> void:
 	_close_btn.pressed.connect(close)
 	_list.item_selected.connect(_on_item_selected)
+	if _invite_date_btn != null:
+		_invite_date_btn.pressed.connect(_on_invite_date_pressed)
 	_tab_buttons = {
 		PhoneTab.STATUS: %StatusTab,
 		PhoneTab.STORY: %StoryTab,
@@ -1602,6 +1614,7 @@ func _refresh_list() -> void:
 	var discovered: Array = gs.call("get_discovered_girl_ids") as Array
 	if discovered.is_empty():
 		_detail.text = "Пока нет записей."
+		_refresh_invite_cta(StringName())
 		return
 	var ordered: Array[StringName] = _sorted_girl_ids(discovered, gs)
 	var gd: Node = get_node_or_null("/root/GirlDiscovery")
@@ -1695,8 +1708,14 @@ func _show_detail(girl_id: StringName) -> void:
 	var db: Node = get_node_or_null("/root/ContentDB")
 	if gs == null or gd == null:
 		_detail.text = ""
+		_refresh_invite_cta(StringName())
 		return
 	var def: GirlDefinition = gd.call("get_girl_definition", girl_id) as GirlDefinition
+	var span: int = 5
+	if def != null:
+		var raw_span: int = int(def.relationship_span)
+		if raw_span == 5 or raw_span == 10:
+			span = raw_span
 	var lines: PackedStringArray = PackedStringArray()
 	var name: String = String(girl_id)
 	if def != null and def.display_name.strip_edges() != "":
@@ -1704,7 +1723,7 @@ func _show_detail(girl_id: StringName) -> void:
 	lines.append("[b]%s[/b]" % name)
 	if girl_id == StoryIds.GIRL_FINAL_TARGET:
 		if bool(gs.call("is_girl_conquered", girl_id)):
-			lines.append("Отношения: +5")
+			lines.append("Отношения: %+d" % span)
 			lines.append("Статус: цель достигнута")
 		elif bool(gs.call("has_girl_contact", girl_id)):
 			lines.append("Статус: контакт установлен")
@@ -1712,6 +1731,7 @@ func _show_detail(girl_id: StringName) -> void:
 		else:
 			lines.append("Статус: сигнал обнаружен")
 		_detail.text = "\n".join(lines)
+		_refresh_invite_cta(girl_id)
 		return
 	var has_contact: bool = bool(gs.call("has_girl_contact", girl_id))
 	if has_contact:
@@ -1719,7 +1739,7 @@ func _show_detail(girl_id: StringName) -> void:
 	else:
 		lines.append("Статус: Номера нет")
 	var rel: int = int(gs.call("get_girl_relationship", girl_id))
-	lines.append("Отношения: %+d / 5" % rel)
+	lines.append("Отношения: %+d / %d" % [rel, span])
 	if bool(gs.call("is_girl_conquered", girl_id)):
 		lines.append("Отношения завершены")
 	if has_contact:
@@ -1778,6 +1798,67 @@ func _show_detail(girl_id: StringName) -> void:
 				continue
 			lines.append("%s %s" % [_reaction_text(reaction), label])
 	_detail.text = "\n".join(lines)
+	_refresh_invite_cta(girl_id)
+
+func _refresh_invite_cta(girl_id: StringName) -> void:
+	_invite_girl_id = girl_id
+	if _invite_date_btn == null:
+		return
+	_invite_date_btn.visible = false
+	_invite_date_btn.disabled = true
+	_invite_date_btn.text = "Позвать на свидание"
+	if girl_id == StringName() or girl_id == StoryIds.GIRL_FINAL_TARGET:
+		return
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null or not bool(gs.call("has_girl_contact", girl_id)):
+		return
+	var rel: Node = get_node_or_null("/root/Relationships")
+	if rel == null or not rel.has_method("can_start_date"):
+		_invite_date_btn.visible = true
+		_invite_date_btn.text = "Недоступно"
+		return
+	if bool(rel.call("can_start_date", girl_id)):
+		_invite_date_btn.visible = true
+		_invite_date_btn.disabled = false
+		return
+	var cooldown_days: int = int(gs.call("get_girl_date_cooldown_days_remaining", girl_id))
+	if cooldown_days > 0:
+		_invite_date_btn.visible = true
+		_invite_date_btn.text = "через %d дн." % cooldown_days
+		return
+	if rel.has_method("get_date_availability"):
+		var avail: Dictionary = rel.call("get_date_availability", girl_id) as Dictionary
+		var msg: String = str(avail.get("message", "")).strip_edges()
+		if msg != "":
+			_invite_date_btn.visible = true
+			_invite_date_btn.text = msg
+
+
+func _on_invite_date_pressed() -> void:
+	if _invite_girl_id == StringName():
+		return
+	var panel: Control = _ensure_invite_panel()
+	if panel == null:
+		return
+	_audio_play_ui(AudioIds.UI_CLICK)
+	panel.call("open", _invite_girl_id, self, _player)
+
+
+func _ensure_invite_panel() -> Control:
+	if _invite_panel != null and is_instance_valid(_invite_panel):
+		return _invite_panel
+	var packed: PackedScene = load(INVITE_PANEL_SCENE) as PackedScene
+	if packed == null:
+		push_error("[PhoneJournal] date_invite_panel scene missing")
+		return null
+	var inst: Node = packed.instantiate()
+	if inst == null or not (inst is Control) or not inst.has_method("open"):
+		if inst != null:
+			inst.free()
+		return null
+	add_child(inst)
+	_invite_panel = inst as Control
+	return _invite_panel
 
 
 func _format_tags(tags: Array) -> String:

@@ -38,6 +38,10 @@ func _ready() -> void:
 	var xp_lab: Label = _find_label(hud1, "ExperienceLabel")
 	var up_lab: Label = _find_label(hud1, "PointsLabel")
 	_ok(money_lab != null and money_lab.text == "$ 12.49K", "money label compact (got %s)" % (money_lab.text if money_lab else "null"))
+	var clock_lab: Label = _find_label(hud1, "ClockLabel")
+	_ok(clock_lab != null, "clock label present")
+	if clock_lab != null:
+		_ok(clock_lab.text.begins_with("День ") and clock_lab.text.contains(" · ") and clock_lab.text.contains(":"), "clock format (got %s)" % clock_lab.text)
 	_ok(auth_lab != null and auth_lab.text == "АВТОРИТЕТ 3", "authority label")
 	_ok(xp_lab != null and xp_lab.text == "ПОКОРЕННЫХ СЕРДЕЦ 2", "experience label")
 	_ok(up_lab != null and up_lab.text == "БАЛЛЫ 2", "points label")

@@ -3082,3 +3082,20 @@ None.
 **НЕ начинать MODULE 13 — Salary Mine & Money Loop.**
 
 Остановиться и дождаться отдельной спецификации.
+
+---
+
+# ADDENDUM — Date venue locations (2026-08-13)
+
+Канон: `docs/gdd/10_date_venues_outfits.md`. Девять сюжетных локаций MODULE 12 **остаются**. Добавляются отдельные travel-локации свиданий (не city POI):
+
+```text
+restaurant
+park
+cinema
+arcade
+museum
+planetarium
+```
+
+Они входят в `World.CANONICAL_IDS`, имеют `LocationDefinition`, сцену `WorldLocation`, `PlayerSpawnPoint` `spawn_default`, `DateVenueInteractable`, `WorldTransition` на `city_hub`. Доступ: `SOCIAL_ACCESS`, как у кафе. Кафе-сцена donor не копируется в ресторан.

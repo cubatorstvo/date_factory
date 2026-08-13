@@ -289,13 +289,19 @@
 [ext_resource type="Resource" path="res://data/content/appearances/appearance_male_appearance_ringlight.tres" id="r266"]
 [ext_resource type="Resource" path="res://data/content/appearances/appearance_male_cafe_menu_holder.tres" id="r267"]
 [ext_resource type="Resource" path="res://data/content/appearances/appearance_male_city_headphones.tres" id="r268"]
+[ext_resource type="Resource" path="res://data/content/locations/restaurant.tres" id="r269"]
+[ext_resource type="Resource" path="res://data/content/locations/park.tres" id="r270"]
+[ext_resource type="Resource" path="res://data/content/locations/cinema.tres" id="r271"]
+[ext_resource type="Resource" path="res://data/content/locations/arcade.tres" id="r272"]
+[ext_resource type="Resource" path="res://data/content/locations/museum.tres" id="r273"]
+[ext_resource type="Resource" path="res://data/content/locations/planetarium.tres" id="r274"]
 [resource]
 script = ExtResource("1_script")
 primary_traits = Array[ExtResource("58_x8lld")]([ExtResource("r2"), ExtResource("r3"), ExtResource("r4"), ExtResource("r5")])
 secondary_traits = Array[ExtResource("65_oeu14")]([ExtResource("r6"), ExtResource("r7"), ExtResource("r8"), ExtResource("r9")])
 competitions = Array[ExtResource("7_t48gc")]([ExtResource("r10"), ExtResource("r11"), ExtResource("r12"), ExtResource("r13")])
 perks = Array[ExtResource("25_s6adr")]([ExtResource("r31"), ExtResource("r32"), ExtResource("r33"), ExtResource("r34"), ExtResource("r35"), ExtResource("r36"), ExtResource("r37"), ExtResource("r38"), ExtResource("r39"), ExtResource("r40"), ExtResource("r41"), ExtResource("r42"), ExtResource("r43"), ExtResource("r44"), ExtResource("r45"), ExtResource("r46"), ExtResource("r47"), ExtResource("r48"), ExtResource("r49"), ExtResource("r50"), ExtResource("r51"), ExtResource("r52"), ExtResource("r53"), ExtResource("r54"), ExtResource("r55"), ExtResource("r56"), ExtResource("r57"), ExtResource("r58"), ExtResource("r59"), ExtResource("r60"), ExtResource("r61"), ExtResource("r62")])
-locations = Array[ExtResource("15_f176v")]([ExtResource("r14"), ExtResource("r15"), ExtResource("r16"), ExtResource("r17"), ExtResource("r18"), ExtResource("r19"), ExtResource("r20"), ExtResource("r21"), ExtResource("r22")])
+locations = Array[ExtResource("15_f176v")]([ExtResource("r14"), ExtResource("r15"), ExtResource("r16"), ExtResource("r17"), ExtResource("r18"), ExtResource("r19"), ExtResource("r20"), ExtResource("r21"), ExtResource("r22"), ExtResource("r269"), ExtResource("r270"), ExtResource("r271"), ExtResource("r272"), ExtResource("r273"), ExtResource("r274")])
 stages = Array[ExtResource("70_m381w")]([ExtResource("r23"), ExtResource("r24"), ExtResource("r25"), ExtResource("r26"), ExtResource("r27"), ExtResource("r28"), ExtResource("r29"), ExtResource("r30")])
 appearance_profiles = Array[ExtResource("4_37wg4")]([ExtResource("5_pjut5"), ExtResource("6_p0dw6"), ExtResource("r76"), ExtResource("r77"), ExtResource("r78"), ExtResource("r79"), ExtResource("r80"), ExtResource("r81"), ExtResource("r82"), ExtResource("r83"), ExtResource("r84"), ExtResource("r85"), ExtResource("r86"), ExtResource("r87"), ExtResource("r88"), ExtResource("r126"), ExtResource("r127"), ExtResource("r128"), ExtResource("r129"), ExtResource("r130"), ExtResource("r131"), ExtResource("r132"), ExtResource("r133"), ExtResource("r151"), ExtResource("r152"), ExtResource("r153"), ExtResource("r162"), ExtResource("r163"), ExtResource("r175"), ExtResource("r176"), ExtResource("r177"), ExtResource("r181"), ExtResource("r182"), ExtResource("r183"), ExtResource("r184"), ExtResource("r185"), ExtResource("r186"), ExtResource("r187"), ExtResource("r188"), ExtResource("r189"), ExtResource("r264"), ExtResource("r265"), ExtResource("r266"), ExtResource("r267"), ExtResource("r268")])
 animation_profiles = Array[ExtResource("1_5q52a")]([ExtResource("2_p7o74"), ExtResource("3_cjwjc")])

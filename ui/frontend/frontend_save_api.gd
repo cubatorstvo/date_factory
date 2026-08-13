@@ -149,7 +149,7 @@ static func reset_tutorials() -> bool:
 
 static func default_settings() -> Dictionary:
 	return {
-		"master": 1.0,
+		"master": 0.0,
 		"music": 1.0,
 		"sfx": 1.0,
 		"ui": 1.0,
@@ -170,7 +170,7 @@ static func preview_audio(settings: Dictionary) -> void:
 	if audio == null:
 		return
 	if audio.has_method("set_master_volume"):
-		audio.call("set_master_volume", float(settings.get("master", 1.0)))
+		audio.call("set_master_volume", float(settings.get("master", 0.0)))
 	if audio.has_method("set_music_volume"):
 		audio.call("set_music_volume", float(settings.get("music", 1.0)))
 	if audio.has_method("set_sfx_volume"):
