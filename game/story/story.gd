@@ -108,7 +108,7 @@ func _prologue_objective(gs: Node) -> Dictionary:
 	if not bool(gs.call("get_story_flag", StoryIds.FLAG_NEIGHBOR_BRIEFING_COMPLETE)):
 		return {
 			"id": &"find_neighbor",
-			"text": "Найди соседку возле дома и попроси научить тебя свиданиям.",
+			"text": "Поговори с соседкой у входной двери в квартире.",
 		}
 	if not bool(gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_FOOD_READY)):
 		return {"id": &"prepare_food", "text": "Подготовь еду для свидания."}

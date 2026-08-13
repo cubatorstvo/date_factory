@@ -1,13 +1,13 @@
 ---
-description: Prefer CBM/Serena over broad Search/Read to cut LLM tokens
+description: Use codebase-memory-mcp and Serena before Grep/Read
 alwaysApply: true
 ---
 
-# Code intelligence (token-efficient)
+# Code intelligence
 
-- Architecture, dependencies, callers/callees, call chains, impact: use **codebase-memory-mcp** first.
-- GDScript symbol work (definition, references, rename, function body): use **Serena** first; pass `relative_path` when possible.
-- Cursor semantic search / Grep: unknown names, `.tscn`/`.tres`/`.md`/JSON/text, or when CBM/Serena miss.
-- Do not auto-chain CBM then Serena then Search then Read for every question; pick the smallest sufficient tool.
-- Avoid reading whole large files when a symbol or graph answer is enough.
-- Goal: minimize LLM tokens without losing analysis quality.
+Enabled MCPs are required, not optional. Do not start with Grep/Read if they can answer.
+
+- Architecture, callers, impact, “where is X used” → **codebase-memory-mcp** (`search_graph`, `trace_path`, `detect_changes`).
+- GDScript symbols (def/refs/rename/body) → **Serena** (`relative_path`).
+- Scenes, `.tscn`/`.gd`/`.tres`, editor, runtime → **GodotIQ** (`godotiq_*`).
+- Grep/Read only for docs, JSON, unknown names, or when those miss. One tool, not a chain.

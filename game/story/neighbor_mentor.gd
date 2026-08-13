@@ -29,12 +29,20 @@ const FRIEND_TEXT: String = (
 	"СОСЕДКА:\nНу как? Я рассказала всё, что знаю. Дальше сам — у меня куча дел."
 )
 
+enum Presence {
+	ALWAYS,
+	APARTMENT_UNTIL_BRIEFING,
+	CITY_AFTER_TUTORIAL,
+}
+
 enum _CloseAction {
 	NONE,
 	GRANT_BRIEFING,
 	GRANT_TUTORIAL_POINT,
 	RECLAIM_TUTORIAL,
 }
+
+@export var presence: Presence = Presence.ALWAYS
 
 @onready var _character: CharacterActor = $CharacterActor
 @onready var _dialogue_root: Control = $DialogueLayer/Root
@@ -56,6 +64,11 @@ func _ready() -> void:
 		var animation: CharacterAnimationController = _character.get_animation_controller()
 		if animation != null:
 			animation.play_semantic(&"idle")
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs != null and gs.has_signal("story_flag_changed"):
+		if not gs.story_flag_changed.is_connected(_on_story_flag_changed):
+			gs.story_flag_changed.connect(_on_story_flag_changed)
+	_refresh_presence()
 
 
 func get_interaction_prompt(_player: Node) -> String:
@@ -140,6 +153,41 @@ func _close_dialogue() -> void:
 		_:
 			pass
 	_close_action = _CloseAction.NONE
+	_refresh_presence()
 	if _active_player != null and is_instance_valid(_active_player):
 		_active_player.enter_gameplay()
 	_active_player = null
+
+
+func _on_story_flag_changed(_flag_id: StringName, _value: bool) -> void:
+	_refresh_presence()
+
+
+func _should_be_present() -> bool:
+	if presence == Presence.ALWAYS:
+		return true
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs == null:
+		return presence == Presence.APARTMENT_UNTIL_BRIEFING
+	var briefed: bool = bool(
+		gs.call("get_story_flag", StoryIds.FLAG_NEIGHBOR_BRIEFING_COMPLETE)
+	)
+	var tutorial_complete: bool = bool(
+		gs.call("get_story_flag", StoryIds.FLAG_TUTORIAL_DATE_COMPLETE)
+	)
+	match presence:
+		Presence.APARTMENT_UNTIL_BRIEFING:
+			return not briefed
+		Presence.CITY_AFTER_TUTORIAL:
+			return tutorial_complete
+		_:
+			return true
+
+
+func _refresh_presence() -> void:
+	var show: bool = _should_be_present()
+	visible = show
+	process_mode = Node.PROCESS_MODE_INHERIT if show else Node.PROCESS_MODE_DISABLED
+	collision_layer = 4 if show else 0
+	if _character != null:
+		_character.visible = show

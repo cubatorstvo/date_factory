@@ -37,8 +37,9 @@
 [ext_resource type="PackedScene" uid="uid://bl7xgtsut762s" path="res://assets/environment/interior/house_interior/meshes/Light_Floor2.fbx" id="27_8fvko"]
 [ext_resource type="PackedScene" uid="uid://by6do7d40saoi" path="res://assets/environment/city/downtown_megakit/meshes/Brick_InteriorWall_4.gltf" id="29_neighbor_wall"]
 [ext_resource type="PackedScene" uid="uid://dhn7jqyw3j1m3" path="res://characters/framework/character_actor.tscn" id="36_pa2sr"]
+[ext_resource type="PackedScene" uid="uid://k627612f6tj5" path="res://game/story/neighbor_mentor.tscn" id="37_672kx"]
 [ext_resource type="PackedScene" uid="uid://1jvs8v38wbu1" path="res://game/opening/morning_heart_card.tscn" id="38_672kx"]
-[ext_resource type="Script" uid="uid://cytcp3blqgblf" path="res://world/locations/apartment/office_day_job_interactable.gd" id="39_u76iw"]
+[ext_resource type="Script" uid="uid://bnmlhw6p2i15p" path="res://game/story/neighbor_mentor.gd" id="38_pa2sr"]
 
 [sub_resource type="Environment" id="Environment_pw7ec"]
 background_mode = 1
@@ -136,7 +137,7 @@ roughness = 0.88
 size = Vector3(2.05, 0.52, 1.05)
 
 [sub_resource type="BoxShape3D" id="BoxShape_DiningTable"]
-size = Vector3(1.05, 0.6555029, 1.05)
+size = Vector3(1.05, 0.66, 1.05)
 
 [sub_resource type="BoxShape3D" id="BoxShape_Fridge"]
 size = Vector3(0.72, 1.85, 0.7)
@@ -195,9 +196,6 @@ albedo_color = Color(0.93, 0.91, 0.84, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_c77th"]
 size = Vector3(0.22, 0.01, 0.28)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_672kx"]
-size = Vector3(1.2, 2, 1)
 
 [node name="apartment" type="Node3D" unique_id=772458437]
 script = ExtResource("1_loc")
@@ -405,26 +403,24 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.399, 0, 0.608)
 transform = Transform3D(-2.491549e-07, 0, 5.7, 0, 5.7, 0, -5.7, 0, -2.491549e-07, 0, 0, 0)
 
 [node name="Physics" type="StaticBody3D" parent="Geometry/ApartmentArt/Objects/DiningTable" unique_id=1900100008]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.39, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.33, 0)
 collision_mask = 0
 
 [node name="Shape" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Physics" unique_id=1900100009]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.062248528, 0)
 shape = SubResource("BoxShape_DiningTable")
 
 [node name="Interaction" type="Area3D" parent="Geometry/ApartmentArt/Objects/DiningTable" unique_id=636659215]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.39, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.33, 0)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("7_h50ke")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=302647249]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.061074197, 0)
 shape = SubResource("BoxShape_DiningTable")
 
 [node name="MealAnchor" type="Node3D" parent="Geometry/ApartmentArt/Objects/DiningTable/Interaction" unique_id=467541846]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0009999871, 0.26493204, 0.0019999743)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.001, 0.33, 0.002)
 
 [node name="Fridge" type="Node3D" parent="Geometry/ApartmentArt/Objects" unique_id=1201433160]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 0, -2.15)
@@ -678,6 +674,14 @@ process_mode = 4
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.651, 0.05, 0.608)
 visible = false
 
+[node name="NeighborMentor" type="Area3D" parent="NpcSpawns" unique_id=825001344 instance=ExtResource("37_672kx")]
+transform = Transform3D(0.2988581, 0, -0.95429754, 0, 1, 0, 0.95429754, 0, 0.2988581, -1.65, 0.05, 1.25)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("38_pa2sr")
+presence = 1
+
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=544019242]
 
 [node name="story_point_wardrobe" type="Marker3D" parent="StoryEventPoints" unique_id=74110830]
@@ -741,29 +745,3 @@ font_size = 14
 
 [node name="MorningHeartCard" parent="Interactables" unique_id=364527083 instance=ExtResource("38_672kx")]
 transform = Transform3D(0.96862835, 0.13613184, -0.2079117, -0.1391731, 0.99026805, 0, 0.20588832, 0.028935717, 0.9781476, 1.55, 0.03, -0.55)
-
-[node name="OfficeDayJob" type="Area3D" parent="Interactables" unique_id=2006706245]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.1, 1, 0.55)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("39_u76iw")
-
-[node name="Collision" type="CollisionShape3D" parent="Interactables/OfficeDayJob" unique_id=1271229130]
-shape = SubResource("BoxShape3D_672kx")
-
-[node name="Label" type="Label3D" parent="Interactables/OfficeDayJob" unique_id=617975780]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
-billboard = 1
-text = "ОФИС"
-font_size = 28
-
-[node name="Desk" type="CSGBox3D" parent="Interactables/OfficeDayJob" unique_id=1886379698]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.55, 0)
-size = Vector3(1.1, 0.08, 0.55)
-
-[node name="DeskLamp" type="OmniLight3D" parent="Interactables/OfficeDayJob" unique_id=1066227052]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
-light_color = Color(1, 0.85, 0.65, 1)
-light_energy = 1.2
-omni_range = 3.5

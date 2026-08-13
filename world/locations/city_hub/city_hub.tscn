@@ -537,6 +537,7 @@ script = ExtResource("9_i4m68")
 
 [node name="NeighborMentor" parent="NpcSpawns" unique_id=825001344 instance=ExtResource("10_2i33n")]
 transform = Transform3D(-0.7619391, 0, -0.6476487, 0, 1, 0, 0.6476487, 0, -0.7619391, 8.8, 0.05, 2.8)
+presence = 2
 
 [node name="StoryEventPoints" type="Node3D" parent="." unique_id=1615612912]
 

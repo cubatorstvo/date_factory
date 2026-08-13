@@ -85,6 +85,9 @@ func _resolve_target() -> Node3D:
 		&"pick_up_card":
 			return _find_named(loc, "MorningHeartCard")
 		&"find_neighbor":
+			var mentor: Node3D = _find_named(loc, "NeighborMentor")
+			if mentor != null and mentor.visible:
+				return mentor
 			return _find_named(loc, "TutorialNeighbor")
 		&"prepare_food":
 			return _find_named(loc, "Fridge")
@@ -177,9 +180,6 @@ func _find_day_job(root: Node) -> Node3D:
 	for n in grouped:
 		if n is Node3D and root.is_ancestor_of(n):
 			return n as Node3D
-	var named: Node3D = _find_named(root, "OfficeDayJob")
-	if named != null:
-		return named
 	return _find_named(root, "AgencyOffice")
 
 

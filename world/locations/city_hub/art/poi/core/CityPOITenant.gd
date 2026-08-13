@@ -65,18 +65,23 @@ func _configure_primary_interaction_area() -> void:
 	if not (area_node is Interactable):
 		return
 	var ia: Interactable = area_node as Interactable
-	if action_id != &"":
-		ia.action_id = action_id
-	if display_name != "":
-		ia.display_name = display_name
-	elif prompt_text != "":
-		ia.display_name = prompt_text
-	if action_label != "":
-		ia.action_label = action_label
-	elif prompt_text != "":
-		ia.action_label = prompt_text
+	if action_id != &"" and "action_id" in ia:
+		ia.set("action_id", action_id)
+	if "display_name" in ia:
+		if display_name != "":
+			ia.set("display_name", display_name)
+		elif prompt_text != "":
+			ia.set("display_name", prompt_text)
+	if "action_label" in ia:
+		if action_label != "":
+			ia.set("action_label", action_label)
+		elif prompt_text != "":
+			ia.set("action_label", prompt_text)
 	## Primary: tenant exports win over scene defaults on InteractionArea.
-	ia.payload = _merged_primary_payload(ia.payload)
+	if "payload" in ia:
+		var existing_payload: Variant = ia.get("payload")
+		var payload_dict: Dictionary = existing_payload if existing_payload is Dictionary else {}
+		ia.set("payload", _merged_primary_payload(payload_dict))
 	if not ia.is_in_group("city_poi_interact"):
 		ia.add_to_group("city_poi_interact")
 
@@ -89,9 +94,15 @@ func _register_interacts_under(node: Node) -> void:
 	for child in node.get_children():
 		if child is Interactable:
 			var ia: Interactable = child as Interactable
-			if ia.action_id != &"":
+			var child_action: StringName = &""
+			if "action_id" in ia:
+				child_action = ia.get("action_id") as StringName
+			if child_action != &"":
 				## Sibling multi-action Interactables keep their own payload; only fill gaps.
-				ia.payload = _ensure_art_backed_payload(ia.payload)
+				var existing_payload: Variant = ia.get("payload") if "payload" in ia else {}
+				var payload_dict: Dictionary = existing_payload if existing_payload is Dictionary else {}
+				if "payload" in ia:
+					ia.set("payload", _ensure_art_backed_payload(payload_dict))
 				if not ia.is_in_group("city_poi_interact"):
 					ia.add_to_group("city_poi_interact")
 		_register_interacts_under(child)

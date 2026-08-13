@@ -65,12 +65,12 @@ mesh = SubResource("BoxMesh_7ve0x")
 [node name="Agency" type="Node3D" parent="TenantSlots" unique_id=737659874]
 script = ExtResource("2_0vyk5")
 poi_id = "agency_office"
-action_id = &"open_agency_board"
-prompt_text = "Доска расписания"
+action_id = &"claim_day_job"
+prompt_text = "Сходить на работу"
 functional_type = "StorefrontPOI"
-progression_stage = 2
-display_name = "Офис агентства"
-action_label = "Доска расписания"
+progression_stage = 1
+display_name = "Офис"
+action_label = "Сходить на работу"
 payload = {
 "art_backed": true
 }

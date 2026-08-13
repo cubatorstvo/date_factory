@@ -3,7 +3,7 @@
 Организуй текущую пользовательскую задачу по полному Orchestrator–Worker циклу.
 
 1. Прочитай `docs/README.md` и, если есть, `docs/MASTER_GDD.md` и `docs/agent/*`.
-2. Учти `.cursor/rules/donor-project.mdc`: donor = `../date_factory_legacy` (read-only).
+2. Учти `.cursor/rules/date-factory.mdc`: donor = `../date_factory_legacy` (read-only).
 3. Сформулируй player-visible result.
 4. При необходимости вызови `df-researcher`.
 5. Сам прими продуктовые решения.

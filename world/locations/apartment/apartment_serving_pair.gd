@@ -7,10 +7,10 @@ const FOOD_PLATE_SCENE: String = (
 )
 const CARRIED_LEFT_POSITION: Vector3 = Vector3(-0.18, 0.0, 0.0)
 const CARRIED_RIGHT_POSITION: Vector3 = Vector3(0.18, 0.0, 0.0)
-const TABLE_LEFT_PLATE_POSITION: Vector3 = Vector3(-0.301, -0.048, -0.002)
-const TABLE_RIGHT_PLATE_POSITION: Vector3 = Vector3(0.299, -0.048, -0.002)
-const TABLE_LEFT_DRINK_POSITION: Vector3 = Vector3(-0.18, -0.048, 0.11)
-const TABLE_RIGHT_DRINK_POSITION: Vector3 = Vector3(0.18, -0.048, -0.11)
+const TABLE_LEFT_PLATE_POSITION: Vector3 = Vector3(-0.301, 0.02, -0.002)
+const TABLE_RIGHT_PLATE_POSITION: Vector3 = Vector3(0.299, 0.02, -0.002)
+const TABLE_LEFT_DRINK_POSITION: Vector3 = Vector3(-0.22, 0.02, 0.18)
+const TABLE_RIGHT_DRINK_POSITION: Vector3 = Vector3(0.22, 0.02, -0.18)
 
 var _category: StringName = &""
 

@@ -1,10 +1,16 @@
 extends Interactable
 class_name OfficeDayJobInteractable
-## Early day-job wage claim at the apartment office desk (Wave B).
+## City office day-job: walk up to the agency building, claim today's wage, leave.
 ## Unlocked with StoryFeature.DAY_JOB at STAGE_1. One claim per GameDay.
 ## Independent from SalaryMine / SALARY_MINE.
+## CityPOITenant writes these fields onto InteractionArea at ready.
 
 const FLAT_DAY_WAGE: int = 10
+
+@export var action_id: StringName = &""
+@export var display_name: String = ""
+@export var action_label: String = ""
+@export var payload: Dictionary = {}
 
 
 func _ready() -> void:
