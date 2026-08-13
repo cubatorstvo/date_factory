@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://dgqpvu83vyggy"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n2i51"]
+albedo_color = Color(0.3, 0.32, 0.36, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_m7y43"]
+size = Vector3(0.4, 3.5, 16)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1h8th"]
+size = Vector3(0.4, 3.5, 16)
+
+[node name="AlleyCloseWest" type="Node3D" unique_id=1281252790]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=840649372]
+material_override = SubResource("StandardMaterial3D_n2i51")
+mesh = SubResource("BoxMesh_m7y43")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=1006626688]
+
+[node name="Shape" type="CollisionShape3D" parent="Body" unique_id=1106211883]
+shape = SubResource("BoxShape3D_1h8th")

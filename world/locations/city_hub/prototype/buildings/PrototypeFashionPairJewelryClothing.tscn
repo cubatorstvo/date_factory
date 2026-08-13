@@ -132,7 +132,7 @@ material_override = SubResource("StandardMaterial3D_iv1po")
 mesh = SubResource("BoxMesh_lltk8")
 
 [node name="JewelryWindow" type="MeshInstance3D" parent="VisualRoot" unique_id=1613246442]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.6, 1.75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.44827, 3.3505068, 1.750998)
 material_override = SubResource("StandardMaterial3D_0neqk")
 mesh = SubResource("BoxMesh_6thyj")
 
@@ -147,22 +147,22 @@ material_override = SubResource("StandardMaterial3D_hher7")
 mesh = SubResource("BoxMesh_6n4np")
 
 [node name="ClothWin_0" type="MeshInstance3D" parent="VisualRoot" unique_id=1140653289]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 1.55, 1.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2742154, 1.55, 2.062475)
 material_override = SubResource("StandardMaterial3D_rafmn")
 mesh = SubResource("BoxMesh_rarih")
 
 [node name="ClothWin_1" type="MeshInstance3D" parent="VisualRoot" unique_id=141273539]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, 1.55, 1.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7257845, 1.55, 2.062475)
 material_override = SubResource("StandardMaterial3D_fea8h")
 mesh = SubResource("BoxMesh_3pcnc")
 
 [node name="Portal" type="MeshInstance3D" parent="VisualRoot" unique_id=1099766369]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.05, 1.75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3835363, 1.05, 1.75)
 material_override = SubResource("StandardMaterial3D_qxr1u")
 mesh = SubResource("BoxMesh_7yhji")
 
 [node name="@MeshInstance3D@31346" type="MeshInstance3D" parent="VisualRoot" unique_id=1618927829]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.1, 1.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2623782, 1.1, 1.95)
 material_override = SubResource("StandardMaterial3D_muluh")
 mesh = SubResource("BoxMesh_rkk03")
 
@@ -185,6 +185,7 @@ mesh = SubResource("BoxMesh_uj0s5")
 [node name="TenantSlots" type="Node3D" parent="." unique_id=1988613342]
 
 [node name="Jewelry" type="Node3D" parent="TenantSlots" unique_id=132272269]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9835365, 0, 0.54131556)
 script = ExtResource("2_0dk13")
 poi_id = "jewelry_shop"
 action_id = &"open_jewelry_shop"
@@ -244,6 +245,7 @@ font_size = 22
 [node name="IdentityProps" type="Node3D" parent="TenantSlots/Jewelry" unique_id=1969095728]
 
 [node name="Clothing" type="Node3D" parent="TenantSlots" unique_id=1925351282]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8623781, 0, 0.5137315)
 script = ExtResource("2_0dk13")
 poi_id = "clothing_shop"
 action_id = &"open_clothing_shop"

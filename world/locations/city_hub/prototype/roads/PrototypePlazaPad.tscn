@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://bxnb7fyixqulh"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lybk3"]
+albedo_color = Color(0.4, 0.36, 0.34, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_ifls6"]
+size = Vector3(10.5, 0.09, 10.5)
+
+[node name="PlazaPad" type="Node3D" unique_id=1911493345]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1159973158]
+material_override = SubResource("StandardMaterial3D_lybk3")
+mesh = SubResource("BoxMesh_ifls6")

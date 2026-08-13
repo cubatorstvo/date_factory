@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://dupevw0xh4ca5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pjjux"]
+albedo_color = Color(0.42, 0.38, 0.32, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_y2sxy"]
+size = Vector3(3.4, 0.08, 6.041523)
+
+[node name="Path_06" type="Node3D" unique_id=1217447334]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1088459091]
+material_override = SubResource("StandardMaterial3D_pjjux")
+mesh = SubResource("BoxMesh_y2sxy")

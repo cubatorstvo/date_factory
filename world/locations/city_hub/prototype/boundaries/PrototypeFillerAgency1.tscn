@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://8ok3yngb2pu5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n5bee"]
+albedo_color = Color(0.36, 0.4, 0.48, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_gml05"]
+size = Vector3(0.4, 3.2, 1.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gby1x"]
+size = Vector3(0.4, 3.2, 1.5)
+
+[node name="FillerAgency1" type="Node3D" unique_id=176305557]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=174207474]
+material_override = SubResource("StandardMaterial3D_n5bee")
+mesh = SubResource("BoxMesh_gml05")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=545988288]
+
+[node name="Shape" type="CollisionShape3D" parent="Body" unique_id=897173417]
+shape = SubResource("BoxShape3D_gby1x")

@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://casq7rpjer8gl"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oocyy"]
+albedo_color = Color(0.36, 0.34, 0.37, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_hhvln"]
+size = Vector3(2, 0.1, 18)
+
+[node name="SidewalkResEast" type="Node3D" unique_id=2055622627]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=197926333]
+material_override = SubResource("StandardMaterial3D_oocyy")
+mesh = SubResource("BoxMesh_hhvln")

@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://swyk4plyx0m5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oko2l"]
+albedo_color = Color(0.28, 0.3, 0.36, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_qpxoo"]
+size = Vector3(16.5, 0.09, 13)
+
+[node name="ForecourtPad" type="Node3D" unique_id=211379265]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1456904079]
+material_override = SubResource("StandardMaterial3D_oko2l")
+mesh = SubResource("BoxMesh_qpxoo")

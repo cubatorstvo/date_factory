@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://bb4bgck7u2y7h"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tt037"]
+albedo_color = Color(0.22, 0.36, 0.26, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_hqgal"]
+size = Vector3(20, 0.07, 18)
+
+[node name="GrassPad" type="Node3D" unique_id=519495945]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1659024130]
+material_override = SubResource("StandardMaterial3D_tt037")
+mesh = SubResource("BoxMesh_hqgal")

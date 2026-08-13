@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://l064ms5y3cw7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_otlkw"]
+albedo_color = Color(0.16, 0.17, 0.21, 1)
+roughness = 0.92
+
+[sub_resource type="BoxMesh" id="BoxMesh_fn4jx"]
+size = Vector3(12, 0.08, 5.5)
+
+[node name="RoadAgencyNorth" type="Node3D" unique_id=1257448829]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1970053096]
+material_override = SubResource("StandardMaterial3D_otlkw")
+mesh = SubResource("BoxMesh_fn4jx")
