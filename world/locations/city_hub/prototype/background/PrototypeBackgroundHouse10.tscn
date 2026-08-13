@@ -1,0 +1,107 @@
+[gd_scene format=3 uid="uid://drhialrm6vayb"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_crfu5"]
+albedo_color = Color(0.46, 0.5, 0.52, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_1jgpk"]
+size = Vector3(8.9, 10.1, 8.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_amwvc"]
+albedo_color = Color(0.48700002, 0.525, 0.54399997, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_sno4q"]
+size = Vector3(5.518, 2.2, 5.74)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0u48d"]
+albedo_color = Color(0.45, 0.55, 0.62, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_yyllw"]
+size = Vector3(1.1, 1.2, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_irrrp"]
+albedo_color = Color(0.45, 0.55, 0.62, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_u5pxj"]
+size = Vector3(1.1, 1.2, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h6048"]
+albedo_color = Color(0.45, 0.55, 0.62, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_ttgx4"]
+size = Vector3(0.9, 1, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sqmw2"]
+albedo_color = Color(0.45, 0.55, 0.62, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_vycd6"]
+size = Vector3(0.9, 1, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gejtk"]
+albedo_color = Color(0.45, 0.55, 0.62, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_i4s0d"]
+size = Vector3(0.9, 1, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ehgyt"]
+size = Vector3(8.9, 10.1, 8.2)
+
+[node name="PrototypeBackgroundHouse10" type="Node3D" unique_id=615262545]
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=89712141]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot" unique_id=117977512]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.05, 0)
+material_override = SubResource("StandardMaterial3D_crfu5")
+mesh = SubResource("BoxMesh_1jgpk")
+
+[node name="Setback" type="MeshInstance3D" parent="VisualRoot" unique_id=1044518994]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.068, 11.2, 0)
+material_override = SubResource("StandardMaterial3D_amwvc")
+mesh = SubResource("BoxMesh_sno4q")
+
+[node name="W1_0" type="MeshInstance3D" parent="VisualRoot" unique_id=600196121]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.492, 3.838, 4.12)
+material_override = SubResource("StandardMaterial3D_0u48d")
+mesh = SubResource("BoxMesh_yyllw")
+
+[node name="W1_1" type="MeshInstance3D" parent="VisualRoot" unique_id=986810438]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.492, 3.838, 4.12)
+material_override = SubResource("StandardMaterial3D_irrrp")
+mesh = SubResource("BoxMesh_u5pxj")
+
+[node name="W2_0" type="MeshInstance3D" parent="VisualRoot" unique_id=496202823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.958, 6.868, 4.12)
+material_override = SubResource("StandardMaterial3D_h6048")
+mesh = SubResource("BoxMesh_ttgx4")
+
+[node name="W2_1" type="MeshInstance3D" parent="VisualRoot" unique_id=1954236212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.868, 4.12)
+material_override = SubResource("StandardMaterial3D_sqmw2")
+mesh = SubResource("BoxMesh_vycd6")
+
+[node name="W2_2" type="MeshInstance3D" parent="VisualRoot" unique_id=1735766969]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.958, 6.868, 4.12)
+material_override = SubResource("StandardMaterial3D_gejtk")
+mesh = SubResource("BoxMesh_i4s0d")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=1813531471]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=924804079]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=103865284]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.05, 0)
+shape = SubResource("BoxShape3D_ehgyt")

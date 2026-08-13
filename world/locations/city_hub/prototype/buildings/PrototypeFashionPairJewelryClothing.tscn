@@ -1,0 +1,303 @@
+[gd_scene format=3 uid="uid://o3go2gled7na"]
+
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_bua27"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="2_0dk13"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="3_2ywwy"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iv1po"]
+albedo_color = Color(0.78, 0.68, 0.42, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_lltk8"]
+size = Vector3(4.6, 4.6, 4.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0neqk"]
+albedo_color = Color(0.9, 0.82, 0.45, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_6thyj"]
+size = Vector3(2.4, 2.2, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s16ot"]
+albedo_color = Color(0.4, 0.48, 0.72, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_huje4"]
+size = Vector3(5.4, 3.5, 4.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hher7"]
+albedo_color = Color(0.55, 0.4, 0.7, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_6n4np"]
+size = Vector3(4.4, 0.14, 1.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rafmn"]
+albedo_color = Color(0.55, 0.7, 0.9, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_rarih"]
+size = Vector3(1.3, 1.5, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fea8h"]
+albedo_color = Color(0.55, 0.7, 0.9, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_3pcnc"]
+size = Vector3(1.3, 1.5, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qxr1u"]
+albedo_color = Color(0.22, 0.18, 0.08, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_7yhji"]
+size = Vector3(0.95, 2.1, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_muluh"]
+albedo_color = Color(0.12, 0.14, 0.28, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_rkk03"]
+size = Vector3(1.25, 2.2, 0.18)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6cd81"]
+size = Vector3(9.6, 4.6, 4.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kur3k"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_uj0s5"]
+size = Vector3(12, 0.08, 7.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3xw2j"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_igb2x"]
+albedo_color = Color(0.15, 0.15, 0.22, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_jr0re"]
+size = Vector3(1.45, 0.38, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e0ksi"]
+albedo_color = Color(0.85, 0.75, 0.35, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_56kfc"]
+size = Vector3(1.15, 0.1, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_j2lfr"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b3o4a"]
+albedo_color = Color(0.18, 0.2, 0.35, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_lyt1u"]
+size = Vector3(1.45, 0.38, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8qafx"]
+albedo_color = Color(0.45, 0.55, 0.85, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_jvpvs"]
+size = Vector3(1.15, 0.1, 0.04)
+
+[node name="PrototypeFashionPairJewelryClothing" type="Node3D" unique_id=1847133141]
+script = ExtResource("1_bua27")
+building_id = "fashion_pair_jewelry_clothing"
+district_id = "main_street"
+building_mode = "MultiTenant"
+reserved_lot_size = Vector2(12, 7.5)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=925340231]
+
+[node name="JewelryBody" type="MeshInstance3D" parent="VisualRoot" unique_id=1284135266]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 2.3, -0.35)
+material_override = SubResource("StandardMaterial3D_iv1po")
+mesh = SubResource("BoxMesh_lltk8")
+
+[node name="JewelryWindow" type="MeshInstance3D" parent="VisualRoot" unique_id=1613246442]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.6, 1.75)
+material_override = SubResource("StandardMaterial3D_0neqk")
+mesh = SubResource("BoxMesh_6thyj")
+
+[node name="ClothingBody" type="MeshInstance3D" parent="VisualRoot" unique_id=2050549240]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.75, -0.4)
+material_override = SubResource("StandardMaterial3D_s16ot")
+mesh = SubResource("BoxMesh_huje4")
+
+[node name="ClothingAwning" type="MeshInstance3D" parent="VisualRoot" unique_id=1930426291]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 2.7, 1.7)
+material_override = SubResource("StandardMaterial3D_hher7")
+mesh = SubResource("BoxMesh_6n4np")
+
+[node name="ClothWin_0" type="MeshInstance3D" parent="VisualRoot" unique_id=1140653289]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 1.55, 1.95)
+material_override = SubResource("StandardMaterial3D_rafmn")
+mesh = SubResource("BoxMesh_rarih")
+
+[node name="ClothWin_1" type="MeshInstance3D" parent="VisualRoot" unique_id=141273539]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, 1.55, 1.95)
+material_override = SubResource("StandardMaterial3D_fea8h")
+mesh = SubResource("BoxMesh_3pcnc")
+
+[node name="Portal" type="MeshInstance3D" parent="VisualRoot" unique_id=1099766369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.05, 1.75)
+material_override = SubResource("StandardMaterial3D_qxr1u")
+mesh = SubResource("BoxMesh_7yhji")
+
+[node name="@MeshInstance3D@31346" type="MeshInstance3D" parent="VisualRoot" unique_id=1618927829]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.1, 1.95)
+material_override = SubResource("StandardMaterial3D_muluh")
+mesh = SubResource("BoxMesh_rkk03")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=539565855]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=2102385159]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=135692131]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 2.3, -0.4)
+shape = SubResource("BoxShape3D_6cd81")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=904942734]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
+material_override = SubResource("StandardMaterial3D_kur3k")
+mesh = SubResource("BoxMesh_uj0s5")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=846647662]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=1988613342]
+
+[node name="Jewelry" type="Node3D" parent="TenantSlots" unique_id=132272269]
+script = ExtResource("2_0dk13")
+poi_id = "jewelry_shop"
+action_id = &"open_jewelry_shop"
+prompt_text = "Открыть витрину"
+functional_type = "StorefrontPOI"
+progression_stage = 1
+display_name = "Ювелирный"
+action_label = "Открыть витрину"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Jewelry" unique_id=820209846]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Jewelry" unique_id=1912397205]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 0, 1.05)
+script = ExtResource("3_2ywwy")
+action_id = &"open_jewelry_shop"
+display_name = "Ювелирный"
+action_label = "Открыть витрину"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Jewelry/InteractionArea" unique_id=760661004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_3xw2j")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Jewelry" unique_id=1313008287]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Jewelry" unique_id=1038959501]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Jewelry" unique_id=1198109409]
+
+[node name="SignBoard" type="MeshInstance3D" parent="TenantSlots/Jewelry/Signage" unique_id=1602937218]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 2.45, 0.78)
+material_override = SubResource("StandardMaterial3D_igb2x")
+mesh = SubResource("BoxMesh_jr0re")
+
+[node name="SignAccent" type="MeshInstance3D" parent="TenantSlots/Jewelry/Signage" unique_id=875910743]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 2.45, 0.82)
+material_override = SubResource("StandardMaterial3D_e0ksi")
+mesh = SubResource("BoxMesh_56kfc")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Jewelry/Signage" unique_id=1591242903]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "ЗОЛОТО"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Jewelry" unique_id=1622301716]
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Jewelry" unique_id=1969095728]
+
+[node name="Clothing" type="Node3D" parent="TenantSlots" unique_id=1925351282]
+script = ExtResource("2_0dk13")
+poi_id = "clothing_shop"
+action_id = &"open_clothing_shop"
+prompt_text = "Примерить"
+functional_type = "StorefrontPOI"
+progression_stage = 1
+display_name = "Одежда"
+action_label = "Примерить"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Clothing" unique_id=1050394893]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Clothing" unique_id=288064258]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0, 1.05)
+script = ExtResource("3_2ywwy")
+action_id = &"open_clothing_shop"
+display_name = "Одежда"
+action_label = "Примерить"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Clothing/InteractionArea" unique_id=381802870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_j2lfr")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Clothing" unique_id=513453296]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Clothing" unique_id=474263998]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Clothing" unique_id=1278286398]
+
+[node name="SignBoard" type="MeshInstance3D" parent="TenantSlots/Clothing/Signage" unique_id=290360674]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 2.45, 0.78)
+material_override = SubResource("StandardMaterial3D_b3o4a")
+mesh = SubResource("BoxMesh_lyt1u")
+
+[node name="SignAccent" type="MeshInstance3D" parent="TenantSlots/Clothing/Signage" unique_id=290325148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 2.45, 0.82)
+material_override = SubResource("StandardMaterial3D_8qafx")
+mesh = SubResource("BoxMesh_jvpvs")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Clothing/Signage" unique_id=977261567]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "ОДЕЖДА"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Clothing" unique_id=1532319103]
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Clothing" unique_id=741942377]

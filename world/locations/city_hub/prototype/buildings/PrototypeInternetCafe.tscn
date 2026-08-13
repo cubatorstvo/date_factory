@@ -1,0 +1,226 @@
+[gd_scene format=3 uid="uid://bvyai46fip7u0"]
+
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_wj457"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="2_k88vy"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="3_3d475"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ur845"]
+albedo_color = Color(0.28, 0.34, 0.42, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_ncg1f"]
+size = Vector3(5.8, 3.2, 4.6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4cl87"]
+albedo_color = Color(0.25, 0.75, 0.85, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_sm5c3"]
+size = Vector3(5.2, 0.7, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_co8cq"]
+albedo_color = Color(0.08, 0.1, 0.14, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_axohm"]
+size = Vector3(1.05, 2.05, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4nprx"]
+albedo_color = Color(0.2, 0.85, 0.9, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_1r6pn"]
+size = Vector3(1.25, 1.2, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uqm6a"]
+albedo_color = Color(0.2, 0.85, 0.9, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_y4hf8"]
+size = Vector3(1.25, 1.2, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lrw34"]
+size = Vector3(5.8, 3.2, 4.6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v343c"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_edjty"]
+size = Vector3(8, 0.08, 7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3xxeh"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xc265"]
+albedo_color = Color(0.12, 0.16, 0.22, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_8ilgi"]
+size = Vector3(1.45, 0.38, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1qqea"]
+albedo_color = Color(0.35, 0.9, 1, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_xu5j2"]
+size = Vector3(1.15, 0.1, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6khfi"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8ihh1"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[node name="PrototypeInternetCafe" type="Node3D" unique_id=844289007]
+script = ExtResource("1_wj457")
+building_id = "internet_cafe"
+district_id = "main_street"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(8, 7)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=2129804173]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot" unique_id=1326642337]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -0.4)
+material_override = SubResource("StandardMaterial3D_ur845")
+mesh = SubResource("BoxMesh_ncg1f")
+
+[node name="ScreenBand" type="MeshInstance3D" parent="VisualRoot" unique_id=1214094192]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.85, 1.85)
+material_override = SubResource("StandardMaterial3D_4cl87")
+mesh = SubResource("BoxMesh_sm5c3")
+
+[node name="Portal" type="MeshInstance3D" parent="VisualRoot" unique_id=571925675]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.025, 1.85)
+material_override = SubResource("StandardMaterial3D_co8cq")
+mesh = SubResource("BoxMesh_axohm")
+
+[node name="Win_0" type="MeshInstance3D" parent="VisualRoot" unique_id=1257793526]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 1.5, 1.85)
+material_override = SubResource("StandardMaterial3D_4nprx")
+mesh = SubResource("BoxMesh_1r6pn")
+
+[node name="Win_1" type="MeshInstance3D" parent="VisualRoot" unique_id=872514971]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1.5, 1.85)
+material_override = SubResource("StandardMaterial3D_uqm6a")
+mesh = SubResource("BoxMesh_y4hf8")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=407931991]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1259634290]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=1985182526]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -0.4)
+shape = SubResource("BoxShape3D_lrw34")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1327196854]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
+material_override = SubResource("StandardMaterial3D_v343c")
+mesh = SubResource("BoxMesh_edjty")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=119846347]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=1470153469]
+
+[node name="NetCafe" type="Node3D" parent="TenantSlots" unique_id=1974985568]
+script = ExtResource("2_k88vy")
+poi_id = "internet_cafe"
+action_id = &"city_cafe_job"
+prompt_text = "Поработать онлайн"
+functional_type = "StorefrontPOI"
+progression_stage = 1
+display_name = "ПК №1"
+action_label = "Поработать онлайн"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/NetCafe" unique_id=1279888124]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/NetCafe" unique_id=1233031005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_3d475")
+action_id = &"city_cafe_job"
+display_name = "ПК №1"
+action_label = "Поработать онлайн"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/NetCafe/InteractionArea" unique_id=1919885364]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_3xxeh")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/NetCafe" unique_id=184595640]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/NetCafe" unique_id=283570810]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/NetCafe" unique_id=862273218]
+
+[node name="SignBoard" type="MeshInstance3D" parent="TenantSlots/NetCafe/Signage" unique_id=846867437]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+material_override = SubResource("StandardMaterial3D_xc265")
+mesh = SubResource("BoxMesh_8ilgi")
+
+[node name="SignAccent" type="MeshInstance3D" parent="TenantSlots/NetCafe/Signage" unique_id=1609987853]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+material_override = SubResource("StandardMaterial3D_1qqea")
+mesh = SubResource("BoxMesh_xu5j2")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/NetCafe/Signage" unique_id=1034680473]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "СЕТЬ"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/NetCafe" unique_id=1457915424]
+
+[node name="CyanOmni" type="OmniLight3D" parent="TenantSlots/NetCafe/LocalLights" unique_id=365873400]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0.9)
+light_color = Color(0.35, 0.9, 1, 1)
+light_energy = 1.3
+omni_range = 6.0
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/NetCafe" unique_id=1816580614]
+
+[node name="InteractScroll" type="Area3D" parent="TenantSlots/NetCafe" unique_id=155339169]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 1.05)
+script = ExtResource("3_3d475")
+action_id = &"city_cafe_scroll"
+display_name = "ПК №2"
+action_label = "Скроллить (+популярность)"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/NetCafe/InteractScroll" unique_id=56355236]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_6khfi")
+
+[node name="InteractCoffee" type="Area3D" parent="TenantSlots/NetCafe" unique_id=1663366749]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.05)
+script = ExtResource("3_3d475")
+action_id = &"city_coffee"
+display_name = "Кофейня"
+action_label = "Купить кофе (+внимание)"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/NetCafe/InteractCoffee" unique_id=628393148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_8ihh1")

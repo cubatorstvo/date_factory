@@ -1,0 +1,199 @@
+[gd_scene format=3 uid="uid://dviweg702qg5n"]
+
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_o2kru"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="2_30un0"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="3_omukf"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_13sqv"]
+albedo_color = Color(0.42, 0.46, 0.55, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_n3kj7"]
+size = Vector3(5.2, 4, 4.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nmg0n"]
+albedo_color = Color(0.5, 0.54, 0.62, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_cps5s"]
+size = Vector3(3.2, 2.4, 3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7of48"]
+albedo_color = Color(0.7, 0.75, 0.82, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_oo6sd"]
+size = Vector3(3, 0.1, 0.85)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jrins"]
+albedo_color = Color(0.16, 0.18, 0.24, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_poaj3"]
+size = Vector3(1.05, 2.15, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5iujp"]
+albedo_color = Color(0.85, 0.9, 0.95, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_03r5b"]
+size = Vector3(1.15, 1.3, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fu2im"]
+albedo_color = Color(0.85, 0.9, 0.95, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_6uths"]
+size = Vector3(1.15, 1.3, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ho1yc"]
+size = Vector3(5.2, 4.4, 4.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_32uvd"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_m5mtm"]
+size = Vector3(6, 0.08, 7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_x6qsn"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4qll0"]
+albedo_color = Color(0.22, 0.24, 0.32, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_f05k0"]
+size = Vector3(1.45, 0.38, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y21va"]
+albedo_color = Color(0.75, 0.82, 0.95, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_mcwh8"]
+size = Vector3(1.15, 0.1, 0.04)
+
+[node name="PrototypePhotoStudio" type="Node3D" unique_id=1404397029]
+script = ExtResource("1_o2kru")
+building_id = "photo_studio"
+district_id = "agency_row"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(6, 7)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=1667925854]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot" unique_id=1982908426]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -0.35)
+material_override = SubResource("StandardMaterial3D_13sqv")
+mesh = SubResource("BoxMesh_n3kj7")
+
+[node name="StudioBox" type="MeshInstance3D" parent="VisualRoot" unique_id=1922197670]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 3.2, -0.6)
+material_override = SubResource("StandardMaterial3D_nmg0n")
+mesh = SubResource("BoxMesh_cps5s")
+
+[node name="Awning" type="MeshInstance3D" parent="VisualRoot" unique_id=2065034552]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 1.55)
+material_override = SubResource("StandardMaterial3D_7of48")
+mesh = SubResource("BoxMesh_oo6sd")
+
+[node name="Portal" type="MeshInstance3D" parent="VisualRoot" unique_id=817812098]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.075, 1.7)
+material_override = SubResource("StandardMaterial3D_jrins")
+mesh = SubResource("BoxMesh_poaj3")
+
+[node name="Win_0" type="MeshInstance3D" parent="VisualRoot" unique_id=1159874727]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.55, 1.7, 1.7)
+material_override = SubResource("StandardMaterial3D_5iujp")
+mesh = SubResource("BoxMesh_03r5b")
+
+[node name="Win_1" type="MeshInstance3D" parent="VisualRoot" unique_id=246644370]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 1.7, 1.7)
+material_override = SubResource("StandardMaterial3D_fu2im")
+mesh = SubResource("BoxMesh_6uths")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=1126100063]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=943959316]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=64300421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -0.35)
+shape = SubResource("BoxShape3D_ho1yc")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1463537567]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
+material_override = SubResource("StandardMaterial3D_32uvd")
+mesh = SubResource("BoxMesh_m5mtm")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=948971574]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=94247052]
+
+[node name="Studio" type="Node3D" parent="TenantSlots" unique_id=1689311227]
+script = ExtResource("2_30un0")
+poi_id = "photo_studio"
+action_id = &"open_photo_studio"
+prompt_text = "Сделать снимок"
+functional_type = "StorefrontPOI"
+progression_stage = 3
+display_name = "Фотостудия"
+action_label = "Сделать снимок"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Studio" unique_id=693010557]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Studio" unique_id=1090001976]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_omukf")
+action_id = &"open_photo_studio"
+display_name = "Фотостудия"
+action_label = "Сделать снимок"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Studio/InteractionArea" unique_id=954085607]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_x6qsn")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Studio" unique_id=1768888582]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Studio" unique_id=1295603176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Studio" unique_id=1705795150]
+
+[node name="SignBoard" type="MeshInstance3D" parent="TenantSlots/Studio/Signage" unique_id=1288126112]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+material_override = SubResource("StandardMaterial3D_4qll0")
+mesh = SubResource("BoxMesh_f05k0")
+
+[node name="SignAccent" type="MeshInstance3D" parent="TenantSlots/Studio/Signage" unique_id=812769176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+material_override = SubResource("StandardMaterial3D_y21va")
+mesh = SubResource("BoxMesh_mcwh8")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Studio/Signage" unique_id=1486346476]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "ФОТО"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Studio" unique_id=1640770238]
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Studio" unique_id=2047945253]

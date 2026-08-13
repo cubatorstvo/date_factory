@@ -1,0 +1,107 @@
+[gd_scene format=3 uid="uid://newr7p5p1khg"]
+
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="1_3ms0x"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="2_d3jyr"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r8vpx"]
+albedo_color = Color(0.18, 0.28, 0.2, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_inclj"]
+size = Vector3(1.45, 0.38, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vtu23"]
+albedo_color = Color(0.55, 0.75, 0.4, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_m1idf"]
+size = Vector3(1.15, 0.1, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t7gr8"]
+albedo_color = Color(0.4, 0.32, 0.22, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_b240e"]
+size = Vector3(1.6, 0.35, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2t0hf"]
+albedo_color = Color(0.32, 0.28, 0.2, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_t81je"]
+size = Vector3(0.12, 1.1, 0.12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tca3w"]
+size = Vector3(1.4, 1.6, 1.2)
+
+[node name="PrototypeDuckFeeding" type="Node3D" unique_id=475666164]
+script = ExtResource("1_3ms0x")
+poi_id = "duck_feeding"
+action_id = &"city_park_fun"
+prompt_text = "Покормить уток"
+functional_type = "WorldActivityPOI"
+progression_stage = 2
+display_name = "Утки"
+action_label = "Покормить уток"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Node3D" parent="." unique_id=1095816420]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.8)
+
+[node name="PromptAnchor" type="Node3D" parent="." unique_id=1045304732]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0.8)
+
+[node name="SignAnchor" type="Node3D" parent="." unique_id=961016013]
+
+[node name="Signage" type="Node3D" parent="." unique_id=648648407]
+
+[node name="SignBoard" type="MeshInstance3D" parent="Signage" unique_id=268141803]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+material_override = SubResource("StandardMaterial3D_r8vpx")
+mesh = SubResource("BoxMesh_inclj")
+
+[node name="SignAccent" type="MeshInstance3D" parent="Signage" unique_id=1615947655]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+material_override = SubResource("StandardMaterial3D_vtu23")
+mesh = SubResource("BoxMesh_m1idf")
+
+[node name="SignLabel" type="Label3D" parent="Signage" unique_id=1021703840]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "УТКИ"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="." unique_id=484653546]
+
+[node name="IdentityProps" type="Node3D" parent="." unique_id=338547203]
+
+[node name="Trough" type="MeshInstance3D" parent="IdentityProps" unique_id=2058598321]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+material_override = SubResource("StandardMaterial3D_t7gr8")
+mesh = SubResource("BoxMesh_b240e")
+
+[node name="Post" type="MeshInstance3D" parent="IdentityProps" unique_id=1064095098]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -0.4)
+material_override = SubResource("StandardMaterial3D_2t0hf")
+mesh = SubResource("BoxMesh_t81je")
+
+[node name="InteractionArea" type="Area3D" parent="." unique_id=705754903]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.7)
+script = ExtResource("2_d3jyr")
+action_id = &"city_park_fun"
+display_name = "Утки"
+action_label = "Покормить уток"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea" unique_id=245843930]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("BoxShape3D_tca3w")

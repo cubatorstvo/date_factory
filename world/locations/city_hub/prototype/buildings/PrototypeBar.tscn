@@ -1,0 +1,199 @@
+[gd_scene format=3 uid="uid://bg5jbcl7ce8pk"]
+
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_hdkmy"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="2_p4du1"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="3_u8dt5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b2uk7"]
+albedo_color = Color(0.42, 0.22, 0.24, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_woqyj"]
+size = Vector3(5.4, 3.5, 4.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tiw1n"]
+albedo_color = Color(0.22, 0.12, 0.12, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_gtakd"]
+size = Vector3(5.8, 0.35, 4.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_otrqm"]
+albedo_color = Color(0.7, 0.28, 0.28, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_yodx1"]
+size = Vector3(3.6, 0.12, 1.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ttpmp"]
+albedo_color = Color(0.12, 0.06, 0.06, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_ws4wf"]
+size = Vector3(1.2, 2.2, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_geerr"]
+albedo_color = Color(0.85, 0.45, 0.25, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_rc5kd"]
+size = Vector3(1.15, 1.1, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iv85h"]
+albedo_color = Color(0.85, 0.45, 0.25, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_6rfdb"]
+size = Vector3(1.15, 1.1, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rhpy6"]
+size = Vector3(5.4, 3.8, 4.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5b1bj"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gk1jd"]
+size = Vector3(7, 0.08, 7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wlw3f"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o4mr2"]
+albedo_color = Color(0.18, 0.08, 0.08, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_oii2r"]
+size = Vector3(1.45, 0.38, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1yfwc"]
+albedo_color = Color(0.9, 0.4, 0.3, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_kx08v"]
+size = Vector3(1.15, 0.1, 0.04)
+
+[node name="PrototypeBar" type="Node3D" unique_id=369357905]
+script = ExtResource("1_hdkmy")
+building_id = "bar"
+district_id = "park_leisure"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(7, 7)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=789276216]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot" unique_id=324833967]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -0.35)
+material_override = SubResource("StandardMaterial3D_b2uk7")
+mesh = SubResource("BoxMesh_woqyj")
+
+[node name="RoofCap" type="MeshInstance3D" parent="VisualRoot" unique_id=1663797828]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7, -0.35)
+material_override = SubResource("StandardMaterial3D_tiw1n")
+mesh = SubResource("BoxMesh_gtakd")
+
+[node name="Awning" type="MeshInstance3D" parent="VisualRoot" unique_id=866027227]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 1.6)
+material_override = SubResource("StandardMaterial3D_otrqm")
+mesh = SubResource("BoxMesh_yodx1")
+
+[node name="Portal" type="MeshInstance3D" parent="VisualRoot" unique_id=1967101849]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 1.8)
+material_override = SubResource("StandardMaterial3D_ttpmp")
+mesh = SubResource("BoxMesh_ws4wf")
+
+[node name="Win_0" type="MeshInstance3D" parent="VisualRoot" unique_id=536923643]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7, 1.7, 1.8)
+material_override = SubResource("StandardMaterial3D_geerr")
+mesh = SubResource("BoxMesh_rc5kd")
+
+[node name="Win_1" type="MeshInstance3D" parent="VisualRoot" unique_id=162623522]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7, 1.7, 1.8)
+material_override = SubResource("StandardMaterial3D_iv85h")
+mesh = SubResource("BoxMesh_6rfdb")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=951645731]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1290577293]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=1191532559]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, -0.35)
+shape = SubResource("BoxShape3D_rhpy6")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1582728675]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
+material_override = SubResource("StandardMaterial3D_5b1bj")
+mesh = SubResource("BoxMesh_gk1jd")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=1535041461]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=386284323]
+
+[node name="Bar" type="Node3D" parent="TenantSlots" unique_id=1239913321]
+script = ExtResource("2_p4du1")
+poi_id = "bar"
+action_id = &"city_bar_drink"
+prompt_text = "Заказать напиток"
+functional_type = "StorefrontPOI"
+progression_stage = 2
+display_name = "Бар"
+action_label = "Заказать напиток"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Bar" unique_id=353270130]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Bar" unique_id=1759291303]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_u8dt5")
+action_id = &"city_bar_drink"
+display_name = "Бар"
+action_label = "Заказать напиток"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Bar/InteractionArea" unique_id=1876338171]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_wlw3f")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Bar" unique_id=45807556]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Bar" unique_id=877486836]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Bar" unique_id=80486858]
+
+[node name="SignBoard" type="MeshInstance3D" parent="TenantSlots/Bar/Signage" unique_id=428093732]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+material_override = SubResource("StandardMaterial3D_o4mr2")
+mesh = SubResource("BoxMesh_oii2r")
+
+[node name="SignAccent" type="MeshInstance3D" parent="TenantSlots/Bar/Signage" unique_id=35177274]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+material_override = SubResource("StandardMaterial3D_1yfwc")
+mesh = SubResource("BoxMesh_kx08v")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Bar/Signage" unique_id=389002427]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "БАР"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Bar" unique_id=1695664894]
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Bar" unique_id=873147111]

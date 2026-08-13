@@ -1,0 +1,217 @@
+[gd_scene format=3 uid="uid://cfrxmbfthyedo"]
+
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_w81b0"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="2_oncl0"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="3_gi5po"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1jmxb"]
+albedo_color = Color(0.32, 0.22, 0.42, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_2e736"]
+size = Vector3(6.4, 3.3, 5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i7t13"]
+albedo_color = Color(0.95, 0.45, 0.25, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_gcysk"]
+size = Vector3(6.8, 0.28, 1.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tp5m1"]
+albedo_color = Color(0.45, 0.85, 0.95, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_o4xyh"]
+top_radius = 0.45
+bottom_radius = 0.45
+height = 2.2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gqhoa"]
+albedo_color = Color(0.12, 0.06, 0.16, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_g3dvr"]
+size = Vector3(1.5, 2.25, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7dakh"]
+albedo_color = Color(0.35, 0.9, 1, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_vu00j"]
+size = Vector3(1.15, 1.2, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gk2ye"]
+albedo_color = Color(0.35, 0.9, 1, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_cbivm"]
+size = Vector3(1.15, 1.2, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_l8o0s"]
+size = Vector3(6.8, 4.4, 5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x0nem"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_onjfx"]
+size = Vector3(8, 0.08, 8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3prw0"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q6nvm"]
+albedo_color = Color(0.16, 0.08, 0.22, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_c1kx3"]
+size = Vector3(1.45, 0.38, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_npicv"]
+albedo_color = Color(0.95, 0.45, 0.25, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_fa3lw"]
+size = Vector3(1.15, 0.1, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lunhj"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[node name="PrototypeArcade" type="Node3D" unique_id=1908644665]
+script = ExtResource("1_w81b0")
+building_id = "arcade"
+district_id = "park_leisure"
+building_mode = "Storefront"
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=2055147180]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot" unique_id=501822789]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, -0.4)
+material_override = SubResource("StandardMaterial3D_1jmxb")
+mesh = SubResource("BoxMesh_2e736")
+
+[node name="Canopy" type="MeshInstance3D" parent="VisualRoot" unique_id=1928444875]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.35, 1.7)
+material_override = SubResource("StandardMaterial3D_i7t13")
+mesh = SubResource("BoxMesh_gcysk")
+
+[node name="Tower" type="MeshInstance3D" parent="VisualRoot" unique_id=541533466]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 4.4, -0.2)
+material_override = SubResource("StandardMaterial3D_tp5m1")
+mesh = SubResource("CylinderMesh_o4xyh")
+
+[node name="Portal" type="MeshInstance3D" parent="VisualRoot" unique_id=697175589]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.125, 2.05)
+material_override = SubResource("StandardMaterial3D_gqhoa")
+mesh = SubResource("BoxMesh_g3dvr")
+
+[node name="Win_0" type="MeshInstance3D" parent="VisualRoot" unique_id=1515936404]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.6, 2.05)
+material_override = SubResource("StandardMaterial3D_7dakh")
+mesh = SubResource("BoxMesh_vu00j")
+
+[node name="Win_1" type="MeshInstance3D" parent="VisualRoot" unique_id=631994096]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.6, 2.05)
+material_override = SubResource("StandardMaterial3D_gk2ye")
+mesh = SubResource("BoxMesh_cbivm")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=1096435950]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=769431029]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=1430224550]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -0.4)
+shape = SubResource("BoxShape3D_l8o0s")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=184165943]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
+material_override = SubResource("StandardMaterial3D_x0nem")
+mesh = SubResource("BoxMesh_onjfx")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=1424556391]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=1962438580]
+
+[node name="Arcade" type="Node3D" parent="TenantSlots" unique_id=745317547]
+script = ExtResource("2_oncl0")
+poi_id = "arcade"
+action_id = &"open_arcade"
+prompt_text = "Играть"
+functional_type = "StorefrontPOI"
+progression_stage = 2
+display_name = "Аркада"
+action_label = "Играть"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Arcade" unique_id=1748425525]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Arcade" unique_id=1075245214]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_gi5po")
+action_id = &"open_arcade"
+display_name = "Аркада"
+action_label = "Играть"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Arcade/InteractionArea" unique_id=1118830398]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_3prw0")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Arcade" unique_id=601409381]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Arcade" unique_id=1668935986]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Arcade" unique_id=925734517]
+
+[node name="SignBoard" type="MeshInstance3D" parent="TenantSlots/Arcade/Signage" unique_id=1014673731]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+material_override = SubResource("StandardMaterial3D_q6nvm")
+mesh = SubResource("BoxMesh_c1kx3")
+
+[node name="SignAccent" type="MeshInstance3D" parent="TenantSlots/Arcade/Signage" unique_id=1595461573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+material_override = SubResource("StandardMaterial3D_npicv")
+mesh = SubResource("BoxMesh_fa3lw")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Arcade/Signage" unique_id=110125177]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "АРКАДА"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Arcade" unique_id=712021284]
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Arcade" unique_id=2051836471]
+
+[node name="InteractSit" type="Area3D" parent="TenantSlots/Arcade" unique_id=1282203716]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0, 1.05)
+script = ExtResource("3_gi5po")
+action_id = &"sit_arcade"
+display_name = "Автомат"
+action_label = "Сесть за автомат"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Arcade/InteractSit" unique_id=732567252]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_lunhj")

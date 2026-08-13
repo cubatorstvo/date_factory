@@ -1,0 +1,201 @@
+[gd_scene format=3 uid="uid://bmchqm8lqsasw"]
+
+[ext_resource type="Script" uid="uid://bnee4x68cosiv" path="res://world/locations/city_hub/art/poi/core/CityPOIBuilding.gd" id="1_8dxpt"]
+[ext_resource type="Script" uid="uid://cre7ug6ku4hyn" path="res://world/locations/city_hub/art/poi/core/CityPOITenant.gd" id="2_qa1ry"]
+[ext_resource type="Script" uid="uid://11slghwiexmb" path="res://world/locations/city_hub/art/donor_interactable_stub.gd" id="3_wnup5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dld0q"]
+albedo_color = Color(0.5, 0.52, 0.58, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_3rjwo"]
+size = Vector3(4.8, 3.6, 4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_81wrg"]
+albedo_color = Color(0.85, 0.25, 0.28, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_l6fd2"]
+top_radius = 0.12
+bottom_radius = 0.12
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8h2to"]
+albedo_color = Color(0.75, 0.78, 0.85, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_0j01q"]
+size = Vector3(3.4, 0.1, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p2bp7"]
+albedo_color = Color(0.18, 0.18, 0.22, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_67bsn"]
+size = Vector3(1, 2.1, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hsrv3"]
+albedo_color = Color(0.7, 0.82, 0.9, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_t84i6"]
+size = Vector3(1.05, 1.2, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f0dq0"]
+albedo_color = Color(0.7, 0.82, 0.9, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_pbgp0"]
+size = Vector3(1.05, 1.2, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_41ce1"]
+size = Vector3(4.8, 3.6, 4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l6wwm"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.7, 1, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gmqdd"]
+size = Vector3(6, 0.08, 7)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xdhmu"]
+size = Vector3(1.2, 2.2, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gl5lv"]
+albedo_color = Color(0.2, 0.22, 0.28, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_ou1uf"]
+size = Vector3(1.45, 0.38, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_swcl5"]
+albedo_color = Color(0.85, 0.3, 0.32, 1)
+metallic = 0.04
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="BoxMesh_1fupi"]
+size = Vector3(1.15, 0.1, 0.04)
+
+[node name="PrototypeBarberShop" type="Node3D" unique_id=1655152728]
+script = ExtResource("1_8dxpt")
+building_id = "barber_shop"
+district_id = "agency_row"
+building_mode = "Storefront"
+reserved_lot_size = Vector2(6, 7)
+
+[node name="VisualRoot" type="Node3D" parent="." unique_id=1861535820]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot" unique_id=1345645988]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, -0.3)
+material_override = SubResource("StandardMaterial3D_dld0q")
+mesh = SubResource("BoxMesh_3rjwo")
+
+[node name="Pole" type="MeshInstance3D" parent="VisualRoot" unique_id=1338263002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7, 2.6, 1.7)
+material_override = SubResource("StandardMaterial3D_81wrg")
+mesh = SubResource("CylinderMesh_l6fd2")
+
+[node name="Awning" type="MeshInstance3D" parent="VisualRoot" unique_id=1317428576]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 1.55)
+material_override = SubResource("StandardMaterial3D_8h2to")
+mesh = SubResource("BoxMesh_0j01q")
+
+[node name="Portal" type="MeshInstance3D" parent="VisualRoot" unique_id=1004641684]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 1.65)
+material_override = SubResource("StandardMaterial3D_p2bp7")
+mesh = SubResource("BoxMesh_67bsn")
+
+[node name="Win_0" type="MeshInstance3D" parent="VisualRoot" unique_id=934748772]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.55, 1.65)
+material_override = SubResource("StandardMaterial3D_hsrv3")
+mesh = SubResource("BoxMesh_t84i6")
+
+[node name="Win_1" type="MeshInstance3D" parent="VisualRoot" unique_id=475465550]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.55, 1.65)
+material_override = SubResource("StandardMaterial3D_f0dq0")
+mesh = SubResource("BoxMesh_pbgp0")
+
+[node name="CollisionRoot" type="Node3D" parent="." unique_id=781275272]
+
+[node name="Body" type="StaticBody3D" parent="CollisionRoot" unique_id=1555326448]
+
+[node name="Shape" type="CollisionShape3D" parent="CollisionRoot/Body" unique_id=102630878]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, -0.3)
+shape = SubResource("BoxShape3D_41ce1")
+
+[node name="LotBounds" type="MeshInstance3D" parent="." unique_id=1869428461]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+visible = false
+material_override = SubResource("StandardMaterial3D_l6wwm")
+mesh = SubResource("BoxMesh_gmqdd")
+
+[node name="SharedLighting" type="Node3D" parent="." unique_id=761032398]
+
+[node name="TenantSlots" type="Node3D" parent="." unique_id=942262358]
+
+[node name="Barber" type="Node3D" parent="TenantSlots" unique_id=1964946384]
+script = ExtResource("2_qa1ry")
+poi_id = "barber_shop"
+action_id = &"open_barber"
+prompt_text = "Подстричься"
+functional_type = "StorefrontPOI"
+progression_stage = 3
+display_name = "Барбершоп"
+action_label = "Подстричься"
+payload = {
+"art_backed": true
+}
+
+[node name="EntranceAnchor" type="Marker3D" parent="TenantSlots/Barber" unique_id=1833835840]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+
+[node name="InteractionArea" type="Area3D" parent="TenantSlots/Barber" unique_id=930037132]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.05)
+script = ExtResource("3_wnup5")
+action_id = &"open_barber"
+display_name = "Барбершоп"
+action_label = "Подстричься"
+payload = {
+"art_backed": true
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TenantSlots/Barber/InteractionArea" unique_id=2012162974]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_xdhmu")
+
+[node name="PromptAnchor" type="Marker3D" parent="TenantSlots/Barber" unique_id=1979240006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 1.05)
+
+[node name="SignAnchor" type="Marker3D" parent="TenantSlots/Barber" unique_id=511696439]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.75)
+
+[node name="Signage" type="Node3D" parent="TenantSlots/Barber" unique_id=2134965819]
+
+[node name="SignBoard" type="MeshInstance3D" parent="TenantSlots/Barber/Signage" unique_id=507907347]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.78)
+material_override = SubResource("StandardMaterial3D_gl5lv")
+mesh = SubResource("BoxMesh_ou1uf")
+
+[node name="SignAccent" type="MeshInstance3D" parent="TenantSlots/Barber/Signage" unique_id=1253620676]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.82)
+material_override = SubResource("StandardMaterial3D_swcl5")
+mesh = SubResource("BoxMesh_1fupi")
+
+[node name="SignLabel" type="Label3D" parent="TenantSlots/Barber/Signage" unique_id=1749241893]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.88)
+shaded = true
+modulate = Color(1, 0.96, 0.9, 1)
+text = "БАРБЕР"
+font_size = 22
+
+[node name="LocalLights" type="Node3D" parent="TenantSlots/Barber" unique_id=1530234536]
+
+[node name="IdentityProps" type="Node3D" parent="TenantSlots/Barber" unique_id=419231176]

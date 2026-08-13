@@ -1,878 +1,303 @@
 [gd_scene format=3 uid="uid://ds3bkf8ncg6g4"]
 
-[ext_resource type="PackedScene" uid="uid://cje54wmvogbi1" path="res://world/locations/city_hub/art/poi/buildings/PlayerHome.tscn" id="1_phome"]
-[ext_resource type="PackedScene" uid="uid://cb5bjcpqxtqlr" path="res://world/locations/city_hub/art/poi/buildings/CafeTwoHearts.tscn" id="2_cafe"]
-[ext_resource type="PackedScene" uid="uid://4kof1sldvtn6" path="res://world/locations/city_hub/art/poi/buildings/Bookstore.tscn" id="3_book"]
-[ext_resource type="PackedScene" uid="uid://dsd2bjbrc7sx2" path="res://world/locations/city_hub/art/poi/buildings/RetailPairFlowerGift.tscn" id="4_retail"]
-[ext_resource type="PackedScene" uid="uid://bnhcffo1atyrm" path="res://world/locations/city_hub/art/poi/buildings/FashionPairJewelryClothing.tscn" id="5_fashion"]
-[ext_resource type="PackedScene" uid="uid://b0t3gjn7r0vx8" path="res://world/locations/city_hub/art/poi/buildings/InternetCafe.tscn" id="6_net"]
-[ext_resource type="PackedScene" uid="uid://dcs5y7yxw44e" path="res://world/locations/city_hub/art/poi/buildings/HomewareShop.tscn" id="7_homeware"]
-[ext_resource type="PackedScene" uid="uid://dsnvuvk083yj7" path="res://world/locations/city_hub/art/poi/buildings/ParkRestaurant.tscn" id="8_rest"]
-[ext_resource type="PackedScene" uid="uid://tvnionyctmys" path="res://world/locations/city_hub/art/poi/buildings/Gym.tscn" id="9_gym"]
-[ext_resource type="PackedScene" uid="uid://dv5rwv032uj7u" path="res://world/locations/city_hub/art/poi/buildings/Cinema.tscn" id="10_cine"]
-[ext_resource type="PackedScene" uid="uid://ckqhjpm2i2bdu" path="res://world/locations/city_hub/art/poi/buildings/Arcade.tscn" id="11_arcade"]
-[ext_resource type="PackedScene" uid="uid://cdol2dalycvhb" path="res://world/locations/city_hub/art/poi/buildings/Bar.tscn" id="12_bar"]
-[ext_resource type="PackedScene" uid="uid://c4l4gd16tsdmg" path="res://world/locations/city_hub/art/poi/buildings/PhotoStudio.tscn" id="13_photo"]
-[ext_resource type="PackedScene" uid="uid://bk72bo142bmjt" path="res://world/locations/city_hub/art/poi/buildings/AgencyOffice.tscn" id="14_agency"]
-[ext_resource type="PackedScene" uid="uid://dn2vr8hthq54r" path="res://world/locations/city_hub/art/poi/buildings/BarberShop.tscn" id="15_barber"]
-[ext_resource type="PackedScene" path="res://world/locations/city_hub/art/poi/activities/MainBench.tscn" id="16_mbench"]
-[ext_resource type="PackedScene" path="res://world/locations/city_hub/art/poi/activities/ParkBench.tscn" id="17_pbench"]
-[ext_resource type="PackedScene" path="res://world/locations/city_hub/art/poi/activities/DuckFeeding.tscn" id="18_duck"]
-[ext_resource type="PackedScene" path="res://world/locations/city_hub/art/poi/activities/KaraokeStand.tscn" id="19_karaoke"]
-[ext_resource type="PackedScene" path="res://world/locations/city_hub/art/poi/activities/BusStopCandy.tscn" id="20_bus"]
+[ext_resource type="Script" uid="uid://wb0a5rp68lm7" path="res://world/locations/city_hub/prototype/district_gate_sync.gd" id="1_30frl"]
+[ext_resource type="PackedScene" uid="uid://3vkent3vgtwh" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse00.tscn" id="2_2etp7"]
+[ext_resource type="PackedScene" uid="uid://cpni27nef1dkr" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse01.tscn" id="3_4jr2f"]
+[ext_resource type="PackedScene" uid="uid://v7asdso7cedw" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse02.tscn" id="4_onug1"]
+[ext_resource type="PackedScene" uid="uid://raxy56d8txh0" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse03.tscn" id="5_ci3ar"]
+[ext_resource type="PackedScene" uid="uid://cybl7bg4qblxp" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse04.tscn" id="6_h167n"]
+[ext_resource type="PackedScene" uid="uid://c7y3mad5l44ej" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse05.tscn" id="7_6i5ol"]
+[ext_resource type="PackedScene" uid="uid://3qv8xy12hw3d" path="res://world/locations/city_hub/prototype/buildings/PrototypePlayerHome.tscn" id="8_g6hsv"]
+[ext_resource type="PackedScene" uid="uid://8ibp8yah1xyi" path="res://world/locations/city_hub/prototype/buildings/PrototypeCafe.tscn" id="10_e1hnf"]
+[ext_resource type="PackedScene" uid="uid://uo237c78si08" path="res://world/locations/city_hub/prototype/buildings/PrototypeRetailPairFlowerGift.tscn" id="11_apumo"]
+[ext_resource type="PackedScene" uid="uid://o3go2gled7na" path="res://world/locations/city_hub/prototype/buildings/PrototypeFashionPairJewelryClothing.tscn" id="12_vtwjp"]
+[ext_resource type="PackedScene" uid="uid://e4y0e2eufd2t" path="res://world/locations/city_hub/prototype/buildings/PrototypeHomewareShop.tscn" id="13_hn72o"]
+[ext_resource type="PackedScene" uid="uid://bvyai46fip7u0" path="res://world/locations/city_hub/prototype/buildings/PrototypeInternetCafe.tscn" id="14_x7rr1"]
+[ext_resource type="PackedScene" uid="uid://ca1hiyelltsas" path="res://world/locations/city_hub/prototype/activities/PrototypeMainBench.tscn" id="15_gsrco"]
+[ext_resource type="PackedScene" uid="uid://c4c4t0yx4m62j" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse11.tscn" id="17_7i2q8"]
+[ext_resource type="PackedScene" uid="uid://bfe078i7ydrc8" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse12.tscn" id="18_5n1u7"]
+[ext_resource type="PackedScene" uid="uid://bg3bgg7s2knek" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse13.tscn" id="19_wi1lw"]
+[ext_resource type="PackedScene" uid="uid://dqrnkr5vg3tmo" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse14.tscn" id="20_n8wqy"]
 [ext_resource type="PackedScene" path="res://world/locations/city_hub/art/poi/core/DistrictGate.tscn" id="21_gate"]
-[ext_resource type="PackedScene" uid="uid://v1jb038ujla4" path="res://assets/environment/city/downtown_megakit/meshes/Prop_Planter_Single.gltf" id="25_u426w"]
-[ext_resource type="PackedScene" uid="uid://bkwxamkkeupgn" path="res://assets/environment/restaurant/sushi_restaurant/meshes/Decoration/Decoration_SakuraTree.gltf" id="26_oblms"]
-[ext_resource type="PackedScene" uid="uid://ivp31mv268c1" path="res://assets/environment/city/downtown_megakit/meshes/Building_Large_2.gltf" id="27_nkn8c"]
-[ext_resource type="PackedScene" uid="uid://c1v3og5i7d5cg" path="res://assets/environment/city/downtown_megakit/meshes/Building_Medium_2_001.gltf" id="28_lfdsf"]
-[ext_resource type="PackedScene" uid="uid://d0s6yraf4qqrs" path="res://assets/environment/city/downtown_megakit/meshes/Building_Small_1.gltf" id="29_kmp1w"]
-[ext_resource type="PackedScene" path="res://world/locations/city_hub/art/prefabs/StreetLampRomance.tscn" id="30_gbm14"]
+[ext_resource type="PackedScene" uid="uid://s4tb62sc6ajv" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse15.tscn" id="21_ivjq3"]
+[ext_resource type="PackedScene" uid="uid://csrorqssqslt1" path="res://world/locations/city_hub/prototype/buildings/PrototypeBookstore.tscn" id="22_vh4oc"]
+[ext_resource type="PackedScene" uid="uid://cj3sxuxvfspo6" path="res://world/locations/city_hub/prototype/buildings/PrototypeGym.tscn" id="23_yfxhe"]
+[ext_resource type="PackedScene" uid="uid://c2ph6j63fmenv" path="res://world/locations/city_hub/prototype/buildings/PrototypeCinema.tscn" id="24_nc7jl"]
+[ext_resource type="PackedScene" uid="uid://cfrxmbfthyedo" path="res://world/locations/city_hub/prototype/buildings/PrototypeArcade.tscn" id="25_o2uac"]
+[ext_resource type="PackedScene" uid="uid://bg5jbcl7ce8pk" path="res://world/locations/city_hub/prototype/buildings/PrototypeBar.tscn" id="26_cvabt"]
+[ext_resource type="PackedScene" uid="uid://btf48tl7sn5tj" path="res://world/locations/city_hub/prototype/buildings/PrototypeParkRestaurant.tscn" id="27_sgflf"]
+[ext_resource type="PackedScene" uid="uid://bfddy5ynrenx5" path="res://world/locations/city_hub/prototype/activities/PrototypeParkBench.tscn" id="28_c34l5"]
+[ext_resource type="PackedScene" uid="uid://newr7p5p1khg" path="res://world/locations/city_hub/prototype/activities/PrototypeDuckFeeding.tscn" id="29_d1n6x"]
+[ext_resource type="PackedScene" uid="uid://dqxt8dcpmgm3m" path="res://world/locations/city_hub/prototype/activities/PrototypeKaraokeStand.tscn" id="30_rwply"]
+[ext_resource type="PackedScene" uid="uid://bajxvcdf1scvg" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse06.tscn" id="31_h76q7"]
+[ext_resource type="PackedScene" uid="uid://d1ma43npfsnd6" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse07.tscn" id="32_oyrws"]
+[ext_resource type="PackedScene" uid="uid://dn0ekspmqiuqy" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse08.tscn" id="33_4knyw"]
+[ext_resource type="PackedScene" uid="uid://u5j2p32k53q4" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse09.tscn" id="34_5vo0t"]
+[ext_resource type="PackedScene" uid="uid://drhialrm6vayb" path="res://world/locations/city_hub/prototype/background/PrototypeBackgroundHouse10.tscn" id="35_0kyae"]
+[ext_resource type="PackedScene" uid="uid://dviweg702qg5n" path="res://world/locations/city_hub/prototype/buildings/PrototypePhotoStudio.tscn" id="36_1k0mg"]
+[ext_resource type="PackedScene" uid="uid://bmchqm8lqsasw" path="res://world/locations/city_hub/prototype/buildings/PrototypeBarberShop.tscn" id="37_wus8e"]
+[ext_resource type="PackedScene" uid="uid://b54sdpuoaq7ep" path="res://world/locations/city_hub/prototype/buildings/PrototypeAgencyOffice.tscn" id="38_dgr3e"]
+[ext_resource type="PackedScene" uid="uid://chg2r0aiwa4i3" path="res://world/locations/city_hub/prototype/activities/PrototypeBusStopCandy.tscn" id="39_7lg0n"]
+[ext_resource type="PackedScene" uid="uid://iywqky7j2bd7" path="res://world/locations/city_hub/prototype/PrototypeRoads.tscn" id="40_av0hk"]
+[ext_resource type="PackedScene" uid="uid://nj3qvw55ixm7" path="res://world/locations/city_hub/prototype/PrototypeBoundaries.tscn" id="41_k31sv"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_hlo2u"]
-size = Vector3(100, 0.4, 70)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5ceus"]
-albedo_color = Color(0.1, 0.11, 0.16, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vheip"]
-albedo_color = Color(0.16, 0.16, 0.19, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_74nhd"]
-albedo_color = Color(0.32, 0.3, 0.34, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ppo7s"]
-albedo_color = Color(0.32, 0.3, 0.34, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nnful"]
-albedo_color = Color(0.45, 0.43, 0.48, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j7f6a"]
-albedo_color = Color(0.45, 0.43, 0.48, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sqxbc"]
-albedo_color = Color(0.16, 0.16, 0.19, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pe7w5"]
-albedo_color = Color(0.32, 0.3, 0.34, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p414b"]
-albedo_color = Color(0.32, 0.3, 0.34, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6rfp6"]
-albedo_color = Color(0.55, 0.55, 0.58, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0c5vt"]
-albedo_color = Color(0.15, 0.16, 0.2, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j23xp"]
-albedo_color = Color(0.3, 0.3, 0.34, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sstou"]
-albedo_color = Color(0.3, 0.3, 0.34, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dyjpp"]
-albedo_color = Color(0.15, 0.16, 0.2, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vdu2u"]
-albedo_color = Color(0.15, 0.16, 0.2, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r5yvs"]
-albedo_color = Color(0.28, 0.22, 0.24, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fp42g"]
-albedo_color = Color(0.28, 0.22, 0.24, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hkxyy"]
-albedo_color = Color(0.24, 0.26, 0.3, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q5v6n"]
-albedo_color = Color(0.24, 0.26, 0.3, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_61qgm"]
-albedo_color = Color(0.34, 0.32, 0.36, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ibjd6"]
-albedo_color = Color(0.28, 0.27, 0.3, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mc5jy"]
-albedo_color = Color(0.45, 0.48, 0.55, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gq6og"]
-albedo_color = Color(0.7, 0.72, 0.8, 1)
-roughness = 0.35
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1vebd"]
-albedo_color = Color(0.5, 0.48, 0.52, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qdf0e"]
-albedo_color = Color(0.14, 0.28, 0.18, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_m0x5l"]
-albedo_color = Color(0.22, 0.18, 0.12, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xvuki"]
-albedo_color = Color(0.42, 0.36, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dy3ib"]
-albedo_color = Color(0.42, 0.36, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_si5ss"]
-albedo_color = Color(0.42, 0.36, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i6m5t"]
-albedo_color = Color(0.42, 0.36, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_271gw"]
-albedo_color = Color(0.42, 0.36, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yo1ld"]
-albedo_color = Color(0.42, 0.36, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e27l0"]
-albedo_color = Color(0.42, 0.36, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xskoy"]
-albedo_color = Color(0.42, 0.36, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e7dr2"]
-albedo_color = Color(0.08, 0.16, 0.3, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_811ar"]
-albedo_color = Color(0.35, 0.32, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_qtb07"]
-size = Vector3(7.5, 1.2, 5.5)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nid8b"]
-albedo_color = Color(0.28, 0.24, 0.3, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kdol7"]
-albedo_color = Color(0.22, 0.2, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_87mfa"]
-albedo_color = Color(0.55, 0.55, 0.6, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2i5d1"]
-albedo_color = Color(0.4, 0.4, 0.45, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lbh1d"]
-albedo_color = Color(0.4, 0.4, 0.45, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_u5u3a"]
-albedo_color = Color(0.3, 0.28, 0.32, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lqfrq"]
-albedo_color = Color(0.26, 0.28, 0.34, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pucre"]
-albedo_color = Color(0.35, 0.36, 0.4, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_455q1"]
-albedo_color = Color(0.2, 0.22, 0.28, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2d76n"]
-albedo_color = Color(0.15, 0.35, 0.4, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jmjpf"]
-albedo_color = Color(0.85, 0.88, 0.9, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5fx1l"]
-albedo_color = Color(0.18, 0.18, 0.22, 1)
-roughness = 0.85
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x8j32"]
-albedo_color = Color(0.16, 0.18, 0.22, 1)
-roughness = 0.85
-
-[sub_resource type="Environment" id="Environment_ooftx"]
+[sub_resource type="Environment" id="Environment_j1ipp"]
 background_mode = 1
-background_color = Color(0.04, 0.05, 0.1, 1)
+background_color = Color(0.22, 0.24, 0.28, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.2, 0.22, 0.34, 1)
-ambient_light_energy = 0.5
-tonemap_mode = 3
-glow_enabled = true
-glow_intensity = 0.22
-glow_bloom = 0.08
+ambient_light_color = Color(0.55, 0.52, 0.48, 1)
+ambient_light_energy = 0.55
 
-[node name="City" type="Node3D" unique_id=872770394]
+[node name="City" type="Node3D" unique_id=833315292]
+script = ExtResource("1_30frl")
 
-[node name="Architecture" type="Node3D" parent="." unique_id=681688426]
+[node name="Stage1_MainStreet" type="Node3D" parent="." unique_id=1099496672]
+metadata/district_id = "main_street"
+metadata/progression_stage = 1
 
-[node name="PerimeterCollision" type="StaticBody3D" parent="Architecture" unique_id=746330343]
+[node name="Buildings" type="Node3D" parent="Stage1_MainStreet" unique_id=418052560]
 
-[node name="FloorCollider" type="StaticBody3D" parent="Architecture/PerimeterCollision" unique_id=851133183]
+[node name="BG_00" parent="Stage1_MainStreet/Buildings" unique_id=847311687 instance=ExtResource("2_2etp7")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 36.5, 0, 3.6151543)
 
-[node name="@CollisionShape3D@2" type="CollisionShape3D" parent="Architecture/PerimeterCollision/FloorCollider" unique_id=689627313]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.2, 8)
-shape = SubResource("BoxShape3D_hlo2u")
+[node name="BG_01" parent="Stage1_MainStreet/Buildings" unique_id=1295157660 instance=ExtResource("3_4jr2f")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 36.5, 0, -4.6302433)
 
-[node name="GroundBase" type="CSGBox3D" parent="Architecture" unique_id=1128631798]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, -0.05, 2)
-size = Vector3(42, 0.1, 28)
-material = SubResource("StandardMaterial3D_5ceus")
+[node name="BG_02" parent="Stage1_MainStreet/Buildings" unique_id=1365503582 instance=ExtResource("4_onug1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.268932, 0, -9.887217)
 
-[node name="Buildings" type="Node3D" parent="." unique_id=498638311]
+[node name="BG_03" parent="Stage1_MainStreet/Buildings" unique_id=1262920841 instance=ExtResource("5_ci3ar")]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 26.890965, 0, 24.5)
 
-[node name="POIs" type="Node3D" parent="." unique_id=712117959]
+[node name="BG_04" parent="Stage1_MainStreet/Buildings" unique_id=142542075 instance=ExtResource("6_h167n")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.604971, 0, -21.46541)
 
-[node name="PlayerHome" parent="POIs" unique_id=1699495429 instance=ExtResource("1_phome")]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, 5)
+[node name="BG_05" parent="Stage1_MainStreet/Buildings" unique_id=1085406909 instance=ExtResource("7_6i5ol")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.55066, 0, -21.697334)
 
-[node name="CafeTwoHearts" parent="POIs" unique_id=518142246 instance=ExtResource("2_cafe")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 4.5, 0, 5)
+[node name="POIs" type="Node3D" parent="Stage1_MainStreet" unique_id=1633049572]
 
-[node name="RetailPairFlowerGift" parent="POIs" unique_id=1254928595 instance=ExtResource("4_retail")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 8.5, 0, -5.5)
+[node name="PlayerHome" parent="Stage1_MainStreet/POIs" unique_id=1542665198 instance=ExtResource("8_g6hsv")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 35.667816, 0, 11.19964)
 
-[node name="FashionPairJewelryClothing" parent="POIs" unique_id=692921530 instance=ExtResource("5_fashion")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 3, 0, -5.5)
+[node name="CafeTwoHearts" parent="Stage1_MainStreet/POIs" unique_id=784790261 instance=ExtResource("10_e1hnf")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 23.8, 0, 14.2)
 
-[node name="HomewareShop" parent="POIs" unique_id=439966441 instance=ExtResource("7_homeware")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, -5.5)
+[node name="RetailPairFlowerGift" parent="Stage1_MainStreet/POIs" unique_id=1322354083 instance=ExtResource("11_apumo")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 15.45, 0, 6.35)
 
-[node name="InternetCafe" parent="POIs" unique_id=1631996755 instance=ExtResource("6_net")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -5.5)
+[node name="FashionPairJewelryClothing" parent="Stage1_MainStreet/POIs" unique_id=1847133141 instance=ExtResource("12_vtwjp")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 5.4, 0, 6.35)
 
-[node name="Bookstore" parent="POIs" unique_id=558993893 instance=ExtResource("3_book")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -13, 0, 5)
+[node name="HomewareShop" parent="Stage1_MainStreet/POIs" unique_id=1231659613 instance=ExtResource("13_hn72o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.213257, 0, -7.6219997)
 
-[node name="Gym" parent="POIs" unique_id=1979902861 instance=ExtResource("9_gym")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -8, 0, 5)
+[node name="InternetCafe" parent="Stage1_MainStreet/POIs" unique_id=844289007 instance=ExtResource("14_x7rr1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.3986, 0, -7.641577)
 
-[node name="Cinema" parent="POIs" unique_id=1693808658 instance=ExtResource("10_cine")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -22.5, 0, 8)
+[node name="WorldActivities" type="Node3D" parent="Stage1_MainStreet" unique_id=643510756]
 
-[node name="Arcade" parent="POIs" unique_id=2063750922 instance=ExtResource("11_arcade")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -22.5, 0, 12)
+[node name="MainBench" parent="Stage1_MainStreet/WorldActivities" unique_id=760130391 instance=ExtResource("15_gsrco")]
+transform = Transform3D(0.76604444, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.76604444, -3.6, 0, 3.4)
 
-[node name="Bar" parent="POIs" unique_id=1422966975 instance=ExtResource("12_bar")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -17, 0, 10.5)
+[node name="Stage2_ParkLeisure" type="Node3D" parent="." unique_id=148822978]
+metadata/district_id = "park_leisure"
+metadata/progression_stage = 2
 
-[node name="ParkRestaurant" parent="POIs" unique_id=2015850498 instance=ExtResource("8_rest")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.5, 0, 7.5)
+[node name="Buildings" type="Node3D" parent="Stage2_ParkLeisure" unique_id=67535872]
 
-[node name="PhotoStudio" parent="POIs" unique_id=1352351491 instance=ExtResource("13_photo")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, -5.5)
+[node name="BG_11" parent="Stage2_ParkLeisure/Buildings" unique_id=806801452 instance=ExtResource("17_7i2q8")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -34.5, 0, 20)
 
-[node name="BarberShop" parent="POIs" unique_id=522896923 instance=ExtResource("15_barber")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -18.5, 0, 5)
+[node name="BG_12" parent="Stage2_ParkLeisure/Buildings" unique_id=1609229173 instance=ExtResource("18_5n1u7")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -34.5, 0, 28)
 
-[node name="AgencyOffice" parent="POIs" unique_id=1747127722 instance=ExtResource("14_agency")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2, 0, -5.5)
+[node name="BG_13" parent="Stage2_ParkLeisure/Buildings" unique_id=462964735 instance=ExtResource("19_wi1lw")]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -10, 0, 33.5)
 
-[node name="MainBench" parent="POIs" unique_id=1412620150 instance=ExtResource("16_mbench")]
-transform = Transform3D(0.76604444, 0, -0.6427876, 0, 1, 0, 0.6427876, 0, 0.76604444, 0, 0, 0.8)
+[node name="BG_14" parent="Stage2_ParkLeisure/Buildings" unique_id=1625002886 instance=ExtResource("20_n8wqy")]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -20, 0, 33.5)
 
-[node name="ParkBench" parent="POIs" unique_id=2014962628 instance=ExtResource("17_pbench")]
-transform = Transform3D(-0.76604444, 0, 0.64278764, 0, 1, 0, -0.64278764, 0, -0.76604444, 1.5, 0, 3.5)
+[node name="BG_15" parent="Stage2_ParkLeisure/Buildings" unique_id=1847427741 instance=ExtResource("21_ivjq3")]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 6, 0, 30.5)
 
-[node name="DuckFeeding" parent="POIs" unique_id=827148260 instance=ExtResource("18_duck")]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -1.5, 0, 3.2)
+[node name="POIs" type="Node3D" parent="Stage2_ParkLeisure" unique_id=1930430205]
 
-[node name="KaraokeStand" parent="POIs" unique_id=586040768 instance=ExtResource("19_karaoke")]
-transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -16, 0, 2.5)
+[node name="Bookstore" parent="Stage2_ParkLeisure/POIs" unique_id=1460466483 instance=ExtResource("22_vh4oc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.2, 0, 12)
 
-[node name="BusStopCandy" parent="POIs" unique_id=110634907 instance=ExtResource("20_bus")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -22, 0, 1.5)
+[node name="Gym" parent="Stage2_ParkLeisure/POIs" unique_id=106873687 instance=ExtResource("23_yfxhe")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 12)
 
-[node name="Decor" type="Node3D" parent="." unique_id=1693686746]
+[node name="Cinema" parent="Stage2_ParkLeisure/POIs" unique_id=1195793327 instance=ExtResource("24_nc7jl")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.2, 0, 17.5)
 
-[node name="ParkGate" parent="Decor" unique_id=800004941 groups=["district_gate"] instance=ExtResource("21_gate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6.2)
+[node name="Arcade" parent="Stage2_ParkLeisure/POIs" unique_id=1908644665 instance=ExtResource("25_o2uac")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.2, 0, 24.2)
+
+[node name="Bar" parent="Stage2_ParkLeisure/POIs" unique_id=369357905 instance=ExtResource("26_cvabt")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -16.5, 0, 29.8)
+
+[node name="ParkRestaurant" parent="Stage2_ParkLeisure/POIs" unique_id=912508367 instance=ExtResource("27_sgflf")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 3.2, 0, 21.2)
+
+[node name="WorldActivities" type="Node3D" parent="Stage2_ParkLeisure" unique_id=1001963815]
+
+[node name="ParkBench" parent="Stage2_ParkLeisure/WorldActivities" unique_id=1586865693 instance=ExtResource("28_c34l5")]
+transform = Transform3D(-0.76604444, 0, 0.64278764, 0, 1, 0, -0.64278764, 0, -0.76604444, -3.8, 0, 22.8)
+
+[node name="DuckFeeding" parent="Stage2_ParkLeisure/WorldActivities" unique_id=475666164 instance=ExtResource("29_d1n6x")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 6.2, 0, 16.8)
+
+[node name="KaraokeStand" parent="Stage2_ParkLeisure/WorldActivities" unique_id=704849582 instance=ExtResource("30_rwply")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -10.5, 0, 26.5)
+
+[node name="Stage3_AgencyRow" type="Node3D" parent="." unique_id=1173657059]
+metadata/district_id = "agency_row"
+metadata/progression_stage = 3
+
+[node name="Buildings" type="Node3D" parent="Stage3_AgencyRow" unique_id=1506133001]
+
+[node name="BG_06" parent="Stage3_AgencyRow/Buildings" unique_id=1910827172 instance=ExtResource("31_h76q7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6897755, 0, -13.5)
+
+[node name="BG_07" parent="Stage3_AgencyRow/Buildings" unique_id=576360222 instance=ExtResource("32_oyrws")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -13.5)
+
+[node name="BG_08" parent="Stage3_AgencyRow/Buildings" unique_id=724201651 instance=ExtResource("33_4knyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -13.5)
+
+[node name="BG_09" parent="Stage3_AgencyRow/Buildings" unique_id=964446207 instance=ExtResource("34_5vo0t")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -34.5, 0, 2)
+
+[node name="BG_10" parent="Stage3_AgencyRow/Buildings" unique_id=615262545 instance=ExtResource("35_0kyae")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -34.5, 0, 10)
+
+[node name="POIs" type="Node3D" parent="Stage3_AgencyRow" unique_id=1566605030]
+
+[node name="PhotoStudio" parent="Stage3_AgencyRow/POIs" unique_id=1404397029 instance=ExtResource("36_1k0mg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 0, -6.35)
+
+[node name="BarberShop" parent="Stage3_AgencyRow/POIs" unique_id=1655152728 instance=ExtResource("37_wus8e")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -24.5, 0, 11.8)
+
+[node name="AgencyOffice" parent="Stage3_AgencyRow/POIs" unique_id=1093461929 instance=ExtResource("38_dgr3e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2, 0, -6.35)
+
+[node name="WorldActivities" type="Node3D" parent="Stage3_AgencyRow" unique_id=4068886]
+
+[node name="BusStopCandy" parent="Stage3_AgencyRow/WorldActivities" unique_id=728751512 instance=ExtResource("39_7lg0n")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -30.5, 0, 5)
+
+[node name="Roads" parent="." unique_id=1870446549 instance=ExtResource("40_av0hk")]
+
+[node name="Boundaries" parent="." unique_id=1596640141 instance=ExtResource("41_k31sv")]
+
+[node name="DistrictGates" type="Node3D" parent="." unique_id=169328429]
+
+[node name="ParkGate" parent="DistrictGates" unique_id=63867369 instance=ExtResource("21_gate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 7.2)
 display_name = "Парковый барьер"
 locked_text = "Парковый барьер"
 barrier_size = Vector3(7, 2.6, 0.28)
 
-[node name="AgencyGate" parent="Decor" unique_id=1492803681 groups=["district_gate"] instance=ExtResource("21_gate")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -6.5, 0, 0)
+[node name="AgencyGate" parent="DistrictGates" unique_id=1028580359 instance=ExtResource("21_gate")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -7.2, 0, 0)
 district_id = "agency_row"
 display_name = "Барьер агентства"
 locked_text = "Барьер агентства"
-gate_width = 6.8
 barrier_size = Vector3(6.8, 2.6, 0.28)
 metadata/district_id = "agency_row"
 
-[node name="AgencyGateLeisure" parent="Decor" unique_id=1627093419 groups=["district_gate"] instance=ExtResource("21_gate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0, 3.5)
+[node name="AgencyGateLeisure" parent="DistrictGates" unique_id=1610832772 instance=ExtResource("21_gate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.8, 0, 13.6)
 district_id = "agency_row"
 display_name = "Барьер агентства со стороны Leisure"
 locked_text = "Барьер агентства со стороны Leisure"
-gate_width = 5.4
 barrier_size = Vector3(5.4, 2.6, 0.28)
 metadata/district_id = "agency_row"
 
-[node name="Markers" type="Node3D" parent="." unique_id=180646302]
+[node name="GlobalMarkers" type="Node3D" parent="." unique_id=2109748090]
 
-[node name="HomeEntrance" type="Marker3D" parent="Markers" unique_id=1798777822]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.45, 0, 5)
+[node name="HomeEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1473941782]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.55, 0, 16.5)
 
-[node name="CafeEntrance" type="Marker3D" parent="Markers" unique_id=589645668]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.55, 0, 5)
+[node name="CafeEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=80293686]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.85, 0, 14.2)
 
-[node name="JewelryEntrance" type="Marker3D" parent="Markers" unique_id=2130976845]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0, -4.45)
+[node name="JewelryEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1282729714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 5.3)
 
-[node name="GiftEntrance" type="Marker3D" parent="Markers" unique_id=937969115]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.7, 0, -4.45)
+[node name="GiftEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1714235079]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.65, 0, 5.3)
 
-[node name="FlowerEntrance" type="Marker3D" parent="Markers" unique_id=684641351]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.3, 0, -4.45)
+[node name="FlowerEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1767161919]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.25, 0, 5.3)
 
-[node name="InternetCafeEntrance" type="Marker3D" parent="Markers" unique_id=2114041536]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -4.45)
+[node name="InternetCafeEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=220762105]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 0, -5.3)
 
-[node name="HomewareEntrance" type="Marker3D" parent="Markers" unique_id=36042039]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, -4.45)
+[node name="HomewareEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1973117018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.1, 0, -5.3)
 
-[node name="ClothingEntrance" type="Marker3D" parent="Markers" unique_id=1707559528]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4, 0, -4.45)
+[node name="ClothingEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=461500769]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.8, 0, 5.3)
 
-[node name="ParkRestaurantEntrance" type="Marker3D" parent="Markers" unique_id=1097824686]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 6.45)
+[node name="ParkRestaurantEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1848431713]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0, 20.15)
 
-[node name="GymEntrance" type="Marker3D" parent="Markers" unique_id=56955263]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 3.95)
+[node name="GymEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=422906987]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 13.05)
 
-[node name="BookstoreEntrance" type="Marker3D" parent="Markers" unique_id=1671241005]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, 3.95)
+[node name="BookstoreEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1443635243]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.2, 0, 13.05)
 
-[node name="CinemaEntrance" type="Marker3D" parent="Markers" unique_id=42696605]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.3, 0, 8)
+[node name="CinemaEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=2022706345]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0, 17.5)
 
-[node name="ArcadeEntrance" type="Marker3D" parent="Markers" unique_id=1933995307]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.45, 0, 12)
+[node name="ArcadeEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=596117832]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.15, 0, 24.2)
 
-[node name="BarEntrance" type="Marker3D" parent="Markers" unique_id=619435061]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 0, 9.45)
+[node name="BarEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1148664262]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0, 28.75)
 
-[node name="PhotoStudioEntrance" type="Marker3D" parent="Markers" unique_id=1389359716]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, -4.45)
+[node name="PhotoStudioEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1863202039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 0, -5.3)
 
-[node name="AgencyOfficeEntrance" type="Marker3D" parent="Markers" unique_id=1576382483]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2, 0, -4.45)
+[node name="AgencyOfficeEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=1623189387]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2, 0, -5.3)
 
-[node name="BarberEntrance" type="Marker3D" parent="Markers" unique_id=2118048668]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0, 3.95)
+[node name="BarberEntrance" type="Marker3D" parent="GlobalMarkers" unique_id=389625798]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, 10.75)
 
-[node name="PlayerSpawn" type="Marker3D" parent="Markers" unique_id=964355585]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 1.8)
+[node name="PlayerSpawn" type="Marker3D" parent="GlobalMarkers" unique_id=521699169]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.2, 0, 9)
 
-[node name="ApartmentReturn" type="Marker3D" parent="Markers" unique_id=509224422]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.2, 0, 5)
+[node name="ApartmentReturn" type="Marker3D" parent="GlobalMarkers" unique_id=878746447]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.8, 0, 16.5)
 
-[node name="ParkPicnicSpot" type="Marker3D" parent="Markers" unique_id=1926026074]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+[node name="ParkPicnicSpot" type="Marker3D" parent="GlobalMarkers" unique_id=1719135552]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, 12)
 
-[node name="BusStop" type="Marker3D" parent="Markers" unique_id=38454789]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 1.5)
-
-[node name="PhotoMark" type="Marker3D" parent="Markers" unique_id=789634530]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, -3.6)
-
-[node name="OverviewCamera" type="Marker3D" parent="Markers" unique_id=800547764]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 28, 4)
-
-[node name="WestBoundary" type="Marker3D" parent="Markers" unique_id=1788916012]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0, 2)
-
-[node name="EastBoundary" type="Marker3D" parent="Markers" unique_id=1126651170]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 2)
-
-[node name="Districts" type="Node3D" parent="." unique_id=1275192948]
-
-[node name="GeneratedCity" type="Node3D" parent="." unique_id=1542888468]
-
-[node name="Streets" type="Node3D" parent="GeneratedCity" unique_id=114711795]
-
-[node name="RoadCommercial" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=179212426]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 0)
-size = Vector3(34, 0.08, 7)
-material = SubResource("StandardMaterial3D_vheip")
-
-[node name="SidewalkNorth" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=2071491396]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.02, 4.55)
-size = Vector3(34, 0.1, 2.1)
-material = SubResource("StandardMaterial3D_74nhd")
-
-[node name="SidewalkSouth" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=472527235]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.02, -4.55)
-size = Vector3(34, 0.1, 2.1)
-material = SubResource("StandardMaterial3D_ppo7s")
-
-[node name="CurbNorth" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=642353265]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.05, 3.5)
-size = Vector3(34, 0.14, 0.18)
-material = SubResource("StandardMaterial3D_nnful")
-
-[node name="CurbSouth" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=1643511825]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.05, -3.5)
-size = Vector3(34, 0.14, 0.18)
-material = SubResource("StandardMaterial3D_j7f6a")
-
-[node name="RoadResidential" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=147706623]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 10)
-size = Vector3(7, 0.08, 18)
-material = SubResource("StandardMaterial3D_sqxbc")
-
-[node name="SidewalkResEast" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=2047121438]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.2, 0.02, 10)
-size = Vector3(2, 0.1, 18)
-material = SubResource("StandardMaterial3D_pe7w5")
-
-[node name="SidewalkResWest" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=1292665051]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.8, 0.02, 10.5)
-size = Vector3(2, 0.1, 14)
-material = SubResource("StandardMaterial3D_p414b")
-
-[node name="CrossingRes" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=2074996325]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.5, 0.01, 0)
-size = Vector3(2.4, 0.09, 7)
-material = SubResource("StandardMaterial3D_6rfp6")
-
-[node name="RoadAgencySouth" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=1228949311]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0, 0)
-size = Vector3(24, 0.08, 6)
-material = SubResource("StandardMaterial3D_0c5vt")
-
-[node name="SidewalkAgencyN" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=731544491]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0.02, 3.85)
-size = Vector3(24, 0.1, 1.7)
-material = SubResource("StandardMaterial3D_j23xp")
-
-[node name="SidewalkAgencyS" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=165603281]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0.02, -3.85)
-size = Vector3(24, 0.1, 1.7)
-material = SubResource("StandardMaterial3D_sstou")
-
-[node name="RoadAgencyWest" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=769973058]
+[node name="BusStop" type="Marker3D" parent="GlobalMarkers" unique_id=1734516864]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, 5)
-size = Vector3(6, 0.08, 10)
-material = SubResource("StandardMaterial3D_dyjpp")
 
-[node name="RoadAgencyNorth" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=1735132987]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, 9.5)
-size = Vector3(12, 0.08, 5.5)
-material = SubResource("StandardMaterial3D_vdu2u")
+[node name="PhotoMark" type="Marker3D" parent="GlobalMarkers" unique_id=1797934787]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 0, -4.4)
 
-[node name="FillerN_9" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=1961595285]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.75, 1.4, 6.5)
-size = Vector3(0.35, 2.8, 1.4)
-material = SubResource("StandardMaterial3D_r5yvs")
+[node name="OverviewCamera" type="Marker3D" parent="GlobalMarkers" unique_id=1774384273]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 48, 8)
 
-[node name="FillerN_15" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=1764037800]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.45, 1.4, 6.5)
-size = Vector3(0.35, 2.8, 1.4)
-material = SubResource("StandardMaterial3D_fp42g")
+[node name="WestBoundary" type="Marker3D" parent="GlobalMarkers" unique_id=1985146237]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 0, 8)
 
-[node name="FillerS_9" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=1976617074]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.75, 1.4, -6.5)
-size = Vector3(0.35, 2.8, 1.4)
-material = SubResource("StandardMaterial3D_hkxyy")
+[node name="EastBoundary" type="Marker3D" parent="GlobalMarkers" unique_id=1283672832]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 0, 14)
 
-[node name="FillerS_15" type="CSGBox3D" parent="GeneratedCity/Streets" unique_id=206422256]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.45, 1.4, -6.5)
-size = Vector3(0.35, 2.8, 1.4)
-material = SubResource("StandardMaterial3D_q5v6n")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1550302828]
+environment = SubResource("Environment_j1ipp")
 
-[node name="PlanterWallN1" parent="GeneratedCity/Streets" unique_id=262268339 instance=ExtResource("25_u426w")]
-transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, 8.75, 0, 5.7)
-
-[node name="PlanterWallN2" parent="GeneratedCity/Streets" unique_id=1968270 instance=ExtResource("25_u426w")]
-transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, 15.45, 0, 5.7)
-
-[node name="CentralPocket" type="Node3D" parent="GeneratedCity" unique_id=2005621003]
-
-[node name="PlazaPad" type="CSGBox3D" parent="GeneratedCity/CentralPocket" unique_id=1444133764]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0.2)
-size = Vector3(10.5, 0.09, 10.5)
-material = SubResource("StandardMaterial3D_61qgm")
-
-[node name="PlazaRing" type="CSGBox3D" parent="GeneratedCity/CentralPocket" unique_id=671878529]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.03, 0.2)
-size = Vector3(10.8, 0.05, 10.8)
-material = SubResource("StandardMaterial3D_ibjd6")
-
-[node name="FountainBase" type="CSGBox3D" parent="GeneratedCity/CentralPocket" unique_id=958825562]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0.11, -2.8)
-size = Vector3(1.4, 0.22, 1.4)
-material = SubResource("StandardMaterial3D_mc5jy")
-
-[node name="FountainColumn" type="CSGCylinder3D" parent="GeneratedCity/CentralPocket" unique_id=1563871584]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0.6, -2.8)
-radius = 0.22
-height = 0.9
-material = SubResource("StandardMaterial3D_gq6og")
-
-[node name="CrossingToPark" type="CSGBox3D" parent="GeneratedCity/CentralPocket" unique_id=885388623]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 5.2)
-size = Vector3(3.2, 0.09, 2.2)
-material = SubResource("StandardMaterial3D_1vebd")
-
-[node name="Park" type="Node3D" parent="GeneratedCity" unique_id=1756277302]
-
-[node name="GrassPad" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=1381788435]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.02, 17.5)
-size = Vector3(20, 0.07, 18)
-material = SubResource("StandardMaterial3D_qdf0e")
-
-[node name="SoilRing" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=1918949492]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.01, 17.5)
-size = Vector3(10, 0.08, 8)
-material = SubResource("StandardMaterial3D_m0x5l")
-
-[node name="Path_00" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=633451450]
-transform = Transform3D(0.5547002, 0, 0.8320503, 0, 1, 0, -0.8320503, 0, 0.5547002, 2.25, 0.02, 9.5)
-size = Vector3(3.4, 0.08, 5.408327)
-material = SubResource("StandardMaterial3D_xvuki")
-
-[node name="Path_01" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=1160189591]
-transform = Transform3D(0.9103665, 0, 0.41380295, 0, 1, 0, -0.41380295, 0, 0.9103665, 5.75, 0.02, 13.75)
-size = Vector3(3.4, 0.08, 6.041523)
-material = SubResource("StandardMaterial3D_dy3ib")
-
-[node name="Path_02" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=1524660506]
-transform = Transform3D(0.9397934, 0, -0.34174305, 0, 1, 0, 0.34174305, 0, 0.9397934, 6, 0.02, 19.25)
-size = Vector3(3.4, 0.08, 5.8523498)
-material = SubResource("StandardMaterial3D_si5ss")
-
-[node name="Path_03" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=383405061]
-transform = Transform3D(0.6585046, 0, -0.7525767, 0, 1, 0, 0.7525767, 0, 0.6585046, 3, 0.02, 23.75)
-size = Vector3(3.4, 0.08, 5.315073)
-material = SubResource("StandardMaterial3D_i6m5t")
-
-[node name="Path_04" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=27164272]
-transform = Transform3D(-0.4138029, 0, -0.9103665, 0, 1, 0, 0.9103665, 0, -0.4138029, -1.75, 0.02, 24.25)
-size = Vector3(3.4, 0.08, 6.041523)
-material = SubResource("StandardMaterial3D_271gw")
-
-[node name="Path_05" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=1911994262]
-transform = Transform3D(-0.9284767, 0, -0.37139073, 0, 1, 0, 0.37139073, 0, -0.9284767, -5.5, 0.02, 20.5)
-size = Vector3(3.4, 0.08, 5.3851647)
-material = SubResource("StandardMaterial3D_yo1ld")
-
-[node name="Path_06" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=183325214]
-transform = Transform3D(-0.9103665, 0, 0.41380298, 0, 1, 0, -0.41380298, 0, -0.9103665, -5.25, 0.02, 15.25)
-size = Vector3(3.4, 0.08, 6.041523)
-material = SubResource("StandardMaterial3D_e27l0")
-
-[node name="Path_07" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=1635820489]
-transform = Transform3D(-0.7474092, 0, 0.664364, 0, 1, 0, -0.664364, 0, -0.7474092, -2, 0.02, 10.25)
-size = Vector3(3.4, 0.08, 6.0207973)
-material = SubResource("StandardMaterial3D_xskoy")
-
-[node name="PondWater" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=271392371]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.04, 17.5)
-size = Vector3(7.5, 0.2, 5.5)
-material = SubResource("StandardMaterial3D_e7dr2")
-
-[node name="PondRim" type="CSGBox3D" parent="GeneratedCity/Park" unique_id=1059349045]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 17.5)
-size = Vector3(8.3, 0.12, 6.3)
-material = SubResource("StandardMaterial3D_811ar")
-
-[node name="RestLampA" type="OmniLight3D" parent="GeneratedCity/Park" unique_id=1379172167]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 2.3, 18.5)
-light_color = Color(1, 0.75, 0.45, 1)
-omni_range = 6.0
-
-[node name="RestLampB" type="OmniLight3D" parent="GeneratedCity/Park" unique_id=1282758000]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.3, 19)
-light_color = Color(1, 0.75, 0.45, 1)
-omni_range = 6.0
-
-[node name="Roads" type="Node3D" parent="GeneratedCity" unique_id=1064049849]
-
-[node name="Pond" type="Node3D" parent="GeneratedCity/Roads" unique_id=1903213238]
-
-[node name="PondCollision" type="StaticBody3D" parent="GeneratedCity/Roads/Pond" unique_id=928016585]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.05, 17.5)
-
-[node name="@CollisionShape3D@3" type="CollisionShape3D" parent="GeneratedCity/Roads/Pond/PondCollision" unique_id=975566448]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
-shape = SubResource("BoxShape3D_qtb07")
-
-[node name="Vegetation" type="Node3D" parent="GeneratedCity" unique_id=527666025]
-
-[node name="Tree_00" parent="GeneratedCity/Vegetation" unique_id=804855302 instance=ExtResource("26_oblms")]
-transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -7.5, 0, 14.5)
-
-[node name="Tree_01" parent="GeneratedCity/Vegetation" unique_id=1479728786 instance=ExtResource("26_oblms")]
-transform = Transform3D(1.159111, 0, 0.31058288, 0, 1.2, 0, -0.31058288, 0, 1.159111, -6, 0, 26.5)
-
-[node name="Tree_02" parent="GeneratedCity/Vegetation" unique_id=45334747 instance=ExtResource("26_oblms")]
-transform = Transform3D(1.0392305, 0, 0.6, 0, 1.2, 0, -0.6, 0, 1.0392305, 2.5, 0, 28.5)
-
-[node name="Tree_03" parent="GeneratedCity/Vegetation" unique_id=734359516 instance=ExtResource("26_oblms")]
-transform = Transform3D(0.84852815, 0, 0.84852815, 0, 1.2, 0, -0.84852815, 0, 0.84852815, 9, 0, 25.5)
-
-[node name="Tree_04" parent="GeneratedCity/Vegetation" unique_id=641248847 instance=ExtResource("26_oblms")]
-transform = Transform3D(0.59999996, 0, 1.0392306, 0, 1.2, 0, -1.0392306, 0, 0.59999996, 10.5, 0, 14)
-
-[node name="Tree_05" parent="GeneratedCity/Vegetation" unique_id=267874191 instance=ExtResource("26_oblms")]
-transform = Transform3D(0.3105829, 0, 1.159111, 0, 1.2, 0, -1.159111, 0, 0.3105829, -8.5, 0, 20)
-
-[node name="LeisureForecourt" type="Node3D" parent="GeneratedCity" unique_id=104444314]
-
-[node name="ForecourtPad" type="CSGBox3D" parent="GeneratedCity/LeisureForecourt" unique_id=1983490743]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, -0.01, 20.5)
-size = Vector3(16.5, 0.09, 13)
-material = SubResource("StandardMaterial3D_nid8b")
-
-[node name="ForecourtAccent" type="CSGBox3D" parent="GeneratedCity/LeisureForecourt" unique_id=764218850]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 0, 20.5)
-size = Vector3(8, 0.1, 6)
-material = SubResource("StandardMaterial3D_kdol7")
-
-[node name="QueueRail" type="CSGBox3D" parent="GeneratedCity/LeisureForecourt" unique_id=2084534872]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0.5, 17.5)
-size = Vector3(3.5, 0.08, 0.12)
-material = SubResource("StandardMaterial3D_87mfa")
-
-[node name="QueuePostA" type="CSGBox3D" parent="GeneratedCity/LeisureForecourt" unique_id=1458701546]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.2, 0.5, 17.5)
-size = Vector3(0.12, 1, 0.12)
-material = SubResource("StandardMaterial3D_2i5d1")
-
-[node name="QueuePostB" type="CSGBox3D" parent="GeneratedCity/LeisureForecourt" unique_id=640530531]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.8, 0.5, 17.5)
-size = Vector3(0.12, 1, 0.12)
-material = SubResource("StandardMaterial3D_lbh1d")
-
-[node name="LeisureLampA" type="OmniLight3D" parent="GeneratedCity/LeisureForecourt" unique_id=1949286085]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 2.3, 20.5)
-light_color = Color(1, 0.55, 0.75, 1)
-light_energy = 0.9
-omni_range = 6.0
-
-[node name="LeisureLampB" type="OmniLight3D" parent="GeneratedCity/LeisureForecourt" unique_id=57574319]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 2.3, 22)
-light_color = Color(0.45, 0.85, 1, 1)
-light_energy = 0.75
-omni_range = 6.0
-
-[node name="ExitToPark" type="CSGBox3D" parent="GeneratedCity/LeisureForecourt" unique_id=442372365]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 16)
-size = Vector3(4, 0.08, 3.5)
-material = SubResource("StandardMaterial3D_u5u3a")
-
-[node name="ExitToAgency" type="CSGBox3D" parent="GeneratedCity/LeisureForecourt" unique_id=1289555598]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.8, 0, 15.2)
-size = Vector3(5.5, 0.08, 4)
-material = SubResource("StandardMaterial3D_lqfrq")
-
-[node name="AgencyLane" type="Node3D" parent="GeneratedCity" unique_id=1584418122]
-
-[node name="FillerAgency1" type="CSGBox3D" parent="GeneratedCity/AgencyLane" unique_id=1425070517]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.85, 1.6, -6.5)
-size = Vector3(0.4, 3.2, 1.5)
-material = SubResource("StandardMaterial3D_pucre")
-
-[node name="BusEndWall" type="CSGBox3D" parent="GeneratedCity/AgencyLane" unique_id=1497055266]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 1.8, 5)
-size = Vector3(1.2, 3.6, 6)
-material = SubResource("StandardMaterial3D_455q1")
-
-[node name="BusEndGate" type="CSGBox3D" parent="GeneratedCity/AgencyLane" unique_id=930849164]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.8, 1.3, 5)
-size = Vector3(0.25, 2.6, 3.5)
-material = SubResource("StandardMaterial3D_2d76n")
-
-[node name="ScheduleBoard" type="CSGBox3D" parent="GeneratedCity/AgencyLane" unique_id=1986491767]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.2, 1.4, 6.8)
-size = Vector3(1.4, 1.6, 0.12)
-material = SubResource("StandardMaterial3D_jmjpf")
-
-[node name="AgencyCyan" type="OmniLight3D" parent="GeneratedCity/AgencyLane" unique_id=2027831640]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2, 2.4, -4)
-light_color = Color(0.35, 0.85, 0.95, 1)
-light_energy = 0.65
-
-[node name="AgencyAmberA" type="OmniLight3D" parent="GeneratedCity/AgencyLane" unique_id=1582296599]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 2.3, -4.2)
-light_color = Color(1, 0.85, 0.55, 1)
-light_energy = 0.7
-omni_range = 6.0
-
-[node name="AgencyAmberB" type="OmniLight3D" parent="GeneratedCity/AgencyLane" unique_id=975727576]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2, 2.3, -4.2)
-light_color = Color(1, 0.85, 0.55, 1)
-light_energy = 0.7
-omni_range = 6.0
-
-[node name="BackgroundBuildings" type="Node3D" parent="GeneratedCity" unique_id=1045645091]
-visible = false
-
-[node name="BG_00" parent="GeneratedCity/BackgroundBuildings" unique_id=780925803 instance=ExtResource("27_nkn8c")]
-transform = Transform3D(-2.1855694e-08, 0, -0.5, 0, 0.5, 0, 0.5, 0, -2.1855694e-08, 36.5, 0, 16)
-
-[node name="BG_01" parent="GeneratedCity/BackgroundBuildings" unique_id=199150597 instance=ExtResource("28_lfdsf")]
-transform = Transform3D(-2.0981465e-08, 0, -0.48, 0, 0.48, 0, 0.48, 0, -2.0981465e-08, 36.5, 0, 8)
-
-[node name="BG_02" parent="GeneratedCity/BackgroundBuildings" unique_id=2106965520 instance=ExtResource("28_lfdsf")]
-transform = Transform3D(-2.0981465e-08, 0, -0.48, 0, 0.48, 0, 0.48, 0, -2.0981465e-08, 34.5, 0, 22)
-
-[node name="BG_03" parent="GeneratedCity/BackgroundBuildings" unique_id=969699209 instance=ExtResource("29_kmp1w")]
-transform = Transform3D(-0.45, 0, -3.934025e-08, 0, 0.45, 0, 3.934025e-08, 0, -0.45, 30, 0, 24.5)
-
-[node name="BG_04" parent="GeneratedCity/BackgroundBuildings" unique_id=72023727 instance=ExtResource("28_lfdsf")]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 8, 0, -12.5)
-
-[node name="BG_05" parent="GeneratedCity/BackgroundBuildings" unique_id=1291362377 instance=ExtResource("29_kmp1w")]
-transform = Transform3D(0.48, 0, 0, 0, 0.48, 0, 0, 0, 0.48, 16, 0, -12.5)
-
-[node name="BG_06" parent="GeneratedCity/BackgroundBuildings" unique_id=1680150064 instance=ExtResource("27_nkn8c")]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -1, 0, -13.5)
-
-[node name="BG_07" parent="GeneratedCity/BackgroundBuildings" unique_id=420986024 instance=ExtResource("28_lfdsf")]
-transform = Transform3D(0.48, 0, 0, 0, 0.48, 0, 0, 0, 0.48, -12, 0, -13.5)
-
-[node name="BG_08" parent="GeneratedCity/BackgroundBuildings" unique_id=2100605190 instance=ExtResource("27_nkn8c")]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -22, 0, -13.5)
-
-[node name="BG_09" parent="GeneratedCity/BackgroundBuildings" unique_id=438239419 instance=ExtResource("28_lfdsf")]
-transform = Transform3D(-2.1855694e-08, 0, 0.5, 0, 0.5, 0, -0.5, 0, -2.1855694e-08, -34.5, 0, 2)
-
-[node name="BG_10" parent="GeneratedCity/BackgroundBuildings" unique_id=1200964514 instance=ExtResource("27_nkn8c")]
-transform = Transform3D(-2.0981465e-08, 0, 0.48, 0, 0.48, 0, -0.48, 0, -2.0981465e-08, -34.5, 0, 10)
-
-[node name="BG_11" parent="GeneratedCity/BackgroundBuildings" unique_id=745069229 instance=ExtResource("27_nkn8c")]
-transform = Transform3D(-2.1855694e-08, 0, 0.5, 0, 0.5, 0, -0.5, 0, -2.1855694e-08, -34.5, 0, 20)
-
-[node name="BG_12" parent="GeneratedCity/BackgroundBuildings" unique_id=1438505662 instance=ExtResource("28_lfdsf")]
-transform = Transform3D(-2.0981465e-08, 0, 0.48, 0, 0.48, 0, -0.48, 0, -2.0981465e-08, -34.5, 0, 28)
-
-[node name="BG_13" parent="GeneratedCity/BackgroundBuildings" unique_id=2084585941 instance=ExtResource("28_lfdsf")]
-transform = Transform3D(-0.5, 0, -4.371139e-08, 0, 0.5, 0, 4.371139e-08, 0, -0.5, -10, 0, 33.5)
-
-[node name="BG_14" parent="GeneratedCity/BackgroundBuildings" unique_id=121063483 instance=ExtResource("27_nkn8c")]
-transform = Transform3D(-0.48, 0, -4.196293e-08, 0, 0.48, 0, 4.196293e-08, 0, -0.48, -20, 0, 33.5)
-
-[node name="BG_15" parent="GeneratedCity/BackgroundBuildings" unique_id=805975376 instance=ExtResource("29_kmp1w")]
-transform = Transform3D(-0.45, 0, -3.934025e-08, 0, 0.45, 0, 3.934025e-08, 0, -0.45, 6, 0, 30.5)
-
-[node name="AlleyCloseSouth" type="CSGBox3D" parent="GeneratedCity/BackgroundBuildings" unique_id=2056013915]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1.6, -10.5)
-size = Vector3(20, 3.2, 0.4)
-material = SubResource("StandardMaterial3D_5fx1l")
-
-[node name="AlleyCloseWest" type="CSGBox3D" parent="GeneratedCity/BackgroundBuildings" unique_id=19571530]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 1.75, 14)
-size = Vector3(0.4, 3.5, 16)
-material = SubResource("StandardMaterial3D_x8j32")
-
-[node name="StreetLamps" type="Node3D" parent="GeneratedCity" unique_id=1561378465]
-
-[node name="StreetLamp_00" parent="GeneratedCity/StreetLamps" unique_id=1010673111 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -4)
-
-[node name="StreetLamp_01" parent="GeneratedCity/StreetLamps" unique_id=2145532636 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, -4)
-
-[node name="StreetLamp_02" parent="GeneratedCity/StreetLamps" unique_id=2037758951 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -4)
-
-[node name="StreetLamp_03" parent="GeneratedCity/StreetLamps" unique_id=1667926753 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -4)
-
-[node name="StreetLamp_04" parent="GeneratedCity/StreetLamps" unique_id=13665813 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
-
-[node name="StreetLamp_05" parent="GeneratedCity/StreetLamps" unique_id=1214360938 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 4)
-
-[node name="StreetLamp_06" parent="GeneratedCity/StreetLamps" unique_id=749489833 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 4)
-
-[node name="StreetLamp_07" parent="GeneratedCity/StreetLamps" unique_id=19937883 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 4)
-
-[node name="StreetLamp_08" parent="GeneratedCity/StreetLamps" unique_id=148719703 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.5, 0, 6)
-
-[node name="StreetLamp_09" parent="GeneratedCity/StreetLamps" unique_id=1005576938 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.5, 0, 12)
-
-[node name="StreetLamp_10" parent="GeneratedCity/StreetLamps" unique_id=779808290 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0, 3.8)
-
-[node name="StreetLamp_11" parent="GeneratedCity/StreetLamps" unique_id=2027961730 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 3.8)
-
-[node name="StreetLamp_12" parent="GeneratedCity/StreetLamps" unique_id=1419797102 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, 3.8)
-
-[node name="StreetLamp_13" parent="GeneratedCity/StreetLamps" unique_id=26831514 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0, -3.8)
-
-[node name="StreetLamp_14" parent="GeneratedCity/StreetLamps" unique_id=945052256 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -3.8)
-
-[node name="StreetLamp_15" parent="GeneratedCity/StreetLamps" unique_id=481978208 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, -3.8)
-
-[node name="StreetLamp_16" parent="GeneratedCity/StreetLamps" unique_id=471291405 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, 0, 10.5)
-
-[node name="StreetLamp_17" parent="GeneratedCity/StreetLamps" unique_id=354604531 instance=ExtResource("30_gbm14")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, 14.5)
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=33162720]
-environment = SubResource("Environment_ooftx")
-
-[node name="NightKey" type="DirectionalLight3D" parent="." unique_id=855236100]
-transform = Transform3D(0.90630776, -0.27165377, 0.3237444, 0, 0.76604444, 0.6427876, -0.42261827, -0.58256334, 0.69427204, 0, 0, 0)
-light_color = Color(0.55, 0.62, 0.85, 1)
-light_energy = 0.48
-shadow_enabled = true
-
-[node name="NightFill" type="DirectionalLight3D" parent="." unique_id=1702815097]
-transform = Transform3D(-0.64278764, 0.23672076, -0.72855157, 0, 0.95105654, 0.309017, 0.76604444, 0.19863231, -0.6113274, 0, 0, 0)
-light_color = Color(0.32, 0.26, 0.42, 1)
-light_energy = 0.18
+[node name="DayKey" type="DirectionalLight3D" parent="." unique_id=1190918356]
+transform = Transform3D(0.81915206, -0.38379756, 0.42625037, 0, 0.7431448, 0.6691306, -0.57357645, -0.5481197, 0.6087486, 0, 0, 0)
+light_color = Color(1, 0.94, 0.86, 1)
+light_energy = 0.85
