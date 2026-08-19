@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 2
+const SAVE_VERSION: int = 3
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -79,6 +79,15 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 	var migrated: Dictionary = state_data.duplicate(true)
 	if from_version >= SAVE_VERSION:
 		return migrated
+	if from_version < 2:
+		migrated = _migrate_v1_flow(migrated)
+	if from_version < 3:
+		migrated = _migrate_v2_story(migrated)
+	return migrated
+
+
+func _migrate_v1_flow(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
 	var flow_value: Variant = migrated.get("flow", {})
 	if not (flow_value is Dictionary):
 		return migrated
@@ -88,4 +97,16 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		flow["game_time_minutes"] = maxi(0, old_day - 1) * MINUTES_PER_DAY
 	flow.erase("day")
 	migrated["flow"] = flow
+	return migrated
+
+
+func _migrate_v2_story(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var story_value: Variant = migrated.get("story", {})
+	if not (story_value is Dictionary):
+		return migrated
+	var story: Dictionary = story_value
+	if not story.has("finale_reached"):
+		story["finale_reached"] = false
+	migrated["story"] = story
 	return migrated

@@ -48,11 +48,11 @@ Date Factory строится вокруг свиданий как главно�
 
 ## GameState
 
-Единственное сохраняемое состояние прохождения. Autoload `GameState` владеет секциями; autoload `SaveManager` отвечает за `new_game` / `save_game` / `load_game` / `has_save` / `delete_save`. Autoload `TimeService` продвигает `flow.game_time_minutes` и публикует прошедший интервал.
+Единственное сохраняемое состояние прохождения. Autoload `GameState` владеет секциями; autoload `SaveManager` отвечает за `new_game` / `save_game` / `load_game` / `has_save` / `delete_save`. Autoload `TimeService` продвигает `flow.game_time_minutes` и публикует прошедший интервал. Autoload `ActionService` выполняет статические `GameAction` против текущего прохождения: требования, `money_cost`, эффекты, затем время через `TimeService`.
 
 `GameState` хранит только изменяемое состояние конкретного прохождения. Статические определения игрового контента — параметры девушек, предметов, локаций, Stage, цены, базовые характеристики и прочие definitions — хранятся отдельно от `GameState`. `GameState` хранит только ссылки/ID и изменяемый прогресс относительно этих definitions.
 
-Сейчас в секциях живут только `flow.game_time_minutes`, `story.stage`, `player.money`. День, час и минута вычисляются из абсолютного игрового времени. Остальные секции — пустой каркас для следующих этапов. Прогресс свиданий лаборатории (`DateProgressStore`) пока отдельно: `girls` / `dating` ещё не заполнены.
+Сейчас в секциях живут только `flow.game_time_minutes`, `story.stage`, `story.finale_reached`, `player.money`. День, час и минута вычисляются из абсолютного игрового времени. Кампания идёт по Stage 1–6, затем Finale; текущий Stage и факт Finale хранит `StoryState`, переходы делает autoload `StageService`. Игровые действия выполняет autoload `ActionService` по статическим definitions `GameAction`. Остальные секции — пустой каркас для следующих этапов. Прогресс свиданий лаборатории (`DateProgressStore`) пока отдельно: `girls` / `dating` ещё не заполнены.
 
 `DateSession.stage` — стадия эпизода свидания, не `StoryState.stage`.
 

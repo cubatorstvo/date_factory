@@ -26,6 +26,8 @@ func run_all() -> PackedStringArray:
 	_test_girl_difficulty()
 	_test_game_state_round_trip()
 	_test_game_time()
+	_test_campaign_stages()
+	_test_game_actions()
 	return _failures
 
 
@@ -1003,6 +1005,26 @@ func _time_service() -> Variant:
 	return node
 
 
+func _stage_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("StageService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _action_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("ActionService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
 func _assert_clock(label: String, clock: Variant, minutes: int, day: int, hour: int, minute: int) -> void:
 	_ok("%s game_time_minutes" % label, clock.get_game_time_minutes() == minutes)
 	_ok("%s day" % label, clock.get_day() == day)
@@ -1027,6 +1049,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game game_time_minutes 0", gs.flow.game_time_minutes == 0)
 	_ok("new_game day 1", clock.get_day() == 1)
 	_ok("new_game stage 1", gs.story.stage == 1)
+	_ok("new_game finale false", gs.story.finale_reached == false)
 	_ok("new_game money 0", gs.player.money == 0)
 	gs.flow.game_time_minutes = 8640
 	gs.story.stage = 3
@@ -1040,7 +1063,7 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 2", int(root.get("save_version", 0)) == 2)
+	_ok("save_version == 3", int(root.get("save_version", 0)) == 3)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	_ok("save has empty progression", state_dict.get("progression", {"x": 1}).is_empty())
@@ -1048,12 +1071,17 @@ func _test_game_state_round_trip() -> void:
 	var flow_dict: Dictionary = flow_value if flow_value is Dictionary else {}
 	_ok("save has game_time_minutes", int(flow_dict.get("game_time_minutes", -1)) == 8640)
 	_ok("save has no day", not flow_dict.has("day"))
+	var story_value: Variant = state_dict.get("story", {})
+	var story_dict: Dictionary = story_value if story_value is Dictionary else {}
+	_ok("save has stage", int(story_dict.get("stage", 0)) == 3)
+	_ok("save has finale_reached", story_dict.get("finale_reached", true) == false)
 	sm.new_game()
-	_ok("new_game resets values", gs.flow.game_time_minutes == 0 and gs.story.stage == 1 and gs.player.money == 0)
+	_ok("new_game resets values", gs.flow.game_time_minutes == 0 and gs.story.stage == 1 and gs.story.finale_reached == false and gs.player.money == 0)
 	_ok("load_game", sm.load_game())
 	_ok("loaded game_time_minutes == 8640", gs.flow.game_time_minutes == 8640)
 	_ok("loaded day == 7", clock.get_day() == 7)
 	_ok("loaded stage == 3", gs.story.stage == 3)
+	_ok("loaded finale == false", gs.story.finale_reached == false)
 	_ok("loaded money == 12345", gs.player.money == 12345)
 	_ok("section flow", gs.flow != null)
 	_ok("section story", gs.story != null)
@@ -1068,6 +1096,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("missing keys default game_time_minutes", gs.flow.game_time_minutes == 0)
 	_ok("missing keys default day", clock.get_day() == 1)
 	_ok("missing keys default stage", gs.story.stage == 1)
+	_ok("missing keys default finale", gs.story.finale_reached == false)
 	_ok("missing keys default money", gs.player.money == 0)
 	sm.delete_save()
 	_ok("deleted test save", not sm.has_save())
@@ -1150,7 +1179,230 @@ func _test_game_time() -> void:
 	_ok("load v1 save", sm.load_game())
 	_ok("migrated minutes", clock.get_game_time_minutes() == 8640)
 	_ok("migrated day", clock.get_day() == 7)
+	_ok("migrated v1 finale false", gs.story.finale_reached == false)
 	sm.delete_save()
 	_ok("deleted time test save", not sm.has_save())
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _assert_campaign(label: String, stages: Variant, stage: int, finale: bool) -> void:
+	_ok("%s get_current_stage" % label, stages.get_current_stage() == stage)
+	_ok("%s is_finale_reached" % label, stages.is_finale_reached() == finale)
+	var gs: Variant = _game_state()
+	if gs == null:
+		return
+	_ok("%s story.stage" % label, gs.story.stage == stage)
+	_ok("%s story.finale_reached" % label, gs.story.finale_reached == finale)
+
+
+func _test_campaign_stages() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var stages: Variant = _stage_service()
+	_ok("campaign GameState", gs != null)
+	_ok("campaign SaveManager", sm != null)
+	_ok("campaign StageService", stages != null)
+	if gs == null or sm == null or stages == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/campaign_round_trip.json"
+	sm.delete_save()
+	sm.new_game()
+	_assert_campaign("new_game", stages, 1, false)
+	_ok("advance 1 to 2", stages.complete_current_stage())
+	_assert_campaign("after first complete", stages, 2, false)
+	sm.new_game()
+	for step in range(5):
+		_ok("sequence complete %d" % (step + 1), stages.complete_current_stage())
+	_assert_campaign("after five completes", stages, 6, false)
+	_ok("enter finale", stages.complete_current_stage())
+	_assert_campaign("finale", stages, 6, true)
+	_ok("repeat after finale returns false", stages.complete_current_stage() == false)
+	_assert_campaign("still finale", stages, 6, true)
+	sm.new_game()
+	gs.story.stage = 3
+	gs.story.finale_reached = false
+	var stage_events: Array = []
+	var on_stage := func(previous_stage: int, current_stage: int) -> void:
+		stage_events.append({
+			"previous_stage": previous_stage,
+			"current_stage": current_stage,
+		})
+	stages.stage_changed.connect(on_stage)
+	_ok("complete 3 to 4", stages.complete_current_stage())
+	stages.stage_changed.disconnect(on_stage)
+	_ok("stage_changed once", stage_events.size() == 1)
+	if stage_events.size() == 1:
+		var payload: Dictionary = stage_events[0]
+		_ok("stage_changed previous", int(payload["previous_stage"]) == 3)
+		_ok("stage_changed current", int(payload["current_stage"]) == 4)
+	sm.new_game()
+	gs.story.stage = 6
+	gs.story.finale_reached = false
+	var finale_events: Array = []
+	var on_finale := func() -> void:
+		finale_events.append(true)
+	stages.finale_reached.connect(on_finale)
+	_ok("complete stage 6", stages.complete_current_stage())
+	_ok("finale_reached once", finale_events.size() == 1)
+	_ok("complete after finale false", stages.complete_current_stage() == false)
+	_ok("finale_reached still once", finale_events.size() == 1)
+	stages.finale_reached.disconnect(on_finale)
+	sm.new_game()
+	gs.story.stage = 5
+	gs.story.finale_reached = false
+	sm.save_game()
+	sm.new_game()
+	_assert_campaign("clean before load 5", stages, 1, false)
+	_ok("load stage 5", sm.load_game())
+	_assert_campaign("loaded stage 5", stages, 5, false)
+	sm.new_game()
+	gs.story.stage = 6
+	gs.story.finale_reached = true
+	sm.save_game()
+	sm.new_game()
+	_ok("load finale save", sm.load_game())
+	_assert_campaign("loaded finale", stages, 6, true)
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var legacy: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v2 save", legacy != null)
+	if legacy != null:
+		var v2: Dictionary = {
+			"save_version": 2,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 4},
+				"player": {"money": 0},
+			},
+		}
+		legacy.store_string(JSON.stringify(v2, "\t"))
+		legacy.close()
+	_ok("load v2 save", sm.load_game())
+	_assert_campaign("migrated v2", stages, 4, false)
+	sm.delete_save()
+	_ok("deleted campaign test save", not sm.has_save())
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_game_actions() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var actions: Variant = _action_service()
+	_ok("game actions GameState", gs != null)
+	_ok("game actions SaveManager", sm != null)
+	_ok("game actions TimeService", clock != null)
+	_ok("game actions ActionService", actions != null)
+	if gs == null or sm == null or clock == null or actions == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/game_actions_round_trip.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	gs.flow.game_time_minutes = 0
+	var wait_result: ActionResult = actions.execute(GameActionCatalog.make_test_wait())
+	_ok("test_wait success", wait_result.success)
+	_ok("test_wait time", clock.get_game_time_minutes() == 120)
+	sm.new_game()
+	gs.player.money = 0
+	gs.flow.game_time_minutes = 0
+	var earn_result: ActionResult = actions.execute(GameActionCatalog.make_test_earn_money())
+	_ok("test_earn money", gs.player.money == 100)
+	_ok("test_earn time", clock.get_game_time_minutes() == 60)
+	_ok("test_earn success", earn_result.success)
+	sm.new_game()
+	gs.player.money = 100
+	var spend_ok: ActionResult = actions.execute(GameActionCatalog.make_test_spend_money())
+	_ok("test_spend money", gs.player.money == 50)
+	_ok("test_spend success", spend_ok.success)
+	_ok("test_spend time_spent", spend_ok.time_spent_minutes == 30)
+	_ok("test_spend money_spent", spend_ok.money_spent == 50)
+	sm.new_game()
+	gs.player.money = 25
+	gs.flow.game_time_minutes = 0
+	var spend_fail: ActionResult = actions.execute(GameActionCatalog.make_test_spend_money())
+	_ok("test_spend fail success", spend_fail.success == false)
+	_ok("test_spend fail money", gs.player.money == 25)
+	_ok("test_spend fail time", clock.get_game_time_minutes() == 0)
+	_ok("test_spend fail reason", spend_fail.failure_reason == "Недостаточно денег")
+	sm.new_game()
+	gs.player.money = 50
+	var req_time_before: int = clock.get_game_time_minutes()
+	var req_fail: ActionResult = actions.execute(GameActionCatalog.make_test_require_money())
+	_ok("require fail success", req_fail.success == false)
+	_ok("require fail money", gs.player.money == 50)
+	_ok("require fail time", clock.get_game_time_minutes() == req_time_before)
+	_ok("require fail reason", req_fail.failure_reason == "Недостаточно денег")
+	sm.new_game()
+	gs.player.money = 100
+	var req_ok: ActionResult = actions.execute(GameActionCatalog.make_test_require_money())
+	_ok("require success", req_ok.success)
+	sm.new_game()
+	gs.player.money = 100
+	gs.flow.game_time_minutes = 0
+	var pipeline := GameAction.new()
+	pipeline.id = &"pipeline_test"
+	pipeline.money_cost = 30
+	pipeline.time_cost_minutes = 120
+	var bonus := MoneyEffect.new()
+	bonus.amount = 50
+	pipeline.effects.append(bonus)
+	var pipe_result: ActionResult = actions.execute(pipeline)
+	_ok("pipeline money", gs.player.money == 120)
+	_ok("pipeline time", clock.get_game_time_minutes() == 120)
+	_ok("pipeline success", pipe_result.success)
+	_ok("pipeline money_spent", pipe_result.money_spent == 30)
+	_ok("pipeline time_spent", pipe_result.time_spent_minutes == 120)
+	sm.new_game()
+	gs.player.money = 50
+	gs.flow.game_time_minutes = 0
+	var atomic := GameAction.new()
+	atomic.id = &"atomic_fail"
+	atomic.money_cost = 10
+	atomic.time_cost_minutes = 60
+	var req_low := MoneyRequirement.new()
+	req_low.required_money = 10
+	var req_high := MoneyRequirement.new()
+	req_high.required_money = 100
+	atomic.requirements.append(req_low)
+	atomic.requirements.append(req_high)
+	var poison := MoneyEffect.new()
+	poison.amount = 999
+	atomic.effects.append(poison)
+	var atomic_result: ActionResult = actions.execute(atomic)
+	_ok("atomic fail success", atomic_result.success == false)
+	_ok("atomic fail money", gs.player.money == 50)
+	_ok("atomic fail time", clock.get_game_time_minutes() == 0)
+	_ok("atomic fail effects", atomic_result.applied_effects.is_empty())
+	_ok("atomic can_execute", actions.can_execute(atomic) == false)
+	sm.new_game()
+	gs.player.money = 0
+	gs.flow.game_time_minutes = 0
+	var events: Array = []
+	var on_action := func(action_id: StringName, result: ActionResult) -> void:
+		events.append({
+			"action_id": action_id,
+			"success": result.success,
+		})
+	actions.action_executed.connect(on_action)
+	var signal_ok: ActionResult = actions.execute(GameActionCatalog.make_test_earn_money())
+	_ok("signal execute success", signal_ok.success)
+	_ok("signal once", events.size() == 1)
+	if events.size() == 1:
+		var payload: Dictionary = events[0]
+		_ok("signal action_id", payload["action_id"] == GameActionCatalog.ID_TEST_EARN_MONEY)
+		_ok("signal result", bool(payload["success"]) == true)
+	gs.player.money = 25
+	var signal_fail: ActionResult = actions.execute(GameActionCatalog.make_test_spend_money())
+	_ok("signal fail execute", signal_fail.success == false)
+	_ok("signal still once", events.size() == 1)
+	actions.action_executed.disconnect(on_action)
+	sm.delete_save()
+	_ok("deleted action test save", not sm.has_save())
 	sm.save_path = original_path
 	sm.new_game()

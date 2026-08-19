@@ -23,6 +23,8 @@ GodotIQRuntime="*res://addons/godotiq/godotiq_runtime.gd"
 GameState="*res://game/state/game_state.gd"
 SaveManager="*res://game/save/save_manager.gd"
 TimeService="*res://game/time/time_service.gd"
+StageService="*res://game/story/stage_service.gd"
+ActionService="*res://game/actions/action_service.gd"
 
 [debug]
 

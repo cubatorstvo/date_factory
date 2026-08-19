@@ -38,6 +38,9 @@ var _editor_root: Control
 var _save_bar: HBoxContainer
 var _run_label: Label
 var _game_time_label: Label
+var _campaign_label: Label
+var _action_result_label: Label
+var _action_status_label: Label
 
 
 func _ready() -> void:
@@ -100,10 +103,44 @@ func _build_shell() -> void:
 		var btn := LabUi.button(str(pair[1]))
 		btn.pressed.connect(_apply_test_action.bind(minutes))
 		time_row.add_child(btn)
+	_campaign_label = Label.new()
+	_campaign_label.add_theme_color_override("font_color", LabUi.TEXT)
+	time_row.add_child(_campaign_label)
+	var complete_btn := LabUi.button("COMPLETE CURRENT STAGE")
+	complete_btn.pressed.connect(_complete_current_stage)
+	time_row.add_child(complete_btn)
 	header.add_child(time_row)
+	var actions_row := HBoxContainer.new()
+	actions_row.add_theme_constant_override("separation", 8)
+	var actions_title := Label.new()
+	actions_title.text = "GAME ACTIONS"
+	actions_title.add_theme_color_override("font_color", LabUi.TEXT)
+	actions_row.add_child(actions_title)
+	_action_status_label = Label.new()
+	_action_status_label.add_theme_color_override("font_color", LabUi.TEXT)
+	actions_row.add_child(_action_status_label)
+	for pair in [[GameActionCatalog.ID_TEST_WAIT, "WAIT +120 MIN"], [GameActionCatalog.ID_TEST_EARN_MONEY, "EARN 100"], [GameActionCatalog.ID_TEST_SPEND_MONEY, "SPEND 50"], [GameActionCatalog.ID_TEST_REQUIRE_MONEY, "REQUIRE 100"]]:
+		var action_id: StringName = pair[0]
+		var action_btn := LabUi.button(str(pair[1]))
+		action_btn.pressed.connect(_execute_catalog_action.bind(action_id))
+		actions_row.add_child(action_btn)
+	_action_result_label = Label.new()
+	_action_result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_action_result_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_action_result_label.add_theme_color_override("font_color", LabUi.MUTED)
+	actions_row.add_child(_action_result_label)
+	header.add_child(actions_row)
 	var clock: Variant = _time_service()
 	if clock != null and not clock.time_advanced.is_connected(_on_time_advanced):
 		clock.time_advanced.connect(_on_time_advanced)
+	var stages: Variant = _stage_service()
+	if stages != null and not stages.stage_changed.is_connected(_on_stage_changed):
+		stages.stage_changed.connect(_on_stage_changed)
+	if stages != null and not stages.finale_reached.is_connected(_on_finale_reached):
+		stages.finale_reached.connect(_on_finale_reached)
+	var actions: Variant = _action_service()
+	if actions != null and not actions.action_executed.is_connected(_on_action_executed):
+		actions.action_executed.connect(_on_action_executed)
 	_refresh_run_label()
 	root.add_child(header)
 	var split := HSplitContainer.new()
@@ -172,9 +209,58 @@ func _time_service() -> Variant:
 	return node
 
 
+func _stage_service() -> Variant:
+	var node: Node = get_node_or_null("/root/StageService")
+	if not is_instance_valid(node):
+		push_error("StageService autoload missing")
+	return node
+
+
+func _action_service() -> Variant:
+	var node: Node = get_node_or_null("/root/ActionService")
+	if not is_instance_valid(node):
+		push_error("ActionService autoload missing")
+	return node
+
+
+func _execute_catalog_action(action_id: StringName) -> void:
+	var actions: Variant = _action_service()
+	if actions == null:
+		return
+	var action: GameAction = actions.get_action(action_id)
+	var result: ActionResult = actions.execute(action)
+	_show_action_result(result)
+	_refresh_run_label()
+	if _section == "test_state" or _section == "date":
+		_show_section(_section)
+
+
+func _show_action_result(result: ActionResult) -> void:
+	var text: String = _format_action_result(result)
+	if _action_result_label != null:
+		_action_result_label.text = text
+	_set_status(text.replace("\n", " · "))
+
+
+func _format_action_result(result: ActionResult) -> String:
+	if result == null:
+		return "FAILED"
+	if not result.success:
+		return "FAILED\n%s" % result.failure_reason
+	var effects_text: String = "—"
+	if not result.applied_effects.is_empty():
+		effects_text = ", ".join(PackedStringArray(result.applied_effects))
+	return "SUCCESS\nAction: %s\nEffects: %s\nTime: %d min" % [
+		String(result.action_id),
+		effects_text,
+		result.time_spent_minutes,
+	]
+
+
 func _refresh_run_label() -> void:
 	var gs: Variant = _game_state()
 	var clock: Variant = _time_service()
+	var stages: Variant = _stage_service()
 	if _game_time_label != null and clock != null:
 		_game_time_label.text = "GAME TIME\nDay: %d\nTime: %02d:%02d\nAbsolute: %d min" % [
 			clock.get_day(),
@@ -182,13 +268,54 @@ func _refresh_run_label() -> void:
 			clock.get_minute(),
 			clock.get_game_time_minutes(),
 		]
+	if _action_status_label != null and clock != null and gs != null:
+		_action_status_label.text = "Money: %d\nTime: Day %d %02d:%02d" % [
+			gs.player.money,
+			clock.get_day(),
+			clock.get_hour(),
+			clock.get_minute(),
+		]
+	if _campaign_label != null and stages != null:
+		_campaign_label.text = "CAMPAIGN\nStage: %d\nFinale: %s" % [
+			stages.get_current_stage(),
+			str(stages.is_finale_reached()),
+		]
 	if _run_label == null:
 		return
-	_run_label.text = "Stage %d · Деньги %d" % [gs.story.stage, gs.player.money]
+	var stage: int = gs.story.stage
+	if stages != null:
+		stage = int(stages.get_current_stage())
+	_run_label.text = "Stage %d · Деньги %d" % [stage, gs.player.money]
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
 	_refresh_run_label()
+
+
+func _on_action_executed(_action_id: StringName, result: ActionResult) -> void:
+	_show_action_result(result)
+	_refresh_run_label()
+
+
+func _on_stage_changed(_previous_stage: int, _current_stage: int) -> void:
+	_refresh_campaign_view()
+
+
+func _on_finale_reached() -> void:
+	_refresh_campaign_view()
+
+
+func _refresh_campaign_view() -> void:
+	_refresh_run_label()
+	if _section == "test_state" or _section == "date":
+		call_deferred("_show_section", _section)
+
+
+func _complete_current_stage() -> void:
+	var stages: Variant = _stage_service()
+	if stages == null:
+		return
+	stages.complete_current_stage()
 
 
 func _apply_test_action(minutes: int) -> void:
@@ -355,16 +482,17 @@ func _build_test_state() -> Control:
 			clock.get_game_time_minutes(),
 		]
 	root.add_child(time_view)
-	var stage := SpinBox.new()
-	stage.min_value = 1
-	stage.max_value = 99
-	stage.allow_greater = true
-	stage.value = gs.story.stage
-	stage.value_changed.connect(func(value: float) -> void:
-		_game_state().story.stage = int(value)
-		_refresh_run_label()
-	)
-	root.add_child(LabUi.labeled_row("Stage", stage))
+	var stages: Variant = _stage_service()
+	var campaign_view := Label.new()
+	if stages != null:
+		campaign_view.text = "CAMPAIGN\nStage: %d\nFinale: %s" % [
+			stages.get_current_stage(),
+			str(stages.is_finale_reached()),
+		]
+	root.add_child(campaign_view)
+	var complete_btn := LabUi.button("COMPLETE CURRENT STAGE")
+	complete_btn.pressed.connect(_complete_current_stage)
+	root.add_child(complete_btn)
 	var money := SpinBox.new()
 	money.min_value = 0
 	money.max_value = 999999

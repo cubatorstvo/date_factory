@@ -8,6 +8,8 @@ res://
         state/
         save/
         time/
+        story/
+        actions/
     date_system/
         content/
             tags/

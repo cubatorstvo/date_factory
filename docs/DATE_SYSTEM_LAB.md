@@ -117,10 +117,11 @@ Autoload `GameState` — текущее прохождение. Секции: `f
 ```text
 flow.game_time_minutes = 0
 story.stage = 1
+story.finale_reached = false
 player.money = 0
 ```
 
-`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`.
+`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`. Кампания: `stage` — текущая/последняя достигнутая игровая стадия 1–6, `finale_reached` — завершение основной последовательности после Stage 6.
 
 Пустые секции сериализуются как `{}`. Поля читаются через `data.get(key, default)`.
 
@@ -138,12 +139,12 @@ delete_save()
 
 ```text
 {
-  "save_version": 2,
-  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1 }, "player": { "money": 0 }, "progression": {}, "world": {}, "girls": {}, "dating": {}, "rivals": {}, "automation": {} }
+  "save_version": 3,
+  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0 }, "progression": {}, "world": {}, "girls": {}, "dating": {}, "rivals": {}, "automation": {} }
 }
 ```
 
-`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, money 0. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Системы и UI читают время через `TimeService`, `GameState.story.stage`, `GameState.player.money`.
+`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Текущий формат — `save_version = 3`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `GameState.player.money`. Игровые действия изменяют money и время только через `ActionService`.
 
 `DateSession.stage` не является `StoryState.stage`. `DateProgressStore` остаётся прогрессом лаборатории свиданий, пока `girls` / `dating` пусты.
 
@@ -171,7 +172,7 @@ advance_time(delta_minutes: int)
 
 Любой положительный промежуток обрабатывается одним вызовом. После успешного продвижения публикуется `time_advanced(delta_minutes, previous_game_time, current_game_time)`. Будущие Economy / Automation / Dating / Story / World считают результат сразу за весь `delta_minutes`.
 
-Игровые действия несут `GameAction.time_cost_minutes`. После успеха действие вызывает `TimeService.advance_time(time_cost_minutes)`. Покупка может стоить `0` и не двигает часы.
+Игровые действия несут `GameAction.time_cost_minutes`. После успеха `ActionService` вызывает `TimeService.advance_time(time_cost_minutes)`. Покупка может стоить `0` и не двигает часы.
 
 `TimeService` API для cooldown'ов на абсолютном времени:
 
@@ -194,6 +195,127 @@ game_minutes_per_real_second
 ```
 
 Накопитель дробной части переводит реальное время в целые игровые минуты и вызывает тот же `advance_time()`. Для текущей 2D-игры `real_time_progression_enabled = false`: время двигают действия. Будущий 3D free roam включает режим (`1` реальная секунда = `1` игровая минута при стартовом коэффициенте `1.0`); фиксированные действия по-прежнему идут через `advance_time(action.time_cost_minutes)`.
+
+## Game Actions
+
+Единый механизм игровых действий для текущей 2D-оболочки, будущего 3D-мира, UI, сюжета, работы, покупок, знакомств, свиданий, соперников и incremental. Presentation не меняет `GameState` напрямую: любое игровое действие описывается как `GameAction` и выполняется через autoload `ActionService`.
+
+```text
+Presentation / UI / 3D
+        ↓
+    GameAction
+        ↓
+   ActionService
+        ↓
+ Requirements
+        ↓
+      Costs
+        ↓
+     Effects
+        ↓
+   TimeService
+        ↓
+    GameState
+```
+
+`GameAction` — статическое описание действия, не часть `GameState`. Definitions живут в `res://game/actions/` (`GameActionCatalog` и typed Resources). `GameState` хранит только изменяемое состояние прохождения.
+
+```text
+id: StringName
+time_cost_minutes: int = 0
+money_cost: int = 0
+requirements: Array[ActionRequirement] = []
+effects: Array[ActionEffect] = []
+```
+
+`id` однозначно идентифицирует действие (`work_mine`, `meet_girl`, `invite_to_date`, `buy_upgrade`, `challenge_rival`, `start_date`, `travel`, `prepare_apartment`).
+
+`ActionRequirement`: `is_met() -> bool`, `get_failure_reason() -> String`. Проверяет текущее прохождение. Первая реализация — `MoneyRequirement(required_money)`: `GameState.player.money >= required_money`, отказ `"Недостаточно денег"`.
+
+`ActionEffect`: `apply() -> void`, `get_description() -> String`. Первая реализация — `MoneyEffect(amount)`: `GameState.player.money += amount` (плюс и минус).
+
+`ActionResult` — ответ Presentation после попытки:
+
+```text
+success: bool
+failure_reason: String
+action_id: StringName
+time_spent_minutes: int
+money_spent: int
+applied_effects: Array[String]
+```
+
+Успех: `success = true`, `failure_reason = ""`. Отказ: `success = false`, `failure_reason` первой непройденной проверки, `time_spent_minutes = 0`, `money_spent = 0`, `applied_effects = []`. `GameState` при отказе не меняется.
+
+Autoload `ActionService`:
+
+```text
+can_execute(action: GameAction) -> bool
+get_failure_reason(action: GameAction) -> String
+execute(action: GameAction) -> ActionResult
+signal action_executed(action_id: StringName, result: ActionResult)
+```
+
+Порядок `execute()`:
+
+```text
+1. Проверить каждый action.requirements
+2. Проверить GameState.player.money >= action.money_cost
+3. Если проверка не прошла — вернуть failed ActionResult, GameState без изменений
+4. Списать money_cost
+5. Применить все ActionEffect
+6. TimeService.advance_time(action.time_cost_minutes)
+7. Вернуть успешный ActionResult и испустить action_executed
+```
+
+`money_cost` — встроенная стандартная стоимость. Нехватка даёт `"Недостаточно денег"`. `time_cost_minutes = 0` не двигает часы и не публикует `time_advanced`. `action_executed` испускается только после успеха.
+
+Тестовые definitions каталога:
+
+| id | time | money_cost | requirements | effects |
+|---|---|---|---|---|
+| `test_wait` | 120 | 0 | — | — |
+| `test_earn_money` | 60 | 0 | — | `MoneyEffect(+100)` |
+| `test_spend_money` | 30 | 50 | — | — |
+| `test_require_money` | 10 | 0 | `MoneyRequirement(100)` | — |
+
+Лабораторные кнопки `+30 MIN` / `+120 MIN` / `+1 DAY` остаются часами через `TimeService.apply_action`. Именованные игровые действия идут только через `ActionService.execute`.
+
+## Story / Stages
+
+Кампания проходит фиксированную последовательность игровых стадий, затем Finale. Условия прохождения каждого Stage задают будущие системы Dating / Girls / Economy / Rivals; сейчас `StageService` отвечает только за сам переход.
+
+```text
+Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6 → Finale
+```
+
+`StoryState` хранит изменяемый прогресс кампании:
+
+```text
+stage: int = 1
+finale_reached: bool = false
+```
+
+`stage` всегда означает текущую или последнюю достигнутую игровую стадию (1–6). После завершения Stage 6 `stage` остаётся 6, а `finale_reached` становится `true`. Определения содержимого Stage (что открывается, какие условия) живут отдельно от `GameState`.
+
+Autoload `StageService` — единственная точка продвижения кампании. Читает и пишет `GameState.story`.
+
+```text
+FIRST_STAGE = 1
+LAST_STAGE = 6
+
+get_current_stage() -> int
+is_finale_reached() -> bool
+complete_current_stage() -> bool
+```
+
+`complete_current_stage()`:
+
+- Stage 1–5: `stage += 1`, сигнал `stage_changed(previous_stage, current_stage)`, вернуть `true`
+- Stage 6 и `finale_reached = false`: `finale_reached = true`, сигнал `finale_reached`, вернуть `true`
+- уже Finale: состояние не менять, вернуть `false`
+
+Будущие системы после своих условий вызывают только `StageService.complete_current_stage()`.
 
 ## Будущие эпизоды и действия
 
@@ -461,7 +583,7 @@ AVAILABLE UNLOCKABLE по-прежнему резервируют Tag и рас�
 
 Разделы: СВИДАНИЕ, ДЕВУШКИ, СЛОЖНОСТЬ ДЕВУШЕК, ТЕГИ, БАЗОВЫЕ ХОДЫ, ОТКРЫВАЕМЫЕ ХОДЫ, СИТУАЦИИ, SECONDARY, МЕСТА, ФОРМАТЫ МЕСТ, НАРЯДЫ, ХАРАКТЕРИСТИКИ, ПРАВИЛА СВИДАНИЯ, БАЛАНС, ТЕСТОВОЕ СОСТОЯНИЕ, ВАЛИДАЦИЯ.
 
-Шапка: GAME TIME (`Day`, `Time`, `Absolute`) из `TimeService`, `stage` / `money` из `GameState`, кнопки «Новая игра», «Сохранить», «Загрузить» и тестовые действия `+30 MIN` / `+120 MIN` / `+1 DAY` через `GameAction.time_cost_minutes`. Экран СВИДАНИЕ показывает день, часы и `stage` / `money`. ТЕСТОВОЕ СОСТОЯНИЕ показывает вычисляемое время и редактирует `stage` / `money`.
+Шапка: GAME TIME (`Day`, `Time`, `Absolute`) из `TimeService`, CAMPAIGN (`Stage`, `Finale`) из `StageService`, `money` из `GameState`, кнопки «Новая игра», «Сохранить», «Загрузить», тестовые действия `+30 MIN` / `+120 MIN` / `+1 DAY` через `GameAction.time_cost_minutes` и `COMPLETE CURRENT STAGE` через `StageService.complete_current_stage()`. Блок GAME ACTIONS запускает definitions каталога через `ActionService.execute`: `WAIT +120 MIN`, `EARN 100`, `SPEND 50`, `REQUIRE 100`; после попытки обновляет money, game time и показывает `ActionResult` (`SUCCESS` / `FAILED`). Экран СВИДАНИЕ показывает день, часы, `stage` и `money`. ТЕСТОВОЕ СОСТОЯНИЕ показывает вычисляемое время и кампанию, редактирует `money`. Кампанию в лаборатории двигает только `complete_current_stage()`, без свободного SpinBox Stage.
 
 Редактор: список, поиск, создать, дублировать, редактировать, удалить, сохранить, отменить. Draft-копия Resource. Save: validate → `.tres` → catalog reload → статус. Удаление показывает зависимости.
 
@@ -522,4 +644,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `money` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`.
+Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе).

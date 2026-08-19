@@ -104,21 +104,32 @@ func _time_service() -> Variant:
 	return node
 
 
+func _stage_service() -> Variant:
+	var node: Node = get_node_or_null("/root/StageService")
+	if not is_instance_valid(node):
+		push_error("StageService autoload missing")
+	return node
+
+
 func _build_launch() -> void:
 	_host.add_child(LabUi.heading("Запуск свидания"))
 	var gs: Variant = _game_state()
 	var clock: Variant = _time_service()
+	var stages: Variant = _stage_service()
+	var stage: int = gs.story.stage
+	if stages != null:
+		stage = int(stages.get_current_stage())
 	var run := Label.new()
 	if clock != null:
 		run.text = "День %d · %02d:%02d · Stage %d · Деньги %d" % [
 			clock.get_day(),
 			clock.get_hour(),
 			clock.get_minute(),
-			gs.story.stage,
+			stage,
 			gs.player.money,
 		]
 	else:
-		run.text = "Stage %d · Деньги %d" % [gs.story.stage, gs.player.money]
+		run.text = "Stage %d · Деньги %d" % [stage, gs.player.money]
 	_host.add_child(run)
 	_host.add_child(_girl_card())
 	var girl_sel := OptionButton.new()
