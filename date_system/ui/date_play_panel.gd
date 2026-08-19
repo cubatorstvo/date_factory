@@ -391,6 +391,14 @@ func _reset_all() -> void:
 func _build_runner() -> void:
 	var session: DateSession = _engine.get_session_state()
 	var view: DateEpisodeView = _engine.get_current_episode()
+	if _playthrough:
+		var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id)
+		var location: DateLocation = _engine.catalog().find_location(session.location_id)
+		var girl_name: String = girl.display_name if girl != null else String(session.girl_id)
+		var location_name: String = location.display_name if location != null else String(session.location_id)
+		var active := Label.new()
+		active.text = "Active girl: %s\nLocation: %s" % [girl_name, location_name]
+		_host.add_child(active)
 	_host.add_child(LabUi.heading("Свидание"))
 	var meta := Label.new()
 	meta.text = "Фаза: %s    Эпизод: %d    Seed: %d" % [DateTypes.phase_name(session.current_phase), session.current_episode_index + 1, session.seed]

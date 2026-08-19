@@ -33,6 +33,7 @@ func run_all() -> PackedStringArray:
 	_test_world()
 	_test_girls()
 	_test_dating_and_rating()
+	_test_date_venue_choice()
 	_test_rivals()
 	return _failures
 
@@ -1079,6 +1080,18 @@ func _rating_service() -> Variant:
 	if not is_instance_valid(node):
 		return null
 	return node
+
+
+func _active_session_location(dating: Variant) -> StringName:
+	if dating == null:
+		return &""
+	var engine: DateEngine = dating.get_date_engine() as DateEngine
+	if engine == null:
+		return &""
+	var session: DateSession = engine.get_session_state()
+	if session == null:
+		return &""
+	return session.location_id
 
 
 func _dating_service() -> Variant:
@@ -2143,7 +2156,7 @@ func _test_dating_and_rating() -> void:
 	sm.new_game()
 	girls.give_contact(alina_id)
 	_ok("start date ready", dating.can_start_date(alina_id))
-	var start_action: GameAction = dating.create_start_date_action(alina_id)
+	var start_action: GameAction = dating.create_start_date_action(alina_id, &"cafe")
 	_ok("start action id", start_action.id == StringName("start_date_alina"))
 	_ok("start action no time", start_action.time_cost_minutes == 0)
 	_ok("start action no money", start_action.money_cost == 0)
@@ -2151,12 +2164,15 @@ func _test_dating_and_rating() -> void:
 	_ok("start date success", start_ok.success)
 	_ok("has active date", dating.has_active_date())
 	_ok("active girl id", dating.get_active_girl_id() == alina_id)
+	_ok("active location id", dating.get_active_location_id() == &"cafe")
 	_ok("active_date girl", String(gs.dating.active_date.get("girl_id", "")) == String(alina_id))
+	_ok("active_date location", String(gs.dating.active_date.get("location_id", "")) == "cafe")
+	_ok("session location cafe", _active_session_location(dating) == &"cafe")
 	sm.new_game()
 	girls.discover_girl(alina_id)
 	_ok("start without contact", dating.can_start_date(alina_id) == false)
 	_ok("start without contact reason", dating.get_start_date_failure_reason(alina_id) == "У вас нет контакта этой девушки")
-	var no_contact: ActionResult = actions.execute(dating.create_start_date_action(alina_id))
+	var no_contact: ActionResult = actions.execute(dating.create_start_date_action(alina_id, &"cafe"))
 	_ok("start without contact fail", no_contact.success == false)
 	sm.new_game()
 	girls.give_contact(alina_id)
@@ -2172,7 +2188,7 @@ func _test_dating_and_rating() -> void:
 	girls.give_contact(alina_id)
 	girls.get_state(alina_id).relationship = 1
 	gs.flow.game_time_minutes = 1000
-	_ok("complete start", dating.start_date(alina_id))
+	_ok("complete start", dating.start_date(alina_id, &"cafe"))
 	var date_result := DateResult.new()
 	date_result.girl_id = alina_id
 	date_result.relationship_delta = 1
@@ -2192,7 +2208,7 @@ func _test_dating_and_rating() -> void:
 	sm.delete_save()
 	sm.new_game()
 	girls.give_contact(alina_id)
-	_ok("knowledge start", dating.start_date(alina_id))
+	_ok("knowledge start", dating.start_date(alina_id, &"cafe"))
 	var knowledge_engine: DateEngine = dating.get_date_engine()
 	_ok("knowledge engine", knowledge_engine != null)
 	var revealed_id: StringName = &""
@@ -2224,7 +2240,7 @@ func _test_dating_and_rating() -> void:
 	var loaded_state: GirlState = girls.get_state(alina_id)
 	_ok("knowledge loaded", loaded_state != null and (loaded_state.revealed_positive_tag_ids.has(revealed_id) or loaded_state.revealed_negative_tag_ids.has(revealed_id)))
 	girls.get_state(alina_id).next_date_available_at = 0
-	_ok("knowledge second start", dating.start_date(alina_id))
+	_ok("knowledge second start", dating.start_date(alina_id, &"cafe"))
 	var second_engine: DateEngine = dating.get_date_engine()
 	var second_progress: GirlProgress = second_engine.girl_progress() if second_engine != null else null
 	_ok("knowledge next date", second_progress != null and second_progress.tag_knowledge(revealed_id) == first_knowledge)
@@ -2233,7 +2249,7 @@ func _test_dating_and_rating() -> void:
 	girls.give_contact(alina_id)
 	girls.get_state(alina_id).relationship = 4
 	gs.flow.game_time_minutes = 0
-	_ok("cycle start", dating.start_date(alina_id))
+	_ok("cycle start", dating.start_date(alina_id, &"cafe"))
 	var cycle_result := DateResult.new()
 	cycle_result.girl_id = alina_id
 	cycle_result.relationship_delta = 1
@@ -2253,13 +2269,14 @@ func _test_dating_and_rating() -> void:
 	sm.delete_save()
 	sm.new_game()
 	girls.give_contact(alina_id)
-	_ok("active start", dating.start_date(alina_id))
+	_ok("active start", dating.start_date(alina_id, &"cafe"))
 	sm.save_game()
 	sm.new_game()
 	_ok("active reset new game", dating.has_active_date() == false)
 	_ok("load active save", sm.load_game())
 	_ok("loaded active date", dating.has_active_date())
 	_ok("loaded active girl", dating.get_active_girl_id() == alina_id)
+	_ok("loaded active location", dating.get_active_location_id() == &"cafe")
 	sm.delete_save()
 	var folder: String = sm.save_path.get_base_dir()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
@@ -2331,9 +2348,18 @@ func _test_dating_and_rating() -> void:
 	_ok("sim dates alina", dates_text.contains("АЛИНА"))
 	_ok("sim dates relationship", dates_text.contains("Отношения: 0 / 5"))
 	_ok("sim dates invite", dates_text.contains("ПРИГЛАСИТЬ"))
-	var invite: ActionResult = sim.invite_girl(alina_id)
+	sim.invite_girl(alina_id)
+	var picker_text: String = sim.get_city_body_text()
+	_ok("sim dates picker", picker_text.contains("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
+	_ok("sim dates cafe", picker_text.contains("Кафе"))
+	_ok("sim dates preferred", picker_text.contains("Предпочитаемое место"))
+	sim.select_date_location(&"cafe")
+	var selected_text: String = sim.get_city_body_text()
+	_ok("sim dates selected", selected_text.contains("Место:"))
+	var invite: ActionResult = sim.start_selected_date()
 	_ok("sim invite success", invite.success)
 	_ok("sim invite active", dating.has_active_date())
+	_ok("sim invite location", dating.get_active_location_id() == &"cafe")
 	var overlay_open: bool = false
 	for child in sim.get_children():
 		if child is DatePlayPanel:
@@ -2346,6 +2372,78 @@ func _test_dating_and_rating() -> void:
 					break
 	_ok("sim date overlay", overlay_open)
 	sim.queue_free()
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_date_venue_choice() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var girls: Variant = _girls_service()
+	var dating: Variant = _dating_service()
+	var actions: Variant = _action_service()
+	_ok("venue GameState", gs != null)
+	_ok("venue SaveManager", sm != null)
+	_ok("venue GirlsService", girls != null)
+	_ok("venue DatingService", dating != null)
+	_ok("venue ActionService", actions != null)
+	if gs == null or sm == null or girls == null or dating == null or actions == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/date_venue_choice.json"
+	sm.delete_save()
+	sm.new_game()
+	var alina_id: StringName = GirlCatalog.ID_ALINA
+	var location_a: StringName = &"cafe"
+	var location_b: StringName = &"park"
+	var locked_id: StringName = &"locked_test_venue"
+	var definition: GirlDefinition = girls.get_definition(alina_id)
+	_ok("venue world location cafe", definition != null and definition.location_id == LocationCatalog.ID_CAFE)
+	girls.give_contact(alina_id)
+	var locations: Array = dating.get_available_date_locations(alina_id)
+	_ok("venue available list", locations.size() > 1)
+	_ok("venue cafe open", dating.is_date_location_available(alina_id, location_a))
+	_ok("venue park open", dating.is_date_location_available(alina_id, location_b))
+	_ok("venue locked closed", dating.is_date_location_available(alina_id, locked_id) == false)
+	_ok("venue park preferred", dating.is_preferred_date_location(alina_id, location_b))
+	_ok("venue museum preferred", dating.is_preferred_date_location(alina_id, &"museum"))
+	_ok("venue cafe not preferred", dating.is_preferred_date_location(alina_id, location_a) == false)
+	_ok("venue arcade not preferred", dating.is_preferred_date_location(alina_id, &"arcade") == false)
+	_ok("venue park known", dating.is_date_location_preference_known(alina_id, location_b))
+	_ok("venue cafe unknown preference", dating.is_date_location_preference_known(alina_id, location_a) == false)
+	var locked_requirement := DateLocationAvailableRequirement.new()
+	locked_requirement.girl_id = alina_id
+	locked_requirement.date_location_id = locked_id
+	_ok("venue locked requirement", locked_requirement.is_met() == false)
+	_ok("venue locked reason", locked_requirement.get_failure_reason() == "Это место сейчас недоступно")
+	var locked_action: GameAction = dating.create_start_date_action(alina_id, locked_id)
+	var locked_result: ActionResult = actions.execute(locked_action)
+	_ok("venue locked action fail", locked_result.success == false)
+	_ok("venue locked no active", dating.has_active_date() == false)
+	var start_a: GameAction = dating.create_start_date_action(alina_id, location_a)
+	var result_a: ActionResult = actions.execute(start_a)
+	_ok("venue A start", result_a.success)
+	_ok("venue A active girl", dating.get_active_girl_id() == alina_id)
+	_ok("venue A active location", dating.get_active_location_id() == location_a)
+	_ok("venue A session", _active_session_location(dating) == location_a)
+	var complete_a := DateResult.new()
+	complete_a.girl_id = alina_id
+	complete_a.relationship_delta = 0
+	complete_a.duration_minutes = 120
+	_ok("venue A complete", dating.complete_date(complete_a))
+	girls.get_state(alina_id).next_date_available_at = 0
+	_ok("venue B start", dating.start_date(alina_id, location_b))
+	_ok("venue B independent", _active_session_location(dating) == location_b)
+	_ok("venue B not world cafe", _active_session_location(dating) != definition.location_id)
+	sm.save_game()
+	sm.new_game()
+	_ok("venue reset new game", dating.has_active_date() == false)
+	_ok("venue load", sm.load_game())
+	_ok("venue loaded girl", dating.get_active_girl_id() == alina_id)
+	_ok("venue loaded location", dating.get_active_location_id() == location_b)
+	_ok("venue restore", dating.restore_active_date())
+	_ok("venue restored session", _active_session_location(dating) == location_b)
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()

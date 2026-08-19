@@ -12,6 +12,7 @@ func to_dict() -> Dictionary:
 	return {
 		"active_date": {
 			"girl_id": String(active_date.get("girl_id", "")),
+			"location_id": String(active_date.get("location_id", "")),
 			"started_at_game_time": int(active_date.get("started_at_game_time", 0)),
 		},
 	}
@@ -28,5 +29,6 @@ func from_dict(data: Dictionary) -> void:
 		return
 	active_date = {
 		"girl_id": StringName(girl_text),
+		"location_id": StringName(str(entry.get("location_id", ""))),
 		"started_at_game_time": int(entry.get("started_at_game_time", 0)),
 	}

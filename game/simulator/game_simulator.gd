@@ -34,6 +34,8 @@ var _world_dev_option: OptionButton
 var _refreshing: bool = false
 var _date_overlay: DatePlayPanel
 var _date_overlay_layer: CanvasLayer
+var _invite_girl_id: StringName = &""
+var _selected_date_location_id: StringName = &""
 
 
 func _ready() -> void:
@@ -79,6 +81,7 @@ func get_current_section() -> String:
 
 func start_new_game() -> void:
 	_close_date_overlay()
+	_clear_date_invite()
 	var sm: Variant = _save_manager()
 	if sm == null:
 		return
@@ -107,6 +110,7 @@ func load_playthrough() -> void:
 	if sm.load_game():
 		_last_result_text = ""
 		_close_date_overlay()
+		_clear_date_invite()
 		_restore_active_date_overlay()
 		refresh()
 		return
@@ -178,7 +182,18 @@ func meet_girl(girl_id: StringName) -> ActionResult:
 	return result
 
 
-func invite_girl(girl_id: StringName) -> ActionResult:
+func invite_girl(girl_id: StringName) -> void:
+	_invite_girl_id = girl_id
+	_selected_date_location_id = &""
+	show_section("dates")
+
+
+func select_date_location(date_location_id: StringName) -> void:
+	_selected_date_location_id = date_location_id
+	refresh()
+
+
+func start_selected_date() -> ActionResult:
 	var dating: Variant = _dating_service()
 	var actions: Variant = _action_service()
 	var result := ActionResult.new()
@@ -187,10 +202,22 @@ func invite_girl(girl_id: StringName) -> ActionResult:
 		result.failure_reason = "DatingService autoload missing"
 		_on_action_resolved(result)
 		return result
-	var action: GameAction = dating.create_start_date_action(girl_id)
+	if _invite_girl_id == &"" or _selected_date_location_id == &"":
+		result.success = false
+		result.failure_reason = "Это место сейчас недоступно"
+		_on_action_resolved(result)
+		return result
+	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id)
 	result = actions.execute(action)
+	if result.success:
+		_clear_date_invite()
 	_on_action_resolved(result)
 	return result
+
+
+func cancel_date_invite() -> void:
+	_clear_date_invite()
+	refresh()
 
 
 func meet_rival(rival_id: StringName) -> ActionResult:
@@ -782,6 +809,11 @@ func _build_dates() -> Control:
 	box.add_child(LabUi.heading("СВИДАНИЯ"))
 	var girls: Variant = _girls_service()
 	var dating: Variant = _dating_service()
+	if dating != null and bool(dating.has_active_date()):
+		box.add_child(_build_active_date_dev(girls, dating))
+	if _invite_girl_id != &"":
+		box.add_child(_build_date_location_picker(girls, dating))
+		return box
 	var contacted: Array[GirlDefinition] = []
 	if girls != null:
 		contacted = girls.get_contacted_girls()
@@ -817,21 +849,20 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 		box.add_child(done)
 		return box
 	var can_start: bool = dating != null and bool(dating.can_start_date(definition.id))
+	var invite_btn: Button = LabUi.button("ПРИГЛАСИТЬ")
+	invite_btn.disabled = not can_start
 	if can_start:
-		var action: GameAction = dating.create_start_date_action(definition.id)
-		_add_action_button(box, action, "ПРИГЛАСИТЬ", false, false)
-		return box
-	var remaining: int = 0
-	if dating != null:
-		remaining = int(dating.get_date_cooldown_remaining_minutes(definition.id))
-	if remaining > 0:
-		var wait := Label.new()
-		wait.text = "Следующее свидание через %s" % _format_cooldown(remaining)
-		wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		box.add_child(wait)
-	if dating != null:
-		var wait_action: GameAction = dating.create_start_date_action(definition.id)
-		_add_action_button(box, wait_action, "ПРИГЛАСИТЬ", false, false)
+		invite_btn.pressed.connect(invite_girl.bind(definition.id))
+	box.add_child(invite_btn)
+	if not can_start:
+		var remaining: int = 0
+		if dating != null:
+			remaining = int(dating.get_date_cooldown_remaining_minutes(definition.id))
+		if remaining > 0:
+			var wait := Label.new()
+			wait.text = "Следующее свидание через %s" % _format_cooldown(remaining)
+			wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			box.add_child(wait)
 	return box
 
 
@@ -857,6 +888,137 @@ func _build_placeholder(title: String, body: String) -> Control:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(label)
 	return box
+
+
+func _build_active_date_dev(girls: Variant, dating: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var girl_id: StringName = dating.get_active_girl_id()
+	var location_id: StringName = dating.get_active_location_id()
+	var girl_name: String = String(girl_id)
+	if girls != null:
+		var definition: GirlDefinition = girls.get_definition(girl_id)
+		if definition != null:
+			girl_name = definition.display_name
+	var location_name: String = String(location_id)
+	var catalog_service: DateCatalogService = dating.get_catalog_service()
+	if catalog_service != null and catalog_service.catalog != null:
+		var location: DateLocation = catalog_service.catalog.find_location(location_id)
+		if location != null:
+			location_name = location.display_name
+	var girl_label := Label.new()
+	girl_label.text = "Active girl: %s" % girl_name
+	box.add_child(girl_label)
+	var location_label := Label.new()
+	location_label.text = "Location: %s" % location_name
+	box.add_child(location_label)
+	return box
+
+
+func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	var girl_name: String = String(_invite_girl_id)
+	if girls != null:
+		var definition: GirlDefinition = girls.get_definition(_invite_girl_id)
+		if definition != null:
+			girl_name = definition.display_name
+	var name_label := Label.new()
+	name_label.text = girl_name.to_upper()
+	box.add_child(name_label)
+	box.add_child(LabUi.heading("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
+	var locations: Array = []
+	if dating != null:
+		locations = dating.get_available_date_locations(_invite_girl_id)
+	for item in locations:
+		var location: DateLocation = item as DateLocation
+		if location == null:
+			continue
+		var available: bool = bool(dating.is_date_location_available(_invite_girl_id, location.id))
+		box.add_child(_build_date_location_card(location, dating, available))
+	if _selected_date_location_id != &"":
+		var selected: DateLocation = null
+		if dating != null:
+			var catalog_service: DateCatalogService = dating.get_catalog_service()
+			if catalog_service != null and catalog_service.catalog != null:
+				selected = catalog_service.catalog.find_location(_selected_date_location_id)
+		var selected_title := Label.new()
+		selected_title.text = "Место:"
+		box.add_child(selected_title)
+		var selected_name := Label.new()
+		if selected != null:
+			selected_name.text = selected.display_name
+		else:
+			selected_name.text = String(_selected_date_location_id)
+		box.add_child(selected_name)
+		if dating != null:
+			var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id)
+			_add_action_button(box, action, "НАЧАТЬ СВИДАНИЕ", false, false)
+	var back_btn: Button = LabUi.button("НАЗАД")
+	back_btn.pressed.connect(cancel_date_invite)
+	box.add_child(back_btn)
+	return box
+
+
+func _build_date_location_card(location: DateLocation, dating: Variant, available: bool) -> Control:
+	var panel := PanelContainer.new()
+	var preferred: bool = dating != null and bool(dating.is_preferred_date_location(_invite_girl_id, location.id))
+	var known: bool = dating != null and bool(dating.is_date_location_preference_known(_invite_girl_id, location.id))
+	var highlight: bool = available and preferred and known
+	if highlight:
+		panel.add_theme_stylebox_override("panel", _preferred_location_style())
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	panel.add_child(box)
+	var title := Label.new()
+	if available:
+		title.text = location.display_name
+	else:
+		title.text = "%s 🔒" % location.display_name
+	box.add_child(title)
+	var details := Label.new()
+	details.text = _date_location_details(location)
+	details.add_theme_color_override("font_color", LabUi.MUTED)
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(details)
+	if highlight:
+		var preferred_label := Label.new()
+		preferred_label.text = "Предпочитаемое место"
+		preferred_label.add_theme_color_override("font_color", LabUi.POSITIVE)
+		box.add_child(preferred_label)
+	var choose_btn: Button = LabUi.button(location.display_name)
+	choose_btn.disabled = not available
+	if available:
+		choose_btn.pressed.connect(select_date_location.bind(location.id))
+	box.add_child(choose_btn)
+	return panel
+
+
+func _date_location_details(location: DateLocation) -> String:
+	var lines := PackedStringArray()
+	if location.uses_apartment_quality:
+		lines.append("Качество квартиры")
+	else:
+		lines.append("Качество: %d" % location.base_quality_bonus)
+	if location.uses_apartment_preparation:
+		lines.append("Подготовка квартиры")
+	return "\n".join(lines)
+
+
+func _preferred_location_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.18, 0.32, 0.22)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	return style
+
+
+func _clear_date_invite() -> void:
+	_invite_girl_id = &""
+	_selected_date_location_id = &""
 
 
 func _add_action_button(host: Node, action: GameAction, label: String, show_title: bool = true, show_meta: bool = true) -> void:
@@ -1108,6 +1270,7 @@ func _on_action_executed(_action_id: StringName, result: ActionResult) -> void:
 func _on_action_resolved(result: ActionResult) -> void:
 	_last_result_text = format_action_result(result)
 	if result != null and result.success and String(result.action_id).begins_with("start_date_"):
+		_clear_date_invite()
 		_open_date_overlay()
 	refresh()
 
