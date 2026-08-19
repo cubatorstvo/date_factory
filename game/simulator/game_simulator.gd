@@ -6,6 +6,7 @@ const SECTIONS: Array[Array] = [
 	["work", "Работа"],
 	["city", "Город"],
 	["girls", "Девушки"],
+	["rivals", "Соперники"],
 	["dates", "Свидания"],
 	["apartment", "Квартира"],
 	["progression", "Прокачка"],
@@ -51,7 +52,7 @@ func refresh() -> void:
 	if _refreshing:
 		return
 	_refreshing = true
-	if _section == "city" or _section == "girls" or _section == "dates":
+	if _section == "city" or _section == "girls" or _section == "dates" or _section == "rivals":
 		_rebuild_section()
 	_refresh_hud()
 	_refresh_home()
@@ -192,6 +193,36 @@ func invite_girl(girl_id: StringName) -> ActionResult:
 	return result
 
 
+func meet_rival(rival_id: StringName) -> ActionResult:
+	var rivals: Variant = _rivals_service()
+	var actions: Variant = _action_service()
+	var result := ActionResult.new()
+	if rivals == null or actions == null:
+		result.success = false
+		result.failure_reason = "RivalsService autoload missing"
+		_on_action_resolved(result)
+		return result
+	var action: GameAction = rivals.create_meet_rival_action(rival_id)
+	result = actions.execute(action)
+	_on_action_resolved(result)
+	return result
+
+
+func start_competition(competition_id: StringName) -> ActionResult:
+	var competitions: Variant = _competition_service()
+	var actions: Variant = _action_service()
+	var result := ActionResult.new()
+	if competitions == null or actions == null:
+		result.success = false
+		result.failure_reason = "CompetitionService autoload missing"
+		_on_action_resolved(result)
+		return result
+	var action: GameAction = competitions.create_competition_action(competition_id)
+	result = actions.execute(action)
+	_on_action_resolved(result)
+	return result
+
+
 func unlock_selected_world_location() -> bool:
 	var world: Variant = _world_service()
 	if world == null or _world_dev_option == null:
@@ -268,6 +299,15 @@ func format_action_result(result: ActionResult) -> String:
 		if result.time_spent_minutes > 0:
 			meet_lines.append("Прошло времени: %d минут." % result.time_spent_minutes)
 		return "\n".join(meet_lines)
+	if String(result.action_id).begins_with("competition_"):
+		var competition_lines := PackedStringArray()
+		for description in result.applied_effects:
+			for line in description.split("\n"):
+				if not line.is_empty():
+					competition_lines.append(line)
+		if result.time_spent_minutes > 0:
+			competition_lines.append("Прошло времени: %d минут." % result.time_spent_minutes)
+		return "\n".join(competition_lines)
 	var lines := PackedStringArray(["Успешно."])
 	for description in result.applied_effects:
 		lines.append(_format_effect(description))
@@ -400,6 +440,8 @@ func _rebuild_section() -> void:
 			_section_host.add_child(_build_city())
 		"girls":
 			_section_host.add_child(_build_girls())
+		"rivals":
+			_section_host.add_child(_build_rivals())
 		"dates":
 			_section_host.add_child(_build_dates())
 		"apartment":
@@ -506,14 +548,39 @@ func _build_city_people() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	var girls: Variant = _girls_service()
-	var present: Array[GirlDefinition] = []
+	var rivals: Variant = _rivals_service()
+	var present_girls: Array[GirlDefinition] = []
+	var present_rivals: Array[RivalDefinition] = []
 	if girls != null:
-		present = girls.get_girls_at_current_location()
-	if present.is_empty():
+		present_girls = girls.get_girls_at_current_location()
+	if rivals != null:
+		present_rivals = rivals.get_rivals_at_current_location()
+	if present_girls.is_empty() and present_rivals.is_empty():
 		return box
 	box.add_child(LabUi.heading("ЛЮДИ"))
-	for definition in present:
+	for definition in present_girls:
 		box.add_child(_build_city_girl_row(definition, girls))
+	for definition in present_rivals:
+		box.add_child(_build_city_rival_row(definition, rivals))
+	return box
+
+
+func _build_city_rival_row(definition: RivalDefinition, rivals: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var name_label := Label.new()
+	name_label.text = definition.display_name
+	box.add_child(name_label)
+	var discovered: bool = rivals != null and bool(rivals.is_discovered(definition.id))
+	if discovered:
+		var status := Label.new()
+		var defeated: bool = bool(rivals.is_defeated(definition.id))
+		status.text = "Статус: %s" % ("Побеждён" if defeated else "Не побеждён")
+		box.add_child(status)
+		return box
+	if rivals != null:
+		var action: GameAction = rivals.create_meet_rival_action(definition.id)
+		_add_action_button(box, action, "ВСТРЕТИТЬ", false, false)
 	return box
 
 
@@ -632,6 +699,81 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 		completed.text = "Линия завершена"
 		box.add_child(completed)
 	return box
+
+
+func _build_rivals() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("СОПЕРНИКИ"))
+	var rivals: Variant = _rivals_service()
+	var competitions: Variant = _competition_service()
+	var discovered: Array[RivalDefinition] = []
+	if rivals != null:
+		discovered = rivals.get_discovered_rivals()
+	if discovered.is_empty():
+		var empty := Label.new()
+		empty.text = "Пока нет знакомых соперников."
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(empty)
+		return box
+	for definition in discovered:
+		box.add_child(_build_discovered_rival_card(definition, rivals, competitions))
+	return box
+
+
+func _build_discovered_rival_card(definition: RivalDefinition, rivals: Variant, competitions: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var name_label := Label.new()
+	name_label.text = definition.display_name.to_upper()
+	box.add_child(name_label)
+	var location_label := Label.new()
+	location_label.text = "Локация: %s" % _location_display_name(definition.location_id)
+	box.add_child(location_label)
+	var defeated: bool = rivals != null and bool(rivals.is_defeated(definition.id))
+	var status := Label.new()
+	status.text = "Статус: %s" % ("Побеждён" if defeated else "Не побеждён")
+	box.add_child(status)
+	var rival_competitions: Array[CompetitionDefinition] = []
+	if competitions != null:
+		rival_competitions = competitions.get_competitions_for_rival(definition.id)
+	if rival_competitions.is_empty():
+		return box
+	box.add_child(LabUi.heading("СОРЕВНОВАНИЯ"))
+	for competition in rival_competitions:
+		box.add_child(_build_rival_competition_row(competition, defeated, competitions))
+	return box
+
+
+func _build_rival_competition_row(competition: CompetitionDefinition, defeated: bool, competitions: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var title := Label.new()
+	title.text = competition.display_name
+	box.add_child(title)
+	var time_label := Label.new()
+	time_label.text = "Время: %d минут" % competition.time_cost_minutes
+	box.add_child(time_label)
+	if defeated:
+		var done := Label.new()
+		done.text = "Завершено"
+		box.add_child(done)
+		return box
+	if competitions != null:
+		var action: GameAction = competitions.create_competition_action(competition.id)
+		_add_action_button(box, action, "БРОСИТЬ ВЫЗОВ", false, false)
+	return box
+
+
+func _location_display_name(location_id: StringName) -> String:
+	var world: Variant = _world_service()
+	if world != null:
+		var catalog: LocationCatalog = world.get_catalog()
+		if catalog != null:
+			var location: LocationDefinition = catalog.get_location(location_id)
+			if location != null:
+				return location.display_name
+	return String(location_id)
 
 
 func _build_dates() -> Control:
@@ -824,6 +966,14 @@ func _connect_core_signals() -> void:
 		dating.date_started.connect(_on_date_started)
 	if dating != null and not dating.date_completed.is_connected(_on_date_completed):
 		dating.date_completed.connect(_on_date_completed)
+	var rivals: Variant = _rivals_service()
+	if rivals != null and not rivals.rival_discovered.is_connected(_on_rival_discovered):
+		rivals.rival_discovered.connect(_on_rival_discovered)
+	if rivals != null and not rivals.rival_defeated.is_connected(_on_rival_defeated):
+		rivals.rival_defeated.connect(_on_rival_defeated)
+	var competitions: Variant = _competition_service()
+	if competitions != null and not competitions.competition_completed.is_connected(_on_competition_completed):
+		competitions.competition_completed.connect(_on_competition_completed)
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
@@ -878,6 +1028,18 @@ func _on_date_started(_girl_id: StringName) -> void:
 
 
 func _on_date_completed(_girl_id: StringName, _relationship_delta: int, _current_relationship: int) -> void:
+	refresh()
+
+
+func _on_rival_discovered(_rival_id: StringName) -> void:
+	refresh()
+
+
+func _on_rival_defeated(_rival_id: StringName) -> void:
+	refresh()
+
+
+func _on_competition_completed(_competition_id: StringName, _rival_id: StringName, _won: bool) -> void:
 	refresh()
 
 
@@ -1114,6 +1276,20 @@ func _rating_service() -> Variant:
 
 func _dating_service() -> Variant:
 	var node: Node = get_node_or_null("/root/DatingService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _rivals_service() -> Variant:
+	var node: Node = get_node_or_null("/root/RivalsService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _competition_service() -> Variant:
+	var node: Node = get_node_or_null("/root/CompetitionService")
 	if not is_instance_valid(node):
 		return null
 	return node

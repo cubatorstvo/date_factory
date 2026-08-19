@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 8
+const SAVE_VERSION: int = 9
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -93,6 +93,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v6_rating(migrated)
 	if from_version < 8:
 		migrated = _migrate_v7_date_knowledge(migrated)
+	if from_version < 9:
+		migrated = _migrate_v8_rivals(migrated)
 	return migrated
 
 
@@ -208,4 +210,16 @@ func _migrate_v7_date_knowledge(state_data: Dictionary) -> Dictionary:
 		by_id[girl_key] = girl
 	girls["girls_by_id"] = by_id
 	migrated["girls"] = girls
+	return migrated
+
+
+func _migrate_v8_rivals(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var rivals_value: Variant = migrated.get("rivals", {})
+	var rivals: Dictionary = {}
+	if rivals_value is Dictionary:
+		rivals = rivals_value
+	if not rivals.has("rivals_by_id"):
+		rivals["rivals_by_id"] = {}
+	migrated["rivals"] = rivals
 	return migrated

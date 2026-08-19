@@ -33,6 +33,7 @@ func run_all() -> PackedStringArray:
 	_test_world()
 	_test_girls()
 	_test_dating_and_rating()
+	_test_rivals()
 	return _failures
 
 
@@ -1090,6 +1091,26 @@ func _dating_service() -> Variant:
 	return node
 
 
+func _rivals_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("RivalsService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _competition_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("CompetitionService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
 func _assert_clock(label: String, clock: Variant, minutes: int, day: int, hour: int, minute: int) -> void:
 	_ok("%s game_time_minutes" % label, clock.get_game_time_minutes() == minutes)
 	_ok("%s day" % label, clock.get_day() == day)
@@ -1124,6 +1145,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game start unlocked cafe", gs.world.has_unlocked(LocationCatalog.ID_CAFE))
 	_ok("new_game restaurant locked", not gs.world.has_unlocked(LocationCatalog.ID_RESTAURANT))
 	_ok("new_game girls empty", gs.girls.girls_by_id.is_empty())
+	_ok("new_game rivals empty", gs.rivals.rivals_by_id.is_empty())
 	gs.flow.game_time_minutes = 8640
 	gs.story.stage = 3
 	gs.player.money = 12345
@@ -1136,7 +1158,7 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 8", int(root.get("save_version", 0)) == 8)
+	_ok("save_version == 9", int(root.get("save_version", 0)) == 9)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -2327,3 +2349,207 @@ func _test_dating_and_rating() -> void:
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
+
+
+func _test_rivals() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var world: Variant = _world_service()
+	var rivals: Variant = _rivals_service()
+	var competitions: Variant = _competition_service()
+	var actions: Variant = _action_service()
+	_ok("rivals GameState", gs != null)
+	_ok("rivals SaveManager", sm != null)
+	_ok("rivals TimeService", clock != null)
+	_ok("rivals WorldService", world != null)
+	_ok("rivals RivalsService", rivals != null)
+	_ok("rivals CompetitionService", competitions != null)
+	_ok("rivals ActionService", actions != null)
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	_ok("rivals tree", tree != null and tree.root != null)
+	if gs == null or sm == null or clock == null or world == null or rivals == null or competitions == null or actions == null or tree == null or tree.root == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/rivals_round_trip.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	competitions.set_forced_won(null)
+	sm.new_game()
+	var boris_id: StringName = RivalCatalog.ID_BORIS
+	var competition_id: StringName = CompetitionCatalog.ID_BASIC
+	var boris_def: RivalDefinition = rivals.get_definition(boris_id)
+	var competition_def: CompetitionDefinition = competitions.get_catalog().get_competition(competition_id)
+	_ok("boris definition", boris_def != null and boris_def.display_name == "Борис")
+	_ok("boris location city", boris_def != null and boris_def.location_id == LocationCatalog.ID_CITY_CENTER)
+	_ok("basic competition", competition_def != null and competition_def.rival_id == boris_id)
+	_ok("basic time 60", competition_def != null and competition_def.time_cost_minutes == 60)
+	_ok("basic chance 0.5", competition_def != null and is_equal_approx(competition_def.base_win_chance, 0.5))
+	var default_state := RivalState.new()
+	_ok("default discovered false", default_state.discovered == false)
+	_ok("default defeated false", default_state.defeated == false)
+	var created: RivalState = rivals.get_state(boris_id)
+	_ok("created rival defaults", created != null and created.discovered == false and created.defeated == false)
+	_ok("created rival stored", gs.rivals.rivals_by_id.has(boris_id))
+	var discovered_events: Array = []
+	var on_discovered := func(rival_id: StringName) -> void:
+		discovered_events.append(rival_id)
+	rivals.rival_discovered.connect(on_discovered)
+	_ok("discover first", rivals.discover_rival(boris_id))
+	_ok("is_discovered", rivals.is_discovered(boris_id))
+	_ok("discover defeated false", rivals.is_defeated(boris_id) == false)
+	_ok("discover signal once", discovered_events.size() == 1)
+	_ok("discover repeat false", rivals.discover_rival(boris_id) == false)
+	_ok("discover signal still once", discovered_events.size() == 1)
+	rivals.rival_discovered.disconnect(on_discovered)
+	sm.new_game()
+	var defeated_events: Array = []
+	var on_defeated := func(rival_id: StringName) -> void:
+		defeated_events.append(rival_id)
+	rivals.rival_defeated.connect(on_defeated)
+	_ok("defeat first", rivals.defeat_rival(boris_id))
+	_ok("defeat discovered", rivals.is_discovered(boris_id))
+	_ok("is_defeated", rivals.is_defeated(boris_id))
+	_ok("defeat signal once", defeated_events.size() == 1)
+	_ok("defeat repeat false", rivals.defeat_rival(boris_id) == false)
+	_ok("defeat still true", rivals.is_defeated(boris_id))
+	_ok("defeat signal still once", defeated_events.size() == 1)
+	rivals.rival_defeated.disconnect(on_defeated)
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	var at_city: Array[RivalDefinition] = rivals.get_rivals_at_current_location()
+	_ok("city has boris", _rival_list_has(at_city, boris_id))
+	world.enter_location(LocationCatalog.ID_CAFE)
+	var at_cafe: Array[RivalDefinition] = rivals.get_rivals_at_current_location()
+	_ok("cafe no boris", _rival_list_has(at_cafe, boris_id) == false)
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	var meet_action: GameAction = rivals.create_meet_rival_action(boris_id)
+	_ok("meet rival id", meet_action.id == StringName("meet_rival_rival_boris"))
+	_ok("meet rival time 0", meet_action.time_cost_minutes == 0)
+	var meet_ok: ActionResult = actions.execute(meet_action)
+	_ok("meet rival success", meet_ok.success)
+	_ok("meet rival discovered", rivals.is_discovered(boris_id))
+	_ok("meet rival not defeated", rivals.is_defeated(boris_id) == false)
+	gs.flow.game_time_minutes = 0
+	competitions.set_forced_won(true)
+	var win_action: GameAction = competitions.create_competition_action(competition_id)
+	_ok("competition action id", win_action.id == StringName("competition_competition_basic"))
+	_ok("competition time cost", win_action.time_cost_minutes == 60)
+	var win_result: ActionResult = actions.execute(win_action)
+	_ok("win success", win_result.success)
+	_ok("win defeated", rivals.is_defeated(boris_id))
+	_ok("win time 60", int(clock.get_game_time_minutes()) == 60)
+	competitions.set_forced_won(null)
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	actions.execute(rivals.create_meet_rival_action(boris_id))
+	gs.flow.game_time_minutes = 0
+	competitions.set_forced_won(false)
+	var loss_result: ActionResult = actions.execute(competitions.create_competition_action(competition_id))
+	_ok("loss success", loss_result.success)
+	_ok("loss not defeated", rivals.is_defeated(boris_id) == false)
+	_ok("loss still discovered", rivals.is_discovered(boris_id))
+	_ok("loss time 60", int(clock.get_game_time_minutes()) == 60)
+	competitions.set_forced_won(null)
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	actions.execute(rivals.create_meet_rival_action(boris_id))
+	world.enter_location(LocationCatalog.ID_CAFE)
+	gs.flow.game_time_minutes = 0
+	var snapshot: Dictionary = rivals.get_state(boris_id).to_dict()
+	var wrong_loc: ActionResult = actions.execute(competitions.create_competition_action(competition_id))
+	_ok("wrong loc fail", wrong_loc.success == false)
+	_ok("wrong loc reason", wrong_loc.failure_reason == "Соперник находится в другой локации")
+	_ok("wrong loc state", rivals.get_state(boris_id).to_dict() == snapshot)
+	_ok("wrong loc time", int(clock.get_game_time_minutes()) == 0)
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	gs.flow.game_time_minutes = 0
+	var before_meet: ActionResult = actions.execute(competitions.create_competition_action(competition_id))
+	_ok("before discover fail", before_meet.success == false)
+	_ok("before discover reason", before_meet.failure_reason == "Вы ещё не встретили этого соперника")
+	_ok("before discover defeated", rivals.is_defeated(boris_id) == false)
+	_ok("before discover time", int(clock.get_game_time_minutes()) == 0)
+	sm.new_game()
+	rivals.defeat_rival(boris_id)
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	_ok("after defeat cannot start", competitions.can_start_competition(competition_id) == false)
+	_ok("after defeat reason", competitions.get_failure_reason(competition_id) == "Этот соперник уже побеждён")
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	actions.execute(rivals.create_meet_rival_action(boris_id))
+	competitions.set_forced_won(true)
+	actions.execute(competitions.create_competition_action(competition_id))
+	competitions.set_forced_won(null)
+	sm.save_game()
+	sm.new_game()
+	_ok("rivals clean after save", rivals.is_discovered(boris_id) == false and rivals.is_defeated(boris_id) == false)
+	_ok("rivals load save", sm.load_game())
+	_ok("loaded rival discovered", rivals.is_discovered(boris_id))
+	_ok("loaded rival defeated", rivals.is_defeated(boris_id))
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var legacy: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v8 rivals save", legacy != null)
+	if legacy != null:
+		var v8: Dictionary = {
+			"save_version": 8,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 1, "finale_reached": false},
+				"player": {"money": 0, "rating": 0},
+				"progression": {"purchased_ids": []},
+				"world": {
+					"current_location_id": String(LocationCatalog.START_LOCATION_ID),
+					"unlocked_location_ids": ["city_center", "apartment", "cafe"],
+				},
+				"girls": {"girls_by_id": {}},
+				"dating": {"active_date": {}},
+				"rivals": {},
+			},
+		}
+		legacy.store_string(JSON.stringify(v8, "\t"))
+		legacy.close()
+	_ok("load v8 rivals save", sm.load_game())
+	_ok("migrated rivals empty", gs.rivals.rivals_by_id.is_empty())
+	var migrated_state: RivalState = rivals.get_state(boris_id)
+	_ok("migrated rival defaults", migrated_state != null and migrated_state.discovered == false and migrated_state.defeated == false)
+	var sim := GameSimulator.new()
+	tree.root.add_child(sim)
+	sim.start_new_game()
+	sim.show_section("city")
+	var city_text: String = sim.get_city_body_text()
+	_ok("sim city boris", city_text.contains("Борис"))
+	_ok("sim city meet button", city_text.contains("ВСТРЕТИТЬ"))
+	var sim_meet: ActionResult = sim.meet_rival(boris_id)
+	_ok("sim meet rival success", sim_meet.success)
+	_ok("sim meet rival result", sim.get_result_text().contains("Вы встретили Борис."))
+	sim.show_section("rivals")
+	var rivals_text: String = sim.get_city_body_text()
+	_ok("sim rivals boris", rivals_text.contains("БОРИС"))
+	_ok("sim rivals not defeated", rivals_text.contains("Статус: Не побеждён"))
+	_ok("sim rivals competitions", rivals_text.contains("СОРЕВНОВАНИЯ"))
+	_ok("sim rivals challenge", rivals_text.contains("БРОСИТЬ ВЫЗОВ"))
+	competitions.set_forced_won(true)
+	var sim_win: ActionResult = sim.start_competition(competition_id)
+	competitions.set_forced_won(null)
+	_ok("sim win success", sim_win.success)
+	_ok("sim win result", sim.get_result_text().contains("Победа."))
+	_ok("sim win defeated text", sim.get_result_text().contains("Соперник Борис побеждён."))
+	_ok("sim win time text", sim.get_result_text().contains("Прошло времени: 60 минут."))
+	var after_win: String = sim.get_city_body_text()
+	_ok("sim rivals defeated", after_win.contains("Статус: Побеждён"))
+	_ok("sim rivals completed", after_win.contains("Завершено"))
+	sim.queue_free()
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _rival_list_has(list: Array[RivalDefinition], rival_id: StringName) -> bool:
+	for rival in list:
+		if rival != null and rival.id == rival_id:
+			return true
+	return false

@@ -31,6 +31,8 @@ WorldService="*res://game/world/world_service.gd"
 GirlsService="*res://game/girls/girls_service.gd"
 RatingService="*res://game/rating/rating_service.gd"
 DatingService="*res://game/dating/dating_service.gd"
+RivalsService="*res://game/rivals/rivals_service.gd"
+CompetitionService="*res://game/rivals/competition_service.gd"
 SceneTransitionService="*res://game/world/scene_transition_service.gd"
 
 [debug]
@@ -41,6 +43,7 @@ file_logging/log_path="user://logs/date_factory.log"
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
+window/size/mode=3
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/size/min_width=1280
