@@ -188,10 +188,6 @@ func _begin_episode() -> void:
 	_session.current_phase = rules.phase_for_episode_index(_session.current_episode_index)
 	var situation: DateSituation = _pick_situation(_session.current_phase)
 	_session.selected_situation_ids.append(situation.id)
-	var base_pool: Array[DateMove] = _catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE)
-	_session.current_candidate_base_move_ids = _ids_of(base_pool)
-	var selected: Array[DateMove] = _pick_base_moves(base_pool, rules.base_moves_per_episode)
-	_session.current_selected_base_move_ids = _ids_of(selected)
 	var unlockables: Array[DateMove] = _catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.UNLOCKABLE)
 	if not rules.show_locked_unlockable_moves:
 		var visible: Array[DateMove] = []
@@ -200,6 +196,41 @@ func _begin_episode() -> void:
 				visible.append(move)
 		unlockables = visible
 	_session.current_applicable_unlockable_move_ids = _ids_of(unlockables)
+	var reserved: Dictionary = {}
+	var available_unlockables: Array[DateMove] = []
+	var locked_unlockables: Array[DateMove] = []
+	var used_unlockables: Array[DateMove] = []
+	for move in unlockables:
+		var state: DateTypes.MoveAvailability = _unlockable_availability(move)
+		match state:
+			DateTypes.MoveAvailability.AVAILABLE:
+				available_unlockables.append(move)
+				var mapping: DateMoveSituationMapping = move.mapping_for(situation.id)
+				if mapping != null:
+					reserved[mapping.tag_id] = true
+			DateTypes.MoveAvailability.LOCKED:
+				locked_unlockables.append(move)
+			DateTypes.MoveAvailability.USED:
+				used_unlockables.append(move)
+	_session.current_available_unlockable_move_ids = _ids_of(available_unlockables)
+	_session.current_locked_unlockable_move_ids = _ids_of(locked_unlockables)
+	_session.current_used_unlockable_move_ids = _ids_of(used_unlockables)
+	_session.current_reserved_unlockable_tag_ids = _tag_ids_from_reserved(reserved)
+	var base_pool: Array[DateMove] = _catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE)
+	_session.current_candidate_base_move_ids = _ids_of(base_pool)
+	var preferred: Array[DateMove] = []
+	var fallback: Array[DateMove] = []
+	for move in base_pool:
+		var tag_id: StringName = _move_tag(move, situation.id)
+		if reserved.has(tag_id):
+			fallback.append(move)
+		else:
+			preferred.append(move)
+	_session.current_preferred_base_move_ids = _ids_of(preferred)
+	_session.current_fallback_base_move_ids = _ids_of(fallback)
+	var selected: Array[DateMove] = _pick_base_moves(preferred, fallback, rules.base_moves_per_episode, situation.id)
+	_session.current_selected_base_move_ids = _ids_of(selected)
+	_session.current_selected_base_tag_ids = _tags_of(selected, situation.id)
 	_session.current_selected_move_id = &""
 	_session.current_resolved_tag_id = &""
 	_session.current_tag_preference = 0
@@ -223,22 +254,61 @@ func _pick_situation(phase: DateTypes.DatePhase) -> DateSituation:
 	return pool[_weighted_index(weights)]
 
 
-func _pick_base_moves(pool: Array[DateMove], count: int) -> Array[DateMove]:
-	var copy: Array[DateMove] = pool.duplicate()
-	_shuffle_moves(copy)
+func _pick_base_moves(preferred: Array[DateMove], fallback: Array[DateMove], count: int, situation_id: StringName) -> Array[DateMove]:
 	var selected: Array[DateMove] = []
-	var take: int = mini(count, copy.size())
-	for i in take:
-		selected.append(copy[i])
+	var preferred_copy: Array[DateMove] = preferred.duplicate()
+	var fallback_copy: Array[DateMove] = fallback.duplicate()
+	_take_unique_then_rest(selected, preferred_copy, count, situation_id)
+	_take_unique_then_rest(selected, fallback_copy, count, situation_id)
 	return selected
 
 
-func _shuffle_moves(items: Array[DateMove]) -> void:
-	for i in range(items.size() - 1, 0, -1):
-		var j: int = _rng.randi_range(0, i)
-		var tmp: DateMove = items[i]
-		items[i] = items[j]
-		items[j] = tmp
+func _take_unique_then_rest(selected: Array[DateMove], pool: Array[DateMove], count: int, situation_id: StringName) -> void:
+	_take_from_pool(selected, pool, count, situation_id, true)
+	_take_from_pool(selected, pool, count, situation_id, false)
+
+
+func _take_from_pool(selected: Array[DateMove], pool: Array[DateMove], count: int, situation_id: StringName, unique_only: bool) -> void:
+	while selected.size() < count:
+		var candidates: Array[DateMove] = []
+		var selected_tags: Dictionary = _selected_tag_set(selected, situation_id)
+		for move in pool:
+			if unique_only and selected_tags.has(_move_tag(move, situation_id)):
+				continue
+			candidates.append(move)
+		if candidates.is_empty():
+			break
+		var picked: DateMove = candidates[_rng.randi_range(0, candidates.size() - 1)]
+		selected.append(picked)
+		pool.erase(picked)
+
+
+func _selected_tag_set(selected: Array[DateMove], situation_id: StringName) -> Dictionary:
+	var tags: Dictionary = {}
+	for move in selected:
+		tags[_move_tag(move, situation_id)] = true
+	return tags
+
+
+func _move_tag(move: DateMove, situation_id: StringName) -> StringName:
+	var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
+	if mapping == null:
+		return &""
+	return mapping.tag_id
+
+
+func _tags_of(moves: Array[DateMove], situation_id: StringName) -> Array[StringName]:
+	var tags: Array[StringName] = []
+	for move in moves:
+		tags.append(_move_tag(move, situation_id))
+	return tags
+
+
+func _tag_ids_from_reserved(reserved: Dictionary) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	for key in reserved.keys():
+		ids.append(key as StringName)
+	return ids
 
 
 func _weighted_index(weights: Array[float]) -> int:

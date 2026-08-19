@@ -21,7 +21,14 @@ enum Stage {
 @export var current_episode_index: int = 0
 @export var current_candidate_base_move_ids: Array[StringName] = []
 @export var current_selected_base_move_ids: Array[StringName] = []
+@export var current_selected_base_tag_ids: Array[StringName] = []
 @export var current_applicable_unlockable_move_ids: Array[StringName] = []
+@export var current_available_unlockable_move_ids: Array[StringName] = []
+@export var current_locked_unlockable_move_ids: Array[StringName] = []
+@export var current_used_unlockable_move_ids: Array[StringName] = []
+@export var current_reserved_unlockable_tag_ids: Array[StringName] = []
+@export var current_preferred_base_move_ids: Array[StringName] = []
+@export var current_fallback_base_move_ids: Array[StringName] = []
 @export var used_unlockable_move_counts: Dictionary = {}
 @export var episode_history: Array[DateEpisodeResult] = []
 @export var revealed_tags_during_session: Array[StringName] = []

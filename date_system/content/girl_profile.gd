@@ -19,6 +19,15 @@ extends Resource
 func prefers_tag(tag_id: StringName) -> int:
 	if positive_tag_ids.has(tag_id):
 		return 1
-	if negative_tag_ids.has(tag_id):
-		return -1
-	return 0
+	return -1
+
+
+func sync_negative_tags(all_tags: Array[DateTag]) -> void:
+	negative_tag_ids.clear()
+	for tag in all_tags:
+		if tag == null:
+			continue
+		if not tag.enabled:
+			continue
+		if not positive_tag_ids.has(tag.id):
+			negative_tag_ids.append(tag.id)

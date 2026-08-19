@@ -6,12 +6,12 @@
 script = ExtResource("1_script")
 id = &"variety"
 display_name = "ЛЮБИТ РАЗНООБРАЗИЕ"
-description = "Получить +1 тремя различными Tags в CORE."
+description = "Получить +1 тремя различными Tags за свидание."
 enabled = true
 condition_type = 0
 condition_parameters = {
 "required_count": 3,
-"counted_phases": [1]
+"counted_phases": [0, 1, 2]
 }
 success_score = 2
 failure_score = 0

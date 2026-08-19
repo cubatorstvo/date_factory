@@ -18,6 +18,7 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_secondary_parameters(catalog, issues)
 	_check_phase_coverage(catalog, issues)
 	_check_girl_secondary_and_formats(catalog, issues)
+	_check_duplicate_unlockable_tags(catalog, issues)
 	return issues
 
 
@@ -70,29 +71,14 @@ func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidati
 	for girl in catalog.girls:
 		if girl == null or not girl.enabled:
 			continue
-		var assigned: Dictionary = {}
+		var liked: Dictionary = {}
 		for tag_id in girl.positive_tag_ids:
-			_assign_girl_tag(catalog, issues, girl, tag_id, assigned, "positive_tag_ids")
+			if catalog.find_tag(tag_id) == null:
+				issues.append(_issue("GirlProfile", String(girl.id), "positive_tag_ids", "Неизвестный Tag: %s." % String(tag_id)))
+			liked[String(tag_id)] = true
 		for tag_id in girl.negative_tag_ids:
-			if assigned.has(String(tag_id)):
-				issues.append(_issue("GirlProfile", String(girl.id), "negative_tag_ids", "Tag %s указан и как positive, и как negative." % String(tag_id)))
-			_assign_girl_tag(catalog, issues, girl, tag_id, assigned, "negative_tag_ids")
-		for tag in catalog.enabled_tags():
-			if not assigned.has(String(tag.id)):
-				issues.append(_issue("GirlProfile", String(girl.id), "tags", "Активный Tag %s не распределён между positive и negative." % String(tag.id)))
-
-
-func _assign_girl_tag(
-	catalog: DateContentCatalog,
-	issues: Array[ContentValidationIssue],
-	girl: GirlProfile,
-	tag_id: StringName,
-	assigned: Dictionary,
-	field: String
-) -> void:
-	if catalog.find_tag(tag_id) == null:
-		issues.append(_issue("GirlProfile", String(girl.id), field, "Неизвестный Tag: %s." % String(tag_id)))
-	assigned[String(tag_id)] = true
+			if liked.has(String(tag_id)):
+				issues.append(_issue("GirlProfile", String(girl.id), "negative_tag_ids", "Tag %s указан и как нравится, и как не нравится." % String(tag_id)))
 
 
 func _check_move_mappings(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -197,9 +183,50 @@ func _check_girl_secondary_and_formats(catalog: DateContentCatalog, issues: Arra
 				issues.append(_issue("GirlProfile", String(girl.id), "favorite_location_format_ids", "Неизвестный LocationFormat: %s." % String(format_id)))
 
 
-func _issue(resource_type: String, resource_id: String, field: String, message: String) -> ContentValidationIssue:
-	var issue := ContentValidationIssue.new()
-	issue.severity = DateTypes.ValidationSeverity.ERROR
+func _check_duplicate_unlockable_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	for situation in catalog.situations:
+		if situation == null or not situation.enabled:
+			continue
+		var tag_to_moves: Dictionary = {}
+		for move in catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.UNLOCKABLE):
+			var mapping: DateMoveSituationMapping = move.mapping_for(situation.id)
+			if mapping == null:
+				continue
+			var tag_key: String = String(mapping.tag_id)
+			if not tag_to_moves.has(tag_key):
+				var ids: PackedStringArray = PackedStringArray()
+				tag_to_moves[tag_key] = ids
+			var listed: PackedStringArray = tag_to_moves[tag_key]
+			listed.append(String(move.id))
+			tag_to_moves[tag_key] = listed
+		for tag_key in tag_to_moves.keys():
+			var move_ids: PackedStringArray = tag_to_moves[tag_key]
+			if move_ids.size() < 2:
+				continue
+			var sorted_ids: PackedStringArray = move_ids.duplicate()
+			sorted_ids.sort()
+			var message: String = "Ситуация \"%s\" содержит несколько Открываемых ходов с одинаковым тегом \"%s\":\n%s" % [String(situation.id), String(tag_key), ", ".join(sorted_ids)]
+			issues.append(_issue(
+				"DateSituation",
+				String(situation.id),
+				"unlockable_tags",
+				message,
+				DateTypes.ValidationSeverity.WARNING,
+				"DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION"
+			))
+
+
+func _issue(
+	resource_type: String,
+	resource_id: String,
+	field: String,
+	message: String,
+	severity: DateTypes.ValidationSeverity = DateTypes.ValidationSeverity.ERROR,
+	code: String = ""
+) -> ContentValidationIssue:
+	var issue: ContentValidationIssue = ContentValidationIssue.new()
+	issue.severity = severity
+	issue.code = code
 	issue.resource_type = resource_type
 	issue.resource_id = resource_id
 	issue.field = field

@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://b1vwc7iunut6f"]
 
-[ext_resource type="Script" path="res://date_system/dev_room/date_system_lab.gd" id="1_lab"]
+[ext_resource type="Script" uid="uid://cgexjlo3vow1y" path="res://date_system/dev_room/date_system_lab.gd" id="1_lab"]
 
-[node name="DateSystemLab" type="Control"]
+[node name="DateSystemLab" type="Control" unique_id=376820513]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

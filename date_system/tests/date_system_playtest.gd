@@ -10,15 +10,20 @@ func _init() -> void:
 		return
 	var issues: Array[ContentValidationIssue] = ContentValidator.new().validate(catalog)
 	print("CONTENT VALIDATION: %d issues" % issues.size())
+	var has_error: bool = false
 	for issue in issues:
-		printerr("%s | %s | %s | %s | %s" % [
-			issue.to_dictionary()["severity"],
+		var data: Dictionary = issue.to_dictionary()
+		printerr("%s | %s | %s | %s | %s | %s" % [
+			data["severity"],
+			data["code"],
 			issue.resource_type,
 			issue.resource_id,
 			issue.field,
 			issue.message,
 		])
-	if not issues.is_empty():
+		if issue.severity == DateTypes.ValidationSeverity.ERROR:
+			has_error = true
+	if has_error:
 		quit(1)
 		return
 	var store := DateProgressStore.new()
@@ -63,10 +68,9 @@ func _play_girl(catalog: DateContentCatalog, store: DateProgressStore, girl_id: 
 		for option in engine.get_available_moves():
 			if option.is_selectable():
 				move_id = option.move_id
-				print("%s / %s / %s %s [%s]" % [
+				print("%s / %s / [%s] %s" % [
 					title,
 					DateTypes.phase_name(engine.get_session_state().current_phase),
-					DateTypes.knowledge_glyph(option.tag_knowledge),
 					option.tag_display_name,
 					DateTypes.knowledge_label(option.tag_knowledge),
 				])

@@ -10,6 +10,10 @@ var _paths: Dictionary = {}
 func load_catalog(path: String = CATALOG_PATH) -> DateContentCatalog:
 	var loaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	catalog = loaded as DateContentCatalog
+	if catalog != null:
+		for girl in catalog.girls:
+			if girl != null:
+				girl.sync_negative_tags(catalog.enabled_tags())
 	_rebuild_paths()
 	return catalog
 

@@ -62,16 +62,6 @@ static func move_kind_name(kind: DateMoveKind) -> String:
 			return "?"
 
 
-static func knowledge_glyph(knowledge: TagKnowledge) -> String:
-	match knowledge:
-		TagKnowledge.POSITIVE:
-			return "🟢"
-		TagKnowledge.NEGATIVE:
-			return "🔴"
-		_:
-			return "⚪"
-
-
 static func knowledge_label(knowledge: TagKnowledge) -> String:
 	match knowledge:
 		TagKnowledge.POSITIVE:
@@ -80,3 +70,13 @@ static func knowledge_label(knowledge: TagKnowledge) -> String:
 			return "NEGATIVE"
 		_:
 			return "UNKNOWN"
+
+
+static func availability_name(state: MoveAvailability) -> String:
+	match state:
+		MoveAvailability.LOCKED:
+			return "LOCKED"
+		MoveAvailability.USED:
+			return "USED"
+		_:
+			return "AVAILABLE"

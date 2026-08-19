@@ -17,6 +17,12 @@ var _scroll: ScrollContainer
 var _host: VBoxContainer
 var _debug_body: VBoxContainer
 var _debug_open: bool = false
+var _rebuild_pending: bool = false
+var _tally_lines: Array[Control] = []
+var _tally_index: int = 0
+var _tally_box: VBoxContainer
+var _tally_footer: Control
+var _result_tweens: Array[Tween] = []
 
 
 func setup(p_catalog: DateCatalogService, p_store: DateProgressStore) -> void:
@@ -43,9 +49,32 @@ func _ready() -> void:
 func rebuild() -> void:
 	if _host == null:
 		return
+	if _rebuild_pending:
+		return
+	_rebuild_pending = true
+	call_deferred("_rebuild_impl")
+
+
+func _rebuild_impl() -> void:
+	_rebuild_pending = false
+	if _host == null or not is_instance_valid(_host):
+		return
 	for child in _host.get_children():
 		_host.remove_child(child)
-		child.free()
+		child.queue_free()
+	for line in _tally_lines:
+		if is_instance_valid(line) and line.get_parent() == null:
+			line.queue_free()
+	if _tally_footer != null and is_instance_valid(_tally_footer) and _tally_footer.get_parent() == null:
+		_tally_footer.queue_free()
+	_tally_lines.clear()
+	_tally_index = 0
+	_tally_box = null
+	_tally_footer = null
+	for tw in _result_tweens:
+		if tw != null and tw.is_valid():
+			tw.kill()
+	_result_tweens.clear()
 	if _engine != null and _engine.get_session_state() != null:
 		var stage: DateSession.Stage = _engine.get_session_state().stage
 		if stage == DateSession.Stage.SHOWING_DATE_RESULT or stage == DateSession.Stage.COMPLETED:
@@ -182,15 +211,25 @@ func _girl_card() -> PanelContainer:
 	return panel
 
 
-func _tag_list(title: String, ids: Array[StringName], knowledge: DateTypes.TagKnowledge) -> Label:
-	var names: PackedStringArray = PackedStringArray()
+func _tag_list(title: String, ids: Array[StringName], knowledge: DateTypes.TagKnowledge) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var title_label := Label.new()
+	title_label.text = title
+	row.add_child(title_label)
+	if ids.is_empty():
+		var empty := Label.new()
+		empty.text = "—"
+		row.add_child(empty)
+		return row
+	var flow := HFlowContainer.new()
+	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for tag_id in ids:
 		var tag: DateTag = _catalog().find_tag(tag_id)
-		names.append("%s %s" % [DateTypes.knowledge_glyph(knowledge), tag.display_name if tag != null else String(tag_id)])
-	var label := Label.new()
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.text = "%s %s" % [title, ", ".join(names) if names.size() > 0 else "—"]
-	return label
+		var tag_name: String = tag.display_name if tag != null else String(tag_id)
+		flow.add_child(LabUi.tag_label(tag_name, knowledge))
+	row.add_child(flow)
+	return row
 
 
 func _start_new() -> void:
@@ -295,29 +334,39 @@ func _build_runner() -> void:
 func _move_button(option: DateMoveOption) -> Button:
 	var btn := Button.new()
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var state: String = "ДОСТУПЕН"
+	btn.clip_contents = true
+	btn.disabled = not option.is_selectable()
+	var header: String = "%s %s" % [LabUi.tag_bbcode(option.tag_display_name, option.tag_knowledge), option.display_name]
 	match option.availability:
 		DateTypes.MoveAvailability.LOCKED:
-			state = "ЗАБЛОКИРОВАН"
-			btn.modulate = Color(0.55, 0.55, 0.55)
+			btn.modulate = LabUi.LOCKED
 		DateTypes.MoveAvailability.USED:
-			state = "Уже использован"
 			btn.modulate = Color(0.7, 0.7, 0.7)
-	var req: String = ""
-	if option.kind == DateTypes.DateMoveKind.UNLOCKABLE:
+	var lines := PackedStringArray([
+		header,
+		option.option_text,
+	])
+	if option.kind == DateTypes.DateMoveKind.UNLOCKABLE and option.availability == DateTypes.MoveAvailability.LOCKED:
 		var stat: ProgressionStat = _catalog().find_stat(option.requirement_stat_id)
 		var stat_name: String = stat.display_name if stat != null else String(option.requirement_stat_id)
-		req = "Requirement: %s %d (сейчас %d)\nUses: %d/%d" % [stat_name, option.requirement_level, option.current_stat_level, option.uses_used, option.uses_max]
-	btn.text = "%s  %s [%s] %s\n%s\n%s" % [
-		state,
-		DateTypes.knowledge_glyph(option.tag_knowledge),
-		option.tag_display_name,
-		option.display_name,
-		option.option_text,
-		req,
-	]
-	btn.disabled = not option.is_selectable()
+		lines.append("Requirement: %s %d  (сейчас %d)" % [stat_name, option.requirement_level, option.current_stat_level])
+	elif option.kind == DateTypes.DateMoveKind.UNLOCKABLE and option.availability == DateTypes.MoveAvailability.USED:
+		lines.append("Уже использован")
+	var rtl := RichTextLabel.new()
+	rtl.bbcode_enabled = true
+	rtl.fit_content = true
+	rtl.scroll_active = false
+	rtl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rtl.add_theme_color_override("default_color", LabUi.TEXT)
+	rtl.text = "\n".join(lines)
+	btn.add_child(rtl)
+	rtl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8)
+	btn.custom_minimum_size = Vector2(0, 72)
+	btn.resized.connect(func() -> void:
+		var height: float = float(rtl.get_content_height()) + 20.0
+		if absf(btn.custom_minimum_size.y - height) > 1.0:
+			btn.custom_minimum_size.y = height
+	)
 	var move_id: StringName = option.move_id
 	btn.pressed.connect(func() -> void:
 		_engine.choose_move(move_id)
@@ -333,20 +382,31 @@ func _episode_result_block(session: DateSession) -> PanelContainer:
 	panel.add_child(box)
 	var move: DateMove = _engine.catalog().find_move(session.current_selected_move_id)
 	var tag: DateTag = _engine.catalog().find_tag(session.current_resolved_tag_id)
-	var lines := PackedStringArray([
-		"Выбранный Ход: %s" % (move.display_name if move != null else String(session.current_selected_move_id)),
-		"Получившийся Tag: %s [%s]" % [tag.display_name if tag != null else String(session.current_resolved_tag_id), DateTypes.knowledge_label(_tag_knowledge(session.current_resolved_tag_id))],
-		"Реакция девушки: %s" % session.current_result_text,
-		"Score: %+d" % session.current_score_delta,
-	])
+	var knowledge: DateTypes.TagKnowledge = _tag_knowledge(session.current_resolved_tag_id)
+	var move_label := Label.new()
+	move_label.text = "Выбранный Ход: %s" % (move.display_name if move != null else String(session.current_selected_move_id))
+	box.add_child(move_label)
+	var tag_row := HBoxContainer.new()
+	tag_row.add_theme_constant_override("separation", 8)
+	var tag_title := Label.new()
+	tag_title.text = "Получившийся Tag:"
+	tag_row.add_child(tag_title)
+	var tag_name: String = tag.display_name if tag != null else String(session.current_resolved_tag_id)
+	tag_row.add_child(LabUi.tag_label(tag_name, knowledge))
+	box.add_child(tag_row)
+	var reaction := Label.new()
+	reaction.text = "Реакция девушки: %s" % session.current_result_text
+	reaction.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(reaction)
+	var score := Label.new()
+	score.text = "Score: %+d" % session.current_score_delta
+	box.add_child(score)
+	var revealed := Label.new()
 	if session.episode_history.size() > 0 and session.episode_history[session.episode_history.size() - 1].revealed_tag:
-		lines.append("Новое раскрытое знание: %s" % DateTypes.knowledge_label(_tag_knowledge(session.current_resolved_tag_id)))
+		revealed.text = "Новое раскрытое знание: %s" % DateTypes.knowledge_label(knowledge)
 	else:
-		lines.append("Новое раскрытое знание: нет")
-	var label := Label.new()
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.text = "\n".join(lines)
-	box.add_child(label)
+		revealed.text = "Новое раскрытое знание: нет"
+	box.add_child(revealed)
 	return panel
 
 
@@ -359,55 +419,74 @@ func _tag_knowledge(tag_id: StringName) -> DateTypes.TagKnowledge:
 func _build_result() -> void:
 	var result: DateRunResult = _engine.get_result()
 	var session: DateSession = _engine.get_session_state()
-	_host.add_child(LabUi.heading("RESULT"))
+	_host.add_child(LabUi.heading("Итог свидания"))
 	if result == null:
 		return
-	for episode in session.episode_history:
-		_host.add_child(_history_line(episode))
 	var bd: DateScoreBreakdown = result.score_breakdown
-	var rule_name: String = result.secondary_rule.display_name if result.secondary_rule != null else "?"
-	var lines := PackedStringArray([
-		"SECONDARY  %s  %s  %s  %+d" % [rule_name, result.secondary_live_text, "Success" if bd.secondary_success else "Failure", bd.secondary_score],
-		"LOCATION QUALITY  %+d" % bd.location_quality_score,
-		"LOCATION PREFERENCE  %+d" % bd.location_preference_score,
-		"OUTFIT  %+d" % bd.outfit_score,
-		"Качество квартиры: %+d" % bd.apartment_quality_score,
-		"Подготовка квартиры: %+d" % bd.apartment_preparation_score,
-		"TOTAL  %+d" % bd.total,
-		"RELATIONSHIP  %d → %d" % [session.relationship_before, session.relationship_after],
-	])
-	if result.relationship_max_reached:
-		lines.append("relationship_max_reached")
-	var summary := Label.new()
-	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary.text = "\n".join(lines)
-	_host.add_child(summary)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(520, 0)
+	_tally_box = VBoxContainer.new()
+	_tally_box.add_theme_constant_override("separation", 8)
+	panel.add_child(_tally_box)
+	_host.add_child(panel)
+	_tally_lines.clear()
+	for episode in session.episode_history:
+		if episode.score_delta == 0:
+			continue
+		var tag: DateTag = _engine.catalog().find_tag(episode.tag_id)
+		var tag_name: String = tag.display_name if tag != null else String(episode.tag_id)
+		_tally_lines.append(LabUi.tally_row("[%s]" % tag_name, episode.score_delta))
+	var rule_name: String = result.secondary_rule.display_name if result.secondary_rule != null else "Secondary"
+	_tally_lines.append(LabUi.tally_row(rule_name, bd.secondary_score))
+	var location: DateLocation = _engine.catalog().find_location(session.location_id)
+	var place_name: String = location.display_name if location != null else "Место"
+	var place_score: int = bd.location_quality_score + bd.location_preference_score + bd.apartment_quality_score + bd.apartment_preparation_score
+	_tally_lines.append(LabUi.tally_row(place_name, place_score))
+	_tally_lines.append(LabUi.tally_row("Наряд", bd.outfit_score))
+	var total_row := LabUi.tally_row("Итого", bd.total)
+	for child in total_row.get_children():
+		if child is Label:
+			(child as Label).add_theme_font_size_override("font_size", 26)
+	_tally_lines.append(total_row)
+	var rel := Label.new()
+	rel.text = "Отношения  %d → %d" % [session.relationship_before, session.relationship_after]
+	rel.add_theme_font_size_override("font_size", 18)
+	rel.add_theme_color_override("font_color", LabUi.MUTED)
+	_tally_lines.append(rel)
+	var footer := VBoxContainer.new()
+	footer.add_theme_constant_override("separation", 10)
 	var next := LabUi.button("НАЧАТЬ СЛЕДУЮЩЕЕ СВИДАНИЕ")
 	next.pressed.connect(func() -> void:
 		_engine = null
 		rebuild()
 	)
-	_host.add_child(next)
-	_host.add_child(_debug_panel(session, null))
+	footer.add_child(next)
+	_tally_footer = footer
+	var timer := Timer.new()
+	timer.wait_time = 0.12
+	timer.timeout.connect(_reveal_tally_line)
+	_host.add_child(timer)
+	_reveal_tally_line()
+	timer.start()
 
 
-func _history_line(episode: DateEpisodeResult) -> Label:
-	var situation: DateSituation = _engine.catalog().find_situation(episode.situation_id)
-	var move: DateMove = _engine.catalog().find_move(episode.move_id)
-	var tag: DateTag = _engine.catalog().find_tag(episode.tag_id)
-	var phase_label: String = DateTypes.phase_name(episode.phase)
-	if episode.phase == DateTypes.DatePhase.CORE:
-		phase_label = "CORE %d" % (episode.episode_index)
-	var label := Label.new()
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.text = "%s\nSituation: %s\nMove: %s\nTag: %s\nScore: %+d" % [
-		phase_label,
-		situation.display_name if situation != null else String(episode.situation_id),
-		move.display_name if move != null else String(episode.move_id),
-		tag.display_name if tag != null else String(episode.tag_id),
-		episode.score_delta,
-	]
-	return label
+func _reveal_tally_line() -> void:
+	if _tally_box == null or not is_instance_valid(_tally_box):
+		return
+	if _tally_index >= _tally_lines.size():
+		if _tally_footer != null and is_instance_valid(_tally_footer) and _tally_footer.get_parent() == null:
+			_host.add_child(_tally_footer)
+		for child in _host.get_children():
+			if child is Timer:
+				(child as Timer).stop()
+		return
+	var line: Control = _tally_lines[_tally_index]
+	_tally_index += 1
+	line.modulate.a = 0.0
+	_tally_box.add_child(line)
+	var tw := create_tween()
+	tw.tween_property(line, "modulate:a", 1.0, 0.08)
+	_result_tweens.append(tw)
 
 
 func _debug_panel(session: DateSession, view: DateEpisodeView) -> VBoxContainer:
@@ -433,10 +512,10 @@ func _debug_panel(session: DateSession, view: DateEpisodeView) -> VBoxContainer:
 
 
 func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
-	var situation_id: String = ""
+	var situation_id: StringName = &""
 	if view != null and view.situation != null:
-		situation_id = String(view.situation.id)
-	return "\n".join(PackedStringArray([
+		situation_id = view.situation.id
+	var lines := PackedStringArray([
 		"seed: %d" % session.seed,
 		"session_id: %s" % session.session_id,
 		"girl_id: %s" % String(session.girl_id),
@@ -444,7 +523,7 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 		"outfit_id: %s" % String(session.outfit_id),
 		"phase: %s" % DateTypes.phase_name(session.current_phase),
 		"episode_index: %d" % session.current_episode_index,
-		"situation_id: %s" % situation_id,
+		"situation_id: %s" % String(situation_id),
 		"candidate_base_move_ids: %s" % str(session.current_candidate_base_move_ids),
 		"selected_base_move_ids: %s" % str(session.current_selected_base_move_ids),
 		"applicable_unlockable_move_ids: %s" % str(session.current_applicable_unlockable_move_ids),
@@ -454,4 +533,62 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 		"score_delta: %d" % session.current_score_delta,
 		"secondary_internal_state: %s" % str(session.secondary_runtime_state),
 		"score_breakdown: %s" % str(session.score_breakdown.to_dictionary() if session.score_breakdown != null else {}),
-	]))
+	])
+	lines.append_array(_debug_move_block("applicable_unlockable_moves", session.current_applicable_unlockable_move_ids, situation_id, session, true))
+	lines.append_array(_debug_move_block("available_unlockable_moves", session.current_available_unlockable_move_ids, situation_id, session, true))
+	lines.append_array(_debug_move_block("locked_unlockable_moves", session.current_locked_unlockable_move_ids, situation_id, session, true))
+	lines.append_array(_debug_move_block("used_unlockable_moves", session.current_used_unlockable_move_ids, situation_id, session, true))
+	lines.append("reserved_unlockable_tags")
+	lines.append_array(_debug_id_lines(session.current_reserved_unlockable_tag_ids))
+	lines.append_array(_debug_move_block("preferred_base_candidates", session.current_preferred_base_move_ids, situation_id, session, false))
+	lines.append_array(_debug_move_block("fallback_base_candidates", session.current_fallback_base_move_ids, situation_id, session, false))
+	lines.append_array(_debug_move_block("selected_base_moves", session.current_selected_base_move_ids, situation_id, session, false))
+	lines.append("selected_base_tags")
+	lines.append_array(_debug_id_lines(session.current_selected_base_tag_ids))
+	return "\n".join(lines)
+
+
+func _debug_move_block(
+	title: String,
+	move_ids: Array[StringName],
+	situation_id: StringName,
+	session: DateSession,
+	unlockable: bool
+) -> PackedStringArray:
+	var lines: PackedStringArray = PackedStringArray([title])
+	if move_ids.is_empty():
+		lines.append("  (none)")
+		return lines
+	var catalog: DateContentCatalog = _engine.catalog() if _engine != null else _catalog()
+	for move_id in move_ids:
+		var move: DateMove = catalog.find_move(move_id)
+		var tag_id: String = ""
+		var state: String = DateTypes.availability_name(DateTypes.MoveAvailability.AVAILABLE)
+		if move != null:
+			var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
+			if mapping != null:
+				tag_id = String(mapping.tag_id)
+			if unlockable:
+				state = _debug_unlockable_state(session, move_id)
+		lines.append("  move_id=%s tag_id=%s state=%s" % [String(move_id), tag_id, state])
+	return lines
+
+
+func _debug_unlockable_state(session: DateSession, move_id: StringName) -> String:
+	if session.current_available_unlockable_move_ids.has(move_id):
+		return DateTypes.availability_name(DateTypes.MoveAvailability.AVAILABLE)
+	if session.current_locked_unlockable_move_ids.has(move_id):
+		return DateTypes.availability_name(DateTypes.MoveAvailability.LOCKED)
+	if session.current_used_unlockable_move_ids.has(move_id):
+		return DateTypes.availability_name(DateTypes.MoveAvailability.USED)
+	return DateTypes.availability_name(DateTypes.MoveAvailability.AVAILABLE)
+
+
+func _debug_id_lines(ids: Array[StringName]) -> PackedStringArray:
+	var lines: PackedStringArray = PackedStringArray()
+	if ids.is_empty():
+		lines.append("  (none)")
+		return lines
+	for item in ids:
+		lines.append("  %s" % String(item))
+	return lines

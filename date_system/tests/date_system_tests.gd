@@ -21,6 +21,7 @@ func run_all() -> PackedStringArray:
 	_test_replay_seed()
 	_test_saved_resource_reload()
 	_test_validator()
+	_test_unlockable_tag_reservation()
 	return _failures
 
 
@@ -86,6 +87,21 @@ func _pick_preference(engine: DateEngine, want_positive: bool) -> StringName:
 	return _first_available(engine)
 
 
+func _has_preference(engine: DateEngine, want_positive: bool) -> bool:
+	var girl: GirlProfile = engine.catalog().find_girl(engine.get_session_state().girl_id)
+	if girl == null:
+		return false
+	for option in engine.get_available_moves():
+		if not option.is_selectable():
+			continue
+		var pref: int = girl.prefers_tag(option.tag_id)
+		if want_positive and pref > 0:
+			return true
+		if not want_positive and pref < 0:
+			return true
+	return false
+
+
 func _first_available(engine: DateEngine) -> StringName:
 	for option in engine.get_available_moves():
 		if option.is_selectable():
@@ -99,20 +115,38 @@ func _choose(engine: DateEngine, move_id: StringName) -> void:
 
 
 func _test_unknown_plus_becomes_positive() -> void:
-	var catalog := _catalog()
-	var progress := _fresh_progress(catalog, &"alina")
-	var engine := _start(catalog, &"alina", &"cafe", &"casual", 7, progress, _player())
-	_ok("1. UNKNOWN before +1", progress.tag_knowledge(&"directness") == DateTypes.TagKnowledge.UNKNOWN)
-	_choose(engine, _pick_by_tag(engine, &"directness"))
-	_ok("1. UNKNOWN Tag after +1 becomes POSITIVE", progress.tag_knowledge(&"directness") == DateTypes.TagKnowledge.POSITIVE)
+	var found: bool = false
+	for seed in range(1, 80):
+		var probe_catalog: DateContentCatalog = _catalog()
+		var progress: GirlProgress = _fresh_progress(probe_catalog, &"alina")
+		var probe_engine: DateEngine = _start(probe_catalog, &"alina", &"cafe", &"casual", seed, progress, _player())
+		if not _has_preference(probe_engine, true):
+			continue
+		var move_id: StringName = _pick_preference(probe_engine, true)
+		var option: DateMoveOption = _option(probe_engine, move_id)
+		_ok("1. UNKNOWN before +1", progress.tag_knowledge(option.tag_id) == DateTypes.TagKnowledge.UNKNOWN)
+		_choose(probe_engine, move_id)
+		_ok("1. UNKNOWN Tag after +1 becomes POSITIVE", progress.tag_knowledge(option.tag_id) == DateTypes.TagKnowledge.POSITIVE)
+		found = true
+		break
+	_ok("1. found positive selectable Tag", found)
 
 
 func _test_unknown_minus_becomes_negative() -> void:
-	var catalog := _catalog()
-	var progress := _fresh_progress(catalog, &"alina")
-	var engine := _start(catalog, &"alina", &"cafe", &"casual", 11, progress, _player())
-	_choose(engine, _pick_by_tag(engine, &"audacity"))
-	_ok("2. UNKNOWN Tag after -1 becomes NEGATIVE", progress.tag_knowledge(&"audacity") == DateTypes.TagKnowledge.NEGATIVE)
+	var found: bool = false
+	for seed in range(1, 80):
+		var catalog := _catalog()
+		var progress := _fresh_progress(catalog, &"alina")
+		var engine := _start(catalog, &"alina", &"cafe", &"casual", seed, progress, _player())
+		if not _has_preference(engine, false):
+			continue
+		var move_id: StringName = _pick_preference(engine, false)
+		var option: DateMoveOption = _option(engine, move_id)
+		_choose(engine, move_id)
+		_ok("2. UNKNOWN Tag after -1 becomes NEGATIVE", progress.tag_knowledge(option.tag_id) == DateTypes.TagKnowledge.NEGATIVE)
+		found = true
+		break
+	_ok("2. found negative selectable Tag", found)
 
 
 func _test_opening_reveals_and_zero() -> void:
@@ -145,24 +179,50 @@ func _last_score_of(engine: DateEngine, phase: DateTypes.DatePhase) -> int:
 
 
 func _run_until_phase(catalog: DateContentCatalog, want_positive: bool) -> DateEngine:
-	var engine := _start(catalog, &"alina", &"cafe", &"casual", 21, _fresh_progress(catalog, &"alina"), _player())
-	while engine.get_session_state().current_phase != DateTypes.DatePhase.CORE:
+	for seed in range(1, 80):
+		var engine := _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player())
+		var skipped: bool = false
+		while engine.get_session_state().current_phase != DateTypes.DatePhase.CORE:
+			if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+				engine.advance()
+				continue
+			var opening_move: StringName = _pick_preference(engine, want_positive) if _has_preference(engine, want_positive) else _first_available(engine)
+			_choose(engine, opening_move)
+			if engine.get_session_state().current_phase != DateTypes.DatePhase.CORE and engine.get_session_state().stage == DateSession.Stage.AWAITING_MOVE:
+				skipped = true
+				break
+		if skipped:
+			continue
+		if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+			engine.advance()
+		if engine.get_session_state().current_phase != DateTypes.DatePhase.CORE:
+			continue
+		if not _has_preference(engine, want_positive):
+			continue
 		_choose(engine, _pick_preference(engine, want_positive))
-	_choose(engine, _pick_preference(engine, want_positive))
-	return engine
+		return engine
+	return _start(catalog, &"alina", &"cafe", &"casual", 21, _fresh_progress(catalog, &"alina"), _player())
 
 
 func _finish_with_preference(catalog: DateContentCatalog, core_positive: bool, closing_positive: bool) -> DateEngine:
-	var engine := _start(catalog, &"alina", &"cafe", &"casual", 33, _fresh_progress(catalog, &"alina"), _player())
-	while engine.get_session_state().stage == DateSession.Stage.AWAITING_MOVE or engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
-		if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
-			engine.advance()
-			continue
-		var want: bool = closing_positive if engine.get_session_state().current_phase == DateTypes.DatePhase.CLOSING else core_positive
-		if engine.get_session_state().current_phase == DateTypes.DatePhase.OPENING:
-			want = true
-		_choose(engine, _pick_preference(engine, want))
-	return engine
+	for seed in range(1, 80):
+		var engine := _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player())
+		var valid: bool = true
+		while engine.get_session_state().stage == DateSession.Stage.AWAITING_MOVE or engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+			if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+				engine.advance()
+				continue
+			var want: bool = closing_positive if engine.get_session_state().current_phase == DateTypes.DatePhase.CLOSING else core_positive
+			if engine.get_session_state().current_phase == DateTypes.DatePhase.OPENING:
+				want = true
+			if engine.get_session_state().current_phase != DateTypes.DatePhase.OPENING and not _has_preference(engine, want):
+				valid = false
+				break
+			var move_id: StringName = _pick_preference(engine, want) if _has_preference(engine, want) else _first_available(engine)
+			_choose(engine, move_id)
+		if valid and engine.get_session_state().stage == DateSession.Stage.SHOWING_DATE_RESULT:
+			return engine
+	return _start(catalog, &"alina", &"cafe", &"casual", 33, _fresh_progress(catalog, &"alina"), _player())
 
 
 func _test_base_pool_and_rng() -> void:
@@ -241,6 +301,7 @@ func _test_secondary_reveal_and_rules() -> void:
 	_ok("18. следующий DateSession знает Secondary заранее", progress.secondary_revealed)
 	engine2.abort()
 	_ok("19. VARIETY считает distinct successful Tags", _variety_distinct_works())
+	_ok("19b. VARIETY считает первый успешный ход", _variety_counts_first_success())
 	_ok("20. DEMANDING считает CORE failures", _demanding_counts_failures())
 
 
@@ -263,15 +324,30 @@ func _variety_distinct_works() -> bool:
 			if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
 				engine.advance()
 				continue
-			var move_id: StringName = _first_available(engine)
-			if engine.get_session_state().current_phase == DateTypes.DatePhase.CORE:
-				move_id = _pick_new_success(engine, used)
-				var option := _option(engine, move_id)
-				if option != null:
-					used[String(option.tag_id)] = true
+			var move_id: StringName = _pick_new_success(engine, used)
+			var option := _option(engine, move_id)
+			if option != null:
+				used[String(option.tag_id)] = true
 			_choose(engine, move_id)
 		if used.size() >= 3 and engine.get_result().score_breakdown.secondary_success:
 			return true
+	return false
+
+
+func _variety_counts_first_success() -> bool:
+	for seed in range(1, 80):
+		var engine := _start(_catalog(), &"alina", &"cafe", &"casual", seed, _fresh_progress(_catalog(), &"alina"), _player())
+		if engine.get_session_state().current_phase != DateTypes.DatePhase.OPENING:
+			continue
+		var move_id: StringName = _pick_preference(engine, true)
+		var option := _option(engine, move_id)
+		if option == null:
+			continue
+		var girl: GirlProfile = engine.catalog().find_girl(&"alina")
+		if girl.prefers_tag(option.tag_id) <= 0:
+			continue
+		engine.choose_move(move_id)
+		return engine.secondary_live_text() == "Разные успешные теги: 1/3"
 	return false
 
 
@@ -380,7 +456,7 @@ func _test_saved_resource_reload() -> void:
 func _test_validator() -> void:
 	var validator := ContentValidator.new()
 	var clean := validator.validate(_catalog())
-	_ok("validator seed clean", clean.is_empty())
+	_ok("validator seed has no errors", not _has_error(clean))
 	var dup_catalog := _catalog()
 	var clone: DateTag = dup_catalog.tags[0].duplicate() as DateTag
 	dup_catalog.tags.append(clone)
@@ -403,6 +479,14 @@ func _test_validator() -> void:
 	var unlock := _catalog()
 	unlock.find_move(&"punch").unlock_requirement = null
 	_ok("36. Validator проверяет UnlockRequirement", _has_issue(validator.validate(unlock), "UnlockRequirement"))
+	var dup_unlock := _diversity_catalog(
+		[["base_a", "directness"], ["base_b", "risk"], ["base_c", "status"]],
+		[["unlock_status_a", "status", 0, 1], ["unlock_status_b", "status", 0, 1]]
+	)
+	var dup_issues: Array[ContentValidationIssue] = validator.validate(dup_unlock)
+	var dup_warning: ContentValidationIssue = _find_code(dup_issues, "DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION")
+	_ok("8. WARNING DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION", dup_warning != null and dup_warning.severity == DateTypes.ValidationSeverity.WARNING)
+	_ok("8. warning names status unlockables", dup_warning != null and "status" in dup_warning.message and "unlock_status_a" in dup_warning.message and "unlock_status_b" in dup_warning.message)
 
 
 func _has_issue(issues: Array[ContentValidationIssue], needle: String) -> bool:
@@ -410,3 +494,187 @@ func _has_issue(issues: Array[ContentValidationIssue], needle: String) -> bool:
 		if needle in issue.message:
 			return true
 	return false
+
+
+func _has_error(issues: Array[ContentValidationIssue]) -> bool:
+	for issue in issues:
+		if issue.severity == DateTypes.ValidationSeverity.ERROR:
+			return true
+	return false
+
+
+func _find_code(issues: Array[ContentValidationIssue], code: String) -> ContentValidationIssue:
+	for issue in issues:
+		if issue.code == code:
+			return issue
+	return null
+
+
+func _test_unlockable_tag_reservation() -> void:
+	var four_base: Array = [["base_risk", "risk"], ["base_directness", "directness"], ["base_status", "status"], ["base_dominance", "dominance"]]
+	var available_catalog: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]])
+	var available_player: TestPlayerState = _player()
+	available_player.capital = 6
+	var available_engine: DateEngine = _start(available_catalog, &"alina", &"cafe", &"casual", 3, _fresh_progress(available_catalog, &"alina"), available_player)
+	var available_session: DateSession = available_engine.get_session_state()
+	_ok("1. AVAILABLE reserves risk", available_session.current_reserved_unlockable_tag_ids.has(&"risk"))
+	_ok("1. BASE tags are the non-reserved set", _same_tag_set(available_session.current_selected_base_tag_ids, ["directness", "status", "dominance"]))
+	_ok("1. risk BASE is fallback", available_session.current_fallback_base_move_ids.has(&"base_risk") and not available_session.current_preferred_base_move_ids.has(&"base_risk"))
+
+	var locked_catalog: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]])
+	var locked_engine: DateEngine = _start(locked_catalog, &"alina", &"cafe", &"casual", 3, _fresh_progress(locked_catalog, &"alina"), _player())
+	var locked_session: DateSession = locked_engine.get_session_state()
+	_ok("2. LOCKED does not reserve", locked_session.current_locked_unlockable_move_ids.has(&"unlock_risk") and not locked_session.current_reserved_unlockable_tag_ids.has(&"risk"))
+	_ok("2. BASE risk is in preferred pool", locked_session.current_preferred_base_move_ids.has(&"base_risk"))
+
+	var used_catalog: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]], 0, 2, true)
+	var used_player: TestPlayerState = _player()
+	used_player.capital = 6
+	var used_engine: DateEngine = _start(used_catalog, &"alina", &"cafe", &"casual", 3, _fresh_progress(used_catalog, &"alina"), used_player)
+	_ok("3 pre AVAILABLE", used_engine.get_session_state().current_available_unlockable_move_ids.has(&"unlock_risk"))
+	used_engine.choose_move(&"unlock_risk")
+	used_engine.advance()
+	var used_session: DateSession = used_engine.get_session_state()
+	_ok("3. USED does not reserve", used_session.current_used_unlockable_move_ids.has(&"unlock_risk") and not used_session.current_reserved_unlockable_tag_ids.has(&"risk"))
+	_ok("3. BASE risk returns to preferred pool", used_session.current_preferred_base_move_ids.has(&"base_risk"))
+
+	var unique_catalog: DateContentCatalog = _diversity_catalog(four_base, [])
+	var unique_engine: DateEngine = _start(unique_catalog, &"alina", &"cafe", &"casual", 17, _fresh_progress(unique_catalog, &"alina"), _player())
+	_ok("4. three BASE have three Tags", unique_engine.get_session_state().current_selected_base_move_ids.size() == 3 and _unique_count(unique_engine.get_session_state().current_selected_base_tag_ids) == 3)
+
+	var fallback_catalog: DateContentCatalog = _diversity_catalog(
+		[["base_a", "risk"], ["base_b", "risk"], ["base_c", "directness"], ["base_d", "directness"], ["base_e", "risk"]],
+		[]
+	)
+	var fallback_engine: DateEngine = _start(fallback_catalog, &"alina", &"cafe", &"casual", 19, _fresh_progress(fallback_catalog, &"alina"), _player())
+	var fallback_session: DateSession = fallback_engine.get_session_state()
+	_ok("5. three BASE with only two Tags", fallback_session.current_selected_base_move_ids.size() == 3 and _unique_count(fallback_session.current_selected_base_tag_ids) == 2)
+
+	var need_fallback: DateContentCatalog = _diversity_catalog(
+		[["base_risk", "risk"], ["base_directness", "directness"], ["base_status", "status"]],
+		[["unlock_risk", "risk", 3, 1]]
+	)
+	var need_player: TestPlayerState = _player()
+	need_player.capital = 6
+	var need_engine: DateEngine = _start(need_fallback, &"alina", &"cafe", &"casual", 23, _fresh_progress(need_fallback, &"alina"), need_player)
+	var need_session: DateSession = need_engine.get_session_state()
+	_ok("6. fallback includes reserved Tag", _same_tag_set(need_session.current_selected_base_tag_ids, ["risk", "directness", "status"]))
+	_ok("6. all three BASE selected", need_session.current_selected_base_move_ids.size() == 3)
+
+	var det_catalog_a: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]])
+	var det_catalog_b: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]])
+	var det_player_a: TestPlayerState = _player()
+	det_player_a.capital = 6
+	var det_player_b: TestPlayerState = _player()
+	det_player_b.capital = 6
+	var det_a: DateEngine = _start(det_catalog_a, &"alina", &"cafe", &"casual", 91, _fresh_progress(det_catalog_a, &"alina"), det_player_a)
+	var det_b: DateEngine = _start(det_catalog_b, &"alina", &"cafe", &"casual", 91, _fresh_progress(det_catalog_b, &"alina"), det_player_b)
+	_ok("7. same seed same BASE ids and order", det_a.get_session_state().current_selected_base_move_ids == det_b.get_session_state().current_selected_base_move_ids)
+
+	var seed_catalog: DateContentCatalog = _catalog()
+	for situation in seed_catalog.situations:
+		if situation.id != &"appearance_question" and situation.id != &"spontaneous_bet":
+			situation.enabled = false
+	seed_catalog.date_rules.core_episode_count = 1
+	seed_catalog.date_rules.closing_episode_count = 0
+	var seed_player: TestPlayerState = _player()
+	seed_player.capital = 6
+	var seed_engine: DateEngine = _start(seed_catalog, &"alina", &"cafe", &"casual", 5, _fresh_progress(seed_catalog, &"alina"), seed_player)
+	_choose(seed_engine, _first_available(seed_engine))
+	var seed_session: DateSession = seed_engine.get_session_state()
+	_ok("seed spontaneous_bet episode", seed_session.selected_situation_ids.size() >= 2 and seed_session.selected_situation_ids[1] == &"spontaneous_bet")
+	_ok("seed reserved STATUS", seed_session.current_reserved_unlockable_tag_ids.has(&"status"))
+	_ok("seed reserved RISK", seed_session.current_reserved_unlockable_tag_ids.has(&"risk"))
+	_ok("seed BASE prefers other tags", not seed_session.current_selected_base_tag_ids.has(&"status") and not seed_session.current_selected_base_tag_ids.has(&"risk"))
+
+
+func _diversity_catalog(base_specs: Array, unlock_specs: Array, opening_count: int = 1, core_count: int = 0, allow_repeats: bool = false) -> DateContentCatalog:
+	var catalog: DateContentCatalog = _catalog()
+	var situation: DateSituation = DateSituation.new()
+	situation.id = &"lab_episode"
+	situation.display_name = "Lab"
+	situation.description = "Lab"
+	situation.situation_text = "Lab"
+	situation.enabled = true
+	situation.allowed_phases = [
+		int(DateTypes.DatePhase.OPENING),
+		int(DateTypes.DatePhase.CORE),
+		int(DateTypes.DatePhase.CLOSING),
+	]
+	situation.weight = 1.0
+	var situations: Array[DateSituation] = []
+	situations.append(situation)
+	catalog.situations = situations
+	var moves: Array[DateMove] = []
+	for spec in base_specs:
+		moves.append(_test_base_move(String(spec[0]), String(spec[1])))
+	for spec in unlock_specs:
+		moves.append(_test_unlock_move(String(spec[0]), String(spec[1]), int(spec[2]), int(spec[3])))
+	catalog.moves = moves
+	catalog.date_rules.opening_episode_count = opening_count
+	catalog.date_rules.core_episode_count = core_count
+	catalog.date_rules.closing_episode_count = 0
+	catalog.date_rules.allow_situation_repeats = allow_repeats
+	catalog.date_rules.base_moves_per_episode = 3
+	return catalog
+
+
+func _test_base_move(move_id: String, tag_id: String) -> DateMove:
+	var move: DateMove = DateMove.new()
+	move.id = StringName(move_id)
+	move.display_name = move_id
+	move.description = move_id
+	move.kind = DateTypes.DateMoveKind.BASE
+	move.enabled = true
+	move.max_uses_per_date = 0
+	var mappings: Array[DateMoveSituationMapping] = []
+	mappings.append(_test_mapping(tag_id))
+	move.situation_mappings = mappings
+	return move
+
+
+func _test_unlock_move(move_id: String, tag_id: String, required_level: int, max_uses: int) -> DateMove:
+	var move: DateMove = DateMove.new()
+	move.id = StringName(move_id)
+	move.display_name = move_id
+	move.description = move_id
+	move.kind = DateTypes.DateMoveKind.UNLOCKABLE
+	move.enabled = true
+	move.max_uses_per_date = max_uses
+	var requirement: UnlockRequirement = UnlockRequirement.new()
+	requirement.stat_id = &"capital"
+	requirement.required_level = required_level
+	move.unlock_requirement = requirement
+	var mappings: Array[DateMoveSituationMapping] = []
+	mappings.append(_test_mapping(tag_id))
+	move.situation_mappings = mappings
+	return move
+
+
+func _test_mapping(tag_id: String) -> DateMoveSituationMapping:
+	var mapping: DateMoveSituationMapping = DateMoveSituationMapping.new()
+	mapping.situation_id = &"lab_episode"
+	mapping.tag_id = StringName(tag_id)
+	mapping.option_text = tag_id
+	mapping.positive_result_text = "ok"
+	mapping.negative_result_text = "no"
+	return mapping
+
+
+func _same_tag_set(actual: Array[StringName], expected: Array) -> bool:
+	if actual.size() != expected.size():
+		return false
+	var found: Dictionary = {}
+	for tag_id in actual:
+		found[String(tag_id)] = true
+	for tag in expected:
+		if not found.has(String(tag)):
+			return false
+	return true
+
+
+func _unique_count(ids: Array[StringName]) -> int:
+	var found: Dictionary = {}
+	for item in ids:
+		found[String(item)] = true
+	return found.size()

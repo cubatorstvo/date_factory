@@ -74,3 +74,55 @@ static func fill_selector(button: OptionButton, items: Array, selected_id: Strin
 			selected_index = i
 	if button.item_count > 0:
 		button.select(selected_index)
+
+
+static func tag_label(display_name: String, knowledge: DateTypes.TagKnowledge) -> Label:
+	var label := Label.new()
+	label.text = "[%s]" % display_name
+	match knowledge:
+		DateTypes.TagKnowledge.POSITIVE:
+			label.add_theme_color_override("font_color", POSITIVE)
+		DateTypes.TagKnowledge.NEGATIVE:
+			label.add_theme_color_override("font_color", NEGATIVE)
+	return label
+
+
+static func tag_bbcode(display_name: String, knowledge: DateTypes.TagKnowledge) -> String:
+	var wrapped: String = "[lb]%s[rb]" % display_name
+	match knowledge:
+		DateTypes.TagKnowledge.POSITIVE:
+			return "[color=#%s]%s[/color]" % [POSITIVE.to_html(false), wrapped]
+		DateTypes.TagKnowledge.NEGATIVE:
+			return "[color=#%s]%s[/color]" % [NEGATIVE.to_html(false), wrapped]
+		_:
+			return wrapped
+
+
+static func signed(value: int) -> String:
+	return "0" if value == 0 else "%+d" % value
+
+
+static func score_color(value: int) -> Color:
+	if value > 0:
+		return POSITIVE
+	if value < 0:
+		return NEGATIVE
+	return MUTED
+
+
+static func tally_row(title: String, value: int) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	var name_label := Label.new()
+	name_label.text = title
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("font_size", 22)
+	name_label.add_theme_color_override("font_color", score_color(value))
+	row.add_child(name_label)
+	var value_label := Label.new()
+	value_label.text = signed(value)
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value_label.add_theme_font_size_override("font_size", 22)
+	value_label.add_theme_color_override("font_color", score_color(value))
+	row.add_child(value_label)
+	return row

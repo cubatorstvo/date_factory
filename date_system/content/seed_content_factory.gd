@@ -164,12 +164,16 @@ func _secondary() -> Array[SecondaryRule]:
 	var variety := SecondaryRule.new()
 	variety.id = &"variety"
 	variety.display_name = "ЛЮБИТ РАЗНООБРАЗИЕ"
-	variety.description = "Получить +1 тремя различными Tags в CORE."
+	variety.description = "Получить +1 тремя различными Tags за свидание."
 	variety.enabled = true
 	variety.condition_type = DateTypes.SecondaryConditionType.DISTINCT_SUCCESS_TAGS
 	variety.condition_parameters = {
 		"required_count": 3,
-		"counted_phases": [int(DateTypes.DatePhase.CORE)],
+		"counted_phases": [
+			int(DateTypes.DatePhase.OPENING),
+			int(DateTypes.DatePhase.CORE),
+			int(DateTypes.DatePhase.CLOSING),
+		],
 	}
 	variety.success_score = 2
 	variety.failure_score = 0

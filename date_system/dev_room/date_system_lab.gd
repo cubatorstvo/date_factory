@@ -52,7 +52,6 @@ func _ready() -> void:
 	progress_store.load_store(catalog_service.catalog)
 	randomize()
 	_build_shell()
-	_show_section("date")
 
 
 func _build_shell() -> void:
@@ -90,6 +89,7 @@ func _build_shell() -> void:
 func _show_section(section: String) -> void:
 	_section = section
 	for child in _content_host.get_children():
+		_content_host.remove_child(child)
 		child.queue_free()
 	_play_panel = null
 	_editor_root = null
@@ -128,9 +128,10 @@ func _build_validation() -> Control:
 			table.text = "Ошибок нет."
 			_set_status("Валидация: OK")
 			return
-		var lines := PackedStringArray(["severity | resource_type | resource_id | field | message"])
+		var lines := PackedStringArray(["severity | code | resource_type | resource_id | field | message"])
 		for issue in issues:
-			lines.append("%s | %s | %s | %s | %s" % [issue.to_dictionary()["severity"], issue.resource_type, issue.resource_id, issue.field, issue.message])
+			var data: Dictionary = issue.to_dictionary()
+			lines.append("%s | %s | %s | %s | %s | %s" % [data["severity"], data["code"], issue.resource_type, issue.resource_id, issue.field, issue.message])
 		table.text = "\n".join(lines)
 		_set_status("Валидация: %d проблем" % issues.size())
 	)
@@ -296,8 +297,6 @@ func _refresh_list() -> void:
 		if query.is_empty() or query in label.to_lower():
 			_list.add_item(label)
 			_list.set_item_metadata(_list.item_count - 1, item)
-			_list.add_item(label)
-			_list.set_item_metadata(_list.item_count - 1, item)
 
 
 func _select_index(index: int) -> void:
@@ -310,6 +309,7 @@ func _select_index(index: int) -> void:
 
 func _rebuild_form() -> void:
 	for child in _form_host.get_children():
+		_form_host.remove_child(child)
 		child.queue_free()
 	if _draft == null:
 		return
@@ -507,37 +507,23 @@ func _add_girl_form() -> void:
 	_add_int(girl, "relationship_start", "relationship_start")
 	_add_int(girl, "relationship_max", "relationship_max")
 	_add_id_selector(girl, "secondary_rule_id", "secondary_rule", catalog_service.catalog.secondary_rules)
-	_form_host.add_child(LabUi.heading("Теги"))
-	var grid := GridContainer.new()
-	grid.columns = 3
-	for caption in ["TAG", "НРАВИТСЯ", "НЕ НРАВИТСЯ"]:
-		var label := Label.new()
-		label.text = caption
-		grid.add_child(label)
+	_form_host.add_child(LabUi.heading("Нравится"))
+	var hint := Label.new()
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.text = "Отмеченные теги нравятся. Все остальные по умолчанию не нравятся."
+	_form_host.add_child(hint)
 	for tag in catalog_service.catalog.tags:
-		var name := Label.new()
-		name.text = tag.display_name
-		grid.add_child(name)
-		var pos := CheckBox.new()
-		var neg := CheckBox.new()
-		pos.button_pressed = girl.positive_tag_ids.has(tag.id)
-		neg.button_pressed = girl.negative_tag_ids.has(tag.id)
+		if tag == null:
+			continue
+		var box := CheckBox.new()
+		box.text = tag.display_name
+		box.button_pressed = girl.positive_tag_ids.has(tag.id)
 		var tag_id: StringName = tag.id
-		pos.toggled.connect(func(pressed: bool) -> void:
-			_set_girl_tag(girl, tag_id, true, pressed)
-			if pressed:
-				neg.button_pressed = false
+		box.toggled.connect(func(pressed: bool) -> void:
+			_set_girl_liked_tag(girl, tag_id, pressed)
 			_dirty = true
 		)
-		neg.toggled.connect(func(pressed: bool) -> void:
-			_set_girl_tag(girl, tag_id, false, pressed)
-			if pressed:
-				pos.button_pressed = false
-			_dirty = true
-		)
-		grid.add_child(pos)
-		grid.add_child(neg)
-	_form_host.add_child(grid)
+		_form_host.add_child(box)
 	_form_host.add_child(LabUi.heading("Любимые форматы"))
 	for format in catalog_service.catalog.location_formats:
 		var box := CheckBox.new()
@@ -554,14 +540,11 @@ func _add_girl_form() -> void:
 		_form_host.add_child(box)
 
 
-func _set_girl_tag(girl: GirlProfile, tag_id: StringName, positive: bool, enabled: bool) -> void:
+func _set_girl_liked_tag(girl: GirlProfile, tag_id: StringName, liked: bool) -> void:
 	girl.positive_tag_ids.erase(tag_id)
-	girl.negative_tag_ids.erase(tag_id)
-	if enabled:
-		if positive:
-			girl.positive_tag_ids.append(tag_id)
-		else:
-			girl.negative_tag_ids.append(tag_id)
+	if liked:
+		girl.positive_tag_ids.append(tag_id)
+	girl.sync_negative_tags(catalog_service.catalog.enabled_tags())
 
 
 func _add_move_form() -> void:
@@ -711,7 +694,14 @@ func _new_resource() -> Resource:
 			var rule := SecondaryRule.new()
 			rule.id = StringName("secondary_%s" % suffix)
 			rule.display_name = "Новое Secondary"
-			rule.condition_parameters = {"counted_phases": [int(DateTypes.DatePhase.CORE)], "required_count": 3}
+			rule.condition_parameters = {
+				"counted_phases": [
+					int(DateTypes.DatePhase.OPENING),
+					int(DateTypes.DatePhase.CORE),
+					int(DateTypes.DatePhase.CLOSING),
+				],
+				"required_count": 3,
+			}
 			return rule
 		"locations":
 			var location := DateLocation.new()
@@ -785,11 +775,15 @@ func _delete_item() -> void:
 func _save_item() -> void:
 	if _draft == null:
 		return
+	if _draft is GirlProfile:
+		(_draft as GirlProfile).sync_negative_tags(catalog_service.catalog.enabled_tags())
 	var temp_catalog: DateContentCatalog = catalog_service.catalog.snapshot()
 	_swap_into(temp_catalog, _draft)
 	var issues: Array[ContentValidationIssue] = validator.validate(temp_catalog)
 	var blocking: Array[ContentValidationIssue] = []
 	for issue in issues:
+		if issue.severity != DateTypes.ValidationSeverity.ERROR:
+			continue
 		if issue.resource_id == String(_draft.get("id")) or _section == "rules":
 			blocking.append(issue)
 	if not blocking.is_empty() and _section != "rules":

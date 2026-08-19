@@ -22,19 +22,69 @@ Design-content хранится в `res://`. Runtime-прогресс — в `us
 
 - Есть у героя с начала игры.
 - Применимость задаётся mapping к Ситуации.
-- Перед эпизодом Date Engine собирает все применимые BASE.
-- RNG выбирает из них 3 и определяет порядок отображения.
+- Базовые ходы дают случайный набор тегов. При одинаковом теге два Хода механически эквивалентны: результат идёт через `Tag → preference девушки → +1/-1`.
 - Один BASE может снова появиться в следующих эпизодах того же свидания.
 - `max_uses_per_date = 0` означает unlimited.
+- Несколько BASE одного Tag для одной Situation допустимы: это текстовые варианты одного механического направления.
 
 ### UNLOCKABLE
 
 - Есть требование к характеристике и mappings к Ситуациям.
 - Все подходящие текущей Ситуации UNLOCKABLE показываются игроку.
-- Выполненное требование делает Ход доступным.
-- Будущее требование: затемнён, рядом характеристика и уровень.
+- Открываемые ходы расширяют доступный игроку набор тегов.
+- Состояния каждого применимого UNLOCKABLE:
+  - `AVAILABLE` — `unlock_requirement` выполнен и `uses < max_uses_per_date`; Tag резервируется для BASE selection.
+  - `LOCKED` — требование ещё не выполнено; затемнён, рядом `Requirement: ...`; Tag свободен для BASE.
+  - `USED` — `uses >= max_uses_per_date`; затемнён, статус `Уже использован`; Tag свободен для BASE.
+- Без слова «ДОСТУПЕН»: доступный Ход выглядит как обычная кнопка.
 - Seed: `max_uses_per_date = 1`.
-- После использования строка остаётся со статусом `Уже использован`.
+
+### Формирование вариантов эпизода
+
+Для текущей `DateSituation` Date Engine выполняет строго этот порядок:
+
+```text
+1. Получить применимые UNLOCKABLE Moves
+2. Определить состояние каждого UNLOCKABLE
+3. Зарезервировать Tags доступных UNLOCKABLE
+4. Сформировать BASE candidate pool
+5. Выбрать BASE Moves с максимальным количеством уникальных Tags
+6. Собрать итоговый список вариантов
+```
+
+`reserved_unlockable_tags` содержит уникальные `tag_id` всех применимых UNLOCKABLE со статусом `AVAILABLE`.
+
+BASE candidate pool делится так:
+
+```text
+preferred_base_candidates  — Tag отсутствует в reserved_unlockable_tags
+fallback_base_candidates   — Tag присутствует в reserved_unlockable_tags
+```
+
+Число выбранных BASE: `DateRules.base_moves_per_episode` (seed = 3). Выбор через RNG текущей `DateSession`. Порядок:
+
+```text
+A. preferred, каждый раз новый Tag относительно уже выбранных BASE
+B. оставшиеся preferred
+C. fallback, сначала новые Tags относительно уже выбранных BASE
+D. оставшиеся fallback
+```
+
+Пока `selected_base_moves.size() != base_moves_per_episode`. Сначала покрывается максимум разных Tags, затем повторы как fallback.
+
+Итоговый доступный набор:
+
+```text
+уникальные Tags AVAILABLE UNLOCKABLE
++ уникальные Tags BASE
++ повторяющиеся Tags как fallback
+```
+
+Пример: AVAILABLE UNLOCKABLE → Tag A, BASE selection берёт B, C, D. Игрок видит BASE B/C/D и UNLOCKABLE A.
+
+LOCKED или USED UNLOCKABLE с Tag A оставляют этот Tag в обычном BASE pool: корректно получить `BASE → Tag A` рядом с затемнённым UNLOCKABLE → Tag A, потому что фактически доступен только BASE.
+
+Несколько AVAILABLE UNLOCKABLE одного Tag резервируют его один раз. Content Validator даёт WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION`.
 
 ## Формула эпизода
 
@@ -80,7 +130,7 @@ signal episode_presentation_finished
 - `DateMoveSituationMapping`: situation_id, tag_id, option_text, positive_result_text, negative_result_text
 - `DateSituation`: id, display_name, description, situation_text, enabled, allowed_phases, weight, custom_episode_scene, custom_logic_script
 - `SecondaryRule`: id, display_name, description, enabled, condition_type, condition_parameters, success_score, failure_score
-- `GirlProfile`: id, display_name, description, enabled, relationship_min/start/max, positive_tag_ids, negative_tag_ids, secondary_rule_id, favorite_location_format_ids, portrait, future_character_scene
+- `GirlProfile`: id, display_name, description, enabled, relationship_min/start/max, positive_tag_ids, negative_tag_ids, secondary_rule_id, favorite_location_format_ids, portrait, future_character_scene. В редакторе задаются только теги «нравится»; все остальные активные теги по умолчанию «не нравится».
 - `LocationFormat`: id, display_name, description, enabled
 - `DateLocation`: id, display_name, description, enabled, base_quality_bonus, preference_mode, location_format_id, uses_apartment_quality, uses_apartment_preparation, future_location_scene
 - `Outfit`: id, display_name, description, enabled, score_bonus, future_visual_resource
@@ -114,7 +164,7 @@ closing_positive_score = 1
 closing_negative_score = -1
 reveal_tag_after_use = true
 reveal_secondary_after_first_completed_date = true
-secondary_counted_phases = [CORE]
+secondary_counted_phases = [CORE]  # fallback, если у SecondaryRule нет counted_phases
 location_preference_success = 1
 location_preference_failure = -1
 apartment_unprepared_penalty = -1
@@ -130,9 +180,9 @@ apartment_quality_max = 3
 
 `TestPlayerState`: muscle, appearance, capital, aura, apartment_quality, apartment_prepared.
 
-`DateSession`: session_id, seed, girl_id, location_id, outfit_id, relationship_before, selected_situation_ids, current_phase, current_episode_index, current_candidate_base_move_ids, current_selected_base_move_ids, current_applicable_unlockable_move_ids, used_unlockable_move_counts, episode_history, revealed_tags_during_session, secondary_runtime_state, score_breakdown, relationship_after, completed.
+`DateSession`: session_id, seed, girl_id, location_id, outfit_id, relationship_before, selected_situation_ids, current_phase, current_episode_index, current_candidate_base_move_ids, current_selected_base_move_ids, current_selected_base_tag_ids, current_applicable_unlockable_move_ids, current_available_unlockable_move_ids, current_locked_unlockable_move_ids, current_used_unlockable_move_ids, current_reserved_unlockable_tag_ids, current_preferred_base_move_ids, current_fallback_base_move_ids, used_unlockable_move_counts, episode_history, revealed_tags_during_session, secondary_runtime_state, score_breakdown, relationship_after, completed.
 
-Каждая DateSession создаёт deterministic RNG из seed.
+Каждая DateSession создаёт deterministic RNG из seed. При одинаковых seed, GirlProgress snapshot, TestPlayerState и DateContent snapshot воспроизводятся Situations, BASE Moves и порядок BASE Moves.
 
 ## Date Engine API
 
@@ -164,7 +214,7 @@ Secondary + Location + Location Preference + Outfit + Apartment + Episode Scores
 
 ## Раскрытие Tags
 
-UNKNOWN / POSITIVE / NEGATIVE. UI: ⚪ 🟢 🔴. Первое использование +1 → POSITIVE, -1 → NEGATIVE. Знание хранится в GirlProgress.
+UNKNOWN / POSITIVE / NEGATIVE. UI: текст `[ТЕГ]` без изменений / зелёный / красный. Первое использование +1 → POSITIVE, -1 → NEGATIVE. Знание хранится в GirlProgress.
 
 Secondary на первом свидании `???`. После первого completed date раскрывается в Result и дальше известна заранее; во время свидания — live progress.
 
@@ -172,7 +222,7 @@ Secondary на первом свидании `???`. После первого co
 
 ### variety — ЛЮБИТ РАЗНООБРАЗИЕ
 
-`DISTINCT_SUCCESS_TAGS`, `required_count = 3`, counted CORE. +1 тремя различными Tags в CORE. success +2, failure 0. Live: `Разные успешные теги: N/3`.
+`DISTINCT_SUCCESS_TAGS`, `required_count = 3`, counted OPENING+CORE+CLOSING. +1 тремя различными успешными Tags за свидание. Первый успешный тег уже даёт `1/3`. success +2, failure 0. Live: `Разные успешные теги: N/3`.
 
 ### demanding — ТРЕБОВАТЕЛЬНАЯ
 
@@ -249,7 +299,7 @@ politeness УЧТИВОСТЬ; directness ПРЯМОЛИНЕЙНОСТЬ; flatte
 
 1. уникальные IDs  
 2. references существуют  
-3. каждый активный Girl Tag ровно в positive или negative  
+3. у GirlProfile редактируются только positive tags; все остальные активные Tags считаются negative. Tag не может быть одновременно в positive и negative  
 4. mapping → существующая Situation  
 5. mapping → существующий Tag  
 6. UNLOCKABLE имеет UnlockRequirement  
@@ -262,16 +312,19 @@ politeness УЧТИВОСТЬ; directness ПРЯМОЛИНЕЙНОСТЬ; flatte
 13. favorite LocationFormat существует  
 14. UnlockRequirement → существующий ProgressionStat  
 15. один Move — максимум один mapping на одну Situation  
+16. несколько UNLOCKABLE одной Situation с одинаковым Tag → WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION` (не блокирует запуск)
 
-Экран: severity, resource_type, resource_id, field, message. Кнопка «ПРОВЕРИТЬ ВЕСЬ КОНТЕНТ».
+Экран: severity, code, resource_type, resource_id, field, message. Кнопка «ПРОВЕРИТЬ ВЕСЬ КОНТЕНТ». ERROR блокирует сохранение; WARNING только показывает проблему.
 
 ## UI свидания
 
 Запуск: девушка, место, наряд, квартира (если location uses apartment), тестовые статы, seed. Кнопки: НАЧАТЬ НОВОЕ СВИДАНИЕ, ПОВТОРИТЬ ПОСЛЕДНИЙ SEED, СБРОСИТЬ ПРОГРЕСС ДЕВУШКИ, СБРОСИТЬ ВЕСЬ ТЕСТОВЫЙ ПРОГРЕСС.
 
-Эпизод: фаза, номер, Situation, BASE×3, все applicable UNLOCKABLE, состояние/цвет Tag/option/requirement/uses. После выбора: ход, tag, реакция, score, новое знание, ПРОДОЛЖИТЬ.
+Эпизод: фаза, номер, Situation, BASE×3, все applicable UNLOCKABLE. Tag цветом знания конкретной девушки (UNKNOWN — цвет текста по умолчанию, POSITIVE — зелёный, NEGATIVE — красный), option, у locked — затемнение и `Requirement: ...`, у used — затемнение и отдельная строка `Уже использован`. После выбора: ход, tag, реакция, score, новое знание, ПРОДОЛЖИТЬ.
 
-Result: все эпизоды, Secondary, location quality/preference, outfit, apartment quality/preparation, total, relationship before→after.
+Debug-панель эпизода дополнительно показывает: applicable/available/locked/used unlockable moves, reserved_unlockable_tags, preferred/fallback BASE candidates, selected_base_moves и selected_base_tags. У каждого Move: `move_id`, `tag_id`, `state`.
+
+Result: построчный итог, строки появляются быстро одна за другой. Сначала `[ТЕГ] +1` / `[ТЕГ] -1` по эпизодам с ненулевым score. Opening `0` не показывают. Затем Secondary всегда, даже при `0`; место (quality + preference одним числом); наряд; квартира входит в строку места, если это место её использует. В конце `Итого` и отношения. Без эпизодной статистики и без debug-панели.
 
 Replay восстанавливает snapshot девушки до сессии и тот же seed: те же Situations, BASE selection и порядок.
 
@@ -285,4 +338,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи (раскрытие tags, scores фаз, BASE pool/RNG/replay, UNLOCKABLE, Secondary, локации, квартира, outfit, clamp Алины/Вики, reset, resource reload, validator).
+Кейсы 1–36 постановки задачи (раскрытие tags, scores фаз, BASE pool/RNG/replay, UNLOCKABLE, Secondary, локации, квартира, outfit, clamp Алины/Вики, reset, resource reload, validator) плюс резервирование Tags AVAILABLE UNLOCKABLE, LOCKED/USED, уникальность BASE Tags, fallback, deterministic seed и WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION`.
