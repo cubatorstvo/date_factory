@@ -27,6 +27,7 @@ func run_all() -> PackedStringArray:
 	_test_game_state_round_trip()
 	_test_game_time()
 	_test_campaign_stages()
+	_test_stage_story_rules()
 	_test_game_actions()
 	_test_game_simulator()
 	_test_economy()
@@ -1374,15 +1375,15 @@ func _test_campaign_stages() -> void:
 	sm.delete_save()
 	sm.new_game()
 	_assert_campaign("new_game", stages, 1, false)
-	_ok("advance 1 to 2", stages.complete_current_stage())
+	_ok("advance 1 to 2", stages.force_complete_current_stage_for_dev())
 	_assert_campaign("after first complete", stages, 2, false)
 	sm.new_game()
 	for step in range(5):
-		_ok("sequence complete %d" % (step + 1), stages.complete_current_stage())
+		_ok("sequence complete %d" % (step + 1), stages.force_complete_current_stage_for_dev())
 	_assert_campaign("after five completes", stages, 6, false)
-	_ok("enter finale", stages.complete_current_stage())
+	_ok("enter finale", stages.force_complete_current_stage_for_dev())
 	_assert_campaign("finale", stages, 6, true)
-	_ok("repeat after finale returns false", stages.complete_current_stage() == false)
+	_ok("repeat after finale returns false", stages.force_complete_current_stage_for_dev() == false)
 	_assert_campaign("still finale", stages, 6, true)
 	sm.new_game()
 	gs.story.stage = 3
@@ -1394,7 +1395,7 @@ func _test_campaign_stages() -> void:
 			"current_stage": current_stage,
 		})
 	stages.stage_changed.connect(on_stage)
-	_ok("complete 3 to 4", stages.complete_current_stage())
+	_ok("complete 3 to 4", stages.force_complete_current_stage_for_dev())
 	stages.stage_changed.disconnect(on_stage)
 	_ok("stage_changed once", stage_events.size() == 1)
 	if stage_events.size() == 1:
@@ -1408,9 +1409,9 @@ func _test_campaign_stages() -> void:
 	var on_finale := func() -> void:
 		finale_events.append(true)
 	stages.finale_reached.connect(on_finale)
-	_ok("complete stage 6", stages.complete_current_stage())
+	_ok("complete stage 6", stages.force_complete_current_stage_for_dev())
 	_ok("finale_reached once", finale_events.size() == 1)
-	_ok("complete after finale false", stages.complete_current_stage() == false)
+	_ok("complete after finale false", stages.force_complete_current_stage_for_dev() == false)
 	_ok("finale_reached still once", finale_events.size() == 1)
 	stages.finale_reached.disconnect(on_finale)
 	sm.new_game()
@@ -1450,6 +1451,200 @@ func _test_campaign_stages() -> void:
 	_ok("deleted campaign test save", not sm.has_save())
 	sm.save_path = original_path
 	sm.new_game()
+
+
+func _test_stage_story_rules() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var stages: Variant = _stage_service()
+	var girls: Variant = _girls_service()
+	var world: Variant = _world_service()
+	_ok("story GameState", gs != null)
+	_ok("story SaveManager", sm != null)
+	_ok("story StageService", stages != null)
+	_ok("story GirlsService", girls != null)
+	_ok("story WorldService", world != null)
+	if gs == null or sm == null or stages == null or girls == null or world == null:
+		return
+	var catalog: StageCatalog = stages.get_catalog() as StageCatalog
+	_ok("story catalog", catalog != null)
+	if catalog == null:
+		return
+	_clear_stage_enter_effects(catalog)
+
+	sm.new_game()
+	var rel_req: GirlRelationshipRequirement = GirlRelationshipRequirement.new()
+	rel_req.girl_id = GirlCatalog.ID_ACTRESS
+	rel_req.target_relationship = 5
+	girls.change_relationship(GirlCatalog.ID_ACTRESS, 3)
+	_ok("req unmet at 3", rel_req.is_met() == false)
+	_ok("req current 3", rel_req.get_current_value() == 3)
+	_ok("req target 5", rel_req.get_target_value() == 5)
+	girls.change_relationship(GirlCatalog.ID_ACTRESS, 2)
+	_ok("req met at 5", rel_req.is_met())
+
+	sm.new_game()
+	var actress_max: int = int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS))
+	girls.change_relationship(GirlCatalog.ID_ACTRESS, actress_max - 1)
+	_ok("auto can_complete false", stages.can_complete_current_stage() == false)
+	girls.change_relationship(GirlCatalog.ID_ACTRESS, 1)
+	_ok("auto stage 2", stages.get_current_stage() == 2)
+
+	sm.new_game()
+	var alina_max: int = int(girls.get_relationship_max(GirlCatalog.ID_ALINA))
+	girls.change_relationship(GirlCatalog.ID_ALINA, alina_max)
+	_ok("wrong girl stage 1", stages.get_current_stage() == 1)
+	var vika_max: int = int(girls.get_relationship_max(GirlCatalog.ID_VIKA))
+	girls.change_relationship(GirlCatalog.ID_VIKA, vika_max)
+	_ok("wrong vika stage 1", stages.get_current_stage() == 1)
+	girls.change_relationship(GirlCatalog.ID_ACTRESS, actress_max)
+	_ok("actress max stage 2", stages.get_current_stage() == 2)
+
+	var stage2: StageDefinition = catalog.get_stage(2)
+	_ok("stage 2 definition", stage2 != null)
+	if stage2 != null:
+		var unlock_effect: UnlockLocationStageEffect = UnlockLocationStageEffect.new()
+		unlock_effect.location_id = LocationCatalog.ID_RESTAURANT
+		stage2.on_enter_effects.append(unlock_effect)
+		sm.new_game()
+		_ok("enter restaurant locked", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT) == false)
+		var signal_order: Array = []
+		var unlocked_on_changed: bool = false
+		var on_completed := func(completed_stage: int) -> void:
+			signal_order.append({"name": "completed", "stage": completed_stage})
+		var on_changed := func(previous_stage: int, current_stage: int) -> void:
+			unlocked_on_changed = bool(world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+			signal_order.append({
+				"name": "changed",
+				"previous_stage": previous_stage,
+				"current_stage": current_stage,
+			})
+		stages.stage_completed.connect(on_completed)
+		stages.stage_changed.connect(on_changed)
+		girls.change_relationship(GirlCatalog.ID_ACTRESS, actress_max)
+		stages.stage_completed.disconnect(on_completed)
+		stages.stage_changed.disconnect(on_changed)
+		_ok("enter stage 2", stages.get_current_stage() == 2)
+		_ok("enter restaurant unlocked", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+		_ok("enter unlocked during changed", unlocked_on_changed)
+		_ok("enter signal count", signal_order.size() == 2)
+		if signal_order.size() >= 1:
+			var completed_payload: Dictionary = signal_order[0]
+			_ok("enter completed first", str(completed_payload.get("name", "")) == "completed")
+			_ok("enter completed stage", int(completed_payload.get("stage", 0)) == 1)
+		if signal_order.size() >= 2:
+			var changed_payload: Dictionary = signal_order[1]
+			_ok("enter changed second", str(changed_payload.get("name", "")) == "changed")
+			_ok("enter changed previous", int(changed_payload.get("previous_stage", 0)) == 1)
+			_ok("enter changed current", int(changed_payload.get("current_stage", 0)) == 2)
+		stage2.on_enter_effects.clear()
+
+	var stage1: StageDefinition = catalog.get_stage(1)
+	var stage3: StageDefinition = catalog.get_stage(3)
+	_ok("reconcile stage 1", stage1 != null)
+	_ok("reconcile stage 2", stage2 != null)
+	if stage1 != null and stage2 != null:
+		var effect1: UnlockLocationStageEffect = UnlockLocationStageEffect.new()
+		effect1.location_id = LocationCatalog.ID_RESTAURANT
+		var effect2: UnlockLocationStageEffect = UnlockLocationStageEffect.new()
+		effect2.location_id = LocationCatalog.ID_RESTAURANT
+		stage1.on_enter_effects.append(effect1)
+		stage2.on_enter_effects.append(effect2)
+		sm.new_game()
+		gs.story.stage = 3
+		gs.world.unlocked_location_ids.erase(LocationCatalog.ID_RESTAURANT)
+		_ok("reconcile restaurant removed", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT) == false)
+		stages.reconcile_stage_entry_state()
+		_ok("reconcile restaurant unlocked", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+		var unlocked_after: Array = gs.world.unlocked_location_ids.duplicate()
+		stages.reconcile_stage_entry_state()
+		_ok("reconcile restaurant still", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+		_ok("reconcile unlock set same", gs.world.unlocked_location_ids.size() == unlocked_after.size())
+		_ok("reconcile restaurant unique", gs.world.unlocked_location_ids.count(LocationCatalog.ID_RESTAURANT) == 1)
+		stage1.on_enter_effects.clear()
+		stage2.on_enter_effects.clear()
+		if stage3 != null:
+			stage3.on_enter_effects.clear()
+
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/stage_story_progress.json"
+	sm.delete_save()
+	sm.new_game()
+	girls.change_relationship(GirlCatalog.ID_ACTRESS, 3)
+	sm.save_game()
+	sm.new_game()
+	_ok("progress clean load path", sm.load_game())
+	var loaded_req: StageRequirement = stages.get_current_requirement() as StageRequirement
+	_ok("progress requirement", loaded_req != null)
+	if loaded_req != null:
+		_ok("progress current 3", loaded_req.get_current_value() == 3)
+		_ok("progress target 10", loaded_req.get_target_value() == actress_max)
+		_ok("progress unmet", loaded_req.is_met() == false)
+	sm.delete_save()
+	sm.save_path = original_path
+
+	sm.new_game()
+	gs.story.stage = 6
+	gs.story.finale_reached = false
+	var stage6: StageDefinition = stages.get_current_definition() as StageDefinition
+	_ok("stage 6 definition", stage6 != null)
+	if stage6 != null:
+		_ok("stage 6 req null", stage6.completion_requirement == null)
+	_ok("stage 6 can_complete false", stages.can_complete_current_stage() == false)
+	_ok("stage 6 try_complete false", stages.try_complete_current_stage() == false)
+	_ok("stage 6 stays", stages.get_current_stage() == 6)
+	_ok("stage 6 finale false", stages.is_finale_reached() == false)
+
+	sm.new_game()
+	gs.story.stage = 6
+	gs.story.finale_reached = false
+	var finale_events: Array = []
+	var on_finale := func() -> void:
+		finale_events.append(true)
+	stages.finale_reached.connect(on_finale)
+	_ok("dev finale force", stages.force_complete_current_stage_for_dev())
+	_ok("dev finale stage 6", stages.get_current_stage() == 6)
+	_ok("dev finale true", stages.is_finale_reached())
+	_ok("dev finale signal once", finale_events.size() == 1)
+	_ok("dev finale repeat false", stages.force_complete_current_stage_for_dev() == false)
+	_ok("dev finale still once", finale_events.size() == 1)
+	stages.finale_reached.disconnect(on_finale)
+
+	sm.new_game()
+	var story_ids: Array[StringName] = [
+		GirlCatalog.ID_ACTRESS,
+		GirlCatalog.ID_MINE_BOSS,
+		GirlCatalog.ID_MAGAZINE_EDITOR,
+		GirlCatalog.ID_SCIENTIST,
+		GirlCatalog.ID_PRESIDENT,
+	]
+	for index in range(story_ids.size()):
+		var girl_id: StringName = story_ids[index]
+		var max_value: int = int(girls.get_relationship_max(girl_id))
+		girls.change_relationship(girl_id, max_value)
+		var expected_stage: int = index + 2
+		_ok("skeleton stage after %d" % (index + 1), stages.get_current_stage() == expected_stage)
+		var definition: StageDefinition = stages.get_current_definition() as StageDefinition
+		_ok("skeleton definition %d" % expected_stage, definition != null and definition.stage == expected_stage)
+		var requirement: StageRequirement = stages.get_current_requirement() as StageRequirement
+		if expected_stage == 6:
+			_ok("skeleton stage 6 req null", requirement == null)
+		else:
+			_ok("skeleton req typed %d" % expected_stage, requirement is GirlRelationshipRequirement)
+			var girl_req: GirlRelationshipRequirement = requirement as GirlRelationshipRequirement
+			_ok("skeleton req girl %d" % expected_stage, girl_req != null and girl_req.girl_id == story_ids[index + 1])
+
+	_clear_stage_enter_effects(catalog)
+	sm.new_game()
+
+
+func _clear_stage_enter_effects(catalog: StageCatalog) -> void:
+	if catalog == null:
+		return
+	for stage_number in range(1, 7):
+		var definition: StageDefinition = catalog.get_stage(stage_number)
+		if definition != null:
+			definition.on_enter_effects.clear()
 
 
 func _test_game_actions() -> void:

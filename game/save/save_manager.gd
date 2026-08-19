@@ -21,11 +21,21 @@ func _time_service() -> Node:
 	return node
 
 
+func _stage_service() -> Node:
+	var node: Node = get_node_or_null("/root/StageService")
+	if not is_instance_valid(node):
+		push_error("StageService autoload missing")
+	return node
+
+
 func new_game() -> void:
 	_playthrough().apply_new_game()
 	var clock: Variant = _time_service()
 	if clock != null:
 		clock.on_playthrough_reset()
+	var stages: Variant = _stage_service()
+	if stages != null:
+		stages.reconcile_stage_entry_state()
 
 
 func save_game() -> void:
@@ -62,6 +72,9 @@ func load_game() -> bool:
 	var clock: Variant = _time_service()
 	if clock != null:
 		clock.on_playthrough_reset()
+	var stages: Variant = _stage_service()
+	if stages != null:
+		stages.reconcile_stage_entry_state()
 	return true
 
 

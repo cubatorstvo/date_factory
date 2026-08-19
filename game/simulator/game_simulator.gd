@@ -27,6 +27,7 @@ var _section_host: VBoxContainer
 var _nav_buttons: Dictionary = {}
 var _action_buttons: Array[GameActionButton] = []
 var _home_summary: Label
+var _home_goal: Label
 var _home_result: Label
 var _upgrade_status_label: Label
 var _upgrade_price_label: Label
@@ -133,9 +134,8 @@ func complete_current_stage() -> void:
 	var stages: Variant = _stage_service()
 	if stages == null:
 		return
-	stages.complete_current_stage()
+	stages.force_complete_current_stage_for_dev()
 	refresh()
-
 
 func execute_catalog_action(action_id: StringName) -> ActionResult:
 	var actions: Variant = _action_service()
@@ -508,6 +508,9 @@ func _build_home() -> Control:
 	_home_summary = Label.new()
 	_home_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_home_summary)
+	_home_goal = Label.new()
+	_home_goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(_home_goal)
 	var save_btn := LabUi.button("СОХРАНИТЬ")
 	save_btn.pressed.connect(save_playthrough)
 	box.add_child(save_btn)
@@ -519,7 +522,6 @@ func _build_home() -> Control:
 	_home_result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_home_result)
 	return box
-
 
 func _build_work() -> Control:
 	var box := VBoxContainer.new()
@@ -1247,9 +1249,11 @@ func _refresh_hud() -> void:
 func _refresh_home() -> void:
 	if _home_summary != null:
 		_home_summary.text = _format_home_summary()
+	if _home_goal != null:
+		_home_goal.text = _format_stage_goal()
+		_home_goal.visible = not _home_goal.text.is_empty()
 	if _home_result != null:
 		_home_result.text = _last_result_text
-
 
 func _refresh_progression() -> void:
 	pass
@@ -1278,6 +1282,10 @@ func _connect_core_signals() -> void:
 	if clock != null and not clock.time_advanced.is_connected(_on_time_advanced):
 		clock.time_advanced.connect(_on_time_advanced)
 	var stages: Variant = _stage_service()
+	if stages != null and not stages.stage_progress_changed.is_connected(_on_stage_progress_changed):
+		stages.stage_progress_changed.connect(_on_stage_progress_changed)
+	if stages != null and not stages.stage_completed.is_connected(_on_stage_completed):
+		stages.stage_completed.connect(_on_stage_completed)
 	if stages != null and not stages.stage_changed.is_connected(_on_stage_changed):
 		stages.stage_changed.connect(_on_stage_changed)
 	if stages != null and not stages.finale_reached.is_connected(_on_finale_reached):
@@ -1454,9 +1462,20 @@ func _on_playthrough_finished() -> void:
 	refresh()
 
 
-func _on_stage_changed(_previous_stage: int, _current_stage: int) -> void:
+func _on_stage_changed(_previous_stage: int, current_stage: int) -> void:
+	var started: String = "Начат Stage %d." % current_stage
+	if _last_result_text == "Stage завершён.":
+		_last_result_text = "%s\n%s" % [_last_result_text, started]
+	else:
+		_last_result_text = started
 	refresh()
 
+func _on_stage_progress_changed(_stage: int) -> void:
+	refresh()
+
+
+func _on_stage_completed(_stage: int) -> void:
+	_last_result_text = "Stage завершён."
 
 func _on_finale_reached() -> void:
 	refresh()
@@ -1524,6 +1543,34 @@ func _format_home_summary() -> String:
 	if stages != null:
 		stage = int(stages.get_current_stage())
 	return "День %d, %02d:%02d\n\nStage %d\n\nДеньги: %d\nRating: %d" % [day, hour, minute, stage, money, rating]
+
+func _format_stage_goal() -> String:
+	var stages: Variant = _stage_service()
+	if stages == null:
+		return ""
+	if bool(stages.is_finale_reached()):
+		return ""
+	var stage: int = int(stages.get_current_stage())
+	var requirement: Variant = stages.get_current_requirement()
+	if requirement == null:
+		return "STAGE %d\n\nIncremental-прогрессия будет подключена следующим этапом." % stage
+	var girl_name: String = _stage_goal_display_name(requirement)
+	var current_value: int = int(requirement.get_current_value())
+	var target_value: int = int(requirement.get_target_value())
+	return "STAGE %d\n\nЦЕЛЬ\n\n%s\n\nОтношения:\n%d / %d" % [stage, girl_name, current_value, target_value]
+
+
+func _stage_goal_display_name(requirement: Variant) -> String:
+	var description: String = String(requirement.get_description())
+	var prefix: String = "Отношения с "
+	if description.begins_with(prefix):
+		var girl_name: String = description.substr(prefix.length())
+		if girl_name.ends_with(":"):
+			girl_name = girl_name.substr(0, girl_name.length() - 1)
+		return girl_name
+	if not description.is_empty():
+		return description
+	return ""
 
 
 func _format_effect(description: String) -> String:

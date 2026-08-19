@@ -3,6 +3,11 @@ extends Resource
 
 const ID_ALINA: StringName = &"alina"
 const ID_VIKA: StringName = &"vika"
+const ID_ACTRESS: StringName = &"girl_actress"
+const ID_MINE_BOSS: StringName = &"girl_mine_boss"
+const ID_MAGAZINE_EDITOR: StringName = &"girl_magazine_editor"
+const ID_SCIENTIST: StringName = &"girl_scientist"
+const ID_PRESIDENT: StringName = &"girl_president"
 
 @export var girls: Array[GirlDefinition] = []
 
@@ -38,6 +43,11 @@ static func create_seed() -> GirlCatalog:
 	var catalog := GirlCatalog.new()
 	catalog.girls.append(_make(ID_ALINA, "Алина", LocationCatalog.ID_CAFE, -5, 5))
 	catalog.girls.append(_make(ID_VIKA, "Вика", LocationCatalog.ID_RESTAURANT, -10, 10))
+	catalog.girls.append(_make(ID_ACTRESS, "Актриса", &"", -10, 10))
+	catalog.girls.append(_make(ID_MINE_BOSS, "Начальница шахты", &"", -10, 10))
+	catalog.girls.append(_make(ID_MAGAZINE_EDITOR, "Редактор журнала", &"", -10, 10))
+	catalog.girls.append(_make(ID_SCIENTIST, "Учёная", &"", -10, 10))
+	catalog.girls.append(_make(ID_PRESIDENT, "Президент", &"", -10, 10))
 	return catalog
 
 

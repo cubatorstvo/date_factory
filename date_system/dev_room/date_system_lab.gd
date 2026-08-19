@@ -315,7 +315,7 @@ func _complete_current_stage() -> void:
 	var stages: Variant = _stage_service()
 	if stages == null:
 		return
-	stages.complete_current_stage()
+	stages.force_complete_current_stage_for_dev()
 
 
 func _apply_test_action(minutes: int) -> void:
