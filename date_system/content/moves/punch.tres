@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/date_move_situation_mapping.gd" id="2_map"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="map_1"]
+script = ExtResource("2_map")
+situation_id = &"rival_provocation"
+tag_id = &"dominance"
+option_text = "Дать самцу в жбан."
+positive_result_text = "Ей это откликается. Тег «dominance» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «dominance» играет против вас."
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"muscle"
+required_level = 4
+
+[resource]
+script = ExtResource("1_move")
+id = &"punch"
+display_name = "Дать в жбан"
+description = "Дать в жбан"
+kind = 1
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+situation_mappings = [SubResource("map_1")]

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Outfit" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/outfit.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"casual"
+display_name = "Повседневный"
+description = "Повседневный"
+enabled = true
+score_bonus = 0

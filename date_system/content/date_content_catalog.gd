@@ -1,0 +1,114 @@
+class_name DateContentCatalog
+extends Resource
+
+@export var tags: Array[DateTag] = []
+@export var moves: Array[DateMove] = []
+@export var situations: Array[DateSituation] = []
+@export var girls: Array[GirlProfile] = []
+@export var secondary_rules: Array[SecondaryRule] = []
+@export var location_formats: Array[LocationFormat] = []
+@export var locations: Array[DateLocation] = []
+@export var outfits: Array[Outfit] = []
+@export var progression_stats: Array[ProgressionStat] = []
+@export var date_rules: DateRules
+
+
+func find_tag(tag_id: StringName) -> DateTag:
+	for item in tags:
+		if item != null and item.id == tag_id:
+			return item
+	return null
+
+
+func find_move(move_id: StringName) -> DateMove:
+	for item in moves:
+		if item != null and item.id == move_id:
+			return item
+	return null
+
+
+func find_situation(situation_id: StringName) -> DateSituation:
+	for item in situations:
+		if item != null and item.id == situation_id:
+			return item
+	return null
+
+
+func find_girl(girl_id: StringName) -> GirlProfile:
+	for item in girls:
+		if item != null and item.id == girl_id:
+			return item
+	return null
+
+
+func find_secondary(rule_id: StringName) -> SecondaryRule:
+	for item in secondary_rules:
+		if item != null and item.id == rule_id:
+			return item
+	return null
+
+
+func find_location_format(format_id: StringName) -> LocationFormat:
+	for item in location_formats:
+		if item != null and item.id == format_id:
+			return item
+	return null
+
+
+func find_location(location_id: StringName) -> DateLocation:
+	for item in locations:
+		if item != null and item.id == location_id:
+			return item
+	return null
+
+
+func find_outfit(outfit_id: StringName) -> Outfit:
+	for item in outfits:
+		if item != null and item.id == outfit_id:
+			return item
+	return null
+
+
+func find_stat(stat_id: StringName) -> ProgressionStat:
+	for item in progression_stats:
+		if item != null and item.id == stat_id:
+			return item
+	return null
+
+
+func enabled_tags() -> Array[DateTag]:
+	var result: Array[DateTag] = []
+	for item in tags:
+		if item != null and item.enabled:
+			result.append(item)
+	return result
+
+
+func enabled_moves() -> Array[DateMove]:
+	var result: Array[DateMove] = []
+	for item in moves:
+		if item != null and item.enabled:
+			result.append(item)
+	return result
+
+
+func enabled_situations() -> Array[DateSituation]:
+	var result: Array[DateSituation] = []
+	for item in situations:
+		if item != null and item.enabled:
+			result.append(item)
+	return result
+
+
+func applicable_moves(situation_id: StringName, kind: DateTypes.DateMoveKind) -> Array[DateMove]:
+	var result: Array[DateMove] = []
+	for move in enabled_moves():
+		if move.kind != kind:
+			continue
+		if move.mapping_for(situation_id) != null:
+			result.append(move)
+	return result
+
+
+func snapshot() -> DateContentCatalog:
+	return duplicate(true) as DateContentCatalog

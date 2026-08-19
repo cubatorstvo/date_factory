@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateLocation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_location.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"cinema"
+display_name = "Кинотеатр"
+description = "Кинотеатр"
+enabled = true
+base_quality_bonus = 1
+preference_mode = 1
+location_format_id = &"entertainment"
+uses_apartment_quality = false
+uses_apartment_preparation = false

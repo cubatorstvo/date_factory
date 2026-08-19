@@ -1,37 +1,31 @@
-# DATE FACTORY v2
+# DATE FACTORY — Date System Lab
 
-Новая версия Date Factory. Старый прототип — отдельный read-only donor, не часть runtime.
+Ядро механики свиданий: 2D-текстовая игра и комната разработчика.
+
+Предыдущая 3D-игра сохранена как **Legacy V2** (`legacy-v2`, папка `../date_factory_legacy_v2`). Ещё более ранний прототип — **Legacy V1**.
 
 ## Requirements
 
-- Godot **4.7** (Forward Plus)
+- Godot **4.7.1 stable**
+- Renderer **Forward Plus**
 - Desktop
 
 ## Open / run
 
 1. Открыть эту папку как Godot project.
-2. Main scene: `res://main.tscn`
+2. Main scene: `res://date_system/dev_room/DateSystemLab.tscn`
 3. Play (F5)
 
 ## Docs
 
 | Doc | Path |
 |---|---|
-| Master GDD (product truth) | [`docs/MASTER_GDD.md`](docs/MASTER_GDD.md) |
-| Technical plan (surface only) | [`docs/TECH_PLAN.md`](docs/TECH_PLAN.md) |
-| Module specs | [`docs/modules/`](docs/modules/) |
+| Master GDD | [`docs/MASTER_GDD.md`](docs/MASTER_GDD.md) |
+| Date System Lab spec | [`docs/DATE_SYSTEM_LAB.md`](docs/DATE_SYSTEM_LAB.md) |
 | Project structure | [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) |
 | Technical decisions | [`docs/TECHNICAL_DECISIONS.md`](docs/TECHNICAL_DECISIONS.md) |
 
-Per-module **final implementation specs** are provided separately before each module starts.  
-`TECH_PLAN` is only module order / boundaries / dependencies.
+## Data
 
-## Donor
-
-```text
-../date_factory_legacy
-branch/tag: legacy-v1
-mode: READ-ONLY
-```
-
-Copy into this project only when explicitly needed. Never runtime-link to donor.
+- Design-content: `res://date_system/content/`
+- Runtime progress: `user://date_system/`

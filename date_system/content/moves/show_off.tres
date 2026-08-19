@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/date_move_situation_mapping.gd" id="2_map"]
+
+[sub_resource type="Resource" id="map_1"]
+script = ExtResource("2_map")
+situation_id = &"appearance_question"
+tag_id = &"status"
+option_text = "Перевести разговор на собственный образ и сравнить его с её образом."
+positive_result_text = "Ей это откликается. Тег «status» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «status» играет против вас."
+
+[sub_resource type="Resource" id="map_2"]
+script = ExtResource("2_map")
+situation_id = &"money_request"
+tag_id = &"status"
+option_text = "Дать крупную сумму так, чтобы это заметили окружающие."
+positive_result_text = "Ей это откликается. Тег «status» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «status» играет против вас."
+
+[sub_resource type="Resource" id="map_3"]
+script = ExtResource("2_map")
+situation_id = &"rival_provocation"
+tag_id = &"status"
+option_text = "Назвать свой рейтинг и предложить сравнить показатели."
+positive_result_text = "Ей это откликается. Тег «status» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «status» играет против вас."
+
+[sub_resource type="Resource" id="map_4"]
+script = ExtResource("2_map")
+situation_id = &"spontaneous_bet"
+tag_id = &"status"
+option_text = "Сказать, что предложенная ставка слишком мала."
+positive_result_text = "Ей это откликается. Тег «status» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «status» играет против вас."
+
+[sub_resource type="Resource" id="map_5"]
+script = ExtResource("2_map")
+situation_id = &"date_verdict"
+tag_id = &"status"
+option_text = "Сказать, что для первого раза она справилась неплохо."
+positive_result_text = "Ей это откликается. Тег «status» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «status» играет против вас."
+
+[resource]
+script = ExtResource("1_move")
+id = &"show_off"
+display_name = "Показать себя"
+description = "Показать себя"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = [SubResource("map_1"), SubResource("map_2"), SubResource("map_3"), SubResource("map_4"), SubResource("map_5")]

@@ -1,6 +1,0 @@
-[gd_scene format=3 uid="uid://bhh72hmosq3pm"]
-
-[ext_resource type="Script" uid="uid://d1v45waajmumi" path="res://minigames/dance/test/dance_minigame_self_test.gd" id="1_lb1nf"]
-
-[node name="DanceMinigameSelfTest" type="Node" unique_id=552369188]
-script = ExtResource("1_lb1nf")

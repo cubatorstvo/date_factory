@@ -1,5 +1,0 @@
-[gd_scene format=3 uid="uid://cun0j4oayyoox"]
-
-[ext_resource type="PackedScene" uid="uid://jw6l45vnbk5p" path="res://characters/female/female_base_visual.tscn" id="1_base"]
-
-[node name="FemaleWorkerVisual" instance=ExtResource("1_base")]

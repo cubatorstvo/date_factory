@@ -1,6 +1,0 @@
-[gd_scene format=3 uid="uid://bupygq2y63pyt"]
-
-[ext_resource type="Script" uid="uid://d3dcgheq1ixbt" path="res://game/opening/test/morning_tutorial_self_test.gd" id="1_3il02"]
-
-[node name="MorningTutorialSelfTest" type="Node" unique_id=137151372]
-script = ExtResource("1_3il02")

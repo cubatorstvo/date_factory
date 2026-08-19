@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"date_verdict"
+display_name = "Оценка свидания"
+description = "Оценка свидания"
+situation_text = "Перед расставанием девушка спрашивает:\n«Ну и как тебе сегодняшний вечер?»"
+enabled = true
+allowed_phases = Array[int]([2])
+weight = 1.0

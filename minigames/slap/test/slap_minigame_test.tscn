@@ -1,6 +1,0 @@
-[gd_scene format=3 uid="uid://ddqu7ttcv73jj"]
-
-[ext_resource type="Script" uid="uid://db60fikvkw0am" path="res://minigames/slap/test/slap_minigame_self_test.gd" id="1_psaah"]
-
-[node name="SlapMinigameTest" type="Node" unique_id=919509648]
-script = ExtResource("1_psaah")

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="DateRules" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_rules.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+opening_episode_count = 1
+core_episode_count = 3
+closing_episode_count = 1
+base_moves_per_episode = 3
+allow_situation_repeats = false
+show_locked_unlockable_moves = true
+opening_choice_score = 0
+core_positive_score = 1
+core_negative_score = -1
+closing_positive_score = 1
+closing_negative_score = -1
+reveal_tag_after_use = true
+reveal_secondary_after_first_completed_date = true
+secondary_counted_phases = Array[int]([1])
+location_preference_success = 1
+location_preference_failure = -1
+apartment_unprepared_penalty = -1
+apartment_quality_min = 0
+apartment_quality_max = 3

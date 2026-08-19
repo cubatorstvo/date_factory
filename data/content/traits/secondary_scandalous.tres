@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script_class="SecondaryTraitDefinition" load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://data/definitions/secondary_trait_definition.gd" id="1_script"]
-
-[resource]
-script = ExtResource("1_script")
-secondary_trait = 0
-display_name = "Скандальная"
-description = "+1: минимум одно оцениваемое событие содержало публичный CONFLICT. -1: свидание прошло полностью тихо и незаметно. 0: иначе."

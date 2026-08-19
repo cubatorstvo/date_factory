@@ -1,6 +1,0 @@
-[gd_scene format=3 uid="uid://bqkwg0n8sw4vs"]
-
-[ext_resource type="Script" uid="uid://c0skqtvs0sbxx" path="res://game/opening/test/opening_scene_self_test.gd" id="1_lr5yp"]
-
-[node name="OpeningSceneSelfTest" type="Node" unique_id=821447618]
-script = ExtResource("1_lr5yp")

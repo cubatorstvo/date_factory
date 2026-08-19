@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/date_move_situation_mapping.gd" id="2_map"]
+
+[sub_resource type="Resource" id="map_1"]
+script = ExtResource("2_map")
+situation_id = &"appearance_question"
+tag_id = &"audacity"
+option_text = "Сказать, что ожидал увидеть что-то хуже."
+positive_result_text = "Ей это откликается. Тег «audacity» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «audacity» играет против вас."
+
+[sub_resource type="Resource" id="map_2"]
+script = ExtResource("2_map")
+situation_id = &"money_request"
+tag_id = &"audacity"
+option_text = "Попросить сначала убедительно продать свою историю."
+positive_result_text = "Ей это откликается. Тег «audacity» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «audacity» играет против вас."
+
+[sub_resource type="Resource" id="map_3"]
+script = ExtResource("2_map")
+situation_id = &"rival_provocation"
+tag_id = &"audacity"
+option_text = "Высмеять его претензию."
+positive_result_text = "Ей это откликается. Тег «audacity» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «audacity» играет против вас."
+
+[sub_resource type="Resource" id="map_4"]
+script = ExtResource("2_map")
+situation_id = &"spontaneous_bet"
+tag_id = &"audacity"
+option_text = "Добавить унизительное условие для проигравшего."
+positive_result_text = "Ей это откликается. Тег «audacity» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «audacity» играет против вас."
+
+[sub_resource type="Resource" id="map_5"]
+script = ExtResource("2_map")
+situation_id = &"date_verdict"
+tag_id = &"audacity"
+option_text = "Сказать, что бывало и хуже."
+positive_result_text = "Ей это откликается. Тег «audacity» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «audacity» играет против вас."
+
+[resource]
+script = ExtResource("1_move")
+id = &"tease"
+display_name = "Подколоть"
+description = "Подколоть"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = [SubResource("map_1"), SubResource("map_2"), SubResource("map_3"), SubResource("map_4"), SubResource("map_5")]

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"vika"
+display_name = "Вика"
+description = "Вика"
+enabled = true
+relationship_min = -10
+relationship_start = 0
+relationship_max = 10
+positive_tag_ids = Array[StringName]([&"flattery", &"audacity", &"dominance", &"status"])
+negative_tag_ids = Array[StringName]([&"politeness", &"directness", &"risk", &"generosity"])
+secondary_rule_id = &"demanding"
+favorite_location_format_ids = Array[StringName]([&"game", &"unusual"])

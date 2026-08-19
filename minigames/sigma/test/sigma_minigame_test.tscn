@@ -1,6 +1,0 @@
-[gd_scene format=3 uid="uid://cpuhu8bqsak08"]
-
-[ext_resource type="Script" uid="uid://doa0dbsarxyth" path="res://minigames/sigma/test/sigma_minigame_self_test.gd" id="1_3mkry"]
-
-[node name="SigmaMinigameSelfTest" type="Node" unique_id=1638048492]
-script = ExtResource("1_3mkry")
