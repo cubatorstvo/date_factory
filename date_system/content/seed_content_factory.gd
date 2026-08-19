@@ -377,15 +377,15 @@ func _girl(
 	rel_min: int,
 	rel_max: int,
 	positives: Array,
-	negatives: Array,
 	secondary_id: String,
 	favorites: Array,
-	favorite_outfits: Array
+	favorite_outfits: Array,
+	description: String = ""
 ) -> GirlProfile:
 	var girl: GirlProfile = GirlProfile.new()
 	girl.id = StringName(id)
 	girl.display_name = name
-	girl.description = name
+	girl.description = name if description.is_empty() else description
 	girl.enabled = true
 	girl.relationship_min = rel_min
 	girl.relationship_start = 0
@@ -395,10 +395,7 @@ func _girl(
 	for item in positives:
 		pos.append(StringName(str(item)))
 	girl.positive_tag_ids = pos
-	var neg: Array[StringName] = []
-	for item in negatives:
-		neg.append(StringName(str(item)))
-	girl.negative_tag_ids = neg
+	girl.sync_negative_tags(_tags())
 	girl.secondary_rule_id = StringName(secondary_id)
 	var fav: Array[StringName] = []
 	for item in favorites:
@@ -410,13 +407,19 @@ func _girl(
 	girl.favorite_outfit_ids = fav_outfits
 	return girl
 
-
 func _girls() -> Array[GirlProfile]:
 	return [
-		_girl("alina", "Алина", "starter", -5, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"], ["flattery", "audacity", "dominance", "risk", "status", "cunning"], "variety", ["calm", "culture"], ["business"]),
-		_girl("vika", "Вика", "late", -10, 10, ["audacity", "dominance", "risk"], ["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"], "demanding", ["game", "unusual"], ["luxury"]),
+		_girl("alina", "Алина", "starter", -5, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety", ["calm", "culture"], ["business"]),
+		_girl("girl_actress", "Актриса", "early", -5, 5, ["flattery", "audacity", "generosity", "status", "humor"], "variety", ["entertainment", "culture"], ["luxury"], "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
+		_girl("vika", "Вика", "early", -5, 5, ["audacity", "dominance", "risk", "humor", "cunning"], "demanding", ["game", "unusual"], ["luxury"]),
+		_girl("girl_mine_boss", "Начальница шахты", "mid", -5, 5, ["directness", "dominance", "generosity", "composure"], "demanding", ["calm", "unusual"], ["business"], "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
+		_girl("katya", "Катя", "mid", -5, 5, ["directness", "risk", "humor", "cunning"], "variety", ["entertainment", "game"], ["business"], "любит спонтанность, игры, подколы и быстрые нестандартные решения"),
+		_girl("girl_magazine_editor", "Редактор журнала", "mid", -5, 5, ["directness", "status", "composure", "cunning"], "demanding", ["culture", "calm"], ["business"], "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),
+		_girl("lera", "Лера", "mid", -5, 5, ["politeness", "flattery", "status", "composure"], "variety", ["calm", "culture"], ["luxury"], "любит красивую спокойную подачу, хороший вкус и социальную уверенность"),
+		_girl("girl_scientist", "Учёная", "mid", -5, 5, ["directness", "composure", "cunning", "care"], "demanding", ["culture", "unusual"], ["business"], "ценит ясность, спокойствие, наблюдательность и необычные решения"),
+		_girl("sonya", "Соня", "late", -5, 5, ["audacity", "risk", "humor"], "variety", ["entertainment", "unusual"], ["luxury"], "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"),
+		_girl("girl_president", "Президент", "late", -5, 5, ["dominance", "status", "composure"], "demanding", ["culture", "unusual"], ["luxury"], "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание"),
 	]
-
 
 func _rules() -> DateRules:
 	var rules := DateRules.new()

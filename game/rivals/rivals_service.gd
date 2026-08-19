@@ -73,8 +73,16 @@ func get_rivals_at_current_location() -> Array[RivalDefinition]:
 	var world: Variant = _world_service()
 	if world != null:
 		location_id = world.get_current_location_id()
-	return get_catalog().get_rivals_for_location(location_id)
-
+	var result: Array[RivalDefinition] = []
+	var girls: Variant = _girls_service()
+	for rival in get_catalog().get_rivals_for_location(location_id):
+		if rival == null:
+			continue
+		if rival.linked_girl_id != &"":
+			if girls == null or not bool(girls.is_discovered(rival.linked_girl_id)):
+				continue
+		result.append(rival)
+	return result
 
 func get_discovered_rivals() -> Array[RivalDefinition]:
 	var result: Array[RivalDefinition] = []
@@ -120,5 +128,14 @@ func _world_service() -> Variant:
 	var node: Node = get_node_or_null("/root/WorldService")
 	if not is_instance_valid(node):
 		push_error("WorldService autoload missing")
+		return null
+	return node
+
+func _girls_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("GirlsService")
+	if not is_instance_valid(node):
 		return null
 	return node

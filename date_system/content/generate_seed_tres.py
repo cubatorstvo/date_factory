@@ -65,6 +65,54 @@ DIFFICULTIES = [
     ("elite", "Элитная", "Очень узкий набор положительных реакций. Рассчитана на сильно развитого героя и полноценную подготовку.", 2, 4),
 ]
 
+TAG_IDS = [tag_id for tag_id, *_ in TAGS]
+
+# id, name, description, difficulty, positives, secondary, formats, outfits
+GIRLS = [
+    ("alina", "Алина", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety", ["calm", "culture"], ["business"]),
+    ("girl_actress", "Актриса", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу", "early", ["flattery", "audacity", "generosity", "status", "humor"], "variety", ["entertainment", "culture"], ["luxury"]),
+    ("vika", "Вика", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "demanding", ["game", "unusual"], ["luxury"]),
+    ("girl_mine_boss", "Начальница шахты", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением", "mid", ["directness", "dominance", "generosity", "composure"], "demanding", ["calm", "unusual"], ["business"]),
+    ("katya", "Катя", "любит спонтанность, игры, подколы и быстрые нестандартные решения", "mid", ["directness", "risk", "humor", "cunning"], "variety", ["entertainment", "game"], ["business"]),
+    ("girl_magazine_editor", "Редактор журнала", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова", "mid", ["directness", "status", "composure", "cunning"], "demanding", ["culture", "calm"], ["business"]),
+    ("lera", "Лера", "любит красивую спокойную подачу, хороший вкус и социальную уверенность", "mid", ["politeness", "flattery", "status", "composure"], "variety", ["calm", "culture"], ["luxury"]),
+    ("girl_scientist", "Учёная", "ценит ясность, спокойствие, наблюдательность и необычные решения", "mid", ["directness", "composure", "cunning", "care"], "demanding", ["culture", "unusual"], ["business"]),
+    ("sonya", "Соня", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю", "late", ["audacity", "risk", "humor"], "variety", ["entertainment", "unusual"], ["luxury"]),
+    ("girl_president", "Президент", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание", "late", ["dominance", "status", "composure"], "demanding", ["culture", "unusual"], ["luxury"]),
+]
+
+
+def negative_tags(positives: list[str]) -> list[str]:
+    pos = set(positives)
+    return [tag_id for tag_id in TAG_IDS if tag_id not in pos]
+
+
+def girl_resource_fields(girl: tuple) -> str:
+    girl_id, name, description, difficulty, positives, secondary, formats, outfits = girl
+    return (
+        f'id = &"{girl_id}"\n'
+        f'display_name = "{esc(name)}"\n'
+        f'description = "{esc(description)}"\n'
+        "enabled = true\n"
+        "relationship_min = -5\n"
+        "relationship_start = 0\n"
+        "relationship_max = 5\n"
+        f'difficulty_preset_id = &"{difficulty}"\n'
+        f"positive_tag_ids = {string_name_array(positives)}\n"
+        f"negative_tag_ids = {string_name_array(negative_tags(positives))}\n"
+        f'secondary_rule_id = &"{secondary}"\n'
+        f"favorite_location_format_ids = {string_name_array(formats)}\n"
+        f"favorite_outfit_ids = {string_name_array(outfits)}\n"
+    )
+
+
+def write_girls() -> None:
+    for girl in GIRLS:
+        write(
+            CONTENT / "girls" / f"{girl[0]}.tres",
+            simple_resource("GirlProfile", "res://date_system/content/girl_profile.gd", girl_resource_fields(girl)),
+        )
+
 SITUATIONS = [
     ("appearance_question", "Оценка внешности", "В начале встречи девушка спрашивает:\n«Ну что, как я выгляжу?»", 0),
     ("money_request", "Просьба о деньгах", "К вам подходит незнакомец и просит денег на срочную проблему.", 1),
@@ -348,38 +396,7 @@ def main() -> None:
             ),
         )
 
-    alina_fields = (
-        'id = &"alina"\n'
-        'display_name = "Алина"\n'
-        'description = "Алина"\n'
-        "enabled = true\n"
-        "relationship_min = -5\n"
-        "relationship_start = 0\n"
-        "relationship_max = 5\n"
-        'difficulty_preset_id = &"starter"\n'
-        f'positive_tag_ids = {string_name_array(["politeness", "directness", "care", "generosity", "composure", "humor"])}\n'
-        f'negative_tag_ids = {string_name_array(["flattery", "audacity", "dominance", "risk", "status", "cunning"])}\n'
-        'secondary_rule_id = &"variety"\n'
-        f'favorite_location_format_ids = {string_name_array(["calm", "culture"])}\n'
-        f'favorite_outfit_ids = {string_name_array(["business"])}\n'
-    )
-    write(CONTENT / "girls" / "alina.tres", simple_resource("GirlProfile", "res://date_system/content/girl_profile.gd", alina_fields))
-    vika_fields = (
-        'id = &"vika"\n'
-        'display_name = "Вика"\n'
-        'description = "Вика"\n'
-        "enabled = true\n"
-        "relationship_min = -10\n"
-        "relationship_start = 0\n"
-        "relationship_max = 10\n"
-        'difficulty_preset_id = &"late"\n'
-        f'positive_tag_ids = {string_name_array(["audacity", "dominance", "risk"])}\n'
-        f'negative_tag_ids = {string_name_array(["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"])}\n'
-        'secondary_rule_id = &"demanding"\n'
-        f'favorite_location_format_ids = {string_name_array(["game", "unusual"])}\n'
-        f'favorite_outfit_ids = {string_name_array(["luxury"])}\n'
-    )
-    write(CONTENT / "girls" / "vika.tres", simple_resource("GirlProfile", "res://date_system/content/girl_profile.gd", vika_fields))
+    write_girls()
 
     write(
         CONTENT / "rules" / "date_rules.tres",
@@ -425,7 +442,7 @@ def main() -> None:
     move_ids = [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in BASE_MOVES]
     move_ids += [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in UNLOCK_MOVES]
     sit_ids = [add_res(f"res://date_system/content/situations/{i}.tres", "situations") for i, *_ in SITUATIONS]
-    girl_ids = [add_res("res://date_system/content/girls/alina.tres", "girls"), add_res("res://date_system/content/girls/vika.tres", "girls")]
+    girl_ids = [add_res(f"res://date_system/content/girls/{girl[0]}.tres", "girls") for girl in GIRLS]
     difficulty_ids = [add_res(f"res://date_system/content/girl_difficulty/{i}.tres", "diff") for i, *_ in DIFFICULTIES]
     sec_ids = [add_res("res://date_system/content/secondary/variety.tres", "sec"), add_res("res://date_system/content/secondary/demanding.tres", "sec")]
     fmt_ids = [add_res(f"res://date_system/content/location_formats/{i}.tres", "fmt") for i, *_ in FORMATS]

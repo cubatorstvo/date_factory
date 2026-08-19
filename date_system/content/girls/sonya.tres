@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"sonya"
+display_name = "Соня"
+description = "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"
+enabled = true
+relationship_min = -5
+relationship_start = 0
+relationship_max = 5
+difficulty_preset_id = &"late"
+positive_tag_ids = Array[StringName]([&"audacity", &"risk", &"humor"])
+negative_tag_ids = Array[StringName]([&"politeness", &"directness", &"flattery", &"dominance", &"generosity", &"status", &"care", &"composure", &"cunning"])
+secondary_rule_id = &"variety"
+favorite_location_format_ids = Array[StringName]([&"entertainment", &"unusual"])
+favorite_outfit_ids = Array[StringName]([&"luxury"])

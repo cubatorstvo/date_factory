@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"girl_magazine_editor"
+display_name = "Редактор журнала"
+description = "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"
+enabled = true
+relationship_min = -5
+relationship_start = 0
+relationship_max = 5
+difficulty_preset_id = &"mid"
+positive_tag_ids = Array[StringName]([&"directness", &"status", &"composure", &"cunning"])
+negative_tag_ids = Array[StringName]([&"politeness", &"flattery", &"audacity", &"dominance", &"risk", &"generosity", &"care", &"humor"])
+secondary_rule_id = &"demanding"
+favorite_location_format_ids = Array[StringName]([&"culture", &"calm"])
+favorite_outfit_ids = Array[StringName]([&"business"])

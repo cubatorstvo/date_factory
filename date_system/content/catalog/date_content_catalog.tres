@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DateContentCatalog" load_steps=64 format=3]
+[gd_resource type="Resource" script_class="DateContentCatalog" load_steps=72 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/date_content_catalog.gd" id="1_script"]
 [ext_resource type="Resource" path="res://date_system/content/tags/politeness.tres" id="res_2"]
@@ -63,13 +63,21 @@
 [ext_resource type="Resource" path="res://date_system/content/progression/capital.tres" id="res_61"]
 [ext_resource type="Resource" path="res://date_system/content/progression/aura.tres" id="res_62"]
 [ext_resource type="Resource" path="res://date_system/content/rules/date_rules.tres" id="res_63"]
+[ext_resource type="Resource" path="res://date_system/content/girls/girl_actress.tres" id="res_64"]
+[ext_resource type="Resource" path="res://date_system/content/girls/girl_mine_boss.tres" id="res_65"]
+[ext_resource type="Resource" path="res://date_system/content/girls/katya.tres" id="res_66"]
+[ext_resource type="Resource" path="res://date_system/content/girls/girl_magazine_editor.tres" id="res_67"]
+[ext_resource type="Resource" path="res://date_system/content/girls/lera.tres" id="res_68"]
+[ext_resource type="Resource" path="res://date_system/content/girls/girl_scientist.tres" id="res_69"]
+[ext_resource type="Resource" path="res://date_system/content/girls/sonya.tres" id="res_70"]
+[ext_resource type="Resource" path="res://date_system/content/girls/girl_president.tres" id="res_71"]
 
 [resource]
 script = ExtResource("1_script")
 tags = [ExtResource("res_2"), ExtResource("res_3"), ExtResource("res_4"), ExtResource("res_5"), ExtResource("res_6"), ExtResource("res_7"), ExtResource("res_8"), ExtResource("res_9"), ExtResource("res_10"), ExtResource("res_11"), ExtResource("res_12"), ExtResource("res_13")]
 moves = [ExtResource("res_14"), ExtResource("res_15"), ExtResource("res_16"), ExtResource("res_17"), ExtResource("res_18"), ExtResource("res_19"), ExtResource("res_20"), ExtResource("res_21"), ExtResource("res_22"), ExtResource("res_23"), ExtResource("res_24"), ExtResource("res_25"), ExtResource("res_26"), ExtResource("res_27"), ExtResource("res_28")]
 situations = [ExtResource("res_29"), ExtResource("res_30"), ExtResource("res_31"), ExtResource("res_32"), ExtResource("res_33")]
-girls = [ExtResource("res_34"), ExtResource("res_35")]
+girls = [ExtResource("res_34"), ExtResource("res_64"), ExtResource("res_35"), ExtResource("res_65"), ExtResource("res_66"), ExtResource("res_67"), ExtResource("res_68"), ExtResource("res_69"), ExtResource("res_70"), ExtResource("res_71")]
 girl_difficulty_presets = [ExtResource("res_36"), ExtResource("res_37"), ExtResource("res_38"), ExtResource("res_39"), ExtResource("res_40")]
 secondary_rules = [ExtResource("res_41"), ExtResource("res_42")]
 location_formats = [ExtResource("res_43"), ExtResource("res_44"), ExtResource("res_45"), ExtResource("res_46"), ExtResource("res_47")]

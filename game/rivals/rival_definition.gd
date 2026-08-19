@@ -5,3 +5,4 @@ extends Resource
 @export var display_name: String = ""
 @export var location_id: StringName = &""
 @export var competition_ids: Array[StringName] = []
+@export var linked_girl_id: StringName = &""

@@ -5,6 +5,7 @@ const ID_TEST_WAIT: StringName = &"test_wait"
 const ID_TEST_EARN_MONEY: StringName = &"test_earn_money"
 const ID_TEST_SPEND_MONEY: StringName = &"test_spend_money"
 const ID_TEST_REQUIRE_MONEY: StringName = &"test_require_money"
+const ID_WAIT_ONE_DAY: StringName = &"wait_one_day"
 
 @export var actions: Array[GameAction] = []
 
@@ -29,6 +30,13 @@ static func make_test_wait() -> GameAction:
 	var action := GameAction.new()
 	action.id = ID_TEST_WAIT
 	action.time_cost_minutes = 120
+	return action
+
+static func make_wait_one_day() -> GameAction:
+	var action: GameAction = GameAction.new()
+	action.id = ID_WAIT_ONE_DAY
+	action.time_cost_minutes = 1440
+	action.money_cost = 0
 	return action
 
 

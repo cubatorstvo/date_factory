@@ -1,7 +1,11 @@
 class_name CompetitionCatalog
 extends Resource
 
-const ID_BASIC: StringName = &"competition_basic"
+const ID_CASTING: StringName = &"competition_casting"
+const ID_ARMWRESTLING: StringName = &"competition_armwrestling"
+const ID_TASTE_DEBATE: StringName = &"competition_taste_debate"
+const ID_GRANT: StringName = &"competition_grant"
+const ID_PROTOCOL_DUEL: StringName = &"competition_protocol_duel"
 
 @export var competitions: Array[CompetitionDefinition] = []
 
@@ -27,9 +31,12 @@ func get_competitions_for_rival(rival_id: StringName) -> Array[CompetitionDefini
 
 static func create_seed() -> CompetitionCatalog:
 	var catalog := CompetitionCatalog.new()
-	catalog.competitions.append(_make(ID_BASIC, "Базовый вызов", RivalCatalog.ID_BORIS, 60, 0.5, CharacteristicIds.MUSCLE))
+	catalog.competitions.append(_make(ID_CASTING, "Кастинг на главную мужскую роль", RivalCatalog.ID_BORIS, 60, 0.5, CharacteristicIds.APPEARANCE))
+	catalog.competitions.append(_make(ID_ARMWRESTLING, "Армрестлинг за обедом", RivalCatalog.ID_FOREMAN, 60, 0.5, CharacteristicIds.MUSCLE))
+	catalog.competitions.append(_make(ID_TASTE_DEBATE, "Публичный спор о вкусе", RivalCatalog.ID_COLUMNIST, 60, 0.5, CharacteristicIds.AURA))
+	catalog.competitions.append(_make(ID_GRANT, "Битва за грант", RivalCatalog.ID_ACADEMIC, 60, 0.5, CharacteristicIds.CAPITAL))
+	catalog.competitions.append(_make(ID_PROTOCOL_DUEL, "Протокольная дуэль", RivalCatalog.ID_MINISTER, 60, 0.5, CharacteristicIds.AURA))
 	return catalog
-
 
 static func _make(
 	id: StringName,
