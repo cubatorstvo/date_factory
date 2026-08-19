@@ -3,7 +3,9 @@ extends RefCounted
 
 const LABEL_WAIT: String = "Подождать"
 const LABEL_WORK: String = "Работать"
+const LABEL_WORK_ACTION: String = "РАБОТАТЬ"
 const LABEL_SPEND: String = "Потратить 50"
+const LABEL_BUY: String = "КУПИТЬ"
 
 
 static func for_id(action_id: StringName) -> String:
@@ -12,6 +14,8 @@ static func for_id(action_id: StringName) -> String:
 			return LABEL_WAIT
 		GameActionCatalog.ID_TEST_EARN_MONEY:
 			return LABEL_WORK
+		WorkService.ID_WORK_BASIC:
+			return LABEL_WORK_ACTION
 		GameActionCatalog.ID_TEST_SPEND_MONEY:
 			return LABEL_SPEND
 		_:

@@ -25,6 +25,8 @@ var _nav_buttons: Dictionary = {}
 var _action_buttons: Array[GameActionButton] = []
 var _home_summary: Label
 var _home_result: Label
+var _upgrade_status_label: Label
+var _upgrade_price_label: Label
 
 
 func _ready() -> void:
@@ -42,6 +44,7 @@ func _ready() -> void:
 func refresh() -> void:
 	_refresh_hud()
 	_refresh_home()
+	_refresh_progression()
 	_refresh_save_buttons()
 	for button in _action_buttons:
 		if is_instance_valid(button):
@@ -256,6 +259,8 @@ func _rebuild_section() -> void:
 	_action_buttons.clear()
 	_home_summary = null
 	_home_result = null
+	_upgrade_status_label = null
+	_upgrade_price_label = null
 	if _section_host == null:
 		return
 	for child in _section_host.get_children():
@@ -275,7 +280,7 @@ func _rebuild_section() -> void:
 		"apartment":
 			_section_host.add_child(_build_placeholder("КВАРТИРА", "Система квартиры появится здесь."))
 		"progression":
-			_section_host.add_child(_build_placeholder("ПРОКАЧКА", "Система прогрессии появится здесь."))
+			_section_host.add_child(_build_progression())
 
 
 func _build_home() -> Control:
@@ -302,11 +307,15 @@ func _build_work() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("РАБОТА"))
-	var action: GameAction = _catalog_action(GameActionCatalog.ID_TEST_EARN_MONEY)
+	var work: WorkDefinition = WorkService.make_work_basic()
+	var action: GameAction = WorkService.create_work_action(work)
+	var title := Label.new()
+	title.text = work.display_name
+	box.add_child(title)
 	var info := Label.new()
-	info.text = "Заработок: %d\nВремя: %d минут" % [_money_effect_amount(action), _time_cost(action)]
+	info.text = "Доход: %d\nВремя: %d минут" % [work.income, work.time_cost_minutes]
 	box.add_child(info)
-	_add_action_button(box, action, GameActionLabels.LABEL_WORK)
+	_add_action_button(box, action, GameActionLabels.LABEL_WORK_ACTION, false, false)
 	return box
 
 
@@ -325,6 +334,30 @@ func _build_city() -> Control:
 	return box
 
 
+func _build_progression() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("ПРОКАЧКА"))
+	var purchases: Variant = _purchase_service()
+	var definition: PurchaseDefinition = null
+	if purchases != null:
+		definition = purchases.make_basic_upgrade()
+	var title := Label.new()
+	title.text = "Базовое улучшение"
+	if definition != null:
+		title.text = definition.display_name
+	box.add_child(title)
+	_upgrade_status_label = Label.new()
+	box.add_child(_upgrade_status_label)
+	_upgrade_price_label = Label.new()
+	box.add_child(_upgrade_price_label)
+	if definition != null:
+		var action: GameAction = purchases.create_purchase_action(definition)
+		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
+	_refresh_progression()
+	return box
+
+
 func _build_placeholder(title: String, body: String) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
@@ -336,11 +369,11 @@ func _build_placeholder(title: String, body: String) -> Control:
 	return box
 
 
-func _add_action_button(host: Node, action: GameAction, label: String) -> void:
+func _add_action_button(host: Node, action: GameAction, label: String, show_title: bool = true, show_meta: bool = true) -> void:
 	var button := GameActionButton.new()
 	host.add_child(button)
 	button.action_resolved.connect(_on_action_resolved)
-	button.setup(action, label)
+	button.setup(action, label, show_title, show_meta)
 	_action_buttons.append(button)
 
 
@@ -362,6 +395,25 @@ func _refresh_home() -> void:
 		_home_summary.text = _format_home_summary()
 	if _home_result != null:
 		_home_result.text = _last_result_text
+
+
+func _refresh_progression() -> void:
+	var purchases: Variant = _purchase_service()
+	var purchased: bool = false
+	var definition: PurchaseDefinition = null
+	if purchases != null:
+		definition = purchases.make_basic_upgrade()
+		if definition != null:
+			purchased = bool(purchases.is_purchased(definition.id))
+	if _upgrade_status_label != null:
+		_upgrade_status_label.visible = purchased
+		_upgrade_status_label.text = "Куплено"
+	if _upgrade_price_label != null:
+		_upgrade_price_label.visible = not purchased
+		var price: int = 300
+		if definition != null:
+			price = definition.price
+		_upgrade_price_label.text = "Цена: %d" % price
 
 
 func _refresh_save_buttons() -> void:
@@ -394,9 +446,23 @@ func _connect_core_signals() -> void:
 	var actions: Variant = _action_service()
 	if actions != null and not actions.action_executed.is_connected(_on_action_executed):
 		actions.action_executed.connect(_on_action_executed)
+	var economy: Variant = _economy_service()
+	if economy != null and not economy.money_changed.is_connected(_on_money_changed):
+		economy.money_changed.connect(_on_money_changed)
+	var purchases: Variant = _purchase_service()
+	if purchases != null and not purchases.purchase_completed.is_connected(_on_purchase_completed):
+		purchases.purchase_completed.connect(_on_purchase_completed)
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
+	refresh()
+
+
+func _on_money_changed(_previous_money: int, _current_money: int, _delta: int) -> void:
+	refresh()
+
+
+func _on_purchase_completed(_purchase_id: StringName) -> void:
 	refresh()
 
 
@@ -419,7 +485,6 @@ func _on_action_resolved(result: ActionResult) -> void:
 
 func _format_hud_text() -> String:
 	var clock: Variant = _time_service()
-	var gs: Variant = _game_state()
 	var stages: Variant = _stage_service()
 	var day: int = 1
 	var hour: int = 0
@@ -428,9 +493,7 @@ func _format_hud_text() -> String:
 		day = int(clock.get_day())
 		hour = int(clock.get_hour())
 		minute = int(clock.get_minute())
-	var money: int = 0
-	if gs != null:
-		money = int(gs.player.money)
+	var money: int = _current_money()
 	var stage: int = 1
 	var finale: bool = false
 	if stages != null:
@@ -444,7 +507,6 @@ func _format_hud_text() -> String:
 
 func _format_home_summary() -> String:
 	var clock: Variant = _time_service()
-	var gs: Variant = _game_state()
 	var stages: Variant = _stage_service()
 	var day: int = 1
 	var hour: int = 0
@@ -453,9 +515,7 @@ func _format_home_summary() -> String:
 		day = int(clock.get_day())
 		hour = int(clock.get_hour())
 		minute = int(clock.get_minute())
-	var money: int = 0
-	if gs != null:
-		money = int(gs.player.money)
+	var money: int = _current_money()
 	var stage: int = 1
 	if stages != null:
 		stage = int(stages.get_current_stage())
@@ -500,6 +560,16 @@ func _game_state() -> Variant:
 	return node
 
 
+func _current_money() -> int:
+	var economy: Variant = _economy_service()
+	if economy != null:
+		return int(economy.get_money())
+	var gs: Variant = _game_state()
+	if gs == null:
+		return 0
+	return int(gs.player.money)
+
+
 func _save_manager() -> Variant:
 	var node: Node = get_node_or_null("/root/SaveManager")
 	if not is_instance_valid(node):
@@ -523,6 +593,20 @@ func _stage_service() -> Variant:
 
 func _action_service() -> Variant:
 	var node: Node = get_node_or_null("/root/ActionService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _economy_service() -> Variant:
+	var node: Node = get_node_or_null("/root/EconomyService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _purchase_service() -> Variant:
+	var node: Node = get_node_or_null("/root/PurchaseService")
 	if not is_instance_valid(node):
 		return null
 	return node

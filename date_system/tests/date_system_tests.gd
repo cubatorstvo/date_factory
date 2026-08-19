@@ -29,6 +29,7 @@ func run_all() -> PackedStringArray:
 	_test_campaign_stages()
 	_test_game_actions()
 	_test_game_simulator()
+	_test_economy()
 	return _failures
 
 
@@ -1026,6 +1027,26 @@ func _action_service() -> Variant:
 	return node
 
 
+func _economy_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("EconomyService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _purchase_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("PurchaseService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
 func _assert_clock(label: String, clock: Variant, minutes: int, day: int, hour: int, minute: int) -> void:
 	_ok("%s game_time_minutes" % label, clock.get_game_time_minutes() == minutes)
 	_ok("%s day" % label, clock.get_day() == day)
@@ -1052,6 +1073,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game stage 1", gs.story.stage == 1)
 	_ok("new_game finale false", gs.story.finale_reached == false)
 	_ok("new_game money 0", gs.player.money == 0)
+	_ok("new_game purchased empty", gs.progression.purchased_ids.is_empty())
 	gs.flow.game_time_minutes = 8640
 	gs.story.stage = 3
 	gs.player.money = 12345
@@ -1064,10 +1086,13 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 3", int(root.get("save_version", 0)) == 3)
+	_ok("save_version == 4", int(root.get("save_version", 0)) == 4)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
-	_ok("save has empty progression", state_dict.get("progression", {"x": 1}).is_empty())
+	var progression_value: Variant = state_dict.get("progression", {})
+	var progression_dict: Dictionary = progression_value if progression_value is Dictionary else {}
+	var purchased_raw: Variant = progression_dict.get("purchased_ids", ["x"])
+	_ok("save has empty purchased_ids", purchased_raw is Array and (purchased_raw as Array).is_empty())
 	var flow_value: Variant = state_dict.get("flow", {})
 	var flow_dict: Dictionary = flow_value if flow_value is Dictionary else {}
 	_ok("save has game_time_minutes", int(flow_dict.get("game_time_minutes", -1)) == 8640)
@@ -1498,5 +1523,170 @@ func _test_game_simulator() -> void:
 	sim.delete_playthrough()
 	_ok("sim deleted save", not sm.has_save())
 	sim.queue_free()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_economy() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var actions: Variant = _action_service()
+	var economy: Variant = _economy_service()
+	var purchases: Variant = _purchase_service()
+	_ok("economy GameState", gs != null)
+	_ok("economy SaveManager", sm != null)
+	_ok("economy TimeService", clock != null)
+	_ok("economy ActionService", actions != null)
+	_ok("economy EconomyService", economy != null)
+	_ok("economy PurchaseService", purchases != null)
+	if gs == null or sm == null or clock == null or actions == null or economy == null or purchases == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/economy_round_trip.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	gs.player.money = 100
+	economy.add_money(50)
+	_ok("add_money 100+50", gs.player.money == 150)
+	_ok("add_money get_money", int(economy.get_money()) == 150)
+	sm.new_game()
+	gs.player.money = 100
+	var spend_ok: bool = bool(economy.spend_money(30))
+	_ok("spend success money", gs.player.money == 70)
+	_ok("spend success result", spend_ok)
+	sm.new_game()
+	gs.player.money = 20
+	var spend_fail: bool = bool(economy.spend_money(30))
+	_ok("spend fail money", gs.player.money == 20)
+	_ok("spend fail result", spend_fail == false)
+	sm.new_game()
+	gs.player.money = 100
+	var add_events: Array = []
+	var on_add := func(previous_money: int, current_money: int, delta: int) -> void:
+		add_events.append({
+			"previous_money": previous_money,
+			"current_money": current_money,
+			"delta": delta,
+		})
+	economy.money_changed.connect(on_add)
+	economy.add_money(50)
+	economy.money_changed.disconnect(on_add)
+	_ok("add money_changed once", add_events.size() == 1)
+	if add_events.size() == 1:
+		var add_payload: Dictionary = add_events[0]
+		_ok("add previous", int(add_payload["previous_money"]) == 100)
+		_ok("add current", int(add_payload["current_money"]) == 150)
+		_ok("add delta", int(add_payload["delta"]) == 50)
+	var spend_events: Array = []
+	var on_spend := func(previous_money: int, current_money: int, delta: int) -> void:
+		spend_events.append({
+			"previous_money": previous_money,
+			"current_money": current_money,
+			"delta": delta,
+		})
+	economy.money_changed.connect(on_spend)
+	var spend_from_150: bool = bool(economy.spend_money(30))
+	economy.money_changed.disconnect(on_spend)
+	_ok("spend after add result", spend_from_150)
+	_ok("spend money_changed once", spend_events.size() == 1)
+	if spend_events.size() == 1:
+		var spend_payload: Dictionary = spend_events[0]
+		_ok("spend previous", int(spend_payload["previous_money"]) == 150)
+		_ok("spend current", int(spend_payload["current_money"]) == 120)
+		_ok("spend delta", int(spend_payload["delta"]) == -30)
+	sm.new_game()
+	gs.player.money = 0
+	gs.flow.game_time_minutes = 0
+	var work: WorkDefinition = WorkService.make_work_basic()
+	var work_action: GameAction = WorkService.create_work_action(work)
+	var work_first: ActionResult = actions.execute(work_action)
+	_ok("work_basic first success", work_first.success)
+	_ok("work_basic first money", gs.player.money == 100)
+	_ok("work_basic first time", clock.get_game_time_minutes() == 60)
+	var work_second: ActionResult = actions.execute(WorkService.create_work_action(work))
+	_ok("work_basic second success", work_second.success)
+	_ok("work_basic second money", gs.player.money == 200)
+	_ok("work_basic second time", clock.get_game_time_minutes() == 120)
+	sm.new_game()
+	gs.player.money = 299
+	gs.flow.game_time_minutes = 0
+	var definition: PurchaseDefinition = purchases.make_basic_upgrade()
+	var buy_fail: ActionResult = actions.execute(purchases.create_purchase_action(definition))
+	_ok("purchase poor success", buy_fail.success == false)
+	_ok("purchase poor money", gs.player.money == 299)
+	_ok("purchase poor not bought", purchases.is_purchased(definition.id) == false)
+	_ok("purchase poor reason", buy_fail.failure_reason == "Недостаточно денег")
+	sm.new_game()
+	gs.player.money = 300
+	gs.flow.game_time_minutes = 90
+	var purchase_events: Array = []
+	var on_purchase := func(purchase_id: StringName) -> void:
+		purchase_events.append(purchase_id)
+	purchases.purchase_completed.connect(on_purchase)
+	var buy_ok: ActionResult = actions.execute(purchases.create_purchase_action(definition))
+	_ok("purchase success", buy_ok.success)
+	_ok("purchase money", gs.player.money == 0)
+	_ok("purchase bought", purchases.is_purchased(&"basic_upgrade"))
+	_ok("purchase time unchanged", clock.get_game_time_minutes() == 90)
+	_ok("purchase_completed once", purchase_events.size() == 1)
+	if purchase_events.size() == 1:
+		_ok("purchase_completed id", purchase_events[0] == &"basic_upgrade")
+	var buy_again: ActionResult = actions.execute(purchases.create_purchase_action(definition))
+	purchases.purchase_completed.disconnect(on_purchase)
+	_ok("repurchase success", buy_again.success == false)
+	_ok("repurchase money", gs.player.money == 0)
+	_ok("repurchase still bought", purchases.is_purchased(&"basic_upgrade"))
+	_ok("repurchase unique", gs.progression.purchased_ids.size() == 1)
+	_ok("repurchase reason", buy_again.failure_reason == "Уже куплено")
+	_ok("repurchase no extra signal", purchase_events.size() == 1)
+	sm.new_game()
+	gs.player.money = 500
+	gs.flow.game_time_minutes = 0
+	var buy_saved: ActionResult = actions.execute(purchases.create_purchase_action(definition))
+	_ok("save purchase success", buy_saved.success)
+	_ok("save purchase money", gs.player.money == 200)
+	sm.save_game()
+	sm.new_game()
+	_ok("clean money after save", gs.player.money == 0)
+	_ok("clean purchased after save", purchases.is_purchased(&"basic_upgrade") == false)
+	_ok("load economy save", sm.load_game())
+	_ok("loaded money 200", gs.player.money == 200)
+	_ok("loaded purchased", purchases.is_purchased(&"basic_upgrade"))
+	sm.new_game()
+	gs.player.money = 0
+	gs.flow.game_time_minutes = 0
+	for _i in range(3):
+		actions.execute(WorkService.create_work_action(WorkService.make_work_basic()))
+	_ok("cycle money 300", gs.player.money == 300)
+	_ok("cycle time 180", clock.get_game_time_minutes() == 180)
+	var cycle_buy: ActionResult = actions.execute(purchases.create_purchase_action(definition))
+	_ok("cycle buy success", cycle_buy.success)
+	_ok("cycle money 0", gs.player.money == 0)
+	_ok("cycle purchased", purchases.is_purchased(&"basic_upgrade"))
+	_ok("cycle time still 180", clock.get_game_time_minutes() == 180)
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var legacy: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v3 save", legacy != null)
+	if legacy != null:
+		var v3: Dictionary = {
+			"save_version": 3,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 1, "finale_reached": false},
+				"player": {"money": 80},
+				"progression": {},
+			},
+		}
+		legacy.store_string(JSON.stringify(v3, "\t"))
+		legacy.close()
+	_ok("load v3 save", sm.load_game())
+	_ok("migrated v3 money", gs.player.money == 80)
+	_ok("migrated v3 purchased empty", gs.progression.purchased_ids.is_empty())
+	sm.delete_save()
+	_ok("deleted economy test save", not sm.has_save())
 	sm.save_path = original_path
 	sm.new_game()

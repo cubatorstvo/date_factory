@@ -27,10 +27,10 @@ func get_failure_reason(action: GameAction) -> String:
 			continue
 		if not requirement.is_met():
 			return requirement.get_failure_reason()
-	var gs: Variant = _game_state()
-	if gs == null:
-		return "GameState autoload missing"
-	if gs.player.money < action.money_cost:
+	var economy: Variant = _economy_service()
+	if economy == null:
+		return "EconomyService autoload missing"
+	if not bool(economy.can_afford(action.money_cost)):
 		return "Недостаточно денег"
 	return ""
 
@@ -47,8 +47,15 @@ func execute(action: GameAction) -> ActionResult:
 		result.success = false
 		result.failure_reason = reason
 		return result
-	var gs: Variant = _game_state()
-	gs.player.money -= action.money_cost
+	var economy: Variant = _economy_service()
+	if economy == null:
+		result.success = false
+		result.failure_reason = "EconomyService autoload missing"
+		return result
+	if not bool(economy.spend_money(action.money_cost)):
+		result.success = false
+		result.failure_reason = "Недостаточно денег"
+		return result
 	var applied: Array[String] = []
 	for effect in action.effects:
 		if effect == null:
@@ -67,10 +74,10 @@ func execute(action: GameAction) -> ActionResult:
 	return result
 
 
-func _game_state() -> Variant:
-	var node: Node = get_node_or_null("/root/GameState")
+func _economy_service() -> Variant:
+	var node: Node = get_node_or_null("/root/EconomyService")
 	if not is_instance_valid(node):
-		push_error("GameState autoload missing")
+		push_error("EconomyService autoload missing")
 		return null
 	return node
 

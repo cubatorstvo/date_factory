@@ -10,6 +10,7 @@ res://
         time/
         story/
         actions/
+        economy/
         simulator/
     date_system/
         content/

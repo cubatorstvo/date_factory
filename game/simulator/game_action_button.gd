@@ -5,6 +5,8 @@ signal action_resolved(result: ActionResult)
 
 var _action: GameAction
 var _label_text: String = ""
+var _show_title: bool = true
+var _show_meta: bool = true
 var _title: Label
 var _meta: Label
 var _button: Button
@@ -25,9 +27,11 @@ func _ready() -> void:
 	_refresh_view()
 
 
-func setup(action: GameAction, label: String = "") -> void:
+func setup(action: GameAction, label: String = "", show_title: bool = true, show_meta: bool = true) -> void:
 	_action = action
 	_label_text = label
+	_show_title = show_title
+	_show_meta = show_meta
 	if is_node_ready():
 		_apply_label()
 		_refresh_view()
@@ -40,6 +44,7 @@ func _apply_label() -> void:
 	if resolved.is_empty() and _action != null:
 		resolved = GameActionLabels.for_id(_action.id)
 	_title.text = resolved
+	_title.visible = _show_title
 	_button.text = resolved
 
 
@@ -56,10 +61,15 @@ func _refresh_view() -> void:
 		return
 	if _action == null:
 		_meta.text = ""
+		_meta.visible = false
 		_button.disabled = true
 		_button.tooltip_text = "Действие не задано"
 		return
-	_meta.text = "Деньги: %d\nВремя: %d мин." % [_action.money_cost, _action.time_cost_minutes]
+	_meta.visible = _show_meta
+	if _show_meta:
+		_meta.text = "Деньги: %d\nВремя: %d мин." % [_action.money_cost, _action.time_cost_minutes]
+	else:
+		_meta.text = ""
 	var actions: Variant = _action_service()
 	if actions == null:
 		_button.disabled = true

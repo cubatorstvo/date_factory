@@ -121,6 +121,7 @@ flow.game_time_minutes = 0
 story.stage = 1
 story.finale_reached = false
 player.money = 0
+progression.purchased_ids = []
 ```
 
 `game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`. Кампания: `stage` — текущая/последняя достигнутая игровая стадия 1–6, `finale_reached` — завершение основной последовательности после Stage 6.
@@ -141,12 +142,12 @@ delete_save()
 
 ```text
 {
-  "save_version": 3,
-  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0 }, "progression": {}, "world": {}, "girls": {}, "dating": {}, "rivals": {}, "automation": {} }
+  "save_version": 4,
+  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0 }, "progression": { "purchased_ids": [] }, "world": {}, "girls": {}, "dating": {}, "rivals": {}, "automation": {} }
 }
 ```
 
-`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Текущий формат — `save_version = 3`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `GameState.player.money`. Игровые действия изменяют money и время только через `ActionService`. Presentation-слой прохождения — `GameSimulator`.
+`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0, `purchased_ids = []`. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Сохранения без `progression.purchased_ids` получают `[]`. Текущий формат — `save_version = 4`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `EconomyService`. Игровые действия изменяют money только через `EconomyService` и время только через `TimeService`; последовательность выполнения остаётся у `ActionService`. Presentation-слой прохождения — `GameSimulator`.
 
 `DateSession.stage` не является `StoryState.stage`. `DateProgressStore` остаётся прогрессом лаборатории свиданий, пока `girls` / `dating` пусты.
 
@@ -200,7 +201,7 @@ game_minutes_per_real_second
 
 ## Game Actions
 
-Единый механизм игровых действий для текущей 2D-оболочки, будущего 3D-мира, UI, сюжета, работы, покупок, знакомств, свиданий, соперников и incremental. Presentation не меняет `GameState` напрямую: любое игровое действие описывается как `GameAction` и выполняется через autoload `ActionService`.
+Единый механизм игровых действий для текущей 2D-оболочки, будущего 3D-мира, UI, сюжета, работы, покупок, знакомств, свиданий, соперников и incremental. Presentation не меняет `GameState` напрямую: любое игровое действие описывается как `GameAction` и выполняется через autoload `ActionService`. Денежный pipeline действия идёт через `EconomyService`.
 
 ```text
 Presentation / UI / 3D
@@ -211,7 +212,7 @@ Presentation / UI / 3D
         ↓
  Requirements
         ↓
-      Costs
+ EconomyService
         ↓
      Effects
         ↓
@@ -232,9 +233,9 @@ effects: Array[ActionEffect] = []
 
 `id` однозначно идентифицирует действие (`work_mine`, `meet_girl`, `invite_to_date`, `buy_upgrade`, `challenge_rival`, `start_date`, `travel`, `prepare_apartment`).
 
-`ActionRequirement`: `is_met() -> bool`, `get_failure_reason() -> String`. Проверяет текущее прохождение. Первая реализация — `MoneyRequirement(required_money)`: `GameState.player.money >= required_money`, отказ `"Недостаточно денег"`.
+`ActionRequirement`: `is_met() -> bool`, `get_failure_reason() -> String`. Проверяет текущее прохождение. `MoneyRequirement(required_money)`: `EconomyService.can_afford(required_money)`, отказ `"Недостаточно денег"`. `NotPurchasedRequirement(purchase_id)`: `purchase_id` отсутствует в `GameState.progression.purchased_ids`, отказ `"Уже куплено"`.
 
-`ActionEffect`: `apply() -> void`, `get_description() -> String`. Первая реализация — `MoneyEffect(amount)`: `GameState.player.money += amount` (плюс и минус).
+`ActionEffect`: `apply() -> void`, `get_description() -> String`. `MoneyEffect(amount)`: при `amount > 0` вызывает `EconomyService.add_money(amount)`, при `amount < 0` — `EconomyService.spend_money(-amount)`. `PurchaseEffect(purchase_id)` добавляет ID в `ProgressionState.purchased_ids` не более одного раза.
 
 `ActionResult` — ответ Presentation после попытки:
 
@@ -262,9 +263,9 @@ signal action_executed(action_id: StringName, result: ActionResult)
 
 ```text
 1. Проверить каждый action.requirements
-2. Проверить GameState.player.money >= action.money_cost
+2. Проверить EconomyService.can_afford(action.money_cost)
 3. Если проверка не прошла — вернуть failed ActionResult, GameState без изменений
-4. Списать money_cost
+4. Списать money_cost через EconomyService.spend_money(action.money_cost)
 5. Применить все ActionEffect
 6. TimeService.advance_time(action.time_cost_minutes)
 7. Вернуть успешный ActionResult и испустить action_executed
@@ -282,6 +283,81 @@ signal action_executed(action_id: StringName, result: ActionResult)
 | `test_require_money` | 10 | 0 | `MoneyRequirement(100)` | — |
 
 Лабораторные кнопки `+30 MIN` / `+120 MIN` / `+1 DAY` остаются часами через `TimeService.apply_action`. Именованные игровые действия идут только через `ActionService.execute`.
+
+## Economy
+
+Autoload `EconomyService` — единственная точка изменения `GameState.player.money`. Хранимое значение по-прежнему в `PlayerState`; сервисы и игровые эффекты не пишут money напрямую.
+
+```text
+get_money() -> int
+can_afford(amount: int) -> bool
+add_money(amount: int) -> void
+spend_money(amount: int) -> bool
+signal money_changed(previous_money: int, current_money: int, delta: int)
+```
+
+`get_money()` возвращает `GameState.player.money`. `can_afford(amount)` — `true`, если `amount <= 0` или `get_money() >= amount`. `add_money(amount)` начисляет деньги (`money += amount`) и публикует `money_changed`. `spend_money(amount)` при достаточном балансе списывает сумму, публикует `money_changed` и возвращает `true`; иначе деньги не меняются и результат `false`. `delta` — фактическое изменение (`current_money - previous_money`).
+
+## Work
+
+`WorkDefinition` — статическое описание работы, не часть `GameState`:
+
+```text
+id: StringName
+display_name: String
+income: int
+time_cost_minutes: int
+```
+
+`WorkService.create_work_action(work)` собирает `GameAction`: `id` и `time_cost_minutes` из definition, `money_cost = 0`, эффект `MoneyEffect(+income)`.
+
+Seed: `work_basic` — «Работать», доход 100, 60 минут.
+
+## Purchases
+
+`ProgressionState.purchased_ids` — JSON-массив купленных ID. New Game: `[]`. Методы `has(id)` / `add(id)`; один ID максимум один раз.
+
+`PurchaseDefinition` — статическое описание постоянной одноразовой покупки:
+
+```text
+id: StringName
+display_name: String
+description: String
+price: int
+```
+
+Autoload `PurchaseService`:
+
+```text
+is_purchased(purchase_id: StringName) -> bool
+can_purchase(definition: PurchaseDefinition) -> bool
+create_purchase_action(definition: PurchaseDefinition) -> GameAction
+signal purchase_completed(purchase_id: StringName)
+```
+
+`is_purchased` читает `GameState.progression.purchased_ids`. `can_purchase` — покупка ещё не куплена и `EconomyService.can_afford(price)`. `create_purchase_action` собирает `GameAction` с `id = buy_<purchase_id>`, `money_cost = price`, `time_cost_minutes = 0`, `NotPurchasedRequirement` и `PurchaseEffect`. После успешного `ActionService.execute` сервис испускает `purchase_completed`.
+
+Seed: `basic_upgrade` — «Базовое улучшение», цена 300. Покупка только добавляет ID в `purchased_ids`.
+
+Полный pipeline покупки:
+
+```text
+PurchaseDefinition
+        ↓
+PurchaseService.create_purchase_action()
+        ↓
+ActionService.execute()
+        ↓
+NotPurchasedRequirement
+        ↓
+EconomyService.can_afford()
+        ↓
+EconomyService.spend_money()
+        ↓
+PurchaseEffect
+        ↓
+ProgressionState.purchased_ids
+```
 
 ## Story / Stages
 
@@ -334,7 +410,7 @@ GameAction
 ActionService
       │
       ├── requirements
-      ├── costs
+      ├── EconomyService
       ├── effects
       └── TimeService
       │
@@ -345,7 +421,7 @@ GameState
 GameSimulator.refresh()
 ```
 
-Autoload `StageService` и `ActionService` регистрируются в `project.godot` как `/root/StageService` и `/root/ActionService`.
+Autoload `StageService`, `ActionService`, `EconomyService` и `PurchaseService` регистрируются в `project.godot` как `/root/StageService`, `/root/ActionService`, `/root/EconomyService` и `/root/PurchaseService`.
 
 Интерфейс — 2D Control, контейнеры и anchors, читаемый в 1280×720 и 1920×1080:
 
@@ -359,7 +435,7 @@ HUD читает только канонические данные:
 
 ```text
 TimeService.get_day() / get_hour() / get_minute()
-GameState.player.money
+EconomyService.get_money()
 StageService.get_current_stage()
 StageService.is_finale_reached()
 ```
@@ -370,15 +446,17 @@ StageService.is_finale_reached()
 
 Главная показывает краткое состояние прохождения (`День`, время, `Stage`, деньги), кнопку «СОХРАНИТЬ» и последний результат действия.
 
-Работа запускает каталожный `test_earn_money` (`TEST_EARN_MONEY`): заработок 100, 60 минут, кнопка «Работать». Город запускает `test_wait` (`TEST_WAIT`): провести время 120 минут, кнопка «Подождать». Оба идут только через `ActionService.execute(action)`. UI деньги и время не меняет.
+Работа показывает `work_basic`: название «Работать», доход 100, время 60 минут, кнопка «РАБОТАТЬ». Город запускает каталожный `test_wait` (`TEST_WAIT`): провести время 120 минут, кнопка «Подождать». Оба идут только через `ActionService.execute(action)`. UI деньги и время не меняет.
 
-Заготовки секций: Девушки — «Доступные девушки появятся здесь.»; Свидания — «Доступные свидания появятся здесь.»; Квартира — «Система квартиры появится здесь.»; Прокачка — «Система прогрессии появится здесь.»
+Прокачка показывает `basic_upgrade`: название «Базовое улучшение», цена 300, кнопка «КУПИТЬ». Если денег недостаточно, кнопка `disabled`, причина `"Недостаточно денег"`. Если upgrade уже куплен, показывается «Куплено», кнопка `disabled`. Покупка идёт через `PurchaseService.create_purchase_action` → `ActionService.execute`.
+
+Заготовки секций: Девушки — «Доступные девушки появятся здесь.»; Свидания — «Доступные свидания появятся здесь.»; Квартира — «Система квартиры появится здесь.»
 
 Reusable `GameActionButton` получает `GameAction` и показывает label, `money_cost`, `time_cost_minutes`. Кнопка вызывает `ActionService.execute(action)` и возвращает `ActionResult` в `GameSimulator`. Человекочитаемые label тестовых actions живут в presentation-каталоге Simulator: `test_wait` → Подождать, `test_earn_money` → Работать, `test_spend_money` → Потратить 50.
 
 Успешный `ActionResult`: «Успешно.», полученные эффекты, «Прошло времени: N мин.». Отказ: «Действие недоступно.» и `ActionResult.failure_reason`. Кнопка `disabled`, если `ActionService.can_execute(action)` ложно; причина — `ActionService.get_failure_reason(action)` в `tooltip_text`.
 
-Единый `refresh()` обновляет HUD, текущую секцию, доступность actions и последние отображаемые значения. Вызывается после New Game, Load, `ActionService.action_executed`, `TimeService.time_advanced`, `StageService.stage_changed`, `StageService.finale_reached`. Simulator не хранит копии игровых значений: всегда читает сервисы и `GameState`.
+Единый `refresh()` обновляет HUD, текущую секцию, доступность actions и последние отображаемые значения. Вызывается после New Game, Load, `ActionService.action_executed`, `TimeService.time_advanced`, `EconomyService.money_changed`, `PurchaseService.purchase_completed`, `StageService.stage_changed`, `StageService.finale_reached`. Simulator не хранит копии игровых значений: всегда читает сервисы и `GameState`.
 
 Управление сохранением через `SaveManager`: «НОВАЯ ИГРА» → `new_game()`; «СОХРАНИТЬ» → `save_game()` и сообщение «Игра сохранена.»; «ЗАГРУЗИТЬ» доступна при `has_save()` → `load_game()`; «УДАЛИТЬ СОХРАНЕНИЕ» → `delete_save()`. После New Game HUD: Day 1, 00:00, Money 0, Stage 1.
 
@@ -711,4 +789,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`).
+Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` / `purchased_ids` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, миграция без `progression.purchased_ids` → `[]`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), `EconomyService` (`add_money` / `spend_money` success/fail / `money_changed`), `work_basic` (100 денег / 60 минут, повтор), покупка `basic_upgrade` (нехватка денег / успех / повтор «Уже куплено»), save/load денег и `purchased_ids`, presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`).

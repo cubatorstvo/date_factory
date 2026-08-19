@@ -19,12 +19,14 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-GodotIQRuntime="*res://addons/godotiq/godotiq_runtime.gd"
+GodotIQRuntime="*uid://b2otg5noq2igh"
 GameState="*res://game/state/game_state.gd"
 SaveManager="*res://game/save/save_manager.gd"
 TimeService="*res://game/time/time_service.gd"
 StageService="*res://game/story/stage_service.gd"
+EconomyService="*res://game/economy/economy_service.gd"
 ActionService="*res://game/actions/action_service.gd"
+PurchaseService="*res://game/economy/purchase_service.gd"
 
 [debug]
 
@@ -42,7 +44,3 @@ window/size/min_height=720
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/godotiq/plugin.cfg")
-
-[rendering]
-
-renderer/rendering_method="forward_plus"
