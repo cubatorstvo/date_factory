@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://cnvnfxjjrjt50"]
+
+[ext_resource type="Script" uid="uid://dhkm4mk2wrtps" path="res://game/world/world_player.gd" id="1_7w8s4"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_li62p"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_vnukp"]
+radius = 0.4
+height = 1.8
+
+[node name="WorldPlayer" type="CharacterBody3D" unique_id=827761901]
+script = ExtResource("1_7w8s4")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1098415286]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_li62p")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1886363830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_vnukp")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=150429389]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+current = true

@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 4
+const SAVE_VERSION: int = 5
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -85,6 +85,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v2_story(migrated)
 	if from_version < 4:
 		migrated = _migrate_v3_progression(migrated)
+	if from_version < 5:
+		migrated = _migrate_v4_world(migrated)
 	return migrated
 
 
@@ -123,4 +125,21 @@ func _migrate_v3_progression(state_data: Dictionary) -> Dictionary:
 	if not progression.has("purchased_ids"):
 		progression["purchased_ids"] = []
 	migrated["progression"] = progression
+	return migrated
+
+
+func _migrate_v4_world(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var world_value: Variant = migrated.get("world", {})
+	var world: Dictionary = {}
+	if world_value is Dictionary:
+		world = world_value
+	if not world.has("current_location_id") or str(world.get("current_location_id", "")).is_empty():
+		world["current_location_id"] = String(LocationCatalog.START_LOCATION_ID)
+	if not world.has("unlocked_location_ids"):
+		var ids: Array = []
+		for location_id in LocationCatalog.START_UNLOCKED_LOCATION_IDS:
+			ids.append(String(location_id))
+		world["unlocked_location_ids"] = ids
+	migrated["world"] = world
 	return migrated

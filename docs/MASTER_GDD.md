@@ -20,7 +20,7 @@
 
 Date Factory строится вокруг свиданий как главной игровой системы. Игрок выбирает девушку, готовится к встрече, выбирает место и одежду, проходит последовательность эпизодов, реагирует на ситуации через доступные Ходы, постепенно раскрывает предпочтения девушки и развивает собственный арсенал действий.
 
-Мир, экономика, сюжет, рейтинг и полноценные игровые сцены позже строятся вокруг этого ядра.
+Экономика и физический мир уже строятся вокруг этого ядра как отдельные Game Core-системы. Сюжетный контент Stage, рейтинг и полноценный 3D free roam подключаются к ним позже.
 
 Текущая `main` реализует ядро как:
 
@@ -49,11 +49,11 @@ Date Factory строится вокруг свиданий как главно�
 
 ## GameState
 
-Единственное сохраняемое состояние прохождения. Autoload `GameState` владеет секциями; autoload `SaveManager` отвечает за `new_game` / `save_game` / `load_game` / `has_save` / `delete_save`. Autoload `TimeService` продвигает `flow.game_time_minutes` и публикует прошедший интервал. Autoload `ActionService` выполняет статические `GameAction` против текущего прохождения: требования, денежную стоимость через `EconomyService`, эффекты, затем время через `TimeService`. Autoload `EconomyService` — единственная точка изменения `player.money`. Autoload `PurchaseService` создаёт покупки как `GameAction` и отмечает постоянные `purchased_ids`.
+Единственное сохраняемое состояние прохождения. Autoload `GameState` владеет секциями; autoload `SaveManager` отвечает за `new_game` / `save_game` / `load_game` / `has_save` / `delete_save`. Autoload `TimeService` продвигает `flow.game_time_minutes` и публикует прошедший интервал. Autoload `ActionService` выполняет статические `GameAction` против текущего прохождения: требования, денежную стоимость через `EconomyService`, эффекты, затем время через `TimeService`. Autoload `EconomyService` — единственная точка изменения `player.money`. Autoload `PurchaseService` создаёт покупки как `GameAction` и отмечает постоянные `purchased_ids`. Autoload `WorldService` хранит семантическую локацию прохождения и открытые места; 3D-смена сцен — presentation через `SceneTransitionService`, не Game Action.
 
 `GameState` хранит только изменяемое состояние конкретного прохождения. Статические определения игрового контента — параметры девушек, предметов, локаций, Stage, цены, базовые характеристики и прочие definitions — хранятся отдельно от `GameState`. `GameState` хранит только ссылки/ID и изменяемый прогресс относительно этих definitions.
 
-Сейчас в секциях живут только `flow.game_time_minutes`, `story.stage`, `story.finale_reached`, `player.money`, `progression.purchased_ids`. День, час и минута вычисляются из абсолютного игрового времени. Кампания идёт по Stage 1–6, затем Finale; текущий Stage и факт Finale хранит `StoryState`, переходы делает autoload `StageService`. Деньги изменяет autoload `EconomyService`. Игровые действия выполняет autoload `ActionService` по статическим definitions `GameAction`. Работа и постоянные покупки — статические definitions (`WorkDefinition`, `PurchaseDefinition`); `GameState` хранит только деньги и купленные ID. Остальные секции — пустой каркас для следующих этапов. Прогресс свиданий лаборатории (`DateProgressStore`) пока отдельно: `girls` / `dating` ещё не заполнены.
+Сейчас в секциях живут `flow.game_time_minutes`, `story.stage`, `story.finale_reached`, `player.money`, `progression.purchased_ids`, `world.current_location_id`, `world.unlocked_location_ids`. День, час и минута вычисляются из абсолютного игрового времени. Кампания идёт по Stage 1–6, затем Finale; текущий Stage и факт Finale хранит `StoryState`, переходы делает autoload `StageService`. Деньги изменяет autoload `EconomyService`. Игровые действия выполняет autoload `ActionService` по статическим definitions `GameAction`. Работа и постоянные покупки — статические definitions (`WorkDefinition`, `PurchaseDefinition`); `GameState` хранит только деньги и купленные ID. Локации мира — статические `LocationDefinition` в `LocationCatalog`; `GameState.world` хранит только текущий ID и набор открытых ID. `girls` / `dating` / `rivals` / `automation` — пустой каркас. Прогресс свиданий лаборатории (`DateProgressStore`) пока отдельно.
 
 `DateSession.stage` — стадия эпизода свидания, не `StoryState.stage`.
 

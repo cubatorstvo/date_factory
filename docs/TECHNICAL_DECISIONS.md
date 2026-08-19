@@ -4,7 +4,8 @@
 
 - Godot 4.7.1 stable
 - Forward Plus
-- Главная сцена — 2D Control UI, не 3D-мир
+- Главная сцена — 2D Control UI (`GameSimulator`)
+- 3D-локации — presentation тех же `location_id`; вход в дверь грузит `LocationDefinition.scene_path` через `SceneTransitionService`, не через `ActionService`
 
 ## Контент
 

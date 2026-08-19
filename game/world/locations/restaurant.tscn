@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://c0c8nqvxfte31"]
+
+[ext_resource type="Script" uid="uid://csh1rcchbr5q1" path="res://game/world/location_spawn_point.gd" id="1_lj38q"]
+[ext_resource type="Script" uid="uid://drtoa7bc76wvm" path="res://game/world/location_door.gd" id="2_iuugu"]
+[ext_resource type="PackedScene" uid="uid://cnvnfxjjrjt50" path="res://game/world/world_player.tscn" id="3_d4o6u"]
+[ext_resource type="Script" uid="uid://dhkm4mk2wrtps" path="res://game/world/world_player.gd" id="4_3dwkx"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ce2s3"]
+albedo_color = Color(0.4, 0.2, 0.2, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5eayo"]
+size = Vector3(1.4, 2.4, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_awa1o"]
+size = Vector3(1.2, 2.2, 0.2)
+
+[node name="Restaurant" type="Node3D" unique_id=472935609]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=154365534]
+transform = Transform3D(0.9396926, -0.2198463, 0.26200262, 0, 0.76604444, 0.6427876, -0.34202012, -0.60402274, 0.7198463, 0, 0, 0)
+
+[node name="Floor" type="CSGBox3D" parent="." unique_id=1325845881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+use_collision = true
+size = Vector3(12, 1, 12)
+material = SubResource("StandardMaterial3D_ce2s3")
+
+[node name="SpawnEntrance" type="Marker3D" parent="." unique_id=100385320]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4)
+script = ExtResource("1_lj38q")
+spawn_id = &"entrance"
+
+[node name="ExitDoor" type="Area3D" parent="." unique_id=1540588774]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 5.5)
+script = ExtResource("2_iuugu")
+target_location_id = &"city_center"
+target_spawn_id = &"restaurant_door"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ExitDoor" unique_id=1383806938]
+shape = SubResource("BoxShape3D_5eayo")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ExitDoor" unique_id=431665061]
+mesh = SubResource("BoxMesh_awa1o")
+
+[node name="WorldPlayer" type="CharacterBody3D" parent="." unique_id=827761901 instance=ExtResource("3_d4o6u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4)
+script = ExtResource("4_3dwkx")

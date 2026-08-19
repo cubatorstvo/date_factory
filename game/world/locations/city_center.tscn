@@ -1,0 +1,94 @@
+[gd_scene format=3 uid="uid://c6ns7jshmk072"]
+
+[ext_resource type="Script" uid="uid://csh1rcchbr5q1" path="res://game/world/location_spawn_point.gd" id="1_frfs5"]
+[ext_resource type="Script" uid="uid://drtoa7bc76wvm" path="res://game/world/location_door.gd" id="2_4n78h"]
+[ext_resource type="PackedScene" uid="uid://cnvnfxjjrjt50" path="res://game/world/world_player.tscn" id="3_qbjwi"]
+[ext_resource type="Script" uid="uid://dhkm4mk2wrtps" path="res://game/world/world_player.gd" id="4_2bvv7"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_w01jf"]
+size = Vector3(1.4, 2.4, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tehg8"]
+size = Vector3(1.2, 2.2, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_t8rju"]
+size = Vector3(1.4, 2.4, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_r8hme"]
+size = Vector3(1.2, 2.2, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0x1vs"]
+size = Vector3(1.4, 2.4, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_iingn"]
+size = Vector3(1.2, 2.2, 0.2)
+
+[node name="CityCenter" type="Node3D" unique_id=388550089]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=245621152]
+transform = Transform3D(0.8660254, -0.38302222, 0.32139382, 0, 0.64278764, 0.76604444, -0.5, -0.66341394, 0.5566704, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Floor" type="CSGBox3D" parent="." unique_id=1000953603]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+use_collision = true
+size = Vector3(24, 1, 24)
+
+[node name="SpawnDefault" type="Marker3D" parent="." unique_id=267897877]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 6)
+script = ExtResource("1_frfs5")
+
+[node name="SpawnApartmentDoor" type="Marker3D" parent="." unique_id=176799529]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.1, -5)
+script = ExtResource("1_frfs5")
+spawn_id = &"apartment_door"
+
+[node name="SpawnCafeDoor" type="Marker3D" parent="." unique_id=1778179183]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -5)
+script = ExtResource("1_frfs5")
+spawn_id = &"cafe_door"
+
+[node name="SpawnRestaurantDoor" type="Marker3D" parent="." unique_id=987292957]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.1, -5)
+script = ExtResource("1_frfs5")
+spawn_id = &"restaurant_door"
+
+[node name="ToApartment" type="Area3D" parent="." unique_id=1511833678]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.2, -7)
+script = ExtResource("2_4n78h")
+target_location_id = &"apartment"
+target_spawn_id = &"entrance"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ToApartment" unique_id=933016156]
+shape = SubResource("BoxShape3D_w01jf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ToApartment" unique_id=1718248657]
+mesh = SubResource("BoxMesh_tehg8")
+
+[node name="ToCafe" type="Area3D" parent="." unique_id=194743319]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -7)
+script = ExtResource("2_4n78h")
+target_location_id = &"cafe"
+target_spawn_id = &"entrance"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ToCafe" unique_id=1626378884]
+shape = SubResource("BoxShape3D_t8rju")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ToCafe" unique_id=1338587959]
+mesh = SubResource("BoxMesh_r8hme")
+
+[node name="ToRestaurant" type="Area3D" parent="." unique_id=1448624259]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.2, -7)
+script = ExtResource("2_4n78h")
+target_location_id = &"restaurant"
+target_spawn_id = &"entrance"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ToRestaurant" unique_id=271575383]
+shape = SubResource("BoxShape3D_0x1vs")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ToRestaurant" unique_id=2093324282]
+mesh = SubResource("BoxMesh_iingn")
+
+[node name="WorldPlayer" type="CharacterBody3D" parent="." unique_id=827761901 instance=ExtResource("3_qbjwi")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 6)
+script = ExtResource("4_2bvv7")

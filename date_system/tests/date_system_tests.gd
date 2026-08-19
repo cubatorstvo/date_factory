@@ -30,6 +30,7 @@ func run_all() -> PackedStringArray:
 	_test_game_actions()
 	_test_game_simulator()
 	_test_economy()
+	_test_world()
 	return _failures
 
 
@@ -1047,6 +1048,16 @@ func _purchase_service() -> Variant:
 	return node
 
 
+func _world_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("WorldService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
 func _assert_clock(label: String, clock: Variant, minutes: int, day: int, hour: int, minute: int) -> void:
 	_ok("%s game_time_minutes" % label, clock.get_game_time_minutes() == minutes)
 	_ok("%s day" % label, clock.get_day() == day)
@@ -1074,6 +1085,11 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game finale false", gs.story.finale_reached == false)
 	_ok("new_game money 0", gs.player.money == 0)
 	_ok("new_game purchased empty", gs.progression.purchased_ids.is_empty())
+	_ok("new_game start location", gs.world.current_location_id == LocationCatalog.START_LOCATION_ID)
+	_ok("new_game start unlocked city", gs.world.has_unlocked(LocationCatalog.ID_CITY_CENTER))
+	_ok("new_game start unlocked apartment", gs.world.has_unlocked(LocationCatalog.ID_APARTMENT))
+	_ok("new_game start unlocked cafe", gs.world.has_unlocked(LocationCatalog.ID_CAFE))
+	_ok("new_game restaurant locked", not gs.world.has_unlocked(LocationCatalog.ID_RESTAURANT))
 	gs.flow.game_time_minutes = 8640
 	gs.story.stage = 3
 	gs.player.money = 12345
@@ -1086,7 +1102,7 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 4", int(root.get("save_version", 0)) == 4)
+	_ok("save_version == 5", int(root.get("save_version", 0)) == 5)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -1124,6 +1140,8 @@ func _test_game_state_round_trip() -> void:
 	_ok("missing keys default stage", gs.story.stage == 1)
 	_ok("missing keys default finale", gs.story.finale_reached == false)
 	_ok("missing keys default money", gs.player.money == 0)
+	_ok("missing keys default location", gs.world.current_location_id == LocationCatalog.START_LOCATION_ID)
+	_ok("missing keys default unlocked city", gs.world.has_unlocked(LocationCatalog.ID_CITY_CENTER))
 	sm.delete_save()
 	_ok("deleted test save", not sm.has_save())
 	sm.save_path = original_path
@@ -1688,5 +1706,144 @@ func _test_economy() -> void:
 	_ok("migrated v3 purchased empty", gs.progression.purchased_ids.is_empty())
 	sm.delete_save()
 	_ok("deleted economy test save", not sm.has_save())
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_world() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var world: Variant = _world_service()
+	_ok("world GameState", gs != null)
+	_ok("world SaveManager", sm != null)
+	_ok("world TimeService", clock != null)
+	_ok("world WorldService", world != null)
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	_ok("world tree", tree != null and tree.root != null)
+	if gs == null or sm == null or clock == null or world == null or tree == null or tree.root == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/world_round_trip.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	_ok("world new current", world.get_current_location_id() == LocationCatalog.START_LOCATION_ID)
+	_ok("world new city unlocked", world.is_location_unlocked(LocationCatalog.ID_CITY_CENTER))
+	_ok("world new apartment unlocked", world.is_location_unlocked(LocationCatalog.ID_APARTMENT))
+	_ok("world new cafe unlocked", world.is_location_unlocked(LocationCatalog.ID_CAFE))
+	_ok("world new restaurant locked", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT) == false)
+	var start_location: LocationDefinition = world.get_current_location()
+	_ok("world current definition", start_location != null and start_location.id == LocationCatalog.ID_CITY_CENTER)
+	var unlocked_events: Array = []
+	var on_unlocked := func(location_id: StringName) -> void:
+		unlocked_events.append(location_id)
+	world.location_unlocked.connect(on_unlocked)
+	var first_unlock: bool = bool(world.unlock_location(LocationCatalog.ID_RESTAURANT))
+	_ok("world first unlock", first_unlock)
+	_ok("world restaurant unlocked", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+	_ok("world unlock signal once", unlocked_events.size() == 1)
+	var second_unlock: bool = bool(world.unlock_location(LocationCatalog.ID_RESTAURANT))
+	_ok("world repeat unlock false", second_unlock == false)
+	_ok("world restaurant unique", gs.world.unlocked_location_ids.count(LocationCatalog.ID_RESTAURANT) == 1)
+	_ok("world unlock signal still once", unlocked_events.size() == 1)
+	world.location_unlocked.disconnect(on_unlocked)
+	sm.new_game()
+	var changed_events: Array = []
+	var on_changed := func(previous_location_id: StringName, current_location_id: StringName) -> void:
+		changed_events.append([previous_location_id, current_location_id])
+	world.location_changed.connect(on_changed)
+	var time_before: int = int(clock.get_game_time_minutes())
+	var enter_ok: bool = bool(world.enter_location(LocationCatalog.ID_APARTMENT))
+	_ok("world enter apartment", enter_ok)
+	_ok("world current apartment", world.get_current_location_id() == LocationCatalog.ID_APARTMENT)
+	_ok("world location_changed once", changed_events.size() == 1)
+	if changed_events.size() == 1:
+		var payload: Array = changed_events[0]
+		_ok("world changed from city", payload[0] == LocationCatalog.ID_CITY_CENTER)
+		_ok("world changed to apartment", payload[1] == LocationCatalog.ID_APARTMENT)
+	_ok("world enter no time", int(clock.get_game_time_minutes()) == time_before)
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	var locked_enter: bool = bool(world.enter_location(LocationCatalog.ID_RESTAURANT))
+	_ok("world locked enter false", locked_enter == false)
+	_ok("world locked current unchanged", world.get_current_location_id() == LocationCatalog.ID_CITY_CENTER)
+	world.location_changed.disconnect(on_changed)
+	var req := LocationRequirement.new()
+	req.required_location_id = LocationCatalog.ID_APARTMENT
+	world.enter_location(LocationCatalog.ID_APARTMENT)
+	_ok("location requirement met", req.is_met())
+	world.enter_location(LocationCatalog.ID_CAFE)
+	_ok("location requirement unmet", req.is_met() == false)
+	_ok("location requirement reason", req.get_failure_reason() == "Действие недоступно в этой локации")
+	var unlock_effect := UnlockLocationEffect.new()
+	unlock_effect.location_id = LocationCatalog.ID_RESTAURANT
+	sm.new_game()
+	unlock_effect.apply()
+	_ok("unlock effect restaurant", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+	sm.new_game()
+	world.unlock_location(LocationCatalog.ID_RESTAURANT)
+	world.enter_location(LocationCatalog.ID_RESTAURANT)
+	sm.save_game()
+	sm.new_game()
+	_ok("world clean after save", world.get_current_location_id() == LocationCatalog.START_LOCATION_ID)
+	_ok("world clean restaurant locked", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT) == false)
+	_ok("world load save", sm.load_game())
+	_ok("world loaded restaurant current", world.get_current_location_id() == LocationCatalog.ID_RESTAURANT)
+	_ok("world loaded restaurant unlocked", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var legacy: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v4 world save", legacy != null)
+	if legacy != null:
+		var v4: Dictionary = {
+			"save_version": 4,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 1, "finale_reached": false},
+				"player": {"money": 0},
+				"progression": {"purchased_ids": []},
+				"world": {},
+			},
+		}
+		legacy.store_string(JSON.stringify(v4, "\t"))
+		legacy.close()
+	_ok("load v4 world save", sm.load_game())
+	_ok("migrated v4 location", world.get_current_location_id() == LocationCatalog.START_LOCATION_ID)
+	_ok("migrated v4 city unlocked", world.is_location_unlocked(LocationCatalog.ID_CITY_CENTER))
+	_ok("migrated v4 apartment unlocked", world.is_location_unlocked(LocationCatalog.ID_APARTMENT))
+	var sim := GameSimulator.new()
+	tree.root.add_child(sim)
+	sim.start_new_game()
+	sim.show_section("city")
+	_ok("sim city current", sim.get_city_current_location_name() == "Центральная часть города")
+	var city_text: String = sim.get_city_body_text()
+	_ok("sim city cafe", city_text.contains("Кафе"))
+	_ok("sim city apartment", city_text.contains("Квартира"))
+	_ok("sim city restaurant locked", city_text.contains("Ресторан 🔒"))
+	var sim_time: int = int(clock.get_game_time_minutes())
+	_ok("sim enter apartment", sim.enter_world_location(LocationCatalog.ID_APARTMENT))
+	_ok("sim apartment name", sim.get_city_current_location_name() == "Квартира")
+	_ok("sim exit button", sim.get_city_body_text().contains("ВЫЙТИ"))
+	_ok("sim enter no time", int(clock.get_game_time_minutes()) == sim_time)
+	_ok("sim exit interior", sim.exit_world_interior())
+	_ok("sim back to city", sim.get_city_current_location_name() == "Центральная часть города")
+	_ok("sim exit no time", int(clock.get_game_time_minutes()) == sim_time)
+	var city_scene: PackedScene = load(LocationCatalog.SCENE_CITY_CENTER) as PackedScene
+	_ok("city scene exists", city_scene != null)
+	if city_scene != null:
+		var city_node: Node = city_scene.instantiate()
+		var to_apartment: LocationDoor = city_node.find_child("ToApartment", true, false) as LocationDoor
+		_ok("city door to apartment", to_apartment != null and to_apartment.target_location_id == LocationCatalog.ID_APARTMENT)
+		city_node.free()
+	var apartment_scene: PackedScene = load(LocationCatalog.SCENE_APARTMENT) as PackedScene
+	_ok("apartment scene exists", apartment_scene != null)
+	if apartment_scene != null:
+		var apartment_node: Node = apartment_scene.instantiate()
+		var exit_door: LocationDoor = apartment_node.find_child("ExitDoor", true, false) as LocationDoor
+		_ok("apartment exit to city", exit_door != null and exit_door.target_location_id == LocationCatalog.ID_CITY_CENTER)
+		apartment_node.free()
+	sim.queue_free()
+	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()

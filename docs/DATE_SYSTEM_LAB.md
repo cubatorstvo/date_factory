@@ -114,7 +114,7 @@ Autoload `GameState` — текущее прохождение. Секции: `f
 
 `GameState` хранит только изменяемое состояние конкретного прохождения. Статические определения игрового контента — параметры девушек, предметов, локаций, Stage, цены, базовые характеристики и прочие definitions — хранятся отдельно от `GameState`. `GameState` хранит только ссылки/ID и изменяемый прогресс относительно этих definitions.
 
-Сейчас используются только:
+Сейчас используются:
 
 ```text
 flow.game_time_minutes = 0
@@ -122,11 +122,13 @@ story.stage = 1
 story.finale_reached = false
 player.money = 0
 progression.purchased_ids = []
+world.current_location_id = city_center
+world.unlocked_location_ids = [city_center, apartment, cafe]
 ```
 
-`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`. Кампания: `stage` — текущая/последняя достигнутая игровая стадия 1–6, `finale_reached` — завершение основной последовательности после Stage 6.
+`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`. Кампания: `stage` — текущая/последняя достигнутая игровая стадия 1–6, `finale_reached` — завершение основной последовательности после Stage 6. Мир: `current_location_id` — семантическое место игрока, `unlocked_location_ids` — открытые `LocationDefinition`. Definitions локаций живут в `LocationCatalog`; `GameState` хранит только ID.
 
-Пустые секции сериализуются как `{}`. Поля читаются через `data.get(key, default)`.
+Пустые секции `girls` / `dating` / `rivals` / `automation` сериализуются как `{}`. Поля читаются через `data.get(key, default)`. Отсутствующие поля `world` восстанавливаются стартовым состоянием нового прохождения.
 
 Autoload `SaveManager` — жизненный цикл:
 
@@ -142,14 +144,14 @@ delete_save()
 
 ```text
 {
-  "save_version": 4,
-  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0 }, "progression": { "purchased_ids": [] }, "world": {}, "girls": {}, "dating": {}, "rivals": {}, "automation": {} }
+  "save_version": 5,
+  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0 }, "progression": { "purchased_ids": [] }, "world": { "current_location_id": "city_center", "unlocked_location_ids": ["city_center", "apartment", "cafe"] }, "girls": {}, "dating": {}, "rivals": {}, "automation": {} }
 }
 ```
 
-`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0, `purchased_ids = []`. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Сохранения без `progression.purchased_ids` получают `[]`. Текущий формат — `save_version = 4`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `EconomyService`. Игровые действия изменяют money только через `EconomyService` и время только через `TimeService`; последовательность выполнения остаётся у `ActionService`. Presentation-слой прохождения — `GameSimulator`.
+`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0, `purchased_ids = []`, `current_location_id = city_center`, стартовые unlock'и. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Сохранения без `progression.purchased_ids` получают `[]`. Сохранения без world-полей получают стартовую локацию и стартовый набор unlock'ов. Текущий формат — `save_version = 5`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `EconomyService`, место через `WorldService`. Игровые действия изменяют money только через `EconomyService` и время только через `TimeService`; последовательность выполнения остаётся у `ActionService`. Переход между локациями не является `GameAction` и не двигает время. Presentation-слой прохождения — `GameSimulator`.
 
-`DateSession.stage` не является `StoryState.stage`. `DateProgressStore` остаётся прогрессом лаборатории свиданий, пока `girls` / `dating` пусты.
+`DateSession.stage` не является `StoryState.stage`. `DateProgressStore` остаётся прогрессом лаборатории свиданий, пока `girls` / `dating` пусты. Физический мир (`LocationDefinition`) не подменяет `DateLocation`.
 
 ## Time / Game Flow
 
@@ -233,9 +235,9 @@ effects: Array[ActionEffect] = []
 
 `id` однозначно идентифицирует действие (`work_mine`, `meet_girl`, `invite_to_date`, `buy_upgrade`, `challenge_rival`, `start_date`, `travel`, `prepare_apartment`).
 
-`ActionRequirement`: `is_met() -> bool`, `get_failure_reason() -> String`. Проверяет текущее прохождение. `MoneyRequirement(required_money)`: `EconomyService.can_afford(required_money)`, отказ `"Недостаточно денег"`. `NotPurchasedRequirement(purchase_id)`: `purchase_id` отсутствует в `GameState.progression.purchased_ids`, отказ `"Уже куплено"`.
+`ActionRequirement`: `is_met() -> bool`, `get_failure_reason() -> String`. Проверяет текущее прохождение. `MoneyRequirement(required_money)`: `EconomyService.can_afford(required_money)`, отказ `"Недостаточно денег"`. `NotPurchasedRequirement(purchase_id)`: `purchase_id` отсутствует в `GameState.progression.purchased_ids`, отказ `"Уже куплено"`. `LocationRequirement(required_location_id)`: `WorldService.get_current_location_id() == required_location_id`, отказ `"Действие недоступно в этой локации"`.
 
-`ActionEffect`: `apply() -> void`, `get_description() -> String`. `MoneyEffect(amount)`: при `amount > 0` вызывает `EconomyService.add_money(amount)`, при `amount < 0` — `EconomyService.spend_money(-amount)`. `PurchaseEffect(purchase_id)` добавляет ID в `ProgressionState.purchased_ids` не более одного раза.
+`ActionEffect`: `apply() -> void`, `get_description() -> String`. `MoneyEffect(amount)`: при `amount > 0` вызывает `EconomyService.add_money(amount)`, при `amount < 0` — `EconomyService.spend_money(-amount)`. `PurchaseEffect(purchase_id)` добавляет ID в `ProgressionState.purchased_ids` не более одного раза. `UnlockLocationEffect(location_id)` вызывает `WorldService.unlock_location(location_id)`.
 
 `ActionResult` — ответ Presentation после попытки:
 
@@ -393,7 +395,90 @@ complete_current_stage() -> bool
 - Stage 6 и `finale_reached = false`: `finale_reached = true`, сигнал `finale_reached`, вернуть `true`
 - уже Finale: состояние не менять, вернуть `false`
 
-Будущие системы после своих условий вызывают только `StageService.complete_current_stage()`.
+Будущие системы после своих условий вызывают только `StageService.complete_current_stage()`. `StageService.stage_changed` — точка будущей интеграции сюжета с миром: Stage меняется → story/progression logic → `WorldService.unlock_location(...)`. Сейчас список unlock'ов по Stage не задан; механизм unlock уже есть у `WorldService`.
+
+## World / Locations
+
+Физический мир отделён от содержательных действий:
+
+```text
+WORLD NAVIGATION          GAME ACTION
+ходьба / дверь            работа / покупка
+вход / выход интерьера    знакомство / свидание
+переход зоны              соревнование / прочее
+        ↓                         ↓
+WorldService              ActionService
+SceneTransitionService    EconomyService / TimeService
+```
+
+`DateLocation` остаётся местом свидания (скоринг). `LocationDefinition` — физическая локация мира. Одинаковые строковые ID (`apartment`, `cafe`) означают одно и то же место в fiction, но это разные typed Resources.
+
+`LocationDefinition`:
+
+```text
+id: StringName
+display_name: String
+location_type: CITY_ZONE | INTERIOR
+scene_path: String
+default_spawn_id: StringName
+parent_location_id: StringName
+```
+
+`CITY_ZONE` — физическая часть города, `parent_location_id = ""`. `INTERIOR` — отдельная подгружаемая сцена; `parent_location_id` указывает городскую зону входа.
+
+Seed каталога текущего дизайна:
+
+| id | имя | type | parent | start |
+|---|---|---|---|---|
+| `city_center` | Центральная часть города | CITY_ZONE | — | текущая и открыта |
+| `apartment` | Квартира | INTERIOR | `city_center` | открыта |
+| `cafe` | Кафе | INTERIOR | `city_center` | открыта |
+| `restaurant` | Ресторан | INTERIOR | `city_center` | закрыта |
+
+`START_LOCATION_ID = city_center`. `START_UNLOCKED_LOCATION_IDS = [city_center, apartment, cafe]`. `restaurant` нужен для проверки unlock и закрытых мест до сюжетной прогрессии.
+
+`LocationCatalog`:
+
+```text
+get_location(location_id) -> LocationDefinition
+get_all_locations() -> Array[LocationDefinition]
+get_locations_by_type(location_type) -> Array[LocationDefinition]
+get_interiors_for_zone(zone_id) -> Array[LocationDefinition]
+```
+
+`WorldState`:
+
+```text
+current_location_id: StringName
+unlocked_location_ids: Array[StringName]
+```
+
+`to_dict()` / `from_dict()` сериализуют оба поля. Один ID в `unlocked_location_ids` хранится один раз. Отсутствующие поля → стартовое состояние New Game.
+
+Autoload `WorldService` — единственная точка смены семантической локации и unlock. Читает и пишет `GameState.world`.
+
+```text
+get_current_location_id() -> StringName
+get_current_location() -> LocationDefinition
+is_location_unlocked(location_id) -> bool
+unlock_location(location_id) -> bool
+can_enter_location(location_id) -> bool
+enter_location(location_id) -> bool
+signal location_unlocked(location_id)
+signal location_changed(previous_location_id, current_location_id)
+```
+
+`unlock_location`: добавляет ID один раз, при первом открытии испускает `location_unlocked` и возвращает `true`; повтор возвращает `false` без сигнала. `can_enter_location`: definition существует и ID открыт. `enter_location`: при `can_enter` запоминает предыдущий ID, пишет `current_location_id`, испускает `location_changed`, возвращает `true`. `time_cost = 0`: время не двигается. Закрытая или неизвестная локация: `false`, состояние не меняется.
+
+3D Presentation:
+
+- `LocationSpawnPoint` — reusable `Marker3D` с `spawn_id` внутри 3D-сцены.
+- `LocationDoor` — reusable дверь с `target_location_id` и `target_spawn_id`; при взаимодействии вызывает `SceneTransitionService.transition_to_location`.
+- Autoload `SceneTransitionService.transition_to_location(location_id, spawn_id = "")`: каталог → `WorldService.can_enter` / `enter_location` → загрузка `scene_path` → игрок в `spawn_id` или `default_spawn_id`.
+
+Выход из интерьера — тот же `LocationDoor` на родительскую `CITY_ZONE`. После `load_game()` 3D Presentation читает `current_location_id`, грузит `scene_path` и ставит игрока в `default_spawn_id`. 2D `GameSimulator` сцену не грузит: только `WorldService.enter_location` + `refresh()`.
+
+`TimeService.real_time_progression_enabled` уже существует и выключен для 2D. Будущий 3D free roam включает его на время ходьбы; дверь по-прежнему только меняет локацию и сцену.
 
 ## Game Simulator
 
@@ -421,7 +506,7 @@ GameState
 GameSimulator.refresh()
 ```
 
-Autoload `StageService`, `ActionService`, `EconomyService` и `PurchaseService` регистрируются в `project.godot` как `/root/StageService`, `/root/ActionService`, `/root/EconomyService` и `/root/PurchaseService`.
+Autoload `StageService`, `ActionService`, `EconomyService`, `PurchaseService`, `WorldService` и `SceneTransitionService` регистрируются в `project.godot` как `/root/StageService`, `/root/ActionService`, `/root/EconomyService`, `/root/PurchaseService`, `/root/WorldService` и `/root/SceneTransitionService`.
 
 Интерфейс — 2D Control, контейнеры и anchors, читаемый в 1280×720 и 1920×1080:
 
@@ -446,7 +531,7 @@ StageService.is_finale_reached()
 
 Главная показывает краткое состояние прохождения (`День`, время, `Stage`, деньги), кнопку «СОХРАНИТЬ» и последний результат действия.
 
-Работа показывает `work_basic`: название «Работать», доход 100, время 60 минут, кнопка «РАБОТАТЬ». Город запускает каталожный `test_wait` (`TEST_WAIT`): провести время 120 минут, кнопка «Подождать». Оба идут только через `ActionService.execute(action)`. UI деньги и время не меняет.
+Работа показывает `work_basic`: название «Работать», доход 100, время 60 минут, кнопка «РАБОТАТЬ». Город отображает `WorldState`: текущая локация (`LocationDefinition.display_name`); если это `CITY_ZONE` — связанные `INTERIOR` через `parent_location_id` с кнопкой «ВОЙТИ»; если `INTERIOR` — кнопка «ВЫЙТИ» в родительскую зону. Вход и выход вызывают `WorldService.enter_location` и `refresh()`, без загрузки 3D-сцены и без сдвига времени. Закрытая локация: «Название 🔒», кнопка входа `disabled`. Dev-блок `WORLD DEV` / «UNLOCK LOCATION» открывает существующую закрытую локацию через `WorldService.unlock_location`. Работа идёт только через `ActionService.execute(action)`. UI деньги, время и локацию не меняет напрямую.
 
 Прокачка показывает `basic_upgrade`: название «Базовое улучшение», цена 300, кнопка «КУПИТЬ». Если денег недостаточно, кнопка `disabled`, причина `"Недостаточно денег"`. Если upgrade уже куплен, показывается «Куплено», кнопка `disabled`. Покупка идёт через `PurchaseService.create_purchase_action` → `ActionService.execute`.
 
@@ -456,7 +541,7 @@ Reusable `GameActionButton` получает `GameAction` и показывае�
 
 Успешный `ActionResult`: «Успешно.», полученные эффекты, «Прошло времени: N мин.». Отказ: «Действие недоступно.» и `ActionResult.failure_reason`. Кнопка `disabled`, если `ActionService.can_execute(action)` ложно; причина — `ActionService.get_failure_reason(action)` в `tooltip_text`.
 
-Единый `refresh()` обновляет HUD, текущую секцию, доступность actions и последние отображаемые значения. Вызывается после New Game, Load, `ActionService.action_executed`, `TimeService.time_advanced`, `EconomyService.money_changed`, `PurchaseService.purchase_completed`, `StageService.stage_changed`, `StageService.finale_reached`. Simulator не хранит копии игровых значений: всегда читает сервисы и `GameState`.
+Единый `refresh()` обновляет HUD, текущую секцию, доступность actions и последние отображаемые значения. Вызывается после New Game, Load, `ActionService.action_executed`, `TimeService.time_advanced`, `EconomyService.money_changed`, `PurchaseService.purchase_completed`, `StageService.stage_changed`, `StageService.finale_reached`, `WorldService.location_changed`, `WorldService.location_unlocked`. Simulator не хранит копии игровых значений: всегда читает сервисы и `GameState`.
 
 Управление сохранением через `SaveManager`: «НОВАЯ ИГРА» → `new_game()`; «СОХРАНИТЬ» → `save_game()` и сообщение «Игра сохранена.»; «ЗАГРУЗИТЬ» доступна при `has_save()` → `load_game()`; «УДАЛИТЬ СОХРАНЕНИЕ» → `delete_save()`. После New Game HUD: Day 1, 00:00, Money 0, Stage 1.
 
@@ -789,4 +874,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` / `purchased_ids` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, миграция без `progression.purchased_ids` → `[]`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), `EconomyService` (`add_money` / `spend_money` success/fail / `money_changed`), `work_basic` (100 денег / 60 минут, повтор), покупка `basic_upgrade` (нехватка денег / успех / повтор «Уже куплено»), save/load денег и `purchased_ids`, presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`).
+Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` / `purchased_ids` / `current_location_id` / `unlocked_location_ids` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, миграция без `progression.purchased_ids` → `[]`, миграция без world-полей → стартовый `WorldState`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), `EconomyService` (`add_money` / `spend_money` success/fail / `money_changed`), `work_basic` (100 денег / 60 минут, повтор), покупка `basic_upgrade` (нехватка денег / успех / повтор «Уже куплено»), save/load денег и `purchased_ids`, presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`; Город: текущая локация, вход/выход интерьера без сдвига времени, закрытая локация, dev unlock), `WorldService` (New Game start location и unlock'и, первый/повторный unlock, `enter_location`, отказ в закрытую, `location_changed` / `location_unlocked`, время не двигается), `LocationRequirement`, save/load локации и unlock'ов.

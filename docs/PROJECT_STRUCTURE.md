@@ -11,6 +11,7 @@ res://
         story/
         actions/
         economy/
+        world/
         simulator/
     date_system/
         content/

@@ -27,6 +27,9 @@ var _home_summary: Label
 var _home_result: Label
 var _upgrade_status_label: Label
 var _upgrade_price_label: Label
+var _city_current_label: Label
+var _world_dev_option: OptionButton
+var _refreshing: bool = false
 
 
 func _ready() -> void:
@@ -42,6 +45,11 @@ func _ready() -> void:
 
 
 func refresh() -> void:
+	if _refreshing:
+		return
+	_refreshing = true
+	if _section == "city":
+		_rebuild_section()
 	_refresh_hud()
 	_refresh_home()
 	_refresh_progression()
@@ -51,6 +59,7 @@ func refresh() -> void:
 			button.refresh()
 	if _result_label != null:
 		_result_label.text = _last_result_text
+	_refreshing = false
 
 
 func show_section(section_id: String) -> void:
@@ -126,6 +135,73 @@ func execute_catalog_action(action_id: StringName) -> ActionResult:
 	result = actions.execute(action)
 	_on_action_resolved(result)
 	return result
+
+
+func enter_world_location(location_id: StringName) -> bool:
+	var world: Variant = _world_service()
+	if world == null:
+		return false
+	var ok: bool = bool(world.enter_location(location_id))
+	refresh()
+	return ok
+
+
+func exit_world_interior() -> bool:
+	var world: Variant = _world_service()
+	if world == null:
+		return false
+	var location: LocationDefinition = world.get_current_location()
+	if location == null or location.parent_location_id == &"":
+		return false
+	return enter_world_location(location.parent_location_id)
+
+
+func unlock_selected_world_location() -> bool:
+	var world: Variant = _world_service()
+	if world == null or _world_dev_option == null:
+		return false
+	if _world_dev_option.item_count <= 0:
+		return false
+	var selected: int = _world_dev_option.selected
+	if selected < 0:
+		return false
+	var location_id: StringName = StringName(str(_world_dev_option.get_item_metadata(selected)))
+	var ok: bool = bool(world.unlock_location(location_id))
+	refresh()
+	return ok
+
+
+func get_city_current_location_name() -> String:
+	if _city_current_label != null:
+		return _city_current_label.text
+	var world: Variant = _world_service()
+	if world == null:
+		return ""
+	var location: LocationDefinition = world.get_current_location()
+	if location == null:
+		return String(world.get_current_location_id())
+	return location.display_name
+
+
+func get_city_body_text() -> String:
+	if _section_host == null:
+		return ""
+	var lines := PackedStringArray()
+	_collect_label_text(_section_host, lines)
+	return "\n".join(lines)
+
+
+func _collect_label_text(node: Node, lines: PackedStringArray) -> void:
+	if node is Label:
+		var label: Label = node
+		if not label.text.is_empty():
+			lines.append(label.text)
+	elif node is Button:
+		var button: Button = node
+		if not button.text.is_empty():
+			lines.append(button.text)
+	for child in node.get_children():
+		_collect_label_text(child, lines)
 
 
 func get_hud_text() -> String:
@@ -261,6 +337,8 @@ func _rebuild_section() -> void:
 	_home_result = null
 	_upgrade_status_label = null
 	_upgrade_price_label = null
+	_city_current_label = null
+	_world_dev_option = null
 	if _section_host == null:
 		return
 	for child in _section_host.get_children():
@@ -323,14 +401,81 @@ func _build_city() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("ГОРОД"))
-	var wait_title := Label.new()
-	wait_title.text = "Провести время"
-	box.add_child(wait_title)
-	var action: GameAction = _catalog_action(GameActionCatalog.ID_TEST_WAIT)
-	var info := Label.new()
-	info.text = "Время: %d минут" % _time_cost(action)
-	box.add_child(info)
-	_add_action_button(box, action, GameActionLabels.LABEL_WAIT)
+	box.add_child(LabUi.heading("ТЕКУЩАЯ ЛОКАЦИЯ"))
+	var world: Variant = _world_service()
+	var location: LocationDefinition = null
+	if world != null:
+		location = world.get_current_location()
+	_city_current_label = Label.new()
+	_city_current_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if location != null:
+		_city_current_label.text = location.display_name
+	elif world != null:
+		_city_current_label.text = String(world.get_current_location_id())
+	else:
+		_city_current_label.text = ""
+	box.add_child(_city_current_label)
+	if location != null and location.location_type == LocationDefinition.LocationType.INTERIOR:
+		var exit_btn: Button = LabUi.button("ВЫЙТИ")
+		exit_btn.pressed.connect(exit_world_interior)
+		box.add_child(exit_btn)
+	else:
+		box.add_child(LabUi.heading("ДОСТУПНЫЕ МЕСТА"))
+		var catalog: LocationCatalog = null
+		if world != null:
+			catalog = world.get_catalog()
+		var zone_id: StringName = LocationCatalog.START_LOCATION_ID
+		if location != null:
+			zone_id = location.id
+		var interiors: Array[LocationDefinition] = []
+		if catalog != null:
+			interiors = catalog.get_interiors_for_zone(zone_id)
+		for interior in interiors:
+			box.add_child(_build_city_place_row(interior, world))
+	box.add_child(_build_world_dev(world))
+	return box
+
+
+func _build_city_place_row(interior: LocationDefinition, world: Variant) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var unlocked: bool = world != null and bool(world.is_location_unlocked(interior.id))
+	var title := Label.new()
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if unlocked:
+		title.text = interior.display_name
+	else:
+		title.text = "%s 🔒" % interior.display_name
+	row.add_child(title)
+	var enter_btn: Button = LabUi.button("ВОЙТИ")
+	enter_btn.disabled = not unlocked
+	enter_btn.pressed.connect(enter_world_location.bind(interior.id))
+	row.add_child(enter_btn)
+	return row
+
+
+func _build_world_dev(world: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	box.add_child(LabUi.heading("WORLD DEV"))
+	_world_dev_option = OptionButton.new()
+	var catalog: LocationCatalog = null
+	if world != null:
+		catalog = world.get_catalog()
+	var has_locked: bool = false
+	if catalog != null:
+		for location in catalog.get_all_locations():
+			if world != null and bool(world.is_location_unlocked(location.id)):
+				continue
+			has_locked = true
+			var index: int = _world_dev_option.item_count
+			_world_dev_option.add_item(location.display_name)
+			_world_dev_option.set_item_metadata(index, String(location.id))
+	var unlock_btn: Button = LabUi.button("UNLOCK LOCATION")
+	unlock_btn.disabled = not has_locked
+	unlock_btn.pressed.connect(unlock_selected_world_location)
+	box.add_child(_world_dev_option)
+	box.add_child(unlock_btn)
 	return box
 
 
@@ -452,6 +597,11 @@ func _connect_core_signals() -> void:
 	var purchases: Variant = _purchase_service()
 	if purchases != null and not purchases.purchase_completed.is_connected(_on_purchase_completed):
 		purchases.purchase_completed.connect(_on_purchase_completed)
+	var world: Variant = _world_service()
+	if world != null and not world.location_changed.is_connected(_on_location_changed):
+		world.location_changed.connect(_on_location_changed)
+	if world != null and not world.location_unlocked.is_connected(_on_location_unlocked):
+		world.location_unlocked.connect(_on_location_unlocked)
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
@@ -463,6 +613,14 @@ func _on_money_changed(_previous_money: int, _current_money: int, _delta: int) -
 
 
 func _on_purchase_completed(_purchase_id: StringName) -> void:
+	refresh()
+
+
+func _on_location_changed(_previous_location_id: StringName, _current_location_id: StringName) -> void:
+	refresh()
+
+
+func _on_location_unlocked(_location_id: StringName) -> void:
 	refresh()
 
 
@@ -607,6 +765,13 @@ func _economy_service() -> Variant:
 
 func _purchase_service() -> Variant:
 	var node: Node = get_node_or_null("/root/PurchaseService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _world_service() -> Variant:
+	var node: Node = get_node_or_null("/root/WorldService")
 	if not is_instance_valid(node):
 		return null
 	return node

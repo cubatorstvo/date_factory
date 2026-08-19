@@ -27,6 +27,8 @@ StageService="*res://game/story/stage_service.gd"
 EconomyService="*res://game/economy/economy_service.gd"
 ActionService="*res://game/actions/action_service.gd"
 PurchaseService="*res://game/economy/purchase_service.gd"
+WorldService="*res://game/world/world_service.gd"
+SceneTransitionService="*res://game/world/scene_transition_service.gd"
 
 [debug]
 
