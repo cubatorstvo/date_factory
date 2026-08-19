@@ -34,6 +34,7 @@ func run_all() -> PackedStringArray:
 	_test_world()
 	_test_girls()
 	_test_dating_and_rating()
+	_test_girl_access_requirements()
 	_test_date_venue_choice()
 	_test_rivals()
 	_test_character_progression()
@@ -2619,6 +2620,247 @@ func _test_dating_and_rating() -> void:
 					break
 	_ok("sim date overlay", overlay_open)
 	sim.queue_free()
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_girl_access_requirements() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var stages: Variant = _stage_service()
+	var world: Variant = _world_service()
+	var girls: Variant = _girls_service()
+	var rating: Variant = _rating_service()
+	var dating: Variant = _dating_service()
+	var rivals: Variant = _rivals_service()
+	var actions: Variant = _action_service()
+	_ok("access GameState", gs != null)
+	_ok("access SaveManager", sm != null)
+	_ok("access TimeService", clock != null)
+	_ok("access StageService", stages != null)
+	_ok("access WorldService", world != null)
+	_ok("access GirlsService", girls != null)
+	_ok("access RatingService", rating != null)
+	_ok("access DatingService", dating != null)
+	_ok("access RivalsService", rivals != null)
+	_ok("access ActionService", actions != null)
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	_ok("access tree", tree != null and tree.root != null)
+	if gs == null or sm == null or clock == null or stages == null or world == null or girls == null or rating == null or dating == null or rivals == null or actions == null or tree == null or tree.root == null:
+		return
+	var alina_id: StringName = GirlCatalog.ID_ALINA
+	var alina_def: GirlDefinition = girls.get_definition(alina_id)
+	_ok("access alina definition", alina_def != null)
+	if alina_def == null:
+		return
+	var actress_def: GirlDefinition = girls.get_definition(GirlCatalog.ID_ACTRESS)
+	_ok("access actress definition", actress_def != null)
+	var catalog: StageCatalog = stages.get_catalog() as StageCatalog
+	_ok("access stage catalog", catalog != null)
+	if catalog == null:
+		return
+	var stage6: StageDefinition = catalog.get_stage(6)
+	var original_meet: Array[GirlAccessRequirement] = []
+	original_meet.assign(alina_def.meet_requirements)
+	var original_date: Array[GirlAccessRequirement] = []
+	original_date.assign(alina_def.date_requirements)
+	var original_actress_max: int = 0
+	if actress_def != null:
+		original_actress_max = actress_def.relationship_max
+	var original_stage6_req: StageRequirement = stage6.completion_requirement if stage6 != null else null
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/girl_access_requirements.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	var rating_req: RatingGirlRequirement = RatingGirlRequirement.new()
+	rating_req.required_rating = 5
+	gs.player.rating = 3
+	_ok("30 rating unmet", rating_req.is_met(alina_id) == false)
+	_ok("30 rating description", rating_req.get_description(alina_id) == "Рейтинг")
+	_ok("30 rating progress 3", rating_req.get_progress_text(alina_id) == "3 / 5")
+	gs.player.rating = 5
+	_ok("30 rating met", rating_req.is_met(alina_id))
+	_ok("30 rating progress 5", rating_req.get_progress_text(alina_id) == "5 / 5")
+	sm.new_game()
+	var rival_req: RivalDefeatedGirlRequirement = RivalDefeatedGirlRequirement.new()
+	rival_req.rival_id = RivalCatalog.ID_BORIS
+	_ok("31 rival unmet", rival_req.is_met(alina_id) == false)
+	_ok("31 defeat", rivals.defeat_rival(RivalCatalog.ID_BORIS))
+	_ok("31 rival met", rival_req.is_met(alina_id))
+	_ok("31 rival description", rival_req.get_description(alina_id).contains("Борис"))
+	sm.new_game()
+	var min_req: MinStageGirlRequirement = MinStageGirlRequirement.new()
+	min_req.minimum_stage = 3
+	gs.story.stage = 2
+	_ok("32 stage 2 unmet", min_req.is_met(alina_id) == false)
+	gs.story.stage = 3
+	_ok("32 stage 3 met", min_req.is_met(alina_id))
+	gs.story.stage = 4
+	_ok("32 stage 4 met", min_req.is_met(alina_id))
+	sm.new_game()
+	var meet_min: MinStageGirlRequirement = MinStageGirlRequirement.new()
+	meet_min.minimum_stage = 2
+	var meet_rating: RatingGirlRequirement = RatingGirlRequirement.new()
+	meet_rating.required_rating = 5
+	var several_meet: Array[GirlAccessRequirement] = []
+	several_meet.append(meet_min)
+	several_meet.append(meet_rating)
+	alina_def.meet_requirements = several_meet
+	gs.story.stage = 2
+	gs.player.rating = 3
+	world.enter_location(LocationCatalog.ID_CAFE)
+	var several_status: Array[RequirementStatus] = girls.get_meet_requirements_status(alina_id)
+	var stage_met: bool = false
+	var rating_met: bool = true
+	for status in several_status:
+		if status == null:
+			continue
+		if status.description == "Этап игры":
+			stage_met = status.is_met
+		elif status.description == "Рейтинг":
+			rating_met = status.is_met
+	_ok("33 stage met", stage_met)
+	_ok("33 rating unmet", rating_met == false)
+	_ok("33 cannot meet", girls.can_meet_girl(alina_id) == false)
+	gs.player.rating = 5
+	_ok("33 can meet", girls.can_meet_girl(alina_id))
+	alina_def.meet_requirements = original_meet
+	sm.new_game()
+	var atomic_rating: RatingGirlRequirement = RatingGirlRequirement.new()
+	atomic_rating.required_rating = 5
+	var atomic_meet: Array[GirlAccessRequirement] = []
+	atomic_meet.append(atomic_rating)
+	alina_def.meet_requirements = atomic_meet
+	gs.player.rating = 3
+	world.enter_location(LocationCatalog.ID_CAFE)
+	gs.flow.game_time_minutes = 0
+	var meet_action: GameAction = girls.create_meet_girl_action(alina_id)
+	var blocked_meet: ActionResult = actions.execute(meet_action)
+	_ok("34 meet blocked", blocked_meet.success == false)
+	_ok("34 undiscovered", girls.is_discovered(alina_id) == false)
+	_ok("34 no contact", girls.has_contact(alina_id) == false)
+	_ok("34 time unchanged", int(clock.get_game_time_minutes()) == 0)
+	gs.player.rating = 5
+	var allowed_meet: ActionResult = actions.execute(meet_action)
+	_ok("34 meet success", allowed_meet.success)
+	_ok("34 discovered", girls.is_discovered(alina_id))
+	_ok("34 contact", girls.has_contact(alina_id))
+	_ok("34 time 30", int(clock.get_game_time_minutes()) == 30)
+	alina_def.meet_requirements = original_meet
+	sm.new_game()
+	girls.give_contact(alina_id)
+	var date_rival: RivalDefeatedGirlRequirement = RivalDefeatedGirlRequirement.new()
+	date_rival.rival_id = RivalCatalog.ID_BORIS
+	var date_list: Array[GirlAccessRequirement] = []
+	date_list.append(date_rival)
+	alina_def.date_requirements = date_list
+	_ok("35 cannot start", dating.can_start_date(alina_id) == false)
+	_ok("35 defeat", rivals.defeat_rival(RivalCatalog.ID_BORIS))
+	_ok("35 can start", dating.can_start_date(alina_id))
+	alina_def.date_requirements = original_date
+	sm.new_game()
+	gs.player.rating = 99
+	var actress_rel: int = int(girls.get_relationship(GirlCatalog.ID_ACTRESS))
+	var actress_max: int = int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS))
+	_ok("36 actress below max", actress_rel < actress_max)
+	_ok("36 rating not stage", stages.get_current_stage() == 1)
+	girls.change_relationship(GirlCatalog.ID_ACTRESS, actress_max)
+	_ok("36 actress max stage 2", stages.get_current_stage() == 2)
+	sm.new_game()
+	if actress_def != null:
+		actress_def.relationship_max = 7
+		var made_req: GirlRelationshipRequirement = StageCatalog.make_girl_relationship_requirement(actress_def)
+		_ok("37 factory uses live max", made_req != null and made_req.target_relationship == 7)
+		var stage1: StageDefinition = catalog.get_stage(1) if catalog != null else null
+		var live_stage1_req: GirlRelationshipRequirement = stage1.completion_requirement as GirlRelationshipRequirement if stage1 != null else null
+		_ok("37 stage 1 original max", live_stage1_req != null and live_stage1_req.target_relationship == original_actress_max)
+		actress_def.relationship_max = original_actress_max
+	sm.new_game()
+	gs.story.stage = 6
+	gs.story.finale_reached = false
+	if stage6 != null:
+		var finale_req: GirlRelationshipRequirement = GirlRelationshipRequirement.new()
+		finale_req.girl_id = alina_id
+		finale_req.target_relationship = 0
+		stage6.completion_requirement = finale_req
+		var completed_events: Array = []
+		var finale_events: Array = []
+		var on_completed := func(completed_stage: int) -> void:
+			completed_events.append(completed_stage)
+		var on_finale := func() -> void:
+			finale_events.append(true)
+		stages.stage_completed.connect(on_completed)
+		stages.finale_reached.connect(on_finale)
+		_ok("38 try_complete", stages.try_complete_current_stage())
+		_ok("38 stage stays 6", stages.get_current_stage() == 6)
+		_ok("38 finale reached", stages.is_finale_reached())
+		_ok("38 stage_completed 6", completed_events.size() == 1 and int(completed_events[0]) == 6)
+		_ok("38 finale signal", finale_events.size() == 1)
+		_ok("38 no stage 7", catalog.get_stage(7) == null)
+		stages.stage_completed.disconnect(on_completed)
+		stages.finale_reached.disconnect(on_finale)
+		stage6.completion_requirement = original_stage6_req
+	sm.new_game()
+	var sim_rating: RatingGirlRequirement = RatingGirlRequirement.new()
+	sim_rating.required_rating = 4
+	var sim_meet: Array[GirlAccessRequirement] = []
+	sim_meet.append(sim_rating)
+	alina_def.meet_requirements = sim_meet
+	var sim_city := GameSimulator.new()
+	tree.root.add_child(sim_city)
+	sim_city.start_new_game()
+	gs.player.rating = 2
+	sim_city.show_section("city")
+	sim_city.enter_world_location(LocationCatalog.ID_CAFE)
+	var city_text: String = sim_city.get_city_body_text()
+	_ok("39 city alina", city_text.contains("Алина"))
+	_ok("39 city rating", city_text.contains("Рейтинг"))
+	_ok("39 city progress", city_text.contains("2 / 4"))
+	_ok("39 city meet button", city_text.contains("ПОЗНАКОМИТЬСЯ"))
+	_ok("39 cannot meet", girls.can_meet_girl(alina_id) == false)
+	var blocked_sim_meet: ActionResult = sim_city.meet_girl(alina_id)
+	_ok("39 meet blocked", blocked_sim_meet.success == false)
+	gs.player.rating = 4
+	sim_city.refresh()
+	_ok("39 can meet", girls.can_meet_girl(alina_id))
+	var allowed_sim_meet: ActionResult = sim_city.meet_girl(alina_id)
+	_ok("39 meet success", allowed_sim_meet.success)
+	sim_city.queue_free()
+	alina_def.meet_requirements = original_meet
+	sm.new_game()
+	var sim_date_req: RivalDefeatedGirlRequirement = RivalDefeatedGirlRequirement.new()
+	sim_date_req.rival_id = RivalCatalog.ID_BORIS
+	var sim_dates: Array[GirlAccessRequirement] = []
+	sim_dates.append(sim_date_req)
+	alina_def.date_requirements = sim_dates
+	var sim_date := GameSimulator.new()
+	tree.root.add_child(sim_date)
+	sim_date.start_new_game()
+	sim_date.show_section("city")
+	sim_date.enter_world_location(LocationCatalog.ID_CAFE)
+	var cafe_meet: ActionResult = sim_date.meet_girl(alina_id)
+	_ok("40 meet alina", cafe_meet.success)
+	sim_date.show_section("dates")
+	var dates_text: String = sim_date.get_city_body_text()
+	_ok("40 has defeat", dates_text.contains("Победить"))
+	_ok("40 has boris", dates_text.contains("Борис"))
+	_ok("40 invite", dates_text.contains("ПРИГЛАСИТЬ"))
+	_ok("40 cannot start", dating.can_start_date(alina_id) == false)
+	_ok("40 defeat", rivals.defeat_rival(RivalCatalog.ID_BORIS))
+	sim_date.refresh()
+	var dates_after: String = sim_date.get_city_body_text()
+	_ok("40 met copy", dates_after.contains("Выполнено") or dates_after.contains("✓"))
+	_ok("40 can start", dating.can_start_date(alina_id))
+	sim_date.queue_free()
+	alina_def.meet_requirements = original_meet
+	alina_def.date_requirements = original_date
+	if actress_def != null:
+		actress_def.relationship_max = original_actress_max
+	if stage6 != null:
+		stage6.completion_requirement = original_stage6_req
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()

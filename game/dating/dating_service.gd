@@ -52,7 +52,26 @@ func get_start_date_failure_reason(girl_id: StringName) -> String:
 		return REASON_COMPLETED
 	if has_active_date():
 		return REASON_ACTIVE
+	var definition: GirlDefinition = girls.get_definition(girl_id)
+	if definition != null:
+		for requirement in definition.date_requirements:
+			if requirement == null:
+				continue
+			if not requirement.is_met(girl_id):
+				return "%s: %s" % [requirement.get_description(girl_id), requirement.get_progress_text(girl_id)]
 	return ""
+
+
+func get_date_requirements_status(girl_id: StringName) -> Array[RequirementStatus]:
+	var girls: Variant = _girls_service()
+	if girls == null:
+		var empty: Array[RequirementStatus] = []
+		return empty
+	var definition: GirlDefinition = girls.get_definition(girl_id)
+	if definition == null:
+		var empty_status: Array[RequirementStatus] = []
+		return empty_status
+	return girls.build_requirement_status_list(girl_id, definition.date_requirements)
 
 
 func get_available_date_locations(girl_id: StringName) -> Array:

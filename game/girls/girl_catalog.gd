@@ -40,15 +40,23 @@ func get_girls_for_location(location_id: StringName) -> Array[GirlDefinition]:
 
 
 static func create_seed() -> GirlCatalog:
-	var catalog := GirlCatalog.new()
+	var catalog: GirlCatalog = GirlCatalog.new()
 	catalog.girls.append(_make(ID_ALINA, "Алина", LocationCatalog.ID_CAFE, -5, 5))
 	catalog.girls.append(_make(ID_VIKA, "Вика", LocationCatalog.ID_RESTAURANT, -10, 10))
-	catalog.girls.append(_make(ID_ACTRESS, "Актриса", &"", -10, 10))
-	catalog.girls.append(_make(ID_MINE_BOSS, "Начальница шахты", &"", -10, 10))
-	catalog.girls.append(_make(ID_MAGAZINE_EDITOR, "Редактор журнала", &"", -10, 10))
-	catalog.girls.append(_make(ID_SCIENTIST, "Учёная", &"", -10, 10))
-	catalog.girls.append(_make(ID_PRESIDENT, "Президент", &"", -10, 10))
+	catalog.girls.append(_make(ID_ACTRESS, "Актриса", &"", -10, 10, _min_stage_meet_requirements(1)))
+	catalog.girls.append(_make(ID_MINE_BOSS, "Начальница шахты", &"", -10, 10, _min_stage_meet_requirements(2)))
+	catalog.girls.append(_make(ID_MAGAZINE_EDITOR, "Редактор журнала", &"", -10, 10, _min_stage_meet_requirements(3)))
+	catalog.girls.append(_make(ID_SCIENTIST, "Учёная", &"", -10, 10, _min_stage_meet_requirements(4)))
+	catalog.girls.append(_make(ID_PRESIDENT, "Президент", &"", -10, 10, _min_stage_meet_requirements(5)))
 	return catalog
+
+
+static func _min_stage_meet_requirements(minimum_stage: int) -> Array[GirlAccessRequirement]:
+	var requirements: Array[GirlAccessRequirement] = []
+	var requirement: MinStageGirlRequirement = MinStageGirlRequirement.new()
+	requirement.minimum_stage = minimum_stage
+	requirements.append(requirement)
+	return requirements
 
 
 static func _make(
@@ -56,7 +64,8 @@ static func _make(
 	display_name: String,
 	location_id: StringName,
 	relationship_min: int,
-	relationship_max: int
+	relationship_max: int,
+	meet_requirements: Array[GirlAccessRequirement] = []
 ) -> GirlDefinition:
 	var girl: GirlDefinition = GirlDefinition.new()
 	girl.id = id
@@ -64,4 +73,7 @@ static func _make(
 	girl.location_id = location_id
 	girl.relationship_min = relationship_min
 	girl.relationship_max = relationship_max
+	for requirement in meet_requirements:
+		if requirement != null:
+			girl.meet_requirements.append(requirement)
 	return girl

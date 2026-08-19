@@ -4,6 +4,7 @@ signal girl_discovered(girl_id: StringName)
 signal girl_contact_received(girl_id: StringName)
 signal girl_relationship_changed(girl_id: StringName, previous_value: int, current_value: int, delta: int)
 signal girl_relationship_completed(girl_id: StringName)
+signal girl_access_changed(girl_id: StringName)
 
 const MEET_ACTION_PREFIX: String = "meet_"
 const MEET_TIME_MINUTES: int = 30
@@ -13,6 +14,7 @@ var _catalog: GirlCatalog
 
 func _ready() -> void:
 	_catalog = GirlCatalog.create_seed()
+	_connect_girl_access_signals()
 
 
 func get_catalog() -> GirlCatalog:
@@ -195,20 +197,80 @@ func get_contacted_girls() -> Array[GirlDefinition]:
 
 
 func create_meet_girl_action(girl_id: StringName) -> GameAction:
-	var action := GameAction.new()
+	var action: GameAction = GameAction.new()
 	action.id = StringName("%s%s" % [MEET_ACTION_PREFIX, String(girl_id)])
 	action.time_cost_minutes = MEET_TIME_MINUTES
 	action.money_cost = 0
-	var not_met := GirlNotMetRequirement.new()
-	not_met.girl_id = girl_id
-	action.requirements.append(not_met)
-	var location_req := GirlLocationRequirement.new()
-	location_req.girl_id = girl_id
-	action.requirements.append(location_req)
-	var effect := MeetGirlEffect.new()
+	var availability: GirlMeetAvailableRequirement = GirlMeetAvailableRequirement.new()
+	availability.girl_id = girl_id
+	action.requirements.append(availability)
+	var effect: MeetGirlEffect = MeetGirlEffect.new()
 	effect.girl_id = girl_id
 	action.effects.append(effect)
 	return action
+
+
+func can_meet_girl(girl_id: StringName) -> bool:
+	var definition: GirlDefinition = get_definition(girl_id)
+	if definition == null:
+		return false
+	var world: Variant = _world_service()
+	if world == null:
+		return false
+	if definition.location_id != world.get_current_location_id():
+		return false
+	if is_discovered(girl_id):
+		return false
+	for requirement in definition.meet_requirements:
+		if requirement == null:
+			continue
+		if not requirement.is_met(girl_id):
+			return false
+	return true
+
+
+func get_meet_requirements_status(girl_id: StringName) -> Array[RequirementStatus]:
+	var definition: GirlDefinition = get_definition(girl_id)
+	if definition == null:
+		var empty: Array[RequirementStatus] = []
+		return empty
+	return build_requirement_status_list(girl_id, definition.meet_requirements)
+
+
+func get_meet_failure_reason(girl_id: StringName) -> String:
+	var definition: GirlDefinition = get_definition(girl_id)
+	if definition == null:
+		return "Девушка не найдена"
+	var world: Variant = _world_service()
+	var current_location: StringName = &""
+	if world != null:
+		current_location = world.get_current_location_id()
+	if definition.location_id != current_location:
+		return "Девушка находится в другой локации"
+	if is_discovered(girl_id):
+		return "Вы уже знакомы"
+	for requirement in definition.meet_requirements:
+		if requirement == null:
+			continue
+		if not requirement.is_met(girl_id):
+			return "%s: %s" % [requirement.get_description(girl_id), requirement.get_progress_text(girl_id)]
+	return ""
+
+
+func build_requirement_status_list(
+	girl_id: StringName,
+	requirements: Array[GirlAccessRequirement]
+) -> Array[RequirementStatus]:
+	var result: Array[RequirementStatus] = []
+	for requirement in requirements:
+		if requirement == null:
+			continue
+		var status: RequirementStatus = RequirementStatus.new()
+		status.description = requirement.get_description(girl_id)
+		status.progress_text = requirement.get_progress_text(girl_id)
+		status.is_met = requirement.is_met(girl_id)
+		result.append(status)
+	return result
 
 
 func _girls() -> GirlsState:
@@ -248,3 +310,49 @@ func _rating_service() -> Variant:
 		push_error("RatingService autoload missing")
 		return null
 	return node
+
+
+func _stage_service() -> Variant:
+	var node: Node = get_node_or_null("/root/StageService")
+	if not is_instance_valid(node):
+		push_error("StageService autoload missing")
+		return null
+	return node
+
+
+func _rivals_service() -> Variant:
+	var node: Node = get_node_or_null("/root/RivalsService")
+	if not is_instance_valid(node):
+		push_error("RivalsService autoload missing")
+		return null
+	return node
+
+
+func _connect_girl_access_signals() -> void:
+	var rating: Variant = _rating_service()
+	if rating != null and not rating.rating_changed.is_connected(_on_rating_changed):
+		rating.rating_changed.connect(_on_rating_changed)
+	var stage: Variant = _stage_service()
+	if stage != null and not stage.stage_changed.is_connected(_on_stage_changed):
+		stage.stage_changed.connect(_on_stage_changed)
+	var rivals: Variant = _rivals_service()
+	if rivals != null and not rivals.rival_defeated.is_connected(_on_rival_defeated):
+		rivals.rival_defeated.connect(_on_rival_defeated)
+
+
+func _on_rating_changed(_previous_rating: int, _current_rating: int, _delta: int) -> void:
+	_emit_girl_access_changed_for_catalog()
+
+
+func _on_stage_changed(_previous_stage: int, _current_stage: int) -> void:
+	_emit_girl_access_changed_for_catalog()
+
+
+func _on_rival_defeated(_rival_id: StringName) -> void:
+	_emit_girl_access_changed_for_catalog()
+
+
+func _emit_girl_access_changed_for_catalog() -> void:
+	for definition in get_catalog().get_all_girls():
+		if definition != null:
+			girl_access_changed.emit(definition.id)

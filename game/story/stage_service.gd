@@ -73,12 +73,8 @@ func force_complete_current_stage_for_dev() -> bool:
 		return false
 	if story.finale_reached:
 		return false
-	if story.stage >= FIRST_STAGE and story.stage < LAST_STAGE:
+	if story.stage >= FIRST_STAGE and story.stage <= LAST_STAGE:
 		_advance_from_completed_stage()
-		return true
-	if story.stage == LAST_STAGE:
-		story.finale_reached = true
-		finale_reached.emit()
 		return true
 	return false
 
@@ -94,11 +90,17 @@ func _advance_from_completed_stage() -> void:
 	var story: StoryState = _story()
 	if story == null:
 		return
-	var previous_stage: int = story.stage
-	stage_completed.emit(previous_stage)
-	story.stage = previous_stage + 1
-	_apply_enter_effects(get_current_definition())
-	stage_changed.emit(previous_stage, story.stage)
+	var current_stage: int = story.stage
+	if current_stage == LAST_STAGE:
+		story.finale_reached = true
+		stage_completed.emit(LAST_STAGE)
+		finale_reached.emit()
+		return
+	if current_stage < LAST_STAGE:
+		stage_completed.emit(current_stage)
+		story.stage += 1
+		_apply_enter_effects(get_current_definition())
+		stage_changed.emit(current_stage, story.stage)
 
 
 func _apply_enter_effects(definition: StageDefinition) -> void:

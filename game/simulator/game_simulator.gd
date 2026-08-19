@@ -650,9 +650,15 @@ func _build_city_girl_row(definition: GirlDefinition, girls: Variant) -> Control
 		status.text = "Контакт: %s" % ("Да" if has_contact else "Нет")
 		box.add_child(status)
 		return box
-	var unknown := Label.new()
-	unknown.text = "Вы ещё не знакомы."
-	box.add_child(unknown)
+	var meet_statuses: Array[RequirementStatus] = []
+	if girls != null:
+		meet_statuses = girls.get_meet_requirements_status(definition.id)
+	if meet_statuses.is_empty():
+		var unknown := Label.new()
+		unknown.text = "Вы ещё не знакомы."
+		box.add_child(unknown)
+	else:
+		_add_requirement_lines(box, meet_statuses, "Требования для знакомства:")
 	if girls != null:
 		var action: GameAction = girls.create_meet_girl_action(definition.id)
 		_add_action_button(box, action, "ПОЗНАКОМИТЬСЯ", false, false)
@@ -759,6 +765,11 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 	var contact_label := Label.new()
 	contact_label.text = "Контакт: %s" % ("Да" if has_contact else "Нет")
 	box.add_child(contact_label)
+	var dating: Variant = _dating_service()
+	var date_statuses: Array[RequirementStatus] = []
+	if dating != null:
+		date_statuses = dating.get_date_requirements_status(definition.id)
+	_add_requirement_lines(box, date_statuses, "Требования для свидания:")
 	if girls != null and bool(girls.is_relationship_completed(definition.id)):
 		var completed := Label.new()
 		completed.text = "Линия завершена"
@@ -885,6 +896,10 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 	var relationship_label := Label.new()
 	relationship_label.text = "Отношения: %d / %d" % [relationship_value, relationship_max]
 	box.add_child(relationship_label)
+	var date_statuses: Array[RequirementStatus] = []
+	if dating != null:
+		date_statuses = dating.get_date_requirements_status(definition.id)
+	_add_requirement_lines(box, date_statuses, "Требования:", true)
 	var completed: bool = girls != null and bool(girls.is_relationship_completed(definition.id))
 	if completed:
 		var done := Label.new()
@@ -907,6 +922,45 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 			wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			box.add_child(wait)
 	return box
+
+
+func _add_requirement_lines(
+	host: Node,
+	statuses: Array[RequirementStatus],
+	heading: String,
+	compact_when_all_met: bool = false
+) -> void:
+	if statuses.is_empty():
+		return
+	var all_met: bool = true
+	for status in statuses:
+		if status == null or not status.is_met:
+			all_met = false
+			break
+	if compact_when_all_met and all_met:
+		for status in statuses:
+			if status == null:
+				continue
+			var met_line: Label = Label.new()
+			if status.progress_text.is_empty():
+				met_line.text = "✓ %s" % status.description
+			else:
+				met_line.text = "✓ %s — %s" % [status.description, status.progress_text]
+			host.add_child(met_line)
+		return
+	if not heading.is_empty():
+		var heading_label: Label = Label.new()
+		heading_label.text = heading
+		host.add_child(heading_label)
+	for status in statuses:
+		if status == null:
+			continue
+		var line: Label = Label.new()
+		if status.is_met:
+			line.text = "✓ %s — %s" % [status.description, status.progress_text]
+		else:
+			line.text = "✗ %s — %s" % [status.description, status.progress_text]
+		host.add_child(line)
 
 
 func _format_cooldown(minutes: int) -> String:
@@ -1313,6 +1367,8 @@ func _connect_core_signals() -> void:
 		girls.girl_relationship_changed.connect(_on_girl_relationship_changed)
 	if girls != null and not girls.girl_relationship_completed.is_connected(_on_girl_relationship_completed):
 		girls.girl_relationship_completed.connect(_on_girl_relationship_completed)
+	if girls != null and not girls.girl_access_changed.is_connected(_on_girl_access_changed):
+		girls.girl_access_changed.connect(_on_girl_access_changed)
 	var rating: Variant = _rating_service()
 	if rating != null and not rating.rating_changed.is_connected(_on_rating_changed):
 		rating.rating_changed.connect(_on_rating_changed)
@@ -1377,6 +1433,10 @@ func _on_girl_relationship_completed(girl_id: StringName) -> void:
 		if definition != null:
 			display_name = definition.display_name
 	_last_result_text = "Отношения с %s достигли максимума.\nRating +1" % display_name
+	refresh()
+
+
+func _on_girl_access_changed(_girl_id: StringName) -> void:
 	refresh()
 
 
