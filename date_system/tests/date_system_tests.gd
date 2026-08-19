@@ -35,6 +35,7 @@ func run_all() -> PackedStringArray:
 	_test_dating_and_rating()
 	_test_date_venue_choice()
 	_test_rivals()
+	_test_character_progression()
 	return _failures
 
 
@@ -1094,6 +1095,18 @@ func _active_session_location(dating: Variant) -> StringName:
 	return session.location_id
 
 
+func _active_session_outfit(dating: Variant) -> StringName:
+	if dating == null:
+		return &""
+	var engine: DateEngine = dating.get_date_engine() as DateEngine
+	if engine == null:
+		return &""
+	var session: DateSession = engine.get_session_state()
+	if session == null:
+		return &""
+	return session.outfit_id
+
+
 func _dating_service() -> Variant:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
 	if tree == null or tree.root == null:
@@ -1119,6 +1132,36 @@ func _competition_service() -> Variant:
 	if tree == null or tree.root == null:
 		return null
 	var node: Node = tree.root.get_node_or_null("CompetitionService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _characteristic_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("CharacteristicService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _equipment_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("EquipmentService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _apartment_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("ApartmentService")
 	if not is_instance_valid(node):
 		return null
 	return node
@@ -1151,7 +1194,14 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game finale false", gs.story.finale_reached == false)
 	_ok("new_game money 0", gs.player.money == 0)
 	_ok("new_game rating 0", gs.player.rating == 0)
+	_ok("new_game muscle 0", gs.player.muscle == 0)
+	_ok("new_game appearance 0", gs.player.appearance == 0)
+	_ok("new_game capital 0", gs.player.capital == 0)
+	_ok("new_game aura 0", gs.player.aura == 0)
 	_ok("new_game purchased empty", gs.progression.purchased_ids.is_empty())
+	_ok("new_game start outfit owned", gs.progression.owns_outfit(OutfitCatalog.START_OUTFIT_ID))
+	_ok("new_game start outfit equipped", gs.progression.equipped_outfit_id == OutfitCatalog.START_OUTFIT_ID)
+	_ok("new_game apartment level 1", gs.progression.apartment.level == 1)
 	_ok("new_game start location", gs.world.current_location_id == LocationCatalog.START_LOCATION_ID)
 	_ok("new_game start unlocked city", gs.world.has_unlocked(LocationCatalog.ID_CITY_CENTER))
 	_ok("new_game start unlocked apartment", gs.world.has_unlocked(LocationCatalog.ID_APARTMENT))
@@ -1171,7 +1221,7 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 9", int(root.get("save_version", 0)) == 9)
+	_ok("save_version == 10", int(root.get("save_version", 0)) == 10)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -2356,6 +2406,8 @@ func _test_dating_and_rating() -> void:
 	sim.select_date_location(&"cafe")
 	var selected_text: String = sim.get_city_body_text()
 	_ok("sim dates selected", selected_text.contains("Место:"))
+	_ok("sim dates outfit picker", selected_text.contains("ВЫБЕРИТЕ ОДЕЖДУ"))
+	sim.select_date_outfit(&"casual")
 	var invite: ActionResult = sim.start_selected_date()
 	_ok("sim invite success", invite.success)
 	_ok("sim invite active", dating.has_active_date())
@@ -2651,3 +2703,179 @@ func _rival_list_has(list: Array[RivalDefinition], rival_id: StringName) -> bool
 		if rival != null and rival.id == rival_id:
 			return true
 	return false
+
+func _test_character_progression() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var actions: Variant = _action_service()
+	var economy: Variant = _economy_service()
+	var characteristics: Variant = _characteristic_service()
+	var equipment: Variant = _equipment_service()
+	var apartment: Variant = _apartment_service()
+	var dating: Variant = _dating_service()
+	var girls: Variant = _girls_service()
+	var competitions: Variant = _competition_service()
+	_ok("progress GameState", gs != null)
+	_ok("progress SaveManager", sm != null)
+	_ok("progress ActionService", actions != null)
+	_ok("progress EconomyService", economy != null)
+	_ok("progress CharacteristicService", characteristics != null)
+	_ok("progress EquipmentService", equipment != null)
+	_ok("progress ApartmentService", apartment != null)
+	_ok("progress DatingService", dating != null)
+	_ok("progress GirlsService", girls != null)
+	_ok("progress CompetitionService", competitions != null)
+	if gs == null or sm == null or actions == null or economy == null or characteristics == null or equipment == null or apartment == null or dating == null or girls == null or competitions == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/character_progression.json"
+	sm.delete_save()
+	sm.new_game()
+	_ok("chars new muscle 0", int(characteristics.get_value(CharacteristicIds.MUSCLE)) == 0)
+	_ok("chars new appearance 0", int(characteristics.get_value(CharacteristicIds.APPEARANCE)) == 0)
+	_ok("chars new capital 0", int(characteristics.get_value(CharacteristicIds.CAPITAL)) == 0)
+	_ok("chars new aura 0", int(characteristics.get_value(CharacteristicIds.AURA)) == 0)
+	_ok("chars add appearance", int(characteristics.add_value(CharacteristicIds.APPEARANCE, 1)) == 1)
+	_ok("chars appearance 1", gs.player.appearance == 1)
+	sm.new_game()
+	var muscle_effect := CharacteristicEffect.new()
+	muscle_effect.characteristic_id = CharacteristicIds.MUSCLE
+	muscle_effect.amount = 1
+	var muscle_action := GameAction.new()
+	muscle_action.id = &"test_muscle_effect"
+	muscle_action.effects.append(muscle_effect)
+	var muscle_result: ActionResult = actions.execute(muscle_action)
+	_ok("char effect success", muscle_result.success)
+	_ok("char effect muscle 1", gs.player.muscle == 1)
+	sm.new_game()
+	gs.player.money = 300
+	var buy_muscle: ActionResult = actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1))
+	_ok("upgrade muscle success", buy_muscle.success)
+	_ok("upgrade muscle money 0", gs.player.money == 0)
+	_ok("upgrade muscle value 1", gs.player.muscle == 1)
+	_ok("upgrade muscle purchased", gs.progression.has(CharacteristicCatalog.ID_MUSCLE_1))
+	var buy_muscle_again: ActionResult = actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1))
+	_ok("upgrade muscle repeat fail", buy_muscle_again.success == false)
+	_ok("start outfit owned", bool(equipment.owns_outfit(OutfitCatalog.START_OUTFIT_ID)))
+	gs.player.money = 500
+	var buy_business: ActionResult = actions.execute(equipment.create_buy_outfit_action(&"business"))
+	_ok("buy business success", buy_business.success)
+	_ok("owns business", bool(equipment.owns_outfit(&"business")))
+	_ok("owned contains business", gs.progression.owns_outfit(&"business"))
+	_ok("equip business", bool(equipment.equip_outfit(&"business")))
+	_ok("equipped business", equipment.get_equipped_outfit_id() == &"business")
+	girls.give_contact(GirlCatalog.ID_ALINA)
+	_ok("date start outfit", dating.start_date(GirlCatalog.ID_ALINA, &"park", &"business"))
+	_ok("active outfit business", dating.get_active_outfit_id() == &"business")
+	_ok("session outfit business", _active_session_outfit(dating) == &"business")
+	var date_result := DateResult.new()
+	date_result.girl_id = GirlCatalog.ID_ALINA
+	date_result.relationship_delta = 0
+	date_result.duration_minutes = 120
+	dating.complete_date(date_result)
+	sm.new_game()
+	gs.player.money = 500
+	_ok("apartment start 1", int(apartment.get_level()) == 1)
+	var buy_apt: ActionResult = actions.execute(apartment.create_upgrade_action(ApartmentCatalog.ID_UPGRADE_1))
+	_ok("apartment buy success", buy_apt.success)
+	_ok("apartment money 0", gs.player.money == 0)
+	_ok("apartment level 2", int(apartment.get_level()) == 2)
+	_ok("apartment upgrade stored", bool(apartment.is_upgrade_purchased(ApartmentCatalog.ID_UPGRADE_1)))
+	_ok("apartment quality 1", int(apartment.get_quality()) == 1)
+	girls.give_contact(GirlCatalog.ID_ALINA)
+	_ok("apartment date start", dating.start_date(GirlCatalog.ID_ALINA, &"apartment"))
+	var engine: DateEngine = dating.get_date_engine()
+	_ok("apartment engine", engine != null)
+	if engine != null:
+		var player_state: TestPlayerState = engine.player_state()
+		_ok("apartment quality in engine", player_state != null and player_state.apartment_quality == 1)
+	dating.complete_date(date_result)
+	sm.new_game()
+	var competition_id: StringName = CompetitionCatalog.ID_BASIC
+	_ok("chance muscle 0", is_equal_approx(float(competitions.get_win_chance(competition_id)), 0.5))
+	gs.player.muscle = 2
+	_ok("chance muscle 2", is_equal_approx(float(competitions.get_win_chance(competition_id)), 0.7))
+	gs.player.muscle = 5
+	var catalog: CompetitionCatalog = competitions.get_catalog()
+	var definition: CompetitionDefinition = catalog.get_competition(competition_id)
+	var previous_chance: float = definition.base_win_chance
+	definition.base_win_chance = 0.8
+	_ok("chance clamp 1", is_equal_approx(float(competitions.get_win_chance(competition_id)), 1.0))
+	definition.base_win_chance = previous_chance
+	sm.new_game()
+	gs.player.money = 1000
+	gs.player.muscle = 1
+	gs.player.appearance = 2
+	gs.player.capital = 1
+	gs.player.aura = 3
+	actions.execute(equipment.create_buy_outfit_action(&"business"))
+	equipment.equip_outfit(&"business")
+	actions.execute(apartment.create_upgrade_action(ApartmentCatalog.ID_UPGRADE_1))
+	gs.player.money = 1000
+	sm.save_game()
+	sm.new_game()
+	_ok("progress reset muscle", gs.player.muscle == 0)
+	_ok("progress reset outfit", equipment.get_equipped_outfit_id() == OutfitCatalog.START_OUTFIT_ID)
+	_ok("progress reset apartment", int(apartment.get_level()) == 1)
+	_ok("progress load", sm.load_game())
+	_ok("loaded money 1000", gs.player.money == 1000)
+	_ok("loaded muscle 1", gs.player.muscle == 1)
+	_ok("loaded appearance 2", gs.player.appearance == 2)
+	_ok("loaded capital 1", gs.player.capital == 1)
+	_ok("loaded aura 3", gs.player.aura == 3)
+	_ok("loaded owns business", bool(equipment.owns_outfit(&"business")))
+	_ok("loaded equipped business", equipment.get_equipped_outfit_id() == &"business")
+	_ok("loaded apartment 2", int(apartment.get_level()) == 2)
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var legacy: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v9 progression save", legacy != null)
+	if legacy != null:
+		var v9: Dictionary = {
+			"save_version": 9,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 1, "finale_reached": false},
+				"player": {"money": 0, "rating": 0},
+				"progression": {"purchased_ids": []},
+				"world": {
+					"current_location_id": String(LocationCatalog.START_LOCATION_ID),
+					"unlocked_location_ids": ["city_center", "apartment", "cafe"],
+				},
+				"girls": {"girls_by_id": {}},
+				"dating": {"active_date": {}},
+				"rivals": {"rivals_by_id": {}},
+			},
+		}
+		legacy.store_string(JSON.stringify(v9, "\t"))
+		legacy.close()
+	_ok("load v9 progression save", sm.load_game())
+	_ok("migrated muscle 0", gs.player.muscle == 0)
+	_ok("migrated appearance 0", gs.player.appearance == 0)
+	_ok("migrated start outfit", bool(equipment.owns_outfit(OutfitCatalog.START_OUTFIT_ID)))
+	_ok("migrated equipped start", equipment.get_equipped_outfit_id() == OutfitCatalog.START_OUTFIT_ID)
+	_ok("migrated apartment 1", int(apartment.get_level()) == 1)
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree != null and tree.root != null:
+		var sim := GameSimulator.new()
+		tree.root.add_child(sim)
+		sim.start_new_game()
+		_ok("sim hud muscle", sim.get_hud_text().contains("Мышца: 0"))
+		sim.show_section("progression")
+		var progression_text: String = sim.get_city_body_text()
+		_ok("sim progression heading", progression_text.contains("ХАРАКТЕРИСТИКИ"))
+		_ok("sim progression training", progression_text.contains("Тренировка"))
+		sim.show_section("clothing")
+		var clothing_text: String = sim.get_city_body_text()
+		_ok("sim clothing casual", clothing_text.contains("Повседневный"))
+		_ok("sim clothing worn", clothing_text.contains("Надето"))
+		_ok("sim clothing buy", clothing_text.contains("КУПИТЬ"))
+		sim.show_section("apartment")
+		var apartment_text: String = sim.get_city_body_text()
+		_ok("sim apartment level", apartment_text.contains("Уровень квартиры: 1"))
+		_ok("sim apartment upgrade", apartment_text.contains("Улучшить квартиру"))
+		sim.queue_free()
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()

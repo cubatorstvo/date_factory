@@ -54,6 +54,12 @@ func create_purchase_action(definition: PurchaseDefinition) -> GameAction:
 	var effect := PurchaseEffect.new()
 	effect.purchase_id = definition.id
 	action.effects.append(effect)
+	var upgrade: CharacteristicUpgradeDefinition = definition as CharacteristicUpgradeDefinition
+	if upgrade != null:
+		var characteristic_effect := CharacteristicEffect.new()
+		characteristic_effect.characteristic_id = upgrade.characteristic_id
+		characteristic_effect.amount = upgrade.amount
+		action.effects.append(characteristic_effect)
 	return action
 
 

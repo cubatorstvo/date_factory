@@ -9,6 +9,7 @@ const SECTIONS: Array[Array] = [
 	["rivals", "Соперники"],
 	["dates", "Свидания"],
 	["apartment", "Квартира"],
+	["clothing", "Одежда"],
 	["progression", "Прокачка"],
 ]
 
@@ -36,6 +37,8 @@ var _date_overlay: DatePlayPanel
 var _date_overlay_layer: CanvasLayer
 var _invite_girl_id: StringName = &""
 var _selected_date_location_id: StringName = &""
+var _selected_outfit_id: StringName = &""
+var _hud_characteristics_label: Label
 
 
 func _ready() -> void:
@@ -54,7 +57,7 @@ func refresh() -> void:
 	if _refreshing:
 		return
 	_refreshing = true
-	if _section == "city" or _section == "girls" or _section == "dates" or _section == "rivals":
+	if _section == "city" or _section == "girls" or _section == "dates" or _section == "rivals" or _section == "progression" or _section == "apartment" or _section == "clothing":
 		_rebuild_section()
 	_refresh_hud()
 	_refresh_home()
@@ -185,11 +188,28 @@ func meet_girl(girl_id: StringName) -> ActionResult:
 func invite_girl(girl_id: StringName) -> void:
 	_invite_girl_id = girl_id
 	_selected_date_location_id = &""
+	_selected_outfit_id = &""
 	show_section("dates")
 
 
 func select_date_location(date_location_id: StringName) -> void:
 	_selected_date_location_id = date_location_id
+	if _selected_outfit_id == &"":
+		var equipment: Variant = _equipment_service()
+		if equipment != null:
+			_selected_outfit_id = equipment.get_equipped_outfit_id()
+	refresh()
+
+
+func select_date_outfit(outfit_id: StringName) -> void:
+	_selected_outfit_id = outfit_id
+	refresh()
+
+
+func wear_owned_outfit(outfit_id: StringName) -> void:
+	var equipment: Variant = _equipment_service()
+	if equipment != null:
+		equipment.equip_outfit(outfit_id)
 	refresh()
 
 
@@ -202,12 +222,12 @@ func start_selected_date() -> ActionResult:
 		result.failure_reason = "DatingService autoload missing"
 		_on_action_resolved(result)
 		return result
-	if _invite_girl_id == &"" or _selected_date_location_id == &"":
+	if _invite_girl_id == &"" or _selected_date_location_id == &"" or _selected_outfit_id == &"":
 		result.success = false
 		result.failure_reason = "Это место сейчас недоступно"
 		_on_action_resolved(result)
 		return result
-	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id)
+	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id, _selected_outfit_id)
 	result = actions.execute(action)
 	if result.success:
 		_clear_date_invite()
@@ -402,6 +422,8 @@ func _build_hud() -> Control:
 	stats.add_child(_hud_rating_label)
 	stats.add_child(_hud_stage_label)
 	box.add_child(stats)
+	_hud_characteristics_label = Label.new()
+	box.add_child(_hud_characteristics_label)
 	var save_row := HBoxContainer.new()
 	save_row.add_theme_constant_override("separation", 8)
 	var new_btn := LabUi.button("НОВАЯ ИГРА")
@@ -472,7 +494,9 @@ func _rebuild_section() -> void:
 		"dates":
 			_section_host.add_child(_build_dates())
 		"apartment":
-			_section_host.add_child(_build_placeholder("КВАРТИРА", "Система квартиры появится здесь."))
+			_section_host.add_child(_build_apartment())
+		"clothing":
+			_section_host.add_child(_build_clothing())
 		"progression":
 			_section_host.add_child(_build_progression())
 
@@ -662,23 +686,35 @@ func _build_progression() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("ПРОКАЧКА"))
+	box.add_child(LabUi.heading("ХАРАКТЕРИСТИКИ"))
+	var characteristics: Variant = _characteristic_service()
+	if characteristics == null:
+		return box
+	var catalog: CharacteristicCatalog = characteristics.get_catalog()
+	for upgrade in catalog.get_all_upgrades():
+		box.add_child(_build_characteristic_upgrade_card(upgrade, characteristics))
+	return box
+
+
+func _build_characteristic_upgrade_card(
+	upgrade: CharacteristicUpgradeDefinition,
+	characteristics: Variant
+) -> Control:
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var value_label: Label = Label.new()
+	var current_value: int = int(characteristics.get_value(upgrade.characteristic_id))
+	value_label.text = "%s: %d" % [CharacteristicIds.display_name(upgrade.characteristic_id), current_value]
+	box.add_child(value_label)
 	var purchases: Variant = _purchase_service()
-	var definition: PurchaseDefinition = null
-	if purchases != null:
-		definition = purchases.make_basic_upgrade()
-	var title := Label.new()
-	title.text = "Базовое улучшение"
-	if definition != null:
-		title.text = definition.display_name
-	box.add_child(title)
-	_upgrade_status_label = Label.new()
-	box.add_child(_upgrade_status_label)
-	_upgrade_price_label = Label.new()
-	box.add_child(_upgrade_price_label)
-	if definition != null:
-		var action: GameAction = purchases.create_purchase_action(definition)
-		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
-	_refresh_progression()
+	var purchased: bool = purchases != null and bool(purchases.is_purchased(upgrade.id))
+	if purchased:
+		var done: Label = Label.new()
+		done.text = "Куплено"
+		box.add_child(done)
+	else:
+		var action: GameAction = characteristics.create_upgrade_action(upgrade.id)
+		_add_action_button(box, action, "%s — %d" % [upgrade.display_name, upgrade.price], false, false)
 	return box
 
 
@@ -781,6 +817,11 @@ func _build_rival_competition_row(competition: CompetitionDefinition, defeated: 
 	var time_label := Label.new()
 	time_label.text = "Время: %d минут" % competition.time_cost_minutes
 	box.add_child(time_label)
+	if competitions != null:
+		var chance_label := Label.new()
+		var chance: float = float(competitions.get_win_chance(competition.id))
+		chance_label.text = "Шанс победы: %d%%" % int(round(chance * 100.0))
+		box.add_child(chance_label)
 	if defeated:
 		var done := Label.new()
 		done.text = "Завершено"
@@ -890,6 +931,82 @@ func _build_placeholder(title: String, body: String) -> Control:
 	return box
 
 
+func _build_clothing() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("ОДЕЖДА"))
+	var equipment: Variant = _equipment_service()
+	if equipment == null:
+		return box
+	var catalog: OutfitCatalog = equipment.get_catalog()
+	var equipped_id: StringName = equipment.get_equipped_outfit_id()
+	for outfit in catalog.get_all_outfits():
+		box.add_child(_build_outfit_catalog_card(outfit, equipment, equipped_id))
+	return box
+
+
+func _build_outfit_catalog_card(outfit: Outfit, equipment: Variant, equipped_id: StringName) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var title := Label.new()
+	title.text = outfit.display_name
+	box.add_child(title)
+	var owned: bool = bool(equipment.owns_outfit(outfit.id))
+	if owned and outfit.id == equipped_id:
+		var worn := Label.new()
+		worn.text = "Надето"
+		box.add_child(worn)
+	elif owned:
+		var bought := Label.new()
+		bought.text = "Куплено"
+		box.add_child(bought)
+		var wear_btn: Button = LabUi.button("НАДЕТЬ")
+		wear_btn.pressed.connect(wear_owned_outfit.bind(outfit.id))
+		box.add_child(wear_btn)
+	else:
+		var price := Label.new()
+		price.text = "Цена: %d" % outfit.price
+		box.add_child(price)
+		var action: GameAction = equipment.create_buy_outfit_action(outfit.id)
+		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
+	return box
+
+
+func _build_apartment() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("КВАРТИРА"))
+	var apartment: Variant = _apartment_service()
+	if apartment == null:
+		return box
+	var level_label := Label.new()
+	level_label.text = "Уровень квартиры: %d" % int(apartment.get_level())
+	box.add_child(level_label)
+	var catalog: ApartmentCatalog = apartment.get_catalog()
+	for upgrade in catalog.get_all_upgrades():
+		box.add_child(_build_apartment_upgrade_card(upgrade, apartment))
+	return box
+
+
+func _build_apartment_upgrade_card(upgrade: ApartmentUpgradeDefinition, apartment: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var title := Label.new()
+	title.text = upgrade.display_name
+	box.add_child(title)
+	if bool(apartment.is_upgrade_purchased(upgrade.id)):
+		var done := Label.new()
+		done.text = "Куплено"
+		box.add_child(done)
+	else:
+		var price := Label.new()
+		price.text = "Цена: %d" % upgrade.price
+		box.add_child(price)
+		var action: GameAction = apartment.create_upgrade_action(upgrade.id)
+		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
+	return box
+
+
 func _build_active_date_dev(girls: Variant, dating: Variant) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
@@ -912,6 +1029,15 @@ func _build_active_date_dev(girls: Variant, dating: Variant) -> Control:
 	var location_label := Label.new()
 	location_label.text = "Location: %s" % location_name
 	box.add_child(location_label)
+	var outfit_id: StringName = dating.get_active_outfit_id()
+	var outfit_name: String = String(outfit_id)
+	if catalog_service != null and catalog_service.catalog != null:
+		var outfit: Outfit = catalog_service.catalog.find_outfit(outfit_id)
+		if outfit != null:
+			outfit_name = outfit.display_name
+	var outfit_label := Label.new()
+	outfit_label.text = "Outfit: %s" % outfit_name
+	box.add_child(outfit_label)
 	return box
 
 
@@ -951,8 +1077,10 @@ func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
 		else:
 			selected_name.text = String(_selected_date_location_id)
 		box.add_child(selected_name)
-		if dating != null:
-			var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id)
+		box.add_child(_build_date_outfit_picker(girls, dating))
+		if _selected_outfit_id != &"" and dating != null:
+			box.add_child(_build_date_start_summary(girls, dating, selected))
+			var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id, _selected_outfit_id)
 			_add_action_button(box, action, "НАЧАТЬ СВИДАНИЕ", false, false)
 	var back_btn: Button = LabUi.button("НАЗАД")
 	back_btn.pressed.connect(cancel_date_invite)
@@ -1016,9 +1144,79 @@ func _preferred_location_style() -> StyleBoxFlat:
 	return style
 
 
+func _build_date_outfit_picker(_girls: Variant, dating: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("ВЫБЕРИТЕ ОДЕЖДУ"))
+	var equipment: Variant = _equipment_service()
+	if equipment == null:
+		return box
+	for item in equipment.get_owned_outfits():
+		var outfit: Outfit = item as Outfit
+		if outfit == null:
+			continue
+		box.add_child(_build_date_outfit_card(outfit, dating))
+	return box
+
+
+func _build_date_outfit_card(outfit: Outfit, dating: Variant) -> Control:
+	var panel := PanelContainer.new()
+	var preferred: bool = dating != null and bool(dating.is_preferred_outfit(_invite_girl_id, outfit.id))
+	var known: bool = dating != null and bool(dating.is_outfit_preference_known(_invite_girl_id, outfit.id))
+	var highlight: bool = preferred and known
+	if highlight:
+		panel.add_theme_stylebox_override("panel", _preferred_location_style())
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	panel.add_child(box)
+	var title := Label.new()
+	title.text = outfit.display_name
+	box.add_child(title)
+	if highlight:
+		var preferred_label := Label.new()
+		preferred_label.text = "Предпочитаемый"
+		preferred_label.add_theme_color_override("font_color", LabUi.POSITIVE)
+		box.add_child(preferred_label)
+	var choose_btn: Button = LabUi.button(outfit.display_name)
+	choose_btn.pressed.connect(select_date_outfit.bind(outfit.id))
+	box.add_child(choose_btn)
+	return panel
+
+
+func _build_date_start_summary(girls: Variant, dating: Variant, selected_location: DateLocation) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var girl_name: String = String(_invite_girl_id)
+	if girls != null:
+		var definition: GirlDefinition = girls.get_definition(_invite_girl_id)
+		if definition != null:
+			girl_name = definition.display_name
+	var location_name: String = String(_selected_date_location_id)
+	if selected_location != null:
+		location_name = selected_location.display_name
+	var outfit_name: String = String(_selected_outfit_id)
+	if dating != null:
+		var catalog_service: DateCatalogService = dating.get_catalog_service()
+		if catalog_service != null and catalog_service.catalog != null:
+			var outfit: Outfit = catalog_service.catalog.find_outfit(_selected_outfit_id)
+			if outfit != null:
+				outfit_name = outfit.display_name
+	var girl_label := Label.new()
+	girl_label.text = "Девушка: %s" % girl_name
+	box.add_child(girl_label)
+	var location_label := Label.new()
+	location_label.text = "Место: %s" % location_name
+	box.add_child(location_label)
+	var outfit_label := Label.new()
+	outfit_label.text = "Одежда: %s" % outfit_name
+	box.add_child(outfit_label)
+	return box
+
+
 func _clear_date_invite() -> void:
 	_invite_girl_id = &""
 	_selected_date_location_id = &""
+	_selected_outfit_id = &""
 
 
 func _add_action_button(host: Node, action: GameAction, label: String, show_title: bool = true, show_meta: bool = true) -> void:
@@ -1040,6 +1238,8 @@ func _refresh_hud() -> void:
 		_hud_rating_label.text = parts[2]
 	if _hud_stage_label != null and parts.size() >= 4:
 		_hud_stage_label.text = parts[3]
+	if _hud_characteristics_label != null and parts.size() >= 5:
+		_hud_characteristics_label.text = parts[4]
 	if _finale_label != null:
 		_finale_label.visible = is_finale_presented()
 
@@ -1052,22 +1252,7 @@ func _refresh_home() -> void:
 
 
 func _refresh_progression() -> void:
-	var purchases: Variant = _purchase_service()
-	var purchased: bool = false
-	var definition: PurchaseDefinition = null
-	if purchases != null:
-		definition = purchases.make_basic_upgrade()
-		if definition != null:
-			purchased = bool(purchases.is_purchased(definition.id))
-	if _upgrade_status_label != null:
-		_upgrade_status_label.visible = purchased
-		_upgrade_status_label.text = "Куплено"
-	if _upgrade_price_label != null:
-		_upgrade_price_label.visible = not purchased
-		var price: int = 300
-		if definition != null:
-			price = definition.price
-		_upgrade_price_label.text = "Цена: %d" % price
+	pass
 
 
 func _refresh_save_buttons() -> void:
@@ -1136,6 +1321,12 @@ func _connect_core_signals() -> void:
 	var competitions: Variant = _competition_service()
 	if competitions != null and not competitions.competition_completed.is_connected(_on_competition_completed):
 		competitions.competition_completed.connect(_on_competition_completed)
+	var characteristics: Variant = _characteristic_service()
+	if characteristics != null and not characteristics.characteristic_changed.is_connected(_on_characteristic_changed):
+		characteristics.characteristic_changed.connect(_on_characteristic_changed)
+	var equipment: Variant = _equipment_service()
+	if equipment != null and not equipment.outfit_equipped.is_connected(_on_outfit_equipped):
+		equipment.outfit_equipped.connect(_on_outfit_equipped)
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
@@ -1202,6 +1393,14 @@ func _on_rival_defeated(_rival_id: StringName) -> void:
 
 
 func _on_competition_completed(_competition_id: StringName, _rival_id: StringName, _won: bool) -> void:
+	refresh()
+
+
+func _on_characteristic_changed(_characteristic_id: StringName, _previous_value: int, _current_value: int, _delta: int) -> void:
+	refresh()
+
+
+func _on_outfit_equipped(_previous_outfit_id: StringName, _current_outfit_id: StringName) -> void:
 	refresh()
 
 
@@ -1295,7 +1494,18 @@ func _format_hud_text() -> String:
 	var stage_text: String = "Stage: %d" % stage
 	if finale:
 		stage_text += "\nFinale"
-	return "День %d\n%02d:%02d\n\nДеньги: %d\n\nRating: %d\n\n%s" % [day, hour, minute, money, rating, stage_text]
+	var characteristics: Variant = _characteristic_service()
+	var muscle: int = 0
+	var appearance: int = 0
+	var capital: int = 0
+	var aura: int = 0
+	if characteristics != null:
+		muscle = int(characteristics.get_value(CharacteristicIds.MUSCLE))
+		appearance = int(characteristics.get_value(CharacteristicIds.APPEARANCE))
+		capital = int(characteristics.get_value(CharacteristicIds.CAPITAL))
+		aura = int(characteristics.get_value(CharacteristicIds.AURA))
+	var stats_text: String = "Мышца: %d  Внешность: %d  Капитал: %d  Аура: %d" % [muscle, appearance, capital, aura]
+	return "День %d\n%02d:%02d\n\nДеньги: %d\n\nRating: %d\n\n%s\n\n%s" % [day, hour, minute, money, rating, stage_text, stats_text]
 
 
 func _format_home_summary() -> String:
@@ -1453,6 +1663,27 @@ func _rivals_service() -> Variant:
 
 func _competition_service() -> Variant:
 	var node: Node = get_node_or_null("/root/CompetitionService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _characteristic_service() -> Variant:
+	var node: Node = get_node_or_null("/root/CharacteristicService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _equipment_service() -> Variant:
+	var node: Node = get_node_or_null("/root/EquipmentService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _apartment_service() -> Variant:
+	var node: Node = get_node_or_null("/root/ApartmentService")
 	if not is_instance_valid(node):
 		return null
 	return node

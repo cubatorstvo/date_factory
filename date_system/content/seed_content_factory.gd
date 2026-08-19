@@ -148,21 +148,22 @@ func _locations() -> Array[DateLocation]:
 	]
 
 
-func _outfit(id: String, name: String, bonus: int) -> Outfit:
+func _outfit(id: String, name: String, bonus: int, price: int) -> Outfit:
 	var outfit := Outfit.new()
 	outfit.id = StringName(id)
 	outfit.display_name = name
 	outfit.description = name
 	outfit.enabled = true
 	outfit.score_bonus = bonus
+	outfit.price = price
 	return outfit
 
 
 func _outfits() -> Array[Outfit]:
 	return [
-		_outfit("casual", "Повседневный", 0),
-		_outfit("business", "Деловой", 1),
-		_outfit("luxury", "Роскошный", 2),
+		_outfit("casual", "Повседневный", 0, 0),
+		_outfit("business", "Деловой", 1, 500),
+		_outfit("luxury", "Роскошный", 2, 800),
 	]
 
 
@@ -378,7 +379,8 @@ func _girl(
 	positives: Array,
 	negatives: Array,
 	secondary_id: String,
-	favorites: Array
+	favorites: Array,
+	favorite_outfits: Array
 ) -> GirlProfile:
 	var girl: GirlProfile = GirlProfile.new()
 	girl.id = StringName(id)
@@ -402,13 +404,17 @@ func _girl(
 	for item in favorites:
 		fav.append(StringName(str(item)))
 	girl.favorite_location_format_ids = fav
+	var fav_outfits: Array[StringName] = []
+	for item in favorite_outfits:
+		fav_outfits.append(StringName(str(item)))
+	girl.favorite_outfit_ids = fav_outfits
 	return girl
 
 
 func _girls() -> Array[GirlProfile]:
 	return [
-		_girl("alina", "Алина", "starter", -5, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"], ["flattery", "audacity", "dominance", "risk", "status", "cunning"], "variety", ["calm", "culture"]),
-		_girl("vika", "Вика", "late", -10, 10, ["audacity", "dominance", "risk"], ["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"], "demanding", ["game", "unusual"]),
+		_girl("alina", "Алина", "starter", -5, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"], ["flattery", "audacity", "dominance", "risk", "status", "cunning"], "variety", ["calm", "culture"], ["business"]),
+		_girl("vika", "Вика", "late", -10, 10, ["audacity", "dominance", "risk"], ["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"], "demanding", ["game", "unusual"], ["luxury"]),
 	]
 
 

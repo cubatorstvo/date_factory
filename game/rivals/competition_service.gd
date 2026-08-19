@@ -88,6 +88,17 @@ func get_competitions_for_rival(rival_id: StringName) -> Array[CompetitionDefini
 	return result
 
 
+func get_win_chance(competition_id: StringName) -> float:
+	var definition: CompetitionDefinition = get_catalog().get_competition(competition_id)
+	if definition == null:
+		return 0.0
+	var bonus: float = 0.0
+	var characteristics: Variant = _characteristic_service()
+	if characteristics != null and definition.primary_characteristic_id != &"":
+		bonus = float(int(characteristics.get_value(definition.primary_characteristic_id))) * 0.1
+	return clampf(definition.base_win_chance + bonus, 0.0, 1.0)
+
+
 func resolve_competition(competition_id: StringName) -> CompetitionResult:
 	var result := CompetitionResult.new()
 	result.competition_id = competition_id
@@ -122,7 +133,7 @@ func complete_competition(result: CompetitionResult) -> bool:
 func _roll_win(definition: CompetitionDefinition) -> bool:
 	if _forced_won is bool:
 		return bool(_forced_won)
-	var chance: float = clampf(definition.base_win_chance, 0.0, 1.0)
+	var chance: float = get_win_chance(definition.id)
 	if _rng != null:
 		return _rng.randf() < chance
 	return randf() < chance
@@ -140,5 +151,13 @@ func _world_service() -> Variant:
 	var node: Node = get_node_or_null("/root/WorldService")
 	if not is_instance_valid(node):
 		push_error("WorldService autoload missing")
+		return null
+	return node
+
+
+func _characteristic_service() -> Variant:
+	var node: Node = get_node_or_null("/root/CharacteristicService")
+	if not is_instance_valid(node):
+		push_error("CharacteristicService autoload missing")
 		return null
 	return node

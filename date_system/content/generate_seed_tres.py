@@ -52,9 +52,9 @@ LOCATIONS = [
 ]
 
 OUTFITS = [
-    ("casual", "Повседневный", 0),
-    ("business", "Деловой", 1),
-    ("luxury", "Роскошный", 2),
+    ("casual", "Повседневный", 0, 0),
+    ("business", "Деловой", 1, 500),
+    ("luxury", "Роскошный", 2, 800),
 ]
 
 DIFFICULTIES = [
@@ -274,13 +274,13 @@ def main() -> None:
             CONTENT / "locations" / f"{loc_id}.tres",
             simple_resource("DateLocation", "res://date_system/content/date_location.gd", fields),
         )
-    for outfit_id, name, bonus in OUTFITS:
+    for outfit_id, name, bonus, price in OUTFITS:
         write(
             CONTENT / "outfits" / f"{outfit_id}.tres",
             simple_resource(
                 "Outfit",
                 "res://date_system/content/outfit.gd",
-                f'id = &"{outfit_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(name)}"\nenabled = true\nscore_bonus = {bonus}\n',
+                f'id = &"{outfit_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(name)}"\nenabled = true\nscore_bonus = {bonus}\nprice = {price}\n',
             ),
         )
     write(
@@ -361,6 +361,7 @@ def main() -> None:
         f'negative_tag_ids = {string_name_array(["flattery", "audacity", "dominance", "risk", "status", "cunning"])}\n'
         'secondary_rule_id = &"variety"\n'
         f'favorite_location_format_ids = {string_name_array(["calm", "culture"])}\n'
+        f'favorite_outfit_ids = {string_name_array(["business"])}\n'
     )
     write(CONTENT / "girls" / "alina.tres", simple_resource("GirlProfile", "res://date_system/content/girl_profile.gd", alina_fields))
     vika_fields = (
@@ -376,6 +377,7 @@ def main() -> None:
         f'negative_tag_ids = {string_name_array(["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"])}\n'
         'secondary_rule_id = &"demanding"\n'
         f'favorite_location_format_ids = {string_name_array(["game", "unusual"])}\n'
+        f'favorite_outfit_ids = {string_name_array(["luxury"])}\n'
     )
     write(CONTENT / "girls" / "vika.tres", simple_resource("GirlProfile", "res://date_system/content/girl_profile.gd", vika_fields))
 

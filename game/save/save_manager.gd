@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 9
+const SAVE_VERSION: int = 10
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -95,6 +95,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v7_date_knowledge(migrated)
 	if from_version < 9:
 		migrated = _migrate_v8_rivals(migrated)
+	if from_version < 10:
+		migrated = _migrate_v9_progression(migrated)
 	return migrated
 
 
@@ -222,4 +224,47 @@ func _migrate_v8_rivals(state_data: Dictionary) -> Dictionary:
 	if not rivals.has("rivals_by_id"):
 		rivals["rivals_by_id"] = {}
 	migrated["rivals"] = rivals
+	return migrated
+
+
+func _migrate_v9_progression(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var player_value: Variant = migrated.get("player", {})
+	var player: Dictionary = {}
+	if player_value is Dictionary:
+		player = player_value
+	if not player.has("muscle"):
+		player["muscle"] = 0
+	if not player.has("appearance"):
+		player["appearance"] = 0
+	if not player.has("capital"):
+		player["capital"] = 0
+	if not player.has("aura"):
+		player["aura"] = 0
+	migrated["player"] = player
+	var progression_value: Variant = migrated.get("progression", {})
+	var progression: Dictionary = {}
+	if progression_value is Dictionary:
+		progression = progression_value
+	if not progression.has("owned_outfit_ids"):
+		progression["owned_outfit_ids"] = [String(OutfitCatalog.START_OUTFIT_ID)]
+	if not progression.has("equipped_outfit_id") or str(progression.get("equipped_outfit_id", "")).is_empty():
+		progression["equipped_outfit_id"] = String(OutfitCatalog.START_OUTFIT_ID)
+	if not progression.has("apartment"):
+		progression["apartment"] = {
+			"level": 1,
+			"purchased_upgrade_ids": [],
+		}
+	migrated["progression"] = progression
+	var dating_value: Variant = migrated.get("dating", {})
+	var dating: Dictionary = {}
+	if dating_value is Dictionary:
+		dating = dating_value
+	var active_value: Variant = dating.get("active_date", {})
+	if active_value is Dictionary:
+		var active: Dictionary = active_value
+		if not str(active.get("girl_id", "")).is_empty() and (not active.has("outfit_id") or str(active.get("outfit_id", "")).is_empty()):
+			active["outfit_id"] = String(OutfitCatalog.START_OUTFIT_ID)
+			dating["active_date"] = active
+	migrated["dating"] = dating
 	return migrated

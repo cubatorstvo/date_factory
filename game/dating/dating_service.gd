@@ -6,7 +6,7 @@ signal date_completed(girl_id: StringName, relationship_delta: int, current_rela
 const START_ACTION_PREFIX: String = "start_date_"
 const DATE_COOLDOWN_DAYS: int = 3
 const DATE_DURATION_MINUTES: int = 120
-const DEFAULT_OUTFIT_ID: StringName = &"casual"
+const DEFAULT_OUTFIT_ID: StringName = OutfitCatalog.START_OUTFIT_ID
 const REASON_NOT_DISCOVERED: String = "Вы ещё не знакомы"
 const REASON_NO_CONTACT: String = "У вас нет контакта этой девушки"
 const REASON_COOLDOWN: String = "До следующего свидания нужно подождать"
@@ -95,7 +95,27 @@ func is_date_location_preference_known(girl_id: StringName, date_location_id: St
 	return is_preferred_date_location(girl_id, date_location_id)
 
 
-func create_start_date_action(girl_id: StringName, date_location_id: StringName) -> GameAction:
+func is_preferred_outfit(girl_id: StringName, outfit_id: StringName) -> bool:
+	var catalog: DateContentCatalog = _catalog()
+	if catalog == null:
+		return false
+	var girl: GirlProfile = catalog.find_girl(girl_id)
+	var outfit: Outfit = catalog.find_outfit(outfit_id)
+	if girl == null or outfit == null:
+		return false
+	return girl.favorite_outfit_ids.has(outfit_id)
+
+
+func is_outfit_preference_known(girl_id: StringName, outfit_id: StringName) -> bool:
+	return is_preferred_outfit(girl_id, outfit_id)
+
+
+func create_start_date_action(
+	girl_id: StringName,
+	date_location_id: StringName,
+	outfit_id: StringName = &""
+) -> GameAction:
+	var resolved_outfit_id: StringName = _resolve_outfit_id(outfit_id)
 	var action := GameAction.new()
 	action.id = StringName("%s%s" % [START_ACTION_PREFIX, String(girl_id)])
 	action.time_cost_minutes = 0
@@ -107,27 +127,40 @@ func create_start_date_action(girl_id: StringName, date_location_id: StringName)
 	location_requirement.girl_id = girl_id
 	location_requirement.date_location_id = date_location_id
 	action.requirements.append(location_requirement)
+	var outfit_requirement := OutfitOwnedRequirement.new()
+	outfit_requirement.outfit_id = resolved_outfit_id
+	action.requirements.append(outfit_requirement)
 	var effect := StartDateEffect.new()
 	effect.girl_id = girl_id
 	effect.date_location_id = date_location_id
+	effect.outfit_id = resolved_outfit_id
 	action.effects.append(effect)
 	return action
 
 
-func start_date(girl_id: StringName, date_location_id: StringName) -> bool:
+func start_date(
+	girl_id: StringName,
+	date_location_id: StringName,
+	outfit_id: StringName = &""
+) -> bool:
+	var resolved_outfit_id: StringName = _resolve_outfit_id(outfit_id)
 	if not can_start_date(girl_id):
 		return false
 	if not is_date_location_available(girl_id, date_location_id):
+		return false
+	var equipment: Variant = _equipment_service()
+	if equipment == null or not bool(equipment.owns_outfit(resolved_outfit_id)):
 		return false
 	var dating: DatingState = _dating()
 	var clock: Variant = _time_service()
 	if dating == null or clock == null:
 		return false
-	if not _create_engine(girl_id, date_location_id):
+	if not _create_engine(girl_id, date_location_id, resolved_outfit_id):
 		return false
 	dating.active_date = {
 		"girl_id": girl_id,
 		"location_id": date_location_id,
+		"outfit_id": resolved_outfit_id,
 		"started_at_game_time": int(clock.get_game_time_minutes()),
 	}
 	date_started.emit(girl_id)
@@ -182,6 +215,16 @@ func get_active_location_id() -> StringName:
 	return StringName(str(dating.active_date.get("location_id", "")))
 
 
+func get_active_outfit_id() -> StringName:
+	var dating: DatingState = _dating()
+	if dating == null:
+		return &""
+	var outfit_text: String = str(dating.active_date.get("outfit_id", ""))
+	if outfit_text.is_empty():
+		return DEFAULT_OUTFIT_ID
+	return StringName(outfit_text)
+
+
 func get_date_cooldown_remaining_minutes(girl_id: StringName) -> int:
 	var girls: Variant = _girls_service()
 	var clock: Variant = _time_service()
@@ -195,10 +238,19 @@ func restore_active_date() -> bool:
 	if not has_active_date():
 		_engine = null
 		return false
-	return _create_engine(get_active_girl_id(), get_active_location_id())
+	return _create_engine(get_active_girl_id(), get_active_location_id(), get_active_outfit_id())
 
 
-func _create_engine(girl_id: StringName, date_location_id: StringName) -> bool:
+func _resolve_outfit_id(outfit_id: StringName) -> StringName:
+	if outfit_id != &"":
+		return outfit_id
+	var equipment: Variant = _equipment_service()
+	if equipment != null:
+		return equipment.get_equipped_outfit_id()
+	return DEFAULT_OUTFIT_ID
+
+
+func _create_engine(girl_id: StringName, date_location_id: StringName, outfit_id: StringName) -> bool:
 	var catalog_service: DateCatalogService = get_catalog_service()
 	if catalog_service == null or catalog_service.catalog == null:
 		return false
@@ -207,6 +259,8 @@ func _create_engine(girl_id: StringName, date_location_id: StringName) -> bool:
 	if girl == null:
 		return false
 	if catalog.find_location(date_location_id) == null:
+		return false
+	if catalog.find_outfit(outfit_id) == null:
 		return false
 	var girls: Variant = _girls_service()
 	var progress := GirlProgress.new()
@@ -218,13 +272,28 @@ func _create_engine(girl_id: StringName, date_location_id: StringName) -> bool:
 	config.seed = randi()
 	config.girl_id = girl_id
 	config.location_id = date_location_id
-	config.outfit_id = DEFAULT_OUTFIT_ID
+	config.outfit_id = outfit_id
 	config.catalog = catalog
 	config.girl_progress = progress
-	config.player_state = TestPlayerState.new()
+	config.player_state = _make_player_state(catalog.find_location(date_location_id))
 	_engine = DateEngine.new()
 	_engine.create_date_session(config)
 	return true
+
+
+func _make_player_state(location: DateLocation) -> TestPlayerState:
+	var player := TestPlayerState.new()
+	var characteristics: Variant = _characteristic_service()
+	if characteristics != null:
+		player.muscle = int(characteristics.get_value(CharacteristicIds.MUSCLE))
+		player.appearance = int(characteristics.get_value(CharacteristicIds.APPEARANCE))
+		player.capital = int(characteristics.get_value(CharacteristicIds.CAPITAL))
+		player.aura = int(characteristics.get_value(CharacteristicIds.AURA))
+	var apartment: Variant = _apartment_service()
+	if apartment != null and location != null and location.uses_apartment_quality:
+		player.apartment_quality = int(apartment.get_quality())
+	player.apartment_prepared = true
+	return player
 
 
 func _catalog() -> DateContentCatalog:
@@ -261,5 +330,29 @@ func _time_service() -> Variant:
 	var node: Node = get_node_or_null("/root/TimeService")
 	if not is_instance_valid(node):
 		push_error("TimeService autoload missing")
+		return null
+	return node
+
+
+func _equipment_service() -> Variant:
+	var node: Node = get_node_or_null("/root/EquipmentService")
+	if not is_instance_valid(node):
+		push_error("EquipmentService autoload missing")
+		return null
+	return node
+
+
+func _characteristic_service() -> Variant:
+	var node: Node = get_node_or_null("/root/CharacteristicService")
+	if not is_instance_valid(node):
+		push_error("CharacteristicService autoload missing")
+		return null
+	return node
+
+
+func _apartment_service() -> Variant:
+	var node: Node = get_node_or_null("/root/ApartmentService")
+	if not is_instance_valid(node):
+		push_error("ApartmentService autoload missing")
 		return null
 	return node

@@ -6,3 +6,4 @@ extends Resource
 @export var rival_id: StringName = &""
 @export var time_cost_minutes: int = 60
 @export var base_win_chance: float = 0.5
+@export var primary_characteristic_id: StringName = CharacteristicIds.MUSCLE

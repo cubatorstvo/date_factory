@@ -13,6 +13,7 @@ extends Resource
 @export var negative_tag_ids: Array[StringName] = []
 @export var secondary_rule_id: StringName = &""
 @export var favorite_location_format_ids: Array[StringName] = []
+@export var favorite_outfit_ids: Array[StringName] = []
 @export var portrait: Texture2D
 @export var future_character_scene: PackedScene
 

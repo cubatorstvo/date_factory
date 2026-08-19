@@ -11,6 +11,7 @@ res://
         story/
         actions/
         economy/
+        progression/
         world/
         girls/
         dating/

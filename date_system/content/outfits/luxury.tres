@@ -9,3 +9,4 @@ display_name = "Роскошный"
 description = "Роскошный"
 enabled = true
 score_bonus = 2
+price = 800

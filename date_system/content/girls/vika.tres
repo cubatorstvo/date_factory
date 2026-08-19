@@ -16,3 +16,4 @@ positive_tag_ids = Array[StringName]([&"audacity", &"dominance", &"risk"])
 negative_tag_ids = Array[StringName]([&"politeness", &"directness", &"flattery", &"generosity", &"status", &"care", &"humor", &"composure", &"cunning"])
 secondary_rule_id = &"demanding"
 favorite_location_format_ids = Array[StringName]([&"game", &"unusual"])
+favorite_outfit_ids = Array[StringName]([&"luxury"])

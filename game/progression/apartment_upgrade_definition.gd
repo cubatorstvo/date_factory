@@ -1,10 +1,8 @@
-class_name Outfit
+class_name ApartmentUpgradeDefinition
 extends Resource
 
 @export var id: StringName = &""
 @export var display_name: String = ""
 @export var description: String = ""
-@export var enabled: bool = true
-@export var score_bonus: int = 0
 @export var price: int = 0
-@export var future_visual_resource: Resource
+@export var level_granted: int = 1

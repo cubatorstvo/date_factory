@@ -183,6 +183,10 @@ func girl_progress() -> GirlProgress:
 	return _girl_progress
 
 
+func player_state() -> TestPlayerState:
+	return _player
+
+
 func _begin_episode() -> void:
 	var rules: DateRules = _catalog.date_rules
 	_session.current_phase = rules.phase_for_episode_index(_session.current_episode_index)

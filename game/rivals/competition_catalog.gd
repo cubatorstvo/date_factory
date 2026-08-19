@@ -27,7 +27,7 @@ func get_competitions_for_rival(rival_id: StringName) -> Array[CompetitionDefini
 
 static func create_seed() -> CompetitionCatalog:
 	var catalog := CompetitionCatalog.new()
-	catalog.competitions.append(_make(ID_BASIC, "Базовый вызов", RivalCatalog.ID_BORIS, 60, 0.5))
+	catalog.competitions.append(_make(ID_BASIC, "Базовый вызов", RivalCatalog.ID_BORIS, 60, 0.5, CharacteristicIds.MUSCLE))
 	return catalog
 
 
@@ -36,7 +36,8 @@ static func _make(
 	display_name: String,
 	rival_id: StringName,
 	time_cost_minutes: int,
-	base_win_chance: float
+	base_win_chance: float,
+	primary_characteristic_id: StringName
 ) -> CompetitionDefinition:
 	var competition: CompetitionDefinition = CompetitionDefinition.new()
 	competition.id = id
@@ -44,4 +45,5 @@ static func _make(
 	competition.rival_id = rival_id
 	competition.time_cost_minutes = time_cost_minutes
 	competition.base_win_chance = clampf(base_win_chance, 0.0, 1.0)
+	competition.primary_characteristic_id = primary_characteristic_id
 	return competition
