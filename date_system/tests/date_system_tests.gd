@@ -31,6 +31,7 @@ func run_all() -> PackedStringArray:
 	_test_game_simulator()
 	_test_economy()
 	_test_world()
+	_test_girls()
 	return _failures
 
 
@@ -1058,6 +1059,16 @@ func _world_service() -> Variant:
 	return node
 
 
+func _girls_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("GirlsService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
 func _assert_clock(label: String, clock: Variant, minutes: int, day: int, hour: int, minute: int) -> void:
 	_ok("%s game_time_minutes" % label, clock.get_game_time_minutes() == minutes)
 	_ok("%s day" % label, clock.get_day() == day)
@@ -1090,6 +1101,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game start unlocked apartment", gs.world.has_unlocked(LocationCatalog.ID_APARTMENT))
 	_ok("new_game start unlocked cafe", gs.world.has_unlocked(LocationCatalog.ID_CAFE))
 	_ok("new_game restaurant locked", not gs.world.has_unlocked(LocationCatalog.ID_RESTAURANT))
+	_ok("new_game girls empty", gs.girls.girls_by_id.is_empty())
 	gs.flow.game_time_minutes = 8640
 	gs.story.stage = 3
 	gs.player.money = 12345
@@ -1102,7 +1114,7 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 5", int(root.get("save_version", 0)) == 5)
+	_ok("save_version == 6", int(root.get("save_version", 0)) == 6)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -1847,3 +1859,188 @@ func _test_world() -> void:
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
+
+
+func _test_girls() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var world: Variant = _world_service()
+	var girls: Variant = _girls_service()
+	var actions: Variant = _action_service()
+	_ok("girls GameState", gs != null)
+	_ok("girls SaveManager", sm != null)
+	_ok("girls TimeService", clock != null)
+	_ok("girls WorldService", world != null)
+	_ok("girls GirlsService", girls != null)
+	_ok("girls ActionService", actions != null)
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	_ok("girls tree", tree != null and tree.root != null)
+	if gs == null or sm == null or clock == null or world == null or girls == null or actions == null or tree == null or tree.root == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/girls_round_trip.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	var alina_id: StringName = GirlCatalog.ID_ALINA
+	var vika_id: StringName = GirlCatalog.ID_VIKA
+	var alina_def: GirlDefinition = girls.get_definition(alina_id)
+	var vika_def: GirlDefinition = girls.get_definition(vika_id)
+	_ok("alina definition", alina_def != null and alina_def.display_name == "Алина")
+	_ok("alina location cafe", alina_def != null and alina_def.location_id == LocationCatalog.ID_CAFE)
+	_ok("vika definition", vika_def != null and vika_def.display_name == "Вика")
+	_ok("vika location restaurant", vika_def != null and vika_def.location_id == LocationCatalog.ID_RESTAURANT)
+	var default_state: GirlState = GirlState.new()
+	_ok("default discovered false", default_state.discovered == false)
+	_ok("default has_contact false", default_state.has_contact == false)
+	_ok("default relationship 0", default_state.relationship == 0)
+	var created: GirlState = girls.get_state(alina_id)
+	_ok("created state defaults", created != null and created.discovered == false and created.has_contact == false and created.relationship == 0)
+	_ok("created stored", gs.girls.girls_by_id.has(alina_id))
+	var discovered_events: Array = []
+	var on_discovered := func(girl_id: StringName) -> void:
+		discovered_events.append(girl_id)
+	girls.girl_discovered.connect(on_discovered)
+	_ok("discover first", girls.discover_girl(alina_id))
+	_ok("is_discovered", girls.is_discovered(alina_id))
+	_ok("discover signal once", discovered_events.size() == 1)
+	_ok("discover repeat false", girls.discover_girl(alina_id) == false)
+	_ok("discover signal still once", discovered_events.size() == 1)
+	girls.girl_discovered.disconnect(on_discovered)
+	sm.new_game()
+	_ok("give_contact first", girls.give_contact(alina_id))
+	_ok("contact discovered", girls.is_discovered(alina_id))
+	_ok("has_contact", girls.has_contact(alina_id))
+	_ok("give_contact repeat false", girls.give_contact(alina_id) == false)
+	sm.new_game()
+	_ok("relationship start 0", girls.get_relationship(alina_id) == 0)
+	_ok("relationship plus two", girls.change_relationship(alina_id, 2) == 2)
+	_ok("relationship after plus", girls.get_relationship(alina_id) == 2)
+	_ok("relationship minus one", girls.change_relationship(alina_id, -1) == 1)
+	_ok("relationship after minus", girls.get_relationship(alina_id) == 1)
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_CAFE)
+	var at_cafe: Array[GirlDefinition] = girls.get_girls_at_current_location()
+	_ok("cafe has alina", _girl_list_has(at_cafe, alina_id))
+	_ok("cafe no vika", _girl_list_has(at_cafe, vika_id) == false)
+	world.enter_location(LocationCatalog.ID_APARTMENT)
+	var at_apartment: Array[GirlDefinition] = girls.get_girls_at_current_location()
+	_ok("apartment no alina", _girl_list_has(at_apartment, alina_id) == false)
+	world.unlock_location(LocationCatalog.ID_RESTAURANT)
+	world.enter_location(LocationCatalog.ID_RESTAURANT)
+	var at_restaurant: Array[GirlDefinition] = girls.get_girls_at_current_location()
+	_ok("restaurant has vika", _girl_list_has(at_restaurant, vika_id))
+	_ok("restaurant no alina", _girl_list_has(at_restaurant, alina_id) == false)
+	sm.new_game()
+	var contact_req := GirlContactRequirement.new()
+	contact_req.girl_id = alina_id
+	_ok("contact req new game false", contact_req.is_met() == false)
+	world.enter_location(LocationCatalog.ID_CAFE)
+	gs.flow.game_time_minutes = 0
+	var meet_action: GameAction = girls.create_meet_girl_action(alina_id)
+	_ok("meet action id", meet_action.id == StringName("meet_alina"))
+	_ok("meet time cost", meet_action.time_cost_minutes == 30)
+	_ok("meet money cost", meet_action.money_cost == 0)
+	var meet_ok: ActionResult = actions.execute(meet_action)
+	_ok("meet success", meet_ok.success)
+	_ok("meet discovered", girls.is_discovered(alina_id))
+	_ok("meet has_contact", girls.has_contact(alina_id))
+	_ok("meet time 30", int(clock.get_game_time_minutes()) == 30)
+	_ok("contact req after meet", contact_req.is_met())
+	var time_after_meet: int = int(clock.get_game_time_minutes())
+	var snapshot: Dictionary = girls.get_state(alina_id).to_dict()
+	var meet_again: ActionResult = actions.execute(meet_action)
+	_ok("meet repeat fail", meet_again.success == false)
+	_ok("meet repeat reason", meet_again.failure_reason == "Вы уже знакомы")
+	_ok("meet repeat time unchanged", int(clock.get_game_time_minutes()) == time_after_meet)
+	_ok("meet repeat state unchanged", girls.get_state(alina_id).to_dict() == snapshot)
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_APARTMENT)
+	gs.flow.game_time_minutes = 0
+	var other_loc: ActionResult = actions.execute(girls.create_meet_girl_action(alina_id))
+	_ok("meet other location fail", other_loc.success == false)
+	_ok("meet other location reason", other_loc.failure_reason == "Девушка находится в другой локации")
+	_ok("meet other location undiscovered", girls.is_discovered(alina_id) == false)
+	_ok("meet other location no contact", girls.has_contact(alina_id) == false)
+	_ok("meet other location time", int(clock.get_game_time_minutes()) == 0)
+	sm.new_game()
+	girls.get_state(alina_id).relationship = 2
+	var rel_req := RelationshipRequirement.new()
+	rel_req.girl_id = alina_id
+	rel_req.minimum_relationship = 1
+	_ok("rel req min 1", rel_req.is_met())
+	rel_req.minimum_relationship = 2
+	_ok("rel req min 2", rel_req.is_met())
+	rel_req.minimum_relationship = 3
+	_ok("rel req min 3", rel_req.is_met() == false)
+	_ok("rel req reason", rel_req.get_failure_reason() == "Недостаточный уровень отношений")
+	sm.new_game()
+	world.enter_location(LocationCatalog.ID_CAFE)
+	actions.execute(girls.create_meet_girl_action(alina_id))
+	sm.save_game()
+	sm.new_game()
+	_ok("girls clean after save", girls.is_discovered(alina_id) == false and girls.has_contact(alina_id) == false)
+	_ok("girls load save", sm.load_game())
+	_ok("loaded discovered", girls.is_discovered(alina_id))
+	_ok("loaded has_contact", girls.has_contact(alina_id))
+	_ok("loaded relationship 0", girls.get_relationship(alina_id) == 0)
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var legacy: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v5 girls save", legacy != null)
+	if legacy != null:
+		var v5: Dictionary = {
+			"save_version": 5,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 1, "finale_reached": false},
+				"player": {"money": 0},
+				"progression": {"purchased_ids": []},
+				"world": {
+					"current_location_id": String(LocationCatalog.START_LOCATION_ID),
+					"unlocked_location_ids": ["city_center", "apartment", "cafe"],
+				},
+				"girls": {},
+			},
+		}
+		legacy.store_string(JSON.stringify(v5, "\t"))
+		legacy.close()
+	_ok("load v5 girls save", sm.load_game())
+	_ok("migrated girls empty", gs.girls.girls_by_id.is_empty())
+	var migrated_state: GirlState = girls.get_state(alina_id)
+	_ok("migrated defaults", migrated_state != null and migrated_state.discovered == false and migrated_state.has_contact == false and migrated_state.relationship == 0)
+	var sim := GameSimulator.new()
+	tree.root.add_child(sim)
+	sim.start_new_game()
+	sim.show_section("city")
+	sim.enter_world_location(LocationCatalog.ID_CAFE)
+	var cafe_text: String = sim.get_city_body_text()
+	_ok("sim cafe alina", cafe_text.contains("Алина"))
+	_ok("sim cafe unknown", cafe_text.contains("Вы ещё не знакомы."))
+	_ok("sim cafe meet button", cafe_text.contains("ПОЗНАКОМИТЬСЯ"))
+	var sim_meet: ActionResult = sim.meet_girl(alina_id)
+	_ok("sim meet success", sim_meet.success)
+	_ok("sim meet result name", sim.get_result_text().contains("Вы познакомились с Алина."))
+	_ok("sim meet result contact", sim.get_result_text().contains("Получен контакт."))
+	_ok("sim meet result time", sim.get_result_text().contains("Прошло времени: 30 минут."))
+	var known_text: String = sim.get_city_body_text()
+	_ok("sim cafe known no meet", known_text.contains("ПОЗНАКОМИТЬСЯ") == false)
+	sim.show_section("girls")
+	var girls_text: String = sim.get_city_body_text()
+	_ok("sim girls alina", girls_text.contains("АЛИНА"))
+	_ok("sim girls relationship", girls_text.contains("Отношения: 0"))
+	_ok("sim girls contact", girls_text.contains("Контакт: Да"))
+	_ok("sim girls no vika", girls_text.contains("ВИКА") == false)
+	sim.queue_free()
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _girl_list_has(list: Array[GirlDefinition], girl_id: StringName) -> bool:
+	for girl in list:
+		if girl != null and girl.id == girl_id:
+			return true
+	return false

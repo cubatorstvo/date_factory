@@ -12,6 +12,7 @@ res://
         actions/
         economy/
         world/
+        girls/
         simulator/
     date_system/
         content/

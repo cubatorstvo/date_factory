@@ -48,7 +48,7 @@ func refresh() -> void:
 	if _refreshing:
 		return
 	_refreshing = true
-	if _section == "city":
+	if _section == "city" or _section == "girls":
 		_rebuild_section()
 	_refresh_hud()
 	_refresh_home()
@@ -156,6 +156,21 @@ func exit_world_interior() -> bool:
 	return enter_world_location(location.parent_location_id)
 
 
+func meet_girl(girl_id: StringName) -> ActionResult:
+	var girls: Variant = _girls_service()
+	var actions: Variant = _action_service()
+	var result := ActionResult.new()
+	if girls == null or actions == null:
+		result.success = false
+		result.failure_reason = "GirlsService autoload missing"
+		_on_action_resolved(result)
+		return result
+	var action: GameAction = girls.create_meet_girl_action(girl_id)
+	result = actions.execute(action)
+	_on_action_resolved(result)
+	return result
+
+
 func unlock_selected_world_location() -> bool:
 	var world: Variant = _world_service()
 	if world == null or _world_dev_option == null:
@@ -223,6 +238,15 @@ func format_action_result(result: ActionResult) -> String:
 		if result != null:
 			reason = result.failure_reason
 		return "Действие недоступно.\n%s" % reason
+	if String(result.action_id).begins_with("meet_"):
+		var meet_lines := PackedStringArray()
+		for description in result.applied_effects:
+			for line in description.split("\n"):
+				if not line.is_empty():
+					meet_lines.append(line)
+		if result.time_spent_minutes > 0:
+			meet_lines.append("Прошло времени: %d минут." % result.time_spent_minutes)
+		return "\n".join(meet_lines)
 	var lines := PackedStringArray(["Успешно."])
 	for description in result.applied_effects:
 		lines.append(_format_effect(description))
@@ -352,7 +376,7 @@ func _rebuild_section() -> void:
 		"city":
 			_section_host.add_child(_build_city())
 		"girls":
-			_section_host.add_child(_build_placeholder("ДЕВУШКИ", "Доступные девушки появятся здесь."))
+			_section_host.add_child(_build_girls())
 		"dates":
 			_section_host.add_child(_build_placeholder("СВИДАНИЯ", "Доступные свидания появятся здесь."))
 		"apartment":
@@ -432,6 +456,7 @@ func _build_city() -> Control:
 			interiors = catalog.get_interiors_for_zone(zone_id)
 		for interior in interiors:
 			box.add_child(_build_city_place_row(interior, world))
+	box.add_child(_build_city_people())
 	box.add_child(_build_world_dev(world))
 	return box
 
@@ -452,6 +477,43 @@ func _build_city_place_row(interior: LocationDefinition, world: Variant) -> Cont
 	enter_btn.pressed.connect(enter_world_location.bind(interior.id))
 	row.add_child(enter_btn)
 	return row
+
+
+func _build_city_people() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	var girls: Variant = _girls_service()
+	var present: Array[GirlDefinition] = []
+	if girls != null:
+		present = girls.get_girls_at_current_location()
+	if present.is_empty():
+		return box
+	box.add_child(LabUi.heading("ЛЮДИ"))
+	for definition in present:
+		box.add_child(_build_city_girl_row(definition, girls))
+	return box
+
+
+func _build_city_girl_row(definition: GirlDefinition, girls: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var name_label := Label.new()
+	name_label.text = definition.display_name
+	box.add_child(name_label)
+	var discovered: bool = girls != null and bool(girls.is_discovered(definition.id))
+	if discovered:
+		var status := Label.new()
+		var has_contact: bool = bool(girls.has_contact(definition.id))
+		status.text = "Контакт: %s" % ("Да" if has_contact else "Нет")
+		box.add_child(status)
+		return box
+	var unknown := Label.new()
+	unknown.text = "Вы ещё не знакомы."
+	box.add_child(unknown)
+	if girls != null:
+		var action: GameAction = girls.create_meet_girl_action(definition.id)
+		_add_action_button(box, action, "ПОЗНАКОМИТЬСЯ", false, false)
+	return box
 
 
 func _build_world_dev(world: Variant) -> Control:
@@ -500,6 +562,45 @@ func _build_progression() -> Control:
 		var action: GameAction = purchases.create_purchase_action(definition)
 		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
 	_refresh_progression()
+	return box
+
+
+func _build_girls() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("ДЕВУШКИ"))
+	var girls: Variant = _girls_service()
+	var discovered: Array[GirlDefinition] = []
+	if girls != null:
+		discovered = girls.get_discovered_girls()
+	if discovered.is_empty():
+		var empty := Label.new()
+		empty.text = "Пока нет знакомых девушек."
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(empty)
+		return box
+	for definition in discovered:
+		box.add_child(_build_discovered_girl_card(definition, girls))
+	return box
+
+
+func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var name_label := Label.new()
+	name_label.text = definition.display_name.to_upper()
+	box.add_child(name_label)
+	var relationship_value: int = 0
+	var has_contact: bool = false
+	if girls != null:
+		relationship_value = int(girls.get_relationship(definition.id))
+		has_contact = bool(girls.has_contact(definition.id))
+	var relationship_label := Label.new()
+	relationship_label.text = "Отношения: %d" % relationship_value
+	box.add_child(relationship_label)
+	var contact_label := Label.new()
+	contact_label.text = "Контакт: %s" % ("Да" if has_contact else "Нет")
+	box.add_child(contact_label)
 	return box
 
 
@@ -602,6 +703,13 @@ func _connect_core_signals() -> void:
 		world.location_changed.connect(_on_location_changed)
 	if world != null and not world.location_unlocked.is_connected(_on_location_unlocked):
 		world.location_unlocked.connect(_on_location_unlocked)
+	var girls: Variant = _girls_service()
+	if girls != null and not girls.girl_discovered.is_connected(_on_girl_discovered):
+		girls.girl_discovered.connect(_on_girl_discovered)
+	if girls != null and not girls.girl_contact_received.is_connected(_on_girl_contact_received):
+		girls.girl_contact_received.connect(_on_girl_contact_received)
+	if girls != null and not girls.girl_relationship_changed.is_connected(_on_girl_relationship_changed):
+		girls.girl_relationship_changed.connect(_on_girl_relationship_changed)
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
@@ -621,6 +729,18 @@ func _on_location_changed(_previous_location_id: StringName, _current_location_i
 
 
 func _on_location_unlocked(_location_id: StringName) -> void:
+	refresh()
+
+
+func _on_girl_discovered(_girl_id: StringName) -> void:
+	refresh()
+
+
+func _on_girl_contact_received(_girl_id: StringName) -> void:
+	refresh()
+
+
+func _on_girl_relationship_changed(_girl_id: StringName, _previous_value: int, _current_value: int, _delta: int) -> void:
 	refresh()
 
 
@@ -772,6 +892,13 @@ func _purchase_service() -> Variant:
 
 func _world_service() -> Variant:
 	var node: Node = get_node_or_null("/root/WorldService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _girls_service() -> Variant:
+	var node: Node = get_node_or_null("/root/GirlsService")
 	if not is_instance_valid(node):
 		return null
 	return node
