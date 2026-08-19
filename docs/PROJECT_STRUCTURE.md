@@ -4,6 +4,10 @@ Godot **4.7.1 stable**, renderer **Forward Plus**.
 
 ```text
 res://
+    game/
+        state/
+        save/
+        time/
     date_system/
         content/
             tags/

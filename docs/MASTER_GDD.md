@@ -41,10 +41,20 @@ Date Factory строится вокруг свиданий как главно�
 ## Слои
 
 1. **Content Layer** — typed Resources в `res://date_system/content/`
-2. **Runtime Progress Layer** — прогресс в `user://`
+2. **Runtime Progress Layer** — канонический `GameState` прохождения в `user://`; Date System Lab дополнительно хранит тестовый прогресс свиданий в `DateProgressStore`
 3. **Date Engine** — детерминированная логика свидания
 4. **Text Date Runner** — текстовый 2D-проход DateSession
 5. **Developer Room** — редактор контента и тестовый запуск
+
+## GameState
+
+Единственное сохраняемое состояние прохождения. Autoload `GameState` владеет секциями; autoload `SaveManager` отвечает за `new_game` / `save_game` / `load_game` / `has_save` / `delete_save`. Autoload `TimeService` продвигает `flow.game_time_minutes` и публикует прошедший интервал.
+
+`GameState` хранит только изменяемое состояние конкретного прохождения. Статические определения игрового контента — параметры девушек, предметов, локаций, Stage, цены, базовые характеристики и прочие definitions — хранятся отдельно от `GameState`. `GameState` хранит только ссылки/ID и изменяемый прогресс относительно этих definitions.
+
+Сейчас в секциях живут только `flow.game_time_minutes`, `story.stage`, `player.money`. День, час и минута вычисляются из абсолютного игрового времени. Остальные секции — пустой каркас для следующих этапов. Прогресс свиданий лаборатории (`DateProgressStore`) пока отдельно: `girls` / `dating` ещё не заполнены.
+
+`DateSession.stage` — стадия эпизода свидания, не `StoryState.stage`.
 
 ## Главная формула эпизода
 

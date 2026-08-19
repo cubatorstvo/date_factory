@@ -36,6 +36,8 @@ var _selected_index: int = -1
 var _dirty: bool = false
 var _editor_root: Control
 var _save_bar: HBoxContainer
+var _run_label: Label
+var _game_time_label: Label
 
 
 func _ready() -> void:
@@ -52,6 +54,10 @@ func _ready() -> void:
 		factory.export_to_disk()
 		catalog_service.load_catalog()
 	progress_store.load_store(catalog_service.catalog)
+	if _save_manager().has_save():
+		_save_manager().load_game()
+	else:
+		_save_manager().new_game()
 	randomize()
 	_build_shell()
 
@@ -61,15 +67,44 @@ func _build_shell() -> void:
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 12)
 	root.add_theme_constant_override("separation", 8)
 	add_child(root)
-	var header := HBoxContainer.new()
-	header.add_child(LabUi.heading("DATE SYSTEM LAB"))
+	var header := VBoxContainer.new()
+	var top := HBoxContainer.new()
+	top.add_child(LabUi.heading("DATE SYSTEM LAB"))
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(spacer)
+	top.add_child(spacer)
+	_run_label = Label.new()
+	_run_label.add_theme_color_override("font_color", LabUi.MUTED)
+	top.add_child(_run_label)
+	var new_btn := LabUi.button("Новая игра")
+	new_btn.pressed.connect(_new_playthrough)
+	top.add_child(new_btn)
+	var save_btn := LabUi.button("Сохранить")
+	save_btn.pressed.connect(_save_playthrough)
+	top.add_child(save_btn)
+	var load_btn := LabUi.button("Загрузить")
+	load_btn.pressed.connect(_load_playthrough)
+	top.add_child(load_btn)
 	_status = Label.new()
 	_status.text = "Готово"
 	_status.add_theme_color_override("font_color", LabUi.MUTED)
-	header.add_child(_status)
+	top.add_child(_status)
+	header.add_child(top)
+	var time_row := HBoxContainer.new()
+	time_row.add_theme_constant_override("separation", 8)
+	_game_time_label = Label.new()
+	_game_time_label.add_theme_color_override("font_color", LabUi.TEXT)
+	time_row.add_child(_game_time_label)
+	for pair in [[30, "+30 MIN"], [120, "+120 MIN"], [1440, "+1 DAY"]]:
+		var minutes: int = int(pair[0])
+		var btn := LabUi.button(str(pair[1]))
+		btn.pressed.connect(_apply_test_action.bind(minutes))
+		time_row.add_child(btn)
+	header.add_child(time_row)
+	var clock: Variant = _time_service()
+	if clock != null and not clock.time_advanced.is_connected(_on_time_advanced):
+		clock.time_advanced.connect(_on_time_advanced)
+	_refresh_run_label()
 	root.add_child(header)
 	var split := HSplitContainer.new()
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -114,6 +149,84 @@ func _show_section(section: String) -> void:
 
 func _set_status(text: String) -> void:
 	_status.text = text
+
+
+func _game_state() -> Variant:
+	var node: Node = get_node("/root/GameState")
+	if not is_instance_valid(node):
+		push_error("GameState autoload missing")
+	return node
+
+
+func _save_manager() -> Variant:
+	var node: Node = get_node("/root/SaveManager")
+	if not is_instance_valid(node):
+		push_error("SaveManager autoload missing")
+	return node
+
+
+func _time_service() -> Variant:
+	var node: Node = get_node_or_null("/root/TimeService")
+	if not is_instance_valid(node):
+		push_error("TimeService autoload missing")
+	return node
+
+
+func _refresh_run_label() -> void:
+	var gs: Variant = _game_state()
+	var clock: Variant = _time_service()
+	if _game_time_label != null and clock != null:
+		_game_time_label.text = "GAME TIME\nDay: %d\nTime: %02d:%02d\nAbsolute: %d min" % [
+			clock.get_day(),
+			clock.get_hour(),
+			clock.get_minute(),
+			clock.get_game_time_minutes(),
+		]
+	if _run_label == null:
+		return
+	_run_label.text = "Stage %d · Деньги %d" % [gs.story.stage, gs.player.money]
+
+
+func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
+	_refresh_run_label()
+
+
+func _apply_test_action(minutes: int) -> void:
+	var clock: Variant = _time_service()
+	if clock == null:
+		return
+	var action := GameAction.new()
+	action.time_cost_minutes = minutes
+	clock.apply_action(action)
+	if _section == "test_state":
+		_show_section(_section)
+
+
+func _new_playthrough() -> void:
+	_save_manager().new_game()
+	_refresh_run_label()
+	_set_status("Новое прохождение")
+	if _section == "date" or _section == "test_state":
+		_show_section(_section)
+
+
+func _save_playthrough() -> void:
+	_save_manager().save_game()
+	_set_status("Прохождение сохранено")
+
+
+func _load_playthrough() -> void:
+	var sm: Variant = _save_manager()
+	if not sm.has_save():
+		_set_status("Нет сохранения")
+		return
+	if sm.load_game():
+		_refresh_run_label()
+		_set_status("Прохождение загружено")
+		if _section == "date" or _section == "test_state":
+			_show_section(_section)
+		return
+	_set_status("Не удалось загрузить сохранение")
 
 
 func _build_validation() -> Control:
@@ -230,6 +343,38 @@ func _build_test_state() -> Control:
 	var root := VBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(LabUi.heading("Тестовое состояние"))
+	root.add_child(LabUi.heading("Прохождение"))
+	var gs: Variant = _game_state()
+	var clock: Variant = _time_service()
+	var time_view := Label.new()
+	if clock != null:
+		time_view.text = "GAME TIME\nDay: %d\nTime: %02d:%02d\nAbsolute: %d min" % [
+			clock.get_day(),
+			clock.get_hour(),
+			clock.get_minute(),
+			clock.get_game_time_minutes(),
+		]
+	root.add_child(time_view)
+	var stage := SpinBox.new()
+	stage.min_value = 1
+	stage.max_value = 99
+	stage.allow_greater = true
+	stage.value = gs.story.stage
+	stage.value_changed.connect(func(value: float) -> void:
+		_game_state().story.stage = int(value)
+		_refresh_run_label()
+	)
+	root.add_child(LabUi.labeled_row("Stage", stage))
+	var money := SpinBox.new()
+	money.min_value = 0
+	money.max_value = 999999
+	money.allow_greater = true
+	money.value = gs.player.money
+	money.value_changed.connect(func(value: float) -> void:
+		_game_state().player.money = int(value)
+		_refresh_run_label()
+	)
+	root.add_child(LabUi.labeled_row("Деньги", money))
 	var player: TestPlayerState = progress_store.player_state
 	for stat in catalog_service.catalog.progression_stats:
 		var spin := SpinBox.new()

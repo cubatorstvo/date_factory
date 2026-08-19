@@ -24,6 +24,8 @@ func run_all() -> PackedStringArray:
 	_test_unlockable_tag_reservation()
 	_test_twelve_tag_rebalance()
 	_test_girl_difficulty()
+	_test_game_state_round_trip()
+	_test_game_time()
 	return _failures
 
 
@@ -969,3 +971,186 @@ func _unique_count(ids: Array[StringName]) -> int:
 	for item in ids:
 		found[String(item)] = true
 	return found.size()
+
+
+func _game_state() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("GameState")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _save_manager() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("SaveManager")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _time_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("TimeService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _assert_clock(label: String, clock: Variant, minutes: int, day: int, hour: int, minute: int) -> void:
+	_ok("%s game_time_minutes" % label, clock.get_game_time_minutes() == minutes)
+	_ok("%s day" % label, clock.get_day() == day)
+	_ok("%s hour" % label, clock.get_hour() == hour)
+	_ok("%s minute" % label, clock.get_minute() == minute)
+
+
+func _test_game_state_round_trip() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	_ok("GameState autoload", gs != null)
+	_ok("SaveManager autoload", sm != null)
+	_ok("TimeService autoload", clock != null)
+	if gs == null or sm == null or clock == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/game_state_round_trip.json"
+	sm.delete_save()
+	_ok("has_save false after delete", not sm.has_save())
+	sm.new_game()
+	_ok("new_game game_time_minutes 0", gs.flow.game_time_minutes == 0)
+	_ok("new_game day 1", clock.get_day() == 1)
+	_ok("new_game stage 1", gs.story.stage == 1)
+	_ok("new_game money 0", gs.player.money == 0)
+	gs.flow.game_time_minutes = 8640
+	gs.story.stage = 3
+	gs.player.money = 12345
+	sm.save_game()
+	_ok("has_save true after save", sm.has_save())
+	var file: FileAccess = FileAccess.open(sm.save_path, FileAccess.READ)
+	_ok("save file opened", file != null)
+	var parsed: Variant = {}
+	if file != null:
+		parsed = JSON.parse_string(file.get_as_text())
+		file.close()
+	var root: Dictionary = parsed if parsed is Dictionary else {}
+	_ok("save_version == 2", int(root.get("save_version", 0)) == 2)
+	var snapshot: Variant = root.get("game_state", {})
+	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
+	_ok("save has empty progression", state_dict.get("progression", {"x": 1}).is_empty())
+	var flow_value: Variant = state_dict.get("flow", {})
+	var flow_dict: Dictionary = flow_value if flow_value is Dictionary else {}
+	_ok("save has game_time_minutes", int(flow_dict.get("game_time_minutes", -1)) == 8640)
+	_ok("save has no day", not flow_dict.has("day"))
+	sm.new_game()
+	_ok("new_game resets values", gs.flow.game_time_minutes == 0 and gs.story.stage == 1 and gs.player.money == 0)
+	_ok("load_game", sm.load_game())
+	_ok("loaded game_time_minutes == 8640", gs.flow.game_time_minutes == 8640)
+	_ok("loaded day == 7", clock.get_day() == 7)
+	_ok("loaded stage == 3", gs.story.stage == 3)
+	_ok("loaded money == 12345", gs.player.money == 12345)
+	_ok("section flow", gs.flow != null)
+	_ok("section story", gs.story != null)
+	_ok("section player", gs.player != null)
+	_ok("section progression", gs.progression != null)
+	_ok("section world", gs.world != null)
+	_ok("section girls", gs.girls != null)
+	_ok("section dating", gs.dating != null)
+	_ok("section rivals", gs.rivals != null)
+	_ok("section automation", gs.automation != null)
+	gs.from_dict({"flow": {}, "story": {}, "player": {}})
+	_ok("missing keys default game_time_minutes", gs.flow.game_time_minutes == 0)
+	_ok("missing keys default day", clock.get_day() == 1)
+	_ok("missing keys default stage", gs.story.stage == 1)
+	_ok("missing keys default money", gs.player.money == 0)
+	sm.delete_save()
+	_ok("deleted test save", not sm.has_save())
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_game_time() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	_ok("game time GameState", gs != null)
+	_ok("game time SaveManager", sm != null)
+	_ok("game time TimeService", clock != null)
+	if gs == null or sm == null or clock == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/game_time_round_trip.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	_assert_clock("start", clock, 0, 1, 0, 0)
+	clock.advance_time(90)
+	_assert_clock("inside day", clock, 90, 1, 1, 30)
+	gs.flow.game_time_minutes = 1380
+	clock.advance_time(120)
+	_assert_clock("day rollover", clock, 1500, 2, 1, 0)
+	sm.new_game()
+	clock.advance_time(4320)
+	_ok("multi-day minutes", clock.get_game_time_minutes() == 4320)
+	_ok("multi-day day", clock.get_day() == 4)
+	sm.new_game()
+	clock.advance_time(3675)
+	sm.save_game()
+	sm.new_game()
+	_ok("clean runtime after save", clock.get_game_time_minutes() == 0)
+	_ok("load_game time", sm.load_game())
+	_assert_clock("loaded 3675", clock, 3675, 3, 13, 15)
+	sm.new_game()
+	var events: Array = []
+	var on_time := func(delta_minutes: int, previous_game_time: int, current_game_time: int) -> void:
+		events.append({
+			"delta_minutes": delta_minutes,
+			"previous_game_time": previous_game_time,
+			"current_game_time": current_game_time,
+		})
+	clock.time_advanced.connect(on_time)
+	var previous_game_time: int = clock.get_game_time_minutes()
+	clock.advance_time(120)
+	clock.time_advanced.disconnect(on_time)
+	_ok("time event once", events.size() == 1)
+	if events.size() == 1:
+		var payload: Dictionary = events[0]
+		_ok("time event delta", int(payload["delta_minutes"]) == 120)
+		_ok("time event previous", int(payload["previous_game_time"]) == previous_game_time)
+		_ok("time event current", int(payload["current_game_time"]) == previous_game_time + 120)
+	sm.new_game()
+	var action := GameAction.new()
+	action.time_cost_minutes = 120
+	clock.apply_action(action)
+	_ok("game action minutes", clock.get_game_time_minutes() == 120)
+	_ok("days_to_minutes", clock.days_to_minutes(3) == 4320)
+	_ok("hours_to_minutes", clock.hours_to_minutes(5) == 300)
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var legacy: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v1 save", legacy != null)
+	if legacy != null:
+		var v1: Dictionary = {
+			"save_version": 1,
+			"game_state": {
+				"flow": {"day": 7},
+				"story": {"stage": 1},
+				"player": {"money": 0},
+			},
+		}
+		legacy.store_string(JSON.stringify(v1, "\t"))
+		legacy.close()
+	_ok("load v1 save", sm.load_game())
+	_ok("migrated minutes", clock.get_game_time_minutes() == 8640)
+	_ok("migrated day", clock.get_day() == 7)
+	sm.delete_save()
+	_ok("deleted time test save", not sm.has_save())
+	sm.save_path = original_path
+	sm.new_game()

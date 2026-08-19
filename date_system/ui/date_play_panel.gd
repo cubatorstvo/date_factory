@@ -90,8 +90,36 @@ func _catalog() -> DateContentCatalog:
 	return catalog_service.catalog
 
 
+func _game_state() -> Variant:
+	var node: Node = get_node("/root/GameState")
+	if not is_instance_valid(node):
+		push_error("GameState autoload missing")
+	return node
+
+
+func _time_service() -> Variant:
+	var node: Node = get_node_or_null("/root/TimeService")
+	if not is_instance_valid(node):
+		push_error("TimeService autoload missing")
+	return node
+
+
 func _build_launch() -> void:
 	_host.add_child(LabUi.heading("Запуск свидания"))
+	var gs: Variant = _game_state()
+	var clock: Variant = _time_service()
+	var run := Label.new()
+	if clock != null:
+		run.text = "День %d · %02d:%02d · Stage %d · Деньги %d" % [
+			clock.get_day(),
+			clock.get_hour(),
+			clock.get_minute(),
+			gs.story.stage,
+			gs.player.money,
+		]
+	else:
+		run.text = "Stage %d · Деньги %d" % [gs.story.stage, gs.player.money]
+	_host.add_child(run)
 	_host.add_child(_girl_card())
 	var girl_sel := OptionButton.new()
 	LabUi.fill_selector(girl_sel, _catalog().girls, _girl_id)

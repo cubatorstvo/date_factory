@@ -101,10 +101,99 @@ Opening: score `0`, но Tag раскрывается. Core/Closing: `+1` / `-1`
 ## Слои
 
 1. Content Layer — typed Resources.
-2. Runtime Progress Layer — отношения, известные предпочтения, Secondary, число свиданий, тестовая прокачка, квартира, replay snapshot.
+2. Runtime Progress Layer — канонический `GameState` прохождения (`SaveManager`, JSON `user://saves/game.json`) плюс лабораторный `DateProgressStore` (отношения, известные предпочтения, Secondary, число свиданий, тестовая прокачка, квартира, replay snapshot).
 3. Date Engine — DateSession, RNG, эпизоды, BASE/UNLOCKABLE, mappings, Tags, Secondary, location/outfit/apartment scores, итог отношений.
 4. Text Date Runner — текстовый 2D DateSession.
 5. Developer Room — редактор Content Layer и запуск runner.
+
+## GameState
+
+Autoload `GameState` — текущее прохождение. Секции: `flow`, `story`, `player`, `progression`, `world`, `girls`, `dating`, `rivals`, `automation`. Каждая секция — отдельный typed-класс с `to_dict()` / `from_dict()`.
+
+`GameState` хранит только изменяемое состояние конкретного прохождения. Статические определения игрового контента — параметры девушек, предметов, локаций, Stage, цены, базовые характеристики и прочие definitions — хранятся отдельно от `GameState`. `GameState` хранит только ссылки/ID и изменяемый прогресс относительно этих definitions.
+
+Сейчас используются только:
+
+```text
+flow.game_time_minutes = 0
+story.stage = 1
+player.money = 0
+```
+
+`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`.
+
+Пустые секции сериализуются как `{}`. Поля читаются через `data.get(key, default)`.
+
+Autoload `SaveManager` — жизненный цикл:
+
+```text
+new_game()
+save_game()
+load_game()
+has_save() -> bool
+delete_save()
+```
+
+Формат файла `user://saves/game.json`:
+
+```text
+{
+  "save_version": 2,
+  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1 }, "player": { "money": 0 }, "progression": {}, "world": {}, "girls": {}, "dating": {}, "rivals": {}, "automation": {} }
+}
+```
+
+`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, money 0. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Системы и UI читают время через `TimeService`, `GameState.story.stage`, `GameState.player.money`.
+
+`DateSession.stage` не является `StoryState.stage`. `DateProgressStore` остаётся прогрессом лаборатории свиданий, пока `girls` / `dating` пусты.
+
+## Time / Game Flow
+
+Единые игровые часы для текущей 2D-текстовой оболочки, будущих Game Actions, 3D free roam, incremental и cooldown'ов. Источник истины — абсолютное игровое время в минутах.
+
+```text
+1 игровой день = 1440 игровых минут
+24 часа, 60 минут в часе
+
+day = floor(game_time_minutes / 1440) + 1
+minute_of_day = game_time_minutes % 1440
+hour = floor(minute_of_day / 60)
+minute = minute_of_day % 60
+```
+
+`FlowState` хранит только `game_time_minutes`. `to_dict()` / `from_dict()` сериализуют это поле.
+
+Autoload `TimeService` — единственная точка продвижения времени:
+
+```text
+advance_time(delta_minutes: int)
+```
+
+Любой положительный промежуток обрабатывается одним вызовом. После успешного продвижения публикуется `time_advanced(delta_minutes, previous_game_time, current_game_time)`. Будущие Economy / Automation / Dating / Story / World считают результат сразу за весь `delta_minutes`.
+
+Игровые действия несут `GameAction.time_cost_minutes`. После успеха действие вызывает `TimeService.advance_time(time_cost_minutes)`. Покупка может стоить `0` и не двигает часы.
+
+`TimeService` API для cooldown'ов на абсолютном времени:
+
+```text
+get_game_time_minutes() -> int
+get_day() -> int
+get_hour() -> int
+get_minute() -> int
+days_to_minutes(days: int) -> int
+hours_to_minutes(hours: int) -> int
+```
+
+Пример: `next_date_available_at = current + days_to_minutes(3)`, проверка `current >= next_date_available_at`.
+
+Real-time progression — управляемый режим того же часов:
+
+```text
+real_time_progression_enabled
+game_minutes_per_real_second
+```
+
+Накопитель дробной части переводит реальное время в целые игровые минуты и вызывает тот же `advance_time()`. Для текущей 2D-игры `real_time_progression_enabled = false`: время двигают действия. Будущий 3D free roam включает режим (`1` реальная секунда = `1` игровая минута при стартовом коэффициенте `1.0`); фиксированные действия по-прежнему идут через `advance_time(action.time_cost_minutes)`.
 
 ## Будущие эпизоды и действия
 
@@ -372,6 +461,8 @@ AVAILABLE UNLOCKABLE по-прежнему резервируют Tag и рас�
 
 Разделы: СВИДАНИЕ, ДЕВУШКИ, СЛОЖНОСТЬ ДЕВУШЕК, ТЕГИ, БАЗОВЫЕ ХОДЫ, ОТКРЫВАЕМЫЕ ХОДЫ, СИТУАЦИИ, SECONDARY, МЕСТА, ФОРМАТЫ МЕСТ, НАРЯДЫ, ХАРАКТЕРИСТИКИ, ПРАВИЛА СВИДАНИЯ, БАЛАНС, ТЕСТОВОЕ СОСТОЯНИЕ, ВАЛИДАЦИЯ.
 
+Шапка: GAME TIME (`Day`, `Time`, `Absolute`) из `TimeService`, `stage` / `money` из `GameState`, кнопки «Новая игра», «Сохранить», «Загрузить» и тестовые действия `+30 MIN` / `+120 MIN` / `+1 DAY` через `GameAction.time_cost_minutes`. Экран СВИДАНИЕ показывает день, часы и `stage` / `money`. ТЕСТОВОЕ СОСТОЯНИЕ показывает вычисляемое время и редактирует `stage` / `money`.
+
 Редактор: список, поиск, создать, дублировать, редактировать, удалить, сохранить, отменить. Draft-копия Resource. Save: validate → `.tres` → catalog reload → статус. Удаление показывает зависимости.
 
 «СЛОЖНОСТЬ ДЕВУШЕК»: поля ID, Название, Описание, Enabled, Количество положительных тегов (SpinBox 1 .. enabled_tags−1), Порядок. В списке: `Название | Positive | Negative`.
@@ -431,4 +522,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive.
+Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `money` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`.

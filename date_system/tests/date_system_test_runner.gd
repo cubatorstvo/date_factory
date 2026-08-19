@@ -2,6 +2,10 @@ extends SceneTree
 
 
 func _init() -> void:
+	call_deferred("_run_tests")
+
+
+func _run_tests() -> void:
 	var tests := DateSystemTests.new()
 	var failures: PackedStringArray = tests.run_all()
 	print("DATE SYSTEM TESTS: %s" % tests.summary())
