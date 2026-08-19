@@ -55,6 +55,7 @@ func default_path_for(kind: String, resource_id: String) -> String:
 		"DateLocation": "res://date_system/content/locations",
 		"Outfit": "res://date_system/content/outfits",
 		"ProgressionStat": "res://date_system/content/progression",
+		"GirlDifficultyPreset": "res://date_system/content/girl_difficulty",
 		"DateRules": "res://date_system/content/rules",
 	}
 	var folder: String = str(folders.get(kind, "res://date_system/content"))
@@ -82,6 +83,8 @@ func add_to_catalog(resource: Resource) -> void:
 		catalog.outfits.append(resource)
 	elif resource is ProgressionStat:
 		catalog.progression_stats.append(resource)
+	elif resource is GirlDifficultyPreset:
+		catalog.girl_difficulty_presets.append(resource)
 	elif resource is DateRules:
 		catalog.date_rules = resource
 
@@ -107,6 +110,8 @@ func remove_from_catalog(resource: Resource) -> void:
 		catalog.outfits.erase(resource)
 	elif resource is ProgressionStat:
 		catalog.progression_stats.erase(resource)
+	elif resource is GirlDifficultyPreset:
+		catalog.girl_difficulty_presets.erase(resource)
 
 
 func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]:
@@ -141,6 +146,10 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 		for move in catalog.moves:
 			if move.unlock_requirement != null and move.unlock_requirement.stat_id == resource_id:
 				result.append({"type": "DateMove", "id": String(move.id), "field": "unlock_requirement.stat_id"})
+	elif kind == "GirlDifficultyPreset":
+		for girl in catalog.girls:
+			if girl.difficulty_preset_id == resource_id:
+				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "difficulty_preset_id"})
 	return result
 
 
@@ -157,6 +166,7 @@ func _rebuild_paths() -> void:
 	_capture_array(catalog.locations, "DateLocation")
 	_capture_array(catalog.outfits, "Outfit")
 	_capture_array(catalog.progression_stats, "ProgressionStat")
+	_capture_array(catalog.girl_difficulty_presets, "GirlDifficultyPreset")
 	if catalog.date_rules != null:
 		var rules_path: String = catalog.date_rules.resource_path
 		if rules_path.is_empty():

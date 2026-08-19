@@ -130,14 +130,15 @@ signal episode_presentation_finished
 - `DateMoveSituationMapping`: situation_id, tag_id, option_text, positive_result_text, negative_result_text
 - `DateSituation`: id, display_name, description, situation_text, enabled, allowed_phases, weight, custom_episode_scene, custom_logic_script
 - `SecondaryRule`: id, display_name, description, enabled, condition_type, condition_parameters, success_score, failure_score
-- `GirlProfile`: id, display_name, description, enabled, relationship_min/start/max, positive_tag_ids, negative_tag_ids, secondary_rule_id, favorite_location_format_ids, portrait, future_character_scene. В редакторе выбираются только положительные Tags; их число равно `DateRules.positive_tags_per_girl` (seed = 3). При сохранении `negative_tag_ids = enabled_tag_ids − positive_tag_ids`.
+- `GirlDifficultyPreset`: id, display_name, description, enabled, positive_tag_count, sort_order. Seed: starter 6, early 5, mid 4, late 3, elite 2.
+- `GirlProfile`: id, display_name, description, enabled, relationship_min/start/max, difficulty_preset_id, positive_tag_ids, negative_tag_ids, secondary_rule_id, favorite_location_format_ids, portrait, future_character_scene. Редактор выбирает Difficulty и положительные Tags. Требуемое число positive = `GirlDifficultyPreset.positive_tag_count`. При сохранении `negative_tag_ids = enabled_tag_ids − positive_tag_ids`.
 - `LocationFormat`: id, display_name, description, enabled
 - `DateLocation`: id, display_name, description, enabled, base_quality_bonus, preference_mode, location_format_id, uses_apartment_quality, uses_apartment_preparation, future_location_scene
 - `Outfit`: id, display_name, description, enabled, score_bonus, future_visual_resource
 - `ProgressionStat`: id, display_name, description, min_level, max_level
 - `UnlockRequirement`: stat_id, required_level
 - `DateRules`: см. seed-параметры ниже
-- `DateContentCatalog`: tags, moves, situations, girls, secondary_rules, location_formats, locations, outfits, progression_stats, date_rules
+- `DateContentCatalog`: tags, moves, situations, girls, girl_difficulty_presets, secondary_rules, location_formats, locations, outfits, progression_stats, date_rules
 
 Enums:
 
@@ -170,13 +171,12 @@ location_preference_failure = -1
 apartment_unprepared_penalty = -1
 apartment_quality_min = 0
 apartment_quality_max = 3
-positive_tags_per_girl = 3
 min_distinct_base_tags_per_situation = 6
 ```
 
-Итоговая модель знания: 12 активных Tags; у каждой девушки 3 положительных и 9 отрицательных; BASE за эпизод — 3 Хода; результат Tag `+1` / `-1`. При полном знании случайный BASE-набор регулярно оставляет игрока без положительного варианта. AVAILABLE UNLOCKABLE расширяют покрытие Tags и снижают эту вероятность по мере прокачки.
+Количество положительных тегов — свойство конкретной девушки через `GirlDifficultyPreset`, не глобальное DateRules.
 
-Все параметры редактируются в Developer Room. В «ПРАВИЛА СВИДАНИЯ»: `Положительных тегов у девушки` (SpinBox, min = 1, max = число активных Tags − 1) и `Минимум разных базовых тегов в ситуации`.
+Все параметры свидания редактируются в «ПРАВИЛА СВИДАНИЯ». Difficulty presets — в «СЛОЖНОСТЬ ДЕВУШЕК».
 
 ## Runtime
 
@@ -278,11 +278,46 @@ muscle Мышца 0..8; appearance Внешность 0..8; capital Капита
 | composure | САМООБЛАДАНИЕ | Спокойствие, выдержка и отсутствие суеты под давлением ситуации. |
 | cunning | ХИТРОСТЬ | Решение ситуации через обходной ход, проверку условий или использование правил в свою пользу. |
 
+## Girl Difficulty
+
+Количество положительных тегов — главный параметр сложности девушки. Диапазон отношений — отдельное независимое измерение.
+
+```text
+Tag Difficulty     → насколько трудно получить +1 в эпизоде из BASE
+Relationship Range → сколько суммарного прогресса нужно до максимума
+```
+
+Seed presets при 12 активных Tags и `base_moves_per_episode = 3`. Теоретическая доступность хотя бы одного positive среди трёх разных BASE Tags в равномерном пуле из 12:
+
+| id | имя | positive | negative | теоретическая доступность |
+|---|---|---|---|---|
+| starter | Стартовая | 6 | 6 | 90.9% |
+| early | Ранняя | 5 | 7 | 84.1% |
+| mid | Средняя | 4 | 8 | 74.5% |
+| late | Поздняя | 3 | 9 | 61.8% |
+| elite | Элитная | 2 | 10 | 45.5% |
+
+Формула UI: `1 − C(enabled − positive, base_moves) / C(enabled, base_moves)`. Обновляется при изменении числа активных Tags, `positive_tag_count` и `base_moves_per_episode`.
+
+Балансировочный принцип:
+
+```text
+STARTER  6  герой почти без прокачки
+EARLY    5  первые Открываемые ходы
+MID      4  заметная роль билда, места и одежды
+LATE     3  развитый набор Открываемых ходов
+ELITE    2  поздняя прокачка + сильная подготовка
+```
+
+Разрешённые сочетания включают STARTER + -5..+5, MID + -5..+5, MID + -10..+10, LATE + -10..+10, ELITE + -10..+10.
+
+AVAILABLE UNLOCKABLE по-прежнему резервируют Tag и расширяют покрытие: для STARTER BASE почти всегда даёт хороший вариант; для LATE/ELITE арсенал становится основным способом стабильно находить +1.
+
 ## Seed Girls
 
-Алина `alina`: rel -5..+5 start 0. Positive: care, generosity, composure. Negative: politeness, directness, flattery, audacity, dominance, risk, status, humor, cunning. Secondary variety. Favorites: calm, culture.
+Алина `alina`: difficulty starter. rel -5..+5 start 0. Positive: politeness, directness, care, generosity, composure, humor. Negative: flattery, audacity, dominance, risk, status, cunning. Secondary variety. Favorites: calm, culture. Первая полноценная девушка: 6/6, базовый герой может довести до +5 после изучения предпочтений.
 
-Вика `vika`: rel -10..+10 start 0. Positive: audacity, dominance, risk. Negative: politeness, directness, flattery, generosity, status, care, humor, composure, cunning. Secondary demanding. Favorites: game, unusual.
+Вика `vika`: difficulty late. rel -10..+10 start 0. Positive: audacity, dominance, risk. Negative: politeness, directness, flattery, generosity, status, care, humor, composure, cunning. Secondary demanding. Favorites: game, unusual. Девушка на развитый арсенал: 3/9.
 
 ## Seed Situations
 
@@ -335,11 +370,15 @@ muscle Мышца 0..8; appearance Внешность 0..8; capital Капита
 
 Сцена `res://date_system/dev_room/DateSystemLab.tscn` (Control).
 
-Разделы: СВИДАНИЕ, ДЕВУШКИ, ТЕГИ, БАЗОВЫЕ ХОДЫ, ОТКРЫВАЕМЫЕ ХОДЫ, СИТУАЦИИ, SECONDARY, МЕСТА, ФОРМАТЫ МЕСТ, НАРЯДЫ, ХАРАКТЕРИСТИКИ, ПРАВИЛА СВИДАНИЯ, ТЕСТОВОЕ СОСТОЯНИЕ, ВАЛИДАЦИЯ.
+Разделы: СВИДАНИЕ, ДЕВУШКИ, СЛОЖНОСТЬ ДЕВУШЕК, ТЕГИ, БАЗОВЫЕ ХОДЫ, ОТКРЫВАЕМЫЕ ХОДЫ, СИТУАЦИИ, SECONDARY, МЕСТА, ФОРМАТЫ МЕСТ, НАРЯДЫ, ХАРАКТЕРИСТИКИ, ПРАВИЛА СВИДАНИЯ, БАЛАНС, ТЕСТОВОЕ СОСТОЯНИЕ, ВАЛИДАЦИЯ.
 
 Редактор: список, поиск, создать, дублировать, редактировать, удалить, сохранить, отменить. Draft-копия Resource. Save: validate → `.tres` → catalog reload → статус. Удаление показывает зависимости.
 
-В «ДЕВУШКИ» над списком Tags счётчик `Положительные теги: N / 3` (`3` из `DateRules.positive_tags_per_girl`). Пока N < лимита можно добавлять положительные Tags; при N = лимиту выбранные можно снимать, остальные остаются отрицательными. N ≠ лимит → Save показывает ошибку валидации. Карточка редактирования: `Положительные: 3`, `Отрицательные: 9`, `Всего активных тегов: 12`.
+«СЛОЖНОСТЬ ДЕВУШЕК»: поля ID, Название, Описание, Enabled, Количество положительных тегов (SpinBox 1 .. enabled_tags−1), Порядок. В списке: `Название | Positive | Negative`.
+
+«ДЕВУШКИ»: selector Сложность (enabled presets), рядом `Положительных тегов требуется: N` / `Отрицательных тегов: enabled−N` и теоретическая доступность. Таблица `TAG | НРАВИТСЯ | НЕ НРАВИТСЯ`. Счётчик `Положительные теги: current / required`. Save пересобирает negative как дополнение positive. N ≠ required → ERROR валидации.
+
+«БАЛАНС»: по каждой девушке Girl, Difficulty, Positive Tags, Negative Tags, Relationship Range, Theoretical positive availability. Кнопка «СИМУЛИРОВАТЬ BASE» (10000 seeds, stats на минимуме, UNLOCKABLE unavailable): по Situation и aggregate — доля эпизодов с хотя бы одним positive BASE, доля all-negative, средний positive BASE count. Фактические проценты считаются по реальным mappings Situations.
 
 После save новый DateSession берёт новые данные. Запущенная сессия работает на snapshot.
 
@@ -361,10 +400,12 @@ muscle Мышца 0..8; appearance Внешность 0..8; capital Капита
 14. UnlockRequirement → существующий ProgressionStat  
 15. один Move — максимум один mapping на одну Situation  
 16. несколько UNLOCKABLE одной Situation с одинаковым Tag → WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION` (не блокирует запуск)
-17. `girl.positive_tag_ids.size() != date_rules.positive_tags_per_girl` → ERROR `INVALID_POSITIVE_TAG_COUNT`
-18. `positive_tag_ids ∪ negative_tag_ids` должен совпадать со всеми активными Tags → ERROR `INCOMPLETE_GIRL_TAG_COVERAGE` (сообщение содержит отсутствующие и лишние `tag_ids`)
-19. активный DateTag без DateMoveSituationMapping → WARNING `TAG_WITHOUT_MOVE_MAPPING` (в seed = 0)
-20. distinct BASE Tags ситуации < `min_distinct_base_tags_per_situation` → WARNING `LOW_BASE_TAG_DIVERSITY` (seed: каждая из пяти Situations ≥ 6)
+17. `GirlProfile.difficulty_preset_id` не резолвится в enabled preset → ERROR `INVALID_GIRL_DIFFICULTY_REFERENCE`
+18. `girl.positive_tag_ids.size() != difficulty.positive_tag_count` → ERROR `INVALID_POSITIVE_TAG_COUNT`
+19. `positive ∪ negative == enabled Tags`, пересечение пусто; иначе ERROR `INCOMPLETE_GIRL_TAG_COVERAGE` (missing_tag_ids, duplicate_state_tag_ids, unknown_tag_ids)
+20. enabled preset: `1 <= positive_tag_count < enabled_tags.size()` иначе ERROR `INVALID_DIFFICULTY_POSITIVE_COUNT`
+21. активный DateTag без DateMoveSituationMapping → WARNING `TAG_WITHOUT_MOVE_MAPPING` (в seed = 0)
+22. distinct BASE Tags ситуации < `min_distinct_base_tags_per_situation` → WARNING `LOW_BASE_TAG_DIVERSITY`
 
 Экран: severity, code, resource_type, resource_id, field, message. Кнопка «ПРОВЕРИТЬ ВЕСЬ КОНТЕНТ». ERROR блокирует сохранение; WARNING только показывает проблему.
 
@@ -382,7 +423,7 @@ Replay восстанавливает snapshot девушки до сессии 
 
 Сброс девушки: relationship_start, пустые revealed tags, secondary_revealed=false, completed_dates=0.
 
-Карточка девушки: имя, отношения min/max, нравится/не нравится/неизвестно, Secondary, любимые форматы.
+Карточка девушки: имя; Сложность; Положительных тегов N/12; Теоретическая базовая доступность; Отношения current/max; известные нравится/не нравится; Неизвестно N; Secondary ??? / раскрытое правило.
 
 Debug-панель свёрнута по умолчанию.
 
@@ -390,4 +431,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи (раскрытие tags, scores фаз, BASE pool/RNG/replay, UNLOCKABLE, Secondary, локации, квартира, outfit, clamp Алины/Вики, reset, resource reload, validator) плюс резервирование Tags AVAILABLE UNLOCKABLE, LOCKED/USED, уникальность BASE Tags, fallback, deterministic seed, WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION`, 12 Tags / 3 positive / полное покрытие GirlProfile, новые mappings, UNKNOWN новых Tags, 10000-seed баланс `0.60..0.64` для абстрактного пула 12 BASE × 3 positive × 3 хода без UNLOCKABLE.
+Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive.

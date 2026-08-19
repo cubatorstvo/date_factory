@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="GirlDifficultyPreset" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/girl_difficulty_preset.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"early"
+display_name = "Ранняя"
+description = "Небольшая вероятность получить полностью неподходящий набор базовых ходов."
+enabled = true
+positive_tag_count = 5
+sort_order = 1

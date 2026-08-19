@@ -17,6 +17,7 @@ func build_catalog() -> DateContentCatalog:
 	catalog.secondary_rules = _secondary()
 	catalog.situations = _situations()
 	catalog.moves = _moves()
+	catalog.girl_difficulty_presets = _difficulties()
 	catalog.girls = _girls()
 	catalog.date_rules = _rules()
 	return catalog
@@ -32,6 +33,7 @@ func export_to_disk() -> void:
 	_save_group(catalog.secondary_rules, "res://date_system/content/secondary")
 	_save_group(catalog.situations, "res://date_system/content/situations")
 	_save_group(catalog.moves, "res://date_system/content/moves")
+	_save_group(catalog.girl_difficulty_presets, "res://date_system/content/girl_difficulty")
 	_save_group(catalog.girls, "res://date_system/content/girls")
 	ResourceSaver.save(catalog.date_rules, "res://date_system/content/rules/date_rules.tres")
 	ResourceSaver.save(catalog, "res://date_system/content/catalog/date_content_catalog.tres")
@@ -346,9 +348,31 @@ func _moves() -> Array[DateMove]:
 	]
 
 
+func _difficulty(id: String, name: String, description: String, positive_count: int, order: int) -> GirlDifficultyPreset:
+	var preset := GirlDifficultyPreset.new()
+	preset.id = StringName(id)
+	preset.display_name = name
+	preset.description = description
+	preset.enabled = true
+	preset.positive_tag_count = positive_count
+	preset.sort_order = order
+	return preset
+
+
+func _difficulties() -> Array[GirlDifficultyPreset]:
+	return [
+		_difficulty("starter", "Стартовая", "Высокая совместимость с базовым арсеналом героя. Подходит для первых девушек игры.", 6, 0),
+		_difficulty("early", "Ранняя", "Небольшая вероятность получить полностью неподходящий набор базовых ходов.", 5, 1),
+		_difficulty("mid", "Средняя", "Прокачка героя и подготовка к свиданию начинают заметно влиять на стабильность результата.", 4, 2),
+		_difficulty("late", "Поздняя", "Базовый набор регулярно оставляет игрока без положительного тега. Развитый арсенал становится важной частью свидания.", 3, 3),
+		_difficulty("elite", "Элитная", "Очень узкий набор положительных реакций. Рассчитана на сильно развитого героя и полноценную подготовку.", 2, 4),
+	]
+
+
 func _girl(
 	id: String,
 	name: String,
+	difficulty_id: String,
 	rel_min: int,
 	rel_max: int,
 	positives: Array,
@@ -364,6 +388,7 @@ func _girl(
 	girl.relationship_min = rel_min
 	girl.relationship_start = 0
 	girl.relationship_max = rel_max
+	girl.difficulty_preset_id = StringName(difficulty_id)
 	var pos: Array[StringName] = []
 	for item in positives:
 		pos.append(StringName(str(item)))
@@ -382,8 +407,8 @@ func _girl(
 
 func _girls() -> Array[GirlProfile]:
 	return [
-		_girl("alina", "Алина", -5, 5, ["care", "generosity", "composure"], ["politeness", "directness", "flattery", "audacity", "dominance", "risk", "status", "humor", "cunning"], "variety", ["calm", "culture"]),
-		_girl("vika", "Вика", -10, 10, ["audacity", "dominance", "risk"], ["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"], "demanding", ["game", "unusual"]),
+		_girl("alina", "Алина", "starter", -5, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"], ["flattery", "audacity", "dominance", "risk", "status", "cunning"], "variety", ["calm", "culture"]),
+		_girl("vika", "Вика", "late", -10, 10, ["audacity", "dominance", "risk"], ["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"], "demanding", ["game", "unusual"]),
 	]
 
 
@@ -408,6 +433,5 @@ func _rules() -> DateRules:
 	rules.apartment_unprepared_penalty = -1
 	rules.apartment_quality_min = 0
 	rules.apartment_quality_max = 3
-	rules.positive_tags_per_girl = 3
 	rules.min_distinct_base_tags_per_situation = 6
 	return rules

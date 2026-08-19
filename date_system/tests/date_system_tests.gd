@@ -23,6 +23,7 @@ func run_all() -> PackedStringArray:
 	_test_validator()
 	_test_unlockable_tag_reservation()
 	_test_twelve_tag_rebalance()
+	_test_girl_difficulty()
 	return _failures
 
 
@@ -594,11 +595,15 @@ func _test_twelve_tag_rebalance() -> void:
 	var enabled: Array[DateTag] = catalog.enabled_tags()
 	_ok("22.1 seed contains 12 Tags", enabled.size() == 12)
 	var alina: GirlProfile = catalog.find_girl(&"alina")
-	_ok("22.2 Alina positives", _same_tag_set(alina.positive_tag_ids, ["care", "generosity", "composure"]))
-	_ok("22.2 Alina sizes", alina.positive_tag_ids.size() == 3 and alina.negative_tag_ids.size() == 9)
+	_ok("22.2 Alina difficulty starter", alina.difficulty_preset_id == &"starter")
+	_ok("22.2 Alina positives", _same_tag_set(alina.positive_tag_ids, ["politeness", "directness", "care", "generosity", "composure", "humor"]))
+	_ok("22.2 Alina sizes", alina.positive_tag_ids.size() == 6 and alina.negative_tag_ids.size() == 6)
+	_ok("22.2 Alina range", alina.relationship_min == -5 and alina.relationship_max == 5)
 	var vika: GirlProfile = catalog.find_girl(&"vika")
+	_ok("22.3 Vika difficulty late", vika.difficulty_preset_id == &"late")
 	_ok("22.3 Vika positives", _same_tag_set(vika.positive_tag_ids, ["audacity", "dominance", "risk"]))
 	_ok("22.3 Vika sizes", vika.positive_tag_ids.size() == 3 and vika.negative_tag_ids.size() == 9)
+	_ok("22.3 Vika range", vika.relationship_min == -10 and vika.relationship_max == 10)
 	for girl in catalog.girls:
 		_ok("22.4 coverage %s" % String(girl.id), _girl_covers_enabled_tags(girl, enabled))
 	var validator := ContentValidator.new()
@@ -613,7 +618,7 @@ func _test_twelve_tag_rebalance() -> void:
 	four_girl.sync_negative_tags(four.enabled_tags())
 	_ok("22.5 four positives", _find_code(validator.validate(four), "INVALID_POSITIVE_TAG_COUNT") != null)
 	var three_issues: Array[ContentValidationIssue] = validator.validate(_catalog())
-	_ok("22.5 three positives pass count", _find_code(three_issues, "INVALID_POSITIVE_TAG_COUNT") == null)
+	_ok("22.5 six positives pass count", _find_code(three_issues, "INVALID_POSITIVE_TAG_COUNT") == null)
 	_ok("22.6 unused tags warning count", _count_code(three_issues, "TAG_WITHOUT_MOVE_MAPPING") == 0)
 	_ok("22.6 no incomplete coverage", _find_code(three_issues, "INCOMPLETE_GIRL_TAG_COVERAGE") == null)
 	for situation in catalog.situations:
@@ -638,15 +643,15 @@ func _test_twelve_tag_rebalance() -> void:
 		_ok("22.12 UNKNOWN %s" % String(tag_id), reset_progress.tag_knowledge(tag_id) == DateTypes.TagKnowledge.UNKNOWN)
 	var remap_progress := GirlProgress.new()
 	remap_progress.reset_to_profile(alina)
-	remap_progress.revealed_positive_tag_ids = [&"politeness"] as Array[StringName]
+	remap_progress.revealed_positive_tag_ids = [&"flattery"] as Array[StringName]
 	remap_progress.revealed_negative_tag_ids = [&"care"] as Array[StringName]
 	remap_progress.realign_revealed_to_profile(alina, catalog)
-	_ok("22.12 remap politeness negative", remap_progress.tag_knowledge(&"politeness") == DateTypes.TagKnowledge.NEGATIVE)
+	_ok("22.12 remap flattery negative", remap_progress.tag_knowledge(&"flattery") == DateTypes.TagKnowledge.NEGATIVE)
 	_ok("22.12 remap care positive", remap_progress.tag_knowledge(&"care") == DateTypes.TagKnowledge.POSITIVE)
 	_ok("22.12 remap humor unknown", remap_progress.tag_knowledge(&"humor") == DateTypes.TagKnowledge.UNKNOWN)
 	_ok("22.13 reveal care positive", _reveal_tag_knowledge(&"care", true))
 	_ok("22.13 reveal composure positive", _reveal_tag_knowledge(&"composure", true))
-	_ok("22.13 reveal humor negative", _reveal_tag_knowledge(&"humor", false))
+	_ok("22.13 reveal humor positive", _reveal_tag_knowledge(&"humor", true))
 	_ok("22.13 reveal cunning negative", _reveal_tag_knowledge(&"cunning", false))
 	_test_twelve_tag_reservation_regression()
 	_test_twelve_tag_balance_simulation()
@@ -747,27 +752,47 @@ func _test_twelve_tag_reservation_regression() -> void:
 
 
 func _test_twelve_tag_balance_simulation() -> void:
+	var cases: Array = [
+		[6, 0.89, 0.93, "STARTER"],
+		[5, 0.82, 0.86, "EARLY"],
+		[4, 0.72, 0.77, "MID"],
+		[3, 0.59, 0.65, "LATE"],
+		[2, 0.42, 0.49, "ELITE"],
+	]
+	for case in cases:
+		var share: float = _uniform_positive_share(int(case[0]))
+		print("BALANCE %s positive=%d share=%.4f" % [str(case[3]), int(case[0]), share])
+		_ok("23. %s 10000-seed share %.2f..%.2f" % [str(case[3]), float(case[1]), float(case[2])], share >= float(case[1]) and share <= float(case[2]), "share=%.4f" % share)
+
+
+func _uniform_positive_share(positive_count: int) -> float:
 	var specs: Array = []
-	for tag in _catalog().enabled_tags():
+	var catalog: DateContentCatalog = _catalog()
+	for tag in catalog.enabled_tags():
 		specs.append(["base_%s" % String(tag.id), String(tag.id)])
-	var catalog: DateContentCatalog = _diversity_catalog(specs, [])
+	catalog = _diversity_catalog(specs, [])
 	var girl: GirlProfile = catalog.find_girl(&"alina")
-	var positives: Dictionary = {}
+	var positives: Array[StringName] = []
+	for tag in catalog.enabled_tags():
+		if positives.size() >= positive_count:
+			break
+		positives.append(tag.id)
+	girl.positive_tag_ids = positives
+	girl.sync_negative_tags(catalog.enabled_tags())
+	var liked: Dictionary = {}
 	for tag_id in girl.positive_tag_ids:
-		positives[String(tag_id)] = true
+		liked[String(tag_id)] = true
 	var hits: int = 0
 	for seed in range(1, 10001):
 		var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player())
 		var has_positive: bool = false
 		for tag_id in engine.get_session_state().current_selected_base_tag_ids:
-			if positives.has(String(tag_id)):
+			if liked.has(String(tag_id)):
 				has_positive = true
 				break
 		if has_positive:
 			hits += 1
-	var share: float = float(hits) / 10000.0
-	print("BALANCE 10000-seed share=%.4f hits=%d" % [share, hits])
-	_ok("23. 10000-seed share 0.60..0.64", share >= 0.60 and share <= 0.64, "share=%.4f hits=%d" % [share, hits])
+	return float(hits) / 10000.0
 
 
 func _diversity_catalog(base_specs: Array, unlock_specs: Array, opening_count: int = 1, core_count: int = 0, allow_repeats: bool = false) -> DateContentCatalog:
@@ -841,6 +866,90 @@ func _test_mapping(tag_id: String) -> DateMoveSituationMapping:
 	mapping.positive_result_text = "ok"
 	mapping.negative_result_text = "no"
 	return mapping
+
+
+func _test_girl_difficulty() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var presets: Array[GirlDifficultyPreset] = catalog.enabled_girl_difficulty_presets()
+	_ok("5 enabled difficulty presets", presets.size() == 5)
+	_ok("STARTER positive_tag_count == 6", catalog.find_girl_difficulty(&"starter").positive_tag_count == 6)
+	_ok("EARLY positive_tag_count == 5", catalog.find_girl_difficulty(&"early").positive_tag_count == 5)
+	_ok("MID positive_tag_count == 4", catalog.find_girl_difficulty(&"mid").positive_tag_count == 4)
+	_ok("LATE positive_tag_count == 3", catalog.find_girl_difficulty(&"late").positive_tag_count == 3)
+	_ok("ELITE positive_tag_count == 2", catalog.find_girl_difficulty(&"elite").positive_tag_count == 2)
+	var expected: Array = [[6, 0.9091], [5, 0.8409], [4, 0.7455], [3, 0.6182], [2, 0.4545]]
+	for pair in expected:
+		var actual: float = DateBalanceMath.at_least_one_positive_probability(12, int(pair[0]), 3)
+		_ok("theory positive=%d" % int(pair[0]), abs(actual - float(pair[1])) < 0.0002, "actual=%.4f" % actual)
+	var validator := ContentValidator.new()
+	var seed_issues: Array[ContentValidationIssue] = validator.validate(catalog)
+	_ok("seed 0 INVALID_GIRL_DIFFICULTY_REFERENCE", _find_code(seed_issues, "INVALID_GIRL_DIFFICULTY_REFERENCE") == null)
+	_ok("seed 0 INVALID_POSITIVE_TAG_COUNT", _find_code(seed_issues, "INVALID_POSITIVE_TAG_COUNT") == null)
+	_ok("seed 0 INCOMPLETE_GIRL_TAG_COVERAGE", _find_code(seed_issues, "INCOMPLETE_GIRL_TAG_COVERAGE") == null)
+	_ok("seed 0 INVALID_DIFFICULTY_POSITIVE_COUNT", _find_code(seed_issues, "INVALID_DIFFICULTY_POSITIVE_COUNT") == null)
+	var missing := _catalog()
+	missing.find_girl(&"alina").difficulty_preset_id = &"missing"
+	_ok("INVALID_GIRL_DIFFICULTY_REFERENCE missing", _find_code(validator.validate(missing), "INVALID_GIRL_DIFFICULTY_REFERENCE") != null)
+	var disabled := _catalog()
+	disabled.find_girl_difficulty(&"starter").enabled = false
+	_ok("INVALID_GIRL_DIFFICULTY_REFERENCE disabled", _find_code(validator.validate(disabled), "INVALID_GIRL_DIFFICULTY_REFERENCE") != null)
+	var bad_count := _catalog()
+	bad_count.find_girl_difficulty(&"mid").positive_tag_count = 12
+	_ok("INVALID_DIFFICULTY_POSITIVE_COUNT", _find_code(validator.validate(bad_count), "INVALID_DIFFICULTY_POSITIVE_COUNT") != null)
+	var mid_girl: GirlProfile = GirlProfile.new()
+	mid_girl.id = &"lab_mid"
+	mid_girl.display_name = "Lab Mid"
+	mid_girl.enabled = true
+	mid_girl.difficulty_preset_id = &"mid"
+	mid_girl.relationship_min = -5
+	mid_girl.relationship_max = 5
+	mid_girl.positive_tag_ids = [&"care", &"generosity", &"composure", &"humor"] as Array[StringName]
+	mid_girl.sync_negative_tags(catalog.enabled_tags())
+	_ok("save mid positive 4", mid_girl.positive_tag_ids.size() == 4)
+	_ok("save mid negative 8", mid_girl.negative_tag_ids.size() == 8)
+	_ok("save mid coverage", _girl_covers_enabled_tags(mid_girl, catalog.enabled_tags()))
+	DirAccess.make_dir_recursive_absolute("user://date_system")
+	var path: String = "user://date_system/test_mid_girl.tres"
+	_ok("save mid girl", ResourceSaver.save(mid_girl, path) == OK)
+	var loaded: GirlProfile = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as GirlProfile
+	_ok("reload mid girl", loaded != null and loaded.positive_tag_ids.size() == 4 and loaded.negative_tag_ids.size() == 8)
+	_ok("reload mid coverage", loaded != null and _girl_covers_enabled_tags(loaded, catalog.enabled_tags()))
+	var starter_girl: GirlProfile = catalog.find_girl(&"alina").duplicate(true) as GirlProfile
+	_ok("starter current 6", starter_girl.positive_tag_ids.size() == 6)
+	starter_girl.difficulty_preset_id = &"mid"
+	var required: int = catalog.find_girl_difficulty(&"mid").positive_tag_count
+	_ok("editor shows 6 / 4", starter_girl.positive_tag_ids.size() == 6 and required == 4)
+	starter_girl.positive_tag_ids = [&"care", &"generosity", &"composure", &"humor"] as Array[StringName]
+	starter_girl.sync_negative_tags(catalog.enabled_tags())
+	_ok("after MID save 4/8", starter_girl.difficulty_preset_id == &"mid" and starter_girl.positive_tag_ids.size() == 4 and starter_girl.negative_tag_ids.size() == 8)
+	var progress := GirlProgress.new()
+	var alina: GirlProfile = catalog.find_girl(&"alina")
+	progress.reset_to_profile(alina)
+	progress.reveal_tag(&"care", true)
+	progress.reveal_tag(&"flattery", false)
+	var swapped: GirlProfile = alina.duplicate(true) as GirlProfile
+	swapped.positive_tag_ids.erase(&"care")
+	swapped.positive_tag_ids.append(&"flattery")
+	swapped.sync_negative_tags(catalog.enabled_tags())
+	progress.realign_revealed_to_profile(swapped, catalog)
+	_ok("known care stays known", progress.tag_knowledge(&"care") != DateTypes.TagKnowledge.UNKNOWN)
+	_ok("known flattery stays known", progress.tag_knowledge(&"flattery") != DateTypes.TagKnowledge.UNKNOWN)
+	_ok("care follows updated profile", progress.tag_knowledge(&"care") == DateTypes.TagKnowledge.NEGATIVE)
+	_ok("flattery follows updated profile", progress.tag_knowledge(&"flattery") == DateTypes.TagKnowledge.POSITIVE)
+	var diagnostics := DateBalanceDiagnostics.new()
+	var alina_sim: Dictionary = {}
+	var vika_sim: Dictionary = {}
+	for girl_id in [&"alina", &"vika"]:
+		var girl: GirlProfile = catalog.find_girl(girl_id)
+		var result: Dictionary = diagnostics.simulate_girl(catalog, girl, 10000)
+		if girl_id == &"alina":
+			alina_sim = result
+		else:
+			vika_sim = result
+		print("SEED SIM %s at_least_one=%.4f all_negative=%.4f avg=%.3f episodes=%d" % [String(girl_id), float(result["at_least_one"]), float(result["all_negative"]), float(result["average_positive"]), int(result["episodes"])])
+		for row in result["situations"]:
+			print("SEED SIM %s %s at_least=%.4f all_neg=%.4f avg=%.3f" % [String(girl_id), str(row["situation_id"]), float(row["at_least_one"]), float(row["all_negative"]), float(row["average_positive"])])
+	_ok("Alina BASE availability above Vika", float(alina_sim["at_least_one"]) > float(vika_sim["at_least_one"]))
 
 
 func _same_tag_set(actual: Array[StringName], expected: Array) -> bool:

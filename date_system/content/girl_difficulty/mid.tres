@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="GirlDifficultyPreset" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/girl_difficulty_preset.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"mid"
+display_name = "Средняя"
+description = "Прокачка героя и подготовка к свиданию начинают заметно влиять на стабильность результата."
+enabled = true
+positive_tag_count = 4
+sort_order = 2

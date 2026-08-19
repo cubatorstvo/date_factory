@@ -4,6 +4,7 @@ extends Control
 const SECTIONS: Array[Array] = [
 	["date", "СВИДАНИЕ"],
 	["girls", "ДЕВУШКИ"],
+	["girl_difficulty", "СЛОЖНОСТЬ ДЕВУШЕК"],
 	["tags", "ТЕГИ"],
 	["base_moves", "БАЗОВЫЕ ХОДЫ"],
 	["unlock_moves", "ОТКРЫВАЕМЫЕ ХОДЫ"],
@@ -14,6 +15,7 @@ const SECTIONS: Array[Array] = [
 	["outfits", "НАРЯДЫ"],
 	["stats", "ХАРАКТЕРИСТИКИ"],
 	["rules", "ПРАВИЛА СВИДАНИЯ"],
+	["balance", "БАЛАНС"],
 	["test_state", "ТЕСТОВОЕ СОСТОЯНИЕ"],
 	["validation", "ВАЛИДАЦИЯ"],
 ]
@@ -102,6 +104,8 @@ func _show_section(section: String) -> void:
 			_play_panel.status_message.connect(_set_status)
 		"validation":
 			_content_host.add_child(_build_validation())
+		"balance":
+			_content_host.add_child(_build_balance())
 		"test_state":
 			_content_host.add_child(_build_test_state())
 		_:
@@ -136,6 +140,90 @@ func _build_validation() -> Control:
 		_set_status("Валидация: %d проблем" % issues.size())
 	)
 	return root
+
+
+func _build_balance() -> Control:
+	var root := VBoxContainer.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_theme_constant_override("separation", 8)
+	root.add_child(LabUi.heading("Баланс"))
+	var overview := RichTextLabel.new()
+	overview.fit_content = true
+	overview.scroll_active = false
+	overview.bbcode_enabled = false
+	overview.text = _balance_overview_text()
+	root.add_child(overview)
+	var tools := HBoxContainer.new()
+	var seeds := SpinBox.new()
+	seeds.min_value = 1
+	seeds.max_value = 100000
+	seeds.value = 10000
+	tools.add_child(LabUi.labeled_row("Seeds", seeds))
+	var btn := LabUi.button("СИМУЛИРОВАТЬ BASE")
+	tools.add_child(btn)
+	root.add_child(tools)
+	var results := RichTextLabel.new()
+	results.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	results.scroll_active = true
+	root.add_child(results)
+	btn.pressed.connect(func() -> void:
+		_set_status("Симуляция BASE...")
+		results.text = _run_balance_simulation(int(seeds.value))
+		_set_status("Симуляция BASE завершена")
+	)
+	return root
+
+
+func _balance_overview_text() -> String:
+	var catalog: DateContentCatalog = catalog_service.catalog
+	var lines := PackedStringArray(["Girl | Difficulty | Positive Tags | Negative Tags | Relationship Range | Theoretical positive availability"])
+	var diagnostics := DateBalanceDiagnostics.new()
+	for girl in catalog.girls:
+		if girl == null or not girl.enabled:
+			continue
+		var preset: GirlDifficultyPreset = catalog.find_girl_difficulty(girl.difficulty_preset_id)
+		var difficulty_name: String = preset.display_name if preset != null else String(girl.difficulty_preset_id)
+		var enabled_count: int = catalog.enabled_tags().size()
+		var positive_count: int = girl.positive_tag_ids.size()
+		var theory: String = DateBalanceMath.format_percent(diagnostics.theoretical_availability(catalog, girl))
+		lines.append("%s | %s | %d / %d | %d negative | %d..%d | %s" % [
+			girl.display_name,
+			difficulty_name,
+			positive_count,
+			enabled_count,
+			girl.negative_tag_ids.size(),
+			girl.relationship_min,
+			girl.relationship_max,
+			theory,
+		])
+	return "\n".join(lines)
+
+
+func _run_balance_simulation(seed_count: int) -> String:
+	var catalog: DateContentCatalog = catalog_service.catalog
+	var diagnostics := DateBalanceDiagnostics.new()
+	var lines := PackedStringArray()
+	for girl in catalog.girls:
+		if girl == null or not girl.enabled:
+			continue
+		var result: Dictionary = diagnostics.simulate_girl(catalog, girl, seed_count)
+		lines.append(girl.display_name)
+		for row in result["situations"]:
+			lines.append("%s | episodes %d | at least one positive BASE %s | all negative BASE %s | average positive BASE %.2f" % [
+				str(row["situation_name"]),
+				int(row["episodes"]),
+				DateBalanceMath.format_percent(float(row["at_least_one"])),
+				DateBalanceMath.format_percent(float(row["all_negative"])),
+				float(row["average_positive"]),
+			])
+		lines.append("aggregate | episodes %d | at least one positive BASE %s | all negative BASE %s | average positive BASE %.2f" % [
+			int(result["episodes"]),
+			DateBalanceMath.format_percent(float(result["at_least_one"])),
+			DateBalanceMath.format_percent(float(result["all_negative"])),
+			float(result["average_positive"]),
+		])
+		lines.append("")
+	return "\n".join(lines)
 
 
 func _build_test_state() -> Control:
@@ -249,6 +337,8 @@ func _items() -> Array:
 	match _section:
 		"girls":
 			return catalog.girls
+		"girl_difficulty":
+			return catalog.girl_difficulty_presets
 		"tags":
 			return catalog.tags
 		"base_moves":
@@ -286,14 +376,19 @@ func _refresh_list() -> void:
 		return
 	_list.clear()
 	var query: String = _search.text.to_lower() if _search != null else ""
+	var enabled_count: int = catalog_service.catalog.enabled_tags().size() if catalog_service.catalog != null else 0
 	for item in _items():
 		if item == null:
 			continue
 		var label: String = "DateRules"
-		if "display_name" in item:
-			label = str(item.display_name)
-		if "id" in item:
-			label = "%s  [%s]" % [label, String(item.id)]
+		if _section == "girl_difficulty":
+			var positive_count: int = int(item.positive_tag_count)
+			label = "%s | %d | %d" % [str(item.display_name), positive_count, maxi(0, enabled_count - positive_count)]
+		else:
+			if "display_name" in item:
+				label = str(item.display_name)
+			if "id" in item:
+				label = "%s  [%s]" % [label, String(item.id)]
 		if query.is_empty() or query in label.to_lower():
 			_list.add_item(label)
 			_list.set_item_metadata(_list.item_count - 1, item)
@@ -344,6 +439,8 @@ func _rebuild_form() -> void:
 			_add_situation_move_lists()
 		"girls":
 			_add_girl_form()
+		"girl_difficulty":
+			_add_difficulty_form()
 		"base_moves", "unlock_moves":
 			_add_move_form()
 		"rules":
@@ -511,41 +608,60 @@ func _add_girl_form() -> void:
 	_add_int(girl, "relationship_min", "relationship_min")
 	_add_int(girl, "relationship_start", "relationship_start")
 	_add_int(girl, "relationship_max", "relationship_max")
-	_add_id_selector(girl, "secondary_rule_id", "secondary_rule", catalog_service.catalog.secondary_rules)
+	_add_girl_difficulty_selector(girl)
 	var enabled_count: int = catalog_service.catalog.enabled_tags().size()
+	var required: int = _positive_tag_required(girl)
 	var positive_count: int = girl.positive_tag_ids.size()
-	var summary := Label.new()
-	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary.text = "Положительные: %d\nОтрицательные: %d\nВсего активных тегов: %d" % [
-		positive_count,
-		maxi(0, enabled_count - positive_count),
-		enabled_count,
-	]
-	_form_host.add_child(summary)
-	var limit: int = _positive_tag_limit()
-	_form_host.add_child(LabUi.heading("Нравится"))
+	var required_label := Label.new()
+	required_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	required_label.text = "Положительных тегов требуется: %d" % required
+	_form_host.add_child(required_label)
+	var negative_label := Label.new()
+	negative_label.text = "Отрицательных тегов: %d" % maxi(0, enabled_count - required)
+	_form_host.add_child(negative_label)
+	var theory := Label.new()
+	theory.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var draws: int = 3
+	if catalog_service.catalog.date_rules != null:
+		draws = catalog_service.catalog.date_rules.base_moves_per_episode
+	var chance: float = DateBalanceMath.at_least_one_positive_probability(enabled_count, required, draws)
+	theory.text = "Теоретическая базовая доступность положительного тега: %s" % DateBalanceMath.format_percent(chance)
+	_form_host.add_child(theory)
+	_add_id_selector(girl, "secondary_rule_id", "secondary_rule", catalog_service.catalog.secondary_rules)
 	var counter := Label.new()
-	counter.text = "Положительные теги: %d / %d" % [positive_count, limit]
+	counter.text = "Положительные теги: %d / %d" % [positive_count, required]
 	_form_host.add_child(counter)
-	var hint := Label.new()
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.text = "Отмеченные теги нравятся. Все остальные активные теги автоматически не нравятся."
-	_form_host.add_child(hint)
+	var grid := GridContainer.new()
+	grid.columns = 3
+	for header in ["TAG", "НРАВИТСЯ", "НЕ НРАВИТСЯ"]:
+		var title := Label.new()
+		title.text = header
+		grid.add_child(title)
 	for tag in catalog_service.catalog.tags:
 		if tag == null or not tag.enabled:
 			continue
-		var box := CheckBox.new()
-		box.text = tag.display_name
+		var name_label := Label.new()
+		name_label.text = tag.display_name
+		grid.add_child(name_label)
 		var selected: bool = girl.positive_tag_ids.has(tag.id)
-		box.button_pressed = selected
-		box.disabled = (not selected) and positive_count >= limit
+		var like := CheckBox.new()
+		like.button_pressed = selected
+		var dislike := CheckBox.new()
+		dislike.button_pressed = not selected
 		var tag_id: StringName = tag.id
-		box.toggled.connect(func(pressed: bool) -> void:
+		like.toggled.connect(func(pressed: bool) -> void:
 			_set_girl_liked_tag(girl, tag_id, pressed)
 			_dirty = true
 			_rebuild_form.call_deferred()
 		)
-		_form_host.add_child(box)
+		dislike.toggled.connect(func(pressed: bool) -> void:
+			_set_girl_liked_tag(girl, tag_id, not pressed)
+			_dirty = true
+			_rebuild_form.call_deferred()
+		)
+		grid.add_child(like)
+		grid.add_child(dislike)
+	_form_host.add_child(grid)
 	_form_host.add_child(LabUi.heading("Любимые форматы"))
 	for format in catalog_service.catalog.location_formats:
 		var box := CheckBox.new()
@@ -562,17 +678,55 @@ func _add_girl_form() -> void:
 		_form_host.add_child(box)
 
 
-func _positive_tag_limit() -> int:
-	var rules: DateRules = catalog_service.catalog.date_rules if catalog_service.catalog != null else null
-	if rules == null:
-		return 3
-	return maxi(1, rules.positive_tags_per_girl)
+func _add_girl_difficulty_selector(girl: GirlProfile) -> void:
+	var button := OptionButton.new()
+	var selected: int = 0
+	var presets: Array[GirlDifficultyPreset] = catalog_service.catalog.enabled_girl_difficulty_presets()
+	var current: GirlDifficultyPreset = catalog_service.catalog.find_girl_difficulty(girl.difficulty_preset_id)
+	if current != null and not current.enabled:
+		presets.append(current)
+	for i in presets.size():
+		var preset: GirlDifficultyPreset = presets[i]
+		button.add_item(preset.display_name, i)
+		button.set_item_metadata(i, preset.id)
+		if preset.id == girl.difficulty_preset_id:
+			selected = i
+	if presets.is_empty():
+		button.add_item("—", 0)
+		button.set_item_metadata(0, StringName())
+	else:
+		button.select(selected)
+	button.item_selected.connect(func(index: int) -> void:
+		girl.difficulty_preset_id = button.get_item_metadata(index)
+		_dirty = true
+		_rebuild_form.call_deferred()
+	)
+	_form_host.add_child(LabUi.labeled_row("Сложность", button))
+
+
+func _add_difficulty_form() -> void:
+	var preset: GirlDifficultyPreset = _draft as GirlDifficultyPreset
+	_add_string(preset, "id", "ID")
+	_add_string(preset, "display_name", "Название")
+	_add_text(preset, "description", "Описание")
+	_add_bool(preset, "enabled", "Enabled")
+	var enabled_count: int = catalog_service.catalog.enabled_tags().size()
+	_add_bounded_int(preset, "positive_tag_count", "Количество положительных тегов", 1, maxi(1, enabled_count - 1))
+	_add_int(preset, "sort_order", "Порядок")
+
+
+func _positive_tag_required(girl: GirlProfile) -> int:
+	if girl == null or catalog_service.catalog == null:
+		return 0
+	var preset: GirlDifficultyPreset = catalog_service.catalog.find_girl_difficulty(girl.difficulty_preset_id)
+	if preset == null:
+		return 0
+	return preset.positive_tag_count
 
 
 func _set_girl_liked_tag(girl: GirlProfile, tag_id: StringName, liked: bool) -> void:
 	girl.positive_tag_ids.erase(tag_id)
-	var limit: int = _positive_tag_limit()
-	if liked and girl.positive_tag_ids.size() < limit:
+	if liked:
 		girl.positive_tag_ids.append(tag_id)
 	girl.sync_negative_tags(catalog_service.catalog.enabled_tags())
 
@@ -649,7 +803,6 @@ func _add_rules_form() -> void:
 	]:
 		_add_int(rules, prop, prop)
 	var enabled_count: int = catalog_service.catalog.enabled_tags().size()
-	_add_bounded_int(rules, "positive_tags_per_girl", "Положительных тегов у девушки", 1, maxi(1, enabled_count - 1))
 	_add_bounded_int(rules, "min_distinct_base_tags_per_situation", "Минимум разных базовых тегов в ситуации", 1, maxi(1, enabled_count))
 	_add_bool(rules, "allow_situation_repeats", "allow_situation_repeats")
 	_add_bool(rules, "show_locked_unlockable_moves", "show_locked_unlockable_moves")
@@ -661,6 +814,8 @@ func _kind_name() -> String:
 	match _section:
 		"girls":
 			return "GirlProfile"
+		"girl_difficulty":
+			return "GirlDifficultyPreset"
 		"tags":
 			return "DateTag"
 		"base_moves", "unlock_moves":
@@ -702,7 +857,18 @@ func _new_resource() -> Resource:
 			var girl := GirlProfile.new()
 			girl.id = StringName("girl_%s" % suffix)
 			girl.display_name = "Новая девушка"
+			var starter: GirlDifficultyPreset = catalog_service.catalog.find_girl_difficulty(&"starter")
+			if starter != null:
+				girl.difficulty_preset_id = starter.id
 			return girl
+		"girl_difficulty":
+			var preset := GirlDifficultyPreset.new()
+			preset.id = StringName("difficulty_%s" % suffix)
+			preset.display_name = "Новая сложность"
+			preset.enabled = true
+			preset.positive_tag_count = 4
+			preset.sort_order = catalog_service.catalog.girl_difficulty_presets.size()
+			return preset
 		"tags":
 			var tag := DateTag.new()
 			tag.id = StringName("tag_%s" % suffix)
@@ -850,7 +1016,7 @@ func _swap_into(catalog: DateContentCatalog, draft: Resource) -> void:
 	if draft is DateRules:
 		catalog.date_rules = draft
 		return
-	var arrays: Array = [catalog.tags, catalog.moves, catalog.situations, catalog.girls, catalog.secondary_rules, catalog.location_formats, catalog.locations, catalog.outfits, catalog.progression_stats]
+	var arrays: Array = [catalog.tags, catalog.moves, catalog.situations, catalog.girls, catalog.girl_difficulty_presets, catalog.secondary_rules, catalog.location_formats, catalog.locations, catalog.outfits, catalog.progression_stats]
 	for arr in arrays:
 		for i in arr.size():
 			if arr[i] != null and arr[i].id == draft.get("id"):
@@ -864,6 +1030,8 @@ func _swap_into(catalog: DateContentCatalog, draft: Resource) -> void:
 		catalog.situations.append(draft)
 	elif draft is GirlProfile:
 		catalog.girls.append(draft)
+	elif draft is GirlDifficultyPreset:
+		catalog.girl_difficulty_presets.append(draft)
 	elif draft is SecondaryRule:
 		catalog.secondary_rules.append(draft)
 	elif draft is LocationFormat:
@@ -883,7 +1051,7 @@ func _replace_original(draft: Resource) -> void:
 	var found: bool = false
 	var arrays: Array = [
 		catalog_service.catalog.tags, catalog_service.catalog.moves, catalog_service.catalog.situations,
-		catalog_service.catalog.girls, catalog_service.catalog.secondary_rules, catalog_service.catalog.location_formats,
+		catalog_service.catalog.girls, catalog_service.catalog.girl_difficulty_presets, catalog_service.catalog.secondary_rules, catalog_service.catalog.location_formats,
 		catalog_service.catalog.locations, catalog_service.catalog.outfits, catalog_service.catalog.progression_stats,
 	]
 	for arr in arrays:

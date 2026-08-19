@@ -23,5 +23,4 @@ location_preference_failure = -1
 apartment_unprepared_penalty = -1
 apartment_quality_min = 0
 apartment_quality_max = 3
-positive_tags_per_girl = 3
 min_distinct_base_tags_per_situation = 6

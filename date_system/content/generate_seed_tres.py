@@ -57,6 +57,14 @@ OUTFITS = [
     ("luxury", "Роскошный", 2),
 ]
 
+DIFFICULTIES = [
+    ("starter", "Стартовая", "Высокая совместимость с базовым арсеналом героя. Подходит для первых девушек игры.", 6, 0),
+    ("early", "Ранняя", "Небольшая вероятность получить полностью неподходящий набор базовых ходов.", 5, 1),
+    ("mid", "Средняя", "Прокачка героя и подготовка к свиданию начинают заметно влиять на стабильность результата.", 4, 2),
+    ("late", "Поздняя", "Базовый набор регулярно оставляет игрока без положительного тега. Развитый арсенал становится важной частью свидания.", 3, 3),
+    ("elite", "Элитная", "Очень узкий набор положительных реакций. Рассчитана на сильно развитого героя и полноценную подготовку.", 2, 4),
+]
+
 SITUATIONS = [
     ("appearance_question", "Оценка внешности", "В начале встречи девушка спрашивает:\n«Ну что, как я выгляжу?»", 0),
     ("money_request", "Просьба о деньгах", "К вам подходит незнакомец и просит денег на срочную проблему.", 1),
@@ -325,6 +333,21 @@ def main() -> None:
     for move_id, name, stat, level, mappings in UNLOCK_MOVES:
         write_move(move_id, name, 1, mappings, req=(stat, level), max_uses=1)
 
+    for diff_id, name, desc, positive_count, order in DIFFICULTIES:
+        write(
+            CONTENT / "girl_difficulty" / f"{diff_id}.tres",
+            simple_resource(
+                "GirlDifficultyPreset",
+                "res://date_system/content/girl_difficulty_preset.gd",
+                f'id = &"{diff_id}"\n'
+                f'display_name = "{esc(name)}"\n'
+                f'description = "{esc(desc)}"\n'
+                "enabled = true\n"
+                f"positive_tag_count = {positive_count}\n"
+                f"sort_order = {order}\n",
+            ),
+        )
+
     alina_fields = (
         'id = &"alina"\n'
         'display_name = "Алина"\n'
@@ -333,8 +356,9 @@ def main() -> None:
         "relationship_min = -5\n"
         "relationship_start = 0\n"
         "relationship_max = 5\n"
-        f'positive_tag_ids = {string_name_array(["care", "generosity", "composure"])}\n'
-        f'negative_tag_ids = {string_name_array(["politeness", "directness", "flattery", "audacity", "dominance", "risk", "status", "humor", "cunning"])}\n'
+        'difficulty_preset_id = &"starter"\n'
+        f'positive_tag_ids = {string_name_array(["politeness", "directness", "care", "generosity", "composure", "humor"])}\n'
+        f'negative_tag_ids = {string_name_array(["flattery", "audacity", "dominance", "risk", "status", "cunning"])}\n'
         'secondary_rule_id = &"variety"\n'
         f'favorite_location_format_ids = {string_name_array(["calm", "culture"])}\n'
     )
@@ -347,6 +371,7 @@ def main() -> None:
         "relationship_min = -10\n"
         "relationship_start = 0\n"
         "relationship_max = 10\n"
+        'difficulty_preset_id = &"late"\n'
         f'positive_tag_ids = {string_name_array(["audacity", "dominance", "risk"])}\n'
         f'negative_tag_ids = {string_name_array(["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"])}\n'
         'secondary_rule_id = &"demanding"\n'
@@ -378,7 +403,6 @@ def main() -> None:
             "apartment_unprepared_penalty = -1\n"
             "apartment_quality_min = 0\n"
             "apartment_quality_max = 3\n"
-            "positive_tags_per_girl = 3\n"
             "min_distinct_base_tags_per_situation = 6\n",
         ),
     )
@@ -400,6 +424,7 @@ def main() -> None:
     move_ids += [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in UNLOCK_MOVES]
     sit_ids = [add_res(f"res://date_system/content/situations/{i}.tres", "situations") for i, *_ in SITUATIONS]
     girl_ids = [add_res("res://date_system/content/girls/alina.tres", "girls"), add_res("res://date_system/content/girls/vika.tres", "girls")]
+    difficulty_ids = [add_res(f"res://date_system/content/girl_difficulty/{i}.tres", "diff") for i, *_ in DIFFICULTIES]
     sec_ids = [add_res("res://date_system/content/secondary/variety.tres", "sec"), add_res("res://date_system/content/secondary/demanding.tres", "sec")]
     fmt_ids = [add_res(f"res://date_system/content/location_formats/{i}.tres", "fmt") for i, *_ in FORMATS]
     loc_ids = [add_res(f"res://date_system/content/locations/{i}.tres", "loc") for i, *_ in LOCATIONS]
@@ -420,6 +445,7 @@ def main() -> None:
         + f"moves = {arr(move_ids)}\n"
         + f"situations = {arr(sit_ids)}\n"
         + f"girls = {arr(girl_ids)}\n"
+        + f"girl_difficulty_presets = {arr(difficulty_ids)}\n"
         + f"secondary_rules = {arr(sec_ids)}\n"
         + f"location_formats = {arr(fmt_ids)}\n"
         + f"locations = {arr(loc_ids)}\n"

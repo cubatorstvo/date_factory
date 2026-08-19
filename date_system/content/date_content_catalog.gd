@@ -5,6 +5,7 @@ extends Resource
 @export var moves: Array[DateMove] = []
 @export var situations: Array[DateSituation] = []
 @export var girls: Array[GirlProfile] = []
+@export var girl_difficulty_presets: Array[GirlDifficultyPreset] = []
 @export var secondary_rules: Array[SecondaryRule] = []
 @export var location_formats: Array[LocationFormat] = []
 @export var locations: Array[DateLocation] = []
@@ -39,6 +40,24 @@ func find_girl(girl_id: StringName) -> GirlProfile:
 		if item != null and item.id == girl_id:
 			return item
 	return null
+
+
+func find_girl_difficulty(preset_id: StringName) -> GirlDifficultyPreset:
+	for item in girl_difficulty_presets:
+		if item != null and item.id == preset_id:
+			return item
+	return null
+
+
+func enabled_girl_difficulty_presets() -> Array[GirlDifficultyPreset]:
+	var result: Array[GirlDifficultyPreset] = []
+	for item in girl_difficulty_presets:
+		if item != null and item.enabled:
+			result.append(item)
+	result.sort_custom(func(a: GirlDifficultyPreset, b: GirlDifficultyPreset) -> bool:
+		return a.sort_order < b.sort_order
+	)
+	return result
 
 
 func find_secondary(rule_id: StringName) -> SecondaryRule:

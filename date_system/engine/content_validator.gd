@@ -9,6 +9,7 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 		return issues
 	_check_unique_ids(catalog, issues)
 	_check_references(catalog, issues)
+	_check_difficulty_presets(catalog, issues)
 	_check_girl_tags(catalog, issues)
 	_check_move_mappings(catalog, issues)
 	_check_unlockables(catalog, issues)
@@ -34,6 +35,7 @@ func _check_unique_ids(catalog: DateContentCatalog, issues: Array[ContentValidat
 	_unique_group("DateLocation", catalog.locations, issues)
 	_unique_group("Outfit", catalog.outfits, issues)
 	_unique_group("ProgressionStat", catalog.progression_stats, issues)
+	_unique_group("GirlDifficultyPreset", catalog.girl_difficulty_presets, issues)
 
 
 func _unique_group(resource_type: String, items: Array, issues: Array[ContentValidationIssue]) -> void:
@@ -70,9 +72,6 @@ func _check_references(catalog: DateContentCatalog, issues: Array[ContentValidat
 
 
 func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
-	var expected_positive: int = 3
-	if catalog.date_rules != null:
-		expected_positive = catalog.date_rules.positive_tags_per_girl
 	var enabled_ids: Dictionary = {}
 	for tag in catalog.enabled_tags():
 		if tag == null:
@@ -81,52 +80,86 @@ func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidati
 	for girl in catalog.girls:
 		if girl == null or not girl.enabled:
 			continue
-		var liked: Dictionary = {}
-		for tag_id in girl.positive_tag_ids:
-			if catalog.find_tag(tag_id) == null:
-				issues.append(_issue("GirlProfile", String(girl.id), "positive_tag_ids", "Неизвестный Tag: %s." % String(tag_id)))
-			liked[String(tag_id)] = true
-		for tag_id in girl.negative_tag_ids:
-			if liked.has(String(tag_id)):
-				issues.append(_issue("GirlProfile", String(girl.id), "negative_tag_ids", "Tag %s указан и как нравится, и как не нравится." % String(tag_id)))
+		var preset: GirlDifficultyPreset = catalog.find_girl_difficulty(girl.difficulty_preset_id)
+		if preset == null or not preset.enabled:
+			issues.append(_issue(
+				"GirlProfile",
+				String(girl.id),
+				"difficulty_preset_id",
+				"Девушка \"%s\" ссылается на отсутствующий или отключённый preset сложности \"%s\"." % [String(girl.id), String(girl.difficulty_preset_id)],
+				DateTypes.ValidationSeverity.ERROR,
+				"INVALID_GIRL_DIFFICULTY_REFERENCE"
+			))
+		var expected_positive: int = 0
+		var difficulty_name: String = String(girl.difficulty_preset_id)
+		if preset != null:
+			expected_positive = preset.positive_tag_count
+			difficulty_name = preset.display_name
 		var actual_count: int = girl.positive_tag_ids.size()
-		if actual_count != expected_positive:
+		if preset != null and preset.enabled and actual_count != expected_positive:
 			issues.append(_issue(
 				"GirlProfile",
 				String(girl.id),
 				"positive_tag_ids",
-				"Девушка \"%s\" должна иметь ровно %d положительных тегов. Сейчас: %d." % [String(girl.id), expected_positive, actual_count],
+				"Девушка \"%s\" имеет сложность \"%s\". Требуется положительных тегов: %d. Сейчас указано: %d." % [String(girl.id), difficulty_name, expected_positive, actual_count],
 				DateTypes.ValidationSeverity.ERROR,
 				"INVALID_POSITIVE_TAG_COUNT"
 			))
-		var girl_ids: Dictionary = {}
+		var liked: Dictionary = {}
+		var disliked: Dictionary = {}
+		var duplicate_state: PackedStringArray = PackedStringArray()
+		var unknown_ids: PackedStringArray = PackedStringArray()
 		for tag_id in girl.positive_tag_ids:
-			girl_ids[String(tag_id)] = true
+			var key: String = String(tag_id)
+			liked[key] = true
+			if not enabled_ids.has(key) and not unknown_ids.has(key):
+				unknown_ids.append(key)
 		for tag_id in girl.negative_tag_ids:
-			girl_ids[String(tag_id)] = true
+			var key: String = String(tag_id)
+			disliked[key] = true
+			if liked.has(key) and not duplicate_state.has(key):
+				duplicate_state.append(key)
+			if not enabled_ids.has(key) and not unknown_ids.has(key):
+				unknown_ids.append(key)
 		var missing: PackedStringArray = PackedStringArray()
-		var extra: PackedStringArray = PackedStringArray()
 		for tag_key in enabled_ids.keys():
-			if not girl_ids.has(String(tag_key)):
-				missing.append(String(tag_key))
-		for tag_key in girl_ids.keys():
-			if not enabled_ids.has(String(tag_key)):
-				extra.append(String(tag_key))
-		if missing.is_empty() and extra.is_empty():
+			var key: String = String(tag_key)
+			if not liked.has(key) and not disliked.has(key):
+				missing.append(key)
+		if missing.is_empty() and duplicate_state.is_empty() and unknown_ids.is_empty():
 			continue
 		missing.sort()
-		extra.sort()
+		duplicate_state.sort()
+		unknown_ids.sort()
 		issues.append(_issue(
 			"GirlProfile",
 			String(girl.id),
 			"tags",
-			"Девушка \"%s\": неполный охват тегов. Отсутствующие tag_ids: %s. Лишние tag_ids: %s." % [
+			"Девушка \"%s\": неполный охват тегов. missing_tag_ids: %s. duplicate_state_tag_ids: %s. unknown_tag_ids: %s." % [
 				String(girl.id),
 				", ".join(missing) if not missing.is_empty() else "нет",
-				", ".join(extra) if not extra.is_empty() else "нет",
+				", ".join(duplicate_state) if not duplicate_state.is_empty() else "нет",
+				", ".join(unknown_ids) if not unknown_ids.is_empty() else "нет",
 			],
 			DateTypes.ValidationSeverity.ERROR,
 			"INCOMPLETE_GIRL_TAG_COVERAGE"
+		))
+
+
+func _check_difficulty_presets(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var enabled_count: int = catalog.enabled_tags().size()
+	for preset in catalog.girl_difficulty_presets:
+		if preset == null or not preset.enabled:
+			continue
+		if preset.positive_tag_count >= 1 and preset.positive_tag_count < enabled_count:
+			continue
+		issues.append(_issue(
+			"GirlDifficultyPreset",
+			String(preset.id),
+			"positive_tag_count",
+			"Preset \"%s\" должен иметь 1..%d положительных тегов. Сейчас: %d." % [String(preset.id), maxi(0, enabled_count - 1), preset.positive_tag_count],
+			DateTypes.ValidationSeverity.ERROR,
+			"INVALID_DIFFICULTY_POSITIVE_COUNT"
 		))
 
 

@@ -20,7 +20,6 @@ extends Resource
 @export var apartment_unprepared_penalty: int = -1
 @export var apartment_quality_min: int = 0
 @export var apartment_quality_max: int = 3
-@export var positive_tags_per_girl: int = 3
 @export var min_distinct_base_tags_per_situation: int = 6
 
 

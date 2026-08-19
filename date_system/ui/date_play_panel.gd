@@ -185,8 +185,20 @@ func _girl_card() -> PanelContainer:
 		return panel
 	var progress: GirlProgress = progress_store.get_girl_progress(girl.id, girl)
 	box.add_child(LabUi.heading(girl.display_name))
+	var preset: GirlDifficultyPreset = _catalog().find_girl_difficulty(girl.difficulty_preset_id)
+	var difficulty := Label.new()
+	difficulty.text = "Сложность:\n%s" % (preset.display_name if preset != null else String(girl.difficulty_preset_id))
+	box.add_child(difficulty)
+	var enabled_count: int = _catalog().enabled_tags().size()
+	var positive_count := Label.new()
+	positive_count.text = "Положительных тегов:\n%d / %d" % [girl.positive_tag_ids.size(), enabled_count]
+	box.add_child(positive_count)
+	var theory := Label.new()
+	var chance: float = DateBalanceDiagnostics.new().theoretical_availability(_catalog(), girl)
+	theory.text = "Теоретическая базовая доступность:\n%s" % DateBalanceMath.format_percent(chance)
+	box.add_child(theory)
 	var rel := Label.new()
-	rel.text = "Отношения: %d  (min %d / max %d)" % [progress.relationship, girl.relationship_min, girl.relationship_max]
+	rel.text = "Отношения:\n%d / %d" % [progress.relationship, girl.relationship_max]
 	box.add_child(rel)
 	box.add_child(_tag_list("Нравится:", progress.revealed_positive_tag_ids, DateTypes.TagKnowledge.POSITIVE))
 	box.add_child(_tag_list("Не нравится:", progress.revealed_negative_tag_ids, DateTypes.TagKnowledge.NEGATIVE))
@@ -196,18 +208,10 @@ func _girl_card() -> PanelContainer:
 	var secondary := Label.new()
 	var rule: SecondaryRule = _catalog().find_secondary(girl.secondary_rule_id)
 	if progress.secondary_revealed and rule != null:
-		secondary.text = "Secondary: %s" % rule.display_name
+		secondary.text = "Secondary:\n%s" % rule.display_name
 	else:
-		secondary.text = "Secondary: ???"
+		secondary.text = "Secondary:\n???"
 	box.add_child(secondary)
-	var formats: PackedStringArray = PackedStringArray()
-	for format_id in girl.favorite_location_format_ids:
-		var format: LocationFormat = _catalog().find_location_format(format_id)
-		formats.append(format.display_name if format != null else String(format_id))
-	var fav := Label.new()
-	fav.text = "Любимые форматы мест: %s" % ", ".join(formats)
-	fav.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(fav)
 	return panel
 
 

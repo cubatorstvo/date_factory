@@ -11,6 +11,7 @@ enabled = true
 relationship_min = -10
 relationship_start = 0
 relationship_max = 10
+difficulty_preset_id = &"late"
 positive_tag_ids = Array[StringName]([&"audacity", &"dominance", &"risk"])
 negative_tag_ids = Array[StringName]([&"politeness", &"directness", &"flattery", &"generosity", &"status", &"care", &"humor", &"composure", &"cunning"])
 secondary_rule_id = &"demanding"
