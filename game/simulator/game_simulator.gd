@@ -40,6 +40,8 @@ var _invite_girl_id: StringName = &""
 var _selected_date_location_id: StringName = &""
 var _selected_outfit_id: StringName = &""
 var _hud_characteristics_label: Label
+var _factory_status: Label
+var _factory_slider: HSlider
 
 
 func _ready() -> void:
@@ -58,12 +60,15 @@ func refresh() -> void:
 	if _refreshing:
 		return
 	_refreshing = true
-	if _section == "city" or _section == "girls" or _section == "dates" or _section == "rivals" or _section == "progression" or _section == "apartment" or _section == "clothing":
+	if _section == "factory" and not _is_factory_unlocked():
+		_section = "home"
+	if _section == "city" or _section == "girls" or _section == "dates" or _section == "rivals" or _section == "progression" or _section == "apartment" or _section == "clothing" or _section == "factory":
 		_rebuild_section()
 	_refresh_hud()
 	_refresh_home()
 	_refresh_progression()
 	_refresh_save_buttons()
+	_refresh_nav()
 	for button in _action_buttons:
 		if is_instance_valid(button):
 			button.refresh()
@@ -73,6 +78,8 @@ func refresh() -> void:
 
 
 func show_section(section_id: String) -> void:
+	if section_id == "factory" and not _is_factory_unlocked():
+		return
 	_section = section_id
 	_rebuild_section()
 	_refresh_nav()
@@ -128,6 +135,13 @@ func delete_playthrough() -> void:
 		return
 	sm.delete_save()
 	refresh()
+
+
+func advance_factory_hour() -> void:
+	var clock: Variant = _time_service()
+	if clock == null:
+		return
+	clock.advance_time(60)
 
 
 func complete_current_stage() -> void:
@@ -464,6 +478,12 @@ func _build_nav() -> Control:
 		btn.pressed.connect(show_section.bind(section_id))
 		nav.add_child(btn)
 		_nav_buttons[section_id] = btn
+		if section_id == "work":
+			var factory_btn := LabUi.button("Фабрика")
+			factory_btn.pressed.connect(show_section.bind("factory"))
+			factory_btn.visible = false
+			nav.add_child(factory_btn)
+			_nav_buttons["factory"] = factory_btn
 	return nav
 
 
@@ -475,6 +495,8 @@ func _rebuild_section() -> void:
 	_upgrade_price_label = null
 	_city_current_label = null
 	_world_dev_option = null
+	_factory_status = null
+	_factory_slider = null
 	if _section_host == null:
 		return
 	for child in _section_host.get_children():
@@ -485,6 +507,8 @@ func _rebuild_section() -> void:
 			_section_host.add_child(_build_home())
 		"work":
 			_section_host.add_child(_build_work())
+		"factory":
+			_section_host.add_child(_build_factory())
 		"city":
 			_section_host.add_child(_build_city())
 		"girls":
@@ -536,6 +560,56 @@ func _build_work() -> Control:
 	info.text = "Доход: %d\nВремя: %d минут" % [work.income, work.time_cost_minutes]
 	box.add_child(info)
 	_add_action_button(box, action, GameActionLabels.LABEL_WORK_ACTION, false, false)
+	return box
+
+
+func _build_factory() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("DATE FACTORY"))
+	var automation: Variant = _automation_service()
+	if automation == null:
+		return box
+	_factory_status = Label.new()
+	_factory_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(_factory_status)
+	box.add_child(LabUi.heading("РАСПРЕДЕЛЕНИЕ"))
+	_factory_slider = HSlider.new()
+	_factory_slider.min_value = 0
+	_factory_slider.max_value = 100
+	_factory_slider.step = 1
+	_factory_slider.value = int(automation.get_work_allocation_percent())
+	_factory_slider.value_changed.connect(_on_factory_slider_changed)
+	box.add_child(_factory_slider)
+	box.add_child(LabUi.heading("УЛУЧШЕНИЯ"))
+	var catalog: AutomationCatalog = automation.get_catalog()
+	for upgrade in catalog.get_all_upgrades():
+		box.add_child(_build_factory_upgrade_card(upgrade, automation))
+	var dev := VBoxContainer.new()
+	dev.add_theme_constant_override("separation", 6)
+	dev.add_child(LabUi.heading("FACTORY DEV"))
+	var hour_btn: Button = LabUi.button("+1 ИГРОВОЙ ЧАС")
+	hour_btn.modulate = Color(0.75, 0.7, 0.6)
+	hour_btn.pressed.connect(advance_factory_hour)
+	dev.add_child(hour_btn)
+	box.add_child(dev)
+	_refresh_factory_status()
+	return box
+
+
+func _build_factory_upgrade_card(upgrade: AutomationUpgradeDefinition, automation: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var title := Label.new()
+	title.text = "%s — %d" % [upgrade.display_name, upgrade.price]
+	box.add_child(title)
+	if bool(automation.is_upgrade_purchased(upgrade.id)):
+		var done := Label.new()
+		done.text = "Куплено"
+		box.add_child(done)
+	else:
+		var action: GameAction = automation.create_upgrade_action(upgrade.id)
+		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
 	return box
 
 
@@ -1323,8 +1397,11 @@ func _refresh_save_buttons() -> void:
 
 
 func _refresh_nav() -> void:
+	var factory_unlocked: bool = _is_factory_unlocked()
 	for section_id in _nav_buttons.keys():
 		var btn: Button = _nav_buttons[section_id]
+		if section_id == "factory":
+			btn.visible = factory_unlocked
 		if section_id == _section:
 			btn.modulate = Color(1, 0.92, 0.65)
 		else:
@@ -1391,6 +1468,17 @@ func _connect_core_signals() -> void:
 	var equipment: Variant = _equipment_service()
 	if equipment != null and not equipment.outfit_equipped.is_connected(_on_outfit_equipped):
 		equipment.outfit_equipped.connect(_on_outfit_equipped)
+	var automation: Variant = _automation_service()
+	if automation != null and not automation.automation_unlocked.is_connected(_on_automation_unlocked):
+		automation.automation_unlocked.connect(_on_automation_unlocked)
+	if automation != null and not automation.clones_changed.is_connected(_on_automation_clones_changed):
+		automation.clones_changed.connect(_on_automation_clones_changed)
+	if automation != null and not automation.allocation_changed.is_connected(_on_automation_allocation_changed):
+		automation.allocation_changed.connect(_on_automation_allocation_changed)
+	if automation != null and not automation.production_changed.is_connected(_on_automation_production_changed):
+		automation.production_changed.connect(_on_automation_production_changed)
+	if automation != null and not automation.upgrade_purchased.is_connected(_on_automation_upgrade_purchased):
+		automation.upgrade_purchased.connect(_on_automation_upgrade_purchased)
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
@@ -1470,6 +1558,92 @@ func _on_characteristic_changed(_characteristic_id: StringName, _previous_value:
 
 func _on_outfit_equipped(_previous_outfit_id: StringName, _current_outfit_id: StringName) -> void:
 	refresh()
+
+
+func _on_automation_unlocked() -> void:
+	refresh()
+
+
+func _on_automation_clones_changed(_total_clones: int) -> void:
+	refresh()
+
+
+func _on_automation_allocation_changed(_work_allocation_percent: int) -> void:
+	_refresh_factory_status()
+
+
+func _on_automation_production_changed() -> void:
+	_refresh_factory_status()
+	_refresh_hud()
+
+
+func _on_automation_upgrade_purchased(_upgrade_id: StringName) -> void:
+	refresh()
+
+
+func _on_factory_slider_changed(value: float) -> void:
+	if _refreshing:
+		return
+	var automation: Variant = _automation_service()
+	if automation == null:
+		return
+	automation.set_work_allocation_percent(int(round(value)))
+	_refresh_factory_status()
+
+
+func _is_factory_unlocked() -> bool:
+	var automation: Variant = _automation_service()
+	return automation != null and bool(automation.is_unlocked())
+
+
+func _refresh_factory_status() -> void:
+	if _factory_status == null:
+		return
+	var automation: Variant = _automation_service()
+	if automation == null:
+		_factory_status.text = ""
+		return
+	var work_percent: int = int(automation.get_work_allocation_percent())
+	var dating_percent: int = int(automation.get_dating_allocation_percent())
+	_factory_status.text = "\n".join(PackedStringArray([
+		"Клоны: %d" % int(automation.get_total_clones()),
+		"Работа: %d%%" % work_percent,
+		"Свидания: %d%%" % dating_percent,
+		"Рабочий эквивалент:",
+		"%.1f" % float(automation.get_work_clones()),
+		"Dating-эквивалент:",
+		"%.1f" % float(automation.get_dating_clones()),
+		"ПРОИЗВОДСТВО",
+		"Доход:",
+		"%s / игровой час" % _format_factory_amount(float(automation.get_work_income_per_hour())),
+		"Автоматические свидания:",
+		"%.1f / игровой час" % float(automation.get_dating_production_per_hour()),
+		"Всего автоматических свиданий:",
+		str(int(automation.get_completed_auto_dates())),
+		"Прогресс следующего auto date:",
+		"%.2f" % float(automation.get_dating_progress_fraction()),
+	]))
+
+
+func _format_factory_amount(value: float) -> String:
+	var rounded: int = int(round(value))
+	if is_equal_approx(value, float(rounded)):
+		return _format_grouped_int(rounded)
+	return "%.1f" % value
+
+
+func _format_grouped_int(value: int) -> String:
+	var digits: String = str(absi(value))
+	var grouped: String = ""
+	var count: int = 0
+	for i in range(digits.length() - 1, -1, -1):
+		if count > 0 and count % 3 == 0:
+			grouped = " " + grouped
+		grouped = digits.substr(i, 1) + grouped
+		count += 1
+	if value < 0:
+		return "-" + grouped
+	return grouped
 
 
 func _open_date_overlay() -> void:
@@ -1791,6 +1965,13 @@ func _equipment_service() -> Variant:
 
 func _apartment_service() -> Variant:
 	var node: Node = get_node_or_null("/root/ApartmentService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _automation_service() -> Variant:
+	var node: Node = get_node_or_null("/root/AutomationService")
 	if not is_instance_valid(node):
 		return null
 	return node

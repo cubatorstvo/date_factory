@@ -29,9 +29,25 @@ static func create_seed(girl_catalog: GirlCatalog = null) -> StageCatalog:
 	catalog.stages.append(_make_stage(2, "Stage 2", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_MINE_BOSS)), empty_effects))
 	catalog.stages.append(_make_stage(3, "Stage 3", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_MAGAZINE_EDITOR)), empty_effects))
 	catalog.stages.append(_make_stage(4, "Stage 4", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_SCIENTIST)), empty_effects))
-	catalog.stages.append(_make_stage(5, "Stage 5", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_PRESIDENT)), empty_effects))
+	catalog.stages.append(_make_stage(5, "Stage 5", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_PRESIDENT)), make_stage_5_enter_effects()))
 	catalog.stages.append(_make_stage(6, "Stage 6", null, empty_effects))
 	return catalog
+
+
+static func make_stage_5_enter_effects() -> Array[StageEnterEffect]:
+	var effects: Array[StageEnterEffect] = []
+	effects.append(UnlockAutomationStageEffect.new())
+	effects.append(GrantInitialClonesStageEffect.new())
+	return effects
+
+
+func apply_canonical_enter_effects() -> void:
+	for definition in stages:
+		if definition == null:
+			continue
+		definition.on_enter_effects.clear()
+		if definition.stage == 5:
+			definition.on_enter_effects = make_stage_5_enter_effects()
 
 
 static func make_girl_relationship_requirement(definition: GirlDefinition) -> GirlRelationshipRequirement:

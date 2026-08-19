@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 10
+const SAVE_VERSION: int = 11
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -110,6 +110,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v8_rivals(migrated)
 	if from_version < 10:
 		migrated = _migrate_v9_progression(migrated)
+	if from_version < 11:
+		migrated = _migrate_v10_automation(migrated)
 	return migrated
 
 
@@ -280,4 +282,30 @@ func _migrate_v9_progression(state_data: Dictionary) -> Dictionary:
 			active["outfit_id"] = String(OutfitCatalog.START_OUTFIT_ID)
 			dating["active_date"] = active
 	migrated["dating"] = dating
+	return migrated
+
+
+func _migrate_v10_automation(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var automation_value: Variant = migrated.get("automation", {})
+	var automation: Dictionary = {}
+	if automation_value is Dictionary:
+		automation = automation_value
+	if not automation.has("unlocked"):
+		automation["unlocked"] = false
+	if not automation.has("initial_clones_granted"):
+		automation["initial_clones_granted"] = false
+	if not automation.has("total_clones"):
+		automation["total_clones"] = 0
+	if not automation.has("work_allocation_percent"):
+		automation["work_allocation_percent"] = 50
+	if not automation.has("work_income_fraction"):
+		automation["work_income_fraction"] = 0
+	if not automation.has("dating_progress_fraction"):
+		automation["dating_progress_fraction"] = 0
+	if not automation.has("completed_auto_dates"):
+		automation["completed_auto_dates"] = 0
+	if not automation.has("purchased_upgrade_ids"):
+		automation["purchased_upgrade_ids"] = []
+	migrated["automation"] = automation
 	return migrated
