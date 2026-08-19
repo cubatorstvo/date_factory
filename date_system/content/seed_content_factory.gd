@@ -64,6 +64,10 @@ func _tags() -> Array[DateTag]:
 		_tag("risk", "АЗАРТ", "Готовность к риску и пари."),
 		_tag("generosity", "ЩЕДРОСТЬ", "Деньги и материальная помощь."),
 		_tag("status", "СТАТУС", "Демонстрация положения и ресурсов."),
+		_tag("care", "ЗАБОТА", "Внимание к комфорту, состоянию и интересам другого человека."),
+		_tag("humor", "ЮМОР", "Реакция через шутку, иронию или превращение ситуации в комедию."),
+		_tag("composure", "САМООБЛАДАНИЕ", "Спокойствие, выдержка и отсутствие суеты под давлением ситуации."),
+		_tag("cunning", "ХИТРОСТЬ", "Решение ситуации через обходной ход, проверку условий или использование правил в свою пользу."),
 	]
 
 
@@ -273,22 +277,22 @@ func _moves() -> Array[DateMove]:
 			_mapping("date_verdict", "flattery", "Сказать, что это было идеальное свидание."),
 		]),
 		_base_move("support", "Поддержать", [
-			_mapping("appearance_question", "politeness", "Спросить, нравится ли образ ей самой, и поддержать её выбор."),
+			_mapping("appearance_question", "care", "Спросить, нравится ли образ ей самой, и поддержать её выбор."),
 			_mapping("money_request", "generosity", "Дать незнакомцу небольшую сумму."),
 			_mapping("spontaneous_bet", "politeness", "Согласиться на предложенные девушкой правила."),
-			_mapping("date_verdict", "politeness", "Сказать, что вечер прошёл хорошо, и поблагодарить её."),
+			_mapping("date_verdict", "care", "Сказать, что главное — понравился ли вечер ей самой."),
 		]),
 		_base_move("smooth", "Сгладить ситуацию", [
 			_mapping("appearance_question", "flattery", "Сказать, что к её образу невозможно придраться."),
 			_mapping("money_request", "politeness", "Вежливо отказать и пожелать удачи."),
-			_mapping("rival_provocation", "politeness", "Предложить спокойно разойтись."),
+			_mapping("rival_provocation", "composure", "Спокойно предложить завершить конфликт и разойтись."),
 		]),
 		_base_move("tease", "Подколоть", [
-			_mapping("appearance_question", "audacity", "Сказать, что ожидал увидеть что-то хуже."),
-			_mapping("money_request", "audacity", "Попросить сначала убедительно продать свою историю."),
-			_mapping("rival_provocation", "audacity", "Высмеять его претензию."),
+			_mapping("appearance_question", "humor", "Сказать, что ожидал увидеть что-то хуже."),
+			_mapping("money_request", "cunning", "Попросить сначала доказать историю, а потом вернуться к вопросу денег."),
+			_mapping("rival_provocation", "humor", "Высмеять его претензию."),
 			_mapping("spontaneous_bet", "audacity", "Добавить унизительное условие для проигравшего."),
-			_mapping("date_verdict", "audacity", "Сказать, что бывало и хуже."),
+			_mapping("date_verdict", "humor", "Сказать, что бывало и хуже."),
 		]),
 		_base_move("take_initiative", "Взять инициативу", [
 			_mapping("money_request", "dominance", "Самому определить сумму и закончить разговор."),
@@ -297,9 +301,9 @@ func _moves() -> Array[DateMove]:
 			_mapping("date_verdict", "dominance", "Сразу назначить следующую встречу."),
 		]),
 		_base_move("refuse", "Отказаться", [
-			_mapping("money_request", "dominance", "Коротко отказать и закончить разговор."),
-			_mapping("rival_provocation", "status", "Продолжить свидание, оставив провокацию без внимания."),
-			_mapping("spontaneous_bet", "directness", "Отказаться от пари."),
+			_mapping("money_request", "composure", "Спокойно отказать и закончить разговор."),
+			_mapping("rival_provocation", "cunning", "Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис."),
+			_mapping("spontaneous_bet", "composure", "Спокойно отказаться от пари."),
 		]),
 		_base_move("accept_challenge", "Принять вызов", [
 			_mapping("rival_provocation", "risk", "Принять предложенное соревнование."),
@@ -333,7 +337,7 @@ func _moves() -> Array[DateMove]:
 		_unlock_move("silent_pressure", "Молча продавить", "aura", 3, [
 			_mapping("money_request", "dominance", "Смотреть на незнакомца до завершения разговора с его стороны."),
 			_mapping("rival_provocation", "dominance", "Смотреть на самца до его отступления."),
-			_mapping("date_verdict", "audacity", "Выдержать паузу до реакции девушки."),
+			_mapping("date_verdict", "composure", "Выдержать паузу до реакции девушки."),
 		]),
 		_unlock_move("raise_stakes", "Поднять ставки", "capital", 6, [
 			_mapping("money_request", "risk", "Предложить удвоить сумму после немедленного доказательства истории."),
@@ -378,8 +382,8 @@ func _girl(
 
 func _girls() -> Array[GirlProfile]:
 	return [
-		_girl("alina", "Алина", -5, 5, ["politeness", "directness", "risk", "generosity"], ["flattery", "audacity", "dominance", "status"], "variety", ["calm", "culture"]),
-		_girl("vika", "Вика", -10, 10, ["flattery", "audacity", "dominance", "status"], ["politeness", "directness", "risk", "generosity"], "demanding", ["game", "unusual"]),
+		_girl("alina", "Алина", -5, 5, ["care", "generosity", "composure"], ["politeness", "directness", "flattery", "audacity", "dominance", "risk", "status", "humor", "cunning"], "variety", ["calm", "culture"]),
+		_girl("vika", "Вика", -10, 10, ["audacity", "dominance", "risk"], ["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"], "demanding", ["game", "unusual"]),
 	]
 
 
@@ -404,4 +408,6 @@ func _rules() -> DateRules:
 	rules.apartment_unprepared_penalty = -1
 	rules.apartment_quality_min = 0
 	rules.apartment_quality_max = 3
+	rules.positive_tags_per_girl = 3
+	rules.min_distinct_base_tags_per_situation = 6
 	return rules

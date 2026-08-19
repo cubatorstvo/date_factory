@@ -19,6 +19,8 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_phase_coverage(catalog, issues)
 	_check_girl_secondary_and_formats(catalog, issues)
 	_check_duplicate_unlockable_tags(catalog, issues)
+	_check_tag_move_usage(catalog, issues)
+	_check_base_tag_diversity(catalog, issues)
 	return issues
 
 
@@ -68,6 +70,14 @@ func _check_references(catalog: DateContentCatalog, issues: Array[ContentValidat
 
 
 func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var expected_positive: int = 3
+	if catalog.date_rules != null:
+		expected_positive = catalog.date_rules.positive_tags_per_girl
+	var enabled_ids: Dictionary = {}
+	for tag in catalog.enabled_tags():
+		if tag == null:
+			continue
+		enabled_ids[String(tag.id)] = true
 	for girl in catalog.girls:
 		if girl == null or not girl.enabled:
 			continue
@@ -79,6 +89,45 @@ func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidati
 		for tag_id in girl.negative_tag_ids:
 			if liked.has(String(tag_id)):
 				issues.append(_issue("GirlProfile", String(girl.id), "negative_tag_ids", "Tag %s указан и как нравится, и как не нравится." % String(tag_id)))
+		var actual_count: int = girl.positive_tag_ids.size()
+		if actual_count != expected_positive:
+			issues.append(_issue(
+				"GirlProfile",
+				String(girl.id),
+				"positive_tag_ids",
+				"Девушка \"%s\" должна иметь ровно %d положительных тегов. Сейчас: %d." % [String(girl.id), expected_positive, actual_count],
+				DateTypes.ValidationSeverity.ERROR,
+				"INVALID_POSITIVE_TAG_COUNT"
+			))
+		var girl_ids: Dictionary = {}
+		for tag_id in girl.positive_tag_ids:
+			girl_ids[String(tag_id)] = true
+		for tag_id in girl.negative_tag_ids:
+			girl_ids[String(tag_id)] = true
+		var missing: PackedStringArray = PackedStringArray()
+		var extra: PackedStringArray = PackedStringArray()
+		for tag_key in enabled_ids.keys():
+			if not girl_ids.has(String(tag_key)):
+				missing.append(String(tag_key))
+		for tag_key in girl_ids.keys():
+			if not enabled_ids.has(String(tag_key)):
+				extra.append(String(tag_key))
+		if missing.is_empty() and extra.is_empty():
+			continue
+		missing.sort()
+		extra.sort()
+		issues.append(_issue(
+			"GirlProfile",
+			String(girl.id),
+			"tags",
+			"Девушка \"%s\": неполный охват тегов. Отсутствующие tag_ids: %s. Лишние tag_ids: %s." % [
+				String(girl.id),
+				", ".join(missing) if not missing.is_empty() else "нет",
+				", ".join(extra) if not extra.is_empty() else "нет",
+			],
+			DateTypes.ValidationSeverity.ERROR,
+			"INCOMPLETE_GIRL_TAG_COVERAGE"
+		))
 
 
 func _check_move_mappings(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -181,6 +230,55 @@ func _check_girl_secondary_and_formats(catalog: DateContentCatalog, issues: Arra
 		for format_id in girl.favorite_location_format_ids:
 			if catalog.find_location_format(format_id) == null:
 				issues.append(_issue("GirlProfile", String(girl.id), "favorite_location_format_ids", "Неизвестный LocationFormat: %s." % String(format_id)))
+
+
+func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var used: Dictionary = {}
+	for move in catalog.moves:
+		if move == null:
+			continue
+		for mapping in move.situation_mappings:
+			if mapping == null:
+				continue
+			used[String(mapping.tag_id)] = true
+	for tag in catalog.enabled_tags():
+		if tag == null:
+			continue
+		if used.has(String(tag.id)):
+			continue
+		issues.append(_issue(
+			"DateTag",
+			String(tag.id),
+			"situation_mappings",
+			"Активный тег \"%s\" не используется ни в одном DateMoveSituationMapping." % String(tag.id),
+			DateTypes.ValidationSeverity.WARNING,
+			"TAG_WITHOUT_MOVE_MAPPING"
+		))
+
+
+func _check_base_tag_diversity(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var min_distinct: int = 6
+	if catalog.date_rules != null:
+		min_distinct = catalog.date_rules.min_distinct_base_tags_per_situation
+	for situation in catalog.situations:
+		if situation == null or not situation.enabled:
+			continue
+		var tags: Dictionary = {}
+		for move in catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE):
+			var mapping: DateMoveSituationMapping = move.mapping_for(situation.id)
+			if mapping == null:
+				continue
+			tags[String(mapping.tag_id)] = true
+		if tags.size() >= min_distinct:
+			continue
+		issues.append(_issue(
+			"DateSituation",
+			String(situation.id),
+			"base_tags",
+			"Ситуация \"%s\" имеет только %d разных BASE Tags, минимум %d." % [String(situation.id), tags.size(), min_distinct],
+			DateTypes.ValidationSeverity.WARNING,
+			"LOW_BASE_TAG_DIVERSITY"
+		))
 
 
 func _check_duplicate_unlockable_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:

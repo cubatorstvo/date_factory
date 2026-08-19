@@ -45,6 +45,27 @@ func reset_to_profile(girl: GirlProfile) -> void:
 	completed_dates = 0
 
 
+func realign_revealed_to_profile(girl: GirlProfile, catalog: DateContentCatalog) -> void:
+	if girl == null or catalog == null:
+		return
+	var known: Dictionary = {}
+	for tag_id in revealed_positive_tag_ids:
+		known[String(tag_id)] = true
+	for tag_id in revealed_negative_tag_ids:
+		known[String(tag_id)] = true
+	revealed_positive_tag_ids.clear()
+	revealed_negative_tag_ids.clear()
+	for tag in catalog.enabled_tags():
+		if tag == null:
+			continue
+		if not known.has(String(tag.id)):
+			continue
+		if girl.prefers_tag(tag.id) > 0:
+			revealed_positive_tag_ids.append(tag.id)
+		else:
+			revealed_negative_tag_ids.append(tag.id)
+
+
 func to_dictionary() -> Dictionary:
 	var positives: Array = []
 	for tag_id in revealed_positive_tag_ids:

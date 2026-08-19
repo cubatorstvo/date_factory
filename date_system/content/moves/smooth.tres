@@ -21,10 +21,10 @@ negative_result_text = "Ей это режет. Тег «politeness» играе
 [sub_resource type="Resource" id="map_3"]
 script = ExtResource("2_map")
 situation_id = &"rival_provocation"
-tag_id = &"politeness"
-option_text = "Предложить спокойно разойтись."
-positive_result_text = "Ей это откликается. Тег «politeness» работает в её пользу."
-negative_result_text = "Ей это режет. Тег «politeness» играет против вас."
+tag_id = &"composure"
+option_text = "Спокойно предложить завершить конфликт и разойтись."
+positive_result_text = "Ей это откликается. Тег «composure» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «composure» играет против вас."
 
 [resource]
 script = ExtResource("1_move")

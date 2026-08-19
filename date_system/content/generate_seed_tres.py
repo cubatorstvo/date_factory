@@ -18,6 +18,10 @@ TAGS = [
     ("risk", "АЗАРТ", "Готовность к риску и пари."),
     ("generosity", "ЩЕДРОСТЬ", "Деньги и материальная помощь."),
     ("status", "СТАТУС", "Демонстрация положения и ресурсов."),
+    ("care", "ЗАБОТА", "Внимание к комфорту, состоянию и интересам другого человека."),
+    ("humor", "ЮМОР", "Реакция через шутку, иронию или превращение ситуации в комедию."),
+    ("composure", "САМООБЛАДАНИЕ", "Спокойствие, выдержка и отсутствие суеты под давлением ситуации."),
+    ("cunning", "ХИТРОСТЬ", "Решение ситуации через обходной ход, проверку условий или использование правил в свою пользу."),
 ]
 
 STATS = [
@@ -75,22 +79,22 @@ BASE_MOVES = [
         ("date_verdict", "flattery", "Сказать, что это было идеальное свидание."),
     ]),
     ("support", "Поддержать", [
-        ("appearance_question", "politeness", "Спросить, нравится ли образ ей самой, и поддержать её выбор."),
+        ("appearance_question", "care", "Спросить, нравится ли образ ей самой, и поддержать её выбор."),
         ("money_request", "generosity", "Дать незнакомцу небольшую сумму."),
         ("spontaneous_bet", "politeness", "Согласиться на предложенные девушкой правила."),
-        ("date_verdict", "politeness", "Сказать, что вечер прошёл хорошо, и поблагодарить её."),
+        ("date_verdict", "care", "Сказать, что главное — понравился ли вечер ей самой."),
     ]),
     ("smooth", "Сгладить ситуацию", [
         ("appearance_question", "flattery", "Сказать, что к её образу невозможно придраться."),
         ("money_request", "politeness", "Вежливо отказать и пожелать удачи."),
-        ("rival_provocation", "politeness", "Предложить спокойно разойтись."),
+        ("rival_provocation", "composure", "Спокойно предложить завершить конфликт и разойтись."),
     ]),
     ("tease", "Подколоть", [
-        ("appearance_question", "audacity", "Сказать, что ожидал увидеть что-то хуже."),
-        ("money_request", "audacity", "Попросить сначала убедительно продать свою историю."),
-        ("rival_provocation", "audacity", "Высмеять его претензию."),
+        ("appearance_question", "humor", "Сказать, что ожидал увидеть что-то хуже."),
+        ("money_request", "cunning", "Попросить сначала доказать историю, а потом вернуться к вопросу денег."),
+        ("rival_provocation", "humor", "Высмеять его претензию."),
         ("spontaneous_bet", "audacity", "Добавить унизительное условие для проигравшего."),
-        ("date_verdict", "audacity", "Сказать, что бывало и хуже."),
+        ("date_verdict", "humor", "Сказать, что бывало и хуже."),
     ]),
     ("take_initiative", "Взять инициативу", [
         ("money_request", "dominance", "Самому определить сумму и закончить разговор."),
@@ -99,9 +103,9 @@ BASE_MOVES = [
         ("date_verdict", "dominance", "Сразу назначить следующую встречу."),
     ]),
     ("refuse", "Отказаться", [
-        ("money_request", "dominance", "Коротко отказать и закончить разговор."),
-        ("rival_provocation", "status", "Продолжить свидание, оставив провокацию без внимания."),
-        ("spontaneous_bet", "directness", "Отказаться от пари."),
+        ("money_request", "composure", "Спокойно отказать и закончить разговор."),
+        ("rival_provocation", "cunning", "Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис."),
+        ("spontaneous_bet", "composure", "Спокойно отказаться от пари."),
     ]),
     ("accept_challenge", "Принять вызов", [
         ("rival_provocation", "risk", "Принять предложенное соревнование."),
@@ -138,7 +142,7 @@ UNLOCK_MOVES = [
     ("silent_pressure", "Молча продавить", "aura", 3, [
         ("money_request", "dominance", "Смотреть на незнакомца до завершения разговора с его стороны."),
         ("rival_provocation", "dominance", "Смотреть на самца до его отступления."),
-        ("date_verdict", "audacity", "Выдержать паузу до реакции девушки."),
+        ("date_verdict", "composure", "Выдержать паузу до реакции девушки."),
     ]),
     ("raise_stakes", "Поднять ставки", "capital", 6, [
         ("money_request", "risk", "Предложить удвоить сумму после немедленного доказательства истории."),
@@ -278,10 +282,10 @@ def main() -> None:
             "res://date_system/content/secondary_rule.gd",
             'id = &"variety"\n'
             'display_name = "ЛЮБИТ РАЗНООБРАЗИЕ"\n'
-            'description = "Получить +1 тремя различными Tags в CORE."\n'
+            'description = "Получить +1 тремя различными Tags за свидание."\n'
             "enabled = true\n"
             "condition_type = 0\n"
-            'condition_parameters = {\n"required_count": 3,\n"counted_phases": [1]\n}\n'
+            'condition_parameters = {\n"required_count": 3,\n"counted_phases": [0, 1, 2]\n}\n'
             "success_score = 2\n"
             "failure_score = 0\n",
         ),
@@ -329,8 +333,8 @@ def main() -> None:
         "relationship_min = -5\n"
         "relationship_start = 0\n"
         "relationship_max = 5\n"
-        f'positive_tag_ids = {string_name_array(["politeness", "directness", "risk", "generosity"])}\n'
-        f'negative_tag_ids = {string_name_array(["flattery", "audacity", "dominance", "status"])}\n'
+        f'positive_tag_ids = {string_name_array(["care", "generosity", "composure"])}\n'
+        f'negative_tag_ids = {string_name_array(["politeness", "directness", "flattery", "audacity", "dominance", "risk", "status", "humor", "cunning"])}\n'
         'secondary_rule_id = &"variety"\n'
         f'favorite_location_format_ids = {string_name_array(["calm", "culture"])}\n'
     )
@@ -343,8 +347,8 @@ def main() -> None:
         "relationship_min = -10\n"
         "relationship_start = 0\n"
         "relationship_max = 10\n"
-        f'positive_tag_ids = {string_name_array(["flattery", "audacity", "dominance", "status"])}\n'
-        f'negative_tag_ids = {string_name_array(["politeness", "directness", "risk", "generosity"])}\n'
+        f'positive_tag_ids = {string_name_array(["audacity", "dominance", "risk"])}\n'
+        f'negative_tag_ids = {string_name_array(["politeness", "directness", "flattery", "generosity", "status", "care", "humor", "composure", "cunning"])}\n'
         'secondary_rule_id = &"demanding"\n'
         f'favorite_location_format_ids = {string_name_array(["game", "unusual"])}\n'
     )
@@ -373,7 +377,9 @@ def main() -> None:
             "location_preference_failure = -1\n"
             "apartment_unprepared_penalty = -1\n"
             "apartment_quality_min = 0\n"
-            "apartment_quality_max = 3\n",
+            "apartment_quality_max = 3\n"
+            "positive_tags_per_girl = 3\n"
+            "min_distinct_base_tags_per_situation = 6\n",
         ),
     )
 

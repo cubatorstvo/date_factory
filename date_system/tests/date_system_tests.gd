@@ -22,6 +22,7 @@ func run_all() -> PackedStringArray:
 	_test_saved_resource_reload()
 	_test_validator()
 	_test_unlockable_tag_reservation()
+	_test_twelve_tag_rebalance()
 	return _failures
 
 
@@ -179,7 +180,7 @@ func _last_score_of(engine: DateEngine, phase: DateTypes.DatePhase) -> int:
 
 
 func _run_until_phase(catalog: DateContentCatalog, want_positive: bool) -> DateEngine:
-	for seed in range(1, 80):
+	for seed in range(1, 400):
 		var engine := _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player())
 		var skipped: bool = false
 		while engine.get_session_state().current_phase != DateTypes.DatePhase.CORE:
@@ -205,7 +206,7 @@ func _run_until_phase(catalog: DateContentCatalog, want_positive: bool) -> DateE
 
 
 func _finish_with_preference(catalog: DateContentCatalog, core_positive: bool, closing_positive: bool) -> DateEngine:
-	for seed in range(1, 80):
+	for seed in range(1, 400):
 		var engine := _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player())
 		var valid: bool = true
 		while engine.get_session_state().stage == DateSession.Stage.AWAITING_MOVE or engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
@@ -316,7 +317,7 @@ func _finish_progress(catalog: DateContentCatalog, girl_id: StringName, progress
 
 
 func _variety_distinct_works() -> bool:
-	for seed in range(1, 80):
+	for seed in range(1, 400):
 		var catalog := _catalog()
 		var engine := _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player())
 		var used: Dictionary = {}
@@ -586,6 +587,187 @@ func _test_unlockable_tag_reservation() -> void:
 	_ok("seed reserved STATUS", seed_session.current_reserved_unlockable_tag_ids.has(&"status"))
 	_ok("seed reserved RISK", seed_session.current_reserved_unlockable_tag_ids.has(&"risk"))
 	_ok("seed BASE prefers other tags", not seed_session.current_selected_base_tag_ids.has(&"status") and not seed_session.current_selected_base_tag_ids.has(&"risk"))
+
+
+func _test_twelve_tag_rebalance() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var enabled: Array[DateTag] = catalog.enabled_tags()
+	_ok("22.1 seed contains 12 Tags", enabled.size() == 12)
+	var alina: GirlProfile = catalog.find_girl(&"alina")
+	_ok("22.2 Alina positives", _same_tag_set(alina.positive_tag_ids, ["care", "generosity", "composure"]))
+	_ok("22.2 Alina sizes", alina.positive_tag_ids.size() == 3 and alina.negative_tag_ids.size() == 9)
+	var vika: GirlProfile = catalog.find_girl(&"vika")
+	_ok("22.3 Vika positives", _same_tag_set(vika.positive_tag_ids, ["audacity", "dominance", "risk"]))
+	_ok("22.3 Vika sizes", vika.positive_tag_ids.size() == 3 and vika.negative_tag_ids.size() == 9)
+	for girl in catalog.girls:
+		_ok("22.4 coverage %s" % String(girl.id), _girl_covers_enabled_tags(girl, enabled))
+	var validator := ContentValidator.new()
+	var two: DateContentCatalog = _catalog()
+	var two_girl: GirlProfile = two.find_girl(&"alina")
+	two_girl.positive_tag_ids = [&"care", &"generosity"] as Array[StringName]
+	two_girl.sync_negative_tags(two.enabled_tags())
+	_ok("22.5 two positives", _find_code(validator.validate(two), "INVALID_POSITIVE_TAG_COUNT") != null)
+	var four: DateContentCatalog = _catalog()
+	var four_girl: GirlProfile = four.find_girl(&"alina")
+	four_girl.positive_tag_ids = [&"care", &"generosity", &"composure", &"humor"] as Array[StringName]
+	four_girl.sync_negative_tags(four.enabled_tags())
+	_ok("22.5 four positives", _find_code(validator.validate(four), "INVALID_POSITIVE_TAG_COUNT") != null)
+	var three_issues: Array[ContentValidationIssue] = validator.validate(_catalog())
+	_ok("22.5 three positives pass count", _find_code(three_issues, "INVALID_POSITIVE_TAG_COUNT") == null)
+	_ok("22.6 unused tags warning count", _count_code(three_issues, "TAG_WITHOUT_MOVE_MAPPING") == 0)
+	_ok("22.6 no incomplete coverage", _find_code(three_issues, "INCOMPLETE_GIRL_TAG_COVERAGE") == null)
+	for situation in catalog.situations:
+		if situation == null or not situation.enabled:
+			continue
+		var distinct: int = _distinct_base_tags(catalog, situation.id)
+		print("BASE diversity %s = %d" % [String(situation.id), distinct])
+		_ok("22.7 BASE diversity %s" % String(situation.id), distinct >= 6)
+	_ok("22.8 support appearance care", _mapping_tag(&"support", &"appearance_question") == &"care")
+	_ok("22.8 support verdict care", _mapping_tag(&"support", &"date_verdict") == &"care")
+	_ok("22.9 tease appearance humor", _mapping_tag(&"tease", &"appearance_question") == &"humor")
+	_ok("22.9 tease rival humor", _mapping_tag(&"tease", &"rival_provocation") == &"humor")
+	_ok("22.9 tease verdict humor", _mapping_tag(&"tease", &"date_verdict") == &"humor")
+	_ok("22.10 tease money cunning", _mapping_tag(&"tease", &"money_request") == &"cunning")
+	_ok("22.10 refuse rival cunning", _mapping_tag(&"refuse", &"rival_provocation") == &"cunning")
+	_ok("22.11 smooth rival composure", _mapping_tag(&"smooth", &"rival_provocation") == &"composure")
+	_ok("22.11 refuse money composure", _mapping_tag(&"refuse", &"money_request") == &"composure")
+	_ok("22.11 refuse bet composure", _mapping_tag(&"refuse", &"spontaneous_bet") == &"composure")
+	_ok("22.11 silent verdict composure", _mapping_tag(&"silent_pressure", &"date_verdict") == &"composure")
+	var reset_progress: GirlProgress = _fresh_progress(catalog, &"alina")
+	for tag_id in [&"care", &"humor", &"composure", &"cunning"]:
+		_ok("22.12 UNKNOWN %s" % String(tag_id), reset_progress.tag_knowledge(tag_id) == DateTypes.TagKnowledge.UNKNOWN)
+	var remap_progress := GirlProgress.new()
+	remap_progress.reset_to_profile(alina)
+	remap_progress.revealed_positive_tag_ids = [&"politeness"] as Array[StringName]
+	remap_progress.revealed_negative_tag_ids = [&"care"] as Array[StringName]
+	remap_progress.realign_revealed_to_profile(alina, catalog)
+	_ok("22.12 remap politeness negative", remap_progress.tag_knowledge(&"politeness") == DateTypes.TagKnowledge.NEGATIVE)
+	_ok("22.12 remap care positive", remap_progress.tag_knowledge(&"care") == DateTypes.TagKnowledge.POSITIVE)
+	_ok("22.12 remap humor unknown", remap_progress.tag_knowledge(&"humor") == DateTypes.TagKnowledge.UNKNOWN)
+	_ok("22.13 reveal care positive", _reveal_tag_knowledge(&"care", true))
+	_ok("22.13 reveal composure positive", _reveal_tag_knowledge(&"composure", true))
+	_ok("22.13 reveal humor negative", _reveal_tag_knowledge(&"humor", false))
+	_ok("22.13 reveal cunning negative", _reveal_tag_knowledge(&"cunning", false))
+	_test_twelve_tag_reservation_regression()
+	_test_twelve_tag_balance_simulation()
+
+
+func _girl_covers_enabled_tags(girl: GirlProfile, enabled: Array[DateTag]) -> bool:
+	var positive: Dictionary = {}
+	var negative: Dictionary = {}
+	for tag_id in girl.positive_tag_ids:
+		positive[String(tag_id)] = true
+	for tag_id in girl.negative_tag_ids:
+		negative[String(tag_id)] = true
+	for tag_id in positive.keys():
+		if negative.has(String(tag_id)):
+			return false
+	var union: Dictionary = {}
+	for tag_id in positive.keys():
+		union[String(tag_id)] = true
+	for tag_id in negative.keys():
+		union[String(tag_id)] = true
+	if union.size() != enabled.size():
+		return false
+	for tag in enabled:
+		if not union.has(String(tag.id)):
+			return false
+	return true
+
+
+func _distinct_base_tags(catalog: DateContentCatalog, situation_id: StringName) -> int:
+	var tags: Dictionary = {}
+	for move in catalog.applicable_moves(situation_id, DateTypes.DateMoveKind.BASE):
+		var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
+		if mapping == null:
+			continue
+		tags[String(mapping.tag_id)] = true
+	return tags.size()
+
+
+func _mapping_tag(move_id: StringName, situation_id: StringName) -> StringName:
+	var move: DateMove = _catalog().find_move(move_id)
+	if move == null:
+		return &""
+	var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
+	if mapping == null:
+		return &""
+	return mapping.tag_id
+
+
+func _count_code(issues: Array[ContentValidationIssue], code: String) -> int:
+	var count: int = 0
+	for issue in issues:
+		if issue.code == code:
+			count += 1
+	return count
+
+
+func _reveal_tag_knowledge(tag_id: StringName, expect_positive: bool) -> bool:
+	for seed in range(1, 200):
+		var catalog: DateContentCatalog = _new_tag_lab_catalog()
+		var progress: GirlProgress = _fresh_progress(catalog, &"alina")
+		var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", seed, progress, _player())
+		var found: bool = false
+		for option in engine.get_available_moves():
+			if option.is_selectable() and option.tag_id == tag_id:
+				found = true
+				_choose(engine, option.move_id)
+				break
+		if not found:
+			continue
+		var knowledge: DateTypes.TagKnowledge = progress.tag_knowledge(tag_id)
+		if expect_positive:
+			return knowledge == DateTypes.TagKnowledge.POSITIVE
+		return knowledge == DateTypes.TagKnowledge.NEGATIVE
+	return false
+
+
+func _new_tag_lab_catalog() -> DateContentCatalog:
+	return _diversity_catalog(
+		[["base_care", "care"], ["base_humor", "humor"], ["base_composure", "composure"], ["base_cunning", "cunning"]],
+		[]
+	)
+
+
+func _test_twelve_tag_reservation_regression() -> void:
+	var specs: Array = []
+	for tag in _catalog().enabled_tags():
+		specs.append(["base_%s" % String(tag.id), String(tag.id)])
+	var catalog: DateContentCatalog = _diversity_catalog(specs, [["unlock_care", "care", 3, 1]])
+	var player: TestPlayerState = _player()
+	player.capital = 6
+	var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 11, _fresh_progress(catalog, &"alina"), player)
+	var session: DateSession = engine.get_session_state()
+	_ok("22.14 reserved care", session.current_reserved_unlockable_tag_ids.has(&"care"))
+	_ok("22.14 care not preferred", not session.current_preferred_base_move_ids.has(&"base_care"))
+	_ok("22.14 care is fallback", session.current_fallback_base_move_ids.has(&"base_care"))
+	_ok("22.14 selected BASE omits reserved care", not session.current_selected_base_tag_ids.has(&"care"))
+	_ok("22.14 three BASE selected", session.current_selected_base_move_ids.size() == 3)
+
+
+func _test_twelve_tag_balance_simulation() -> void:
+	var specs: Array = []
+	for tag in _catalog().enabled_tags():
+		specs.append(["base_%s" % String(tag.id), String(tag.id)])
+	var catalog: DateContentCatalog = _diversity_catalog(specs, [])
+	var girl: GirlProfile = catalog.find_girl(&"alina")
+	var positives: Dictionary = {}
+	for tag_id in girl.positive_tag_ids:
+		positives[String(tag_id)] = true
+	var hits: int = 0
+	for seed in range(1, 10001):
+		var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player())
+		var has_positive: bool = false
+		for tag_id in engine.get_session_state().current_selected_base_tag_ids:
+			if positives.has(String(tag_id)):
+				has_positive = true
+				break
+		if has_positive:
+			hits += 1
+	var share: float = float(hits) / 10000.0
+	print("BALANCE 10000-seed share=%.4f hits=%d" % [share, hits])
+	_ok("23. 10000-seed share 0.60..0.64", share >= 0.60 and share <= 0.64, "share=%.4f hits=%d" % [share, hits])
 
 
 func _diversity_catalog(base_specs: Array, unlock_specs: Array, opening_count: int = 1, core_count: int = 0, allow_repeats: bool = false) -> DateContentCatalog:

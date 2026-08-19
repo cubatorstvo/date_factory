@@ -5,26 +5,26 @@
 [sub_resource type="Resource" id="map_1"]
 script = ExtResource("2_map")
 situation_id = &"money_request"
-tag_id = &"dominance"
-option_text = "Коротко отказать и закончить разговор."
-positive_result_text = "Ей это откликается. Тег «dominance» работает в её пользу."
-negative_result_text = "Ей это режет. Тег «dominance» играет против вас."
+tag_id = &"composure"
+option_text = "Спокойно отказать и закончить разговор."
+positive_result_text = "Ей это откликается. Тег «composure» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «composure» играет против вас."
 
 [sub_resource type="Resource" id="map_2"]
 script = ExtResource("2_map")
 situation_id = &"rival_provocation"
-tag_id = &"status"
-option_text = "Продолжить свидание, оставив провокацию без внимания."
-positive_result_text = "Ей это откликается. Тег «status» работает в её пользу."
-negative_result_text = "Ей это режет. Тег «status» играет против вас."
+tag_id = &"cunning"
+option_text = "Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис."
+positive_result_text = "Ей это откликается. Тег «cunning» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «cunning» играет против вас."
 
 [sub_resource type="Resource" id="map_3"]
 script = ExtResource("2_map")
 situation_id = &"spontaneous_bet"
-tag_id = &"directness"
-option_text = "Отказаться от пари."
-positive_result_text = "Ей это откликается. Тег «directness» работает в её пользу."
-negative_result_text = "Ей это режет. Тег «directness» играет против вас."
+tag_id = &"composure"
+option_text = "Спокойно отказаться от пари."
+positive_result_text = "Ей это откликается. Тег «composure» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «composure» играет против вас."
 
 [resource]
 script = ExtResource("1_move")

@@ -5,10 +5,10 @@
 [sub_resource type="Resource" id="map_1"]
 script = ExtResource("2_map")
 situation_id = &"appearance_question"
-tag_id = &"politeness"
+tag_id = &"care"
 option_text = "Спросить, нравится ли образ ей самой, и поддержать её выбор."
-positive_result_text = "Ей это откликается. Тег «politeness» работает в её пользу."
-negative_result_text = "Ей это режет. Тег «politeness» играет против вас."
+positive_result_text = "Ей это откликается. Тег «care» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «care» играет против вас."
 
 [sub_resource type="Resource" id="map_2"]
 script = ExtResource("2_map")
@@ -29,10 +29,10 @@ negative_result_text = "Ей это режет. Тег «politeness» играе
 [sub_resource type="Resource" id="map_4"]
 script = ExtResource("2_map")
 situation_id = &"date_verdict"
-tag_id = &"politeness"
-option_text = "Сказать, что вечер прошёл хорошо, и поблагодарить её."
-positive_result_text = "Ей это откликается. Тег «politeness» работает в её пользу."
-negative_result_text = "Ей это режет. Тег «politeness» играет против вас."
+tag_id = &"care"
+option_text = "Сказать, что главное — понравился ли вечер ей самой."
+positive_result_text = "Ей это откликается. Тег «care» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «care» играет против вас."
 
 [resource]
 script = ExtResource("1_move")

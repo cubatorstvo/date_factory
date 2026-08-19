@@ -130,7 +130,7 @@ signal episode_presentation_finished
 - `DateMoveSituationMapping`: situation_id, tag_id, option_text, positive_result_text, negative_result_text
 - `DateSituation`: id, display_name, description, situation_text, enabled, allowed_phases, weight, custom_episode_scene, custom_logic_script
 - `SecondaryRule`: id, display_name, description, enabled, condition_type, condition_parameters, success_score, failure_score
-- `GirlProfile`: id, display_name, description, enabled, relationship_min/start/max, positive_tag_ids, negative_tag_ids, secondary_rule_id, favorite_location_format_ids, portrait, future_character_scene. В редакторе задаются только теги «нравится»; все остальные активные теги по умолчанию «не нравится».
+- `GirlProfile`: id, display_name, description, enabled, relationship_min/start/max, positive_tag_ids, negative_tag_ids, secondary_rule_id, favorite_location_format_ids, portrait, future_character_scene. В редакторе выбираются только положительные Tags; их число равно `DateRules.positive_tags_per_girl` (seed = 3). При сохранении `negative_tag_ids = enabled_tag_ids − positive_tag_ids`.
 - `LocationFormat`: id, display_name, description, enabled
 - `DateLocation`: id, display_name, description, enabled, base_quality_bonus, preference_mode, location_format_id, uses_apartment_quality, uses_apartment_preparation, future_location_scene
 - `Outfit`: id, display_name, description, enabled, score_bonus, future_visual_resource
@@ -170,13 +170,19 @@ location_preference_failure = -1
 apartment_unprepared_penalty = -1
 apartment_quality_min = 0
 apartment_quality_max = 3
+positive_tags_per_girl = 3
+min_distinct_base_tags_per_situation = 6
 ```
 
-Все параметры редактируются в Developer Room.
+Итоговая модель знания: 12 активных Tags; у каждой девушки 3 положительных и 9 отрицательных; BASE за эпизод — 3 Хода; результат Tag `+1` / `-1`. При полном знании случайный BASE-набор регулярно оставляет игрока без положительного варианта. AVAILABLE UNLOCKABLE расширяют покрытие Tags и снижают эту вероятность по мере прокачки.
+
+Все параметры редактируются в Developer Room. В «ПРАВИЛА СВИДАНИЯ»: `Положительных тегов у девушки` (SpinBox, min = 1, max = число активных Tags − 1) и `Минимум разных базовых тегов в ситуации`.
 
 ## Runtime
 
 `GirlProgress`: girl_id, relationship, revealed_positive_tag_ids, revealed_negative_tag_ids, secondary_revealed, completed_dates.
+
+После reload Content Catalog runtime progress нормализуется: известные `tag_id` из обоих revealed-списков оставляются только если Tag активен, затем заново раскладываются по актуальному GirlProfile. Новые Tags (`care`, `humor`, `composure`, `cunning` при расширении набора) начинаются как `UNKNOWN`.
 
 `TestPlayerState`: muscle, appearance, capital, aura, apartment_quality, apartment_prepared.
 
@@ -255,13 +261,28 @@ muscle Мышца 0..8; appearance Внешность 0..8; capital Капита
 
 ## Seed Tags
 
-politeness УЧТИВОСТЬ; directness ПРЯМОЛИНЕЙНОСТЬ; flattery ПОДХАЛИМАЖ; audacity НАГЛОСТЬ; dominance ДОМИНИРОВАНИЕ; risk АЗАРТ; generosity ЩЕДРОСТЬ; status СТАТУС.
+12 активных Tags:
+
+| id | имя | смысл |
+|---|---|---|
+| politeness | УЧТИВОСТЬ | Вежливость, уважение, мягкая поддержка. |
+| directness | ПРЯМОЛИНЕЙНОСТЬ | Прямая речь без украшений. |
+| flattery | ПОДХАЛИМАЖ | Угодливая похвала и сглаживание. |
+| audacity | НАГЛОСТЬ | Колкость, дерзость, провокация. |
+| dominance | ДОМИНИРОВАНИЕ | Контроль ситуации и давления. |
+| risk | АЗАРТ | Готовность к риску и пари. |
+| generosity | ЩЕДРОСТЬ | Деньги и материальная помощь. |
+| status | СТАТУС | Демонстрация положения и ресурсов. |
+| care | ЗАБОТА | Внимание к комфорту, состоянию и интересам другого человека. |
+| humor | ЮМОР | Реакция через шутку, иронию или превращение ситуации в комедию. |
+| composure | САМООБЛАДАНИЕ | Спокойствие, выдержка и отсутствие суеты под давлением ситуации. |
+| cunning | ХИТРОСТЬ | Решение ситуации через обходной ход, проверку условий или использование правил в свою пользу. |
 
 ## Seed Girls
 
-Алина `alina`: rel -5..+5 start 0. Positive: politeness, directness, risk, generosity. Negative: flattery, audacity, dominance, status. Secondary variety. Favorites: calm, culture.
+Алина `alina`: rel -5..+5 start 0. Positive: care, generosity, composure. Negative: politeness, directness, flattery, audacity, dominance, risk, status, humor, cunning. Secondary variety. Favorites: calm, culture.
 
-Вика `vika`: rel -10..+10 start 0. Positive: flattery, audacity, dominance, status. Negative: politeness, directness, risk, generosity. Secondary demanding. Favorites: game, unusual.
+Вика `vika`: rel -10..+10 start 0. Positive: audacity, dominance, risk. Negative: politeness, directness, flattery, generosity, status, care, humor, composure, cunning. Secondary demanding. Favorites: game, unusual.
 
 ## Seed Situations
 
@@ -273,7 +294,32 @@ politeness УЧТИВОСТЬ; directness ПРЯМОЛИНЕЙНОСТЬ; flatte
 
 ## Seed BASE Moves
 
-`say_directly`, `compliment`, `support`, `smooth`, `tease`, `take_initiative`, `refuse`, `accept_challenge`, `pay`, `show_off` — mappings и option_text как в постановке задачи.
+`say_directly`, `compliment`, `support`, `smooth`, `tease`, `take_initiative`, `refuse`, `accept_challenge`, `pay`, `show_off`.
+
+Изменённые mappings:
+
+| Move | Situation | Tag | option_text |
+|---|---|---|---|
+| support | appearance_question | care | Спросить, нравится ли образ ей самой, и поддержать её выбор. |
+| support | date_verdict | care | Сказать, что главное — понравился ли вечер ей самой. |
+| tease | appearance_question | humor | Сказать, что ожидал увидеть что-то хуже. |
+| tease | money_request | cunning | Попросить сначала доказать историю, а потом вернуться к вопросу денег. |
+| tease | rival_provocation | humor | Высмеять его претензию. |
+| tease | date_verdict | humor | Сказать, что бывало и хуже. |
+| smooth | rival_provocation | composure | Спокойно предложить завершить конфликт и разойтись. |
+| refuse | money_request | composure | Спокойно отказать и закончить разговор. |
+| refuse | rival_provocation | cunning | Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис. |
+| refuse | spontaneous_bet | composure | Спокойно отказаться от пари. |
+
+Разные BASE Tags по Situation (минимум `min_distinct_base_tags_per_situation` = 6):
+
+| Situation | distinct BASE Tags | число |
+|---|---|---|
+| appearance_question | directness, politeness, care, flattery, humor, status | 6 |
+| money_request | directness, generosity, politeness, cunning, dominance, composure, status | 7 |
+| rival_provocation | directness, composure, humor, dominance, cunning, risk, status | ≥7 |
+| spontaneous_bet | directness, flattery, politeness, audacity, dominance, composure, risk, status | 8 |
+| date_verdict | directness, flattery, care, humor, dominance, status | 6 |
 
 ## Seed UNLOCKABLE Moves
 
@@ -282,7 +328,7 @@ politeness УЧТИВОСТЬ; directness ПРЯМОЛИНЕЙНОСТЬ; flatte
 | punch | Дать в жбан | muscle >= 4 | rival_provocation → dominance |
 | solve_with_money | Решить деньгами | capital >= 3 | money_request generosity; rival_provocation status; spontaneous_bet status |
 | play_with_looks | Сыграть внешностью | appearance >= 3 | appearance_question audacity; rival_provocation status; date_verdict flattery |
-| silent_pressure | Молча продавить | aura >= 3 | money_request dominance; rival_provocation dominance; date_verdict audacity |
+| silent_pressure | Молча продавить | aura >= 3 | money_request dominance; rival_provocation dominance; date_verdict composure |
 | raise_stakes | Поднять ставки | capital >= 6 | money_request risk; spontaneous_bet risk |
 
 ## Developer Room
@@ -292,6 +338,8 @@ politeness УЧТИВОСТЬ; directness ПРЯМОЛИНЕЙНОСТЬ; flatte
 Разделы: СВИДАНИЕ, ДЕВУШКИ, ТЕГИ, БАЗОВЫЕ ХОДЫ, ОТКРЫВАЕМЫЕ ХОДЫ, СИТУАЦИИ, SECONDARY, МЕСТА, ФОРМАТЫ МЕСТ, НАРЯДЫ, ХАРАКТЕРИСТИКИ, ПРАВИЛА СВИДАНИЯ, ТЕСТОВОЕ СОСТОЯНИЕ, ВАЛИДАЦИЯ.
 
 Редактор: список, поиск, создать, дублировать, редактировать, удалить, сохранить, отменить. Draft-копия Resource. Save: validate → `.tres` → catalog reload → статус. Удаление показывает зависимости.
+
+В «ДЕВУШКИ» над списком Tags счётчик `Положительные теги: N / 3` (`3` из `DateRules.positive_tags_per_girl`). Пока N < лимита можно добавлять положительные Tags; при N = лимиту выбранные можно снимать, остальные остаются отрицательными. N ≠ лимит → Save показывает ошибку валидации. Карточка редактирования: `Положительные: 3`, `Отрицательные: 9`, `Всего активных тегов: 12`.
 
 После save новый DateSession берёт новые данные. Запущенная сессия работает на snapshot.
 
@@ -313,6 +361,10 @@ politeness УЧТИВОСТЬ; directness ПРЯМОЛИНЕЙНОСТЬ; flatte
 14. UnlockRequirement → существующий ProgressionStat  
 15. один Move — максимум один mapping на одну Situation  
 16. несколько UNLOCKABLE одной Situation с одинаковым Tag → WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION` (не блокирует запуск)
+17. `girl.positive_tag_ids.size() != date_rules.positive_tags_per_girl` → ERROR `INVALID_POSITIVE_TAG_COUNT`
+18. `positive_tag_ids ∪ negative_tag_ids` должен совпадать со всеми активными Tags → ERROR `INCOMPLETE_GIRL_TAG_COVERAGE` (сообщение содержит отсутствующие и лишние `tag_ids`)
+19. активный DateTag без DateMoveSituationMapping → WARNING `TAG_WITHOUT_MOVE_MAPPING` (в seed = 0)
+20. distinct BASE Tags ситуации < `min_distinct_base_tags_per_situation` → WARNING `LOW_BASE_TAG_DIVERSITY` (seed: каждая из пяти Situations ≥ 6)
 
 Экран: severity, code, resource_type, resource_id, field, message. Кнопка «ПРОВЕРИТЬ ВЕСЬ КОНТЕНТ». ERROR блокирует сохранение; WARNING только показывает проблему.
 
@@ -338,4 +390,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи (раскрытие tags, scores фаз, BASE pool/RNG/replay, UNLOCKABLE, Secondary, локации, квартира, outfit, clamp Алины/Вики, reset, resource reload, validator) плюс резервирование Tags AVAILABLE UNLOCKABLE, LOCKED/USED, уникальность BASE Tags, fallback, deterministic seed и WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION`.
+Кейсы 1–36 постановки задачи (раскрытие tags, scores фаз, BASE pool/RNG/replay, UNLOCKABLE, Secondary, локации, квартира, outfit, clamp Алины/Вики, reset, resource reload, validator) плюс резервирование Tags AVAILABLE UNLOCKABLE, LOCKED/USED, уникальность BASE Tags, fallback, deterministic seed, WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION`, 12 Tags / 3 positive / полное покрытие GirlProfile, новые mappings, UNKNOWN новых Tags, 10000-seed баланс `0.60..0.64` для абстрактного пула 12 BASE × 3 positive × 3 хода без UNLOCKABLE.

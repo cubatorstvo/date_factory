@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DateTag" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_tag.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"humor"
+display_name = "ЮМОР"
+description = "Реакция через шутку, иронию или превращение ситуации в комедию."
+enabled = true

@@ -22,10 +22,10 @@ negative_result_text = "Ей это режет. Тег «dominance» играе�
 [sub_resource type="Resource" id="map_3"]
 script = ExtResource("2_map")
 situation_id = &"date_verdict"
-tag_id = &"audacity"
+tag_id = &"composure"
 option_text = "Выдержать паузу до реакции девушки."
-positive_result_text = "Ей это откликается. Тег «audacity» работает в её пользу."
-negative_result_text = "Ей это режет. Тег «audacity» играет против вас."
+positive_result_text = "Ей это откликается. Тег «composure» работает в её пользу."
+negative_result_text = "Ей это режет. Тег «composure» играет против вас."
 
 [sub_resource type="Resource" id="req_1"]
 script = ExtResource("3_req")

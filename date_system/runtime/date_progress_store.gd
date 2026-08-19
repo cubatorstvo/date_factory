@@ -117,3 +117,19 @@ func _from_dictionary(data: Dictionary, catalog: DateContentCatalog) -> void:
 	if replay_data is Dictionary and not (replay_data as Dictionary).is_empty():
 		last_replay = DateReplaySnapshot.from_dictionary(replay_data)
 	_ensure_defaults(catalog)
+	realign_to_catalog(catalog)
+
+
+func realign_to_catalog(catalog: DateContentCatalog) -> void:
+	if catalog == null:
+		return
+	for key in girl_progress_by_id.keys():
+		var progress: GirlProgress = girl_progress_by_id[key]
+		var girl: GirlProfile = catalog.find_girl(StringName(str(key)))
+		if progress == null or girl == null:
+			continue
+		progress.realign_revealed_to_profile(girl, catalog)
+	if last_replay != null and last_replay.girl_progress != null:
+		var replay_girl: GirlProfile = catalog.find_girl(last_replay.girl_id)
+		if replay_girl != null:
+			last_replay.girl_progress.realign_revealed_to_profile(replay_girl, catalog)

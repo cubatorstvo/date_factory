@@ -393,11 +393,15 @@ func _add_bool(res: Resource, property: String, title: String) -> void:
 
 
 func _add_int(res: Resource, property: String, title: String) -> void:
+	_add_bounded_int(res, property, title, -99, 99, true)
+
+
+func _add_bounded_int(res: Resource, property: String, title: String, min_value: int, max_value: int, unbounded: bool = false) -> void:
 	var spin := SpinBox.new()
-	spin.min_value = -99
-	spin.max_value = 99
-	spin.allow_greater = true
-	spin.allow_lesser = true
+	spin.min_value = min_value
+	spin.max_value = max_value
+	spin.allow_greater = unbounded
+	spin.allow_lesser = unbounded
 	spin.value = int(res.get(property))
 	spin.value_changed.connect(func(value: float) -> void:
 		res.set(property, int(value))
@@ -502,26 +506,44 @@ func _add_dict_params() -> void:
 
 func _add_girl_form() -> void:
 	var girl: GirlProfile = _draft as GirlProfile
+	girl.sync_negative_tags(catalog_service.catalog.enabled_tags())
 	_add_common_identity(girl)
 	_add_int(girl, "relationship_min", "relationship_min")
 	_add_int(girl, "relationship_start", "relationship_start")
 	_add_int(girl, "relationship_max", "relationship_max")
 	_add_id_selector(girl, "secondary_rule_id", "secondary_rule", catalog_service.catalog.secondary_rules)
+	var enabled_count: int = catalog_service.catalog.enabled_tags().size()
+	var positive_count: int = girl.positive_tag_ids.size()
+	var summary := Label.new()
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.text = "Положительные: %d\nОтрицательные: %d\nВсего активных тегов: %d" % [
+		positive_count,
+		maxi(0, enabled_count - positive_count),
+		enabled_count,
+	]
+	_form_host.add_child(summary)
+	var limit: int = _positive_tag_limit()
 	_form_host.add_child(LabUi.heading("Нравится"))
+	var counter := Label.new()
+	counter.text = "Положительные теги: %d / %d" % [positive_count, limit]
+	_form_host.add_child(counter)
 	var hint := Label.new()
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.text = "Отмеченные теги нравятся. Все остальные по умолчанию не нравятся."
+	hint.text = "Отмеченные теги нравятся. Все остальные активные теги автоматически не нравятся."
 	_form_host.add_child(hint)
 	for tag in catalog_service.catalog.tags:
-		if tag == null:
+		if tag == null or not tag.enabled:
 			continue
 		var box := CheckBox.new()
 		box.text = tag.display_name
-		box.button_pressed = girl.positive_tag_ids.has(tag.id)
+		var selected: bool = girl.positive_tag_ids.has(tag.id)
+		box.button_pressed = selected
+		box.disabled = (not selected) and positive_count >= limit
 		var tag_id: StringName = tag.id
 		box.toggled.connect(func(pressed: bool) -> void:
 			_set_girl_liked_tag(girl, tag_id, pressed)
 			_dirty = true
+			_rebuild_form.call_deferred()
 		)
 		_form_host.add_child(box)
 	_form_host.add_child(LabUi.heading("Любимые форматы"))
@@ -540,9 +562,17 @@ func _add_girl_form() -> void:
 		_form_host.add_child(box)
 
 
+func _positive_tag_limit() -> int:
+	var rules: DateRules = catalog_service.catalog.date_rules if catalog_service.catalog != null else null
+	if rules == null:
+		return 3
+	return maxi(1, rules.positive_tags_per_girl)
+
+
 func _set_girl_liked_tag(girl: GirlProfile, tag_id: StringName, liked: bool) -> void:
 	girl.positive_tag_ids.erase(tag_id)
-	if liked:
+	var limit: int = _positive_tag_limit()
+	if liked and girl.positive_tag_ids.size() < limit:
 		girl.positive_tag_ids.append(tag_id)
 	girl.sync_negative_tags(catalog_service.catalog.enabled_tags())
 
@@ -618,6 +648,9 @@ func _add_rules_form() -> void:
 		"apartment_quality_min", "apartment_quality_max",
 	]:
 		_add_int(rules, prop, prop)
+	var enabled_count: int = catalog_service.catalog.enabled_tags().size()
+	_add_bounded_int(rules, "positive_tags_per_girl", "Положительных тегов у девушки", 1, maxi(1, enabled_count - 1))
+	_add_bounded_int(rules, "min_distinct_base_tags_per_situation", "Минимум разных базовых тегов в ситуации", 1, maxi(1, enabled_count))
 	_add_bool(rules, "allow_situation_repeats", "allow_situation_repeats")
 	_add_bool(rules, "show_locked_unlockable_moves", "show_locked_unlockable_moves")
 	_add_bool(rules, "reveal_tag_after_use", "reveal_tag_after_use")
