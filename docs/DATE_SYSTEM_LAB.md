@@ -4,13 +4,14 @@
 
 ## Назначение
 
-Date System Lab одновременно:
+Date System Lab — канон ядра свиданий и комната разработчика.
 
-- самостоятельная 2D-текстовая версия механики свиданий;
-- комната разработчика;
-- редактор игрового контента;
-- тестовая среда;
-- фундамент будущей основной игры.
+Текущая `main` разделяет два независимых entry point:
+
+- `GameSimulator` — обычная 2D-версия прохождения поверх Game Core;
+- `DateSystemLab` — комната разработчика, редактор контента и тестовая среда Date System.
+
+`GameSimulator` не расширяет `DateSystemLab`. Он только отображает `GameState` и запускает `GameAction` через `ActionService`.
 
 Design-content хранится в `res://`. Runtime-прогресс — в `user://`.
 
@@ -104,7 +105,8 @@ Opening: score `0`, но Tag раскрывается. Core/Closing: `+1` / `-1`
 2. Runtime Progress Layer — канонический `GameState` прохождения (`SaveManager`, JSON `user://saves/game.json`) плюс лабораторный `DateProgressStore` (отношения, известные предпочтения, Secondary, число свиданий, тестовая прокачка, квартира, replay snapshot).
 3. Date Engine — DateSession, RNG, эпизоды, BASE/UNLOCKABLE, mappings, Tags, Secondary, location/outfit/apartment scores, итог отношений.
 4. Text Date Runner — текстовый 2D DateSession.
-5. Developer Room — редактор Content Layer и запуск runner.
+5. Game Simulator — 2D presentation прохождения поверх Game Core.
+6. Developer Room — редактор Content Layer и запуск runner.
 
 ## GameState
 
@@ -144,7 +146,7 @@ delete_save()
 }
 ```
 
-`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Текущий формат — `save_version = 3`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `GameState.player.money`. Игровые действия изменяют money и время только через `ActionService`.
+`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Текущий формат — `save_version = 3`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `GameState.player.money`. Игровые действия изменяют money и время только через `ActionService`. Presentation-слой прохождения — `GameSimulator`.
 
 `DateSession.stage` не является `StoryState.stage`. `DateProgressStore` остаётся прогрессом лаборатории свиданий, пока `girls` / `dating` пусты.
 
@@ -316,6 +318,71 @@ complete_current_stage() -> bool
 - уже Finale: состояние не менять, вернуть `false`
 
 Будущие системы после своих условий вызывают только `StageService.complete_current_stage()`.
+
+## Game Simulator
+
+Сцена `res://game/simulator/GameSimulator.tscn` — presentation-слой прохождения. Главная сцена проекта. `DateSystemLab` остаётся отдельным dev-инструментом.
+
+```text
+GameSimulator
+      │
+      │ пользователь нажимает кнопку
+      ▼
+GameAction
+      │
+      ▼
+ActionService
+      │
+      ├── requirements
+      ├── costs
+      ├── effects
+      └── TimeService
+      │
+      ▼
+GameState
+      │
+      ▼
+GameSimulator.refresh()
+```
+
+Autoload `StageService` и `ActionService` регистрируются в `project.godot` как `/root/StageService` и `/root/ActionService`.
+
+Интерфейс — 2D Control, контейнеры и anchors, читаемый в 1280×720 и 1920×1080:
+
+```text
+HUD: Day / Time | Money | Stage | Finale
+Navigation | Current Section
+Action Result / Event Log
+```
+
+HUD читает только канонические данные:
+
+```text
+TimeService.get_day() / get_hour() / get_minute()
+GameState.player.money
+StageService.get_current_stage()
+StageService.is_finale_reached()
+```
+
+Пример: `День 3`, `14:30`, `Деньги: 650`, `Stage: 2`. После Finale: `Stage: 6` и `Finale`, плюс presentation-факт `FINALE REACHED`. Навигация и системы остаются доступны.
+
+Разделы навигации: Главная, Работа, Город, Девушки, Свидания, Квартира, Прокачка. Смена раздела — только presentation: не меняет `GameState`, не двигает время, не является `GameAction`.
+
+Главная показывает краткое состояние прохождения (`День`, время, `Stage`, деньги), кнопку «СОХРАНИТЬ» и последний результат действия.
+
+Работа запускает каталожный `test_earn_money` (`TEST_EARN_MONEY`): заработок 100, 60 минут, кнопка «Работать». Город запускает `test_wait` (`TEST_WAIT`): провести время 120 минут, кнопка «Подождать». Оба идут только через `ActionService.execute(action)`. UI деньги и время не меняет.
+
+Заготовки секций: Девушки — «Доступные девушки появятся здесь.»; Свидания — «Доступные свидания появятся здесь.»; Квартира — «Система квартиры появится здесь.»; Прокачка — «Система прогрессии появится здесь.»
+
+Reusable `GameActionButton` получает `GameAction` и показывает label, `money_cost`, `time_cost_minutes`. Кнопка вызывает `ActionService.execute(action)` и возвращает `ActionResult` в `GameSimulator`. Человекочитаемые label тестовых actions живут в presentation-каталоге Simulator: `test_wait` → Подождать, `test_earn_money` → Работать, `test_spend_money` → Потратить 50.
+
+Успешный `ActionResult`: «Успешно.», полученные эффекты, «Прошло времени: N мин.». Отказ: «Действие недоступно.» и `ActionResult.failure_reason`. Кнопка `disabled`, если `ActionService.can_execute(action)` ложно; причина — `ActionService.get_failure_reason(action)` в `tooltip_text`.
+
+Единый `refresh()` обновляет HUD, текущую секцию, доступность actions и последние отображаемые значения. Вызывается после New Game, Load, `ActionService.action_executed`, `TimeService.time_advanced`, `StageService.stage_changed`, `StageService.finale_reached`. Simulator не хранит копии игровых значений: всегда читает сервисы и `GameState`.
+
+Управление сохранением через `SaveManager`: «НОВАЯ ИГРА» → `new_game()`; «СОХРАНИТЬ» → `save_game()` и сообщение «Игра сохранена.»; «ЗАГРУЗИТЬ» доступна при `has_save()` → `load_game()`; «УДАЛИТЬ СОХРАНЕНИЕ» → `delete_save()`. После New Game HUD: Day 1, 00:00, Money 0, Stage 1.
+
+Временный dev-control «ЗАВЕРШИТЬ ТЕКУЩИЙ STAGE» вызывает `StageService.complete_current_stage()` и визуально отделён от игровых действий. Нужен для Skeleton: Stage 1 → 6 → Finale.
 
 ## Будущие эпизоды и действия
 
@@ -579,7 +646,7 @@ AVAILABLE UNLOCKABLE по-прежнему резервируют Tag и рас�
 
 ## Developer Room
 
-Сцена `res://date_system/dev_room/DateSystemLab.tscn` (Control).
+Сцена `res://date_system/dev_room/DateSystemLab.tscn` (Control). Это dev-инструмент Date System, не игровая оболочка прохождения. Игровой 2D-проход Game Core — `GameSimulator`.
 
 Разделы: СВИДАНИЕ, ДЕВУШКИ, СЛОЖНОСТЬ ДЕВУШЕК, ТЕГИ, БАЗОВЫЕ ХОДЫ, ОТКРЫВАЕМЫЕ ХОДЫ, СИТУАЦИИ, SECONDARY, МЕСТА, ФОРМАТЫ МЕСТ, НАРЯДЫ, ХАРАКТЕРИСТИКИ, ПРАВИЛА СВИДАНИЯ, БАЛАНС, ТЕСТОВОЕ СОСТОЯНИЕ, ВАЛИДАЦИЯ.
 
@@ -644,4 +711,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе).
+Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`).

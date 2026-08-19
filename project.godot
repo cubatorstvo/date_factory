@@ -13,7 +13,7 @@ config_version=5
 config/name="DATE FACTORY"
 config/description="Date System Lab"
 config/version="0.1.0"
-run/main_scene="res://date_system/dev_room/DateSystemLab.tscn"
+run/main_scene="res://game/simulator/GameSimulator.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 

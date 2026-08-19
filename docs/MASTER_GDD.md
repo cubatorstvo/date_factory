@@ -1,7 +1,7 @@
 # DATE FACTORY — Master GDD
 
 **Статус:** канон новой `main`  
-**Текущий продукт:** Date System Lab — ядро механики свиданий  
+**Текущий продукт:** Date System Lab — ядро механики свиданий плюс 2D Game Simulator  
 **Источник:** пользовательский документ полного перезапуска проекта
 
 ## Приоритет
@@ -24,8 +24,8 @@ Date Factory строится вокруг свиданий как главно�
 
 Текущая `main` реализует ядро как:
 
-- самостоятельную 2D-текстовую игру;
-- комнату разработчика для настройки и тестирования всего контента свиданий.
+- `GameSimulator` — самостоятельную 2D-игру над Game Core (`GameState`, `SaveManager`, `TimeService`, `StageService`, `ActionService`);
+- комнату разработчика `DateSystemLab` для настройки и тестирования контента свиданий.
 
 Полная спецификация ядра: [`DATE_SYSTEM_LAB.md`](DATE_SYSTEM_LAB.md).
 
@@ -44,7 +44,8 @@ Date Factory строится вокруг свиданий как главно�
 2. **Runtime Progress Layer** — канонический `GameState` прохождения в `user://`; Date System Lab дополнительно хранит тестовый прогресс свиданий в `DateProgressStore`
 3. **Date Engine** — детерминированная логика свидания
 4. **Text Date Runner** — текстовый 2D-проход DateSession
-5. **Developer Room** — редактор контента и тестовый запуск
+5. **Game Simulator** — 2D presentation-оболочка прохождения: HUD, навигация, запуск `GameAction` через `ActionService`, без собственной игровой логики
+6. **Developer Room** — редактор контента и тестовый запуск Date System
 
 ## GameState
 

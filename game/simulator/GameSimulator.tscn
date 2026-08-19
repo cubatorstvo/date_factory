@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bx1n30ch3ihqf"]
+
+[ext_resource type="Script" uid="uid://b5hm60211agy2" path="res://game/simulator/game_simulator.gd" id="1_0okpx"]
+
+[node name="GameSimulator" type="Control" unique_id=784294046]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_0okpx")

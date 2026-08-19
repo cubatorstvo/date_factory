@@ -10,6 +10,7 @@ res://
         time/
         story/
         actions/
+        simulator/
     date_system/
         content/
             tags/
@@ -37,8 +38,9 @@ res://
 
 | Назначение | Путь |
 |---|---|
-| Главная сцена | `res://date_system/dev_room/DateSystemLab.tscn` |
-| Обёртка запуска | `res://main/main.tscn` |
+| GameSimulator (главная сцена, 2D-игра) | `res://game/simulator/GameSimulator.tscn` |
+| DateSystemLab (комната разработчика) | `res://date_system/dev_room/DateSystemLab.tscn` |
+| Обёртка запуска Lab | `res://main/main.tscn` |
 | Каталог контента | `res://date_system/content/catalog/date_content_catalog.tres` |
 | Автотесты | `res://date_system/tests/date_system_test_runner.gd` |
 
