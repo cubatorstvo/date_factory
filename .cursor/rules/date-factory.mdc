@@ -18,8 +18,11 @@ Never edit archives. Don't ask which donor. Copy files + dependency closure into
 ## Current product
 `main` is Date System Lab: 2D text dating core + developer room. Canon: `docs/MASTER_GDD.md` and `docs/DATE_SYSTEM_LAB.md`.
 
+## GameState
+`GameState` хранит только изменяемое состояние конкретного прохождения. Статические определения игрового контента — параметры девушек, предметов, локаций, Stage, цены, базовые характеристики и прочие definitions — хранятся отдельно от `GameState`. `GameState` хранит только ссылки/ID и изменяемый прогресс относительно этих definitions.
+
 ## How to implement
-Do not only execute the literal ask. Analyze why it is needed, pick the best existing practice, and apply a mechanic already in the project. Assemble from ready systems; do not invent a parallel solution.
+Do not take the task literally. Read the canon and existing systems, then project the ask onto them. Assemble from ready mechanics; do not invent a parallel solution.
 
 ## Docs vs code
 Documentation and code must match. Before implementing:
