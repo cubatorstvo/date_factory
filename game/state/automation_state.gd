@@ -7,7 +7,8 @@ var total_clones: int = 0
 var work_allocation_percent: int = 50
 var work_income_fraction: float = 0.0
 var dating_progress_fraction: float = 0.0
-var completed_auto_dates: int = 0
+var current_expansion_scope: StringName = &"city"
+var expansion_progress: float = 0.0
 var purchased_upgrade_ids: Array[StringName] = []
 
 
@@ -36,7 +37,8 @@ func to_dict() -> Dictionary:
 		"work_allocation_percent": work_allocation_percent,
 		"work_income_fraction": work_income_fraction,
 		"dating_progress_fraction": dating_progress_fraction,
-		"completed_auto_dates": completed_auto_dates,
+		"current_expansion_scope": String(current_expansion_scope),
+		"expansion_progress": expansion_progress,
 		"purchased_upgrade_ids": ids,
 	}
 
@@ -48,10 +50,18 @@ func from_dict(data: Dictionary) -> void:
 	work_allocation_percent = clampi(int(data.get("work_allocation_percent", 50)), 0, 100)
 	work_income_fraction = maxf(0.0, float(data.get("work_income_fraction", 0.0)))
 	dating_progress_fraction = maxf(0.0, float(data.get("dating_progress_fraction", 0.0)))
-	completed_auto_dates = maxi(0, int(data.get("completed_auto_dates", 0)))
+	current_expansion_scope = _parse_expansion_scope(data.get("current_expansion_scope", &"city"))
+	expansion_progress = maxf(0.0, float(data.get("expansion_progress", 0.0)))
 	purchased_upgrade_ids.clear()
 	var raw: Variant = data.get("purchased_upgrade_ids", [])
 	if not (raw is Array):
 		return
 	for item in raw:
 		add(StringName(str(item)))
+
+
+func _parse_expansion_scope(value: Variant) -> StringName:
+	var scope: StringName = StringName(str(value))
+	if scope == &"country" or scope == &"world":
+		return scope
+	return &"city"

@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 11
+const SAVE_VERSION: int = 12
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -112,6 +112,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v9_progression(migrated)
 	if from_version < 11:
 		migrated = _migrate_v10_automation(migrated)
+	if from_version < 12:
+		migrated = _migrate_v11_factory_rating(migrated)
 	return migrated
 
 
@@ -307,5 +309,27 @@ func _migrate_v10_automation(state_data: Dictionary) -> Dictionary:
 		automation["completed_auto_dates"] = 0
 	if not automation.has("purchased_upgrade_ids"):
 		automation["purchased_upgrade_ids"] = []
+	migrated["automation"] = automation
+	return migrated
+
+func _migrate_v11_factory_rating(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var automation_value: Variant = migrated.get("automation", {})
+	var automation: Dictionary = {}
+	if automation_value is Dictionary:
+		automation = automation_value
+	var completed_auto_dates: int = maxi(0, int(automation.get("completed_auto_dates", 0)))
+	var dating_fraction: float = maxf(0.0, float(automation.get("dating_progress_fraction", 0.0)))
+	var player_value: Variant = migrated.get("player", {})
+	var player: Dictionary = {}
+	if player_value is Dictionary:
+		player = player_value
+	player["rating"] = maxi(0, int(player.get("rating", 0))) + completed_auto_dates
+	migrated["player"] = player
+	if not automation.has("current_expansion_scope"):
+		automation["current_expansion_scope"] = "city"
+	if not automation.has("expansion_progress"):
+		automation["expansion_progress"] = minf(float(completed_auto_dates) + dating_fraction, 100.0)
+	automation.erase("completed_auto_dates")
 	migrated["automation"] = automation
 	return migrated

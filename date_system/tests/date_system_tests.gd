@@ -1237,7 +1237,7 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 11", int(root.get("save_version", 0)) == 11)
+	_ok("save_version == 12", int(root.get("save_version", 0)) == 12)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -1607,7 +1607,8 @@ func _test_stage_story_rules() -> void:
 	var stage6: StageDefinition = stages.get_current_definition() as StageDefinition
 	_ok("stage 6 definition", stage6 != null)
 	if stage6 != null:
-		_ok("stage 6 req null", stage6.completion_requirement == null)
+		_ok("stage 6 world reach req", stage6.completion_requirement is WorldReachRequirement)
+		_ok("stage 6 world unmet", stage6.completion_requirement != null and stage6.completion_requirement.is_met() == false)
 	_ok("stage 6 can_complete false", stages.can_complete_current_stage() == false)
 	_ok("stage 6 try_complete false", stages.try_complete_current_stage() == false)
 	_ok("stage 6 stays", stages.get_current_stage() == 6)
@@ -1646,7 +1647,8 @@ func _test_stage_story_rules() -> void:
 		_ok("skeleton definition %d" % expected_stage, definition != null and definition.stage == expected_stage)
 		var requirement: StageRequirement = stages.get_current_requirement() as StageRequirement
 		if expected_stage == 6:
-			_ok("skeleton stage 6 req null", requirement == null)
+			_ok("skeleton stage 6 world reach", requirement is WorldReachRequirement)
+			_ok("skeleton stage 6 unmet", requirement != null and requirement.is_met() == false)
 		else:
 			_ok("skeleton req typed %d" % expected_stage, requirement is GirlRelationshipRequirement)
 			var girl_req: GirlRelationshipRequirement = requirement as GirlRelationshipRequirement
@@ -3389,18 +3391,21 @@ func _test_automation() -> void:
 	gs.player.money = 0
 	clock.advance_time(60)
 	_ok("auto 100 dating money 0", gs.player.money == 0)
-	_ok("auto 100 dating completed 1", int(automation.get_completed_auto_dates()) == 1)
+	_ok("auto 100 dating rating 1", int(gs.player.rating) == 1)
+	_ok("auto 100 dating expansion 1", is_equal_approx(float(automation.get_expansion_progress()), 1.0))
 	sm.new_game()
 	automation.unlock()
 	automation.grant_initial_clones()
 	gs.automation.total_clones = 1
 	automation.set_work_allocation_percent(0)
 	clock.advance_time(60)
-	_ok("auto fraction hour dates 0", int(automation.get_completed_auto_dates()) == 0)
+	_ok("auto fraction hour rating 0", int(gs.player.rating) == 0)
 	_ok("auto fraction hour progress", is_equal_approx(float(automation.get_dating_progress_fraction()), 0.1))
+	_ok("auto fraction hour expansion 0.1", is_equal_approx(float(automation.get_expansion_progress()), 0.1))
 	clock.advance_time(540)
-	_ok("auto fraction 10h dates 1", int(automation.get_completed_auto_dates()) == 1)
+	_ok("auto fraction 10h rating 1", int(gs.player.rating) == 1)
 	_ok("auto fraction 10h leftover", is_equal_approx(float(automation.get_dating_progress_fraction()), 0.0))
+	_ok("auto fraction 10h expansion 1", is_equal_approx(float(automation.get_expansion_progress()), 1.0))
 	sm.new_game()
 	automation.unlock()
 	automation.grant_initial_clones()
@@ -3433,8 +3438,9 @@ func _test_automation() -> void:
 	_ok("auto dating upgrade success", buy_dating.success)
 	_ok("auto dating mult 1.5", is_equal_approx(float(automation.get_dating_multiplier()), 1.5))
 	clock.advance_time(60)
-	_ok("auto dating upgrade 1.5 dates", int(automation.get_completed_auto_dates()) == 1)
+	_ok("auto dating upgrade 1.5 rating", int(gs.player.rating) == 1)
 	_ok("auto dating upgrade leftover", is_equal_approx(float(automation.get_dating_progress_fraction()), 0.5))
+	_ok("auto dating upgrade expansion 1.5", is_equal_approx(float(automation.get_expansion_progress()), 1.5))
 	sm.new_game()
 	automation.unlock()
 	automation.grant_initial_clones()
@@ -3442,7 +3448,8 @@ func _test_automation() -> void:
 	gs.player.money = 0
 	clock.advance_time(60)
 	var jump_money: int = int(gs.player.money)
-	var jump_dates: int = int(automation.get_completed_auto_dates())
+	var jump_rating: int = int(gs.player.rating)
+	var jump_expansion: float = float(automation.get_expansion_progress())
 	var jump_work_frac: float = float(automation.get_work_income_fraction())
 	var jump_date_frac: float = float(automation.get_dating_progress_fraction())
 	sm.new_game()
@@ -3453,7 +3460,8 @@ func _test_automation() -> void:
 	for _minute in range(60):
 		clock.advance_time(1)
 	_ok("auto timestep money", int(gs.player.money) == jump_money)
-	_ok("auto timestep dates", int(automation.get_completed_auto_dates()) == jump_dates)
+	_ok("auto timestep rating", int(gs.player.rating) == jump_rating)
+	_ok("auto timestep expansion", is_equal_approx(float(automation.get_expansion_progress()), jump_expansion))
 	_ok("auto timestep work frac", is_equal_approx(float(automation.get_work_income_fraction()), jump_work_frac))
 	_ok("auto timestep date frac", is_equal_approx(float(automation.get_dating_progress_fraction()), jump_date_frac))
 	sm.new_game()
@@ -3475,6 +3483,93 @@ func _test_automation() -> void:
 	_ok("auto v10 stage 6 unlocked", bool(automation.is_unlocked()))
 	_ok("auto v10 stage 6 granted", gs.automation.initial_clones_granted == true)
 	_ok("auto v10 stage 6 clones", int(automation.get_total_clones()) == 10)
+	_ok("auto v10 scope city", StringName(automation.get_current_expansion_scope()) == &"city")
+	_write_v11_factory_rating_save(sm, 10, 5, 0.3)
+	_ok("auto load v11", sm.load_game())
+	_ok("auto v11 rating 15", int(gs.player.rating) == 15)
+	_ok("auto v11 fraction 0.3", is_equal_approx(float(automation.get_dating_progress_fraction()), 0.3))
+	_ok("auto v11 scope city", StringName(automation.get_current_expansion_scope()) == &"city")
+	_ok("auto v11 expansion 5.3", is_equal_approx(float(automation.get_expansion_progress()), 5.3))
+	sm.new_game()
+	automation.unlock()
+	automation.grant_initial_clones()
+	gs.player.rating = 10
+	gs.automation.total_clones = 34
+	automation.set_work_allocation_percent(0)
+	clock.advance_time(60)
+	_ok("auto rating 3.4 whole", int(gs.player.rating) == 13)
+	_ok("auto rating 3.4 fraction", is_equal_approx(float(automation.get_dating_progress_fraction()), 0.4))
+	_ok("auto rating 3.4 expansion", is_equal_approx(float(automation.get_expansion_progress()), 3.4))
+	var home_total: int = int(girls.get_home_city_girl_count())
+	_ok("auto home total authored", home_total >= 7)
+	var home_before: int = int(girls.get_home_city_completed_count())
+	gs.player.rating = 1000
+	var alina_max: int = int(girls.get_relationship_max(GirlCatalog.ID_ALINA))
+	girls.change_relationship(GirlCatalog.ID_ALINA, alina_max)
+	_ok("auto manual rating 1001", int(gs.player.rating) == 1001)
+	_ok("auto home completed +1", int(girls.get_home_city_completed_count()) == home_before + 1)
+	var coverage_before: int = int(girls.get_home_city_completed_count())
+	gs.automation.total_clones = 1000
+	automation.set_work_allocation_percent(0)
+	clock.advance_time(60)
+	_ok("auto factory rating grew", int(gs.player.rating) > 1001)
+	_ok("auto home coverage independent", int(girls.get_home_city_completed_count()) == coverage_before)
+	sm.new_game()
+	automation.unlock()
+	automation.grant_initial_clones()
+	gs.automation.total_clones = 20
+	gs.automation.expansion_progress = 100.0
+	gs.player.money = 10000
+	var expand_country: ActionResult = actions.execute(automation.create_expansion_action(&"country"))
+	_ok("auto city to country", expand_country.success)
+	_ok("auto country scope", StringName(automation.get_current_expansion_scope()) == &"country")
+	_ok("auto country progress 0", is_equal_approx(float(automation.get_expansion_progress()), 0.0))
+	_ok("auto country required 1000", is_equal_approx(float(automation.get_required_expansion_progress()), 1000.0))
+	_ok("auto country clones 200", int(automation.get_total_clones()) == 200)
+	_ok("auto country money 0", int(gs.player.money) == 0)
+	gs.automation.expansion_progress = 1000.0
+	gs.player.money = 1000000
+	var expand_world: ActionResult = actions.execute(automation.create_expansion_action(&"world"))
+	_ok("auto country to world", expand_world.success)
+	_ok("auto world scope", StringName(automation.get_current_expansion_scope()) == &"world")
+	_ok("auto world progress 0", is_equal_approx(float(automation.get_expansion_progress()), 0.0))
+	_ok("auto world clones 2000", int(automation.get_total_clones()) == 2000)
+	sm.new_game()
+	automation.unlock()
+	automation.grant_initial_clones()
+	gs.automation.expansion_progress = 100.0
+	automation.set_work_allocation_percent(0)
+	var capped_rating: int = int(gs.player.rating)
+	clock.advance_time(180)
+	_ok("auto capped city 100", is_equal_approx(float(automation.get_expansion_progress()), 100.0))
+	_ok("auto capped rating grows", int(gs.player.rating) > capped_rating)
+	sm.new_game()
+	gs.story.stage = 6
+	gs.story.finale_reached = false
+	automation.unlock()
+	gs.automation.current_expansion_scope = &"world"
+	gs.automation.expansion_progress = 9999.0
+	_ok("auto stage 6 world unmet", stages.try_complete_current_stage() == false)
+	_ok("auto stage 6 not finale", stages.is_finale_reached() == false)
+	gs.automation.expansion_progress = 10000.0
+	_ok("auto stage 6 world complete", stages.try_complete_current_stage())
+	_ok("auto stage 6 stays", int(stages.get_current_stage()) == 6)
+	_ok("auto stage 6 finale", stages.is_finale_reached())
+	sm.new_game()
+	for _pre_stage in range(4):
+		_ok("auto pre world stage step", bool(stages.force_complete_current_stage_for_dev()))
+	var scientist_max_pre: int = int(girls.get_relationship_max(GirlCatalog.ID_SCIENTIST))
+	girls.change_relationship(GirlCatalog.ID_SCIENTIST, scientist_max_pre)
+	_ok("auto pre world stage 5", int(stages.get_current_stage()) == 5)
+	automation.unlock()
+	gs.automation.current_expansion_scope = &"world"
+	gs.automation.expansion_progress = 10000.0
+	_ok("auto pre world stays 5", int(stages.get_current_stage()) == 5)
+	_ok("auto pre world not finale", stages.is_finale_reached() == false)
+	var president_max: int = int(girls.get_relationship_max(GirlCatalog.ID_PRESIDENT))
+	girls.change_relationship(GirlCatalog.ID_PRESIDENT, president_max)
+	_ok("auto pre world finale after 5", stages.is_finale_reached())
+	_ok("auto pre world stage stays 6", int(stages.get_current_stage()) == 6)
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
 	if tree != null and tree.root != null:
 		var sim := GameSimulator.new()
@@ -3492,14 +3587,20 @@ func _test_automation() -> void:
 		_ok("auto sim work 50", factory_text.contains("Работа: 50%"))
 		_ok("auto sim dating 50", factory_text.contains("Свидания: 50%"))
 		_ok("auto sim income 500", factory_text.contains("500 / игровой час"))
-		_ok("auto sim dates 0.5", factory_text.contains("0.5 / игровой час"))
+		_ok("auto sim rating 0.5", factory_text.contains("+0.5 / игровой час"))
+		_ok("auto sim factory city", factory_text.contains("другой город"))
+		_ok("auto sim expansion", factory_text.contains("ЭКСПАНСИЯ"))
 		automation.set_work_allocation_percent(80)
 		sim.refresh()
 		factory_text = sim.get_city_body_text()
 		_ok("auto sim work 80", factory_text.contains("Работа: 80%"))
 		_ok("auto sim dating 20", factory_text.contains("Свидания: 20%"))
 		_ok("auto sim income 800", factory_text.contains("800 / игровой час"))
-		_ok("auto sim dates 0.2", factory_text.contains("0.2 / игровой час"))
+		_ok("auto sim rating 0.2", factory_text.contains("+0.2 / игровой час"))
+		sim.show_section("home")
+		var home_text: String = sim.get_city_body_text()
+		_ok("auto sim home city", home_text.contains("Родной город:"))
+		_ok("auto sim home factory", home_text.contains("Фабрика:"))
 		sim.queue_free()
 	sm.delete_save()
 	sm.save_path = original_path
@@ -3528,6 +3629,42 @@ func _write_v10_automation_save(sm: Variant, stage: int) -> void:
 			"dating": {"active_date": {}},
 			"rivals": {"rivals_by_id": {}},
 			"automation": {},
+		},
+	}
+	file.store_string(JSON.stringify(payload, "\t"))
+	file.close()
+
+func _write_v11_factory_rating_save(sm: Variant, rating: int, completed_auto_dates: int, dating_fraction: float) -> void:
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var file: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	if file == null:
+		return
+	var payload: Dictionary = {
+		"save_version": 11,
+		"game_state": {
+			"flow": {"game_time_minutes": 0},
+			"story": {"stage": 5, "finale_reached": false},
+			"player": {"money": 0, "rating": rating},
+			"progression": {"purchased_ids": []},
+			"world": {
+				"current_location_id": String(LocationCatalog.START_LOCATION_ID),
+				"unlocked_location_ids": ["city_center", "apartment", "cafe"],
+			},
+			"girls": {"girls_by_id": {}},
+			"dating": {"active_date": {}},
+			"rivals": {"rivals_by_id": {}},
+			"automation": {
+				"unlocked": true,
+				"initial_clones_granted": true,
+				"total_clones": 10,
+				"work_allocation_percent": 50,
+				"work_income_fraction": 0,
+				"dating_progress_fraction": dating_fraction,
+				"completed_auto_dates": completed_auto_dates,
+				"purchased_upgrade_ids": [],
+			},
 		},
 	}
 	file.store_string(JSON.stringify(payload, "\t"))

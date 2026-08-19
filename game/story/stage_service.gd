@@ -14,6 +14,7 @@ var _catalog: StageCatalog
 func _ready() -> void:
 	_catalog = StageCatalog.create_seed()
 	_ensure_girls_subscription()
+	_ensure_automation_subscription()
 
 
 func get_catalog() -> StageCatalog:
@@ -101,6 +102,7 @@ func _advance_from_completed_stage() -> void:
 		story.stage += 1
 		_apply_enter_effects(get_current_definition())
 		stage_changed.emit(current_stage, story.stage)
+		try_complete_current_stage()
 
 
 func _apply_enter_effects(definition: StageDefinition) -> void:
@@ -125,9 +127,29 @@ func _on_girl_relationship_changed(_girl_id: StringName, _previous_value: int, _
 	stage_progress_changed.emit(get_current_stage())
 	try_complete_current_stage()
 
+func _ensure_automation_subscription() -> void:
+	var automation: Variant = _automation_service()
+	if automation == null:
+		call_deferred("_ensure_automation_subscription")
+		return
+	if automation.expansion_changed.is_connected(_on_expansion_changed):
+		return
+	automation.expansion_changed.connect(_on_expansion_changed)
+
+
+func _on_expansion_changed() -> void:
+	stage_progress_changed.emit(get_current_stage())
+	try_complete_current_stage()
+
 
 func _girls_service() -> Variant:
 	var node: Node = get_node_or_null("/root/GirlsService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+func _automation_service() -> Variant:
+	var node: Node = get_node_or_null("/root/AutomationService")
 	if not is_instance_valid(node):
 		return null
 	return node

@@ -6,5 +6,6 @@ extends Resource
 @export var location_id: StringName = &""
 @export var relationship_min: int = 0
 @export var relationship_max: int = 0
+@export var counts_toward_home_city_coverage: bool = true
 @export var meet_requirements: Array[GirlAccessRequirement] = []
 @export var date_requirements: Array[GirlAccessRequirement] = []

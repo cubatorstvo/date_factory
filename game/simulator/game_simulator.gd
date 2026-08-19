@@ -581,6 +581,10 @@ func _build_factory() -> Control:
 	_factory_slider.value = int(automation.get_work_allocation_percent())
 	_factory_slider.value_changed.connect(_on_factory_slider_changed)
 	box.add_child(_factory_slider)
+	if bool(automation.can_expand()):
+		var next_scope: StringName = StringName(automation.get_next_expansion_scope())
+		var expand_action: GameAction = automation.create_expansion_action(next_scope)
+		_add_action_button(box, expand_action, String(automation.get_expansion_action_label(next_scope)), false, false)
 	box.add_child(LabUi.heading("УЛУЧШЕНИЯ"))
 	var catalog: AutomationCatalog = automation.get_catalog()
 	for upgrade in catalog.get_all_upgrades():
@@ -595,7 +599,6 @@ func _build_factory() -> Control:
 	box.add_child(dev)
 	_refresh_factory_status()
 	return box
-
 
 func _build_factory_upgrade_card(upgrade: AutomationUpgradeDefinition, automation: Variant) -> Control:
 	var box := VBoxContainer.new()
@@ -1479,6 +1482,8 @@ func _connect_core_signals() -> void:
 		automation.production_changed.connect(_on_automation_production_changed)
 	if automation != null and not automation.upgrade_purchased.is_connected(_on_automation_upgrade_purchased):
 		automation.upgrade_purchased.connect(_on_automation_upgrade_purchased)
+	if automation != null and not automation.expansion_changed.is_connected(_on_automation_expansion_changed):
+		automation.expansion_changed.connect(_on_automation_expansion_changed)
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
@@ -1580,6 +1585,9 @@ func _on_automation_production_changed() -> void:
 func _on_automation_upgrade_purchased(_upgrade_id: StringName) -> void:
 	refresh()
 
+func _on_automation_expansion_changed() -> void:
+	refresh()
+
 
 func _on_factory_slider_changed(value: float) -> void:
 	if _refreshing:
@@ -1605,7 +1613,38 @@ func _refresh_factory_status() -> void:
 		return
 	var work_percent: int = int(automation.get_work_allocation_percent())
 	var dating_percent: int = int(automation.get_dating_allocation_percent())
-	_factory_status.text = "\n".join(PackedStringArray([
+	var scope: StringName = StringName(automation.get_current_expansion_scope())
+	var required: float = float(automation.get_required_expansion_progress())
+	var progress: float = float(automation.get_expansion_progress())
+	var percent: float = float(automation.get_expansion_percent())
+	var complete: bool = bool(automation.is_current_expansion_complete())
+	var coverage_name: String = String(automation.get_scope_display_name(scope))
+	if scope == AutomationService.SCOPE_WORLD:
+		coverage_name = "Мировой охват"
+	var coverage_lines: PackedStringArray = PackedStringArray([
+		"ЭКСПАНСИЯ",
+		"МАСШТАБ:",
+		String(automation.get_scope_display_name(scope)),
+		"%s:" % coverage_name,
+	])
+	if complete:
+		coverage_lines.append("100% ✓")
+		coverage_lines.append("%s / %s" % [_format_factory_amount(progress), _format_factory_amount(required)])
+		var next_scope: StringName = StringName(automation.get_next_expansion_scope())
+		if next_scope != &"":
+			coverage_lines.append("Следующий масштаб:")
+			coverage_lines.append(String(automation.get_scope_display_name(next_scope)))
+			coverage_lines.append("Стоимость расширения:")
+			coverage_lines.append(_format_grouped_int(int(automation.get_expansion_cost(next_scope))))
+	else:
+		coverage_lines.append("%.1f%%" % percent)
+		coverage_lines.append("%s / %s" % [_format_factory_amount(progress), _format_factory_amount(required)])
+	coverage_lines.append("Охват:")
+	coverage_lines.append("+%s / игровой час" % _format_factory_amount(float(automation.get_expansion_rate_per_hour())))
+	coverage_lines.append("+%.1f%% / игровой час" % float(automation.get_expansion_percent_per_hour()))
+	var lines: PackedStringArray = PackedStringArray([
+		"Фабрика:",
+		"другой город",
 		"Клоны: %d" % int(automation.get_total_clones()),
 		"Работа: %d%%" % work_percent,
 		"Свидания: %d%%" % dating_percent,
@@ -1616,14 +1655,11 @@ func _refresh_factory_status() -> void:
 		"ПРОИЗВОДСТВО",
 		"Доход:",
 		"%s / игровой час" % _format_factory_amount(float(automation.get_work_income_per_hour())),
-		"Автоматические свидания:",
-		"%.1f / игровой час" % float(automation.get_dating_production_per_hour()),
-		"Всего автоматических свиданий:",
-		str(int(automation.get_completed_auto_dates())),
-		"Прогресс следующего auto date:",
-		"%.2f" % float(automation.get_dating_progress_fraction()),
-	]))
-
+		"Rating:",
+		"+%s / игровой час" % _format_factory_amount(float(automation.get_dating_production_per_hour())),
+	])
+	lines.append_array(coverage_lines)
+	_factory_status.text = "\n".join(lines)
 
 func _format_factory_amount(value: float) -> String:
 	var rounded: int = int(round(value))
@@ -1764,6 +1800,8 @@ func _format_hud_text() -> String:
 func _format_home_summary() -> String:
 	var clock: Variant = _time_service()
 	var stages: Variant = _stage_service()
+	var girls: Variant = _girls_service()
+	var automation: Variant = _automation_service()
 	var day: int = 1
 	var hour: int = 0
 	var minute: int = 0
@@ -1776,8 +1814,24 @@ func _format_home_summary() -> String:
 	var stage: int = 1
 	if stages != null:
 		stage = int(stages.get_current_stage())
-	return "День %d, %02d:%02d\n\nStage %d\n\nДеньги: %d\nRating: %d" % [day, hour, minute, stage, money, rating]
-
+	var lines: PackedStringArray = PackedStringArray([
+		"День %d, %02d:%02d" % [day, hour, minute],
+		"",
+		"Stage %d" % stage,
+		"",
+		"Деньги: %d" % money,
+		"Rating: %d" % rating,
+	])
+	if girls != null:
+		var completed: int = int(girls.get_home_city_completed_count())
+		var total: int = int(girls.get_home_city_girl_count())
+		var percent: float = float(girls.get_home_city_coverage_percent())
+		lines.append("Родной город:")
+		lines.append("%d / %d — %.1f%%" % [completed, total, percent])
+	if automation != null and bool(automation.is_unlocked()):
+		lines.append("Фабрика:")
+		lines.append("%s — %.1f%%" % [String(automation.get_scope_display_name()), float(automation.get_expansion_percent())])
+	return "\n".join(lines)
 func _format_stage_goal() -> String:
 	var stages: Variant = _stage_service()
 	if stages == null:
@@ -1787,12 +1841,13 @@ func _format_stage_goal() -> String:
 	var stage: int = int(stages.get_current_stage())
 	var requirement: Variant = stages.get_current_requirement()
 	if requirement == null:
-		return "STAGE %d\n\nIncremental-прогрессия будет подключена следующим этапом." % stage
-	var girl_name: String = _stage_goal_display_name(requirement)
+		return ""
+	var goal_name: String = _stage_goal_display_name(requirement)
 	var current_value: int = int(requirement.get_current_value())
 	var target_value: int = int(requirement.get_target_value())
-	return "STAGE %d\n\nЦЕЛЬ\n\n%s\n\nОтношения:\n%d / %d" % [stage, girl_name, current_value, target_value]
-
+	if requirement is WorldReachRequirement:
+		return "STAGE %d\n\nЦЕЛЬ\n\n%s\n\n%d / %d" % [stage, goal_name, current_value, target_value]
+	return "STAGE %d\n\nЦЕЛЬ\n\n%s\n\nОтношения:\n%d / %d" % [stage, goal_name, current_value, target_value]
 
 func _stage_goal_display_name(requirement: Variant) -> String:
 	var description: String = String(requirement.get_description())

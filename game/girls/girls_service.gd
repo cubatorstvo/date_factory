@@ -67,6 +67,36 @@ func get_relationship_max(girl_id: StringName) -> int:
 func is_relationship_completed(girl_id: StringName) -> bool:
 	return get_relationship(girl_id) >= get_relationship_max(girl_id) and get_definition(girl_id) != null
 
+func get_home_city_girl_count() -> int:
+	var total: int = 0
+	for girl in get_catalog().get_all_girls():
+		if girl != null and girl.counts_toward_home_city_coverage:
+			total += 1
+	return total
+
+
+func get_home_city_completed_count() -> int:
+	var completed: int = 0
+	var girls: GirlsState = _girls()
+	for girl in get_catalog().get_all_girls():
+		if girl == null or not girl.counts_toward_home_city_coverage:
+			continue
+		var existing: GirlState = null
+		if girls != null:
+			var raw: Variant = girls.girls_by_id.get(girl.id, null)
+			if raw is GirlState:
+				existing = raw
+		if existing != null and existing.relationship >= girl.relationship_max:
+			completed += 1
+	return completed
+
+
+func get_home_city_coverage_percent() -> float:
+	var total: int = get_home_city_girl_count()
+	if total <= 0:
+		return 0.0
+	return 100.0 * float(get_home_city_completed_count()) / float(total)
+
 
 func discover_girl(girl_id: StringName) -> bool:
 	var state: GirlState = get_state(girl_id)
