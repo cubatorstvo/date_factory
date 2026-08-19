@@ -32,6 +32,7 @@ func run_all() -> PackedStringArray:
 	_test_economy()
 	_test_world()
 	_test_girls()
+	_test_dating_and_rating()
 	return _failures
 
 
@@ -1069,6 +1070,26 @@ func _girls_service() -> Variant:
 	return node
 
 
+func _rating_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("RatingService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _dating_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("DatingService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
 func _assert_clock(label: String, clock: Variant, minutes: int, day: int, hour: int, minute: int) -> void:
 	_ok("%s game_time_minutes" % label, clock.get_game_time_minutes() == minutes)
 	_ok("%s day" % label, clock.get_day() == day)
@@ -1095,6 +1116,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game stage 1", gs.story.stage == 1)
 	_ok("new_game finale false", gs.story.finale_reached == false)
 	_ok("new_game money 0", gs.player.money == 0)
+	_ok("new_game rating 0", gs.player.rating == 0)
 	_ok("new_game purchased empty", gs.progression.purchased_ids.is_empty())
 	_ok("new_game start location", gs.world.current_location_id == LocationCatalog.START_LOCATION_ID)
 	_ok("new_game start unlocked city", gs.world.has_unlocked(LocationCatalog.ID_CITY_CENTER))
@@ -1114,7 +1136,7 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 6", int(root.get("save_version", 0)) == 6)
+	_ok("save_version == 8", int(root.get("save_version", 0)) == 8)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -1152,6 +1174,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("missing keys default stage", gs.story.stage == 1)
 	_ok("missing keys default finale", gs.story.finale_reached == false)
 	_ok("missing keys default money", gs.player.money == 0)
+	_ok("missing keys default rating", gs.player.rating == 0)
 	_ok("missing keys default location", gs.world.current_location_id == LocationCatalog.START_LOCATION_ID)
 	_ok("missing keys default unlocked city", gs.world.has_unlocked(LocationCatalog.ID_CITY_CENTER))
 	sm.delete_save()
@@ -1895,6 +1918,10 @@ func _test_girls() -> void:
 	_ok("default discovered false", default_state.discovered == false)
 	_ok("default has_contact false", default_state.has_contact == false)
 	_ok("default relationship 0", default_state.relationship == 0)
+	_ok("default next_date_available_at 0", default_state.next_date_available_at == 0)
+	_ok("default revealed tags empty", default_state.revealed_positive_tag_ids.is_empty() and default_state.revealed_negative_tag_ids.is_empty())
+	_ok("default secondary hidden", default_state.secondary_revealed == false)
+	_ok("default completed_dates 0", default_state.completed_dates == 0)
 	var created: GirlState = girls.get_state(alina_id)
 	_ok("created state defaults", created != null and created.discovered == false and created.has_contact == false and created.relationship == 0)
 	_ok("created stored", gs.girls.girls_by_id.has(alina_id))
@@ -2030,7 +2057,7 @@ func _test_girls() -> void:
 	sim.show_section("girls")
 	var girls_text: String = sim.get_city_body_text()
 	_ok("sim girls alina", girls_text.contains("АЛИНА"))
-	_ok("sim girls relationship", girls_text.contains("Отношения: 0"))
+	_ok("sim girls relationship", girls_text.contains("Отношения: 0 / 5"))
 	_ok("sim girls contact", girls_text.contains("Контакт: Да"))
 	_ok("sim girls no vika", girls_text.contains("ВИКА") == false)
 	sim.queue_free()
@@ -2044,3 +2071,259 @@ func _girl_list_has(list: Array[GirlDefinition], girl_id: StringName) -> bool:
 		if girl != null and girl.id == girl_id:
 			return true
 	return false
+
+
+func _test_dating_and_rating() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var girls: Variant = _girls_service()
+	var rating: Variant = _rating_service()
+	var dating: Variant = _dating_service()
+	var actions: Variant = _action_service()
+	_ok("dating GameState", gs != null)
+	_ok("dating SaveManager", sm != null)
+	_ok("dating TimeService", clock != null)
+	_ok("dating GirlsService", girls != null)
+	_ok("dating RatingService", rating != null)
+	_ok("dating DatingService", dating != null)
+	_ok("dating ActionService", actions != null)
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	_ok("dating tree", tree != null and tree.root != null)
+	if gs == null or sm == null or clock == null or girls == null or rating == null or dating == null or actions == null or tree == null or tree.root == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/dating_rating_round_trip.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	var alina_id: StringName = GirlCatalog.ID_ALINA
+	_ok("rating new game 0", int(rating.get_rating()) == 0)
+	girls.get_state(alina_id).relationship = 4
+	_ok("rating plus one at max", girls.change_relationship(alina_id, 1) == 5)
+	_ok("relationship at max", girls.get_relationship(alina_id) == 5)
+	_ok("rating after max", int(rating.get_rating()) == 1)
+	_ok("relationship completed", girls.is_relationship_completed(alina_id))
+	sm.new_game()
+	girls.get_state(alina_id).relationship = 4
+	_ok("rating large delta clamps", girls.change_relationship(alina_id, 10) == 5)
+	_ok("rating large delta once", int(rating.get_rating()) == 1)
+	_ok("rating repeat no extra", girls.change_relationship(alina_id, 1) == 5)
+	_ok("rating stays 1", int(rating.get_rating()) == 1)
+	_ok("relationship stays max", girls.get_relationship(alina_id) == 5)
+	gs.player.rating = 3
+	sm.save_game()
+	sm.new_game()
+	_ok("rating reset on new game", int(rating.get_rating()) == 0)
+	_ok("load rating save", sm.load_game())
+	_ok("loaded rating 3", int(rating.get_rating()) == 3)
+	sm.delete_save()
+	sm.new_game()
+	girls.give_contact(alina_id)
+	_ok("start date ready", dating.can_start_date(alina_id))
+	var start_action: GameAction = dating.create_start_date_action(alina_id)
+	_ok("start action id", start_action.id == StringName("start_date_alina"))
+	_ok("start action no time", start_action.time_cost_minutes == 0)
+	_ok("start action no money", start_action.money_cost == 0)
+	var start_ok: ActionResult = actions.execute(start_action)
+	_ok("start date success", start_ok.success)
+	_ok("has active date", dating.has_active_date())
+	_ok("active girl id", dating.get_active_girl_id() == alina_id)
+	_ok("active_date girl", String(gs.dating.active_date.get("girl_id", "")) == String(alina_id))
+	sm.new_game()
+	girls.discover_girl(alina_id)
+	_ok("start without contact", dating.can_start_date(alina_id) == false)
+	_ok("start without contact reason", dating.get_start_date_failure_reason(alina_id) == "У вас нет контакта этой девушки")
+	var no_contact: ActionResult = actions.execute(dating.create_start_date_action(alina_id))
+	_ok("start without contact fail", no_contact.success == false)
+	sm.new_game()
+	girls.give_contact(alina_id)
+	girls.get_state(alina_id).next_date_available_at = int(clock.get_game_time_minutes()) + 100
+	_ok("start during cooldown", dating.can_start_date(alina_id) == false)
+	_ok("start cooldown reason", dating.get_start_date_failure_reason(alina_id) == "До следующего свидания нужно подождать")
+	sm.new_game()
+	girls.give_contact(alina_id)
+	girls.get_state(alina_id).relationship = 5
+	_ok("start after max", dating.can_start_date(alina_id) == false)
+	_ok("start after max reason", dating.get_start_date_failure_reason(alina_id) == "Отношения с этой девушкой уже достигли максимума")
+	sm.new_game()
+	girls.give_contact(alina_id)
+	girls.get_state(alina_id).relationship = 1
+	gs.flow.game_time_minutes = 1000
+	_ok("complete start", dating.start_date(alina_id))
+	var date_result := DateResult.new()
+	date_result.girl_id = alina_id
+	date_result.relationship_delta = 1
+	date_result.duration_minutes = 120
+	_ok("complete date", dating.complete_date(date_result))
+	_ok("complete relationship 2", girls.get_relationship(alina_id) == 2)
+	_ok("complete time 1120", int(clock.get_game_time_minutes()) == 1120)
+	_ok("complete cooldown", girls.get_next_date_available_at(alina_id) == 1120 + int(clock.days_to_minutes(3)))
+	_ok("complete active cleared", dating.has_active_date() == false)
+	_ok("complete active dict empty", gs.dating.active_date.is_empty())
+	sm.save_game()
+	var cooldown_at: int = girls.get_next_date_available_at(alina_id)
+	sm.new_game()
+	_ok("cooldown reset new game", girls.get_next_date_available_at(alina_id) == 0)
+	_ok("load cooldown save", sm.load_game())
+	_ok("loaded cooldown", girls.get_next_date_available_at(alina_id) == cooldown_at)
+	sm.delete_save()
+	sm.new_game()
+	girls.give_contact(alina_id)
+	_ok("knowledge start", dating.start_date(alina_id))
+	var knowledge_engine: DateEngine = dating.get_date_engine()
+	_ok("knowledge engine", knowledge_engine != null)
+	var revealed_id: StringName = &""
+	if knowledge_engine != null:
+		var view: DateEpisodeView = knowledge_engine.get_current_episode()
+		if view != null:
+			for option in view.base_options:
+				if option != null and option.is_selectable():
+					knowledge_engine.choose_move(option.move_id)
+					revealed_id = option.tag_id
+					break
+	_ok("knowledge revealed id", revealed_id != &"")
+	var first_progress: GirlProgress = knowledge_engine.girl_progress() if knowledge_engine != null else null
+	var first_knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN
+	if first_progress != null and revealed_id != &"":
+		first_knowledge = first_progress.tag_knowledge(revealed_id)
+	_ok("knowledge during date", first_knowledge != DateTypes.TagKnowledge.UNKNOWN)
+	var knowledge_result := DateResult.new()
+	knowledge_result.girl_id = alina_id
+	knowledge_result.relationship_delta = 0
+	knowledge_result.duration_minutes = 120
+	_ok("knowledge complete", dating.complete_date(knowledge_result))
+	var stored: GirlState = girls.get_state(alina_id)
+	_ok("knowledge stored", stored != null and (stored.revealed_positive_tag_ids.has(revealed_id) or stored.revealed_negative_tag_ids.has(revealed_id)))
+	sm.save_game()
+	sm.new_game()
+	_ok("knowledge reset new game", girls.get_state(alina_id).revealed_positive_tag_ids.is_empty() and girls.get_state(alina_id).revealed_negative_tag_ids.is_empty())
+	_ok("load knowledge save", sm.load_game())
+	var loaded_state: GirlState = girls.get_state(alina_id)
+	_ok("knowledge loaded", loaded_state != null and (loaded_state.revealed_positive_tag_ids.has(revealed_id) or loaded_state.revealed_negative_tag_ids.has(revealed_id)))
+	girls.get_state(alina_id).next_date_available_at = 0
+	_ok("knowledge second start", dating.start_date(alina_id))
+	var second_engine: DateEngine = dating.get_date_engine()
+	var second_progress: GirlProgress = second_engine.girl_progress() if second_engine != null else null
+	_ok("knowledge next date", second_progress != null and second_progress.tag_knowledge(revealed_id) == first_knowledge)
+	sm.delete_save()
+	sm.new_game()
+	girls.give_contact(alina_id)
+	girls.get_state(alina_id).relationship = 4
+	gs.flow.game_time_minutes = 0
+	_ok("cycle start", dating.start_date(alina_id))
+	var cycle_result := DateResult.new()
+	cycle_result.girl_id = alina_id
+	cycle_result.relationship_delta = 1
+	cycle_result.duration_minutes = 120
+	_ok("cycle complete", dating.complete_date(cycle_result))
+	_ok("cycle relationship 5", girls.get_relationship(alina_id) == 5)
+	_ok("cycle rating 1", int(rating.get_rating()) == 1)
+	_ok("cycle completed", girls.is_relationship_completed(alina_id))
+	_ok("cycle cannot start", dating.can_start_date(alina_id) == false)
+	sm.save_game()
+	sm.new_game()
+	_ok("completed reset new game", girls.is_relationship_completed(alina_id) == false)
+	_ok("load completed save", sm.load_game())
+	_ok("loaded completed", girls.is_relationship_completed(alina_id))
+	_ok("loaded completed cannot start", dating.can_start_date(alina_id) == false)
+	_ok("loaded completed rating", int(rating.get_rating()) == 1)
+	sm.delete_save()
+	sm.new_game()
+	girls.give_contact(alina_id)
+	_ok("active start", dating.start_date(alina_id))
+	sm.save_game()
+	sm.new_game()
+	_ok("active reset new game", dating.has_active_date() == false)
+	_ok("load active save", sm.load_game())
+	_ok("loaded active date", dating.has_active_date())
+	_ok("loaded active girl", dating.get_active_girl_id() == alina_id)
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var legacy: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v6 rating save", legacy != null)
+	if legacy != null:
+		var v6: Dictionary = {
+			"save_version": 6,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 1, "finale_reached": false},
+				"player": {"money": 0},
+				"progression": {"purchased_ids": []},
+				"world": {
+					"current_location_id": String(LocationCatalog.START_LOCATION_ID),
+					"unlocked_location_ids": ["city_center", "apartment", "cafe"],
+				},
+				"girls": {"girls_by_id": {}},
+				"dating": {},
+			},
+		}
+		legacy.store_string(JSON.stringify(v6, "\t"))
+		legacy.close()
+	_ok("load v6 rating save", sm.load_game())
+	_ok("migrated rating 0", int(rating.get_rating()) == 0)
+	_ok("migrated active empty", dating.has_active_date() == false)
+	sm.delete_save()
+	var v7_file: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v7 knowledge save", v7_file != null)
+	if v7_file != null:
+		var v7: Dictionary = {
+			"save_version": 7,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 1, "finale_reached": false},
+				"player": {"money": 0, "rating": 0},
+				"progression": {"purchased_ids": []},
+				"world": {
+					"current_location_id": String(LocationCatalog.START_LOCATION_ID),
+					"unlocked_location_ids": ["city_center", "apartment", "cafe"],
+				},
+				"girls": {
+					"girls_by_id": {
+						"alina": {
+							"discovered": true,
+							"has_contact": true,
+							"relationship": 1,
+							"next_date_available_at": 0,
+						},
+					},
+				},
+				"dating": {"active_date": {}},
+			},
+		}
+		v7_file.store_string(JSON.stringify(v7, "\t"))
+		v7_file.close()
+	_ok("load v7 knowledge save", sm.load_game())
+	var migrated_girl: GirlState = girls.get_state(alina_id)
+	_ok("migrated revealed empty", migrated_girl != null and migrated_girl.revealed_positive_tag_ids.is_empty() and migrated_girl.revealed_negative_tag_ids.is_empty())
+	_ok("migrated secondary false", migrated_girl != null and migrated_girl.secondary_revealed == false)
+	_ok("migrated completed_dates 0", migrated_girl != null and migrated_girl.completed_dates == 0)
+	var sim := GameSimulator.new()
+	tree.root.add_child(sim)
+	sim.start_new_game()
+	_ok("sim hud rating", sim.get_hud_text().contains("Rating: 0"))
+	girls.give_contact(alina_id)
+	sim.show_section("dates")
+	var dates_text: String = sim.get_city_body_text()
+	_ok("sim dates alina", dates_text.contains("АЛИНА"))
+	_ok("sim dates relationship", dates_text.contains("Отношения: 0 / 5"))
+	_ok("sim dates invite", dates_text.contains("ПРИГЛАСИТЬ"))
+	var invite: ActionResult = sim.invite_girl(alina_id)
+	_ok("sim invite success", invite.success)
+	_ok("sim invite active", dating.has_active_date())
+	var overlay_open: bool = false
+	for child in sim.get_children():
+		if child is DatePlayPanel:
+			overlay_open = true
+			break
+		if child is CanvasLayer:
+			for nested in child.get_children():
+				if nested is DatePlayPanel:
+					overlay_open = true
+					break
+	_ok("sim date overlay", overlay_open)
+	sim.queue_free()
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()

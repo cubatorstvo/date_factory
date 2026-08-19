@@ -3,6 +3,7 @@ extends Node
 signal girl_discovered(girl_id: StringName)
 signal girl_contact_received(girl_id: StringName)
 signal girl_relationship_changed(girl_id: StringName, previous_value: int, current_value: int, delta: int)
+signal girl_relationship_completed(girl_id: StringName)
 
 const MEET_ACTION_PREFIX: String = "meet_"
 const MEET_TIME_MINUTES: int = 30
@@ -54,6 +55,17 @@ func get_relationship(girl_id: StringName) -> int:
 	return state.relationship
 
 
+func get_relationship_max(girl_id: StringName) -> int:
+	var definition: GirlDefinition = get_definition(girl_id)
+	if definition == null:
+		return 0
+	return definition.relationship_max
+
+
+func is_relationship_completed(girl_id: StringName) -> bool:
+	return get_relationship(girl_id) >= get_relationship_max(girl_id) and get_definition(girl_id) != null
+
+
 func discover_girl(girl_id: StringName) -> bool:
 	var state: GirlState = get_state(girl_id)
 	if state == null:
@@ -82,13 +94,80 @@ func change_relationship(girl_id: StringName, delta: int) -> int:
 	if state == null:
 		return 0
 	var previous_value: int = state.relationship
-	var next_value: int = previous_value + delta
 	var definition: GirlDefinition = get_definition(girl_id)
+	var min_value: int = 0
+	var max_value: int = 0
 	if definition != null:
-		next_value = clampi(next_value, definition.relationship_min, definition.relationship_max)
+		min_value = definition.relationship_min
+		max_value = definition.relationship_max
+	if previous_value >= max_value and definition != null:
+		state.relationship = max_value
+		girl_relationship_changed.emit(girl_id, previous_value, max_value, delta)
+		return max_value
+	var next_value: int = previous_value + delta
+	if definition != null:
+		next_value = clampi(next_value, min_value, max_value)
 	state.relationship = next_value
+	if definition != null and previous_value < max_value and next_value >= max_value:
+		girl_relationship_completed.emit(girl_id)
+		var rating: Variant = _rating_service()
+		if rating != null:
+			rating.add_rating(1)
 	girl_relationship_changed.emit(girl_id, previous_value, next_value, delta)
 	return next_value
+
+
+func get_next_date_available_at(girl_id: StringName) -> int:
+	var state: GirlState = get_state(girl_id)
+	if state == null:
+		return 0
+	return state.next_date_available_at
+
+
+func is_date_cooldown_finished(girl_id: StringName) -> bool:
+	var clock: Variant = _time_service()
+	if clock == null:
+		return false
+	return int(clock.get_game_time_minutes()) >= get_next_date_available_at(girl_id)
+
+
+func set_date_cooldown(girl_id: StringName, duration_minutes: int) -> void:
+	var state: GirlState = get_state(girl_id)
+	if state == null:
+		return
+	var clock: Variant = _time_service()
+	var current_time: int = 0
+	if clock != null:
+		current_time = int(clock.get_game_time_minutes())
+	state.next_date_available_at = current_time + maxi(0, duration_minutes)
+
+
+func fill_date_progress(girl_id: StringName, progress: GirlProgress) -> void:
+	var state: GirlState = get_state(girl_id)
+	if state == null or progress == null:
+		return
+	progress.relationship = state.relationship
+	progress.revealed_positive_tag_ids = _copy_tag_ids(state.revealed_positive_tag_ids)
+	progress.revealed_negative_tag_ids = _copy_tag_ids(state.revealed_negative_tag_ids)
+	progress.secondary_revealed = state.secondary_revealed
+	progress.completed_dates = state.completed_dates
+
+
+func apply_date_knowledge(girl_id: StringName, progress: GirlProgress) -> void:
+	var state: GirlState = get_state(girl_id)
+	if state == null or progress == null:
+		return
+	state.revealed_positive_tag_ids = _copy_tag_ids(progress.revealed_positive_tag_ids)
+	state.revealed_negative_tag_ids = _copy_tag_ids(progress.revealed_negative_tag_ids)
+	state.secondary_revealed = progress.secondary_revealed
+	state.completed_dates = maxi(0, progress.completed_dates)
+
+
+func _copy_tag_ids(ids: Array[StringName]) -> Array[StringName]:
+	var copy: Array[StringName] = []
+	for tag_id in ids:
+		copy.append(tag_id)
+	return copy
 
 
 func get_girls_at_current_location() -> Array[GirlDefinition]:
@@ -151,5 +230,21 @@ func _world_service() -> Variant:
 	var node: Node = get_node_or_null("/root/WorldService")
 	if not is_instance_valid(node):
 		push_error("WorldService autoload missing")
+		return null
+	return node
+
+
+func _time_service() -> Variant:
+	var node: Node = get_node_or_null("/root/TimeService")
+	if not is_instance_valid(node):
+		push_error("TimeService autoload missing")
+		return null
+	return node
+
+
+func _rating_service() -> Variant:
+	var node: Node = get_node_or_null("/root/RatingService")
+	if not is_instance_valid(node):
+		push_error("RatingService autoload missing")
 		return null
 	return node

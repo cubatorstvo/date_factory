@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 6
+const SAVE_VERSION: int = 8
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -89,6 +89,10 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v4_world(migrated)
 	if from_version < 6:
 		migrated = _migrate_v5_girls(migrated)
+	if from_version < 7:
+		migrated = _migrate_v6_rating(migrated)
+	if from_version < 8:
+		migrated = _migrate_v7_date_knowledge(migrated)
 	return migrated
 
 
@@ -155,5 +159,53 @@ func _migrate_v5_girls(state_data: Dictionary) -> Dictionary:
 		girls = girls_value
 	if not girls.has("girls_by_id"):
 		girls["girls_by_id"] = {}
+	migrated["girls"] = girls
+	return migrated
+
+
+func _migrate_v6_rating(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var player_value: Variant = migrated.get("player", {})
+	var player: Dictionary = {}
+	if player_value is Dictionary:
+		player = player_value
+	if not player.has("rating"):
+		player["rating"] = 0
+	migrated["player"] = player
+	var dating_value: Variant = migrated.get("dating", {})
+	var dating: Dictionary = {}
+	if dating_value is Dictionary:
+		dating = dating_value
+	if not dating.has("active_date"):
+		dating["active_date"] = {}
+	migrated["dating"] = dating
+	return migrated
+
+
+func _migrate_v7_date_knowledge(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var girls_value: Variant = migrated.get("girls", {})
+	var girls: Dictionary = {}
+	if girls_value is Dictionary:
+		girls = girls_value
+	var by_id_value: Variant = girls.get("girls_by_id", {})
+	var by_id: Dictionary = {}
+	if by_id_value is Dictionary:
+		by_id = by_id_value
+	for girl_key in by_id.keys():
+		var girl_value: Variant = by_id[girl_key]
+		if not (girl_value is Dictionary):
+			continue
+		var girl: Dictionary = girl_value
+		if not girl.has("revealed_positive_tag_ids"):
+			girl["revealed_positive_tag_ids"] = []
+		if not girl.has("revealed_negative_tag_ids"):
+			girl["revealed_negative_tag_ids"] = []
+		if not girl.has("secondary_revealed"):
+			girl["secondary_revealed"] = false
+		if not girl.has("completed_dates"):
+			girl["completed_dates"] = 0
+		by_id[girl_key] = girl
+	girls["girls_by_id"] = by_id
 	migrated["girls"] = girls
 	return migrated

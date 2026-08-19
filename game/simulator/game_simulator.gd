@@ -15,6 +15,7 @@ var _section: String = "home"
 var _last_result_text: String = ""
 var _hud_time_label: Label
 var _hud_money_label: Label
+var _hud_rating_label: Label
 var _hud_stage_label: Label
 var _finale_label: Label
 var _result_label: Label
@@ -30,6 +31,8 @@ var _upgrade_price_label: Label
 var _city_current_label: Label
 var _world_dev_option: OptionButton
 var _refreshing: bool = false
+var _date_overlay: DatePlayPanel
+var _date_overlay_layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -48,7 +51,7 @@ func refresh() -> void:
 	if _refreshing:
 		return
 	_refreshing = true
-	if _section == "city" or _section == "girls":
+	if _section == "city" or _section == "girls" or _section == "dates":
 		_rebuild_section()
 	_refresh_hud()
 	_refresh_home()
@@ -74,6 +77,7 @@ func get_current_section() -> String:
 
 
 func start_new_game() -> void:
+	_close_date_overlay()
 	var sm: Variant = _save_manager()
 	if sm == null:
 		return
@@ -101,6 +105,8 @@ func load_playthrough() -> void:
 		return
 	if sm.load_game():
 		_last_result_text = ""
+		_close_date_overlay()
+		_restore_active_date_overlay()
 		refresh()
 		return
 	_last_result_text = "Не удалось загрузить сохранение."
@@ -166,6 +172,21 @@ func meet_girl(girl_id: StringName) -> ActionResult:
 		_on_action_resolved(result)
 		return result
 	var action: GameAction = girls.create_meet_girl_action(girl_id)
+	result = actions.execute(action)
+	_on_action_resolved(result)
+	return result
+
+
+func invite_girl(girl_id: StringName) -> ActionResult:
+	var dating: Variant = _dating_service()
+	var actions: Variant = _action_service()
+	var result := ActionResult.new()
+	if dating == null or actions == null:
+		result.success = false
+		result.failure_reason = "DatingService autoload missing"
+		_on_action_resolved(result)
+		return result
+	var action: GameAction = dating.create_start_date_action(girl_id)
 	result = actions.execute(action)
 	_on_action_resolved(result)
 	return result
@@ -307,9 +328,11 @@ func _build_hud() -> Control:
 	stats.add_theme_constant_override("separation", 32)
 	_hud_time_label = Label.new()
 	_hud_money_label = Label.new()
+	_hud_rating_label = Label.new()
 	_hud_stage_label = Label.new()
 	stats.add_child(_hud_time_label)
 	stats.add_child(_hud_money_label)
+	stats.add_child(_hud_rating_label)
 	stats.add_child(_hud_stage_label)
 	box.add_child(stats)
 	var save_row := HBoxContainer.new()
@@ -378,7 +401,7 @@ func _rebuild_section() -> void:
 		"girls":
 			_section_host.add_child(_build_girls())
 		"dates":
-			_section_host.add_child(_build_placeholder("СВИДАНИЯ", "Доступные свидания появятся здесь."))
+			_section_host.add_child(_build_dates())
 		"apartment":
 			_section_host.add_child(_build_placeholder("КВАРТИРА", "Система квартиры появится здесь."))
 		"progression":
@@ -596,12 +619,91 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 		relationship_value = int(girls.get_relationship(definition.id))
 		has_contact = bool(girls.has_contact(definition.id))
 	var relationship_label := Label.new()
-	relationship_label.text = "Отношения: %d" % relationship_value
+	var relationship_max: int = 0
+	if girls != null:
+		relationship_max = int(girls.get_relationship_max(definition.id))
+	relationship_label.text = "Отношения: %d / %d" % [relationship_value, relationship_max]
 	box.add_child(relationship_label)
 	var contact_label := Label.new()
 	contact_label.text = "Контакт: %s" % ("Да" if has_contact else "Нет")
 	box.add_child(contact_label)
+	if girls != null and bool(girls.is_relationship_completed(definition.id)):
+		var completed := Label.new()
+		completed.text = "Линия завершена"
+		box.add_child(completed)
 	return box
+
+
+func _build_dates() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("СВИДАНИЯ"))
+	var girls: Variant = _girls_service()
+	var dating: Variant = _dating_service()
+	var contacted: Array[GirlDefinition] = []
+	if girls != null:
+		contacted = girls.get_contacted_girls()
+	if contacted.is_empty():
+		var empty := Label.new()
+		empty.text = "Сначала получите контакт девушки."
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(empty)
+		return box
+	for definition in contacted:
+		box.add_child(_build_date_girl_card(definition, girls, dating))
+	return box
+
+
+func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var name_label := Label.new()
+	name_label.text = definition.display_name.to_upper()
+	box.add_child(name_label)
+	var relationship_value: int = 0
+	var relationship_max: int = 0
+	if girls != null:
+		relationship_value = int(girls.get_relationship(definition.id))
+		relationship_max = int(girls.get_relationship_max(definition.id))
+	var relationship_label := Label.new()
+	relationship_label.text = "Отношения: %d / %d" % [relationship_value, relationship_max]
+	box.add_child(relationship_label)
+	var completed: bool = girls != null and bool(girls.is_relationship_completed(definition.id))
+	if completed:
+		var done := Label.new()
+		done.text = "Линия завершена"
+		box.add_child(done)
+		return box
+	var can_start: bool = dating != null and bool(dating.can_start_date(definition.id))
+	if can_start:
+		var action: GameAction = dating.create_start_date_action(definition.id)
+		_add_action_button(box, action, "ПРИГЛАСИТЬ", false, false)
+		return box
+	var remaining: int = 0
+	if dating != null:
+		remaining = int(dating.get_date_cooldown_remaining_minutes(definition.id))
+	if remaining > 0:
+		var wait := Label.new()
+		wait.text = "Следующее свидание через %s" % _format_cooldown(remaining)
+		wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(wait)
+	if dating != null:
+		var wait_action: GameAction = dating.create_start_date_action(definition.id)
+		_add_action_button(box, wait_action, "ПРИГЛАСИТЬ", false, false)
+	return box
+
+
+func _format_cooldown(minutes: int) -> String:
+	var safe_minutes: int = maxi(0, minutes)
+	var days: int = int(safe_minutes / 1440)
+	var hours: int = int((safe_minutes % 1440) / 60)
+	if days > 0 and hours > 0:
+		return "%d д. %d ч." % [days, hours]
+	if days > 0:
+		return "%d д." % days
+	if hours > 0:
+		return "%d ч." % hours
+	return "1 ч."
 
 
 func _build_placeholder(title: String, body: String) -> Control:
@@ -630,8 +732,10 @@ func _refresh_hud() -> void:
 		_hud_time_label.text = parts[0]
 	if _hud_money_label != null and parts.size() >= 2:
 		_hud_money_label.text = parts[1]
-	if _hud_stage_label != null and parts.size() >= 3:
-		_hud_stage_label.text = parts[2]
+	if _hud_rating_label != null and parts.size() >= 3:
+		_hud_rating_label.text = parts[2]
+	if _hud_stage_label != null and parts.size() >= 4:
+		_hud_stage_label.text = parts[3]
 	if _finale_label != null:
 		_finale_label.visible = is_finale_presented()
 
@@ -710,6 +814,16 @@ func _connect_core_signals() -> void:
 		girls.girl_contact_received.connect(_on_girl_contact_received)
 	if girls != null and not girls.girl_relationship_changed.is_connected(_on_girl_relationship_changed):
 		girls.girl_relationship_changed.connect(_on_girl_relationship_changed)
+	if girls != null and not girls.girl_relationship_completed.is_connected(_on_girl_relationship_completed):
+		girls.girl_relationship_completed.connect(_on_girl_relationship_completed)
+	var rating: Variant = _rating_service()
+	if rating != null and not rating.rating_changed.is_connected(_on_rating_changed):
+		rating.rating_changed.connect(_on_rating_changed)
+	var dating: Variant = _dating_service()
+	if dating != null and not dating.date_started.is_connected(_on_date_started):
+		dating.date_started.connect(_on_date_started)
+	if dating != null and not dating.date_completed.is_connected(_on_date_completed):
+		dating.date_completed.connect(_on_date_completed)
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
@@ -744,6 +858,79 @@ func _on_girl_relationship_changed(_girl_id: StringName, _previous_value: int, _
 	refresh()
 
 
+func _on_girl_relationship_completed(girl_id: StringName) -> void:
+	var girls: Variant = _girls_service()
+	var display_name: String = String(girl_id)
+	if girls != null:
+		var definition: GirlDefinition = girls.get_definition(girl_id)
+		if definition != null:
+			display_name = definition.display_name
+	_last_result_text = "Отношения с %s достигли максимума.\nRating +1" % display_name
+	refresh()
+
+
+func _on_rating_changed(_previous_rating: int, _current_rating: int, _delta: int) -> void:
+	refresh()
+
+
+func _on_date_started(_girl_id: StringName) -> void:
+	_open_date_overlay()
+
+
+func _on_date_completed(_girl_id: StringName, _relationship_delta: int, _current_relationship: int) -> void:
+	refresh()
+
+
+func _open_date_overlay() -> void:
+	var dating: Variant = _dating_service()
+	if dating == null:
+		return
+	var engine: DateEngine = dating.get_date_engine() as DateEngine
+	if engine == null and bool(dating.has_active_date()):
+		dating.restore_active_date()
+		engine = dating.get_date_engine() as DateEngine
+	if engine == null:
+		return
+	if _date_overlay != null and is_instance_valid(_date_overlay):
+		_date_overlay.attach_playthrough(engine, dating.get_catalog_service())
+		return
+	_date_overlay_layer = CanvasLayer.new()
+	_date_overlay_layer.layer = 20
+	add_child(_date_overlay_layer)
+	_date_overlay = DatePlayPanel.new()
+	_date_overlay_layer.add_child(_date_overlay)
+	_date_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_date_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_date_overlay.attach_playthrough(engine, dating.get_catalog_service())
+	if not _date_overlay.playthrough_finished.is_connected(_on_playthrough_finished):
+		_date_overlay.playthrough_finished.connect(_on_playthrough_finished)
+
+
+func _close_date_overlay() -> void:
+	if _date_overlay != null and is_instance_valid(_date_overlay):
+		_date_overlay.queue_free()
+	_date_overlay = null
+	if _date_overlay_layer != null and is_instance_valid(_date_overlay_layer):
+		_date_overlay_layer.queue_free()
+	_date_overlay_layer = null
+
+
+func _restore_active_date_overlay() -> void:
+	var dating: Variant = _dating_service()
+	if dating == null:
+		return
+	if not bool(dating.has_active_date()):
+		return
+	dating.restore_active_date()
+	_open_date_overlay()
+
+
+func _on_playthrough_finished() -> void:
+	_close_date_overlay()
+	show_section("dates")
+	refresh()
+
+
 func _on_stage_changed(_previous_stage: int, _current_stage: int) -> void:
 	refresh()
 
@@ -758,6 +945,8 @@ func _on_action_executed(_action_id: StringName, result: ActionResult) -> void:
 
 func _on_action_resolved(result: ActionResult) -> void:
 	_last_result_text = format_action_result(result)
+	if result != null and result.success and String(result.action_id).begins_with("start_date_"):
+		_open_date_overlay()
 	refresh()
 
 
@@ -772,6 +961,7 @@ func _format_hud_text() -> String:
 		hour = int(clock.get_hour())
 		minute = int(clock.get_minute())
 	var money: int = _current_money()
+	var rating: int = _current_rating()
 	var stage: int = 1
 	var finale: bool = false
 	if stages != null:
@@ -780,7 +970,7 @@ func _format_hud_text() -> String:
 	var stage_text: String = "Stage: %d" % stage
 	if finale:
 		stage_text += "\nFinale"
-	return "День %d\n%02d:%02d\n\nДеньги: %d\n\n%s" % [day, hour, minute, money, stage_text]
+	return "День %d\n%02d:%02d\n\nДеньги: %d\n\nRating: %d\n\n%s" % [day, hour, minute, money, rating, stage_text]
 
 
 func _format_home_summary() -> String:
@@ -794,10 +984,11 @@ func _format_home_summary() -> String:
 		hour = int(clock.get_hour())
 		minute = int(clock.get_minute())
 	var money: int = _current_money()
+	var rating: int = _current_rating()
 	var stage: int = 1
 	if stages != null:
 		stage = int(stages.get_current_stage())
-	return "День %d, %02d:%02d\n\nStage %d\n\nДеньги: %d" % [day, hour, minute, stage, money]
+	return "День %d, %02d:%02d\n\nStage %d\n\nДеньги: %d\nRating: %d" % [day, hour, minute, stage, money, rating]
 
 
 func _format_effect(description: String) -> String:
@@ -846,6 +1037,16 @@ func _current_money() -> int:
 	if gs == null:
 		return 0
 	return int(gs.player.money)
+
+
+func _current_rating() -> int:
+	var rating: Variant = _rating_service()
+	if rating != null:
+		return int(rating.get_rating())
+	var gs: Variant = _game_state()
+	if gs == null:
+		return 0
+	return int(gs.player.rating)
 
 
 func _save_manager() -> Variant:
@@ -899,6 +1100,20 @@ func _world_service() -> Variant:
 
 func _girls_service() -> Variant:
 	var node: Node = get_node_or_null("/root/GirlsService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _rating_service() -> Variant:
+	var node: Node = get_node_or_null("/root/RatingService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _dating_service() -> Variant:
+	var node: Node = get_node_or_null("/root/DatingService")
 	if not is_instance_valid(node):
 		return null
 	return node

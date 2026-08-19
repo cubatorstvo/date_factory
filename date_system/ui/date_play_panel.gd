@@ -2,6 +2,7 @@ class_name DatePlayPanel
 extends Control
 
 signal status_message(text: String)
+signal playthrough_finished
 
 var catalog_service: DateCatalogService
 var progress_store: DateProgressStore
@@ -23,6 +24,7 @@ var _tally_index: int = 0
 var _tally_box: VBoxContainer
 var _tally_footer: Control
 var _result_tweens: Array[Tween] = []
+var _playthrough: bool = false
 
 
 func setup(p_catalog: DateCatalogService, p_store: DateProgressStore) -> void:
@@ -32,10 +34,66 @@ func setup(p_catalog: DateCatalogService, p_store: DateProgressStore) -> void:
 		rebuild()
 
 
+func attach_playthrough(engine: DateEngine, catalog: DateCatalogService) -> void:
+	_playthrough = true
+	_engine = engine
+	catalog_service = catalog
+	if engine != null and engine.get_session_state() != null:
+		_girl_id = engine.get_session_state().girl_id
+	if is_node_ready():
+		rebuild()
+
+
+func _persist() -> void:
+	if _playthrough:
+		return
+	if progress_store == null:
+		return
+	progress_store.save_store()
+
+
+func _session_progress(girl_id: StringName) -> GirlProgress:
+	if _engine != null and _engine.girl_progress() != null:
+		return _engine.girl_progress()
+	var girl: GirlProfile = _catalog().find_girl(girl_id)
+	if progress_store != null:
+		return progress_store.get_girl_progress(girl_id, girl)
+	var progress := GirlProgress.new()
+	progress.reset_to_profile(girl)
+	return progress
+
+
+func _finish_playthrough() -> void:
+	var run: DateRunResult = null
+	if _engine != null:
+		run = _engine.get_result()
+	var result: DateResult = DateResult.from_run_result(run)
+	if result.girl_id == &"" and _engine != null and _engine.get_session_state() != null:
+		result.girl_id = _engine.get_session_state().girl_id
+	var dating: Variant = _dating_service()
+	if dating != null:
+		dating.complete_date(result)
+	playthrough_finished.emit()
+
+
+func _dating_service() -> Variant:
+	var node: Node = get_node_or_null("/root/DatingService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	var bg := ColorRect.new()
+	bg.color = LabUi.BG
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(bg)
 	_scroll = ScrollContainer.new()
-	_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 16)
+	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(_scroll)
 	_host = VBoxContainer.new()
@@ -83,6 +141,12 @@ func _rebuild_impl() -> void:
 		if stage != DateSession.Stage.IDLE and stage != DateSession.Stage.ABORTED:
 			_build_runner()
 			return
+	if _playthrough:
+		var missing := Label.new()
+		missing.text = "Свидание не удалось запустить."
+		missing.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_host.add_child(missing)
+		return
 	_build_launch()
 
 
@@ -340,8 +404,7 @@ func _build_runner() -> void:
 		sit_text.text = view.situation.situation_text
 		sit_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_host.add_child(sit_text)
-	var girl: GirlProfile = _catalog().find_girl(session.girl_id)
-	var progress: GirlProgress = progress_store.get_girl_progress(session.girl_id, girl)
+	var progress: GirlProgress = _session_progress(session.girl_id)
 	if progress.secondary_revealed:
 		var live := Label.new()
 		live.text = "Secondary: %s" % _engine.secondary_live_text()
@@ -367,11 +430,12 @@ func _build_runner() -> void:
 		var cont := LabUi.button("ПРОДОЛЖИТЬ")
 		cont.pressed.connect(func() -> void:
 			_engine.advance()
-			progress_store.save_store()
+			_persist()
 			rebuild()
 		)
 		_host.add_child(cont)
-	_host.add_child(_debug_panel(session, view))
+	if not _playthrough:
+		_host.add_child(_debug_panel(session, view))
 
 
 func _move_button(option: DateMoveOption) -> Button:
@@ -413,7 +477,7 @@ func _move_button(option: DateMoveOption) -> Button:
 	var move_id: StringName = option.move_id
 	btn.pressed.connect(func() -> void:
 		_engine.choose_move(move_id)
-		progress_store.save_store()
+		_persist()
 		rebuild()
 	)
 	return btn
@@ -455,8 +519,7 @@ func _episode_result_block(session: DateSession) -> PanelContainer:
 
 func _tag_knowledge(tag_id: StringName) -> DateTypes.TagKnowledge:
 	var session: DateSession = _engine.get_session_state()
-	var girl: GirlProfile = _catalog().find_girl(session.girl_id)
-	return progress_store.get_girl_progress(session.girl_id, girl).tag_knowledge(tag_id)
+	return _session_progress(session.girl_id).tag_knowledge(tag_id)
 
 
 func _build_result() -> void:
@@ -498,12 +561,17 @@ func _build_result() -> void:
 	_tally_lines.append(rel)
 	var footer := VBoxContainer.new()
 	footer.add_theme_constant_override("separation", 10)
-	var next := LabUi.button("НАЧАТЬ СЛЕДУЮЩЕЕ СВИДАНИЕ")
-	next.pressed.connect(func() -> void:
-		_engine = null
-		rebuild()
-	)
-	footer.add_child(next)
+	if _playthrough:
+		var done := LabUi.button("ГОТОВО")
+		done.pressed.connect(_finish_playthrough)
+		footer.add_child(done)
+	else:
+		var next := LabUi.button("НАЧАТЬ СЛЕДУЮЩЕЕ СВИДАНИЕ")
+		next.pressed.connect(func() -> void:
+			_engine = null
+			rebuild()
+		)
+		footer.add_child(next)
 	_tally_footer = footer
 	var timer := Timer.new()
 	timer.wait_time = 0.12

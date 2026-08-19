@@ -13,6 +13,8 @@ res://
         economy/
         world/
         girls/
+        dating/
+        rating/
         simulator/
     date_system/
         content/

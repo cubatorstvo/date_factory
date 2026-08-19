@@ -121,15 +121,17 @@ flow.game_time_minutes = 0
 story.stage = 1
 story.finale_reached = false
 player.money = 0
+player.rating = 0
 progression.purchased_ids = []
 world.current_location_id = city_center
 world.unlocked_location_ids = [city_center, apartment, cafe]
 girls.girls_by_id = {}
+dating.active_date = {}
 ```
 
-`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`. Кампания: `stage` — текущая/последняя достигнутая игровая стадия 1–6, `finale_reached` — завершение основной последовательности после Stage 6. Мир: `current_location_id` — семантическое место игрока, `unlocked_location_ids` — открытые `LocationDefinition`. Definitions локаций живут в `LocationCatalog`; `GameState` хранит только ID. Девушки: `GirlState` создаётся при первом обращении (`discovered = false`, `has_contact = false`, `relationship = 0`); definitions живут в `GirlCatalog`.
+`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`. Кампания: `stage` — текущая/последняя достигнутая игровая стадия 1–6, `finale_reached` — завершение основной последовательности после Stage 6. Мир: `current_location_id` — семантическое место игрока, `unlocked_location_ids` — открытые `LocationDefinition`. Definitions локаций живут в `LocationCatalog`; `GameState` хранит только ID. Девушки: `GirlState` создаётся при первом обращении (`discovered = false`, `has_contact = false`, `relationship = 0`, `next_date_available_at = 0`, пустые revealed tags, `secondary_revealed = false`, `completed_dates = 0`); definitions живут в `GirlCatalog`. `player.rating` — число девушек, с которыми игрок достиг максимальных отношений. `dating.active_date` — текущее свидание прохождения или `{}`.
 
-Пустые секции `dating` / `rivals` / `automation` сериализуются как `{}`. Поля читаются через `data.get(key, default)`. Отсутствующие поля `world` восстанавливаются стартовым состоянием нового прохождения. Отсутствующие `girls.girls_by_id` — `{}`.
+Пустые секции `rivals` / `automation` сериализуются как `{}`. Поля читаются через `data.get(key, default)`. Отсутствующие поля `world` восстанавливаются стартовым состоянием нового прохождения. Отсутствующие `girls.girls_by_id` — `{}`. Отсутствующий `player.rating` — `0`. Отсутствующий `dating.active_date` — `{}`.
 
 Autoload `SaveManager` — жизненный цикл:
 
@@ -145,14 +147,14 @@ delete_save()
 
 ```text
 {
-  "save_version": 6,
-  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0 }, "progression": { "purchased_ids": [] }, "world": { "current_location_id": "city_center", "unlocked_location_ids": ["city_center", "apartment", "cafe"] }, "girls": { "girls_by_id": {} }, "dating": {}, "rivals": {}, "automation": {} }
+  "save_version": 8,
+  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0, "rating": 0 }, "progression": { "purchased_ids": [] }, "world": { "current_location_id": "city_center", "unlocked_location_ids": ["city_center", "apartment", "cafe"] }, "girls": { "girls_by_id": {} }, "dating": { "active_date": {} }, "rivals": {}, "automation": {} }
 }
 ```
 
-`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0, `purchased_ids = []`, `current_location_id = city_center`, стартовые unlock'и, пустой `girls_by_id`. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Сохранения без `progression.purchased_ids` получают `[]`. Сохранения без world-полей получают стартовую локацию и стартовый набор unlock'ов. Сохранения без `girls.girls_by_id` получают `{}`; `GirlState` создаётся defaults при первом обращении. Текущий формат — `save_version = 6`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `EconomyService`, место через `WorldService`, девушек через `GirlsService`. Игровые действия изменяют money только через `EconomyService` и время только через `TimeService`; последовательность выполнения остаётся у `ActionService`. Переход между локациями не является `GameAction` и не двигает время. Знакомство — `GameAction` и занимает 30 минут. Presentation-слой прохождения — `GameSimulator`.
+`new_game()` создаёт новые экземпляры всех секций: `game_time_minutes = 0`, stage 1, `finale_reached = false`, money 0, rating 0, `purchased_ids = []`, `current_location_id = city_center`, стартовые unlock'и, пустой `girls_by_id`, пустой `dating.active_date`. `load_game()` собирает чистый `GameState` через `from_dict()`. Сохранения `save_version = 1` с `flow.day = N` мигрируют в `game_time_minutes = (N - 1) * 1440`. Сохранения без `story.finale_reached` получают `false`. Сохранения без `progression.purchased_ids` получают `[]`. Сохранения без world-полей получают стартовую локацию и стартовый набор unlock'ов. Сохранения без `girls.girls_by_id` получают `{}`; `GirlState` создаётся defaults при первом обращении. Сохранения без `player.rating` получают `0`. Сохранения без `dating.active_date` получают `{}`. Сохранения без revealed tags / `secondary_revealed` / `completed_dates` у `GirlState` получают пустые списки, `false` и `0`. Текущий формат — `save_version = 8`. Системы и UI читают время через `TimeService`, кампанию через `StageService`, деньги через `EconomyService`, Rating через `RatingService`, место через `WorldService`, девушек через `GirlsService`, свидания через `DatingService`. Игровые действия изменяют money только через `EconomyService` и время только через `TimeService`; последовательность выполнения остаётся у `ActionService`. Переход между локациями не является `GameAction` и не двигает время. Знакомство — `GameAction` и занимает 30 минут. Начало свидания — `GameAction` с нулевой стоимостью и нулевым временем; длительность свидания проводится после его завершения. Presentation-слой прохождения — `GameSimulator`.
 
-`DateSession.stage` не является `StoryState.stage`. `DateProgressStore` остаётся прогрессом лаборатории свиданий. `GameState.girls` хранит discovery/contact/relationship прохождения; Date Engine пока по-прежнему читает лабораторный `GirlProgress`. Физический мир (`LocationDefinition`) не подменяет `DateLocation`. `GirlDefinition` не подменяет `GirlProfile`.
+`DateSession.stage` не является `StoryState.stage`. `DateProgressStore` остаётся прогрессом лаборатории свиданий. `GameState.girls` хранит discovery/contact/relationship/cooldown и знание тегов прохождения. Date Engine в лаборатории читает лабораторный `GirlProgress`; в прохождении канонические `relationship` и revealed tags читаются и пишутся через `GirlsService`, а Date System получает `girl_id` от `DatingService`. Физический мир (`LocationDefinition`) не подменяет `DateLocation`. `GirlDefinition` не подменяет `GirlProfile`.
 
 ## Time / Game Flow
 
@@ -236,9 +238,9 @@ effects: Array[ActionEffect] = []
 
 `id` однозначно идентифицирует действие (`work_mine`, `meet_girl`, `invite_to_date`, `buy_upgrade`, `challenge_rival`, `start_date`, `travel`, `prepare_apartment`).
 
-`ActionRequirement`: `is_met() -> bool`, `get_failure_reason() -> String`. Проверяет текущее прохождение. `MoneyRequirement(required_money)`: `EconomyService.can_afford(required_money)`, отказ `"Недостаточно денег"`. `NotPurchasedRequirement(purchase_id)`: `purchase_id` отсутствует в `GameState.progression.purchased_ids`, отказ `"Уже куплено"`. `LocationRequirement(required_location_id)`: `WorldService.get_current_location_id() == required_location_id`, отказ `"Действие недоступно в этой локации"`. `GirlNotMetRequirement(girl_id)`: девушка ещё не `discovered`, отказ `"Вы уже знакомы"`. `GirlLocationRequirement(girl_id)`: `GirlDefinition.location_id` совпадает с текущей локацией, отказ `"Девушка находится в другой локации"`. `GirlDiscoveredRequirement(girl_id)`: `discovered`, отказ `"Вы ещё не знакомы"`. `GirlContactRequirement(girl_id)`: `has_contact`, отказ `"У вас нет контакта этой девушки"`. `RelationshipRequirement(girl_id, minimum_relationship)`: `relationship >= minimum`, отказ `"Недостаточный уровень отношений"`.
+`ActionRequirement`: `is_met() -> bool`, `get_failure_reason() -> String`. Проверяет текущее прохождение. `MoneyRequirement(required_money)`: `EconomyService.can_afford(required_money)`, отказ `"Недостаточно денег"`. `NotPurchasedRequirement(purchase_id)`: `purchase_id` отсутствует в `GameState.progression.purchased_ids`, отказ `"Уже куплено"`. `LocationRequirement(required_location_id)`: `WorldService.get_current_location_id() == required_location_id`, отказ `"Действие недоступно в этой локации"`. `GirlNotMetRequirement(girl_id)`: девушка ещё не `discovered`, отказ `"Вы уже знакомы"`. `GirlLocationRequirement(girl_id)`: `GirlDefinition.location_id` совпадает с текущей локацией, отказ `"Девушка находится в другой локации"`. `GirlDiscoveredRequirement(girl_id)`: `discovered`, отказ `"Вы ещё не знакомы"`. `GirlContactRequirement(girl_id)`: `has_contact`, отказ `"У вас нет контакта этой девушки"`. `RelationshipRequirement(girl_id, minimum_relationship)`: `relationship >= minimum`, отказ `"Недостаточный уровень отношений"`. `DateAvailableRequirement(girl_id)`: `DatingService.can_start_date(girl_id)`, отказ — первая причина `get_start_date_failure_reason`.
 
-`ActionEffect`: `apply() -> void`, `get_description() -> String`. `MoneyEffect(amount)`: при `amount > 0` вызывает `EconomyService.add_money(amount)`, при `amount < 0` — `EconomyService.spend_money(-amount)`. `PurchaseEffect(purchase_id)` добавляет ID в `ProgressionState.purchased_ids` не более одного раза. `UnlockLocationEffect(location_id)` вызывает `WorldService.unlock_location(location_id)`. `MeetGirlEffect(girl_id)` вызывает `GirlsService.discover_girl` и `give_contact`.
+`ActionEffect`: `apply() -> void`, `get_description() -> String`. `MoneyEffect(amount)`: при `amount > 0` вызывает `EconomyService.add_money(amount)`, при `amount < 0` — `EconomyService.spend_money(-amount)`. `PurchaseEffect(purchase_id)` добавляет ID в `ProgressionState.purchased_ids` не более одного раза. `UnlockLocationEffect(location_id)` вызывает `WorldService.unlock_location(location_id)`. `MeetGirlEffect(girl_id)` вызывает `GirlsService.discover_girl` и `give_contact`. `StartDateEffect(girl_id)` вызывает `DatingService.start_date(girl_id)`.
 
 `ActionResult` — ответ Presentation после попытки:
 
@@ -535,11 +537,18 @@ get_girls_for_location(location_id) -> Array[GirlDefinition]
 discovered: bool = false
 has_contact: bool = false
 relationship: int = 0
+next_date_available_at: int = 0
+revealed_positive_tag_ids: Array[StringName] = []
+revealed_negative_tag_ids: Array[StringName] = []
+secondary_revealed: bool = false
+completed_dates: int = 0
 ```
+
+`next_date_available_at` — абсолютные игровые минуты, когда снова можно пригласить эту девушку. `0` означает, что cooldown уже закончен. Раскрытые теги, `secondary_revealed` и `completed_dates` — то же знание, что у Date System `GirlProgress`; definitions тегов живут в Date Catalog. Канонические границы отношений — `GirlDefinition.relationship_min` / `relationship_max` (те же, что у Date System `GirlProfile`: Алина `-5..+5`, Вика `-10..+10`). Завершённая линия: `relationship == relationship_max`. Отдельный persistent-флаг завершения не нужен.
 
 `GirlsState.girls_by_id`: `girl_id → GirlState`. При первом `GirlsService.get_state` для существующей девушки создаётся стандартный `GirlState` и кладётся в `GameState.girls.girls_by_id`. New Game: `girls_by_id = {}`.
 
-Autoload `GirlsService` — единственная точка discovery, контакта и relationship. Читает definitions из каталога и пишет `GameState.girls`.
+Autoload `GirlsService` — единственная точка discovery, контакта, relationship, cooldown свиданий и знания тегов прохождения. Читает definitions из каталога и пишет `GameState.girls`.
 
 ```text
 get_definition(girl_id) -> GirlDefinition
@@ -547,9 +556,16 @@ get_state(girl_id) -> GirlState
 is_discovered(girl_id) -> bool
 has_contact(girl_id) -> bool
 get_relationship(girl_id) -> int
+get_relationship_max(girl_id) -> int
+is_relationship_completed(girl_id) -> bool
 discover_girl(girl_id) -> bool
 give_contact(girl_id) -> bool
 change_relationship(girl_id, delta) -> int
+get_next_date_available_at(girl_id) -> int
+is_date_cooldown_finished(girl_id) -> bool
+set_date_cooldown(girl_id, duration_minutes) -> void
+fill_date_progress(girl_id, progress) -> void
+apply_date_knowledge(girl_id, progress) -> void
 get_girls_at_current_location() -> Array[GirlDefinition]
 get_discovered_girls() -> Array[GirlDefinition]
 get_contacted_girls() -> Array[GirlDefinition]
@@ -557,9 +573,10 @@ create_meet_girl_action(girl_id) -> GameAction
 signal girl_discovered(girl_id)
 signal girl_contact_received(girl_id)
 signal girl_relationship_changed(girl_id, previous_value, current_value, delta)
+signal girl_relationship_completed(girl_id)
 ```
 
-`discover_girl`: при первом открытии `discovered = true`, сигнал `girl_discovered`, `true`; повтор — состояние прежнее, `false`. `give_contact`: `discovered = true` и `has_contact = true`; при первом контакте сигнал `girl_contact_received` и `true`. `change_relationship`: `relationship += delta`, clamp в `relationship_min..relationship_max` девушки, сигнал `girl_relationship_changed`, возвращает новое значение.
+`discover_girl`: при первом открытии `discovered = true`, сигнал `girl_discovered`, `true`; повтор — состояние прежнее, `false`. `give_contact`: `discovered = true` и `has_contact = true`; при первом контакте сигнал `girl_contact_received` и `true`. `change_relationship`: если линия уже завершена, `relationship` остаётся `relationship_max` и Rating не начисляется повторно. Иначе `relationship += delta`, clamp в `relationship_min..relationship_max` девушки. Если переход впервые достигает максимума, испускается `girl_relationship_completed` и `RatingService.add_rating(1)`. Затем `girl_relationship_changed`, возврат нового значения. `is_relationship_completed` — каноническая проверка завершённой линии: `get_relationship(girl_id) >= get_relationship_max(girl_id)`. `is_date_cooldown_finished`: `TimeService.get_game_time_minutes() >= next_date_available_at`. `fill_date_progress` копирует в snapshot `GirlProgress` канонические `relationship`, revealed tags, `secondary_revealed` и `completed_dates`. `apply_date_knowledge` пишет обратно revealed tags, `secondary_revealed` и `completed_dates`; `relationship` по-прежнему меняет только `change_relationship`.
 
 `get_girls_at_current_location` читает `WorldService.get_current_location_id()` и возвращает `GirlDefinition` с тем же `location_id`. Этот контракт общий для 2D GameSimulator и будущего 3D NPC (`girl_id` → тот же `GameAction`).
 
@@ -573,7 +590,75 @@ requirements: GirlNotMetRequirement, GirlLocationRequirement
 effects: MeetGirlEffect
 ```
 
-`MeetGirlEffect` вызывает `discover_girl` и `give_contact`. Повторное знакомство отказывает `"Вы уже знакомы"`. В другой локации — `"Девушка находится в другой локации"`. `GirlContactRequirement` — точка будущего приглашения на свидание. Следующий Dating-этап берёт девушку по `girl_id` и обновляет отношения через `GirlsService`.
+`MeetGirlEffect` вызывает `discover_girl` и `give_contact`. Повторное знакомство отказывает `"Вы уже знакомы"`. В другой локации — `"Девушка находится в другой локации"`. `GirlContactRequirement` — приглашение на свидание. Dating-слой берёт девушку по `girl_id` и обновляет отношения через `GirlsService`.
+
+## Rating
+
+`Rating` — количество девушек, с которыми игрок достиг максимального уровня отношений. Хранится в `PlayerState.rating`. New Game: `0`.
+
+Autoload `RatingService` — единственная точка изменения Rating:
+
+```text
+get_rating() -> int
+add_rating(amount: int = 1) -> int
+signal rating_changed(previous_rating, current_rating, delta)
+```
+
+`get_rating()` возвращает `GameState.player.rating`. `add_rating()` увеличивает Rating и возвращает новое значение. Начисление происходит один раз в момент первого достижения `relationship_max` конкретной девушки.
+
+## Dating
+
+Autoload `DatingService` связывает Game Core и существующую Date System. `DatingState.active_date` хранит активное свидание прохождения:
+
+```text
+girl_id
+started_at_game_time
+```
+
+Когда свидания нет, `active_date = {}`. DateSession эпизода — runtime Date Engine; если сессия не сериализуется в JSON, после load восстанавливаются `girl_id` и `started_at_game_time`, и Date System запускается заново для этой девушки.
+
+```text
+can_start_date(girl_id) -> bool
+get_start_date_failure_reason(girl_id) -> String
+create_start_date_action(girl_id) -> GameAction
+start_date(girl_id) -> bool
+complete_date(result) -> bool
+has_active_date() -> bool
+get_active_girl_id() -> StringName
+get_date_cooldown_remaining_minutes(girl_id) -> int
+signal date_started(girl_id)
+signal date_completed(girl_id, relationship_delta, current_relationship)
+```
+
+Свидание доступно, когда одновременно: `discovered`, `has_contact`, cooldown закончен, линия не завершена, активного свидания нет. Первая причина отказа:
+
+```text
+"Вы ещё не знакомы"
+"У вас нет контакта этой девушки"
+"До следующего свидания нужно подождать"
+"Отношения с этой девушкой уже достигли максимума"
+"Свидание уже идёт"
+```
+
+`create_start_date_action`: `id = start_date_<girl_id>`, `money_cost = 0`, `time_cost_minutes = 0`, `DateAvailableRequirement`, `StartDateEffect`. Время свидания не входит в action: оно проводится после завершения.
+
+`start_date()` записывает `active_date`, запускает Date Engine для канонического `girl_id` (место seed — `GirlDefinition.location_id` если это DateLocation, иначе `cafe`; наряд `casual`) и испускает `date_started`. Date System получает snapshot `GirlProgress` через `GirlsService.fill_date_progress`: `relationship` и уже раскрытые теги предыдущих свиданий.
+
+`DateResult`: `girl_id`, `relationship_delta`, `duration_minutes`, `result_text`. Базовая длительность — `120` игровых минут. Date System передаёт результат, Game Core применяет его.
+
+`complete_date(result)`:
+
+```text
+1. Проверить активное свидание и girl_id
+2. GirlsService.change_relationship(relationship_delta)
+3. GirlsService.apply_date_knowledge из GirlProgress сессии (revealed tags, secondary, completed_dates)
+4. TimeService.advance_time(duration_minutes)
+5. set_date_cooldown(days_to_minutes(3))
+6. Очистить active_date
+7. Испустить date_completed
+```
+
+Cooldown 3 игровых дня считается от времени после завершения свидания. Date Engine не пишет `GirlState` и не начисляет Rating: знание тегов проходит через `GirlsService.apply_date_knowledge`.
 
 ## Game Simulator
 
@@ -601,12 +686,12 @@ GameState
 GameSimulator.refresh()
 ```
 
-Autoload `StageService`, `ActionService`, `EconomyService`, `PurchaseService`, `WorldService`, `GirlsService` и `SceneTransitionService` регистрируются в `project.godot` как `/root/StageService`, `/root/ActionService`, `/root/EconomyService`, `/root/PurchaseService`, `/root/WorldService`, `/root/GirlsService` и `/root/SceneTransitionService`.
+Autoload `StageService`, `ActionService`, `EconomyService`, `PurchaseService`, `WorldService`, `GirlsService`, `RatingService`, `DatingService` и `SceneTransitionService` регистрируются в `project.godot` как `/root/StageService`, `/root/ActionService`, `/root/EconomyService`, `/root/PurchaseService`, `/root/WorldService`, `/root/GirlsService`, `/root/RatingService`, `/root/DatingService` и `/root/SceneTransitionService`.
 
 Интерфейс — 2D Control, контейнеры и anchors, читаемый в 1280×720 и 1920×1080:
 
 ```text
-HUD: Day / Time | Money | Stage | Finale
+HUD: Day / Time | Money | Rating | Stage | Finale
 Navigation | Current Section
 Action Result / Event Log
 ```
@@ -616,11 +701,12 @@ HUD читает только канонические данные:
 ```text
 TimeService.get_day() / get_hour() / get_minute()
 EconomyService.get_money()
+RatingService.get_rating()
 StageService.get_current_stage()
 StageService.is_finale_reached()
 ```
 
-Пример: `День 3`, `14:30`, `Деньги: 650`, `Stage: 2`. После Finale: `Stage: 6` и `Finale`, плюс presentation-факт `FINALE REACHED`. Навигация и системы остаются доступны.
+Пример: `День 3`, `14:30`, `Деньги: 650`, `Rating: 0`, `Stage: 2`. После Finale: `Stage: 6` и `Finale`, плюс presentation-факт `FINALE REACHED`. Навигация и системы остаются доступны.
 
 Разделы навигации: Главная, Работа, Город, Девушки, Свидания, Квартира, Прокачка. Смена раздела — только presentation: не меняет `GameState`, не двигает время, не является `GameAction`.
 
@@ -630,15 +716,17 @@ StageService.is_finale_reached()
 
 Прокачка показывает `basic_upgrade`: название «Базовое улучшение», цена 300, кнопка «КУПИТЬ». Если денег недостаточно, кнопка `disabled`, причина `"Недостаточно денег"`. Если upgrade уже куплен, показывается «Куплено», кнопка `disabled`. Покупка идёт через `PurchaseService.create_purchase_action` → `ActionService.execute`.
 
-Раздел Девушки показывает `GirlsService.get_discovered_girls()`: имя, «Отношения: N», «Контакт: Да / Нет». Незнакомые девушки в этот список не входят — они появляются в мире через локацию. Свидания и Квартира пока заготовки: «Доступные свидания появятся здесь.» / «Система квартиры появится здесь.»
+Раздел Девушки показывает `GirlsService.get_discovered_girls()`: имя, «Отношения: N / MAX», «Контакт: Да / Нет». При максимуме: «Отношения: MAX / MAX» и «Линия завершена». Незнакомые девушки в этот список не входят — они появляются в мире через локацию.
+
+Раздел Свидания показывает `GirlsService.get_contacted_girls()`. Доступная девушка: имя, отношения, кнопка «ПРИГЛАСИТЬ» → `DatingService.create_start_date_action` → `ActionService.execute`. После успеха открывается существующий текстовый DatePlayPanel для активной девушки. После итога Date System вызывает `DatingService.complete_date` и возвращает игрока в раздел Свидания. Cooldown: кнопка disabled, «Следующее свидание через N д. N ч.». Завершённая линия: «Линия завершена», без приглашения. При первом достижении максимума Action Result: «Отношения с <Имя> достигли максимума.» и «Rating +1». Квартира пока заготовка: «Система квартиры появится здесь.»
 
 Reusable `GameActionButton` получает `GameAction` и показывает label, `money_cost`, `time_cost_minutes`. Кнопка вызывает `ActionService.execute(action)` и возвращает `ActionResult` в `GameSimulator`. Человекочитаемые label тестовых actions живут в presentation-каталоге Simulator: `test_wait` → Подождать, `test_earn_money` → Работать, `test_spend_money` → Потратить 50.
 
 Успешный `ActionResult`: «Успешно.», полученные эффекты, «Прошло времени: N мин.». Отказ: «Действие недоступно.» и `ActionResult.failure_reason`. Кнопка `disabled`, если `ActionService.can_execute(action)` ложно; причина — `ActionService.get_failure_reason(action)` в `tooltip_text`.
 
-Единый `refresh()` обновляет HUD, текущую секцию, доступность actions и последние отображаемые значения. Вызывается после New Game, Load, `ActionService.action_executed`, `TimeService.time_advanced`, `EconomyService.money_changed`, `PurchaseService.purchase_completed`, `StageService.stage_changed`, `StageService.finale_reached`, `WorldService.location_changed`, `WorldService.location_unlocked`, `GirlsService.girl_discovered`, `GirlsService.girl_contact_received`, `GirlsService.girl_relationship_changed`. Simulator не хранит копии игровых значений: всегда читает сервисы и `GameState`.
+Единый `refresh()` обновляет HUD, текущую секцию, доступность actions и последние отображаемые значения. Вызывается после New Game, Load, `ActionService.action_executed`, `TimeService.time_advanced`, `EconomyService.money_changed`, `RatingService.rating_changed`, `PurchaseService.purchase_completed`, `StageService.stage_changed`, `StageService.finale_reached`, `WorldService.location_changed`, `WorldService.location_unlocked`, `GirlsService.girl_discovered`, `GirlsService.girl_contact_received`, `GirlsService.girl_relationship_changed`, `GirlsService.girl_relationship_completed`, `DatingService.date_started`, `DatingService.date_completed`. Simulator не хранит копии игровых значений: всегда читает сервисы и `GameState`.
 
-Управление сохранением через `SaveManager`: «НОВАЯ ИГРА» → `new_game()`; «СОХРАНИТЬ» → `save_game()` и сообщение «Игра сохранена.»; «ЗАГРУЗИТЬ» доступна при `has_save()` → `load_game()`; «УДАЛИТЬ СОХРАНЕНИЕ» → `delete_save()`. После New Game HUD: Day 1, 00:00, Money 0, Stage 1.
+Управление сохранением через `SaveManager`: «НОВАЯ ИГРА» → `new_game()`; «СОХРАНИТЬ» → `save_game()` и сообщение «Игра сохранена.»; «ЗАГРУЗИТЬ» доступна при `has_save()` → `load_game()`; «УДАЛИТЬ СОХРАНЕНИЕ» → `delete_save()`. После New Game HUD: Day 1, 00:00, Money 0, Rating 0, Stage 1.
 
 Временный dev-control «ЗАВЕРШИТЬ ТЕКУЩИЙ STAGE» вызывает `StageService.complete_current_stage()` и визуально отделён от игровых действий. Нужен для Skeleton: Stage 1 → 6 → Finale.
 
@@ -969,4 +1057,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` / `purchased_ids` / `current_location_id` / `unlocked_location_ids` / `girls_by_id` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, миграция без `progression.purchased_ids` → `[]`, миграция без world-полей → стартовый `WorldState`, миграция без `girls.girls_by_id` → `{}`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), `EconomyService` (`add_money` / `spend_money` success/fail / `money_changed`), `work_basic` (100 денег / 60 минут, повтор), покупка `basic_upgrade` (нехватка денег / успех / повтор «Уже куплено»), save/load денег и `purchased_ids`, presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`; Город: текущая локация, вход/выход интерьера без сдвига времени, закрытая локация, dev unlock, люди текущей локации, знакомство), `WorldService` (New Game start location и unlock'и, первый/повторный unlock, `enter_location`, отказ в закрытую, `location_changed` / `location_unlocked`, время не двигается), `LocationRequirement`, save/load локации и unlock'ов, `GirlsService` (default `GirlState`, однократный `discover_girl` / `give_contact` / `change_relationship`, девушки текущей локации), `MEET_GIRL` (успех 30 минут, повтор «Вы уже знакомы», другая локация), `GirlContactRequirement`, `RelationshipRequirement`.
+Кейсы 1–36 постановки задачи плюс резервирование UNLOCKABLE Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, Вика LATE 3/9, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` / `purchased_ids` / `current_location_id` / `unlocked_location_ids` / `girls_by_id` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, миграция без `progression.purchased_ids` → `[]`, миграция без world-полей → стартовый `WorldState`, миграция без `girls.girls_by_id` → `{}`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, переходы 1→6, Finale, повтор после Finale, сигналы `stage_changed` / `finale_reached`, save/load кампании, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), `EconomyService` (`add_money` / `spend_money` success/fail / `money_changed`), `work_basic` (100 денег / 60 минут, повтор), покупка `basic_upgrade` (нехватка денег / успех / повтор «Уже куплено»), save/load денег и `purchased_ids`, presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`; Город: текущая локация, вход/выход интерьера без сдвига времени, закрытая локация, dev unlock, люди текущей локации, знакомство), `WorldService` (New Game start location и unlock'и, первый/повторный unlock, `enter_location`, отказ в закрытую, `location_changed` / `location_unlocked`, время не двигается), `LocationRequirement`, save/load локации и unlock'ов, `GirlsService` (default `GirlState`, однократный `discover_girl` / `give_contact` / `change_relationship`, девушки текущей локации), `MEET_GIRL` (успех 30 минут, повтор «Вы уже знакомы», другая локация), `GirlContactRequirement`, `RelationshipRequirement`, `RatingService` (старт 0, +1 при первом максимуме, большой delta даёт +1, повтор не начисляет), `DatingService` (start date success/fail без контакта/cooldown/максимума, complete_date применяет relationship/time/cooldown, раскрытые теги переходят на следующее свидание, полный цикл до Rating), save/load Rating / cooldown / знание тегов / завершённой девушки / active_date, миграция без `player.rating` → `0`.
