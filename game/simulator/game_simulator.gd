@@ -662,20 +662,13 @@ func _build_city() -> Control:
 
 
 func _build_city_place_row(interior: LocationDefinition, world: Variant) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
 	var unlocked: bool = world != null and bool(world.is_location_unlocked(interior.id))
-	var title := Label.new()
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if unlocked:
-		title.text = interior.display_name
-	else:
-		title.text = "%s 🔒" % interior.display_name
-	row.add_child(title)
-	var enter_btn: Button = LabUi.button("ВОЙТИ")
-	enter_btn.disabled = not unlocked
-	enter_btn.pressed.connect(enter_world_location.bind(interior.id))
-	row.add_child(enter_btn)
+	var title: String = interior.display_name if unlocked else "%s 🔒" % interior.display_name
+	var row: Button = LabUi.button(title)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	row.disabled = not unlocked
+	row.pressed.connect(enter_world_location.bind(interior.id))
 	return row
 
 
