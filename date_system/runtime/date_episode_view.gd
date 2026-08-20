@@ -7,3 +7,4 @@ var index_in_phase: int = 0
 var situation: DateSituation
 var base_options: Array[DateMoveOption] = []
 var unlockable_options: Array[DateMoveOption] = []
+var local_object_views: Array[DateLocalObjectView] = []

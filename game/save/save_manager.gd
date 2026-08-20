@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 12
+const SAVE_VERSION: int = 13
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -114,6 +114,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v10_automation(migrated)
 	if from_version < 12:
 		migrated = _migrate_v11_factory_rating(migrated)
+	if from_version < 13:
+		migrated = _migrate_v12_apartment_prepared(migrated)
 	return migrated
 
 
@@ -332,4 +334,21 @@ func _migrate_v11_factory_rating(state_data: Dictionary) -> Dictionary:
 		automation["expansion_progress"] = minf(float(completed_auto_dates) + dating_fraction, 100.0)
 	automation.erase("completed_auto_dates")
 	migrated["automation"] = automation
+	return migrated
+
+
+func _migrate_v12_apartment_prepared(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var progression_value: Variant = migrated.get("progression", {})
+	var progression: Dictionary = {}
+	if progression_value is Dictionary:
+		progression = progression_value
+	var apartment_value: Variant = progression.get("apartment", {})
+	var apartment: Dictionary = {}
+	if apartment_value is Dictionary:
+		apartment = apartment_value
+	if not apartment.has("prepared"):
+		apartment["prepared"] = true
+	progression["apartment"] = apartment
+	migrated["progression"] = progression
 	return migrated

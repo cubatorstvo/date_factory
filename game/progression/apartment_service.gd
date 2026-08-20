@@ -1,8 +1,6 @@
 extends Node
 
 const BUY_ACTION_PREFIX: String = "buy_"
-const QUALITY_MIN: int = 0
-const QUALITY_MAX: int = 3
 
 var _catalog: ApartmentCatalog
 
@@ -24,8 +22,25 @@ func get_level() -> int:
 	return apartment.level
 
 
-func get_quality() -> int:
-	return clampi(get_level() - 1, QUALITY_MIN, QUALITY_MAX)
+func is_prepared() -> bool:
+	var apartment: ApartmentState = _apartment()
+	if apartment == null:
+		return true
+	return apartment.prepared
+
+
+func get_granted_local_object_ids() -> Array[StringName]:
+	var result: Array[StringName] = []
+	var apartment: ApartmentState = _apartment()
+	if apartment == null:
+		return result
+	for upgrade in get_catalog().get_all_upgrades():
+		if upgrade == null or not apartment.has(upgrade.id):
+			continue
+		for object_id in upgrade.granted_local_object_ids:
+			if object_id != &"" and not result.has(object_id):
+				result.append(object_id)
+	return result
 
 
 func is_upgrade_purchased(upgrade_id: StringName) -> bool:

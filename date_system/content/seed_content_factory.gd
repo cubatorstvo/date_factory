@@ -11,7 +11,7 @@ func build_catalog() -> DateContentCatalog:
 	var catalog := DateContentCatalog.new()
 	catalog.tags = _tags()
 	catalog.progression_stats = _stats()
-	catalog.location_formats = _formats()
+	catalog.local_objects = _local_objects()
 	catalog.locations = _locations()
 	catalog.outfits = _outfits()
 	catalog.secondary_rules = _secondary()
@@ -27,7 +27,7 @@ func export_to_disk() -> void:
 	var catalog := build_catalog()
 	_save_group(catalog.tags, "res://date_system/content/tags")
 	_save_group(catalog.progression_stats, "res://date_system/content/progression")
-	_save_group(catalog.location_formats, "res://date_system/content/location_formats")
+	_save_group(catalog.local_objects, "res://date_system/content/local_objects")
 	_save_group(catalog.locations, "res://date_system/content/locations")
 	_save_group(catalog.outfits, "res://date_system/content/outfits")
 	_save_group(catalog.secondary_rules, "res://date_system/content/secondary")
@@ -92,59 +92,61 @@ func _stats() -> Array[ProgressionStat]:
 	]
 
 
-func _format(id: String, name: String) -> LocationFormat:
-	var format := LocationFormat.new()
-	format.id = StringName(id)
-	format.display_name = name
-	format.description = name
-	format.enabled = true
-	return format
+func _local_object(id: String, name: String, description: String, move_ids: Array) -> DateLocalObject:
+	var local_object: DateLocalObject = DateLocalObject.new()
+	local_object.id = StringName(id)
+	local_object.display_name = name
+	local_object.description = description
+	local_object.enabled = true
+	var typed: Array[StringName] = []
+	for item in move_ids:
+		typed.append(StringName(str(item)))
+	local_object.move_ids = typed
+	return local_object
 
 
-func _formats() -> Array[LocationFormat]:
+func _local_objects() -> Array[DateLocalObject]:
 	return [
-		_format("calm", "Спокойное"),
-		_format("entertainment", "Развлекательное"),
-		_format("game", "Игровое"),
-		_format("culture", "Культурное"),
-		_format("unusual", "Необычное"),
+		_local_object("window", "Окно", "Окно, которое можно приоткрыть или распахнуть.", ["local_window_audacity", "local_window_care"]),
+		_local_object("sofa", "Диван", "Диван, на котором можно задать позу и темп разговора.", ["local_sofa_composure", "local_sofa_dominance"]),
+		_local_object("tv", "Телевизор", "Телевизор с передачами и роликами под руку.", ["local_tv_humor", "local_tv_cunning"]),
+		_local_object("jukebox", "Музыкальный автомат", "Музыкальный автомат с чужими и своими композициями.", ["local_jukebox_humor", "local_jukebox_audacity"]),
+		_local_object("barista", "Бариста", "Бариста, который может принести десерт или подыграть истории.", ["local_barista_generosity", "local_barista_cunning"]),
+		_local_object("waiter", "Официант", "Официант, через которого заказывают десерт и «то самое».", ["local_waiter_generosity", "local_waiter_status"]),
+		_local_object("piano", "Рояль", "Рояль в зале — сыграть самому или занять место музыканта.", ["local_piano_humor", "local_piano_dominance"]),
 	]
 
 
 func _location(
 	id: String,
 	name: String,
-	quality: int,
-	mode: DateTypes.LocationPreferenceMode,
-	format_id: String = "",
-	apartment_quality: bool = false,
-	apartment_prep: bool = false
+	enabled: bool,
+	apartment_prep: bool,
+	local_object_ids: Array
 ) -> DateLocation:
 	var location: DateLocation = DateLocation.new()
 	location.id = StringName(id)
 	location.display_name = name
 	location.description = name
-	location.enabled = true
-	location.base_quality_bonus = quality
-	location.preference_mode = mode
-	location.location_format_id = StringName(format_id)
-	location.uses_apartment_quality = apartment_quality
+	location.enabled = enabled
 	location.uses_apartment_preparation = apartment_prep
+	var typed: Array[StringName] = []
+	for item in local_object_ids:
+		typed.append(StringName(str(item)))
+	location.local_object_ids = typed
 	return location
 
 
 func _locations() -> Array[DateLocation]:
-	var neutral := DateTypes.LocationPreferenceMode.NEUTRAL
-	var thematic := DateTypes.LocationPreferenceMode.THEMATIC
 	return [
-		_location("apartment", "Квартира", 0, neutral, "", true, true),
-		_location("cafe", "Кафе", 1, neutral),
-		_location("restaurant", "Ресторан", 2, neutral),
-		_location("park", "Парк", 1, thematic, "calm"),
-		_location("cinema", "Кинотеатр", 1, thematic, "entertainment"),
-		_location("arcade", "Аркада", 1, thematic, "game"),
-		_location("museum", "Музей", 1, thematic, "culture"),
-		_location("planetarium", "Планетарий", 1, thematic, "unusual"),
+		_location("apartment", "Квартира", true, true, ["window", "sofa"]),
+		_location("cafe", "Кафе", true, false, ["window", "jukebox", "barista"]),
+		_location("restaurant", "Ресторан", true, false, ["window", "waiter", "piano"]),
+		_location("park", "Парк", false, false, []),
+		_location("cinema", "Кинотеатр", false, false, []),
+		_location("arcade", "Аркада", false, false, []),
+		_location("museum", "Музей", false, false, []),
+		_location("planetarium", "Планетарий", false, false, []),
 	]
 
 
@@ -265,6 +267,35 @@ func _unlock_move(id: String, name: String, stat_id: String, level: int, mapping
 	return move
 
 
+func _local_move(
+	id: String,
+	name: String,
+	tag_id: String,
+	option_text: String,
+	positive_text: String,
+	negative_text: String,
+	stat_id: String = "",
+	level: int = 0
+) -> DateMove:
+	var move: DateMove = DateMove.new()
+	move.id = StringName(id)
+	move.display_name = name
+	move.description = name
+	move.kind = DateTypes.DateMoveKind.LOCAL
+	move.enabled = true
+	move.max_uses_per_date = 0
+	move.local_tag_id = StringName(tag_id)
+	move.local_option_text = option_text
+	move.local_positive_result_text = positive_text
+	move.local_negative_result_text = negative_text
+	if not stat_id.is_empty():
+		var requirement: UnlockRequirement = UnlockRequirement.new()
+		requirement.stat_id = StringName(stat_id)
+		requirement.required_level = level
+		move.unlock_requirement = requirement
+	return move
+
+
 func _moves() -> Array[DateMove]:
 	return [
 		_base_move("say_directly", "Сказать прямо", [
@@ -346,6 +377,20 @@ func _moves() -> Array[DateMove]:
 			_mapping("money_request", "risk", "Предложить удвоить сумму после немедленного доказательства истории."),
 			_mapping("spontaneous_bet", "risk", "Удвоить ставку и усложнить условие проигравшему."),
 		]),
+		_local_move("local_window_audacity", "Распахнуть окно", "audacity", "Распахнуть окно настежь и продолжить разговор с улицей.", "Окно настежь, улица в разговоре — ей это зашло.", "Распахнул окно настежь — ей слишком шумно и демонстративно."),
+		_local_move("local_window_care", "Приоткрыть окно", "care", "Слегка приоткрыть окно для свежего воздуха.", "Свежий воздух к месту — ей спокойнее.", "Приоткрыл окно «для воздуха» — ей это кажется лишней заботой не к месту."),
+		_local_move("local_sofa_composure", "Откинуться на диван", "composure", "Откинуться на диван и невозмутимо продолжить разговор.", "Откинулся и держишь тон — ей это спокойствие по делу.", "Откинулся на диван слишком расслабленно — ей это выглядит как равнодушие."),
+		_local_move("local_sofa_dominance", "Занять центр дивана", "dominance", "Пересесть в центр дивана и самому задать темп разговору.", "Занял центр дивана и темп разговора — ей это зашло.", "Пересел в центр и задал темп — ей это слишком навязано.", "aura", 2),
+		_local_move("local_tv_humor", "Неуместная передача", "humor", "Включить максимально неуместную передачу и сделать вид, что так и было задумано.", "Неуместная передача сработала как шутка — ей смешно.", "Включил неуместную передачу — ей это выглядит как сбой, а не юмор."),
+		_local_move("local_tv_cunning", "Подтверждающий ролик", "cunning", "Найти ролик, который неожиданно подтверждает твою версию.", "Ролик неожиданно подтвердил твою версию — ей это ловко.", "Подобрал ролик «в подтверждение» — ей это выглядит как подтасовка."),
+		_local_move("local_jukebox_humor", "Неуместная песня", "humor", "Поставить максимально неуместную песню.", "Неуместная песня попала в тон — ей смешно.", "Поставил максимально неуместную песню — ей это ломает вечер."),
+		_local_move("local_jukebox_audacity", "Переключить музыку", "audacity", "Переключить музыку на свой выбор посреди чужой композиции.", "Переключил чужую композицию на свою — ей это зашло как наглость к месту.", "Перебил чужую песню своим выбором — ей это грубо."),
+		_local_move("local_barista_generosity", "Фирменный десерт", "generosity", "Заказать девушке фирменный десерт.", "Фирменный десерт к месту — ей приятно.", "Заказал фирменный десерт — ей это кажется покупкой настроения."),
+		_local_move("local_barista_cunning", "Подыграть истории", "cunning", "Попросить бариста подыграть твоей истории.", "Бариста подыграл истории — ей это ловко.", "Попросил бариста подыграть — ей это выглядит как постановка.", "aura", 2),
+		_local_move("local_waiter_generosity", "Дорогой десерт", "generosity", "Заказать для неё самый дорогой десерт.", "Самый дорогой десерт к месту — ей приятно.", "Заказал самый дорогой десерт — ей это слишком демонстративно."),
+		_local_move("local_waiter_status", "То самое", "status", "Попросить принести «то самое», будто ты здесь постоянный гость.", "«То самое» принесли как постоянному гостю — ей это зашло.", "Попросил «то самое» как завсегдатай — ей это выглядит как игра в статус.", "capital", 2),
+		_local_move("local_piano_humor", "Пафосный марш", "humor", "Сыграть одним пальцем максимально пафосный марш.", "Пафосный марш одним пальцем сработал — ей смешно.", "Сыграл пафосный марш одним пальцем — ей это не смешно, а жалко."),
+		_local_move("local_piano_dominance", "Занять рояль", "dominance", "Попросить музыканта уступить тебе рояль и занять его место.", "Занял рояль вместо музыканта — ей это зашло как контроль сцены.", "Попросил уступить рояль — ей это слишком театрально и навязчиво.", "aura", 3),
 	]
 
 
@@ -378,8 +423,6 @@ func _girl(
 	rel_max: int,
 	positives: Array,
 	secondary_id: String,
-	favorites: Array,
-	favorite_outfits: Array,
 	description: String = ""
 ) -> GirlProfile:
 	var girl: GirlProfile = GirlProfile.new()
@@ -397,28 +440,20 @@ func _girl(
 	girl.positive_tag_ids = pos
 	girl.sync_negative_tags(_tags())
 	girl.secondary_rule_id = StringName(secondary_id)
-	var fav: Array[StringName] = []
-	for item in favorites:
-		fav.append(StringName(str(item)))
-	girl.favorite_location_format_ids = fav
-	var fav_outfits: Array[StringName] = []
-	for item in favorite_outfits:
-		fav_outfits.append(StringName(str(item)))
-	girl.favorite_outfit_ids = fav_outfits
 	return girl
 
 func _girls() -> Array[GirlProfile]:
 	return [
-		_girl("alina", "Алина", "starter", -5, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety", ["calm", "culture"], ["business"]),
-		_girl("girl_actress", "Актриса", "early", -5, 5, ["flattery", "audacity", "generosity", "status", "humor"], "variety", ["entertainment", "culture"], ["luxury"], "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
-		_girl("vika", "Вика", "early", -5, 5, ["audacity", "dominance", "risk", "humor", "cunning"], "demanding", ["game", "unusual"], ["luxury"]),
-		_girl("girl_mine_boss", "Начальница шахты", "mid", -5, 5, ["directness", "dominance", "generosity", "composure"], "demanding", ["calm", "unusual"], ["business"], "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
-		_girl("katya", "Катя", "mid", -5, 5, ["directness", "risk", "humor", "cunning"], "variety", ["entertainment", "game"], ["business"], "любит спонтанность, игры, подколы и быстрые нестандартные решения"),
-		_girl("girl_magazine_editor", "Редактор журнала", "mid", -5, 5, ["directness", "status", "composure", "cunning"], "demanding", ["culture", "calm"], ["business"], "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),
-		_girl("lera", "Лера", "mid", -5, 5, ["politeness", "flattery", "status", "composure"], "variety", ["calm", "culture"], ["luxury"], "любит красивую спокойную подачу, хороший вкус и социальную уверенность"),
-		_girl("girl_scientist", "Учёная", "mid", -5, 5, ["directness", "composure", "cunning", "care"], "demanding", ["culture", "unusual"], ["business"], "ценит ясность, спокойствие, наблюдательность и необычные решения"),
-		_girl("sonya", "Соня", "late", -5, 5, ["audacity", "risk", "humor"], "variety", ["entertainment", "unusual"], ["luxury"], "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"),
-		_girl("girl_president", "Президент", "late", -5, 5, ["dominance", "status", "composure"], "demanding", ["culture", "unusual"], ["luxury"], "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание"),
+		_girl("alina", "Алина", "starter", -5, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety"),
+		_girl("girl_actress", "Актриса", "early", -5, 5, ["flattery", "audacity", "generosity", "status", "humor"], "variety", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
+		_girl("vika", "Вика", "early", -5, 5, ["audacity", "dominance", "risk", "humor", "cunning"], "demanding"),
+		_girl("girl_mine_boss", "Начальница шахты", "mid", -5, 5, ["directness", "dominance", "generosity", "composure"], "demanding", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
+		_girl("katya", "Катя", "mid", -5, 5, ["directness", "risk", "humor", "cunning"], "variety", "любит спонтанность, игры, подколы и быстрые нестандартные решения"),
+		_girl("girl_magazine_editor", "Редактор журнала", "mid", -5, 5, ["directness", "status", "composure", "cunning"], "demanding", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),
+		_girl("lera", "Лера", "mid", -5, 5, ["politeness", "flattery", "status", "composure"], "variety", "любит красивую спокойную подачу, хороший вкус и социальную уверенность"),
+		_girl("girl_scientist", "Учёная", "mid", -5, 5, ["directness", "composure", "cunning", "care"], "demanding", "ценит ясность, спокойствие, наблюдательность и необычные решения"),
+		_girl("sonya", "Соня", "late", -5, 5, ["audacity", "risk", "humor"], "variety", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"),
+		_girl("girl_president", "Президент", "late", -5, 5, ["dominance", "status", "composure"], "demanding", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание"),
 	]
 
 func _rules() -> DateRules:
@@ -429,7 +464,8 @@ func _rules() -> DateRules:
 	rules.base_moves_per_episode = 3
 	rules.allow_situation_repeats = false
 	rules.show_locked_unlockable_moves = true
-	rules.opening_choice_score = 0
+	rules.opening_positive_score = 1
+	rules.opening_negative_score = -1
 	rules.core_positive_score = 1
 	rules.core_negative_score = -1
 	rules.closing_positive_score = 1
@@ -437,10 +473,6 @@ func _rules() -> DateRules:
 	rules.reveal_tag_after_use = true
 	rules.reveal_secondary_after_first_completed_date = true
 	rules.secondary_counted_phases = [int(DateTypes.DatePhase.CORE)]
-	rules.location_preference_success = 1
-	rules.location_preference_failure = -1
 	rules.apartment_unprepared_penalty = -1
-	rules.apartment_quality_min = 0
-	rules.apartment_quality_max = 3
 	rules.min_distinct_base_tags_per_situation = 6
 	return rules

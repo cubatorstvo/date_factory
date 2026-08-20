@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"local_tv_cunning"
+display_name = "Подтверждающий ролик"
+description = "Подтверждающий ролик"
+kind = 2
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+local_tag_id = &"cunning"
+local_option_text = "Найти ролик, который неожиданно подтверждает твою версию."
+local_positive_result_text = "Ролик неожиданно подтвердил твою версию — ей это ловко."
+local_negative_result_text = "Подобрал ролик «в подтверждение» — ей это выглядит как подтасовка."

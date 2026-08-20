@@ -25,7 +25,8 @@ func get_all_upgrades() -> Array[ApartmentUpgradeDefinition]:
 
 static func create_seed() -> ApartmentCatalog:
 	var catalog := ApartmentCatalog.new()
-	catalog.upgrades.append(_make(ID_UPGRADE_1, "Улучшить квартиру", 500, 2))
+	var tv_ids: Array[StringName] = [&"tv"]
+	catalog.upgrades.append(_make(ID_UPGRADE_1, "Купить телевизор", 500, 2, tv_ids))
 	return catalog
 
 
@@ -33,7 +34,8 @@ static func _make(
 	id: StringName,
 	display_name: String,
 	price: int,
-	level_granted: int
+	level_granted: int,
+	granted_local_object_ids: Array[StringName] = []
 ) -> ApartmentUpgradeDefinition:
 	var upgrade := ApartmentUpgradeDefinition.new()
 	upgrade.id = id
@@ -41,4 +43,5 @@ static func _make(
 	upgrade.description = display_name
 	upgrade.price = price
 	upgrade.level_granted = level_granted
+	upgrade.granted_local_object_ids = granted_local_object_ids
 	return upgrade

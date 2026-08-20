@@ -15,6 +15,8 @@ enum Stage {
 @export var girl_id: StringName = &""
 @export var location_id: StringName = &""
 @export var outfit_id: StringName = &""
+@export var local_object_ids: Array[StringName] = []
+@export var used_local_object_ids: Array[StringName] = []
 @export var relationship_before: int = 0
 @export var selected_situation_ids: Array[StringName] = []
 @export var current_phase: DateTypes.DatePhase = DateTypes.DatePhase.OPENING

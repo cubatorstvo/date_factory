@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DateLocalObject" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_local_object.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"piano"
+display_name = "Рояль"
+description = "Рояль в зале — сыграть самому или занять место музыканта."
+enabled = true
+move_ids = Array[StringName]([&"local_piano_humor", &"local_piano_dominance"])

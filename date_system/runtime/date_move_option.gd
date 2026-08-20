@@ -14,6 +14,8 @@ var requirement_level: int = 0
 var current_stat_level: int = 0
 var uses_used: int = 0
 var uses_max: int = 0
+var local_object_id: StringName = &""
+var local_object_display_name: String = ""
 
 
 func is_selectable() -> bool:

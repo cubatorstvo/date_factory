@@ -51,6 +51,8 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.relationship_after = _girl_progress.relationship
 	_session.score_breakdown = DateScoreBreakdown.new()
 	_session.used_unlockable_move_counts = {}
+	_session.local_object_ids = config.local_object_ids.duplicate()
+	_session.used_local_object_ids = []
 	_session.secondary_runtime_state = _initial_secondary_state()
 	_rng.seed = config.seed
 	_session.current_episode_index = 0
@@ -78,6 +80,7 @@ func get_current_episode() -> DateEpisodeView:
 		view.situation = _catalog.find_situation(_session.selected_situation_ids[_session.current_episode_index])
 	view.base_options = _build_options(_session.current_selected_base_move_ids, DateTypes.DateMoveKind.BASE)
 	view.unlockable_options = _build_options(_session.current_applicable_unlockable_move_ids, DateTypes.DateMoveKind.UNLOCKABLE)
+	view.local_object_views = _build_local_object_views()
 	return view
 
 
@@ -88,6 +91,8 @@ func get_available_moves() -> Array[DateMoveOption]:
 		return result
 	result.append_array(view.base_options)
 	result.append_array(view.unlockable_options)
+	for local_view in view.local_object_views:
+		result.append_array(local_view.options)
 	return result
 
 
@@ -99,8 +104,7 @@ func choose_move(move_id: StringName) -> void:
 		return
 	var situation_id: StringName = _session.selected_situation_ids[_session.current_episode_index]
 	var move: DateMove = _catalog.find_move(move_id)
-	var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
-	var tag_id: StringName = mapping.tag_id
+	var tag_id: StringName = move.resolved_tag_id(situation_id)
 	var preference: int = _girl.prefers_tag(tag_id)
 	var score: int = _score_for_phase(_session.current_phase, preference)
 	var revealed: bool = false
@@ -114,6 +118,14 @@ func choose_move(move_id: StringName) -> void:
 	if move.kind == DateTypes.DateMoveKind.UNLOCKABLE:
 		var used: int = int(_session.used_unlockable_move_counts.get(String(move_id), 0))
 		_session.used_unlockable_move_counts[String(move_id)] = used + 1
+	if move.is_local():
+		var object_id: StringName = option.local_object_id
+		if object_id == &"":
+			var local_object: DateLocalObject = _catalog.find_local_object_for_move(move_id)
+			if local_object != null:
+				object_id = local_object.id
+		if object_id != &"" and not _session.used_local_object_ids.has(object_id):
+			_session.used_local_object_ids.append(object_id)
 
 	var episode := DateEpisodeResult.new()
 	episode.phase = _session.current_phase
@@ -124,10 +136,7 @@ func choose_move(move_id: StringName) -> void:
 	episode.tag_preference = preference
 	episode.score_delta = score
 	episode.revealed_tag = revealed
-	if preference > 0:
-		episode.result_text = mapping.positive_result_text
-	else:
-		episode.result_text = mapping.negative_result_text
+	episode.result_text = move.resolved_result_text(situation_id, preference > 0)
 
 	_session.episode_history.append(episode)
 	_session.current_selected_move_id = move_id
@@ -196,7 +205,7 @@ func _begin_episode() -> void:
 	if not rules.show_locked_unlockable_moves:
 		var visible: Array[DateMove] = []
 		for move in unlockables:
-			if _unlockable_availability(move) != DateTypes.MoveAvailability.LOCKED:
+			if _move_availability(move) != DateTypes.MoveAvailability.LOCKED:
 				visible.append(move)
 		unlockables = visible
 	_session.current_applicable_unlockable_move_ids = _ids_of(unlockables)
@@ -205,7 +214,7 @@ func _begin_episode() -> void:
 	var locked_unlockables: Array[DateMove] = []
 	var used_unlockables: Array[DateMove] = []
 	for move in unlockables:
-		var state: DateTypes.MoveAvailability = _unlockable_availability(move)
+		var state: DateTypes.MoveAvailability = _move_availability(move)
 		match state:
 			DateTypes.MoveAvailability.AVAILABLE:
 				available_unlockables.append(move)
@@ -339,20 +348,22 @@ func _build_options(move_ids: Array[StringName], kind: DateTypes.DateMoveKind) -
 		var move: DateMove = _catalog.find_move(move_id)
 		if move == null:
 			continue
-		var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
-		if mapping == null:
+		if move.is_local():
+			continue
+		var tag_id: StringName = move.resolved_tag_id(situation_id)
+		if tag_id == &"":
 			continue
 		var option := DateMoveOption.new()
 		option.move_id = move.id
 		option.display_name = move.display_name
 		option.kind = kind
-		option.option_text = mapping.option_text
-		option.tag_id = mapping.tag_id
-		var tag: DateTag = _catalog.find_tag(mapping.tag_id)
-		option.tag_display_name = tag.display_name if tag != null else String(mapping.tag_id)
-		option.tag_knowledge = _girl_progress.tag_knowledge(mapping.tag_id)
+		option.option_text = move.resolved_option_text(situation_id)
+		option.tag_id = tag_id
+		var tag: DateTag = _catalog.find_tag(tag_id)
+		option.tag_display_name = tag.display_name if tag != null else String(tag_id)
+		option.tag_knowledge = _girl_progress.tag_knowledge(tag_id)
 		if kind == DateTypes.DateMoveKind.UNLOCKABLE:
-			option.availability = _unlockable_availability(move)
+			option.availability = _move_availability(move)
 			if move.unlock_requirement != null:
 				option.requirement_stat_id = move.unlock_requirement.stat_id
 				option.requirement_level = move.unlock_requirement.required_level
@@ -365,15 +376,66 @@ func _build_options(move_ids: Array[StringName], kind: DateTypes.DateMoveKind) -
 	return options
 
 
-func _unlockable_availability(move: DateMove) -> DateTypes.MoveAvailability:
-	var used: int = int(_session.used_unlockable_move_counts.get(String(move.id), 0))
-	if not move.is_unlimited() and used >= move.max_uses_per_date:
-		return DateTypes.MoveAvailability.USED
+func _move_availability(move: DateMove) -> DateTypes.MoveAvailability:
+	if move.is_local():
+		var local_object: DateLocalObject = _catalog.find_local_object_for_move(move.id)
+		if local_object != null and _session.used_local_object_ids.has(local_object.id):
+			return DateTypes.MoveAvailability.USED
+	else:
+		var used: int = int(_session.used_unlockable_move_counts.get(String(move.id), 0))
+		if not move.is_unlimited() and used >= move.max_uses_per_date:
+			return DateTypes.MoveAvailability.USED
 	if move.unlock_requirement != null:
 		var current: int = _player.get_stat(move.unlock_requirement.stat_id)
 		if current < move.unlock_requirement.required_level:
 			return DateTypes.MoveAvailability.LOCKED
 	return DateTypes.MoveAvailability.AVAILABLE
+
+
+func _build_local_object_views() -> Array[DateLocalObjectView]:
+	var views: Array[DateLocalObjectView] = []
+	if _session == null:
+		return views
+	for object_id in _session.local_object_ids:
+		var local_object: DateLocalObject = _catalog.find_local_object(object_id)
+		if local_object == null or not local_object.enabled:
+			continue
+		var view := DateLocalObjectView.new()
+		view.object_id = local_object.id
+		view.display_name = local_object.display_name
+		view.used = _session.used_local_object_ids.has(local_object.id)
+		for move_id in local_object.move_ids:
+			var option: DateMoveOption = _build_local_option(move_id, local_object, view.used)
+			if option != null:
+				view.options.append(option)
+		views.append(view)
+	return views
+
+
+func _build_local_option(move_id: StringName, local_object: DateLocalObject, object_used: bool) -> DateMoveOption:
+	var move: DateMove = _catalog.find_move(move_id)
+	if move == null or not move.is_local():
+		return null
+	var option := DateMoveOption.new()
+	option.move_id = move.id
+	option.display_name = move.display_name
+	option.kind = DateTypes.DateMoveKind.LOCAL
+	option.option_text = move.resolved_option_text(&"")
+	option.tag_id = move.resolved_tag_id(&"")
+	var tag: DateTag = _catalog.find_tag(option.tag_id)
+	option.tag_display_name = tag.display_name if tag != null else String(option.tag_id)
+	option.tag_knowledge = _girl_progress.tag_knowledge(option.tag_id)
+	option.local_object_id = local_object.id
+	option.local_object_display_name = local_object.display_name
+	if move.unlock_requirement != null:
+		option.requirement_stat_id = move.unlock_requirement.stat_id
+		option.requirement_level = move.unlock_requirement.required_level
+		option.current_stat_level = _player.get_stat(move.unlock_requirement.stat_id)
+	if object_used:
+		option.availability = DateTypes.MoveAvailability.USED
+	else:
+		option.availability = _move_availability(move)
+	return option
 
 
 func _find_option(move_id: StringName) -> DateMoveOption:
@@ -387,7 +449,7 @@ func _score_for_phase(phase: DateTypes.DatePhase, preference: int) -> int:
 	var rules: DateRules = _catalog.date_rules
 	match phase:
 		DateTypes.DatePhase.OPENING:
-			return rules.opening_choice_score
+			return rules.opening_positive_score if preference > 0 else rules.opening_negative_score
 		DateTypes.DatePhase.CORE:
 			return rules.core_positive_score if preference > 0 else rules.core_negative_score
 		DateTypes.DatePhase.CLOSING:
@@ -430,10 +492,7 @@ func _finish_date() -> void:
 	var secondary_ok: bool = evaluator != null and evaluator.is_success(_session.secondary_runtime_state, rule, rules)
 	_session.score_breakdown.secondary_success = secondary_ok
 	_session.score_breakdown.secondary_score = rule.success_score if secondary_ok else rule.failure_score
-	_session.score_breakdown.location_quality_score = _location_quality_score()
-	_session.score_breakdown.location_preference_score = _location_preference_score()
 	_session.score_breakdown.outfit_score = _outfit.score_bonus
-	_session.score_breakdown.apartment_quality_score = _apartment_quality_score()
 	_session.score_breakdown.apartment_preparation_score = _apartment_preparation_score()
 	_session.score_breakdown.recompute()
 
@@ -465,26 +524,6 @@ func _finish_date() -> void:
 	_last_result.secondary_live_text = evaluator.live_text(_session.secondary_runtime_state, rule, rules) if evaluator != null else ""
 	_last_result.relationship_max_reached = max_reached
 	date_completed.emit()
-
-
-func _location_quality_score() -> int:
-	if _location.uses_apartment_quality:
-		return 0
-	return _location.base_quality_bonus
-
-
-func _location_preference_score() -> int:
-	if _location.preference_mode != DateTypes.LocationPreferenceMode.THEMATIC:
-		return 0
-	if _girl.favorite_location_format_ids.has(_location.location_format_id):
-		return _catalog.date_rules.location_preference_success
-	return _catalog.date_rules.location_preference_failure
-
-
-func _apartment_quality_score() -> int:
-	if not _location.uses_apartment_quality:
-		return 0
-	return clampi(_player.apartment_quality, _catalog.date_rules.apartment_quality_min, _catalog.date_rules.apartment_quality_max)
 
 
 func _apartment_preparation_score() -> int:

@@ -9,6 +9,10 @@ extends Resource
 @export var unlock_requirement: UnlockRequirement
 @export var max_uses_per_date: int = 0
 @export var situation_mappings: Array[DateMoveSituationMapping] = []
+@export var local_tag_id: StringName = &""
+@export var local_option_text: String = ""
+@export var local_positive_result_text: String = ""
+@export var local_negative_result_text: String = ""
 @export var custom_action_scene: PackedScene
 @export var custom_action_script: Script
 
@@ -22,3 +26,30 @@ func mapping_for(situation_id: StringName) -> DateMoveSituationMapping:
 
 func is_unlimited() -> bool:
 	return max_uses_per_date <= 0
+
+
+func is_local() -> bool:
+	return kind == DateTypes.DateMoveKind.LOCAL
+
+
+func resolved_tag_id(situation_id: StringName) -> StringName:
+	if is_local():
+		return local_tag_id
+	var mapping: DateMoveSituationMapping = mapping_for(situation_id)
+	return mapping.tag_id if mapping != null else &""
+
+
+func resolved_option_text(situation_id: StringName) -> String:
+	if is_local():
+		return local_option_text
+	var mapping: DateMoveSituationMapping = mapping_for(situation_id)
+	return mapping.option_text if mapping != null else ""
+
+
+func resolved_result_text(situation_id: StringName, positive: bool) -> String:
+	if is_local():
+		return local_positive_result_text if positive else local_negative_result_text
+	var mapping: DateMoveSituationMapping = mapping_for(situation_id)
+	if mapping == null:
+		return ""
+	return mapping.positive_result_text if positive else mapping.negative_result_text

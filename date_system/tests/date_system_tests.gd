@@ -17,6 +17,7 @@ func run_all() -> PackedStringArray:
 	_test_mapping_tags_differ_by_situation()
 	_test_secondary_reveal_and_rules()
 	_test_location_outfit_apartment()
+	_test_local_moves()
 	_test_relationship_clamp_and_reset()
 	_test_replay_seed()
 	_test_saved_resource_reload()
@@ -88,6 +89,9 @@ func _start(catalog: DateContentCatalog, girl_id: StringName, location_id: Strin
 	config.seed = seed
 	config.girl_progress = progress
 	config.player_state = player
+	var location: DateLocation = catalog.find_location(location_id)
+	if location != null:
+		config.local_object_ids = location.local_object_ids.duplicate()
 	engine.create_date_session(config)
 	return engine
 
@@ -181,7 +185,7 @@ func _test_opening_reveals_and_zero() -> void:
 	_ok("opening situation", engine.get_session_state().current_phase == DateTypes.DatePhase.OPENING)
 	_choose(engine, _pick_preference(engine, true))
 	_ok("3. Opening раскрывает Tag", progress.revealed_positive_tag_ids.size() + progress.revealed_negative_tag_ids.size() == 1)
-	_ok("4. Opening даёт 0", engine.get_session_state().score_breakdown.opening_scores[0] == 0)
+	_ok("4. Opening даёт +1", engine.get_session_state().score_breakdown.opening_scores[0] == 1)
 
 
 func _test_core_and_closing_scores() -> void:
@@ -401,24 +405,206 @@ func _demanding_counts_failures() -> bool:
 func _test_location_outfit_apartment() -> void:
 	var catalog := _catalog()
 	var cafe := _finish_at(catalog, &"cafe", &"casual", _player())
-	_ok("21. NEUTRAL Location считает quality", cafe.score_breakdown.location_quality_score == 1)
-	_ok("21b preference 0", cafe.score_breakdown.location_preference_score == 0)
-	var park := _finish_at(catalog, &"park", &"casual", _player())
-	_ok("22. THEMATIC favorite Location даёт +1", park.score_breakdown.location_preference_score == 1)
-	var arcade := _finish_at(catalog, &"arcade", &"casual", _player())
-	_ok("23. THEMATIC other Location даёт -1", arcade.score_breakdown.location_preference_score == -1)
+	_ok("21. cafe не даёт location_quality_score", not ("location_quality_score" in cafe.score_breakdown.to_dictionary()))
+	_ok("21b cafe без venue score", cafe.score_breakdown.apartment_preparation_score == 0)
+	var restaurant := _finish_at(catalog, &"restaurant", &"casual", _player())
+	_ok("22. restaurant без location preference", not ("location_preference_score" in restaurant.score_breakdown.to_dictionary()))
 	var apt_player := _player()
-	apt_player.apartment_quality = 3
 	apt_player.apartment_prepared = true
 	var apt := _finish_at(catalog, &"apartment", &"casual", apt_player)
-	_ok("24. apartment quality считает 0..3", apt.score_breakdown.apartment_quality_score == 3)
+	_ok("23. apartment quality scoring отсутствует", not ("apartment_quality_score" in apt.score_breakdown.to_dictionary()))
+	_ok("24. подготовленная квартира даёт 0", apt.score_breakdown.apartment_preparation_score == 0)
 	var unprepared := _player()
-	unprepared.apartment_quality = 0
 	unprepared.apartment_prepared = false
 	var apt2 := _finish_at(catalog, &"apartment", &"casual", unprepared)
-	_ok("25. apartment preparation считает 0/-1", apt2.score_breakdown.apartment_preparation_score == -1)
+	_ok("25. неподготовленная квартира даёт -1", apt2.score_breakdown.apartment_preparation_score == -1)
 	var luxury := _finish_at(catalog, &"cafe", &"luxury", _player())
 	_ok("26. Outfit bonus рассчитывается корректно", luxury.score_breakdown.outfit_score == 2)
+
+
+func _test_local_moves() -> void:
+	var catalog := _catalog()
+	_ok("local seed window", catalog.find_local_object(&"window") != null)
+	_ok("local seed tv", catalog.find_local_object(&"tv") != null)
+	var cafe := _finish_at(catalog, &"cafe", &"casual", _player())
+	var restaurant := _finish_at(catalog, &"restaurant", &"casual", _player())
+	var apartment := _finish_at(catalog, &"apartment", &"casual", _player())
+	_ok("1. cafe без location_quality_score", not ("location_quality_score" in cafe.score_breakdown.to_dictionary()))
+	_ok("1b restaurant без location_quality_score", not ("location_quality_score" in restaurant.score_breakdown.to_dictionary()))
+	_ok("1c apartment без location_quality_score", not ("location_quality_score" in apartment.score_breakdown.to_dictionary()))
+	_ok("2. favorite location scoring отсутствует", not ("location_preference_score" in cafe.score_breakdown.to_dictionary()))
+	_ok("3. apartment quality scoring отсутствует", not ("apartment_quality_score" in apartment.score_breakdown.to_dictionary()))
+	var unprepared := _player()
+	unprepared.apartment_prepared = false
+	var unprepared_result := _finish_at(catalog, &"apartment", &"casual", unprepared)
+	_ok("4. неподготовленная квартира даёт -1", unprepared_result.score_breakdown.apartment_preparation_score == -1)
+	var prepared := _player()
+	prepared.apartment_prepared = true
+	var prepared_result := _finish_at(catalog, &"apartment", &"casual", prepared)
+	_ok("5. подготовленная квартира даёт 0", prepared_result.score_breakdown.apartment_preparation_score == 0)
+	var luxury := _finish_at(catalog, &"cafe", &"luxury", _player())
+	_ok("6. outfit bonus считается", luxury.score_breakdown.outfit_score == 2)
+	var progress := _fresh_progress(catalog, &"alina")
+	var opening_engine := _start(catalog, &"alina", &"cafe", &"casual", 3, progress, _player())
+	opening_engine.choose_move(&"local_window_care")
+	_ok("7. удачный OPENING даёт +1", opening_engine.get_session_state().score_breakdown.opening_scores[0] == 1)
+	var bad_progress := _fresh_progress(catalog, &"alina")
+	var bad_opening := _start(catalog, &"alina", &"cafe", &"casual", 5, bad_progress, _player())
+	bad_opening.choose_move(&"local_window_audacity")
+	_ok("8. неудачный OPENING даёт -1", bad_opening.get_session_state().score_breakdown.opening_scores[0] == -1)
+	var cafe_engine := _start(catalog, &"alina", &"cafe", &"casual", 9, _fresh_progress(catalog, &"alina"), _player())
+	var cafe_view: DateEpisodeView = cafe_engine.get_current_episode()
+	_ok("9. Local Move появляется независимо от Situation", _local_move_present(cafe_view, &"local_window_care"))
+	var apartment_engine := _start(catalog, &"alina", &"apartment", &"casual", 9, _fresh_progress(catalog, &"alina"), _player())
+	var restaurant_engine := _start(catalog, &"alina", &"restaurant", &"casual", 9, _fresh_progress(catalog, &"alina"), _player())
+	var apartment_window: PackedStringArray = _local_object_move_ids(apartment_engine, &"window")
+	var cafe_window: PackedStringArray = _local_object_move_ids(cafe_engine, &"window")
+	var restaurant_window: PackedStringArray = _local_object_move_ids(restaurant_engine, &"window")
+	_ok("10. window одинаков в apartment/cafe/restaurant", apartment_window == cafe_window and cafe_window == restaurant_window and apartment_window.has("local_window_audacity") and apartment_window.has("local_window_care"))
+	cafe_engine.choose_move(&"local_window_audacity")
+	var used_view: DateEpisodeView = cafe_engine.get_current_episode()
+	_ok("11. audacity помечает window USED", _local_object_used(used_view, &"window") and _local_option_used(used_view, &"local_window_care"))
+	cafe_engine.advance()
+	var next_view: DateEpisodeView = cafe_engine.get_current_episode()
+	_ok("12. window USED на следующем эпизоде", _local_object_used(next_view, &"window"))
+	var new_session := _start(catalog, &"alina", &"cafe", &"casual", 11, _fresh_progress(catalog, &"alina"), _player())
+	_ok("13. в новой сессии window снова доступно", not _local_object_used(new_session.get_current_episode(), &"window") and _local_option_selectable(new_session.get_current_episode(), &"local_window_care"))
+	var locked_player := _player()
+	locked_player.aura = 0
+	var locked_engine := _start(catalog, &"alina", &"apartment", &"casual", 12, _fresh_progress(catalog, &"alina"), locked_player)
+	var locked_view: DateEpisodeView = locked_engine.get_current_episode()
+	_ok("14. locked Local Move видим и disabled", _local_option_visible(locked_view, &"local_sofa_dominance") and not _local_option_selectable(locked_view, &"local_sofa_dominance"))
+	var unlocked_player := _player()
+	unlocked_player.aura = 2
+	var unlocked_engine := _start(catalog, &"alina", &"apartment", &"casual", 12, _fresh_progress(catalog, &"alina"), unlocked_player)
+	_ok("15. после aura 2 sofa dominance доступен", _local_option_selectable(unlocked_engine.get_current_episode(), &"local_sofa_dominance"))
+	var reveal_progress := _fresh_progress(catalog, &"alina")
+	var reveal_engine := _start(catalog, &"alina", &"cafe", &"casual", 13, reveal_progress, _player())
+	reveal_engine.choose_move(&"local_window_care")
+	_ok("16. Local Move раскрывает tag", reveal_progress.tag_knowledge(&"care") == DateTypes.TagKnowledge.POSITIVE)
+	var secondary_history: Array = reveal_engine.get_session_state().episode_history
+	_ok("17. Local Move участвует в Secondary", not secondary_history.is_empty() and secondary_history[0].move_id == &"local_window_care" and not reveal_engine.get_session_state().secondary_runtime_state.is_empty())
+	var without_local := DateEngine.new()
+	var without_config := DateSessionConfig.new()
+	without_config.catalog = catalog
+	without_config.girl_id = &"alina"
+	without_config.location_id = &"cafe"
+	without_config.outfit_id = &"casual"
+	without_config.seed = 21
+	without_config.girl_progress = _fresh_progress(catalog, &"alina")
+	without_config.player_state = _player()
+	without_local.create_date_session(without_config)
+	var with_local := _start(catalog, &"alina", &"cafe", &"casual", 21, _fresh_progress(catalog, &"alina"), _player())
+	_ok("18. LOCAL не влияет на random BASE", without_local.get_session_state().current_selected_base_move_ids == with_local.get_session_state().current_selected_base_move_ids)
+	_test_local_moves_progression_and_validator(catalog)
+
+
+func _test_local_moves_progression_and_validator(catalog: DateContentCatalog) -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var apartment: Variant = _apartment_service()
+	var dating: Variant = _dating_service()
+	var actions: Variant = _action_service()
+	var girls: Variant = _girls_service()
+	_ok("19. services", gs != null and sm != null and apartment != null and dating != null and actions != null and girls != null)
+	if gs == null or sm == null or apartment == null or dating == null or actions == null or girls == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/local_moves_stage17.json"
+	sm.delete_save()
+	sm.new_game()
+	gs.player.money = 500
+	var buy: ActionResult = actions.execute(apartment.create_upgrade_action(ApartmentCatalog.ID_UPGRADE_1))
+	_ok("19. apartment_upgrade_1 открывает tv", buy.success and apartment.get_granted_local_object_ids().has(&"tv"))
+	sm.save_game()
+	sm.new_game()
+	_ok("20. reset без tv", not apartment.get_granted_local_object_ids().has(&"tv"))
+	_ok("20. load", sm.load_game())
+	_ok("20. после load tv доступен", apartment.get_granted_local_object_ids().has(&"tv"))
+	_write_v12_apartment_save(sm, false, [])
+	_ok("21. load v12", sm.load_game())
+	_ok("21. миграция prepared=true", bool(gs.progression.apartment.prepared))
+	_write_v12_apartment_save(sm, false, ["apartment_upgrade_1"])
+	_ok("22. load old upgrade", sm.load_game())
+	_ok("22. купленный upgrade даёт tv", apartment.get_granted_local_object_ids().has(&"tv"))
+	var replay_progress := _fresh_progress(catalog, &"alina")
+	var store := DateProgressStore.new()
+	store.player_state = _player()
+	var replay_ids: Array[StringName] = [&"window", &"sofa", &"tv"]
+	store.capture_replay(33, &"alina", &"apartment", &"casual", replay_progress, replay_ids)
+	var replay_engine := DateEngine.new()
+	var replay_config := DateSessionConfig.new()
+	replay_config.catalog = catalog
+	replay_config.girl_id = &"alina"
+	replay_config.location_id = &"apartment"
+	replay_config.outfit_id = &"casual"
+	replay_config.seed = 33
+	replay_config.girl_progress = _fresh_progress(catalog, &"alina")
+	replay_config.player_state = _player()
+	replay_config.local_object_ids = store.last_replay.local_object_ids.duplicate()
+	replay_engine.create_date_session(replay_config)
+	_ok("23. replay сохраняет toolkit", replay_engine.get_session_state().local_object_ids == replay_ids)
+	var validator := ContentValidator.new()
+	var clean: Array[ContentValidationIssue] = validator.validate(catalog)
+	_ok("24. validator seed без errors", not _has_error(clean))
+	var broken := _catalog()
+	var broken_object: DateLocalObject = broken.find_local_object(&"window")
+	if broken_object != null:
+		broken_object.move_ids.append(&"missing_local_move")
+	_ok("24. validator ловит broken Local Object", _has_issue(validator.validate(broken), "Неизвестный DateMove"))
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _local_move_present(view: DateEpisodeView, move_id: StringName) -> bool:
+	return _find_local_option(view, move_id) != null
+
+
+func _local_object_used(view: DateEpisodeView, object_id: StringName) -> bool:
+	if view == null:
+		return false
+	for local_view in view.local_object_views:
+		if local_view.object_id == object_id:
+			return local_view.used
+	return false
+
+
+func _local_option_used(view: DateEpisodeView, move_id: StringName) -> bool:
+	var option: DateMoveOption = _find_local_option(view, move_id)
+	return option != null and option.availability == DateTypes.MoveAvailability.USED
+
+
+func _local_option_selectable(view: DateEpisodeView, move_id: StringName) -> bool:
+	var option: DateMoveOption = _find_local_option(view, move_id)
+	return option != null and option.is_selectable()
+
+
+func _local_option_visible(view: DateEpisodeView, move_id: StringName) -> bool:
+	return _find_local_option(view, move_id) != null
+
+
+func _find_local_option(view: DateEpisodeView, move_id: StringName) -> DateMoveOption:
+	if view == null:
+		return null
+	for local_view in view.local_object_views:
+		for option in local_view.options:
+			if option.move_id == move_id:
+				return option
+	return null
+
+
+func _local_object_move_ids(engine: DateEngine, object_id: StringName) -> PackedStringArray:
+	var ids := PackedStringArray()
+	var view: DateEpisodeView = engine.get_current_episode()
+	if view == null:
+		return ids
+	for local_view in view.local_object_views:
+		if local_view.object_id != object_id:
+			continue
+		for option in local_view.options:
+			ids.append(String(option.move_id))
+	return ids
 
 
 func _finish_at(catalog: DateContentCatalog, location_id: StringName, outfit_id: StringName, player: TestPlayerState) -> DateRunResult:
@@ -2637,7 +2823,8 @@ func _test_dating_and_rating() -> void:
 	var picker_text: String = sim.get_city_body_text()
 	_ok("sim dates picker", picker_text.contains("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
 	_ok("sim dates cafe", picker_text.contains("Кафе"))
-	_ok("sim dates preferred", picker_text.contains("Предпочитаемое место"))
+	_ok("sim dates toolkit window", picker_text.contains("Окно"))
+	_ok("sim dates no preferred", not picker_text.contains("Предпочитаемое место"))
 	sim.select_date_location(&"cafe")
 	var selected_text: String = sim.get_city_body_text()
 	_ok("sim dates selected", selected_text.contains("Место:"))
@@ -2925,7 +3112,7 @@ func _test_date_venue_choice() -> void:
 	sm.new_game()
 	var alina_id: StringName = GirlCatalog.ID_ALINA
 	var location_a: StringName = &"cafe"
-	var location_b: StringName = &"park"
+	var location_b: StringName = &"restaurant"
 	var locked_id: StringName = &"locked_test_venue"
 	var definition: GirlDefinition = girls.get_definition(alina_id)
 	_ok("venue world location city_center", definition != null and definition.location_id == LocationCatalog.ID_CITY_CENTER)
@@ -2933,14 +3120,15 @@ func _test_date_venue_choice() -> void:
 	var locations: Array = dating.get_available_date_locations(alina_id)
 	_ok("venue available list", locations.size() > 1)
 	_ok("venue cafe open", dating.is_date_location_available(alina_id, location_a))
-	_ok("venue park open", dating.is_date_location_available(alina_id, location_b))
+	_ok("venue restaurant open", dating.is_date_location_available(alina_id, location_b))
 	_ok("venue locked closed", dating.is_date_location_available(alina_id, locked_id) == false)
-	_ok("venue park preferred", dating.is_preferred_date_location(alina_id, location_b))
-	_ok("venue museum preferred", dating.is_preferred_date_location(alina_id, &"museum"))
-	_ok("venue cafe not preferred", dating.is_preferred_date_location(alina_id, location_a) == false)
-	_ok("venue arcade not preferred", dating.is_preferred_date_location(alina_id, &"arcade") == false)
-	_ok("venue park known", dating.is_date_location_preference_known(alina_id, location_b))
-	_ok("venue cafe unknown preference", dating.is_date_location_preference_known(alina_id, location_a) == false)
+	_ok("venue park closed", dating.is_date_location_available(alina_id, &"park") == false)
+	var cafe_objects: Array[StringName] = dating.resolve_date_local_object_ids(location_a)
+	var restaurant_objects: Array[StringName] = dating.resolve_date_local_object_ids(location_b)
+	_ok("venue cafe toolkit window", cafe_objects.has(&"window"))
+	_ok("venue cafe toolkit no tv", not cafe_objects.has(&"tv"))
+	_ok("venue restaurant toolkit window", restaurant_objects.has(&"window"))
+	_ok("venue restaurant toolkit waiter", restaurant_objects.has(&"waiter"))
 	var locked_requirement := DateLocationAvailableRequirement.new()
 	locked_requirement.girl_id = alina_id
 	locked_requirement.date_location_id = locked_id
@@ -3253,7 +3441,7 @@ func _test_character_progression() -> void:
 	_ok("equip business", bool(equipment.equip_outfit(&"business")))
 	_ok("equipped business", equipment.get_equipped_outfit_id() == &"business")
 	girls.give_contact(GirlCatalog.ID_ALINA)
-	_ok("date start outfit", dating.start_date(GirlCatalog.ID_ALINA, &"park", &"business"))
+	_ok("date start outfit", dating.start_date(GirlCatalog.ID_ALINA, &"cafe", &"business"))
 	_ok("active outfit business", dating.get_active_outfit_id() == &"business")
 	_ok("session outfit business", _active_session_outfit(dating) == &"business")
 	var date_result := DateResult.new()
@@ -3269,14 +3457,15 @@ func _test_character_progression() -> void:
 	_ok("apartment money 0", gs.player.money == 0)
 	_ok("apartment level 2", int(apartment.get_level()) == 2)
 	_ok("apartment upgrade stored", bool(apartment.is_upgrade_purchased(ApartmentCatalog.ID_UPGRADE_1)))
-	_ok("apartment quality 1", int(apartment.get_quality()) == 1)
+	_ok("apartment grants tv", apartment.get_granted_local_object_ids().has(&"tv"))
 	girls.give_contact(GirlCatalog.ID_ALINA)
 	_ok("apartment date start", dating.start_date(GirlCatalog.ID_ALINA, &"apartment"))
 	var engine: DateEngine = dating.get_date_engine()
 	_ok("apartment engine", engine != null)
 	if engine != null:
 		var player_state: TestPlayerState = engine.player_state()
-		_ok("apartment quality in engine", player_state != null and player_state.apartment_quality == 1)
+		_ok("apartment prepared in engine", player_state != null and player_state.apartment_prepared)
+		_ok("apartment session has tv", engine.get_session_state().local_object_ids.has(&"tv"))
 	dating.complete_date(date_result)
 	sm.new_game()
 	var competition_id: StringName = CompetitionCatalog.ID_CASTING
@@ -3362,7 +3551,7 @@ func _test_character_progression() -> void:
 		sim.show_section("apartment")
 		var apartment_text: String = sim.get_city_body_text()
 		_ok("sim apartment level", apartment_text.contains("Уровень квартиры: 1"))
-		_ok("sim apartment upgrade", apartment_text.contains("Улучшить квартиру"))
+		_ok("sim apartment upgrade", apartment_text.contains("Купить телевизор"))
 		sim.queue_free()
 	sm.delete_save()
 	sm.save_path = original_path
@@ -3817,8 +4006,6 @@ func _test_home_city_catalog_consistency() -> void:
 			_ok("difficulty %s" % String(definition.id), seed_catalog.find_girl_difficulty(seed_profile.difficulty_preset_id) != null)
 			_ok("positives %s" % String(definition.id), seed_profile.positive_tag_ids.size() > 0)
 			_ok("secondary %s" % String(definition.id), seed_catalog.find_secondary(seed_profile.secondary_rule_id) != null)
-			_ok("formats %s" % String(definition.id), seed_profile.favorite_location_format_ids.size() > 0)
-			_ok("outfits %s" % String(definition.id), seed_profile.favorite_outfit_ids.size() > 0)
 	_ok("home city count 10", coverage_ids.size() == 10)
 	for girl_id in _home_city_girl_ids():
 		_ok("authored id %s" % String(girl_id), coverage_ids.has(girl_id))
@@ -4217,6 +4404,51 @@ func _write_v10_automation_save(sm: Variant, stage: int) -> void:
 	}
 	file.store_string(JSON.stringify(payload, "\t"))
 	file.close()
+
+func _write_v12_apartment_save(sm: Variant, include_prepared: bool, purchased_upgrade_ids: Array) -> void:
+	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var file: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	if file == null:
+		return
+	var apartment: Dictionary = {
+		"purchased_upgrade_ids": purchased_upgrade_ids.duplicate(),
+	}
+	if include_prepared:
+		apartment["prepared"] = true
+	var payload: Dictionary = {
+		"save_version": 12,
+		"game_state": {
+			"flow": {"game_time_minutes": 0},
+			"story": {"stage": 1, "finale_reached": false},
+			"player": {"money": 0, "rating": 0},
+			"progression": {
+				"purchased_ids": [],
+				"apartment": apartment,
+			},
+			"world": {
+				"current_location_id": String(LocationCatalog.START_LOCATION_ID),
+				"unlocked_location_ids": ["city_center", "apartment", "cafe"],
+			},
+			"girls": {"girls_by_id": {}},
+			"dating": {"active_date": {}},
+			"rivals": {"rivals_by_id": {}},
+			"automation": {
+				"unlocked": false,
+				"initial_clones_granted": false,
+				"total_clones": 0,
+				"work_allocation_percent": 50,
+				"work_income_fraction": 0,
+				"dating_progress_fraction": 0,
+				"completed_auto_dates": 0,
+				"purchased_upgrade_ids": [],
+			},
+		},
+	}
+	file.store_string(JSON.stringify(payload, "\t"))
+	file.close()
+
 
 func _write_v11_factory_rating_save(sm: Variant, rating: int, completed_auto_dates: int, dating_fraction: float) -> void:
 	sm.delete_save()

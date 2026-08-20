@@ -15,5 +15,3 @@ difficulty_preset_id = &"mid"
 positive_tag_ids = Array[StringName]([&"directness", &"risk", &"humor", &"cunning"])
 negative_tag_ids = Array[StringName]([&"politeness", &"flattery", &"audacity", &"dominance", &"generosity", &"status", &"care", &"composure"])
 secondary_rule_id = &"variety"
-favorite_location_format_ids = Array[StringName]([&"entertainment", &"game"])
-favorite_outfit_ids = Array[StringName]([&"business"])

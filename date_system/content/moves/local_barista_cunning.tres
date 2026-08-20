@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"aura"
+required_level = 2
+
+[resource]
+script = ExtResource("1_move")
+id = &"local_barista_cunning"
+display_name = "Подыграть истории"
+description = "Подыграть истории"
+kind = 2
+enabled = true
+max_uses_per_date = 0
+unlock_requirement = SubResource("req_1")
+situation_mappings = []
+local_tag_id = &"cunning"
+local_option_text = "Попросить бариста подыграть твоей истории."
+local_positive_result_text = "Бариста подыграл истории — ей это ловко."
+local_negative_result_text = "Попросил бариста подыграть — ей это выглядит как постановка."

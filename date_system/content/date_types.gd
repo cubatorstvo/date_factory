@@ -4,6 +4,7 @@ extends RefCounted
 enum DateMoveKind {
 	BASE,
 	UNLOCKABLE,
+	LOCAL,
 }
 
 enum DatePhase {
@@ -15,11 +16,6 @@ enum DatePhase {
 enum SecondaryConditionType {
 	DISTINCT_SUCCESS_TAGS,
 	NO_FAILURES,
-}
-
-enum LocationPreferenceMode {
-	NEUTRAL,
-	THEMATIC,
 }
 
 enum TagKnowledge {
@@ -58,6 +54,8 @@ static func move_kind_name(kind: DateMoveKind) -> String:
 			return "BASE"
 		DateMoveKind.UNLOCKABLE:
 			return "UNLOCKABLE"
+		DateMoveKind.LOCAL:
+			return "LOCAL"
 		_:
 			return "?"
 

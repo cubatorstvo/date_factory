@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"local_window_care"
+display_name = "Приоткрыть окно"
+description = "Приоткрыть окно"
+kind = 2
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+local_tag_id = &"care"
+local_option_text = "Слегка приоткрыть окно для свежего воздуха."
+local_positive_result_text = "Свежий воздух к месту — ей спокойнее."
+local_negative_result_text = "Приоткрыл окно «для воздуха» — ей это кажется лишней заботой не к месту."

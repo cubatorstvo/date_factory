@@ -2,6 +2,7 @@ class_name ApartmentState
 extends RefCounted
 
 var level: int = 1
+var prepared: bool = true
 var purchased_upgrade_ids: Array[StringName] = []
 
 
@@ -21,12 +22,14 @@ func to_dict() -> Dictionary:
 		ids.append(String(upgrade_id))
 	return {
 		"level": level,
+		"prepared": prepared,
 		"purchased_upgrade_ids": ids,
 	}
 
 
 func from_dict(data: Dictionary) -> void:
 	level = maxi(1, int(data.get("level", 1)))
+	prepared = bool(data.get("prepared", true))
 	purchased_upgrade_ids.clear()
 	var raw: Variant = data.get("purchased_upgrade_ids", [])
 	if not (raw is Array):

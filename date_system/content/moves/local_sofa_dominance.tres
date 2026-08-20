@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"aura"
+required_level = 2
+
+[resource]
+script = ExtResource("1_move")
+id = &"local_sofa_dominance"
+display_name = "Занять центр дивана"
+description = "Занять центр дивана"
+kind = 2
+enabled = true
+max_uses_per_date = 0
+unlock_requirement = SubResource("req_1")
+situation_mappings = []
+local_tag_id = &"dominance"
+local_option_text = "Пересесть в центр дивана и самому задать темп разговору."
+local_positive_result_text = "Занял центр дивана и темп разговора — ей это зашло."
+local_negative_result_text = "Пересел в центр и задал темп — ей это слишком навязано."

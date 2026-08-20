@@ -7,7 +7,8 @@ extends Resource
 @export var base_moves_per_episode: int = 3
 @export var allow_situation_repeats: bool = false
 @export var show_locked_unlockable_moves: bool = true
-@export var opening_choice_score: int = 0
+@export var opening_positive_score: int = 1
+@export var opening_negative_score: int = -1
 @export var core_positive_score: int = 1
 @export var core_negative_score: int = -1
 @export var closing_positive_score: int = 1
@@ -15,11 +16,7 @@ extends Resource
 @export var reveal_tag_after_use: bool = true
 @export var reveal_secondary_after_first_completed_date: bool = true
 @export var secondary_counted_phases: Array[int] = [int(DateTypes.DatePhase.CORE)]
-@export var location_preference_success: int = 1
-@export var location_preference_failure: int = -1
 @export var apartment_unprepared_penalty: int = -1
-@export var apartment_quality_min: int = 0
-@export var apartment_quality_max: int = 3
 @export var min_distinct_base_tags_per_situation: int = 6
 
 

@@ -97,36 +97,24 @@ func is_date_location_available(girl_id: StringName, date_location_id: StringNam
 	return false
 
 
-func is_preferred_date_location(girl_id: StringName, date_location_id: StringName) -> bool:
+func resolve_date_local_object_ids(date_location_id: StringName) -> Array[StringName]:
+	var result: Array[StringName] = []
 	var catalog: DateContentCatalog = _catalog()
-	if catalog == null:
-		return false
-	var girl: GirlProfile = catalog.find_girl(girl_id)
+	if catalog == null or date_location_id == &"":
+		return result
 	var location: DateLocation = catalog.find_location(date_location_id)
-	if girl == null or location == null:
-		return false
-	if location.preference_mode != DateTypes.LocationPreferenceMode.THEMATIC:
-		return false
-	return girl.favorite_location_format_ids.has(location.location_format_id)
-
-
-func is_date_location_preference_known(girl_id: StringName, date_location_id: StringName) -> bool:
-	return is_preferred_date_location(girl_id, date_location_id)
-
-
-func is_preferred_outfit(girl_id: StringName, outfit_id: StringName) -> bool:
-	var catalog: DateContentCatalog = _catalog()
-	if catalog == null:
-		return false
-	var girl: GirlProfile = catalog.find_girl(girl_id)
-	var outfit: Outfit = catalog.find_outfit(outfit_id)
-	if girl == null or outfit == null:
-		return false
-	return girl.favorite_outfit_ids.has(outfit_id)
-
-
-func is_outfit_preference_known(girl_id: StringName, outfit_id: StringName) -> bool:
-	return is_preferred_outfit(girl_id, outfit_id)
+	if location == null:
+		return result
+	for object_id in location.local_object_ids:
+		if object_id != &"" and not result.has(object_id):
+			result.append(object_id)
+	if location.uses_apartment_preparation:
+		var apartment: Variant = _apartment_service()
+		if apartment != null:
+			for object_id in apartment.get_granted_local_object_ids():
+				if object_id != &"" and not result.has(object_id):
+					result.append(object_id)
+	return result
 
 
 func create_start_date_action(
@@ -294,6 +282,7 @@ func _create_engine(girl_id: StringName, date_location_id: StringName, outfit_id
 	config.outfit_id = outfit_id
 	config.catalog = catalog
 	config.girl_progress = progress
+	config.local_object_ids = resolve_date_local_object_ids(date_location_id)
 	config.player_state = _make_player_state(catalog.find_location(date_location_id))
 	_engine = DateEngine.new()
 	_engine.create_date_session(config)
@@ -309,9 +298,9 @@ func _make_player_state(location: DateLocation) -> TestPlayerState:
 		player.capital = int(characteristics.get_value(CharacteristicIds.CAPITAL))
 		player.aura = int(characteristics.get_value(CharacteristicIds.AURA))
 	var apartment: Variant = _apartment_service()
-	if apartment != null and location != null and location.uses_apartment_quality:
-		player.apartment_quality = int(apartment.get_quality())
 	player.apartment_prepared = true
+	if apartment != null and location != null and location.uses_apartment_preparation:
+		player.apartment_prepared = bool(apartment.is_prepared())
 	return player
 
 

@@ -5,6 +5,7 @@ extends Resource
 @export var girl_id: StringName = &""
 @export var location_id: StringName = &""
 @export var outfit_id: StringName = &""
+@export var local_object_ids: Array[StringName] = []
 @export var girl_progress: GirlProgress
 @export var player_state: TestPlayerState
 
@@ -15,6 +16,7 @@ func to_dictionary() -> Dictionary:
 		"girl_id": String(girl_id),
 		"location_id": String(location_id),
 		"outfit_id": String(outfit_id),
+		"local_object_ids": _ids_to_strings(local_object_ids),
 		"girl_progress": girl_progress.to_dictionary() if girl_progress != null else {},
 		"player_state": player_state.to_dictionary() if player_state != null else {},
 	}
@@ -26,6 +28,7 @@ static func from_dictionary(data: Dictionary) -> DateReplaySnapshot:
 	snapshot.girl_id = StringName(str(data.get("girl_id", "")))
 	snapshot.location_id = StringName(str(data.get("location_id", "")))
 	snapshot.outfit_id = StringName(str(data.get("outfit_id", "")))
+	snapshot.local_object_ids = _strings_to_ids(data.get("local_object_ids", []))
 	var progress_data: Variant = data.get("girl_progress", {})
 	if progress_data is Dictionary:
 		snapshot.girl_progress = GirlProgress.from_dictionary(progress_data)
@@ -33,3 +36,21 @@ static func from_dictionary(data: Dictionary) -> DateReplaySnapshot:
 	if player_data is Dictionary:
 		snapshot.player_state = TestPlayerState.from_dictionary(player_data)
 	return snapshot
+
+
+static func _ids_to_strings(ids: Array[StringName]) -> Array:
+	var result: Array = []
+	for item in ids:
+		result.append(String(item))
+	return result
+
+
+static func _strings_to_ids(raw: Variant) -> Array[StringName]:
+	var result: Array[StringName] = []
+	if not (raw is Array):
+		return result
+	for item in raw:
+		var object_id := StringName(str(item))
+		if object_id != &"" and not result.has(object_id):
+			result.append(object_id)
+	return result

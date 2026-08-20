@@ -51,7 +51,7 @@ func default_path_for(kind: String, resource_id: String) -> String:
 		"DateSituation": "res://date_system/content/situations",
 		"GirlProfile": "res://date_system/content/girls",
 		"SecondaryRule": "res://date_system/content/secondary",
-		"LocationFormat": "res://date_system/content/location_formats",
+		"DateLocalObject": "res://date_system/content/local_objects",
 		"DateLocation": "res://date_system/content/locations",
 		"Outfit": "res://date_system/content/outfits",
 		"ProgressionStat": "res://date_system/content/progression",
@@ -75,8 +75,8 @@ func add_to_catalog(resource: Resource) -> void:
 		catalog.girls.append(resource)
 	elif resource is SecondaryRule:
 		catalog.secondary_rules.append(resource)
-	elif resource is LocationFormat:
-		catalog.location_formats.append(resource)
+	elif resource is DateLocalObject:
+		catalog.local_objects.append(resource)
 	elif resource is DateLocation:
 		catalog.locations.append(resource)
 	elif resource is Outfit:
@@ -102,8 +102,8 @@ func remove_from_catalog(resource: Resource) -> void:
 		catalog.girls.erase(resource)
 	elif resource is SecondaryRule:
 		catalog.secondary_rules.erase(resource)
-	elif resource is LocationFormat:
-		catalog.location_formats.erase(resource)
+	elif resource is DateLocalObject:
+		catalog.local_objects.erase(resource)
 	elif resource is DateLocation:
 		catalog.locations.erase(resource)
 	elif resource is Outfit:
@@ -123,6 +123,8 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 			for mapping in move.situation_mappings:
 				if mapping.tag_id == resource_id:
 					result.append({"type": "DateMove", "id": String(move.id), "field": "situation_mappings.tag_id"})
+			if move.local_tag_id == resource_id:
+				result.append({"type": "DateMove", "id": String(move.id), "field": "local_tag_id"})
 		for girl in catalog.girls:
 			if girl.positive_tag_ids.has(resource_id) or girl.negative_tag_ids.has(resource_id):
 				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "tags"})
@@ -135,13 +137,14 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 		for girl in catalog.girls:
 			if girl.secondary_rule_id == resource_id:
 				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "secondary_rule_id"})
-	elif kind == "LocationFormat":
+	elif kind == "DateLocalObject":
 		for location in catalog.locations:
-			if location.location_format_id == resource_id:
-				result.append({"type": "DateLocation", "id": String(location.id), "field": "location_format_id"})
-		for girl in catalog.girls:
-			if girl.favorite_location_format_ids.has(resource_id):
-				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "favorite_location_format_ids"})
+			if location.local_object_ids.has(resource_id):
+				result.append({"type": "DateLocation", "id": String(location.id), "field": "local_object_ids"})
+	elif kind == "DateMove":
+		for local_object in catalog.local_objects:
+			if local_object != null and local_object.move_ids.has(resource_id):
+				result.append({"type": "DateLocalObject", "id": String(local_object.id), "field": "move_ids"})
 	elif kind == "ProgressionStat":
 		for move in catalog.moves:
 			if move.unlock_requirement != null and move.unlock_requirement.stat_id == resource_id:
@@ -162,7 +165,7 @@ func _rebuild_paths() -> void:
 	_capture_array(catalog.situations, "DateSituation")
 	_capture_array(catalog.girls, "GirlProfile")
 	_capture_array(catalog.secondary_rules, "SecondaryRule")
-	_capture_array(catalog.location_formats, "LocationFormat")
+	_capture_array(catalog.local_objects, "DateLocalObject")
 	_capture_array(catalog.locations, "DateLocation")
 	_capture_array(catalog.outfits, "Outfit")
 	_capture_array(catalog.progression_stats, "ProgressionStat")

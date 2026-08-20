@@ -11,7 +11,8 @@ const SECTIONS: Array[Array] = [
 	["situations", "СИТУАЦИИ"],
 	["secondary", "SECONDARY"],
 	["locations", "МЕСТА"],
-	["formats", "ФОРМАТЫ МЕСТ"],
+	["local_objects", "ЛОКАЛЬНЫЕ ОБЪЕКТЫ"],
+	["local_moves", "ЛОКАЛЬНЫЕ ХОДЫ"],
 	["outfits", "НАРЯДЫ"],
 	["stats", "ХАРАКТЕРИСТИКИ"],
 	["rules", "ПРАВИЛА СВИДАНИЯ"],
@@ -516,15 +517,6 @@ func _build_test_state() -> Control:
 			_show_section("test_state")
 		)
 		root.add_child(LabUi.labeled_row(stat.display_name, spin))
-	var quality := SpinBox.new()
-	quality.min_value = catalog_service.catalog.date_rules.apartment_quality_min
-	quality.max_value = catalog_service.catalog.date_rules.apartment_quality_max
-	quality.value = player.apartment_quality
-	quality.value_changed.connect(func(value: float) -> void:
-		player.apartment_quality = int(value)
-		progress_store.save_store()
-	)
-	root.add_child(LabUi.labeled_row("Качество квартиры", quality))
 	var prepared := CheckBox.new()
 	prepared.text = "Подготовлена"
 	prepared.button_pressed = player.apartment_prepared
@@ -624,8 +616,10 @@ func _items() -> Array:
 			return catalog.secondary_rules
 		"locations":
 			return catalog.locations
-		"formats":
-			return catalog.location_formats
+		"local_objects":
+			return catalog.local_objects
+		"local_moves":
+			return _moves_of(DateTypes.DateMoveKind.LOCAL)
 		"outfits":
 			return catalog.outfits
 		"stats":
@@ -682,7 +676,7 @@ func _rebuild_form() -> void:
 	if _draft == null:
 		return
 	match _section:
-		"tags", "formats":
+		"tags":
 			_add_common_identity(_draft)
 		"stats":
 			_add_common_identity(_draft)
@@ -693,11 +687,12 @@ func _rebuild_form() -> void:
 			_add_int(_draft, "score_bonus", "score_bonus")
 		"locations":
 			_add_common_identity(_draft)
-			_add_int(_draft, "base_quality_bonus", "base_quality_bonus")
-			_add_enum(_draft, "preference_mode", "preference_mode", ["NEUTRAL", "THEMATIC"])
-			_add_id_selector(_draft, "location_format_id", "location_format", catalog_service.catalog.location_formats)
-			_add_bool(_draft, "uses_apartment_quality", "uses_apartment_quality")
 			_add_bool(_draft, "uses_apartment_preparation", "uses_apartment_preparation")
+			_add_local_object_id_checks(_draft as DateLocation)
+		"local_objects":
+			_add_local_object_form()
+		"local_moves":
+			_add_move_form()
 		"secondary":
 			_add_common_identity(_draft)
 			_add_enum(_draft, "condition_type", "condition_type", ["DISTINCT_SUCCESS_TAGS", "NO_FAILURES"])
@@ -935,20 +930,7 @@ func _add_girl_form() -> void:
 		grid.add_child(like)
 		grid.add_child(dislike)
 	_form_host.add_child(grid)
-	_form_host.add_child(LabUi.heading("Любимые форматы"))
-	for format in catalog_service.catalog.location_formats:
-		var box := CheckBox.new()
-		box.text = format.display_name
-		box.button_pressed = girl.favorite_location_format_ids.has(format.id)
-		var format_id: StringName = format.id
-		box.toggled.connect(func(pressed: bool) -> void:
-			if pressed and not girl.favorite_location_format_ids.has(format_id):
-				girl.favorite_location_format_ids.append(format_id)
-			elif not pressed:
-				girl.favorite_location_format_ids.erase(format_id)
-			_dirty = true
-		)
-		_form_host.add_child(box)
+
 
 
 func _add_girl_difficulty_selector(girl: GirlProfile) -> void:
@@ -1007,6 +989,16 @@ func _set_girl_liked_tag(girl: GirlProfile, tag_id: StringName, liked: bool) -> 
 func _add_move_form() -> void:
 	var move: DateMove = _draft as DateMove
 	_add_common_identity(move)
+	if move.kind == DateTypes.DateMoveKind.LOCAL:
+		_add_id_selector(move, "local_tag_id", "local tag", catalog_service.catalog.tags)
+		_add_text(move, "local_option_text", "local_option_text")
+		_add_text(move, "local_positive_result_text", "local_positive_result_text")
+		_add_text(move, "local_negative_result_text", "local_negative_result_text")
+		if move.unlock_requirement == null:
+			move.unlock_requirement = UnlockRequirement.new()
+		_add_id_selector(move.unlock_requirement, "stat_id", "unlock stat", catalog_service.catalog.progression_stats)
+		_add_int(move.unlock_requirement, "required_level", "required_level")
+		return
 	if move.kind == DateTypes.DateMoveKind.UNLOCKABLE:
 		if move.unlock_requirement == null:
 			move.unlock_requirement = UnlockRequirement.new()
@@ -1024,6 +1016,44 @@ func _add_move_form() -> void:
 	_form_host.add_child(add_btn)
 	for i in move.situation_mappings.size():
 		_form_host.add_child(_mapping_editor(move, i))
+
+
+func _add_local_object_form() -> void:
+	var local_object: DateLocalObject = _draft as DateLocalObject
+	_add_common_identity(local_object)
+	_form_host.add_child(LabUi.heading("LOCAL Moves"))
+	for move in _moves_of(DateTypes.DateMoveKind.LOCAL):
+		var box := CheckBox.new()
+		box.text = move.display_name
+		box.button_pressed = local_object.move_ids.has(move.id)
+		var move_id: StringName = move.id
+		box.toggled.connect(func(pressed: bool) -> void:
+			if pressed and not local_object.move_ids.has(move_id):
+				local_object.move_ids.append(move_id)
+			elif not pressed:
+				local_object.move_ids.erase(move_id)
+			_dirty = true
+		)
+		_form_host.add_child(box)
+
+
+func _add_local_object_id_checks(location: DateLocation) -> void:
+	_form_host.add_child(LabUi.heading("Local Objects"))
+	for local_object in catalog_service.catalog.local_objects:
+		if local_object == null:
+			continue
+		var box := CheckBox.new()
+		box.text = local_object.display_name
+		box.button_pressed = location.local_object_ids.has(local_object.id)
+		var object_id: StringName = local_object.id
+		box.toggled.connect(func(pressed: bool) -> void:
+			if pressed and not location.local_object_ids.has(object_id):
+				location.local_object_ids.append(object_id)
+			elif not pressed:
+				location.local_object_ids.erase(object_id)
+			_dirty = true
+		)
+		_form_host.add_child(box)
 
 
 func _mapping_editor(move: DateMove, index: int) -> PanelContainer:
@@ -1070,9 +1100,8 @@ func _add_rules_form() -> void:
 	var rules: DateRules = _draft as DateRules
 	for prop in [
 		"opening_episode_count", "core_episode_count", "closing_episode_count", "base_moves_per_episode",
-		"opening_choice_score", "core_positive_score", "core_negative_score", "closing_positive_score", "closing_negative_score",
-		"location_preference_success", "location_preference_failure", "apartment_unprepared_penalty",
-		"apartment_quality_min", "apartment_quality_max",
+		"opening_positive_score", "opening_negative_score", "core_positive_score", "core_negative_score", "closing_positive_score", "closing_negative_score",
+		"apartment_unprepared_penalty",
 	]:
 		_add_int(rules, prop, prop)
 	var enabled_count: int = catalog_service.catalog.enabled_tags().size()
@@ -1091,7 +1120,7 @@ func _kind_name() -> String:
 			return "GirlDifficultyPreset"
 		"tags":
 			return "DateTag"
-		"base_moves", "unlock_moves":
+		"base_moves", "unlock_moves", "local_moves":
 			return "DateMove"
 		"situations":
 			return "DateSituation"
@@ -1099,8 +1128,8 @@ func _kind_name() -> String:
 			return "SecondaryRule"
 		"locations":
 			return "DateLocation"
-		"formats":
-			return "LocationFormat"
+		"local_objects":
+			return "DateLocalObject"
 		"outfits":
 			return "Outfit"
 		"stats":
@@ -1147,14 +1176,19 @@ func _new_resource() -> Resource:
 			tag.id = StringName("tag_%s" % suffix)
 			tag.display_name = "Новый тег"
 			return tag
-		"base_moves", "unlock_moves":
+		"base_moves", "unlock_moves", "local_moves":
 			var move := DateMove.new()
 			move.id = StringName("move_%s" % suffix)
 			move.display_name = "Новый ход"
-			move.kind = DateTypes.DateMoveKind.UNLOCKABLE if _section == "unlock_moves" else DateTypes.DateMoveKind.BASE
-			move.max_uses_per_date = 1 if _section == "unlock_moves" else 0
 			if _section == "unlock_moves":
+				move.kind = DateTypes.DateMoveKind.UNLOCKABLE
+				move.max_uses_per_date = 1
 				move.unlock_requirement = UnlockRequirement.new()
+			elif _section == "local_moves":
+				move.kind = DateTypes.DateMoveKind.LOCAL
+			else:
+				move.kind = DateTypes.DateMoveKind.BASE
+				move.max_uses_per_date = 0
 			return move
 		"situations":
 			var situation := DateSituation.new()
@@ -1180,11 +1214,11 @@ func _new_resource() -> Resource:
 			location.id = StringName("location_%s" % suffix)
 			location.display_name = "Новое место"
 			return location
-		"formats":
-			var format := LocationFormat.new()
-			format.id = StringName("format_%s" % suffix)
-			format.display_name = "Новый формат"
-			return format
+		"local_objects":
+			var local_object := DateLocalObject.new()
+			local_object.id = StringName("local_object_%s" % suffix)
+			local_object.display_name = "Новый объект"
+			return local_object
 		"outfits":
 			var outfit := Outfit.new()
 			outfit.id = StringName("outfit_%s" % suffix)
@@ -1289,7 +1323,7 @@ func _swap_into(catalog: DateContentCatalog, draft: Resource) -> void:
 	if draft is DateRules:
 		catalog.date_rules = draft
 		return
-	var arrays: Array = [catalog.tags, catalog.moves, catalog.situations, catalog.girls, catalog.girl_difficulty_presets, catalog.secondary_rules, catalog.location_formats, catalog.locations, catalog.outfits, catalog.progression_stats]
+	var arrays: Array = [catalog.tags, catalog.moves, catalog.situations, catalog.girls, catalog.girl_difficulty_presets, catalog.secondary_rules, catalog.local_objects, catalog.locations, catalog.outfits, catalog.progression_stats]
 	for arr in arrays:
 		for i in arr.size():
 			if arr[i] != null and arr[i].id == draft.get("id"):
@@ -1307,8 +1341,8 @@ func _swap_into(catalog: DateContentCatalog, draft: Resource) -> void:
 		catalog.girl_difficulty_presets.append(draft)
 	elif draft is SecondaryRule:
 		catalog.secondary_rules.append(draft)
-	elif draft is LocationFormat:
-		catalog.location_formats.append(draft)
+	elif draft is DateLocalObject:
+		catalog.local_objects.append(draft)
 	elif draft is DateLocation:
 		catalog.locations.append(draft)
 	elif draft is Outfit:
@@ -1324,7 +1358,7 @@ func _replace_original(draft: Resource) -> void:
 	var found: bool = false
 	var arrays: Array = [
 		catalog_service.catalog.tags, catalog_service.catalog.moves, catalog_service.catalog.situations,
-		catalog_service.catalog.girls, catalog_service.catalog.girl_difficulty_presets, catalog_service.catalog.secondary_rules, catalog_service.catalog.location_formats,
+		catalog_service.catalog.girls, catalog_service.catalog.girl_difficulty_presets, catalog_service.catalog.secondary_rules, catalog_service.catalog.local_objects,
 		catalog_service.catalog.locations, catalog_service.catalog.outfits, catalog_service.catalog.progression_stats,
 	]
 	for arr in arrays:

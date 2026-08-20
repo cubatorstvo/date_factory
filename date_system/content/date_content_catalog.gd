@@ -7,7 +7,7 @@ extends Resource
 @export var girls: Array[GirlProfile] = []
 @export var girl_difficulty_presets: Array[GirlDifficultyPreset] = []
 @export var secondary_rules: Array[SecondaryRule] = []
-@export var location_formats: Array[LocationFormat] = []
+@export var local_objects: Array[DateLocalObject] = []
 @export var locations: Array[DateLocation] = []
 @export var outfits: Array[Outfit] = []
 @export var progression_stats: Array[ProgressionStat] = []
@@ -67,11 +67,28 @@ func find_secondary(rule_id: StringName) -> SecondaryRule:
 	return null
 
 
-func find_location_format(format_id: StringName) -> LocationFormat:
-	for item in location_formats:
-		if item != null and item.id == format_id:
+func find_local_object(object_id: StringName) -> DateLocalObject:
+	for item in local_objects:
+		if item != null and item.id == object_id:
 			return item
 	return null
+
+
+func find_local_object_for_move(move_id: StringName) -> DateLocalObject:
+	for item in local_objects:
+		if item == null:
+			continue
+		if item.move_ids.has(move_id):
+			return item
+	return null
+
+
+func enabled_local_objects() -> Array[DateLocalObject]:
+	var result: Array[DateLocalObject] = []
+	for item in local_objects:
+		if item != null and item.enabled:
+			result.append(item)
+	return result
 
 
 func find_location(location_id: StringName) -> DateLocation:
@@ -123,6 +140,8 @@ func applicable_moves(situation_id: StringName, kind: DateTypes.DateMoveKind) ->
 	var result: Array[DateMove] = []
 	for move in enabled_moves():
 		if move.kind != kind:
+			continue
+		if kind == DateTypes.DateMoveKind.LOCAL:
 			continue
 		if move.mapping_for(situation_id) != null:
 			result.append(move)

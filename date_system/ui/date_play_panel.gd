@@ -13,6 +13,7 @@ var _girl_id: StringName = &"alina"
 var _location_id: StringName = &"cafe"
 var _outfit_id: StringName = &"casual"
 var _seed: int = 1
+var _grant_tv: bool = false
 
 var _scroll: ScrollContainer
 var _host: VBoxContainer
@@ -218,16 +219,7 @@ func _build_launch() -> void:
 	_host.add_child(LabUi.labeled_row("Наряд", outfit_sel))
 
 	var location: DateLocation = _catalog().find_location(_location_id)
-	if location != null and (location.uses_apartment_quality or location.uses_apartment_preparation):
-		var quality := SpinBox.new()
-		quality.min_value = _catalog().date_rules.apartment_quality_min
-		quality.max_value = _catalog().date_rules.apartment_quality_max
-		quality.value = progress_store.player_state.apartment_quality
-		quality.value_changed.connect(func(value: float) -> void:
-			progress_store.player_state.apartment_quality = int(value)
-			progress_store.save_store()
-		)
-		_host.add_child(LabUi.labeled_row("Качество квартиры", quality))
+	if location != null and location.uses_apartment_preparation:
 		var prepared := CheckBox.new()
 		prepared.text = "Подготовлена"
 		prepared.button_pressed = progress_store.player_state.apartment_prepared
@@ -236,6 +228,13 @@ func _build_launch() -> void:
 			progress_store.save_store()
 		)
 		_host.add_child(LabUi.labeled_row("Подготовка квартиры", prepared))
+		var tv := CheckBox.new()
+		tv.text = "Телевизор"
+		tv.button_pressed = _grant_tv
+		tv.toggled.connect(func(pressed: bool) -> void:
+			_grant_tv = pressed
+		)
+		_host.add_child(LabUi.labeled_row("Локальный объект", tv))
 
 	for stat in _catalog().progression_stats:
 		var spin := SpinBox.new()
@@ -359,13 +358,18 @@ func _replay() -> void:
 func _begin_session(seed: int, is_replay: bool) -> void:
 	var girl: GirlProfile = _catalog().find_girl(_girl_id)
 	var progress: GirlProgress = progress_store.get_girl_progress(_girl_id, girl)
-	if not is_replay:
-		progress_store.capture_replay(seed, _girl_id, _location_id, _outfit_id, progress)
+	var local_object_ids: Array[StringName] = []
+	if is_replay and progress_store.last_replay != null:
+		local_object_ids = progress_store.last_replay.local_object_ids.duplicate()
+	else:
+		local_object_ids = _lab_local_object_ids()
+		progress_store.capture_replay(seed, _girl_id, _location_id, _outfit_id, progress, local_object_ids)
 	var config := DateSessionConfig.new()
 	config.seed = seed
 	config.girl_id = _girl_id
 	config.location_id = _location_id
 	config.outfit_id = _outfit_id
+	config.local_object_ids = local_object_ids
 	config.catalog = _catalog()
 	config.girl_progress = progress
 	config.player_state = progress_store.player_state
@@ -373,6 +377,18 @@ func _begin_session(seed: int, is_replay: bool) -> void:
 	_engine.create_date_session(config)
 	status_message.emit("Свидание запущено. Seed %d" % seed)
 	rebuild()
+
+
+func _lab_local_object_ids() -> Array[StringName]:
+	var result: Array[StringName] = []
+	var location: DateLocation = _catalog().find_location(_location_id)
+	if location != null:
+		for object_id in location.local_object_ids:
+			if object_id != &"" and not result.has(object_id):
+				result.append(object_id)
+	if location != null and location.uses_apartment_preparation and _grant_tv and not result.has(&"tv"):
+		result.append(&"tv")
+	return result
 
 
 func _reset_girl() -> void:
@@ -433,6 +449,20 @@ func _build_runner() -> void:
 			_host.add_child(empty)
 		for option in view.unlockable_options:
 			_host.add_child(_move_button(option))
+		var location: DateLocation = _engine.catalog().find_location(session.location_id)
+		var location_name: String = location.display_name if location != null else String(session.location_id)
+		_host.add_child(LabUi.heading("ЛОКАЛЬНЫЕ ХОДЫ — %s" % location_name.to_upper()))
+		if view.local_object_views.is_empty():
+			var empty_local := Label.new()
+			empty_local.text = "Нет локальных объектов."
+			_host.add_child(empty_local)
+		for local_view in view.local_object_views:
+			var object_title := Label.new()
+			object_title.text = "%s — Использовано" % local_view.display_name if local_view.used else local_view.display_name
+			object_title.add_theme_font_size_override("font_size", 18)
+			_host.add_child(object_title)
+			for option in local_view.options:
+				_host.add_child(_move_button(option))
 	elif session.stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
 		_host.add_child(_episode_result_block(session))
 		var cont := LabUi.button("ПРОДОЛЖИТЬ")
@@ -451,20 +481,23 @@ func _move_button(option: DateMoveOption) -> Button:
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.clip_contents = true
 	btn.disabled = not option.is_selectable()
-	var header: String = "%s %s" % [LabUi.tag_bbcode(option.tag_display_name, option.tag_knowledge), option.display_name]
+	var header: String = "%s %s" % [LabUi.tag_bbcode(option.tag_display_name, option.tag_knowledge), option.option_text if option.kind == DateTypes.DateMoveKind.LOCAL else option.display_name]
 	match option.availability:
 		DateTypes.MoveAvailability.LOCKED:
 			btn.modulate = LabUi.LOCKED
 		DateTypes.MoveAvailability.USED:
 			btn.modulate = Color(0.7, 0.7, 0.7)
-	var lines := PackedStringArray([
-		header,
-		option.option_text,
-	])
+	var lines := PackedStringArray([header])
+	if option.kind != DateTypes.DateMoveKind.LOCAL:
+		lines.append(option.option_text)
 	if option.kind == DateTypes.DateMoveKind.UNLOCKABLE and option.availability == DateTypes.MoveAvailability.LOCKED:
 		var stat: ProgressionStat = _catalog().find_stat(option.requirement_stat_id)
 		var stat_name: String = stat.display_name if stat != null else String(option.requirement_stat_id)
 		lines.append("Requirement: %s %d  (сейчас %d)" % [stat_name, option.requirement_level, option.current_stat_level])
+	elif option.kind == DateTypes.DateMoveKind.LOCAL and option.availability == DateTypes.MoveAvailability.LOCKED:
+		var local_stat: ProgressionStat = _catalog().find_stat(option.requirement_stat_id)
+		var local_stat_name: String = local_stat.display_name if local_stat != null else String(option.requirement_stat_id)
+		lines.append("%s %d" % [local_stat_name, option.requirement_level])
 	elif option.kind == DateTypes.DateMoveKind.UNLOCKABLE and option.availability == DateTypes.MoveAvailability.USED:
 		lines.append("Уже использован")
 	var rtl := RichTextLabel.new()
@@ -552,10 +585,8 @@ func _build_result() -> void:
 		_tally_lines.append(LabUi.tally_row("[%s]" % tag_name, episode.score_delta))
 	var rule_name: String = result.secondary_rule.display_name if result.secondary_rule != null else "Secondary"
 	_tally_lines.append(LabUi.tally_row(rule_name, bd.secondary_score))
-	var location: DateLocation = _engine.catalog().find_location(session.location_id)
-	var place_name: String = location.display_name if location != null else "Место"
-	var place_score: int = bd.location_quality_score + bd.location_preference_score + bd.apartment_quality_score + bd.apartment_preparation_score
-	_tally_lines.append(LabUi.tally_row(place_name, place_score))
+	if bd.apartment_preparation_score != 0:
+		_tally_lines.append(LabUi.tally_row("Неподготовленная квартира", bd.apartment_preparation_score))
 	_tally_lines.append(LabUi.tally_row("Наряд", bd.outfit_score))
 	var total_row := LabUi.tally_row("Итого", bd.total)
 	for child in total_row.get_children():

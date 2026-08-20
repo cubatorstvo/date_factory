@@ -31,24 +31,45 @@ STATS = [
     ("aura", "Аура", "Присутствие и давление молчанием."),
 ]
 
-FORMATS = [
-    ("calm", "Спокойное"),
-    ("entertainment", "Развлекательное"),
-    ("game", "Игровое"),
-    ("culture", "Культурное"),
-    ("unusual", "Необычное"),
+# id, name, description, move_ids
+LOCAL_OBJECTS = [
+    ("window", "Окно", "Окно, которое можно приоткрыть или распахнуть.", ["local_window_audacity", "local_window_care"]),
+    ("sofa", "Диван", "Диван, на котором можно задать позу и темп разговора.", ["local_sofa_composure", "local_sofa_dominance"]),
+    ("tv", "Телевизор", "Телевизор с передачами и роликами под руку.", ["local_tv_humor", "local_tv_cunning"]),
+    ("jukebox", "Музыкальный автомат", "Музыкальный автомат с чужими и своими композициями.", ["local_jukebox_humor", "local_jukebox_audacity"]),
+    ("barista", "Бариста", "Бариста, который может принести десерт или подыграть истории.", ["local_barista_generosity", "local_barista_cunning"]),
+    ("waiter", "Официант", "Официант, через которого заказывают десерт и «то самое».", ["local_waiter_generosity", "local_waiter_status"]),
+    ("piano", "Рояль", "Рояль в зале — сыграть самому или занять место музыканта.", ["local_piano_humor", "local_piano_dominance"]),
 ]
 
-# id, name, quality, mode(0=NEUTRAL,1=THEMATIC), format, apt_q, apt_p
+# id, name, tag, option, positive, negative, req or None
+LOCAL_MOVES = [
+    ("local_window_audacity", "Распахнуть окно", "audacity", "Распахнуть окно настежь и продолжить разговор с улицей.", "Окно настежь, улица в разговоре — ей это зашло.", "Распахнул окно настежь — ей слишком шумно и демонстративно.", None),
+    ("local_window_care", "Приоткрыть окно", "care", "Слегка приоткрыть окно для свежего воздуха.", "Свежий воздух к месту — ей спокойнее.", "Приоткрыл окно «для воздуха» — ей это кажется лишней заботой не к месту.", None),
+    ("local_sofa_composure", "Откинуться на диван", "composure", "Откинуться на диван и невозмутимо продолжить разговор.", "Откинулся и держишь тон — ей это спокойствие по делу.", "Откинулся на диван слишком расслабленно — ей это выглядит как равнодушие.", None),
+    ("local_sofa_dominance", "Занять центр дивана", "dominance", "Пересесть в центр дивана и самому задать темп разговору.", "Занял центр дивана и темп разговора — ей это зашло.", "Пересел в центр и задал темп — ей это слишком навязано.", ("aura", 2)),
+    ("local_tv_humor", "Неуместная передача", "humor", "Включить максимально неуместную передачу и сделать вид, что так и было задумано.", "Неуместная передача сработала как шутка — ей смешно.", "Включил неуместную передачу — ей это выглядит как сбой, а не юмор.", None),
+    ("local_tv_cunning", "Подтверждающий ролик", "cunning", "Найти ролик, который неожиданно подтверждает твою версию.", "Ролик неожиданно подтвердил твою версию — ей это ловко.", "Подобрал ролик «в подтверждение» — ей это выглядит как подтасовка.", None),
+    ("local_jukebox_humor", "Неуместная песня", "humor", "Поставить максимально неуместную песню.", "Неуместная песня попала в тон — ей смешно.", "Поставил максимально неуместную песню — ей это ломает вечер.", None),
+    ("local_jukebox_audacity", "Переключить музыку", "audacity", "Переключить музыку на свой выбор посреди чужой композиции.", "Переключил чужую композицию на свою — ей это зашло как наглость к месту.", "Перебил чужую песню своим выбором — ей это грубо.", None),
+    ("local_barista_generosity", "Фирменный десерт", "generosity", "Заказать девушке фирменный десерт.", "Фирменный десерт к месту — ей приятно.", "Заказал фирменный десерт — ей это кажется покупкой настроения.", None),
+    ("local_barista_cunning", "Подыграть истории", "cunning", "Попросить бариста подыграть твоей истории.", "Бариста подыграл истории — ей это ловко.", "Попросил бариста подыграть — ей это выглядит как постановка.", ("aura", 2)),
+    ("local_waiter_generosity", "Дорогой десерт", "generosity", "Заказать для неё самый дорогой десерт.", "Самый дорогой десерт к месту — ей приятно.", "Заказал самый дорогой десерт — ей это слишком демонстративно.", None),
+    ("local_waiter_status", "То самое", "status", "Попросить принести «то самое», будто ты здесь постоянный гость.", "«То самое» принесли как постоянному гостю — ей это зашло.", "Попросил «то самое» как завсегдатай — ей это выглядит как игра в статус.", ("capital", 2)),
+    ("local_piano_humor", "Пафосный марш", "humor", "Сыграть одним пальцем максимально пафосный марш.", "Пафосный марш одним пальцем сработал — ей смешно.", "Сыграл пафосный марш одним пальцем — ей это не смешно, а жалко.", None),
+    ("local_piano_dominance", "Занять рояль", "dominance", "Попросить музыканта уступить тебе рояль и занять его место.", "Занял рояль вместо музыканта — ей это зашло как контроль сцены.", "Попросил уступить рояль — ей это слишком театрально и навязчиво.", ("aura", 3)),
+]
+
+# id, name, enabled, apt_prep, local_object_ids
 LOCATIONS = [
-    ("apartment", "Квартира", 0, 0, "", True, True),
-    ("cafe", "Кафе", 1, 0, "", False, False),
-    ("restaurant", "Ресторан", 2, 0, "", False, False),
-    ("park", "Парк", 1, 1, "calm", False, False),
-    ("cinema", "Кинотеатр", 1, 1, "entertainment", False, False),
-    ("arcade", "Аркада", 1, 1, "game", False, False),
-    ("museum", "Музей", 1, 1, "culture", False, False),
-    ("planetarium", "Планетарий", 1, 1, "unusual", False, False),
+    ("apartment", "Квартира", True, True, ["window", "sofa"]),
+    ("cafe", "Кафе", True, False, ["window", "jukebox", "barista"]),
+    ("restaurant", "Ресторан", True, False, ["window", "waiter", "piano"]),
+    ("park", "Парк", False, False, []),
+    ("cinema", "Кинотеатр", False, False, []),
+    ("arcade", "Аркада", False, False, []),
+    ("museum", "Музей", False, False, []),
+    ("planetarium", "Планетарий", False, False, []),
 ]
 
 OUTFITS = [
@@ -67,18 +88,18 @@ DIFFICULTIES = [
 
 TAG_IDS = [tag_id for tag_id, *_ in TAGS]
 
-# id, name, description, difficulty, positives, secondary, formats, outfits
+# id, name, description, difficulty, positives, secondary
 GIRLS = [
-    ("alina", "Алина", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety", ["calm", "culture"], ["business"]),
-    ("girl_actress", "Актриса", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу", "early", ["flattery", "audacity", "generosity", "status", "humor"], "variety", ["entertainment", "culture"], ["luxury"]),
-    ("vika", "Вика", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "demanding", ["game", "unusual"], ["luxury"]),
-    ("girl_mine_boss", "Начальница шахты", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением", "mid", ["directness", "dominance", "generosity", "composure"], "demanding", ["calm", "unusual"], ["business"]),
-    ("katya", "Катя", "любит спонтанность, игры, подколы и быстрые нестандартные решения", "mid", ["directness", "risk", "humor", "cunning"], "variety", ["entertainment", "game"], ["business"]),
-    ("girl_magazine_editor", "Редактор журнала", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова", "mid", ["directness", "status", "composure", "cunning"], "demanding", ["culture", "calm"], ["business"]),
-    ("lera", "Лера", "любит красивую спокойную подачу, хороший вкус и социальную уверенность", "mid", ["politeness", "flattery", "status", "composure"], "variety", ["calm", "culture"], ["luxury"]),
-    ("girl_scientist", "Учёная", "ценит ясность, спокойствие, наблюдательность и необычные решения", "mid", ["directness", "composure", "cunning", "care"], "demanding", ["culture", "unusual"], ["business"]),
-    ("sonya", "Соня", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю", "late", ["audacity", "risk", "humor"], "variety", ["entertainment", "unusual"], ["luxury"]),
-    ("girl_president", "Президент", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание", "late", ["dominance", "status", "composure"], "demanding", ["culture", "unusual"], ["luxury"]),
+    ("alina", "Алина", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety"),
+    ("girl_actress", "Актриса", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу", "early", ["flattery", "audacity", "generosity", "status", "humor"], "variety"),
+    ("vika", "Вика", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "demanding"),
+    ("girl_mine_boss", "Начальница шахты", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением", "mid", ["directness", "dominance", "generosity", "composure"], "demanding"),
+    ("katya", "Катя", "любит спонтанность, игры, подколы и быстрые нестандартные решения", "mid", ["directness", "risk", "humor", "cunning"], "variety"),
+    ("girl_magazine_editor", "Редактор журнала", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова", "mid", ["directness", "status", "composure", "cunning"], "demanding"),
+    ("lera", "Лера", "любит красивую спокойную подачу, хороший вкус и социальную уверенность", "mid", ["politeness", "flattery", "status", "composure"], "variety"),
+    ("girl_scientist", "Учёная", "ценит ясность, спокойствие, наблюдательность и необычные решения", "mid", ["directness", "composure", "cunning", "care"], "demanding"),
+    ("sonya", "Соня", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю", "late", ["audacity", "risk", "humor"], "variety"),
+    ("girl_president", "Президент", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание", "late", ["dominance", "status", "composure"], "demanding"),
 ]
 
 
@@ -88,7 +109,7 @@ def negative_tags(positives: list[str]) -> list[str]:
 
 
 def girl_resource_fields(girl: tuple) -> str:
-    girl_id, name, description, difficulty, positives, secondary, formats, outfits = girl
+    girl_id, name, description, difficulty, positives, secondary = girl
     return (
         f'id = &"{girl_id}"\n'
         f'display_name = "{esc(name)}"\n'
@@ -101,8 +122,6 @@ def girl_resource_fields(girl: tuple) -> str:
         f"positive_tag_ids = {string_name_array(positives)}\n"
         f"negative_tag_ids = {string_name_array(negative_tags(positives))}\n"
         f'secondary_rule_id = &"{secondary}"\n'
-        f"favorite_location_format_ids = {string_name_array(formats)}\n"
-        f"favorite_outfit_ids = {string_name_array(outfits)}\n"
     )
 
 
@@ -278,6 +297,39 @@ def write_move(move_id: str, name: str, kind: int, mappings: list, req=None, max
     write(CONTENT / "moves" / f"{move_id}.tres", "".join(parts))
 
 
+def write_local_move(move_id: str, name: str, tag: str, option: str, pos: str, neg: str, req=None) -> None:
+    parts = [
+        f'[gd_resource type="Resource" script_class="DateMove" load_steps={3 if req else 2} format=3]\n',
+        '[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]\n',
+    ]
+    if req:
+        parts.append('[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]\n')
+    parts.append("\n")
+    if req:
+        parts.append(
+            '[sub_resource type="Resource" id="req_1"]\n'
+            'script = ExtResource("3_req")\n'
+            f'stat_id = &"{req[0]}"\n'
+            f"required_level = {req[1]}\n\n"
+        )
+    parts.append("[resource]\n")
+    parts.append('script = ExtResource("1_move")\n')
+    parts.append(f'id = &"{move_id}"\n')
+    parts.append(f'display_name = "{esc(name)}"\n')
+    parts.append(f'description = "{esc(name)}"\n')
+    parts.append("kind = 2\n")
+    parts.append("enabled = true\n")
+    parts.append("max_uses_per_date = 0\n")
+    if req:
+        parts.append('unlock_requirement = SubResource("req_1")\n')
+    parts.append("situation_mappings = []\n")
+    parts.append(f'local_tag_id = &"{tag}"\n')
+    parts.append(f'local_option_text = "{esc(option)}"\n')
+    parts.append(f'local_positive_result_text = "{esc(pos)}"\n')
+    parts.append(f'local_negative_result_text = "{esc(neg)}"\n')
+    write(CONTENT / "moves" / f"{move_id}.tres", "".join(parts))
+
+
 def main() -> None:
     for tag_id, name, desc in TAGS:
         write(
@@ -297,26 +349,27 @@ def main() -> None:
                 f'id = &"{stat_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(desc)}"\nmin_level = 0\nmax_level = 8\n',
             ),
         )
-    for fmt_id, name in FORMATS:
+    for object_id, name, desc, move_ids in LOCAL_OBJECTS:
         write(
-            CONTENT / "location_formats" / f"{fmt_id}.tres",
+            CONTENT / "local_objects" / f"{object_id}.tres",
             simple_resource(
-                "LocationFormat",
-                "res://date_system/content/location_format.gd",
-                f'id = &"{fmt_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(name)}"\nenabled = true\n',
+                "DateLocalObject",
+                "res://date_system/content/date_local_object.gd",
+                f'id = &"{object_id}"\n'
+                f'display_name = "{esc(name)}"\n'
+                f'description = "{esc(desc)}"\n'
+                "enabled = true\n"
+                f"move_ids = {string_name_array(move_ids)}\n",
             ),
         )
-    for loc_id, name, quality, mode, fmt, apt_q, apt_p in LOCATIONS:
+    for loc_id, name, enabled, apt_p, object_ids in LOCATIONS:
         fields = (
             f'id = &"{loc_id}"\n'
             f'display_name = "{esc(name)}"\n'
             f'description = "{esc(name)}"\n'
-            "enabled = true\n"
-            f"base_quality_bonus = {quality}\n"
-            f"preference_mode = {mode}\n"
-            f'location_format_id = &"{fmt}"\n'
-            f"uses_apartment_quality = {'true' if apt_q else 'false'}\n"
+            f"enabled = {'true' if enabled else 'false'}\n"
             f"uses_apartment_preparation = {'true' if apt_p else 'false'}\n"
+            f"local_object_ids = {string_name_array(object_ids)}\n"
         )
         write(
             CONTENT / "locations" / f"{loc_id}.tres",
@@ -380,6 +433,8 @@ def main() -> None:
         write_move(move_id, name, 0, mappings, max_uses=0)
     for move_id, name, stat, level, mappings in UNLOCK_MOVES:
         write_move(move_id, name, 1, mappings, req=(stat, level), max_uses=1)
+    for move_id, name, tag, option, pos, neg, req in LOCAL_MOVES:
+        write_local_move(move_id, name, tag, option, pos, neg, req)
 
     for diff_id, name, desc, positive_count, order in DIFFICULTIES:
         write(
@@ -409,7 +464,8 @@ def main() -> None:
             "base_moves_per_episode = 3\n"
             "allow_situation_repeats = false\n"
             "show_locked_unlockable_moves = true\n"
-            "opening_choice_score = 0\n"
+            "opening_positive_score = 1\n"
+            "opening_negative_score = -1\n"
             "core_positive_score = 1\n"
             "core_negative_score = -1\n"
             "closing_positive_score = 1\n"
@@ -417,11 +473,7 @@ def main() -> None:
             "reveal_tag_after_use = true\n"
             "reveal_secondary_after_first_completed_date = true\n"
             "secondary_counted_phases = Array[int]([1])\n"
-            "location_preference_success = 1\n"
-            "location_preference_failure = -1\n"
             "apartment_unprepared_penalty = -1\n"
-            "apartment_quality_min = 0\n"
-            "apartment_quality_max = 3\n"
             "min_distinct_base_tags_per_situation = 6\n",
         ),
     )
@@ -441,11 +493,12 @@ def main() -> None:
     tag_ids = [add_res(f"res://date_system/content/tags/{i}.tres", "tags") for i, *_ in TAGS]
     move_ids = [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in BASE_MOVES]
     move_ids += [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in UNLOCK_MOVES]
+    move_ids += [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in LOCAL_MOVES]
     sit_ids = [add_res(f"res://date_system/content/situations/{i}.tres", "situations") for i, *_ in SITUATIONS]
     girl_ids = [add_res(f"res://date_system/content/girls/{girl[0]}.tres", "girls") for girl in GIRLS]
     difficulty_ids = [add_res(f"res://date_system/content/girl_difficulty/{i}.tres", "diff") for i, *_ in DIFFICULTIES]
     sec_ids = [add_res("res://date_system/content/secondary/variety.tres", "sec"), add_res("res://date_system/content/secondary/demanding.tres", "sec")]
-    fmt_ids = [add_res(f"res://date_system/content/location_formats/{i}.tres", "fmt") for i, *_ in FORMATS]
+    object_ids = [add_res(f"res://date_system/content/local_objects/{i}.tres", "obj") for i, *_ in LOCAL_OBJECTS]
     loc_ids = [add_res(f"res://date_system/content/locations/{i}.tres", "loc") for i, *_ in LOCATIONS]
     outfit_ids = [add_res(f"res://date_system/content/outfits/{i}.tres", "outfit") for i, *_ in OUTFITS]
     stat_ids = [add_res(f"res://date_system/content/progression/{i}.tres", "stat") for i, *_ in STATS]
@@ -466,7 +519,7 @@ def main() -> None:
         + f"girls = {arr(girl_ids)}\n"
         + f"girl_difficulty_presets = {arr(difficulty_ids)}\n"
         + f"secondary_rules = {arr(sec_ids)}\n"
-        + f"location_formats = {arr(fmt_ids)}\n"
+        + f"local_objects = {arr(object_ids)}\n"
         + f"locations = {arr(loc_ids)}\n"
         + f"outfits = {arr(outfit_ids)}\n"
         + f"progression_stats = {arr(stat_ids)}\n"

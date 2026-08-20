@@ -1115,27 +1115,57 @@ func _build_apartment() -> Control:
 	var level_label := Label.new()
 	level_label.text = "Уровень квартиры: %d" % int(apartment.get_level())
 	box.add_child(level_label)
-	var catalog: ApartmentCatalog = apartment.get_catalog()
-	for upgrade in catalog.get_all_upgrades():
-		box.add_child(_build_apartment_upgrade_card(upgrade, apartment))
+	var objects_heading := Label.new()
+	objects_heading.text = "Доступные Local Objects"
+	box.add_child(objects_heading)
+	var dating: Variant = _dating_service()
+	var catalog: DateContentCatalog = _date_catalog()
+	var object_ids: Array[StringName] = []
+	if dating != null:
+		object_ids = dating.resolve_date_local_object_ids(&"apartment")
+	if object_ids.is_empty():
+		var empty := Label.new()
+		empty.text = "Нет доступных объектов."
+		empty.add_theme_color_override("font_color", LabUi.MUTED)
+		box.add_child(empty)
+	else:
+		for object_id in object_ids:
+			var line := Label.new()
+			line.text = _local_object_toolkit_line(catalog, object_id)
+			line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			box.add_child(line)
+	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
+	for upgrade in apartment_catalog.get_all_upgrades():
+		box.add_child(_build_apartment_upgrade_card(upgrade, apartment, catalog))
 	_add_action_button(box, GameActionCatalog.make_wait_one_day(), GameActionLabels.for_id(GameActionCatalog.ID_WAIT_ONE_DAY), false, true)
 	return box
 
 
-func _build_apartment_upgrade_card(upgrade: ApartmentUpgradeDefinition, apartment: Variant) -> Control:
+func _build_apartment_upgrade_card(upgrade: ApartmentUpgradeDefinition, apartment: Variant, catalog: DateContentCatalog) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var title := Label.new()
-	title.text = upgrade.display_name
+	title.text = "%s — %d" % [upgrade.display_name, upgrade.price]
 	box.add_child(title)
+	var opens := Label.new()
+	opens.text = "Открывает:"
+	box.add_child(opens)
+	if upgrade.granted_local_object_ids.is_empty():
+		var none := Label.new()
+		none.text = "—"
+		none.add_theme_color_override("font_color", LabUi.MUTED)
+		box.add_child(none)
+	else:
+		for object_id in upgrade.granted_local_object_ids:
+			var line := Label.new()
+			line.text = _local_object_toolkit_line(catalog, object_id)
+			line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			box.add_child(line)
 	if bool(apartment.is_upgrade_purchased(upgrade.id)):
 		var done := Label.new()
 		done.text = "Куплено"
 		box.add_child(done)
 	else:
-		var price := Label.new()
-		price.text = "Цена: %d" % upgrade.price
-		box.add_child(price)
 		var action: GameAction = apartment.create_upgrade_action(upgrade.id)
 		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
 	return box
@@ -1224,11 +1254,6 @@ func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
 
 func _build_date_location_card(location: DateLocation, dating: Variant, available: bool) -> Control:
 	var panel := PanelContainer.new()
-	var preferred: bool = dating != null and bool(dating.is_preferred_date_location(_invite_girl_id, location.id))
-	var known: bool = dating != null and bool(dating.is_date_location_preference_known(_invite_girl_id, location.id))
-	var highlight: bool = available and preferred and known
-	if highlight:
-		panel.add_theme_stylebox_override("panel", _preferred_location_style())
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
@@ -1239,15 +1264,10 @@ func _build_date_location_card(location: DateLocation, dating: Variant, availabl
 		title.text = "%s 🔒" % location.display_name
 	box.add_child(title)
 	var details := Label.new()
-	details.text = _date_location_details(location)
+	details.text = _date_location_details(location, dating)
 	details.add_theme_color_override("font_color", LabUi.MUTED)
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(details)
-	if highlight:
-		var preferred_label := Label.new()
-		preferred_label.text = "Предпочитаемое место"
-		preferred_label.add_theme_color_override("font_color", LabUi.POSITIVE)
-		box.add_child(preferred_label)
 	var choose_btn: Button = LabUi.button(location.display_name)
 	choose_btn.disabled = not available
 	if available:
@@ -1256,26 +1276,50 @@ func _build_date_location_card(location: DateLocation, dating: Variant, availabl
 	return panel
 
 
-func _date_location_details(location: DateLocation) -> String:
+func _date_location_details(location: DateLocation, dating: Variant) -> String:
+	var catalog: DateContentCatalog = _date_catalog()
+	var object_ids: Array[StringName] = []
+	if dating != null:
+		object_ids = dating.resolve_date_local_object_ids(location.id)
+	elif location != null:
+		object_ids = location.local_object_ids.duplicate()
 	var lines := PackedStringArray()
-	if location.uses_apartment_quality:
-		lines.append("Качество квартиры")
-	else:
-		lines.append("Качество: %d" % location.base_quality_bonus)
-	if location.uses_apartment_preparation:
-		lines.append("Подготовка квартиры")
+	for object_id in object_ids:
+		lines.append(_local_object_toolkit_line(catalog, object_id))
 	return "\n".join(lines)
 
 
-func _preferred_location_style() -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.18, 0.32, 0.22)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 8
-	style.content_margin_right = 8
-	style.content_margin_top = 6
-	style.content_margin_bottom = 6
-	return style
+func _date_catalog() -> DateContentCatalog:
+	var dating: Variant = _dating_service()
+	if dating == null:
+		return null
+	var catalog_service: Variant = dating.get_catalog_service()
+	if catalog_service == null:
+		return null
+	return catalog_service.catalog as DateContentCatalog
+
+
+func _local_object_toolkit_line(catalog: DateContentCatalog, object_id: StringName) -> String:
+	if catalog == null:
+		return String(object_id)
+	var local_object: DateLocalObject = catalog.find_local_object(object_id)
+	if local_object == null:
+		return String(object_id)
+	var parts: PackedStringArray = PackedStringArray()
+	for move_id in local_object.move_ids:
+		var move: DateMove = catalog.find_move(move_id)
+		if move == null:
+			continue
+		var tag: DateTag = catalog.find_tag(move.local_tag_id)
+		var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
+		if move.unlock_requirement != null:
+			var stat: ProgressionStat = catalog.find_stat(move.unlock_requirement.stat_id)
+			var stat_name: String = stat.display_name if stat != null else String(move.unlock_requirement.stat_id)
+			parts.append("%s (%s %d)" % [tag_name, stat_name, move.unlock_requirement.required_level])
+		else:
+			parts.append(tag_name)
+	var tags_text: String = " / ".join(parts) if not parts.is_empty() else "—"
+	return "%s — %s" % [local_object.display_name, tags_text]
 
 
 func _build_date_outfit_picker(_girls: Variant, dating: Variant) -> Control:
@@ -1295,22 +1339,16 @@ func _build_date_outfit_picker(_girls: Variant, dating: Variant) -> Control:
 
 func _build_date_outfit_card(outfit: Outfit, dating: Variant) -> Control:
 	var panel := PanelContainer.new()
-	var preferred: bool = dating != null and bool(dating.is_preferred_outfit(_invite_girl_id, outfit.id))
-	var known: bool = dating != null and bool(dating.is_outfit_preference_known(_invite_girl_id, outfit.id))
-	var highlight: bool = preferred and known
-	if highlight:
-		panel.add_theme_stylebox_override("panel", _preferred_location_style())
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
 	var title := Label.new()
 	title.text = outfit.display_name
 	box.add_child(title)
-	if highlight:
-		var preferred_label := Label.new()
-		preferred_label.text = "Предпочитаемый"
-		preferred_label.add_theme_color_override("font_color", LabUi.POSITIVE)
-		box.add_child(preferred_label)
+	var bonus := Label.new()
+	bonus.text = "Бонус свидания: %+d" % outfit.score_bonus
+	bonus.add_theme_color_override("font_color", LabUi.MUTED)
+	box.add_child(bonus)
 	var choose_btn: Button = LabUi.button(outfit.display_name)
 	choose_btn.pressed.connect(select_date_outfit.bind(outfit.id))
 	box.add_child(choose_btn)

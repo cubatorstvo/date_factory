@@ -15,10 +15,10 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_unlockables(catalog, issues)
 	_check_base_usage(catalog, issues)
 	_check_situation_base_pool(catalog, issues)
-	_check_thematic_locations(catalog, issues)
+	_check_local_objects(catalog, issues)
 	_check_secondary_parameters(catalog, issues)
 	_check_phase_coverage(catalog, issues)
-	_check_girl_secondary_and_formats(catalog, issues)
+	_check_girl_secondary(catalog, issues)
 	_check_duplicate_unlockable_tags(catalog, issues)
 	_check_tag_move_usage(catalog, issues)
 	_check_base_tag_diversity(catalog, issues)
@@ -31,7 +31,7 @@ func _check_unique_ids(catalog: DateContentCatalog, issues: Array[ContentValidat
 	_unique_group("DateSituation", catalog.situations, issues)
 	_unique_group("GirlProfile", catalog.girls, issues)
 	_unique_group("SecondaryRule", catalog.secondary_rules, issues)
-	_unique_group("LocationFormat", catalog.location_formats, issues)
+	_unique_group("DateLocalObject", catalog.local_objects, issues)
 	_unique_group("DateLocation", catalog.locations, issues)
 	_unique_group("Outfit", catalog.outfits, issues)
 	_unique_group("ProgressionStat", catalog.progression_stats, issues)
@@ -69,6 +69,13 @@ func _check_references(catalog: DateContentCatalog, issues: Array[ContentValidat
 				issues.append(_issue("DateMove", String(move.id), "tag_id", "Неизвестный Tag: %s." % String(mapping.tag_id)))
 		if move.unlock_requirement != null and catalog.find_stat(move.unlock_requirement.stat_id) == null:
 			issues.append(_issue("DateMove", String(move.id), "unlock_requirement.stat_id", "Неизвестная характеристика: %s." % String(move.unlock_requirement.stat_id)))
+		if move.is_local():
+			if catalog.find_tag(move.local_tag_id) == null:
+				issues.append(_issue("DateMove", String(move.id), "local_tag_id", "LOCAL Move должен иметь существующий Tag."))
+			if move.local_option_text.strip_edges().is_empty():
+				issues.append(_issue("DateMove", String(move.id), "local_option_text", "LOCAL Move должен иметь option text."))
+			if move.local_positive_result_text.strip_edges().is_empty() or move.local_negative_result_text.strip_edges().is_empty():
+				issues.append(_issue("DateMove", String(move.id), "local_result_text", "LOCAL Move должен иметь positive и negative result text."))
 
 
 func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -205,14 +212,33 @@ func _check_situation_base_pool(catalog: DateContentCatalog, issues: Array[Conte
 			issues.append(_issue("DateSituation", String(situation.id), "base_pool", "Недостаточно BASE-ходов: %d из %d." % [pool.size(), needed]))
 
 
-func _check_thematic_locations(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+func _check_local_objects(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	for local_object in catalog.local_objects:
+		if local_object == null:
+			continue
+		for move_id in local_object.move_ids:
+			var move: DateMove = catalog.find_move(move_id)
+			if move == null:
+				issues.append(_issue("DateLocalObject", String(local_object.id), "move_ids", "Неизвестный DateMove: %s." % String(move_id)))
+				continue
+			if not move.is_local():
+				issues.append(_issue("DateLocalObject", String(local_object.id), "move_ids", "Ход %s должен иметь kind LOCAL." % String(move_id)))
 	for location in catalog.locations:
 		if location == null:
 			continue
-		if location.preference_mode != DateTypes.LocationPreferenceMode.THEMATIC:
+		for object_id in location.local_object_ids:
+			if catalog.find_local_object(object_id) == null:
+				issues.append(_issue("DateLocation", String(location.id), "local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
+		if location.enabled and [&"apartment", &"cafe", &"restaurant"].has(location.id):
+			if location.local_object_ids.is_empty():
+				issues.append(_issue("DateLocation", String(location.id), "local_object_ids", "Активное место должно иметь хотя бы один Local Object."))
+	var apartment_catalog: ApartmentCatalog = ApartmentCatalog.create_seed()
+	for upgrade in apartment_catalog.get_all_upgrades():
+		if upgrade == null:
 			continue
-		if catalog.find_location_format(location.location_format_id) == null:
-			issues.append(_issue("DateLocation", String(location.id), "location_format_id", "THEMATIC Location должна иметь существующий LocationFormat."))
+		for object_id in upgrade.granted_local_object_ids:
+			if catalog.find_local_object(object_id) == null:
+				issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "granted_local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
 
 
 func _check_secondary_parameters(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -254,15 +280,12 @@ func _check_phase_coverage(catalog: DateContentCatalog, issues: Array[ContentVal
 			issues.append(_issue("DateSituation", "", "allowed_phases", "Недостаточно Situation для фазы %s: %d из %d." % [DateTypes.phase_name(phase_value as DateTypes.DatePhase), int(counts[phase_value]), int(needed[phase_value])]))
 
 
-func _check_girl_secondary_and_formats(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+func _check_girl_secondary(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	for girl in catalog.girls:
 		if girl == null:
 			continue
 		if catalog.find_secondary(girl.secondary_rule_id) == null:
 			issues.append(_issue("GirlProfile", String(girl.id), "secondary_rule_id", "Неизвестное Secondary-правило."))
-		for format_id in girl.favorite_location_format_ids:
-			if catalog.find_location_format(format_id) == null:
-				issues.append(_issue("GirlProfile", String(girl.id), "favorite_location_format_ids", "Неизвестный LocationFormat: %s." % String(format_id)))
 
 
 func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:

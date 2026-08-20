@@ -24,7 +24,7 @@ res://
             situations/
             girls/
             secondary/
-            location_formats/
+            local_objects/
             locations/
             outfits/
             progression/

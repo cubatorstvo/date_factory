@@ -56,12 +56,13 @@ func reset_all(catalog: DateContentCatalog) -> void:
 	save_store()
 
 
-func capture_replay(seed: int, girl_id: StringName, location_id: StringName, outfit_id: StringName, progress: GirlProgress) -> void:
+func capture_replay(seed: int, girl_id: StringName, location_id: StringName, outfit_id: StringName, progress: GirlProgress, local_object_ids: Array[StringName] = []) -> void:
 	last_replay = DateReplaySnapshot.new()
 	last_replay.seed = seed
 	last_replay.girl_id = girl_id
 	last_replay.location_id = location_id
 	last_replay.outfit_id = outfit_id
+	last_replay.local_object_ids = local_object_ids.duplicate()
 	last_replay.girl_progress = GirlProgress.from_dictionary(progress.to_dictionary())
 	last_replay.player_state = TestPlayerState.from_dictionary(player_state.to_dictionary())
 	save_store()
