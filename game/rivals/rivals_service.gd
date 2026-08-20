@@ -73,10 +73,15 @@ func get_rivals_at_current_location() -> Array[RivalDefinition]:
 	var world: Variant = _world_service()
 	if world != null:
 		location_id = world.get_current_location_id()
+	var city_stage: int = 1
+	if world != null:
+		city_stage = int(world.get_city_stage())
 	var result: Array[RivalDefinition] = []
 	var girls: Variant = _girls_service()
 	for rival in get_catalog().get_rivals_for_location(location_id):
 		if rival == null:
+			continue
+		if rival.minimum_city_stage > city_stage:
 			continue
 		if rival.linked_girl_id != &"":
 			if girls == null or not bool(girls.is_discovered(rival.linked_girl_id)):
@@ -90,6 +95,47 @@ func get_discovered_rivals() -> Array[RivalDefinition]:
 		if is_discovered(definition.id):
 			result.append(definition)
 	return result
+
+
+func get_last_challenge_completed_at(rival_id: StringName) -> int:
+	var state: RivalState = get_state(rival_id)
+	if state == null:
+		return 0
+	return state.last_challenge_completed_at
+
+
+func get_next_challenge_available_at(rival_id: StringName) -> int:
+	var last_completed_at: int = get_last_challenge_completed_at(rival_id)
+	if last_completed_at <= 0:
+		return 0
+	return last_completed_at + CityProgressionService.get_social_cooldown_minutes()
+
+
+func is_challenge_cooldown_finished(rival_id: StringName) -> bool:
+	var clock: Variant = _time_service()
+	if clock == null:
+		return false
+	return int(clock.get_game_time_minutes()) >= get_next_challenge_available_at(rival_id)
+
+
+func get_challenge_cooldown_remaining_minutes(rival_id: StringName) -> int:
+	var clock: Variant = _time_service()
+	if clock == null:
+		return 0
+	return maxi(0, get_next_challenge_available_at(rival_id) - int(clock.get_game_time_minutes()))
+
+
+func mark_challenge_completed(rival_id: StringName, completed_at: int = -1) -> void:
+	var state: RivalState = get_state(rival_id)
+	if state == null:
+		return
+	var clock: Variant = _time_service()
+	var recorded_at: int = completed_at
+	if recorded_at < 0:
+		recorded_at = 0
+		if clock != null:
+			recorded_at = int(clock.get_game_time_minutes())
+	state.last_challenge_completed_at = maxi(1, recorded_at)
 
 
 func create_meet_rival_action(rival_id: StringName) -> GameAction:
@@ -128,6 +174,14 @@ func _world_service() -> Variant:
 	var node: Node = get_node_or_null("/root/WorldService")
 	if not is_instance_valid(node):
 		push_error("WorldService autoload missing")
+		return null
+	return node
+
+
+func _time_service() -> Variant:
+	var node: Node = get_node_or_null("/root/TimeService")
+	if not is_instance_valid(node):
+		push_error("TimeService autoload missing")
 		return null
 	return node
 

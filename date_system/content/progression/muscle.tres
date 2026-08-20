@@ -8,4 +8,4 @@ id = &"muscle"
 display_name = "Мышца"
 description = "Физическая сила."
 min_level = 0
-max_level = 8
+max_level = 5

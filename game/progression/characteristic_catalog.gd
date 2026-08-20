@@ -7,6 +7,7 @@ const ID_CAPITAL_1: StringName = &"upgrade_capital_1"
 const ID_AURA_1: StringName = &"upgrade_aura_1"
 const SEED_PRICE: int = 300
 const SEED_AMOUNT: int = 1
+const MAX_LEVEL: int = 5
 
 @export var upgrades: Array[CharacteristicUpgradeDefinition] = []
 
@@ -20,12 +21,29 @@ func get_upgrade(upgrade_id: StringName) -> CharacteristicUpgradeDefinition:
 	return null
 
 
+func get_upgrade_for_characteristic(characteristic_id: StringName) -> CharacteristicUpgradeDefinition:
+	if characteristic_id == &"":
+		return null
+	for upgrade in upgrades:
+		if upgrade != null and upgrade.characteristic_id == characteristic_id:
+			return upgrade
+	return null
+
+
 func get_all_upgrades() -> Array[CharacteristicUpgradeDefinition]:
 	var result: Array[CharacteristicUpgradeDefinition] = []
 	for upgrade in upgrades:
 		if upgrade != null:
 			result.append(upgrade)
 	return result
+
+
+func get_max_level(_characteristic_id: StringName = &"") -> int:
+	return MAX_LEVEL
+
+
+func get_cost_per_level(_characteristic_id: StringName = &"") -> int:
+	return SEED_PRICE
 
 
 static func create_seed() -> CharacteristicCatalog:

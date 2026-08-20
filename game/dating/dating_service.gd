@@ -4,7 +4,6 @@ signal date_started(girl_id: StringName)
 signal date_completed(girl_id: StringName, relationship_delta: int, current_relationship: int)
 
 const START_ACTION_PREFIX: String = "start_date_"
-const DATE_COOLDOWN_DAYS: int = 3
 const DATE_DURATION_MINUTES: int = 120
 const DEFAULT_OUTFIT_ID: StringName = OutfitCatalog.START_OUTFIT_ID
 const REASON_NOT_DISCOVERED: String = "Вы ещё не знакомы"
@@ -194,7 +193,7 @@ func complete_date(result: DateResult) -> bool:
 	if session_progress != null:
 		girls.apply_date_knowledge(girl_id, session_progress)
 	clock.advance_time(result.duration_minutes)
-	girls.set_date_cooldown(girl_id, int(clock.days_to_minutes(DATE_COOLDOWN_DAYS)))
+	girls.mark_date_completed(girl_id)
 	dating.active_date = {}
 	_engine = null
 	date_completed.emit(girl_id, result.relationship_delta, current_relationship)

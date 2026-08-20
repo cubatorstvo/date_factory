@@ -16,6 +16,7 @@ res://
         girls/
         dating/
         rating/
+        rivals/
         simulator/
     date_system/
         content/

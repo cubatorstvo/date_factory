@@ -8,4 +8,4 @@ id = &"appearance"
 display_name = "Внешность"
 description = "Внешняя привлекательность."
 min_level = 0
-max_level = 8
+max_level = 5

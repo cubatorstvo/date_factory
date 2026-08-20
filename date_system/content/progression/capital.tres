@@ -8,4 +8,4 @@ id = &"capital"
 display_name = "Капитал"
 description = "Деньги и ресурсы."
 min_level = 0
-max_level = 8
+max_level = 5

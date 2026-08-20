@@ -3,6 +3,7 @@ extends RefCounted
 
 var current_location_id: StringName = LocationCatalog.START_LOCATION_ID
 var unlocked_location_ids: Array[StringName] = []
+var city_stage: int = 1
 
 
 func _init() -> void:
@@ -12,6 +13,7 @@ func _init() -> void:
 func apply_start() -> void:
 	current_location_id = LocationCatalog.START_LOCATION_ID
 	unlocked_location_ids.clear()
+	city_stage = 1
 	for location_id in LocationCatalog.START_UNLOCKED_LOCATION_IDS:
 		add_unlocked(location_id)
 
@@ -34,6 +36,7 @@ func to_dict() -> Dictionary:
 	return {
 		"current_location_id": String(current_location_id),
 		"unlocked_location_ids": ids,
+		"city_stage": city_stage,
 	}
 
 
@@ -48,3 +51,4 @@ func from_dict(data: Dictionary) -> void:
 		unlocked_location_ids.clear()
 		for item in raw:
 			add_unlocked(StringName(str(item)))
+	city_stage = clampi(int(data.get("city_stage", 1)), 1, CityProgressionService.MAX_CITY_STAGE)

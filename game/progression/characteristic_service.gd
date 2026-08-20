@@ -20,6 +20,20 @@ func get_catalog() -> CharacteristicCatalog:
 	return _catalog
 
 
+func get_max_level(characteristic_id: StringName = &"") -> int:
+	return get_catalog().get_max_level(characteristic_id)
+
+
+func get_cost_per_level(characteristic_id: StringName = &"") -> int:
+	return get_catalog().get_cost_per_level(characteristic_id)
+
+
+func can_upgrade(characteristic_id: StringName) -> bool:
+	if not CharacteristicIds.is_known(characteristic_id):
+		return false
+	return get_value(characteristic_id) < get_max_level(characteristic_id)
+
+
 func get_value(characteristic_id: StringName) -> int:
 	var player: PlayerState = _player()
 	if player == null:
@@ -44,7 +58,7 @@ func add_value(characteristic_id: StringName, amount: int) -> int:
 	if not CharacteristicIds.is_known(characteristic_id):
 		return 0
 	var previous_value: int = get_value(characteristic_id)
-	var current_value: int = previous_value + amount
+	var current_value: int = clampi(previous_value + amount, 0, get_max_level(characteristic_id))
 	match characteristic_id:
 		CharacteristicIds.MUSCLE:
 			player.muscle = current_value
@@ -54,16 +68,27 @@ func add_value(characteristic_id: StringName, amount: int) -> int:
 			player.capital = current_value
 		CharacteristicIds.AURA:
 			player.aura = current_value
-	characteristic_changed.emit(characteristic_id, previous_value, current_value, amount)
+	var delta: int = current_value - previous_value
+	characteristic_changed.emit(characteristic_id, previous_value, current_value, delta)
 	return current_value
 
 
 func create_upgrade_action(upgrade_id: StringName) -> GameAction:
-	var purchases: Variant = _purchase_service()
+	var action := GameAction.new()
 	var upgrade: CharacteristicUpgradeDefinition = get_catalog().get_upgrade(upgrade_id)
-	if purchases == null or upgrade == null:
-		return GameAction.new()
-	return purchases.create_purchase_action(upgrade)
+	if upgrade == null:
+		return action
+	action.id = upgrade.id
+	action.money_cost = get_cost_per_level(upgrade.characteristic_id)
+	action.time_cost_minutes = 0
+	var below_max := CharacteristicBelowMaxRequirement.new()
+	below_max.characteristic_id = upgrade.characteristic_id
+	action.requirements.append(below_max)
+	var effect := CharacteristicEffect.new()
+	effect.characteristic_id = upgrade.characteristic_id
+	effect.amount = upgrade.amount
+	action.effects.append(effect)
+	return action
 
 
 func _player() -> PlayerState:
@@ -77,13 +102,5 @@ func _game_state() -> Variant:
 	var node: Node = get_node_or_null("/root/GameState")
 	if not is_instance_valid(node):
 		push_error("GameState autoload missing")
-		return null
-	return node
-
-
-func _purchase_service() -> Variant:
-	var node: Node = get_node_or_null("/root/PurchaseService")
-	if not is_instance_valid(node):
-		push_error("PurchaseService autoload missing")
 		return null
 	return node

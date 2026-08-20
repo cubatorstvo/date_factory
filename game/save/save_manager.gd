@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 13
+const SAVE_VERSION: int = 14
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -116,6 +116,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v11_factory_rating(migrated)
 	if from_version < 13:
 		migrated = _migrate_v12_apartment_prepared(migrated)
+	if from_version < 14:
+		migrated = _migrate_v13_city_density(migrated)
 	return migrated
 
 
@@ -351,4 +353,38 @@ func _migrate_v12_apartment_prepared(state_data: Dictionary) -> Dictionary:
 		apartment["prepared"] = true
 	progression["apartment"] = apartment
 	migrated["progression"] = progression
+	return migrated
+
+
+func _migrate_v13_city_density(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var story_value: Variant = migrated.get("story", {})
+	var story_stage: int = 1
+	if story_value is Dictionary:
+		story_stage = int(story_value.get("stage", 1))
+	var world_value: Variant = migrated.get("world", {})
+	var world: Dictionary = {}
+	if world_value is Dictionary:
+		world = world_value
+	if not world.has("city_stage"):
+		world["city_stage"] = CityProgressionService.city_stage_from_story_stage(story_stage)
+	migrated["world"] = world
+	var rivals_value: Variant = migrated.get("rivals", {})
+	var rivals: Dictionary = {}
+	if rivals_value is Dictionary:
+		rivals = rivals_value
+	var by_id_value: Variant = rivals.get("rivals_by_id", {})
+	var by_id: Dictionary = {}
+	if by_id_value is Dictionary:
+		by_id = by_id_value
+	for rival_key in by_id.keys():
+		var rival_value: Variant = by_id[rival_key]
+		if not (rival_value is Dictionary):
+			continue
+		var rival: Dictionary = rival_value
+		if not rival.has("last_challenge_completed_at"):
+			rival["last_challenge_completed_at"] = 0
+		by_id[rival_key] = rival
+	rivals["rivals_by_id"] = by_id
+	migrated["rivals"] = rivals
 	return migrated

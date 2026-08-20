@@ -91,14 +91,19 @@ TAG_IDS = [tag_id for tag_id, *_ in TAGS]
 # id, name, description, difficulty, positives, secondary
 GIRLS = [
     ("alina", "Алина", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety"),
+    ("marina", "Марина", "держит спокойный тон и предпочитает ясную заботу без суеты", "mid", ["care", "composure", "directness", "humor"], "variety"),
     ("girl_actress", "Актриса", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу", "early", ["flattery", "audacity", "generosity", "status", "humor"], "variety"),
     ("vika", "Вика", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "demanding"),
+    ("dasha", "Даша", "любит дерзкие ставки и человека, который не боится задать тон", "mid", ["audacity", "risk", "humor", "dominance"], "variety"),
     ("girl_mine_boss", "Начальница шахты", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением", "mid", ["directness", "dominance", "generosity", "composure"], "demanding"),
     ("katya", "Катя", "любит спонтанность, игры, подколы и быстрые нестандартные решения", "mid", ["directness", "risk", "humor", "cunning"], "variety"),
     ("girl_magazine_editor", "Редактор журнала", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова", "mid", ["directness", "status", "composure", "cunning"], "demanding"),
     ("lera", "Лера", "любит красивую спокойную подачу, хороший вкус и социальную уверенность", "mid", ["politeness", "flattery", "status", "composure"], "variety"),
+    ("olya", "Оля", "ценит щедрый жест, статус и вежливый уход за атмосферой", "mid", ["generosity", "status", "care", "politeness"], "variety"),
     ("girl_scientist", "Учёная", "ценит ясность, спокойствие, наблюдательность и необычные решения", "mid", ["directness", "composure", "cunning", "care"], "demanding"),
     ("sonya", "Соня", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю", "late", ["audacity", "risk", "humor"], "variety"),
+    ("nika", "Ника", "проверяет собеседника прямым ходом и обходным правилом", "mid", ["cunning", "directness", "audacity", "composure"], "variety"),
+    ("rita", "Рита", "любит дорогой жест, контроль сцены и риск напоказ", "mid", ["status", "dominance", "generosity", "risk"], "variety"),
     ("girl_president", "Президент", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание", "late", ["dominance", "status", "composure"], "demanding"),
 ]
 
@@ -219,7 +224,7 @@ UNLOCK_MOVES = [
         ("rival_provocation", "dominance", "Смотреть на самца до его отступления."),
         ("date_verdict", "composure", "Выдержать паузу до реакции девушки."),
     ]),
-    ("raise_stakes", "Поднять ставки", "capital", 6, [
+    ("raise_stakes", "Поднять ставки", "capital", 5, [
         ("money_request", "risk", "Предложить удвоить сумму после немедленного доказательства истории."),
         ("spontaneous_bet", "risk", "Удвоить ставку и усложнить условие проигравшему."),
     ]),
@@ -346,7 +351,7 @@ def main() -> None:
             simple_resource(
                 "ProgressionStat",
                 "res://date_system/content/progression_stat.gd",
-                f'id = &"{stat_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(desc)}"\nmin_level = 0\nmax_level = 8\n',
+                f'id = &"{stat_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(desc)}"\nmin_level = 0\nmax_level = 5\n',
             ),
         )
     for object_id, name, desc, move_ids in LOCAL_OBJECTS:

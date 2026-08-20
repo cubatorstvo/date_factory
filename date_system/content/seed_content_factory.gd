@@ -79,7 +79,7 @@ func _stat(id: String, name: String, description: String) -> ProgressionStat:
 	stat.display_name = name
 	stat.description = description
 	stat.min_level = 0
-	stat.max_level = 8
+	stat.max_level = 5
 	return stat
 
 
@@ -373,7 +373,7 @@ func _moves() -> Array[DateMove]:
 			_mapping("rival_provocation", "dominance", "Смотреть на самца до его отступления."),
 			_mapping("date_verdict", "composure", "Выдержать паузу до реакции девушки."),
 		]),
-		_unlock_move("raise_stakes", "Поднять ставки", "capital", 6, [
+		_unlock_move("raise_stakes", "Поднять ставки", "capital", 5, [
 			_mapping("money_request", "risk", "Предложить удвоить сумму после немедленного доказательства истории."),
 			_mapping("spontaneous_bet", "risk", "Удвоить ставку и усложнить условие проигравшему."),
 		]),
@@ -445,14 +445,19 @@ func _girl(
 func _girls() -> Array[GirlProfile]:
 	return [
 		_girl("alina", "Алина", "starter", -5, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety"),
+		_girl("marina", "Марина", "mid", -5, 5, ["care", "composure", "directness", "humor"], "variety", "держит спокойный тон и предпочитает ясную заботу без суеты"),
 		_girl("girl_actress", "Актриса", "early", -5, 5, ["flattery", "audacity", "generosity", "status", "humor"], "variety", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
 		_girl("vika", "Вика", "early", -5, 5, ["audacity", "dominance", "risk", "humor", "cunning"], "demanding"),
+		_girl("dasha", "Даша", "mid", -5, 5, ["audacity", "risk", "humor", "dominance"], "variety", "любит дерзкие ставки и человека, который не боится задать тон"),
 		_girl("girl_mine_boss", "Начальница шахты", "mid", -5, 5, ["directness", "dominance", "generosity", "composure"], "demanding", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
 		_girl("katya", "Катя", "mid", -5, 5, ["directness", "risk", "humor", "cunning"], "variety", "любит спонтанность, игры, подколы и быстрые нестандартные решения"),
 		_girl("girl_magazine_editor", "Редактор журнала", "mid", -5, 5, ["directness", "status", "composure", "cunning"], "demanding", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),
 		_girl("lera", "Лера", "mid", -5, 5, ["politeness", "flattery", "status", "composure"], "variety", "любит красивую спокойную подачу, хороший вкус и социальную уверенность"),
+		_girl("olya", "Оля", "mid", -5, 5, ["generosity", "status", "care", "politeness"], "variety", "ценит щедрый жест, статус и вежливый уход за атмосферой"),
 		_girl("girl_scientist", "Учёная", "mid", -5, 5, ["directness", "composure", "cunning", "care"], "demanding", "ценит ясность, спокойствие, наблюдательность и необычные решения"),
 		_girl("sonya", "Соня", "late", -5, 5, ["audacity", "risk", "humor"], "variety", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"),
+		_girl("nika", "Ника", "mid", -5, 5, ["cunning", "directness", "audacity", "composure"], "variety", "проверяет собеседника прямым ходом и обходным правилом"),
+		_girl("rita", "Рита", "mid", -5, 5, ["status", "dominance", "generosity", "risk"], "variety", "любит дорогой жест, контроль сцены и риск напоказ"),
 		_girl("girl_president", "Президент", "late", -5, 5, ["dominance", "status", "composure"], "demanding", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание"),
 	]
 

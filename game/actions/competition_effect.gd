@@ -27,8 +27,14 @@ func get_description() -> String:
 		if definition != null:
 			display_name = definition.display_name
 	if _last_result.won:
-		return "Победа.\n\nСоперник %s побеждён." % display_name
-	return "Поражение.\n\n%s остаётся непобеждённым." % display_name
+		var payout_text: String = ""
+		var competitions: Variant = _competition_service()
+		if competitions != null:
+			var competition: CompetitionDefinition = competitions.get_catalog().get_competition(_last_result.competition_id)
+			if competition != null:
+				payout_text = "\nПолучено: %d." % (competition.entry_fee * 2)
+		return "Победа.\n\nСоперник %s побеждён.%s" % [display_name, payout_text]
+	return "Поражение.\n\n%s остаётся доступен для реванша." % display_name
 
 
 func _competition_service() -> Variant:

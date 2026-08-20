@@ -6,7 +6,7 @@ const ACTION_PREFIX: String = "competition_"
 const REASON_NOT_FOUND: String = "Соревнование не найдено"
 const REASON_WRONG_LOCATION: String = "Соперник находится в другой локации"
 const REASON_NOT_DISCOVERED: String = "Вы ещё не встретили этого соперника"
-const REASON_ALREADY_DEFEATED: String = "Этот соперник уже побеждён"
+const REASON_COOLDOWN: String = "Соперник ещё не готов к реваншу"
 
 var _catalog: CompetitionCatalog
 var _forced_won: Variant = null
@@ -52,8 +52,9 @@ func get_failure_reason(competition_id: StringName) -> String:
 		return REASON_WRONG_LOCATION
 	if not bool(rivals.is_discovered(definition.rival_id)):
 		return REASON_NOT_DISCOVERED
-	if bool(rivals.is_defeated(definition.rival_id)):
-		return REASON_ALREADY_DEFEATED
+	if not bool(rivals.is_challenge_cooldown_finished(definition.rival_id)):
+		var remaining: int = int(rivals.get_challenge_cooldown_remaining_minutes(definition.rival_id))
+		return "%s (%d мин.)" % [REASON_COOLDOWN, remaining]
 	return ""
 
 
@@ -64,6 +65,7 @@ func create_competition_action(competition_id: StringName) -> GameAction:
 	var definition: CompetitionDefinition = get_catalog().get_competition(competition_id)
 	if definition != null:
 		action.time_cost_minutes = definition.time_cost_minutes
+		action.money_cost = maxi(0, definition.entry_fee)
 	var requirement := CompetitionAvailableRequirement.new()
 	requirement.competition_id = competition_id
 	action.requirements.append(requirement)
@@ -124,8 +126,22 @@ func complete_competition(result: CompetitionResult) -> bool:
 	var rival: RivalDefinition = rivals.get_definition(result.rival_id)
 	if rival == null:
 		return false
+	var definition: CompetitionDefinition = get_catalog().get_competition(result.competition_id)
+	var completed_at: int = 0
+	var clock: Variant = _time_service()
+	if clock != null:
+		completed_at = int(clock.get_game_time_minutes())
+	if definition != null:
+		completed_at += definition.time_cost_minutes
+	rivals.mark_challenge_completed(result.rival_id, completed_at)
 	if result.won:
 		rivals.defeat_rival(result.rival_id)
+		var payout: int = 0
+		if definition != null:
+			payout = definition.entry_fee * 2
+		var economy: Variant = _economy_service()
+		if economy != null and payout > 0:
+			economy.add_money(payout)
 	competition_completed.emit(result.competition_id, result.rival_id, result.won)
 	return true
 
@@ -155,9 +171,25 @@ func _world_service() -> Variant:
 	return node
 
 
+func _time_service() -> Variant:
+	var node: Node = get_node_or_null("/root/TimeService")
+	if not is_instance_valid(node):
+		push_error("TimeService autoload missing")
+		return null
+	return node
+
+
 func _characteristic_service() -> Variant:
 	var node: Node = get_node_or_null("/root/CharacteristicService")
 	if not is_instance_valid(node):
 		push_error("CharacteristicService autoload missing")
+		return null
+	return node
+
+
+func _economy_service() -> Variant:
+	var node: Node = get_node_or_null("/root/EconomyService")
+	if not is_instance_valid(node):
+		push_error("EconomyService autoload missing")
 		return null
 	return node

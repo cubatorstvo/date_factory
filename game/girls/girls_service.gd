@@ -150,10 +150,17 @@ func change_relationship(girl_id: StringName, delta: int) -> int:
 
 
 func get_next_date_available_at(girl_id: StringName) -> int:
+	var last_completed_at: int = get_last_date_completed_at(girl_id)
+	if last_completed_at <= 0:
+		return 0
+	return last_completed_at + CityProgressionService.get_social_cooldown_minutes()
+
+
+func get_last_date_completed_at(girl_id: StringName) -> int:
 	var state: GirlState = get_state(girl_id)
 	if state == null:
 		return 0
-	return state.next_date_available_at
+	return state.last_date_completed_at
 
 
 func is_date_cooldown_finished(girl_id: StringName) -> bool:
@@ -163,7 +170,11 @@ func is_date_cooldown_finished(girl_id: StringName) -> bool:
 	return int(clock.get_game_time_minutes()) >= get_next_date_available_at(girl_id)
 
 
-func set_date_cooldown(girl_id: StringName, duration_minutes: int) -> void:
+func set_date_cooldown(girl_id: StringName, _duration_minutes: int = 0) -> void:
+	mark_date_completed(girl_id)
+
+
+func mark_date_completed(girl_id: StringName) -> void:
 	var state: GirlState = get_state(girl_id)
 	if state == null:
 		return
@@ -171,7 +182,8 @@ func set_date_cooldown(girl_id: StringName, duration_minutes: int) -> void:
 	var current_time: int = 0
 	if clock != null:
 		current_time = int(clock.get_game_time_minutes())
-	state.next_date_available_at = current_time + maxi(0, duration_minutes)
+	state.last_date_completed_at = current_time
+	state.next_date_available_at = get_next_date_available_at(girl_id)
 
 
 func fill_date_progress(girl_id: StringName, progress: GirlProgress) -> void:
@@ -368,6 +380,9 @@ func _connect_girl_access_signals() -> void:
 	var rivals: Variant = _rivals_service()
 	if rivals != null and not rivals.rival_defeated.is_connected(_on_rival_defeated):
 		rivals.rival_defeated.connect(_on_rival_defeated)
+	var world: Variant = _world_service()
+	if world != null and world.has_signal("city_stage_changed") and not world.city_stage_changed.is_connected(_on_city_stage_changed):
+		world.city_stage_changed.connect(_on_city_stage_changed)
 
 
 func _on_rating_changed(_previous_rating: int, _current_rating: int, _delta: int) -> void:
@@ -379,6 +394,10 @@ func _on_stage_changed(_previous_stage: int, _current_stage: int) -> void:
 
 
 func _on_rival_defeated(_rival_id: StringName) -> void:
+	_emit_girl_access_changed_for_catalog()
+
+
+func _on_city_stage_changed(_previous_city_stage: int, _current_city_stage: int) -> void:
 	_emit_girl_access_changed_for_catalog()
 
 

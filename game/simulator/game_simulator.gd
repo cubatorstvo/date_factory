@@ -555,7 +555,7 @@ func _build_work() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("РАБОТА"))
-	var work: WorkDefinition = WorkService.make_work_basic()
+	var work: WorkDefinition = WorkService.make_current_work()
 	var action: GameAction = WorkService.create_work_action(work)
 	var title := Label.new()
 	title.text = work.display_name
@@ -563,7 +563,8 @@ func _build_work() -> Control:
 	var info := Label.new()
 	info.text = "Доход: %d\nВремя: %d минут" % [work.income, work.time_cost_minutes]
 	box.add_child(info)
-	_add_action_button(box, action, GameActionLabels.LABEL_WORK_ACTION, false, false)
+	var hours: int = maxi(1, int(work.time_cost_minutes / 60))
+	_add_action_button(box, action, "Работать — %d ч — +%d" % [hours, work.income], false, false)
 	return box
 
 
@@ -706,15 +707,20 @@ func _build_city_rival_row(definition: RivalDefinition, rivals: Variant) -> Cont
 	name_label.text = definition.display_name
 	box.add_child(name_label)
 	var discovered: bool = rivals != null and bool(rivals.is_discovered(definition.id))
-	if discovered:
-		var status := Label.new()
-		var defeated: bool = bool(rivals.is_defeated(definition.id))
-		status.text = "Статус: %s" % ("Побеждён" if defeated else "Не побеждён")
-		box.add_child(status)
+	if not discovered:
+		if rivals != null:
+			var action: GameAction = rivals.create_meet_rival_action(definition.id)
+			_add_action_button(box, action, "ВСТРЕТИТЬ", false, false)
 		return box
-	if rivals != null:
-		var action: GameAction = rivals.create_meet_rival_action(definition.id)
-		_add_action_button(box, action, "ВСТРЕТИТЬ", false, false)
+	var defeated: bool = bool(rivals.is_defeated(definition.id))
+	var status := Label.new()
+	status.text = "Статус: %s" % ("Побеждён" if defeated else "Не побеждён")
+	box.add_child(status)
+	var competitions: Variant = _competition_service()
+	if competitions == null:
+		return box
+	for competition in competitions.get_competitions_for_rival(definition.id):
+		box.add_child(_build_rival_competition_row(competition, defeated, competitions, rivals))
 	return box
 
 
@@ -793,17 +799,17 @@ func _build_characteristic_upgrade_card(
 	box.add_theme_constant_override("separation", 4)
 	var value_label: Label = Label.new()
 	var current_value: int = int(characteristics.get_value(upgrade.characteristic_id))
-	value_label.text = "%s: %d" % [CharacteristicIds.display_name(upgrade.characteristic_id), current_value]
+	var max_level: int = int(characteristics.get_max_level(upgrade.characteristic_id))
+	value_label.text = "%s: %d/%d" % [CharacteristicIds.display_name(upgrade.characteristic_id), current_value, max_level]
 	box.add_child(value_label)
-	var purchases: Variant = _purchase_service()
-	var purchased: bool = purchases != null and bool(purchases.is_purchased(upgrade.id))
-	if purchased:
-		var done: Label = Label.new()
-		done.text = "Куплено"
-		box.add_child(done)
-	else:
+	if bool(characteristics.can_upgrade(upgrade.characteristic_id)):
 		var action: GameAction = characteristics.create_upgrade_action(upgrade.id)
-		_add_action_button(box, action, "%s — %d" % [upgrade.display_name, upgrade.price], false, false)
+		var cost: int = int(characteristics.get_cost_per_level(upgrade.characteristic_id))
+		_add_action_button(box, action, "Прокачать до %d — %d" % [current_value + 1, cost], false, false)
+	else:
+		var done: Label = Label.new()
+		done.text = "Максимум"
+		box.add_child(done)
 	return box
 
 
@@ -855,6 +861,17 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 		var completed := Label.new()
 		completed.text = "Линия завершена"
 		box.add_child(completed)
+		return box
+	if dating != null and bool(dating.can_start_date(definition.id)):
+		var available := Label.new()
+		available.text = "Свидание доступно"
+		box.add_child(available)
+	elif dating != null:
+		var remaining: int = int(dating.get_date_cooldown_remaining_minutes(definition.id))
+		if remaining > 0:
+			var wait := Label.new()
+			wait.text = "Следующее свидание через %s" % _format_cooldown(remaining)
+			box.add_child(wait)
 	return box
 
 
@@ -898,32 +915,47 @@ func _build_discovered_rival_card(definition: RivalDefinition, rivals: Variant, 
 		return box
 	box.add_child(LabUi.heading("СОРЕВНОВАНИЯ"))
 	for competition in rival_competitions:
-		box.add_child(_build_rival_competition_row(competition, defeated, competitions))
+		box.add_child(_build_rival_competition_row(competition, defeated, competitions, rivals))
 	return box
 
 
-func _build_rival_competition_row(competition: CompetitionDefinition, defeated: bool, competitions: Variant) -> Control:
-	var box := VBoxContainer.new()
+func _build_rival_competition_row(
+	competition: CompetitionDefinition,
+	defeated: bool,
+	competitions: Variant,
+	rivals: Variant = null
+) -> Control:
+	var box: VBoxContainer = VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
-	var title := Label.new()
+	var title: Label = Label.new()
 	title.text = competition.display_name
 	box.add_child(title)
-	var time_label := Label.new()
+	var time_label: Label = Label.new()
 	time_label.text = "Время: %d минут" % competition.time_cost_minutes
 	box.add_child(time_label)
+	var wager: Label = Label.new()
+	wager.text = "Взнос %d -> Победа %d" % [competition.entry_fee, competition.entry_fee * 2]
+	box.add_child(wager)
+	var characteristic_label: Label = Label.new()
+	characteristic_label.text = "Характеристика: %s" % CharacteristicIds.display_name(competition.primary_characteristic_id)
+	box.add_child(characteristic_label)
 	if competitions != null:
-		var chance_label := Label.new()
+		var chance_label: Label = Label.new()
 		var chance: float = float(competitions.get_win_chance(competition.id))
 		chance_label.text = "Шанс победы: %d%%" % int(round(chance * 100.0))
 		box.add_child(chance_label)
-	if defeated:
-		var done := Label.new()
-		done.text = "Завершено"
-		box.add_child(done)
+	var remaining: int = 0
+	if rivals != null:
+		remaining = int(rivals.get_challenge_cooldown_remaining_minutes(competition.rival_id))
+	if remaining > 0:
+		var wait: Label = Label.new()
+		wait.text = "Доступно через %s" % _format_cooldown(remaining)
+		box.add_child(wait)
 		return box
 	if competitions != null:
 		var action: GameAction = competitions.create_competition_action(competition.id)
-		_add_action_button(box, action, "БРОСИТЬ ВЫЗОВ", false, false)
+		var label: String = ("Реванш — взнос %d" % competition.entry_fee) if defeated else ("Вызвать — взнос %d" % competition.entry_fee)
+		_add_action_button(box, action, label, false, false)
 	return box
 
 
@@ -988,6 +1020,10 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 		box.add_child(done)
 		return box
 	var can_start: bool = dating != null and bool(dating.can_start_date(definition.id))
+	if can_start:
+		var available := Label.new()
+		available.text = "Свидание доступно"
+		box.add_child(available)
 	var invite_btn: Button = LabUi.button("ПРИГЛАСИТЬ")
 	invite_btn.disabled = not can_start
 	if can_start:
@@ -1473,6 +1509,8 @@ func _connect_core_signals() -> void:
 		world.location_changed.connect(_on_location_changed)
 	if world != null and not world.location_unlocked.is_connected(_on_location_unlocked):
 		world.location_unlocked.connect(_on_location_unlocked)
+	if world != null and world.has_signal("city_stage_changed") and not world.city_stage_changed.is_connected(_on_city_stage_changed):
+		world.city_stage_changed.connect(_on_city_stage_changed)
 	var girls: Variant = _girls_service()
 	if girls != null and not girls.girl_discovered.is_connected(_on_girl_discovered):
 		girls.girl_discovered.connect(_on_girl_discovered)
@@ -1538,6 +1576,10 @@ func _on_location_changed(_previous_location_id: StringName, _current_location_i
 
 
 func _on_location_unlocked(_location_id: StringName) -> void:
+	refresh()
+
+
+func _on_city_stage_changed(_previous_city_stage: int, _current_city_stage: int) -> void:
 	refresh()
 
 
@@ -1779,8 +1821,17 @@ func _on_stage_progress_changed(_stage: int) -> void:
 	refresh()
 
 
-func _on_stage_completed(_stage: int) -> void:
-	_last_result_text = "Stage завершён."
+func _on_stage_completed(stage: int) -> void:
+	var lines: PackedStringArray = PackedStringArray(["Stage завершён."])
+	if stage == 1:
+		lines.append("Город: этап 2/3")
+		lines.append("Новые девушки и соперники. Cooldown: 2 дня.")
+	elif stage == 2:
+		lines.append("Новая должность: оплата за работу увеличена до 200/ч")
+	elif stage == 3:
+		lines.append("Город: этап 3/3")
+		lines.append("Новые девушки и соперники. Cooldown: 1 день.")
+	_last_result_text = "\n".join(lines)
 
 func _on_finale_reached() -> void:
 	refresh()
@@ -1818,6 +1869,13 @@ func _format_hud_text() -> String:
 	var stage_text: String = "Stage: %d" % stage
 	if finale:
 		stage_text += "\nFinale"
+	var city_stage: int = 1
+	var world: Variant = _world_service()
+	if world != null:
+		city_stage = int(world.get_city_stage())
+	var cooldown_days: int = CityProgressionService.get_social_cooldown_days()
+	stage_text += "\nГород: этап %d/3" % city_stage
+	stage_text += "\nCooldown: %d д." % cooldown_days
 	var characteristics: Variant = _characteristic_service()
 	var muscle: int = 0
 	var appearance: int = 0
@@ -1828,7 +1886,7 @@ func _format_hud_text() -> String:
 		appearance = int(characteristics.get_value(CharacteristicIds.APPEARANCE))
 		capital = int(characteristics.get_value(CharacteristicIds.CAPITAL))
 		aura = int(characteristics.get_value(CharacteristicIds.AURA))
-	var stats_text: String = "Мышца: %d  Внешность: %d  Капитал: %d  Аура: %d" % [muscle, appearance, capital, aura]
+	var stats_text: String = "Мышца: %d/5  Внешность: %d/5  Капитал: %d/5  Аура: %d/5" % [muscle, appearance, capital, aura]
 	return "День %d\n%02d:%02d\n\nДеньги: %d\n\nRating: %d\n\n%s\n\n%s" % [day, hour, minute, money, rating, stage_text, stats_text]
 
 
@@ -1853,6 +1911,8 @@ func _format_home_summary() -> String:
 		"День %d, %02d:%02d" % [day, hour, minute],
 		"",
 		"Stage %d" % stage,
+		"Город: этап %d/3" % CityProgressionService.get_city_stage(),
+		"Cooldown: %d д." % CityProgressionService.get_social_cooldown_days(),
 		"",
 		"Деньги: %d" % money,
 		"Rating: %d" % rating,

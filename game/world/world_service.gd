@@ -2,6 +2,7 @@ extends Node
 
 signal location_unlocked(location_id: StringName)
 signal location_changed(previous_location_id: StringName, current_location_id: StringName)
+signal city_stage_changed(previous_city_stage: int, current_city_stage: int)
 
 var _catalog: LocationCatalog
 
@@ -48,6 +49,27 @@ func can_enter_location(location_id: StringName) -> bool:
 	if get_catalog().get_location(location_id) == null:
 		return false
 	return is_location_unlocked(location_id)
+
+
+func get_city_stage() -> int:
+	var world: WorldState = _world()
+	if world == null:
+		return 1
+	return clampi(world.city_stage, 1, CityProgressionService.MAX_CITY_STAGE)
+
+
+func set_city_stage(target_stage: int) -> bool:
+	var world: WorldState = _world()
+	if world == null:
+		return false
+	var next_stage: int = clampi(target_stage, 1, CityProgressionService.MAX_CITY_STAGE)
+	next_stage = maxi(world.city_stage, next_stage)
+	if next_stage == world.city_stage:
+		return false
+	var previous_stage: int = world.city_stage
+	world.city_stage = next_stage
+	city_stage_changed.emit(previous_stage, next_stage)
+	return true
 
 
 func enter_location(location_id: StringName) -> bool:

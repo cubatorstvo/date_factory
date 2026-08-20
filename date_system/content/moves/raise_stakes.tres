@@ -22,7 +22,7 @@ negative_result_text = "Ей это режет. Тег «risk» играет п�
 [sub_resource type="Resource" id="req_1"]
 script = ExtResource("3_req")
 stat_id = &"capital"
-required_level = 6
+required_level = 5
 
 [resource]
 script = ExtResource("1_move")

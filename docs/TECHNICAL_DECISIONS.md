@@ -39,3 +39,12 @@
 
 - Headless GDScript runner без внешних фреймворков
 - Кейсы из спецификации Date System Lab, раздел 75
+
+## City density
+
+- Характеристики героя 0–5, repeatable upgrade за 300 от текущего `PlayerState`
+- `WorldState.city_stage` 1–3; social cooldown 3/2/1 дня для девушек и соперников
+- Filler-девушки и filler-rivals открываются пачками City Stage; сюжетные цели — Stage + Rating
+- Работа 100/ч, затем 200/ч после Story Stage 3
+- Rival wager: взнос 100, выплата 200, реванш после cooldown
+- Save version 14
