@@ -7,6 +7,7 @@ const REASON_NOT_FOUND: String = "Соревнование не найдено"
 const REASON_WRONG_LOCATION: String = "Соперник находится в другой локации"
 const REASON_NOT_DISCOVERED: String = "Вы ещё не встретили этого соперника"
 const REASON_COOLDOWN: String = "Соперник ещё не готов к реваншу"
+const REASON_DEFEATED: String = "Соперник уже побеждён"
 
 var _catalog: CompetitionCatalog
 var _forced_won: Variant = null
@@ -52,8 +53,10 @@ func get_failure_reason(competition_id: StringName) -> String:
 		return REASON_WRONG_LOCATION
 	if not bool(rivals.is_discovered(definition.rival_id)):
 		return REASON_NOT_DISCOVERED
-	if not bool(rivals.is_challenge_cooldown_finished(definition.rival_id)):
-		var remaining: int = int(rivals.get_challenge_cooldown_remaining_minutes(definition.rival_id))
+	if not bool(rivals.can_challenge_now(definition.rival_id)):
+		if bool(rivals.is_story_rival(definition.rival_id)) and bool(rivals.is_defeated(definition.rival_id)):
+			return REASON_DEFEATED
+		var remaining: int = int(rivals.get_challenge_cooldown_remaining(definition.rival_id))
 		return "%s (%d мин.)" % [REASON_COOLDOWN, remaining]
 	return ""
 
@@ -133,7 +136,8 @@ func complete_competition(result: CompetitionResult) -> bool:
 		completed_at = int(clock.get_game_time_minutes())
 	if definition != null:
 		completed_at += definition.time_cost_minutes
-	rivals.mark_challenge_completed(result.rival_id, completed_at)
+	if bool(rivals.is_repeatable_rival(result.rival_id)):
+		rivals.mark_challenge_completed(result.rival_id, completed_at)
 	if result.won:
 		rivals.defeat_rival(result.rival_id)
 		var payout: int = 0

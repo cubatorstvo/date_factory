@@ -97,6 +97,38 @@ func get_discovered_rivals() -> Array[RivalDefinition]:
 	return result
 
 
+func is_story_rival(rival_id: StringName) -> bool:
+	var definition: RivalDefinition = get_definition(rival_id)
+	if definition == null:
+		return false
+	return definition.linked_girl_id != &""
+
+
+func is_repeatable_rival(rival_id: StringName) -> bool:
+	var definition: RivalDefinition = get_definition(rival_id)
+	if definition == null:
+		return false
+	return definition.linked_girl_id == &""
+
+
+func can_challenge_now(rival_id: StringName) -> bool:
+	if not is_discovered(rival_id):
+		return false
+	if is_story_rival(rival_id):
+		return not is_defeated(rival_id)
+	return is_challenge_cooldown_finished(rival_id)
+
+
+func get_challenge_available_at(rival_id: StringName) -> int:
+	if is_story_rival(rival_id):
+		return 0
+	return get_next_challenge_available_at(rival_id)
+
+
+func get_challenge_cooldown_remaining(rival_id: StringName) -> int:
+	return get_challenge_cooldown_remaining_minutes(rival_id)
+
+
 func get_last_challenge_completed_at(rival_id: StringName) -> int:
 	var state: RivalState = get_state(rival_id)
 	if state == null:
@@ -119,6 +151,8 @@ func is_challenge_cooldown_finished(rival_id: StringName) -> bool:
 
 
 func get_challenge_cooldown_remaining_minutes(rival_id: StringName) -> int:
+	if is_story_rival(rival_id):
+		return 0
 	var clock: Variant = _time_service()
 	if clock == null:
 		return 0

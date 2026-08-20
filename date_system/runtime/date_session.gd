@@ -34,7 +34,9 @@ enum Stage {
 @export var used_unlockable_move_counts: Dictionary = {}
 @export var episode_history: Array[DateEpisodeResult] = []
 @export var revealed_tags_during_session: Array[StringName] = []
-@export var secondary_runtime_state: Dictionary = {}
+@export var combo_distinct_success_tag_ids: Array[StringName] = []
+@export var combo_achieved: bool = false
+@export var combo_rewards_earned: int = 0
 @export var score_breakdown: DateScoreBreakdown
 @export var relationship_after: int = 0
 @export var completed: bool = false

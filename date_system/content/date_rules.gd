@@ -14,8 +14,9 @@ extends Resource
 @export var closing_positive_score: int = 1
 @export var closing_negative_score: int = -1
 @export var reveal_tag_after_use: bool = true
-@export var reveal_secondary_after_first_completed_date: bool = true
-@export var secondary_counted_phases: Array[int] = [int(DateTypes.DatePhase.CORE)]
+@export var combo_required_distinct_success_tags: int = 3
+@export var combo_bonus_score: int = 1
+@export var combo_max_rewards_per_date: int = 1
 @export var apartment_unprepared_penalty: int = -1
 @export var min_distinct_base_tags_per_situation: int = 6
 

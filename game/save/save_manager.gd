@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 14
+const SAVE_VERSION: int = 15
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -118,6 +118,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v12_apartment_prepared(migrated)
 	if from_version < 14:
 		migrated = _migrate_v13_city_density(migrated)
+	if from_version < 15:
+		migrated = _migrate_v14_game_core(migrated)
 	return migrated
 
 
@@ -387,4 +389,45 @@ func _migrate_v13_city_density(state_data: Dictionary) -> Dictionary:
 		by_id[rival_key] = rival
 	rivals["rivals_by_id"] = by_id
 	migrated["rivals"] = rivals
+	return migrated
+
+
+func _migrate_v14_game_core(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var player_value: Variant = migrated.get("player", {})
+	var player: Dictionary = {}
+	if player_value is Dictionary:
+		player = player_value
+	if not player.has("last_work_day_index"):
+		player["last_work_day_index"] = -1
+	migrated["player"] = player
+	var girls_value: Variant = migrated.get("girls", {})
+	var girls: Dictionary = {}
+	if girls_value is Dictionary:
+		girls = girls_value
+	var girls_by_id_value: Variant = girls.get("girls_by_id", {})
+	var girls_by_id: Dictionary = {}
+	if girls_by_id_value is Dictionary:
+		girls_by_id = girls_by_id_value
+	for girl_key in girls_by_id.keys():
+		var girl_value: Variant = girls_by_id[girl_key]
+		if not (girl_value is Dictionary):
+			continue
+		var girl: Dictionary = girl_value
+		girl["relationship"] = maxi(0, int(girl.get("relationship", 0)))
+		girl.erase("secondary_revealed")
+		girls_by_id[girl_key] = girl
+	girls["girls_by_id"] = girls_by_id
+	migrated["girls"] = girls
+	var progression_value: Variant = migrated.get("progression", {})
+	var progression: Dictionary = {}
+	if progression_value is Dictionary:
+		progression = progression_value
+	if not progression.has("current_outfit_id") or str(progression.get("current_outfit_id", "")).is_empty():
+		var owned_raw: Variant = progression.get("owned_outfit_ids", [])
+		var owned_ids: Array = owned_raw if owned_raw is Array else []
+		progression["current_outfit_id"] = String(OutfitCatalog.current_from_owned(owned_ids))
+	progression.erase("owned_outfit_ids")
+	progression.erase("equipped_outfit_id")
+	migrated["progression"] = progression
 	return migrated

@@ -34,7 +34,9 @@ func get_description() -> String:
 			if competition != null:
 				payout_text = "\nПолучено: %d." % (competition.entry_fee * 2)
 		return "Победа.\n\nСоперник %s побеждён.%s" % [display_name, payout_text]
-	return "Поражение.\n\n%s остаётся доступен для реванша." % display_name
+	if rivals != null and bool(rivals.is_repeatable_rival(_last_result.rival_id)):
+		return "Поражение.\n\n%s остаётся доступен для реванша." % display_name
+	return "Поражение."
 
 
 func _competition_service() -> Variant:

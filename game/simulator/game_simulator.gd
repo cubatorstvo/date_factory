@@ -17,8 +17,8 @@ var _section: String = "home"
 var _last_result_text: String = ""
 var _hud_time_label: Label
 var _hud_money_label: Label
-var _hud_rating_label: Label
-var _hud_stage_label: Label
+var _hud_rating_label: RichTextLabel
+var _hud_stage_label: RichTextLabel
 var _finale_label: Label
 var _result_label: Label
 var _load_button: Button
@@ -39,7 +39,7 @@ var _date_overlay_layer: CanvasLayer
 var _invite_girl_id: StringName = &""
 var _selected_date_location_id: StringName = &""
 var _selected_outfit_id: StringName = &""
-var _hud_characteristics_label: Label
+var _hud_characteristics_label: RichTextLabel
 var _factory_status: Label
 var _factory_slider: HSlider
 
@@ -208,11 +208,7 @@ func invite_girl(girl_id: StringName) -> void:
 
 func select_date_location(date_location_id: StringName) -> void:
 	_selected_date_location_id = date_location_id
-	if _selected_outfit_id == &"":
-		var equipment: Variant = _equipment_service()
-		if equipment != null:
-			_selected_outfit_id = equipment.get_equipped_outfit_id()
-	refresh()
+	start_selected_date()
 
 
 func select_date_outfit(outfit_id: StringName) -> void:
@@ -236,12 +232,12 @@ func start_selected_date() -> ActionResult:
 		result.failure_reason = "DatingService autoload missing"
 		_on_action_resolved(result)
 		return result
-	if _invite_girl_id == &"" or _selected_date_location_id == &"" or _selected_outfit_id == &"":
+	if _invite_girl_id == &"" or _selected_date_location_id == &"":
 		result.success = false
 		result.failure_reason = "Это место сейчас недоступно"
 		_on_action_resolved(result)
 		return result
-	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id, _selected_outfit_id)
+	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id)
 	result = actions.execute(action)
 	if result.success:
 		_clear_date_invite()
@@ -433,14 +429,14 @@ func _build_hud() -> Control:
 	stats.add_theme_constant_override("separation", 32)
 	_hud_time_label = Label.new()
 	_hud_money_label = Label.new()
-	_hud_rating_label = Label.new()
-	_hud_stage_label = Label.new()
+	_hud_rating_label = GameTermView.create("")
+	_hud_stage_label = GameTermView.create("")
 	stats.add_child(_hud_time_label)
 	stats.add_child(_hud_money_label)
 	stats.add_child(_hud_rating_label)
 	stats.add_child(_hud_stage_label)
 	box.add_child(stats)
-	_hud_characteristics_label = Label.new()
+	_hud_characteristics_label = GameTermView.create("")
 	box.add_child(_hud_characteristics_label)
 	var save_row := HBoxContainer.new()
 	save_row.add_theme_constant_override("separation", 8)
@@ -556,15 +552,17 @@ func _build_work() -> Control:
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("РАБОТА"))
 	var work: WorkDefinition = WorkService.make_current_work()
-	var action: GameAction = WorkService.create_work_action(work)
-	var title := Label.new()
-	title.text = work.display_name
-	box.add_child(title)
-	var info := Label.new()
-	info.text = "Доход: %d\nВремя: %d минут" % [work.income, work.time_cost_minutes]
-	box.add_child(info)
-	var hours: int = maxi(1, int(work.time_cost_minutes / 60))
-	_add_action_button(box, action, "Работать — %d ч — +%d" % [hours, work.income], false, false)
+	if WorkService.is_work_available_today():
+		var action: GameAction = WorkService.create_work_action(work)
+		var hours: int = maxi(1, int(work.time_cost_minutes / 60))
+		_add_action_button(box, action, "Работать — %d ч — +%d" % [hours, work.income], false, false)
+	else:
+		var done := Label.new()
+		done.text = "Работа на сегодня выполнена"
+		box.add_child(done)
+		var again := Label.new()
+		again.text = "Снова доступно завтра"
+		box.add_child(again)
 	return box
 
 
@@ -790,10 +788,11 @@ func _build_characteristic_upgrade_card(
 ) -> Control:
 	var box: VBoxContainer = VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
-	var value_label: Label = Label.new()
 	var current_value: int = int(characteristics.get_value(upgrade.characteristic_id))
 	var max_level: int = int(characteristics.get_max_level(upgrade.characteristic_id))
-	value_label.text = "%s: %d/%d" % [CharacteristicIds.display_name(upgrade.characteristic_id), current_value, max_level]
+	var value_label: RichTextLabel = GameTermView.create(
+		"%s: %d/%d" % [CharacteristicIds.display_name(upgrade.characteristic_id), current_value, max_level]
+	)
 	box.add_child(value_label)
 	if bool(characteristics.can_upgrade(upgrade.characteristic_id)):
 		var action: GameAction = characteristics.create_upgrade_action(upgrade.id)
@@ -836,12 +835,12 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 	if girls != null:
 		relationship_value = int(girls.get_relationship(definition.id))
 		has_contact = bool(girls.has_contact(definition.id))
-	var relationship_label := Label.new()
 	var relationship_max: int = 0
 	if girls != null:
 		relationship_max = int(girls.get_relationship_max(definition.id))
-	relationship_label.text = "Отношения: %d / %d" % [relationship_value, relationship_max]
-	box.add_child(relationship_label)
+	var completed_line: bool = girls != null and bool(girls.is_relationship_completed(definition.id))
+	var relationship_text: String = "Отношения: %d / %d — МАКСИМУМ" % [relationship_value, relationship_max] if completed_line else "Отношения: %d / %d" % [relationship_value, relationship_max]
+	box.add_child(GameTermView.create(relationship_text))
 	var contact_label := Label.new()
 	contact_label.text = "Контакт: %s" % ("Да" if has_contact else "Нет")
 	box.add_child(contact_label)
@@ -850,10 +849,7 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 	if dating != null:
 		date_statuses = dating.get_date_requirements_status(definition.id)
 	_add_requirement_lines(box, date_statuses, "Требования для свидания:")
-	if girls != null and bool(girls.is_relationship_completed(definition.id)):
-		var completed := Label.new()
-		completed.text = "Линия завершена"
-		box.add_child(completed)
+	if completed_line:
 		return box
 	if dating != null and bool(dating.can_start_date(definition.id)):
 		var available := Label.new()
@@ -929,8 +925,9 @@ func _build_rival_competition_row(
 	var wager: Label = Label.new()
 	wager.text = "Взнос %d -> Победа %d" % [competition.entry_fee, competition.entry_fee * 2]
 	box.add_child(wager)
-	var characteristic_label: Label = Label.new()
-	characteristic_label.text = "Характеристика: %s" % CharacteristicIds.display_name(competition.primary_characteristic_id)
+	var characteristic_label: RichTextLabel = GameTermView.create(
+		"Характеристика: %s" % CharacteristicIds.display_name(competition.primary_characteristic_id)
+	)
 	box.add_child(characteristic_label)
 	if competitions != null:
 		var chance_label: Label = Label.new()
@@ -939,11 +936,17 @@ func _build_rival_competition_row(
 		box.add_child(chance_label)
 	var remaining: int = 0
 	if rivals != null:
-		remaining = int(rivals.get_challenge_cooldown_remaining_minutes(competition.rival_id))
-	if remaining > 0:
-		var wait: Label = Label.new()
-		wait.text = "Доступно через %s" % _format_cooldown(remaining)
-		box.add_child(wait)
+		remaining = int(rivals.get_challenge_cooldown_remaining(competition.rival_id))
+	if rivals != null and bool(rivals.is_story_rival(competition.rival_id)) and defeated:
+		var done: Label = Label.new()
+		done.text = "Побеждён"
+		box.add_child(done)
+		return box
+	if rivals != null and not bool(rivals.can_challenge_now(competition.rival_id)):
+		if remaining > 0:
+			var wait: Label = Label.new()
+			wait.text = "Доступно через %s" % _format_cooldown(remaining)
+			box.add_child(wait)
 		return box
 	if competitions != null:
 		var action: GameAction = competitions.create_competition_action(competition.id)
@@ -1000,17 +1003,17 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 		relationship_value = int(girls.get_relationship(definition.id))
 		relationship_max = int(girls.get_relationship_max(definition.id))
 	var relationship_label := Label.new()
-	relationship_label.text = "Отношения: %d / %d" % [relationship_value, relationship_max]
+	var completed: bool = girls != null and bool(girls.is_relationship_completed(definition.id))
+	if completed:
+		relationship_label.text = "Отношения: %d / %d — МАКСИМУМ" % [relationship_value, relationship_max]
+	else:
+		relationship_label.text = "Отношения: %d / %d" % [relationship_value, relationship_max]
 	box.add_child(relationship_label)
 	var date_statuses: Array[RequirementStatus] = []
 	if dating != null:
 		date_statuses = dating.get_date_requirements_status(definition.id)
 	_add_requirement_lines(box, date_statuses, "Требования:", true)
-	var completed: bool = girls != null and bool(girls.is_relationship_completed(definition.id))
 	if completed:
-		var done := Label.new()
-		done.text = "Линия завершена"
-		box.add_child(done)
 		return box
 	var can_start: bool = dating != null and bool(dating.can_start_date(definition.id))
 	if can_start:
@@ -1051,12 +1054,8 @@ func _add_requirement_lines(
 		for status in statuses:
 			if status == null:
 				continue
-			var met_line: Label = Label.new()
-			if status.progress_text.is_empty():
-				met_line.text = "✓ %s" % status.description
-			else:
-				met_line.text = "✓ %s — %s" % [status.description, status.progress_text]
-			host.add_child(met_line)
+			var met_text: String = "✓ %s" % status.description if status.progress_text.is_empty() else "✓ %s — %s" % [status.description, status.progress_text]
+			host.add_child(GameTermView.create(met_text))
 		return
 	if not heading.is_empty():
 		var heading_label: Label = Label.new()
@@ -1065,12 +1064,8 @@ func _add_requirement_lines(
 	for status in statuses:
 		if status == null:
 			continue
-		var line: Label = Label.new()
-		if status.is_met:
-			line.text = "✓ %s — %s" % [status.description, status.progress_text]
-		else:
-			line.text = "✗ %s — %s" % [status.description, status.progress_text]
-		host.add_child(line)
+		var line_text: String = "✓ %s — %s" % [status.description, status.progress_text] if status.is_met else "✗ %s — %s" % [status.description, status.progress_text]
+		host.add_child(GameTermView.create(line_text))
 
 
 func _format_cooldown(minutes: int) -> String:
@@ -1100,42 +1095,57 @@ func _build_placeholder(title: String, body: String) -> Control:
 func _build_clothing() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
-	box.add_child(LabUi.heading("ОДЕЖДА"))
+	var heading: RichTextLabel = GameTermView.create("ОДЕЖДА")
+	heading.add_theme_font_size_override("normal_font_size", 22)
+	box.add_child(heading)
 	var equipment: Variant = _equipment_service()
 	if equipment == null:
 		return box
-	var catalog: OutfitCatalog = equipment.get_catalog()
-	var equipped_id: StringName = equipment.get_equipped_outfit_id()
-	for outfit in catalog.get_all_outfits():
-		box.add_child(_build_outfit_catalog_card(outfit, equipment, equipped_id))
-	return box
-
-
-func _build_outfit_catalog_card(outfit: Outfit, equipment: Variant, equipped_id: StringName) -> Control:
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
-	var title := Label.new()
-	title.text = outfit.display_name
-	box.add_child(title)
-	var owned: bool = bool(equipment.owns_outfit(outfit.id))
-	if owned and outfit.id == equipped_id:
-		var worn := Label.new()
-		worn.text = "Надето"
-		box.add_child(worn)
-	elif owned:
-		var bought := Label.new()
-		bought.text = "Куплено"
-		box.add_child(bought)
-		var wear_btn: Button = LabUi.button("НАДЕТЬ")
-		wear_btn.pressed.connect(wear_owned_outfit.bind(outfit.id))
-		box.add_child(wear_btn)
+	var current: Outfit = equipment.get_current_outfit()
+	var current_id: StringName = equipment.get_current_outfit_id()
+	var bonus: int = 0
+	if current != null:
+		bonus = current.score_bonus
+	if bool(equipment.can_upgrade_outfit()):
+		var status_text: String = "Одежда: %s (+%d)" % [_outfit_status_adjective(current_id), bonus]
+		box.add_child(GameTermView.create(status_text))
+		var next_outfit: Outfit = equipment.get_next_outfit()
+		if next_outfit != null:
+			var action: GameAction = equipment.create_upgrade_outfit_action()
+			var upgrade_label: String = "Улучшить до %s (+%d) — %d" % [
+				_outfit_upgrade_adjective(next_outfit.id),
+				next_outfit.score_bonus,
+				next_outfit.price,
+			]
+			_add_action_button(box, action, upgrade_label, false, false)
 	else:
-		var price := Label.new()
-		price.text = "Цена: %d" % outfit.price
-		box.add_child(price)
-		var action: GameAction = equipment.create_buy_outfit_action(outfit.id)
-		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
+		var status_text: String = "Одежда: %s (+%d) — МАКСИМУМ" % [_outfit_status_adjective(current_id), bonus]
+		box.add_child(GameTermView.create(status_text))
 	return box
+
+
+func _outfit_status_adjective(outfit_id: StringName) -> String:
+	match String(outfit_id):
+		"casual":
+			return "Повседневная"
+		"business":
+			return "Деловая"
+		"luxury":
+			return "Роскошная"
+		_:
+			return String(outfit_id)
+
+
+func _outfit_upgrade_adjective(outfit_id: StringName) -> String:
+	match String(outfit_id):
+		"casual":
+			return "Повседневной"
+		"business":
+			return "Деловой"
+		"luxury":
+			return "Роскошной"
+		_:
+			return String(outfit_id)
 
 
 func _build_apartment() -> Control:
@@ -1255,26 +1265,6 @@ func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
 			continue
 		var available: bool = bool(dating.is_date_location_available(_invite_girl_id, location.id))
 		box.add_child(_build_date_location_card(location, dating, available, progress))
-	if _selected_date_location_id != &"":
-		var selected: DateLocation = null
-		if dating != null:
-			var catalog_service: DateCatalogService = dating.get_catalog_service()
-			if catalog_service != null and catalog_service.catalog != null:
-				selected = catalog_service.catalog.find_location(_selected_date_location_id)
-		var selected_title := Label.new()
-		selected_title.text = "Место:"
-		box.add_child(selected_title)
-		var selected_name := Label.new()
-		if selected != null:
-			selected_name.text = selected.display_name
-		else:
-			selected_name.text = String(_selected_date_location_id)
-		box.add_child(selected_name)
-		box.add_child(_build_date_outfit_picker(girls, dating))
-		if _selected_outfit_id != &"" and dating != null:
-			box.add_child(_build_date_start_summary(girls, dating, selected))
-			var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id, _selected_outfit_id)
-			_add_action_button(box, action, "НАЧАТЬ СВИДАНИЕ", false, false)
 	var back_btn: Button = LabUi.button("НАЗАД")
 	back_btn.pressed.connect(cancel_date_invite)
 	box.add_child(back_btn)
@@ -1404,9 +1394,7 @@ func _build_date_start_summary(girls: Variant, dating: Variant, selected_locatio
 	var location_label := Label.new()
 	location_label.text = "Место: %s" % location_name
 	box.add_child(location_label)
-	var outfit_label := Label.new()
-	outfit_label.text = "Одежда: %s" % outfit_name
-	box.add_child(outfit_label)
+	box.add_child(GameTermView.create("Одежда: %s" % outfit_name))
 	return box
 
 
@@ -1425,6 +1413,7 @@ func _add_action_button(host: Node, action: GameAction, label: String, show_titl
 
 
 func _refresh_hud() -> void:
+	GameTermTooltipLayer.ensure(self)
 	var hud: String = _format_hud_text()
 	var parts: PackedStringArray = hud.split("\n\n")
 	if _hud_time_label != null and parts.size() >= 1:
@@ -1432,11 +1421,11 @@ func _refresh_hud() -> void:
 	if _hud_money_label != null and parts.size() >= 2:
 		_hud_money_label.text = parts[1]
 	if _hud_rating_label != null and parts.size() >= 3:
-		_hud_rating_label.text = parts[2]
+		GameTermView.apply(_hud_rating_label, parts[2])
 	if _hud_stage_label != null and parts.size() >= 4:
-		_hud_stage_label.text = parts[3]
+		GameTermView.apply(_hud_stage_label, parts[3])
 	if _hud_characteristics_label != null and parts.size() >= 5:
-		_hud_characteristics_label.text = parts[4]
+		GameTermView.apply(_hud_characteristics_label, parts[4])
 	if _finale_label != null:
 		_finale_label.visible = is_finale_presented()
 
@@ -1867,7 +1856,7 @@ func _format_hud_text() -> String:
 	if world != null:
 		city_stage = int(world.get_city_stage())
 	var cooldown_days: int = CityProgressionService.get_social_cooldown_days()
-	stage_text += "\nГород: этап %d/3" % city_stage
+	stage_text += "\nЭтап города: %d/3" % city_stage
 	stage_text += "\nCooldown: %d д." % cooldown_days
 	var characteristics: Variant = _characteristic_service()
 	var muscle: int = 0

@@ -13,11 +13,6 @@ enum DatePhase {
 	CLOSING,
 }
 
-enum SecondaryConditionType {
-	DISTINCT_SUCCESS_TAGS,
-	NO_FAILURES,
-}
-
 enum TagKnowledge {
 	UNKNOWN,
 	POSITIVE,

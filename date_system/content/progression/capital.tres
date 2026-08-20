@@ -6,6 +6,6 @@
 script = ExtResource("1_script")
 id = &"capital"
 display_name = "Капитал"
-description = "Деньги и ресурсы."
+description = "Деньги и ресурсы героя. Открывает дорогие ходы и повышает шанс победы в соревнованиях на капитал."
 min_level = 0
 max_level = 5

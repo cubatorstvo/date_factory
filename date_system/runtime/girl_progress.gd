@@ -5,7 +5,6 @@ extends Resource
 @export var relationship: int = 0
 @export var revealed_positive_tag_ids: Array[StringName] = []
 @export var revealed_negative_tag_ids: Array[StringName] = []
-@export var secondary_revealed: bool = false
 @export var completed_dates: int = 0
 
 
@@ -41,7 +40,6 @@ func reset_to_profile(girl: GirlProfile) -> void:
 	relationship = girl.relationship_start
 	revealed_positive_tag_ids.clear()
 	revealed_negative_tag_ids.clear()
-	secondary_revealed = false
 	completed_dates = 0
 
 
@@ -78,7 +76,6 @@ func to_dictionary() -> Dictionary:
 		"relationship": relationship,
 		"revealed_positive_tag_ids": positives,
 		"revealed_negative_tag_ids": negatives,
-		"secondary_revealed": secondary_revealed,
 		"completed_dates": completed_dates,
 	}
 
@@ -87,7 +84,6 @@ static func from_dictionary(data: Dictionary) -> GirlProgress:
 	var progress := GirlProgress.new()
 	progress.girl_id = StringName(str(data.get("girl_id", "")))
 	progress.relationship = int(data.get("relationship", 0))
-	progress.secondary_revealed = bool(data.get("secondary_revealed", false))
 	progress.completed_dates = int(data.get("completed_dates", 0))
 	var positives: Array = data.get("revealed_positive_tag_ids", [])
 	for item in positives:

@@ -193,7 +193,6 @@ func fill_date_progress(girl_id: StringName, progress: GirlProgress) -> void:
 	progress.relationship = state.relationship
 	progress.revealed_positive_tag_ids = _copy_tag_ids(state.revealed_positive_tag_ids)
 	progress.revealed_negative_tag_ids = _copy_tag_ids(state.revealed_negative_tag_ids)
-	progress.secondary_revealed = state.secondary_revealed
 	progress.completed_dates = state.completed_dates
 
 
@@ -203,7 +202,6 @@ func apply_date_knowledge(girl_id: StringName, progress: GirlProgress) -> void:
 		return
 	state.revealed_positive_tag_ids = _copy_tag_ids(progress.revealed_positive_tag_ids)
 	state.revealed_negative_tag_ids = _copy_tag_ids(progress.revealed_negative_tag_ids)
-	state.secondary_revealed = progress.secondary_revealed
 	state.completed_dates = maxi(0, progress.completed_dates)
 
 

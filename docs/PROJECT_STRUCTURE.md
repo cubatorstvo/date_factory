@@ -18,13 +18,13 @@ res://
         rating/
         rivals/
         simulator/
+        ui/
     date_system/
         content/
             tags/
             moves/
             situations/
             girls/
-            secondary/
             local_objects/
             locations/
             outfits/

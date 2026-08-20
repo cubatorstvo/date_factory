@@ -24,10 +24,11 @@
 - Каждая DateSession создаёт `RandomNumberGenerator` из `seed`
 - Выбор Situations и BASE-ходов идёт только через этот RNG, в фиксированном порядке вызовов, чтобы replay совпадал
 
-## Secondary
+## Combo
 
-- `SecondaryConditionType` + strategy/evaluator
-- Новый тип Secondary = новое значение enum + новый evaluator, без правок ядра формулы эпизода
+- Универсальное правило Date Engine: три последовательных успешных хода с тремя разными тегами дают `Combo +1`
+- Параметры живут в `DateRules` (`combo_required_distinct_success_tags`, `combo_bonus_score`, `combo_max_rewards_per_date`)
+- Старая система Secondary удалена и не восстанавливается
 
 ## Эпизоды будущего
 
@@ -45,6 +46,10 @@
 - Характеристики героя 0–5, repeatable upgrade за 300 от текущего `PlayerState`
 - `WorldState.city_stage` 1–3; social cooldown 3/2/1 дня для девушек и соперников
 - Filler-девушки и filler-rivals открываются пачками City Stage; сюжетные цели — Stage + Rating
-- Работа 100/ч, затем 200/ч после Story Stage 3
-- Rival wager: взнос 100, выплата 200, реванш после cooldown
-- Save version 14
+- Работа 100/ч, затем 200/ч после Story Stage 3; один shift на календарный игровой день
+- Одежда — последовательный upgrade: Повседневный +0 → Деловой +1 (500) → Роскошный +2 (800)
+- Обычные девушки `0..5`, сложные filler Кира и Ева `0..10`
+- Combo: три последовательных успешных разных тега, максимум +1 за свидание
+- Game Terms: глобальные жирные термины с tooltip во всех player-facing экранах
+- Story rival: повтор сразу до первой победы; filler rival: City Stage cooldown и остаётся repeatable
+- Save version 15

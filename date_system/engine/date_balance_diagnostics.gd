@@ -87,7 +87,6 @@ func _lean_catalog(catalog: DateContentCatalog, girl: GirlProfile, situation: Da
 	lean.moves = catalog.moves
 	lean.progression_stats = catalog.progression_stats
 	lean.girl_difficulty_presets = catalog.girl_difficulty_presets
-	lean.secondary_rules = catalog.secondary_rules
 	var girls: Array[GirlProfile] = []
 	girls.append(girl)
 	lean.girls = girls

@@ -6,6 +6,6 @@
 script = ExtResource("1_script")
 id = &"appearance"
 display_name = "Внешность"
-description = "Внешняя привлекательность."
+description = "Внешняя привлекательность. Открывает специальные ходы и повышает шанс победы в соревнованиях на внешность."
 min_level = 0
 max_level = 5

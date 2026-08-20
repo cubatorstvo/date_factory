@@ -50,7 +50,6 @@ func default_path_for(kind: String, resource_id: String) -> String:
 		"DateMove": "res://date_system/content/moves",
 		"DateSituation": "res://date_system/content/situations",
 		"GirlProfile": "res://date_system/content/girls",
-		"SecondaryRule": "res://date_system/content/secondary",
 		"DateLocalObject": "res://date_system/content/local_objects",
 		"DateLocation": "res://date_system/content/locations",
 		"Outfit": "res://date_system/content/outfits",
@@ -73,8 +72,6 @@ func add_to_catalog(resource: Resource) -> void:
 		catalog.situations.append(resource)
 	elif resource is GirlProfile:
 		catalog.girls.append(resource)
-	elif resource is SecondaryRule:
-		catalog.secondary_rules.append(resource)
 	elif resource is DateLocalObject:
 		catalog.local_objects.append(resource)
 	elif resource is DateLocation:
@@ -100,8 +97,6 @@ func remove_from_catalog(resource: Resource) -> void:
 		catalog.situations.erase(resource)
 	elif resource is GirlProfile:
 		catalog.girls.erase(resource)
-	elif resource is SecondaryRule:
-		catalog.secondary_rules.erase(resource)
 	elif resource is DateLocalObject:
 		catalog.local_objects.erase(resource)
 	elif resource is DateLocation:
@@ -133,10 +128,6 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 			for mapping in move.situation_mappings:
 				if mapping.situation_id == resource_id:
 					result.append({"type": "DateMove", "id": String(move.id), "field": "situation_mappings.situation_id"})
-	elif kind == "SecondaryRule":
-		for girl in catalog.girls:
-			if girl.secondary_rule_id == resource_id:
-				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "secondary_rule_id"})
 	elif kind == "DateLocalObject":
 		for location in catalog.locations:
 			if location.local_object_ids.has(resource_id):
@@ -164,7 +155,6 @@ func _rebuild_paths() -> void:
 	_capture_array(catalog.moves, "DateMove")
 	_capture_array(catalog.situations, "DateSituation")
 	_capture_array(catalog.girls, "GirlProfile")
-	_capture_array(catalog.secondary_rules, "SecondaryRule")
 	_capture_array(catalog.local_objects, "DateLocalObject")
 	_capture_array(catalog.locations, "DateLocation")
 	_capture_array(catalog.outfits, "Outfit")

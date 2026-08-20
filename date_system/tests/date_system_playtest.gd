@@ -29,8 +29,9 @@ func _init() -> void:
 	var store := DateProgressStore.new()
 	store.reset_all(catalog)
 	_play_girl(catalog, store, &"alina", "Алина 1")
-	_play_girl(catalog, store, &"alina", "Алина 2")
-	_ok("Alina secondary revealed after first date", store.get_girl_progress(&"alina", catalog.find_girl(&"alina")).secondary_revealed)
+	var alina_result: DateRunResult = _play_girl(catalog, store, &"alina", "Алина 2")
+	_ok("Alina combo_score", alina_result.score_breakdown.combo_score >= 0)
+	_ok("Alina combo_achieved", typeof(alina_result.session.combo_achieved) == TYPE_BOOL)
 	_play_girl(catalog, store, &"vika", "Вика 1")
 	_play_girl(catalog, store, &"vika", "Вика 2")
 	var locked: TestPlayerState = store.player_state
@@ -47,7 +48,7 @@ func _init() -> void:
 	quit(0)
 
 
-func _play_girl(catalog: DateContentCatalog, store: DateProgressStore, girl_id: StringName, title: String) -> void:
+func _play_girl(catalog: DateContentCatalog, store: DateProgressStore, girl_id: StringName, title: String) -> DateRunResult:
 	var progress: GirlProgress = store.get_girl_progress(girl_id, catalog.find_girl(girl_id))
 	var engine := DateEngine.new()
 	var config := DateSessionConfig.new()
@@ -78,14 +79,16 @@ func _play_girl(catalog: DateContentCatalog, store: DateProgressStore, girl_id: 
 		engine.choose_move(move_id)
 		engine.advance()
 	var result: DateRunResult = engine.get_result()
-	print("%s RESULT total=%d rel=%d→%d secondary=%s" % [
+	print("%s RESULT total=%d rel=%d→%d combo_score=%d combo_achieved=%s" % [
 		title,
 		result.score_breakdown.total,
 		engine.get_session_state().relationship_before,
 		engine.get_session_state().relationship_after,
-		result.secondary_live_text,
+		result.score_breakdown.combo_score,
+		str(result.session.combo_achieved),
 	])
 	store.save_store()
+	return result
 
 
 func _punch_available(catalog: DateContentCatalog, player: TestPlayerState) -> bool:

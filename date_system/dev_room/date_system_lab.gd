@@ -9,7 +9,6 @@ const SECTIONS: Array[Array] = [
 	["base_moves", "БАЗОВЫЕ ХОДЫ"],
 	["unlock_moves", "ОТКРЫВАЕМЫЕ ХОДЫ"],
 	["situations", "СИТУАЦИИ"],
-	["secondary", "SECONDARY"],
 	["locations", "МЕСТА"],
 	["local_objects", "ЛОКАЛЬНЫЕ ОБЪЕКТЫ"],
 	["local_moves", "ЛОКАЛЬНЫЕ ХОДЫ"],
@@ -612,8 +611,6 @@ func _items() -> Array:
 			return _moves_of(DateTypes.DateMoveKind.UNLOCKABLE)
 		"situations":
 			return catalog.situations
-		"secondary":
-			return catalog.secondary_rules
 		"locations":
 			return catalog.locations
 		"local_objects":
@@ -693,12 +690,6 @@ func _rebuild_form() -> void:
 			_add_local_object_form()
 		"local_moves":
 			_add_move_form()
-		"secondary":
-			_add_common_identity(_draft)
-			_add_enum(_draft, "condition_type", "condition_type", ["DISTINCT_SUCCESS_TAGS", "NO_FAILURES"])
-			_add_int(_draft, "success_score", "success_score")
-			_add_int(_draft, "failure_score", "failure_score")
-			_add_dict_params()
 		"situations":
 			_add_common_identity(_draft)
 			_add_text(_draft, "situation_text", "situation_text")
@@ -855,19 +846,6 @@ func _add_situation_move_lists() -> void:
 	_form_host.add_child(unlock)
 
 
-func _add_dict_params() -> void:
-	var rule: SecondaryRule = _draft as SecondaryRule
-	var edit := TextEdit.new()
-	edit.custom_minimum_size = Vector2(0, 90)
-	edit.text = JSON.stringify(rule.condition_parameters)
-	edit.text_changed.connect(func() -> void:
-		var parsed: Variant = JSON.parse_string(edit.text)
-		if parsed is Dictionary:
-			rule.condition_parameters = parsed
-			_dirty = true
-	)
-	_form_host.add_child(LabUi.labeled_row("condition_parameters", edit))
-
 
 func _add_girl_form() -> void:
 	var girl: GirlProfile = _draft as GirlProfile
@@ -895,7 +873,6 @@ func _add_girl_form() -> void:
 	var chance: float = DateBalanceMath.at_least_one_positive_probability(enabled_count, required, draws)
 	theory.text = "Теоретическая базовая доступность положительного тега: %s" % DateBalanceMath.format_percent(chance)
 	_form_host.add_child(theory)
-	_add_id_selector(girl, "secondary_rule_id", "secondary_rule", catalog_service.catalog.secondary_rules)
 	var counter := Label.new()
 	counter.text = "Положительные теги: %d / %d" % [positive_count, required]
 	_form_host.add_child(counter)
@@ -1109,7 +1086,9 @@ func _add_rules_form() -> void:
 	_add_bool(rules, "allow_situation_repeats", "allow_situation_repeats")
 	_add_bool(rules, "show_locked_unlockable_moves", "show_locked_unlockable_moves")
 	_add_bool(rules, "reveal_tag_after_use", "reveal_tag_after_use")
-	_add_bool(rules, "reveal_secondary_after_first_completed_date", "reveal_secondary_after_first_completed_date")
+	_add_int(rules, "combo_required_distinct_success_tags", "combo_required_distinct_success_tags")
+	_add_int(rules, "combo_bonus_score", "combo_bonus_score")
+	_add_int(rules, "combo_max_rewards_per_date", "combo_max_rewards_per_date")
 
 
 func _kind_name() -> String:
@@ -1124,8 +1103,6 @@ func _kind_name() -> String:
 			return "DateMove"
 		"situations":
 			return "DateSituation"
-		"secondary":
-			return "SecondaryRule"
 		"locations":
 			return "DateLocation"
 		"local_objects":
@@ -1196,19 +1173,6 @@ func _new_resource() -> Resource:
 			situation.display_name = "Новая ситуация"
 			situation.allowed_phases = [int(DateTypes.DatePhase.CORE)]
 			return situation
-		"secondary":
-			var rule := SecondaryRule.new()
-			rule.id = StringName("secondary_%s" % suffix)
-			rule.display_name = "Новое Secondary"
-			rule.condition_parameters = {
-				"counted_phases": [
-					int(DateTypes.DatePhase.OPENING),
-					int(DateTypes.DatePhase.CORE),
-					int(DateTypes.DatePhase.CLOSING),
-				],
-				"required_count": 3,
-			}
-			return rule
 		"locations":
 			var location := DateLocation.new()
 			location.id = StringName("location_%s" % suffix)
@@ -1323,7 +1287,7 @@ func _swap_into(catalog: DateContentCatalog, draft: Resource) -> void:
 	if draft is DateRules:
 		catalog.date_rules = draft
 		return
-	var arrays: Array = [catalog.tags, catalog.moves, catalog.situations, catalog.girls, catalog.girl_difficulty_presets, catalog.secondary_rules, catalog.local_objects, catalog.locations, catalog.outfits, catalog.progression_stats]
+	var arrays: Array = [catalog.tags, catalog.moves, catalog.situations, catalog.girls, catalog.girl_difficulty_presets, catalog.local_objects, catalog.locations, catalog.outfits, catalog.progression_stats]
 	for arr in arrays:
 		for i in arr.size():
 			if arr[i] != null and arr[i].id == draft.get("id"):
@@ -1339,8 +1303,6 @@ func _swap_into(catalog: DateContentCatalog, draft: Resource) -> void:
 		catalog.girls.append(draft)
 	elif draft is GirlDifficultyPreset:
 		catalog.girl_difficulty_presets.append(draft)
-	elif draft is SecondaryRule:
-		catalog.secondary_rules.append(draft)
 	elif draft is DateLocalObject:
 		catalog.local_objects.append(draft)
 	elif draft is DateLocation:
@@ -1358,7 +1320,7 @@ func _replace_original(draft: Resource) -> void:
 	var found: bool = false
 	var arrays: Array = [
 		catalog_service.catalog.tags, catalog_service.catalog.moves, catalog_service.catalog.situations,
-		catalog_service.catalog.girls, catalog_service.catalog.girl_difficulty_presets, catalog_service.catalog.secondary_rules, catalog_service.catalog.local_objects,
+		catalog_service.catalog.girls, catalog_service.catalog.girl_difficulty_presets, catalog_service.catalog.local_objects,
 		catalog_service.catalog.locations, catalog_service.catalog.outfits, catalog_service.catalog.progression_stats,
 	]
 	for arr in arrays:

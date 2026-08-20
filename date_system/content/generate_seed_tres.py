@@ -25,10 +25,10 @@ TAGS = [
 ]
 
 STATS = [
-    ("muscle", "Мышца", "Физическая сила."),
-    ("appearance", "Внешность", "Внешняя привлекательность."),
-    ("capital", "Капитал", "Деньги и ресурсы."),
-    ("aura", "Аура", "Присутствие и давление молчанием."),
+    ("muscle", "Мышца", "Физическая сила. Открывает силовые ходы и повышает шанс победы в силовых соревнованиях."),
+    ("appearance", "Внешность", "Внешняя привлекательность. Открывает специальные ходы и повышает шанс победы в соревнованиях на внешность."),
+    ("capital", "Капитал", "Деньги и ресурсы героя. Открывает дорогие ходы и повышает шанс победы в соревнованиях на капитал."),
+    ("aura", "Аура", "Способность давить присутствием и управлять вниманием. Открывает соответствующие ходы и повышает шанс победы в соревнованиях на ауру."),
 ]
 
 # id, name, description, move_ids
@@ -88,23 +88,25 @@ DIFFICULTIES = [
 
 TAG_IDS = [tag_id for tag_id, *_ in TAGS]
 
-# id, name, description, difficulty, positives, secondary
+# id, name, description, difficulty, positives, relationship_max
 GIRLS = [
-    ("alina", "Алина", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "variety"),
-    ("marina", "Марина", "держит спокойный тон и предпочитает ясную заботу без суеты", "mid", ["care", "composure", "directness", "humor"], "variety"),
-    ("girl_actress", "Актриса", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу", "early", ["flattery", "audacity", "generosity", "status", "humor"], "variety"),
-    ("vika", "Вика", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "demanding"),
-    ("dasha", "Даша", "любит дерзкие ставки и человека, который не боится задать тон", "mid", ["audacity", "risk", "humor", "dominance"], "variety"),
-    ("girl_mine_boss", "Начальница шахты", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением", "mid", ["directness", "dominance", "generosity", "composure"], "demanding"),
-    ("katya", "Катя", "любит спонтанность, игры, подколы и быстрые нестандартные решения", "mid", ["directness", "risk", "humor", "cunning"], "variety"),
-    ("girl_magazine_editor", "Редактор журнала", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова", "mid", ["directness", "status", "composure", "cunning"], "demanding"),
-    ("lera", "Лера", "любит красивую спокойную подачу, хороший вкус и социальную уверенность", "mid", ["politeness", "flattery", "status", "composure"], "variety"),
-    ("olya", "Оля", "ценит щедрый жест, статус и вежливый уход за атмосферой", "mid", ["generosity", "status", "care", "politeness"], "variety"),
-    ("girl_scientist", "Учёная", "ценит ясность, спокойствие, наблюдательность и необычные решения", "mid", ["directness", "composure", "cunning", "care"], "demanding"),
-    ("sonya", "Соня", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю", "late", ["audacity", "risk", "humor"], "variety"),
-    ("nika", "Ника", "проверяет собеседника прямым ходом и обходным правилом", "mid", ["cunning", "directness", "audacity", "composure"], "variety"),
-    ("rita", "Рита", "любит дорогой жест, контроль сцены и риск напоказ", "mid", ["status", "dominance", "generosity", "risk"], "variety"),
-    ("girl_president", "Президент", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание", "late", ["dominance", "status", "composure"], "demanding"),
+    ("alina", "Алина", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], 5),
+    ("marina", "Марина", "держит спокойный тон и предпочитает ясную заботу без суеты", "mid", ["care", "composure", "directness", "humor"], 5),
+    ("girl_actress", "Актриса", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу", "early", ["flattery", "audacity", "generosity", "status", "humor"], 5),
+    ("vika", "Вика", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], 5),
+    ("dasha", "Даша", "любит дерзкие ставки и человека, который не боится задать тон", "mid", ["audacity", "risk", "humor", "dominance"], 5),
+    ("girl_mine_boss", "Начальница шахты", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением", "mid", ["directness", "dominance", "generosity", "composure"], 5),
+    ("katya", "Катя", "любит спонтанность, игры, подколы и быстрые нестандартные решения", "mid", ["directness", "risk", "humor", "cunning"], 5),
+    ("girl_magazine_editor", "Редактор журнала", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова", "mid", ["directness", "status", "composure", "cunning"], 5),
+    ("lera", "Лера", "любит красивую спокойную подачу, хороший вкус и социальную уверенность", "mid", ["politeness", "flattery", "status", "composure"], 5),
+    ("kira", "Кира", "режет лишнее напрямую, проверяет наглостью и держит самообладание дольше, чем удобно", "mid", ["directness", "audacity", "cunning", "composure"], 10),
+    ("olya", "Оля", "ценит щедрый жест, статус и вежливый уход за атмосферой", "mid", ["generosity", "status", "care", "politeness"], 5),
+    ("girl_scientist", "Учёная", "ценит ясность, спокойствие, наблюдательность и необычные решения", "mid", ["directness", "composure", "cunning", "care"], 5),
+    ("sonya", "Соня", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю", "late", ["audacity", "risk", "humor"], 5),
+    ("nika", "Ника", "проверяет собеседника прямым ходом и обходным правилом", "mid", ["cunning", "directness", "audacity", "composure"], 5),
+    ("rita", "Рита", "любит дорогой жест, контроль сцены и риск напоказ", "mid", ["status", "dominance", "generosity", "risk"], 5),
+    ("eva", "Ева", "занимает зал статусом, щедрым жестом и ставкой, которую нельзя тихо отменить", "mid", ["status", "dominance", "risk", "generosity"], 10),
+    ("girl_president", "Президент", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание", "late", ["dominance", "status", "composure"], 5),
 ]
 
 
@@ -114,19 +116,18 @@ def negative_tags(positives: list[str]) -> list[str]:
 
 
 def girl_resource_fields(girl: tuple) -> str:
-    girl_id, name, description, difficulty, positives, secondary = girl
+    girl_id, name, description, difficulty, positives, relationship_max = girl
     return (
         f'id = &"{girl_id}"\n'
         f'display_name = "{esc(name)}"\n'
         f'description = "{esc(description)}"\n'
         "enabled = true\n"
-        "relationship_min = -5\n"
+        "relationship_min = 0\n"
         "relationship_start = 0\n"
-        "relationship_max = 5\n"
+        f"relationship_max = {relationship_max}\n"
         f'difficulty_preset_id = &"{difficulty}"\n'
         f"positive_tag_ids = {string_name_array(positives)}\n"
         f"negative_tag_ids = {string_name_array(negative_tags(positives))}\n"
-        f'secondary_rule_id = &"{secondary}"\n'
     )
 
 
@@ -229,6 +230,29 @@ UNLOCK_MOVES = [
         ("spontaneous_bet", "risk", "Удвоить ставку и усложнить условие проигравшему."),
     ]),
 ]
+
+
+def date_rules_fields() -> str:
+    return (
+        "opening_episode_count = 1\n"
+        "core_episode_count = 3\n"
+        "closing_episode_count = 1\n"
+        "base_moves_per_episode = 3\n"
+        "allow_situation_repeats = false\n"
+        "show_locked_unlockable_moves = true\n"
+        "opening_positive_score = 1\n"
+        "opening_negative_score = -1\n"
+        "core_positive_score = 1\n"
+        "core_negative_score = -1\n"
+        "closing_positive_score = 1\n"
+        "closing_negative_score = -1\n"
+        "reveal_tag_after_use = true\n"
+        "combo_required_distinct_success_tags = 3\n"
+        "combo_bonus_score = 1\n"
+        "combo_max_rewards_per_date = 1\n"
+        "apartment_unprepared_penalty = -1\n"
+        "min_distinct_base_tags_per_situation = 6\n"
+    )
 
 
 def esc(text: str) -> str:
@@ -389,36 +413,6 @@ def main() -> None:
                 f'id = &"{outfit_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(name)}"\nenabled = true\nscore_bonus = {bonus}\nprice = {price}\n',
             ),
         )
-    write(
-        CONTENT / "secondary" / "variety.tres",
-        simple_resource(
-            "SecondaryRule",
-            "res://date_system/content/secondary_rule.gd",
-            'id = &"variety"\n'
-            'display_name = "ЛЮБИТ РАЗНООБРАЗИЕ"\n'
-            'description = "Получить +1 тремя различными Tags за свидание."\n'
-            "enabled = true\n"
-            "condition_type = 0\n"
-            'condition_parameters = {\n"required_count": 3,\n"counted_phases": [0, 1, 2]\n}\n'
-            "success_score = 2\n"
-            "failure_score = 0\n",
-        ),
-    )
-    write(
-        CONTENT / "secondary" / "demanding.tres",
-        simple_resource(
-            "SecondaryRule",
-            "res://date_system/content/secondary_rule.gd",
-            'id = &"demanding"\n'
-            'display_name = "ТРЕБОВАТЕЛЬНАЯ"\n'
-            'description = "Завершить CORE с 0 ошибками."\n'
-            "enabled = true\n"
-            "condition_type = 1\n"
-            'condition_parameters = {\n"counted_phases": [1]\n}\n'
-            "success_score = 2\n"
-            "failure_score = 0\n",
-        ),
-    )
     for sit_id, name, text, phase in SITUATIONS:
         write(
             CONTENT / "situations" / f"{sit_id}.tres",
@@ -463,23 +457,7 @@ def main() -> None:
         simple_resource(
             "DateRules",
             "res://date_system/content/date_rules.gd",
-            "opening_episode_count = 1\n"
-            "core_episode_count = 3\n"
-            "closing_episode_count = 1\n"
-            "base_moves_per_episode = 3\n"
-            "allow_situation_repeats = false\n"
-            "show_locked_unlockable_moves = true\n"
-            "opening_positive_score = 1\n"
-            "opening_negative_score = -1\n"
-            "core_positive_score = 1\n"
-            "core_negative_score = -1\n"
-            "closing_positive_score = 1\n"
-            "closing_negative_score = -1\n"
-            "reveal_tag_after_use = true\n"
-            "reveal_secondary_after_first_completed_date = true\n"
-            "secondary_counted_phases = Array[int]([1])\n"
-            "apartment_unprepared_penalty = -1\n"
-            "min_distinct_base_tags_per_situation = 6\n",
+            date_rules_fields(),
         ),
     )
 
@@ -502,7 +480,6 @@ def main() -> None:
     sit_ids = [add_res(f"res://date_system/content/situations/{i}.tres", "situations") for i, *_ in SITUATIONS]
     girl_ids = [add_res(f"res://date_system/content/girls/{girl[0]}.tres", "girls") for girl in GIRLS]
     difficulty_ids = [add_res(f"res://date_system/content/girl_difficulty/{i}.tres", "diff") for i, *_ in DIFFICULTIES]
-    sec_ids = [add_res("res://date_system/content/secondary/variety.tres", "sec"), add_res("res://date_system/content/secondary/demanding.tres", "sec")]
     object_ids = [add_res(f"res://date_system/content/local_objects/{i}.tres", "obj") for i, *_ in LOCAL_OBJECTS]
     loc_ids = [add_res(f"res://date_system/content/locations/{i}.tres", "loc") for i, *_ in LOCATIONS]
     outfit_ids = [add_res(f"res://date_system/content/outfits/{i}.tres", "outfit") for i, *_ in OUTFITS]
@@ -523,7 +500,6 @@ def main() -> None:
         + f"situations = {arr(sit_ids)}\n"
         + f"girls = {arr(girl_ids)}\n"
         + f"girl_difficulty_presets = {arr(difficulty_ids)}\n"
-        + f"secondary_rules = {arr(sec_ids)}\n"
         + f"local_objects = {arr(object_ids)}\n"
         + f"locations = {arr(loc_ids)}\n"
         + f"outfits = {arr(outfit_ids)}\n"

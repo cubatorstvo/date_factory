@@ -216,7 +216,7 @@ func _build_launch() -> void:
 	outfit_sel.item_selected.connect(func(index: int) -> void:
 		_outfit_id = outfit_sel.get_item_metadata(index)
 	)
-	_host.add_child(LabUi.labeled_row("Наряд", outfit_sel))
+	_host.add_child(LabUi.labeled_row("Одежда", outfit_sel))
 
 	var location: DateLocation = _catalog().find_location(_location_id)
 	if location != null and location.uses_apartment_preparation:
@@ -306,13 +306,6 @@ func _girl_card() -> PanelContainer:
 	var unknown := Label.new()
 	unknown.text = "Неизвестно: %d" % progress.unknown_tag_count(girl)
 	box.add_child(unknown)
-	var secondary := Label.new()
-	var rule: SecondaryRule = _catalog().find_secondary(girl.secondary_rule_id)
-	if progress.secondary_revealed and rule != null:
-		secondary.text = "Secondary:\n%s" % rule.display_name
-	else:
-		secondary.text = "Secondary:\n???"
-	box.add_child(secondary)
 	return panel
 
 
@@ -394,6 +387,8 @@ func _build_runner() -> void:
 		active.text = "Active girl: %s\nLocation: %s" % [girl_name, location_name]
 		_host.add_child(active)
 	_host.add_child(LabUi.heading("Свидание"))
+	_host.add_child(_date_start_relationship_block(session))
+	_host.add_child(_combo_status_label(session))
 	var meta := Label.new()
 	meta.text = "Фаза: %s    Эпизод: %d    Seed: %d" % [DateTypes.phase_name(session.current_phase), session.current_episode_index + 1, session.seed]
 	_host.add_child(meta)
@@ -406,15 +401,6 @@ func _build_runner() -> void:
 		sit_text.text = view.situation.situation_text
 		sit_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_host.add_child(sit_text)
-	var progress: GirlProgress = _session_progress(session.girl_id)
-	if progress.secondary_revealed:
-		var live := Label.new()
-		live.text = "Secondary: %s" % _engine.secondary_live_text()
-		_host.add_child(live)
-	else:
-		var hidden := Label.new()
-		hidden.text = "SECONDARY: ???"
-		_host.add_child(hidden)
 
 	if session.stage == DateSession.Stage.AWAITING_MOVE and view != null:
 		_host.add_child(LabUi.heading("БАЗОВЫЕ ХОДЫ"))
@@ -435,9 +421,12 @@ func _build_runner() -> void:
 			empty_local.text = "Нет локальных объектов."
 			_host.add_child(empty_local)
 		for local_view in view.local_object_views:
-			var object_title := Label.new()
-			object_title.text = "%s — Использовано" % local_view.display_name if local_view.used else local_view.display_name
-			object_title.add_theme_font_size_override("font_size", 18)
+			var object_title: RichTextLabel = GameTermView.create(
+				"%s — Использовано" % local_view.display_name if local_view.used else local_view.display_name
+			)
+			object_title.add_theme_font_size_override("normal_font_size", 18)
+			if local_view.used:
+				object_title.modulate = _unavailable_modulate()
 			_host.add_child(object_title)
 			for option in local_view.options:
 				_host.add_child(_move_button(option))
@@ -454,35 +443,81 @@ func _build_runner() -> void:
 		_host.add_child(_debug_panel(session, view))
 
 
+func _unavailable_modulate() -> Color:
+	return Color(0.7, 0.7, 0.7)
+
+
+func _date_start_relationship_block(session: DateSession) -> Control:
+	var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id)
+	var rel_max: int = girl.relationship_max if girl != null else 0
+	var box := VBoxContainer.new()
+	var start: RichTextLabel = GameTermView.create("Отношения на начало свидания: %d / %d" % [session.relationship_before, rel_max])
+	box.add_child(start)
+	box.add_child(GameTermView.create("До максимума: %d" % maxi(0, rel_max - session.relationship_before)))
+	return box
+
+
+func _combo_status_label(session: DateSession) -> Control:
+	return GameTermView.create(_combo_compact_text(session), _combo_tag_knowledge(session))
+
+
+func _combo_tag_knowledge(session: DateSession) -> Dictionary:
+	var knowledge: Dictionary = {}
+	var progress: GirlProgress = _engine.girl_progress() if _engine != null else null
+	for tag_id in session.combo_distinct_success_tag_ids:
+		if progress != null:
+			knowledge[tag_id] = progress.tag_knowledge(tag_id)
+		else:
+			knowledge[tag_id] = DateTypes.TagKnowledge.POSITIVE
+	return knowledge
+
+
+func _combo_compact_text(session: DateSession) -> String:
+	var rules: DateRules = _engine.catalog().date_rules
+	var required: int = rules.combo_required_distinct_success_tags if rules != null else 3
+	if session.combo_achieved:
+		return "КОМБО: ПОЛУЧЕНО +1"
+	var parts := PackedStringArray()
+	for tag_id in session.combo_distinct_success_tag_ids:
+		var tag: DateTag = _engine.catalog().find_tag(tag_id)
+		var tag_name: String = tag.display_name if tag != null else String(tag_id)
+		parts.append("[%s]" % tag_name)
+	var count: int = session.combo_distinct_success_tag_ids.size()
+	if parts.is_empty():
+		return "КОМБО: 0 / %d" % required
+	return "КОМБО: %s %d / %d" % [" ".join(parts), count, required]
+
+
+func _requirement_reason(option: DateMoveOption) -> String:
+	var stat: ProgressionStat = _catalog().find_stat(option.requirement_stat_id)
+	var stat_name: String = stat.display_name if stat != null else String(option.requirement_stat_id)
+	return "Требуется: %s %d (сейчас %d)" % [stat_name, option.requirement_level, option.current_stat_level]
+
+
 func _move_button(option: DateMoveOption) -> Button:
 	var btn := Button.new()
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.clip_contents = true
-	btn.disabled = not option.is_selectable()
-	var locked: bool = option.availability == DateTypes.MoveAvailability.LOCKED
-	var header: String = "%s %s" % [LabUi.tag_bbcode(option.tag_display_name, option.tag_knowledge, locked), option.option_text if option.kind == DateTypes.DateMoveKind.LOCAL else option.display_name]
-	if option.availability == DateTypes.MoveAvailability.USED:
-		btn.modulate = Color(0.7, 0.7, 0.7)
+	var unavailable: bool = not option.is_selectable()
+	btn.disabled = unavailable
+	var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN if unavailable else option.tag_knowledge
+	var header: String = "[%s] %s" % [option.tag_display_name, option.option_text if option.kind == DateTypes.DateMoveKind.LOCAL else option.display_name]
+	if unavailable:
+		btn.modulate = _unavailable_modulate()
 	var lines := PackedStringArray([header])
 	if option.kind != DateTypes.DateMoveKind.LOCAL:
 		lines.append(option.option_text)
-	if option.kind == DateTypes.DateMoveKind.UNLOCKABLE and option.availability == DateTypes.MoveAvailability.LOCKED:
-		var stat: ProgressionStat = _catalog().find_stat(option.requirement_stat_id)
-		var stat_name: String = stat.display_name if stat != null else String(option.requirement_stat_id)
-		lines.append("Requirement: %s %d  (сейчас %d)" % [stat_name, option.requirement_level, option.current_stat_level])
-	elif option.kind == DateTypes.DateMoveKind.LOCAL and option.availability == DateTypes.MoveAvailability.LOCKED:
-		var local_stat: ProgressionStat = _catalog().find_stat(option.requirement_stat_id)
-		var local_stat_name: String = local_stat.display_name if local_stat != null else String(option.requirement_stat_id)
-		lines.append("%s %d" % [local_stat_name, option.requirement_level])
-	elif option.kind == DateTypes.DateMoveKind.UNLOCKABLE and option.availability == DateTypes.MoveAvailability.USED:
-		lines.append("Уже использован")
+	if unavailable:
+		if option.availability == DateTypes.MoveAvailability.LOCKED:
+			lines.append(_requirement_reason(option))
+		else:
+			lines.append("Использовано")
+	var knowledge_map: Dictionary = {}
+	if option.tag_id != &"":
+		knowledge_map[option.tag_id] = knowledge
 	var rtl := RichTextLabel.new()
-	rtl.bbcode_enabled = true
-	rtl.fit_content = true
-	rtl.scroll_active = false
-	rtl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rtl.add_theme_color_override("default_color", LabUi.TEXT)
-	rtl.text = "\n".join(lines)
+	GameTermView.apply(rtl, "\n".join(lines), knowledge_map)
+	rtl.mouse_filter = Control.MOUSE_FILTER_PASS
 	btn.add_child(rtl)
 	rtl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8)
 	btn.custom_minimum_size = Vector2(0, 72)
@@ -492,10 +527,15 @@ func _move_button(option: DateMoveOption) -> Button:
 			btn.custom_minimum_size.y = height
 	)
 	var move_id: StringName = option.move_id
-	btn.pressed.connect(func() -> void:
+	var choose := func() -> void:
+		if unavailable:
+			return
 		_engine.choose_move(move_id)
 		_persist()
 		rebuild()
+	btn.pressed.connect(choose)
+	rtl.meta_clicked.connect(func(_meta: Variant) -> void:
+		choose.call()
 	)
 	return btn
 
@@ -531,6 +571,15 @@ func _episode_result_block(session: DateSession) -> PanelContainer:
 	else:
 		revealed.text = "Новое раскрытое знание: нет"
 	box.add_child(revealed)
+	if session.episode_history.size() > 0 and session.episode_history[session.episode_history.size() - 1].combo_granted:
+		var required: int = 3
+		if _engine.catalog().date_rules != null:
+			required = _engine.catalog().date_rules.combo_required_distinct_success_tags
+		var combo_title: RichTextLabel = GameTermView.create("КОМБО: %d разных успешных тега подряд" % required)
+		box.add_child(combo_title)
+		var combo_score := Label.new()
+		combo_score.text = "+1"
+		box.add_child(combo_score)
 	return panel
 
 
@@ -559,21 +608,31 @@ func _build_result() -> void:
 		var tag: DateTag = _engine.catalog().find_tag(episode.tag_id)
 		var tag_name: String = tag.display_name if tag != null else String(episode.tag_id)
 		_tally_lines.append(LabUi.tally_row("[%s]" % tag_name, episode.score_delta))
-	var rule_name: String = result.secondary_rule.display_name if result.secondary_rule != null else "Secondary"
-	_tally_lines.append(LabUi.tally_row(rule_name, bd.secondary_score))
+	if bd.combo_score != 0:
+		_tally_lines.append(LabUi.tally_row("Комбо", bd.combo_score))
 	if bd.apartment_preparation_score != 0:
 		_tally_lines.append(LabUi.tally_row("Неподготовленная квартира", bd.apartment_preparation_score))
-	_tally_lines.append(LabUi.tally_row("Наряд", bd.outfit_score))
+	_tally_lines.append(LabUi.tally_row("Одежда", bd.outfit_score))
 	var total_row := LabUi.tally_row("Итого", bd.total)
 	for child in total_row.get_children():
 		if child is Label:
 			(child as Label).add_theme_font_size_override("font_size", 26)
+		elif child is RichTextLabel:
+			(child as RichTextLabel).add_theme_font_size_override("normal_font_size", 26)
 	_tally_lines.append(total_row)
-	var rel := Label.new()
-	rel.text = "Отношения  %d → %d" % [session.relationship_before, session.relationship_after]
-	rel.add_theme_font_size_override("font_size", 18)
-	rel.add_theme_color_override("font_color", LabUi.MUTED)
+	var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id)
+	var rel_max: int = girl.relationship_max if girl != null else 0
+	var rel_text: String = "Отношения: %d / %d -> %d / %d" % [session.relationship_before, rel_max, session.relationship_after, rel_max]
+	if session.relationship_after >= rel_max and rel_max > 0:
+		rel_text += " — МАКСИМУМ"
+	var rel: RichTextLabel = GameTermView.create(rel_text)
+	rel.add_theme_font_size_override("normal_font_size", 18)
+	rel.add_theme_color_override("default_color", LabUi.MUTED)
 	_tally_lines.append(rel)
+	if result.relationship_max_reached:
+		var rating: RichTextLabel = GameTermView.create("Рейтинг +1")
+		rating.add_theme_font_size_override("normal_font_size", 18)
+		_tally_lines.append(rating)
 	var footer := VBoxContainer.new()
 	footer.add_theme_constant_override("separation", 10)
 	if _playthrough:
@@ -657,7 +716,9 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 		"resolved_tag_id: %s" % String(session.current_resolved_tag_id),
 		"tag_preference: %d" % session.current_tag_preference,
 		"score_delta: %d" % session.current_score_delta,
-		"secondary_internal_state: %s" % str(session.secondary_runtime_state),
+		"combo_chain: %s" % str(session.combo_distinct_success_tag_ids),
+		"combo_achieved: %s" % str(session.combo_achieved),
+		"combo_rewards_earned: %d" % session.combo_rewards_earned,
 		"score_breakdown: %s" % str(session.score_breakdown.to_dictionary() if session.score_breakdown != null else {}),
 	])
 	lines.append_array(_debug_move_block("applicable_unlockable_moves", session.current_applicable_unlockable_move_ids, situation_id, session, true))

@@ -6,7 +6,7 @@ signal episode_started
 signal move_selected(move_id: StringName)
 signal tag_revealed(tag_id: StringName, knowledge: DateTypes.TagKnowledge)
 signal relationship_changed(girl_id: StringName, value: int)
-signal secondary_revealed(girl_id: StringName)
+signal combo_achieved
 signal date_completed
 signal relationship_max_reached(girl_id: StringName)
 
@@ -18,7 +18,6 @@ var _outfit: Outfit
 var _girl_progress: GirlProgress
 var _player: TestPlayerState
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
-var _evaluators: SecondaryEvaluatorRegistry = SecondaryEvaluatorRegistry.new()
 var _last_result: DateRunResult
 var _relationship_max_emitted: bool = false
 
@@ -53,7 +52,6 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.used_unlockable_move_counts = {}
 	_session.local_object_ids = config.local_object_ids.duplicate()
 	_session.used_local_object_ids = []
-	_session.secondary_runtime_state = _initial_secondary_state()
 	_rng.seed = config.seed
 	_session.current_episode_index = 0
 	_begin_episode()
@@ -145,7 +143,7 @@ func choose_move(move_id: StringName) -> void:
 	_session.current_score_delta = score
 	_session.current_result_text = episode.result_text
 	_append_episode_score(episode)
-	_update_secondary(episode)
+	_update_combo(episode)
 	_session.stage = DateSession.Stage.SHOWING_EPISODE_RESULT
 	move_selected.emit(move_id)
 
@@ -174,14 +172,6 @@ func abort() -> void:
 		return
 	_session.stage = DateSession.Stage.ABORTED
 	_session.completed = false
-
-
-func secondary_live_text() -> String:
-	var rule: SecondaryRule = _catalog.find_secondary(_girl.secondary_rule_id)
-	var evaluator: SecondaryEvaluator = _evaluators.get_evaluator(rule.condition_type)
-	if evaluator == null:
-		return ""
-	return evaluator.live_text(_session.secondary_runtime_state, rule, _catalog.date_rules)
 
 
 func catalog() -> DateContentCatalog:
@@ -469,29 +459,42 @@ func _append_episode_score(episode: DateEpisodeResult) -> void:
 	_session.score_breakdown.recompute()
 
 
-func _initial_secondary_state() -> Dictionary:
-	var rule: SecondaryRule = _catalog.find_secondary(_girl.secondary_rule_id)
-	var evaluator: SecondaryEvaluator = _evaluators.get_evaluator(rule.condition_type)
-	if evaluator == null:
-		return {}
-	return evaluator.initial_state(rule, _catalog.date_rules)
-
-
-func _update_secondary(episode: DateEpisodeResult) -> void:
-	var rule: SecondaryRule = _catalog.find_secondary(_girl.secondary_rule_id)
-	var evaluator: SecondaryEvaluator = _evaluators.get_evaluator(rule.condition_type)
-	if evaluator == null:
+func _update_combo(episode: DateEpisodeResult) -> void:
+	var rules: DateRules = _catalog.date_rules
+	if episode.score_delta <= 0:
+		_session.combo_distinct_success_tag_ids.clear()
 		return
-	evaluator.on_episode(_session.secondary_runtime_state, episode, rule, _catalog.date_rules)
+	var tag_id: StringName = episode.tag_id
+	if tag_id == &"":
+		return
+	var chain: Array[StringName] = _session.combo_distinct_success_tag_ids
+	var previous_index: int = chain.rfind(tag_id)
+	if previous_index >= 0:
+		var tail: Array[StringName] = []
+		var seen: Dictionary = {}
+		for i in range(previous_index + 1, chain.size()):
+			var existing: StringName = chain[i]
+			var key: String = String(existing)
+			if seen.has(key):
+				continue
+			seen[key] = true
+			tail.append(existing)
+		_session.combo_distinct_success_tag_ids = tail
+		chain = _session.combo_distinct_success_tag_ids
+	chain.append(tag_id)
+	if chain.size() < rules.combo_required_distinct_success_tags:
+		return
+	if _session.combo_rewards_earned >= rules.combo_max_rewards_per_date:
+		return
+	_session.score_breakdown.combo_score += rules.combo_bonus_score
+	_session.combo_achieved = true
+	_session.combo_rewards_earned += 1
+	episode.combo_granted = true
+	_session.score_breakdown.recompute()
+	combo_achieved.emit()
 
 
 func _finish_date() -> void:
-	var rules: DateRules = _catalog.date_rules
-	var rule: SecondaryRule = _catalog.find_secondary(_girl.secondary_rule_id)
-	var evaluator: SecondaryEvaluator = _evaluators.get_evaluator(rule.condition_type)
-	var secondary_ok: bool = evaluator != null and evaluator.is_success(_session.secondary_runtime_state, rule, rules)
-	_session.score_breakdown.secondary_success = secondary_ok
-	_session.score_breakdown.secondary_score = rule.success_score if secondary_ok else rule.failure_score
 	_session.score_breakdown.outfit_score = _outfit.score_bonus
 	_session.score_breakdown.apartment_preparation_score = _apartment_preparation_score()
 	_session.score_breakdown.recompute()
@@ -505,9 +508,6 @@ func _finish_date() -> void:
 	_girl_progress.relationship = next_rel
 	relationship_changed.emit(_girl.id, next_rel)
 	_girl_progress.completed_dates += 1
-	if rules.reveal_secondary_after_first_completed_date and not _girl_progress.secondary_revealed:
-		_girl_progress.secondary_revealed = true
-		secondary_revealed.emit(_girl.id)
 
 	var max_reached: bool = next_rel >= _girl.relationship_max and _session.relationship_before < _girl.relationship_max
 	if max_reached:
@@ -520,8 +520,6 @@ func _finish_date() -> void:
 	_last_result.session = _session
 	_last_result.girl_progress = _girl_progress
 	_last_result.score_breakdown = _session.score_breakdown
-	_last_result.secondary_rule = rule
-	_last_result.secondary_live_text = evaluator.live_text(_session.secondary_runtime_state, rule, rules) if evaluator != null else ""
 	_last_result.relationship_max_reached = max_reached
 	date_completed.emit()
 

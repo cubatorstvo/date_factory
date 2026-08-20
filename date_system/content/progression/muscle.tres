@@ -6,6 +6,6 @@
 script = ExtResource("1_script")
 id = &"muscle"
 display_name = "Мышца"
-description = "Физическая сила."
+description = "Физическая сила. Открывает силовые ходы и повышает шанс победы в силовых соревнованиях."
 min_level = 0
 max_level = 5

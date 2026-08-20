@@ -16,6 +16,8 @@ const ID_OLYA: StringName = &"olya"
 const ID_SONYA: StringName = &"sonya"
 const ID_NIKA: StringName = &"nika"
 const ID_RITA: StringName = &"rita"
+const ID_KIRA: StringName = &"kira"
+const ID_EVA: StringName = &"eva"
 
 @export var girls: Array[GirlDefinition] = []
 
@@ -49,21 +51,23 @@ func get_girls_for_location(location_id: StringName) -> Array[GirlDefinition]:
 
 static func create_seed() -> GirlCatalog:
 	var catalog: GirlCatalog = GirlCatalog.new()
-	catalog.girls.append(_make(ID_ALINA, "Алина", LocationCatalog.ID_CITY_CENTER, -5, 5, _city_stage_meet_requirements(1)))
-	catalog.girls.append(_make(ID_MARINA, "Марина", LocationCatalog.ID_CITY_CENTER, -5, 5, _city_stage_meet_requirements(1)))
-	catalog.girls.append(_make(ID_VIKA, "Вика", LocationCatalog.ID_CAFE, -5, 5, _city_stage_meet_requirements(1)))
-	catalog.girls.append(_make(ID_DASHA, "Даша", LocationCatalog.ID_CAFE, -5, 5, _city_stage_meet_requirements(1)))
-	catalog.girls.append(_make(ID_ACTRESS, "Актриса", LocationCatalog.ID_CITY_CENTER, -5, 5, _stage_and_rating_meet_requirements(1, 2), _rival_defeated_date_requirements(RivalCatalog.ID_BORIS)))
-	catalog.girls.append(_make(ID_KATYA, "Катя", LocationCatalog.ID_CITY_CENTER, -5, 5, _city_stage_meet_requirements(2)))
-	catalog.girls.append(_make(ID_LERA, "Лера", LocationCatalog.ID_CAFE, -5, 5, _city_stage_meet_requirements(2)))
-	catalog.girls.append(_make(ID_OLYA, "Оля", LocationCatalog.ID_RESTAURANT, -5, 5, _city_stage_meet_requirements(2)))
-	catalog.girls.append(_make(ID_MINE_BOSS, "Начальница шахты", LocationCatalog.ID_RESTAURANT, -5, 5, _stage_and_rating_meet_requirements(2, 5), _rival_defeated_date_requirements(RivalCatalog.ID_FOREMAN)))
-	catalog.girls.append(_make(ID_MAGAZINE_EDITOR, "Редактор журнала", LocationCatalog.ID_CAFE, -5, 5, _stage_and_rating_meet_requirements(3, 7), _rival_defeated_date_requirements(RivalCatalog.ID_COLUMNIST)))
-	catalog.girls.append(_make(ID_SONYA, "Соня", LocationCatalog.ID_CITY_CENTER, -5, 5, _city_stage_meet_requirements(3)))
-	catalog.girls.append(_make(ID_NIKA, "Ника", LocationCatalog.ID_CAFE, -5, 5, _city_stage_meet_requirements(3)))
-	catalog.girls.append(_make(ID_RITA, "Рита", LocationCatalog.ID_RESTAURANT, -5, 5, _city_stage_meet_requirements(3)))
-	catalog.girls.append(_make(ID_SCIENTIST, "Учёная", LocationCatalog.ID_CITY_CENTER, -5, 5, _stage_and_rating_meet_requirements(4, 10), _rival_defeated_date_requirements(RivalCatalog.ID_ACADEMIC)))
-	catalog.girls.append(_make(ID_PRESIDENT, "Президент", LocationCatalog.ID_RESTAURANT, -5, 5, _stage_and_rating_meet_requirements(5, 12), _rival_defeated_date_requirements(RivalCatalog.ID_MINISTER)))
+	catalog.girls.append(_make(ID_ALINA, "Алина", LocationCatalog.ID_CITY_CENTER, 0, 0, 5, _city_stage_meet_requirements(1)))
+	catalog.girls.append(_make(ID_MARINA, "Марина", LocationCatalog.ID_CITY_CENTER, 0, 0, 5, _city_stage_meet_requirements(1)))
+	catalog.girls.append(_make(ID_VIKA, "Вика", LocationCatalog.ID_CAFE, 0, 0, 5, _city_stage_meet_requirements(1)))
+	catalog.girls.append(_make(ID_DASHA, "Даша", LocationCatalog.ID_CAFE, 0, 0, 5, _city_stage_meet_requirements(1)))
+	catalog.girls.append(_make(ID_ACTRESS, "Актриса", LocationCatalog.ID_CITY_CENTER, 0, 0, 5, _stage_and_rating_meet_requirements(1, 2), _rival_defeated_date_requirements(RivalCatalog.ID_BORIS)))
+	catalog.girls.append(_make(ID_KATYA, "Катя", LocationCatalog.ID_CITY_CENTER, 0, 0, 5, _city_stage_meet_requirements(2)))
+	catalog.girls.append(_make(ID_LERA, "Лера", LocationCatalog.ID_CAFE, 0, 0, 5, _city_stage_meet_requirements(2)))
+	catalog.girls.append(_make(ID_KIRA, "Кира", LocationCatalog.ID_CAFE, 0, 0, 10, _city_stage_meet_requirements(2)))
+	catalog.girls.append(_make(ID_OLYA, "Оля", LocationCatalog.ID_RESTAURANT, 0, 0, 5, _city_stage_meet_requirements(2)))
+	catalog.girls.append(_make(ID_MINE_BOSS, "Начальница шахты", LocationCatalog.ID_RESTAURANT, 0, 0, 5, _stage_and_rating_meet_requirements(2, 5), _rival_defeated_date_requirements(RivalCatalog.ID_FOREMAN)))
+	catalog.girls.append(_make(ID_MAGAZINE_EDITOR, "Редактор журнала", LocationCatalog.ID_CAFE, 0, 0, 5, _stage_and_rating_meet_requirements(3, 7), _rival_defeated_date_requirements(RivalCatalog.ID_COLUMNIST)))
+	catalog.girls.append(_make(ID_SONYA, "Соня", LocationCatalog.ID_CITY_CENTER, 0, 0, 5, _city_stage_meet_requirements(3)))
+	catalog.girls.append(_make(ID_NIKA, "Ника", LocationCatalog.ID_CAFE, 0, 0, 5, _city_stage_meet_requirements(3)))
+	catalog.girls.append(_make(ID_RITA, "Рита", LocationCatalog.ID_RESTAURANT, 0, 0, 5, _city_stage_meet_requirements(3)))
+	catalog.girls.append(_make(ID_EVA, "Ева", LocationCatalog.ID_RESTAURANT, 0, 0, 10, _city_stage_meet_requirements(3)))
+	catalog.girls.append(_make(ID_SCIENTIST, "Учёная", LocationCatalog.ID_CITY_CENTER, 0, 0, 5, _stage_and_rating_meet_requirements(4, 10), _rival_defeated_date_requirements(RivalCatalog.ID_ACADEMIC)))
+	catalog.girls.append(_make(ID_PRESIDENT, "Президент", LocationCatalog.ID_RESTAURANT, 0, 0, 5, _stage_and_rating_meet_requirements(5, 12), _rival_defeated_date_requirements(RivalCatalog.ID_MINISTER)))
 	return catalog
 
 
@@ -111,6 +115,7 @@ static func _make(
 	display_name: String,
 	location_id: StringName,
 	relationship_min: int,
+	relationship_start: int,
 	relationship_max: int,
 	meet_requirements: Array[GirlAccessRequirement] = [],
 	date_requirements: Array[GirlAccessRequirement] = []
@@ -121,6 +126,8 @@ static func _make(
 	girl.location_id = location_id
 	girl.relationship_min = relationship_min
 	girl.relationship_max = relationship_max
+	if "relationship_start" in girl:
+		girl.set("relationship_start", relationship_start)
 	for requirement in meet_requirements:
 		if requirement != null:
 			girl.meet_requirements.append(requirement)

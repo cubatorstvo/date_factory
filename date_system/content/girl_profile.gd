@@ -11,7 +11,6 @@ extends Resource
 @export var difficulty_preset_id: StringName = &""
 @export var positive_tag_ids: Array[StringName] = []
 @export var negative_tag_ids: Array[StringName] = []
-@export var secondary_rule_id: StringName = &""
 @export var portrait: Texture2D
 @export var future_character_scene: PackedScene
 

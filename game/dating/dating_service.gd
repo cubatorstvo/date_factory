@@ -252,7 +252,7 @@ func _resolve_outfit_id(outfit_id: StringName) -> StringName:
 		return outfit_id
 	var equipment: Variant = _equipment_service()
 	if equipment != null:
-		return equipment.get_equipped_outfit_id()
+		return equipment.get_current_outfit_id()
 	return DEFAULT_OUTFIT_ID
 
 

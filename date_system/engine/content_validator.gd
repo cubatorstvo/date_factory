@@ -16,9 +16,12 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_base_usage(catalog, issues)
 	_check_situation_base_pool(catalog, issues)
 	_check_local_objects(catalog, issues)
-	_check_secondary_parameters(catalog, issues)
+	_check_combo_rules(catalog, issues)
 	_check_phase_coverage(catalog, issues)
-	_check_girl_secondary(catalog, issues)
+	_check_girl_relationship_bounds(catalog, issues)
+	_check_required_girl_profiles(catalog, issues)
+	_check_display_copy(catalog, issues)
+	_check_game_terms(catalog, issues)
 	_check_duplicate_unlockable_tags(catalog, issues)
 	_check_tag_move_usage(catalog, issues)
 	_check_base_tag_diversity(catalog, issues)
@@ -30,7 +33,6 @@ func _check_unique_ids(catalog: DateContentCatalog, issues: Array[ContentValidat
 	_unique_group("DateMove", catalog.moves, issues)
 	_unique_group("DateSituation", catalog.situations, issues)
 	_unique_group("GirlProfile", catalog.girls, issues)
-	_unique_group("SecondaryRule", catalog.secondary_rules, issues)
 	_unique_group("DateLocalObject", catalog.local_objects, issues)
 	_unique_group("DateLocation", catalog.locations, issues)
 	_unique_group("Outfit", catalog.outfits, issues)
@@ -241,21 +243,16 @@ func _check_local_objects(catalog: DateContentCatalog, issues: Array[ContentVali
 				issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "granted_local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
 
 
-func _check_secondary_parameters(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
-	for rule in catalog.secondary_rules:
-		if rule == null:
-			continue
-		match rule.condition_type:
-			DateTypes.SecondaryConditionType.DISTINCT_SUCCESS_TAGS:
-				if int(rule.condition_parameters.get("required_count", 0)) <= 0:
-					issues.append(_issue("SecondaryRule", String(rule.id), "condition_parameters.required_count", "required_count должен быть больше 0."))
-			DateTypes.SecondaryConditionType.NO_FAILURES:
-				pass
-			_:
-				issues.append(_issue("SecondaryRule", String(rule.id), "condition_type", "Неизвестный тип Secondary."))
-		var phases: Variant = rule.condition_parameters.get("counted_phases", [])
-		if phases is Array and (phases as Array).is_empty():
-			issues.append(_issue("SecondaryRule", String(rule.id), "condition_parameters.counted_phases", "counted_phases не должен быть пустым."))
+func _check_combo_rules(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var rules: DateRules = catalog.date_rules
+	if rules == null:
+		return
+	if rules.combo_required_distinct_success_tags < 2:
+		issues.append(_issue("DateRules", "", "combo_required_distinct_success_tags", "combo_required_distinct_success_tags должен быть >= 2."))
+	if rules.combo_bonus_score <= 0:
+		issues.append(_issue("DateRules", "", "combo_bonus_score", "combo_bonus_score должен быть больше 0."))
+	if rules.combo_max_rewards_per_date < 1:
+		issues.append(_issue("DateRules", "", "combo_max_rewards_per_date", "combo_max_rewards_per_date должен быть >= 1."))
 
 
 func _check_phase_coverage(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -280,12 +277,54 @@ func _check_phase_coverage(catalog: DateContentCatalog, issues: Array[ContentVal
 			issues.append(_issue("DateSituation", "", "allowed_phases", "Недостаточно Situation для фазы %s: %d из %d." % [DateTypes.phase_name(phase_value as DateTypes.DatePhase), int(counts[phase_value]), int(needed[phase_value])]))
 
 
-func _check_girl_secondary(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+func _check_girl_relationship_bounds(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var world_catalog: GirlCatalog = GirlCatalog.create_seed()
 	for girl in catalog.girls:
 		if girl == null:
 			continue
-		if catalog.find_secondary(girl.secondary_rule_id) == null:
-			issues.append(_issue("GirlProfile", String(girl.id), "secondary_rule_id", "Неизвестное Secondary-правило."))
+		if girl.relationship_min != 0:
+			issues.append(_issue("GirlProfile", String(girl.id), "relationship_min", "relationship_min должен быть 0."))
+		if girl.relationship_start != 0:
+			issues.append(_issue("GirlProfile", String(girl.id), "relationship_start", "relationship_start должен быть 0."))
+		var expected_max: int = 10 if girl.id == &"kira" or girl.id == &"eva" else 5
+		if girl.relationship_max != expected_max:
+			issues.append(_issue("GirlProfile", String(girl.id), "relationship_max", "relationship_max должен быть %d." % expected_max))
+		if girl.relationship_start < girl.relationship_min or girl.relationship_start > girl.relationship_max:
+			issues.append(_issue("GirlProfile", String(girl.id), "relationship_start", "relationship_start должен быть внутри relationship_min..relationship_max."))
+		var world_girl: GirlDefinition = world_catalog.get_girl(girl.id)
+		if world_girl == null:
+			issues.append(_issue("GirlProfile", String(girl.id), "id", "GirlProfile не имеет пары в GirlCatalog."))
+			continue
+		if world_girl.relationship_min != girl.relationship_min or world_girl.relationship_max != girl.relationship_max:
+			issues.append(_issue("GirlProfile", String(girl.id), "relationship_max", "Границы отношений GirlProfile и GirlCatalog не совпадают."))
+
+
+func _check_required_girl_profiles(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	for required_id in [&"kira", &"eva"]:
+		if catalog.find_girl(required_id) != null:
+			continue
+		issues.append(_issue("GirlProfile", String(required_id), "id", "В каталоге должна быть девушка \"%s\"." % String(required_id)))
+
+
+func _check_game_terms(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var registry: GameTermRegistry = GameTermRegistry.from_catalog(catalog)
+	for term_id in registry.duplicate_ids():
+		issues.append(_issue("GameTerm", term_id, "id", "GameTermRegistry содержит повторяющийся id."))
+	for alias in registry.ambiguous_aliases():
+		issues.append(_issue("GameTerm", alias, "aliases", "Alias игрового термина разрешается неоднозначно."))
+
+
+func _check_display_copy(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	for tag in catalog.enabled_tags():
+		if tag == null:
+			continue
+		if tag.display_name.strip_edges().is_empty() or tag.description.strip_edges().is_empty():
+			issues.append(_issue("DateTag", String(tag.id), "description", "Активный тег должен иметь display_name и description."))
+	for stat in catalog.progression_stats:
+		if stat == null:
+			continue
+		if stat.display_name.strip_edges().is_empty() or stat.description.strip_edges().is_empty():
+			issues.append(_issue("ProgressionStat", String(stat.id), "description", "Характеристика должна иметь display_name и description."))
 
 
 func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:

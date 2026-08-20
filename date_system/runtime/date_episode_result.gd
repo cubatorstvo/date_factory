@@ -10,3 +10,4 @@ extends Resource
 @export var score_delta: int = 0
 @export var result_text: String = ""
 @export var revealed_tag: bool = false
+@export var combo_granted: bool = false

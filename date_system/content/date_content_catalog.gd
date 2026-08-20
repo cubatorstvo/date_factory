@@ -6,7 +6,6 @@ extends Resource
 @export var situations: Array[DateSituation] = []
 @export var girls: Array[GirlProfile] = []
 @export var girl_difficulty_presets: Array[GirlDifficultyPreset] = []
-@export var secondary_rules: Array[SecondaryRule] = []
 @export var local_objects: Array[DateLocalObject] = []
 @export var locations: Array[DateLocation] = []
 @export var outfits: Array[Outfit] = []
@@ -58,13 +57,6 @@ func enabled_girl_difficulty_presets() -> Array[GirlDifficultyPreset]:
 		return a.sort_order < b.sort_order
 	)
 	return result
-
-
-func find_secondary(rule_id: StringName) -> SecondaryRule:
-	for item in secondary_rules:
-		if item != null and item.id == rule_id:
-			return item
-	return null
 
 
 func find_local_object(object_id: StringName) -> DateLocalObject:

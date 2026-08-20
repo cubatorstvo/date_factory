@@ -53,10 +53,9 @@ static func button(text: String) -> Button:
 
 static func labeled_row(title: String, control: Control) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	var label := Label.new()
-	label.text = title
+	var label: RichTextLabel = GameTermView.create(title)
 	label.custom_minimum_size = Vector2(220, 0)
-	label.add_theme_color_override("font_color", MUTED)
+	label.add_theme_color_override("default_color", MUTED)
 	row.add_child(label)
 	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(control)
@@ -86,10 +85,8 @@ static func tag_knowledge_color(knowledge: DateTypes.TagKnowledge) -> Color:
 			return TEXT
 
 
-static func tag_bbcode(display_name: String, knowledge: DateTypes.TagKnowledge, locked: bool = false) -> String:
-	var wrapped: String = "[lb]%s[rb]" % display_name
-	if locked:
-		wrapped += " 🔒"
+static func tag_bbcode(display_name: String, knowledge: DateTypes.TagKnowledge, _locked: bool = false) -> String:
+	var wrapped: String = "[b][lb]%s[rb][/b]" % display_name
 	match knowledge:
 		DateTypes.TagKnowledge.POSITIVE, DateTypes.TagKnowledge.NEGATIVE:
 			return "[color=#%s]%s[/color]" % [tag_knowledge_color(knowledge).to_html(false), wrapped]
@@ -97,15 +94,13 @@ static func tag_bbcode(display_name: String, knowledge: DateTypes.TagKnowledge, 
 			return wrapped
 
 
-static func tag_label(display_name: String, knowledge: DateTypes.TagKnowledge, locked: bool = false) -> Label:
-	var label := Label.new()
-	label.text = "[%s]" % display_name
-	if locked:
-		label.text += " 🔒"
-	match knowledge:
-		DateTypes.TagKnowledge.POSITIVE, DateTypes.TagKnowledge.NEGATIVE:
-			label.add_theme_color_override("font_color", tag_knowledge_color(knowledge))
-	return label
+static func tag_label(display_name: String, knowledge: DateTypes.TagKnowledge, _locked: bool = false) -> Control:
+	var registry: GameTermRegistry = GameTermRegistry.from_shared_catalog()
+	var term: GameTerm = registry.find_by_alias(display_name) if registry != null else null
+	var knowledge_map: Dictionary = {}
+	if term != null:
+		knowledge_map[term.id] = knowledge
+	return GameTermView.create("[%s]" % display_name, knowledge_map, registry)
 
 
 static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: Array[StringName], knowledge: DateTypes.TagKnowledge) -> Control:
@@ -146,15 +141,8 @@ static func known_preference_block(catalog: DateContentCatalog, progress: GirlPr
 
 
 static func bbcode_block(text: String, default_color: Color = TEXT) -> RichTextLabel:
-	var rtl := RichTextLabel.new()
-	rtl.bbcode_enabled = true
-	rtl.fit_content = true
-	rtl.scroll_active = false
-	rtl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rtl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rtl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var rtl: RichTextLabel = GameTermView.create(text)
 	rtl.add_theme_color_override("default_color", default_color)
-	rtl.text = text
 	return rtl
 
 
@@ -202,16 +190,16 @@ static func score_color(value: int) -> Color:
 static func tally_row(title: String, value: int) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
-	var name_label := Label.new()
-	name_label.text = title
+	var color: Color = score_color(value)
+	var name_label: RichTextLabel = GameTermView.create(title)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("font_size", 22)
-	name_label.add_theme_color_override("font_color", score_color(value))
+	name_label.add_theme_font_size_override("normal_font_size", 22)
+	name_label.add_theme_color_override("default_color", color)
 	row.add_child(name_label)
 	var value_label := Label.new()
 	value_label.text = signed(value)
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value_label.add_theme_font_size_override("font_size", 22)
-	value_label.add_theme_color_override("font_color", score_color(value))
+	value_label.add_theme_color_override("font_color", color)
 	row.add_child(value_label)
 	return row
