@@ -324,6 +324,10 @@ func _collect_label_text(node: Node, lines: PackedStringArray) -> void:
 		var label: Label = node
 		if not label.text.is_empty():
 			lines.append(label.text)
+	elif node is RichTextLabel:
+		var rtl: RichTextLabel = node
+		if not rtl.text.is_empty():
+			lines.append(rtl.text)
 	elif node is Button:
 		var button: Button = node
 		if not button.text.is_empty():
@@ -1130,10 +1134,7 @@ func _build_apartment() -> Control:
 		box.add_child(empty)
 	else:
 		for object_id in object_ids:
-			var line := Label.new()
-			line.text = _local_object_toolkit_line(catalog, object_id)
-			line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			box.add_child(line)
+			box.add_child(LabUi.bbcode_block(_local_object_toolkit_line(catalog, object_id)))
 	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
 	for upgrade in apartment_catalog.get_all_upgrades():
 		box.add_child(_build_apartment_upgrade_card(upgrade, apartment, catalog))
@@ -1157,10 +1158,7 @@ func _build_apartment_upgrade_card(upgrade: ApartmentUpgradeDefinition, apartmen
 		box.add_child(none)
 	else:
 		for object_id in upgrade.granted_local_object_ids:
-			var line := Label.new()
-			line.text = _local_object_toolkit_line(catalog, object_id)
-			line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			box.add_child(line)
+			box.add_child(LabUi.bbcode_block(_local_object_toolkit_line(catalog, object_id)))
 	if bool(apartment.is_upgrade_purchased(upgrade.id)):
 		var done := Label.new()
 		done.text = "Куплено"
@@ -1216,6 +1214,8 @@ func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
 	var name_label := Label.new()
 	name_label.text = girl_name.to_upper()
 	box.add_child(name_label)
+	var progress: GirlProgress = _girl_date_progress(girls, _invite_girl_id)
+	box.add_child(LabUi.known_preference_block(_date_catalog(), progress))
 	box.add_child(LabUi.heading("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
 	var locations: Array = []
 	if dating != null:
@@ -1225,7 +1225,7 @@ func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
 		if location == null:
 			continue
 		var available: bool = bool(dating.is_date_location_available(_invite_girl_id, location.id))
-		box.add_child(_build_date_location_card(location, dating, available))
+		box.add_child(_build_date_location_card(location, dating, available, progress))
 	if _selected_date_location_id != &"":
 		var selected: DateLocation = null
 		if dating != null:
@@ -1252,7 +1252,7 @@ func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
 	return box
 
 
-func _build_date_location_card(location: DateLocation, dating: Variant, available: bool) -> Control:
+func _build_date_location_card(location: DateLocation, dating: Variant, available: bool, progress: GirlProgress) -> Control:
 	var panel := PanelContainer.new()
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
@@ -1263,11 +1263,7 @@ func _build_date_location_card(location: DateLocation, dating: Variant, availabl
 	else:
 		title.text = "%s 🔒" % location.display_name
 	box.add_child(title)
-	var details := Label.new()
-	details.text = _date_location_details(location, dating)
-	details.add_theme_color_override("font_color", LabUi.MUTED)
-	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(details)
+	box.add_child(LabUi.bbcode_block(_date_location_details(location, dating, progress), LabUi.MUTED))
 	var choose_btn: Button = LabUi.button(location.display_name)
 	choose_btn.disabled = not available
 	if available:
@@ -1276,7 +1272,7 @@ func _build_date_location_card(location: DateLocation, dating: Variant, availabl
 	return panel
 
 
-func _date_location_details(location: DateLocation, dating: Variant) -> String:
+func _date_location_details(location: DateLocation, dating: Variant, progress: GirlProgress) -> String:
 	var catalog: DateContentCatalog = _date_catalog()
 	var object_ids: Array[StringName] = []
 	if dating != null:
@@ -1285,7 +1281,7 @@ func _date_location_details(location: DateLocation, dating: Variant) -> String:
 		object_ids = location.local_object_ids.duplicate()
 	var lines := PackedStringArray()
 	for object_id in object_ids:
-		lines.append(_local_object_toolkit_line(catalog, object_id))
+		lines.append(_local_object_toolkit_line(catalog, object_id, progress))
 	return "\n".join(lines)
 
 
@@ -1299,27 +1295,27 @@ func _date_catalog() -> DateContentCatalog:
 	return catalog_service.catalog as DateContentCatalog
 
 
-func _local_object_toolkit_line(catalog: DateContentCatalog, object_id: StringName) -> String:
-	if catalog == null:
-		return String(object_id)
-	var local_object: DateLocalObject = catalog.find_local_object(object_id)
-	if local_object == null:
-		return String(object_id)
-	var parts: PackedStringArray = PackedStringArray()
-	for move_id in local_object.move_ids:
-		var move: DateMove = catalog.find_move(move_id)
-		if move == null:
-			continue
-		var tag: DateTag = catalog.find_tag(move.local_tag_id)
-		var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
-		if move.unlock_requirement != null:
-			var stat: ProgressionStat = catalog.find_stat(move.unlock_requirement.stat_id)
-			var stat_name: String = stat.display_name if stat != null else String(move.unlock_requirement.stat_id)
-			parts.append("%s (%s %d)" % [tag_name, stat_name, move.unlock_requirement.required_level])
-		else:
-			parts.append(tag_name)
-	var tags_text: String = " / ".join(parts) if not parts.is_empty() else "—"
-	return "%s — %s" % [local_object.display_name, tags_text]
+func _girl_date_progress(girls: Variant, girl_id: StringName) -> GirlProgress:
+	var progress := GirlProgress.new()
+	progress.girl_id = girl_id
+	if girls != null:
+		girls.fill_date_progress(girl_id, progress)
+	return progress
+
+
+func _date_player_preview() -> TestPlayerState:
+	var player := TestPlayerState.new()
+	var characteristics: Variant = _characteristic_service()
+	if characteristics != null:
+		player.muscle = int(characteristics.get_value(CharacteristicIds.MUSCLE))
+		player.appearance = int(characteristics.get_value(CharacteristicIds.APPEARANCE))
+		player.capital = int(characteristics.get_value(CharacteristicIds.CAPITAL))
+		player.aura = int(characteristics.get_value(CharacteristicIds.AURA))
+	return player
+
+
+func _local_object_toolkit_line(catalog: DateContentCatalog, object_id: StringName, progress: GirlProgress = null) -> String:
+	return LabUi.local_object_toolkit_bbcode(catalog, object_id, progress, _date_player_preview())
 
 
 func _build_date_outfit_picker(_girls: Variant, dating: Variant) -> Control:

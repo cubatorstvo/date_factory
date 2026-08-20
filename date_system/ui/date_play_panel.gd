@@ -302,8 +302,7 @@ func _girl_card() -> PanelContainer:
 	var rel := Label.new()
 	rel.text = "Отношения:\n%d / %d" % [progress.relationship, girl.relationship_max]
 	box.add_child(rel)
-	box.add_child(_tag_list("Нравится:", progress.revealed_positive_tag_ids, DateTypes.TagKnowledge.POSITIVE))
-	box.add_child(_tag_list("Не нравится:", progress.revealed_negative_tag_ids, DateTypes.TagKnowledge.NEGATIVE))
+	box.add_child(LabUi.known_preference_block(_catalog(), progress))
 	var unknown := Label.new()
 	unknown.text = "Неизвестно: %d" % progress.unknown_tag_count(girl)
 	box.add_child(unknown)
@@ -315,27 +314,6 @@ func _girl_card() -> PanelContainer:
 		secondary.text = "Secondary:\n???"
 	box.add_child(secondary)
 	return panel
-
-
-func _tag_list(title: String, ids: Array[StringName], knowledge: DateTypes.TagKnowledge) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	var title_label := Label.new()
-	title_label.text = title
-	row.add_child(title_label)
-	if ids.is_empty():
-		var empty := Label.new()
-		empty.text = "—"
-		row.add_child(empty)
-		return row
-	var flow := HFlowContainer.new()
-	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for tag_id in ids:
-		var tag: DateTag = _catalog().find_tag(tag_id)
-		var tag_name: String = tag.display_name if tag != null else String(tag_id)
-		flow.add_child(LabUi.tag_label(tag_name, knowledge))
-	row.add_child(flow)
-	return row
 
 
 func _start_new() -> void:
@@ -481,12 +459,10 @@ func _move_button(option: DateMoveOption) -> Button:
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.clip_contents = true
 	btn.disabled = not option.is_selectable()
-	var header: String = "%s %s" % [LabUi.tag_bbcode(option.tag_display_name, option.tag_knowledge), option.option_text if option.kind == DateTypes.DateMoveKind.LOCAL else option.display_name]
-	match option.availability:
-		DateTypes.MoveAvailability.LOCKED:
-			btn.modulate = LabUi.LOCKED
-		DateTypes.MoveAvailability.USED:
-			btn.modulate = Color(0.7, 0.7, 0.7)
+	var locked: bool = option.availability == DateTypes.MoveAvailability.LOCKED
+	var header: String = "%s %s" % [LabUi.tag_bbcode(option.tag_display_name, option.tag_knowledge, locked), option.option_text if option.kind == DateTypes.DateMoveKind.LOCAL else option.display_name]
+	if option.availability == DateTypes.MoveAvailability.USED:
+		btn.modulate = Color(0.7, 0.7, 0.7)
 	var lines := PackedStringArray([header])
 	if option.kind != DateTypes.DateMoveKind.LOCAL:
 		lines.append(option.option_text)

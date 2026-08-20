@@ -76,26 +76,115 @@ static func fill_selector(button: OptionButton, items: Array, selected_id: Strin
 		button.select(selected_index)
 
 
-static func tag_label(display_name: String, knowledge: DateTypes.TagKnowledge) -> Label:
-	var label := Label.new()
-	label.text = "[%s]" % display_name
+static func tag_knowledge_color(knowledge: DateTypes.TagKnowledge) -> Color:
 	match knowledge:
 		DateTypes.TagKnowledge.POSITIVE:
-			label.add_theme_color_override("font_color", POSITIVE)
+			return POSITIVE
 		DateTypes.TagKnowledge.NEGATIVE:
-			label.add_theme_color_override("font_color", NEGATIVE)
+			return NEGATIVE
+		_:
+			return TEXT
+
+
+static func tag_bbcode(display_name: String, knowledge: DateTypes.TagKnowledge, locked: bool = false) -> String:
+	var wrapped: String = "[lb]%s[rb]" % display_name
+	if locked:
+		wrapped += " 🔒"
+	match knowledge:
+		DateTypes.TagKnowledge.POSITIVE, DateTypes.TagKnowledge.NEGATIVE:
+			return "[color=#%s]%s[/color]" % [tag_knowledge_color(knowledge).to_html(false), wrapped]
+		_:
+			return wrapped
+
+
+static func tag_label(display_name: String, knowledge: DateTypes.TagKnowledge, locked: bool = false) -> Label:
+	var label := Label.new()
+	label.text = "[%s]" % display_name
+	if locked:
+		label.text += " 🔒"
+	match knowledge:
+		DateTypes.TagKnowledge.POSITIVE, DateTypes.TagKnowledge.NEGATIVE:
+			label.add_theme_color_override("font_color", tag_knowledge_color(knowledge))
 	return label
 
 
-static func tag_bbcode(display_name: String, knowledge: DateTypes.TagKnowledge) -> String:
-	var wrapped: String = "[lb]%s[rb]" % display_name
-	match knowledge:
-		DateTypes.TagKnowledge.POSITIVE:
-			return "[color=#%s]%s[/color]" % [POSITIVE.to_html(false), wrapped]
-		DateTypes.TagKnowledge.NEGATIVE:
-			return "[color=#%s]%s[/color]" % [NEGATIVE.to_html(false), wrapped]
-		_:
-			return wrapped
+static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: Array[StringName], knowledge: DateTypes.TagKnowledge) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var title_label := Label.new()
+	title_label.text = title
+	row.add_child(title_label)
+	if ids.is_empty():
+		var empty := Label.new()
+		empty.text = "—"
+		row.add_child(empty)
+		return row
+	var flow := HFlowContainer.new()
+	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for tag_id in ids:
+		var tag_name: String = String(tag_id)
+		if catalog != null:
+			var tag: DateTag = catalog.find_tag(tag_id)
+			if tag != null:
+				tag_name = tag.display_name
+		flow.add_child(tag_label(tag_name, knowledge))
+	row.add_child(flow)
+	return row
+
+
+static func known_preference_block(catalog: DateContentCatalog, progress: GirlProgress) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var likes: Array[StringName] = []
+	var dislikes: Array[StringName] = []
+	if progress != null:
+		likes = progress.revealed_positive_tag_ids
+		dislikes = progress.revealed_negative_tag_ids
+	box.add_child(tag_knowledge_row("Любит:", catalog, likes, DateTypes.TagKnowledge.POSITIVE))
+	box.add_child(tag_knowledge_row("Не любит:", catalog, dislikes, DateTypes.TagKnowledge.NEGATIVE))
+	return box
+
+
+static func bbcode_block(text: String, default_color: Color = TEXT) -> RichTextLabel:
+	var rtl := RichTextLabel.new()
+	rtl.bbcode_enabled = true
+	rtl.fit_content = true
+	rtl.scroll_active = false
+	rtl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rtl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rtl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rtl.add_theme_color_override("default_color", default_color)
+	rtl.text = text
+	return rtl
+
+
+static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: StringName, progress: GirlProgress = null, player: TestPlayerState = null) -> String:
+	if catalog == null:
+		return String(object_id)
+	var local_object: DateLocalObject = catalog.find_local_object(object_id)
+	if local_object == null:
+		return String(object_id)
+	var parts: PackedStringArray = PackedStringArray()
+	for move_id in local_object.move_ids:
+		var move: DateMove = catalog.find_move(move_id)
+		if move == null:
+			continue
+		var tag: DateTag = catalog.find_tag(move.local_tag_id)
+		var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
+		var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN
+		if progress != null:
+			knowledge = progress.tag_knowledge(move.local_tag_id)
+		var locked: bool = false
+		var req_text: String = ""
+		if move.unlock_requirement != null:
+			var stat: ProgressionStat = catalog.find_stat(move.unlock_requirement.stat_id)
+			var stat_name: String = stat.display_name if stat != null else String(move.unlock_requirement.stat_id)
+			req_text = " (%s %d)" % [stat_name, move.unlock_requirement.required_level]
+			if player != null:
+				locked = player.get_stat(move.unlock_requirement.stat_id) < move.unlock_requirement.required_level
+		parts.append("%s%s" % [tag_bbcode(tag_name, knowledge, locked), req_text])
+	var tags_text: String = " / ".join(parts) if not parts.is_empty() else "—"
+	return "%s — %s" % [local_object.display_name, tags_text]
 
 
 static func signed(value: int) -> String:
