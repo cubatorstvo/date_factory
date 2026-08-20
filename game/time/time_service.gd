@@ -4,6 +4,7 @@ signal time_advanced(delta_minutes: int, previous_game_time: int, current_game_t
 
 const MINUTES_PER_HOUR: int = 60
 const MINUTES_PER_DAY: int = 1440
+const MORNING_HOUR: int = 8
 
 var real_time_progression_enabled: bool = false:
 	set(value):
@@ -67,6 +68,14 @@ func days_to_minutes(days: int) -> int:
 
 func hours_to_minutes(hours: int) -> int:
 	return hours * MINUTES_PER_HOUR
+
+
+func minutes_until_next_morning(game_time_minutes: int) -> int:
+	var target_minute_of_day: int = MORNING_HOUR * MINUTES_PER_HOUR
+	var minute_of_day: int = posmod(game_time_minutes, MINUTES_PER_DAY)
+	if minute_of_day < target_minute_of_day:
+		return target_minute_of_day - minute_of_day
+	return MINUTES_PER_DAY - minute_of_day + target_minute_of_day
 
 
 func on_playthrough_reset() -> void:

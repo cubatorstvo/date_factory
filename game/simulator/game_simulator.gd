@@ -1138,7 +1138,7 @@ func _build_apartment() -> Control:
 	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
 	for upgrade in apartment_catalog.get_all_upgrades():
 		box.add_child(_build_apartment_upgrade_card(upgrade, apartment, catalog))
-	_add_action_button(box, GameActionCatalog.make_wait_one_day(), GameActionLabels.for_id(GameActionCatalog.ID_WAIT_ONE_DAY), false, true)
+	_add_action_button(box, GameActionCatalog.make_skip_to_08_00(), GameActionLabels.for_id(GameActionCatalog.ID_SKIP_TO_08_00), false, true)
 	return box
 
 

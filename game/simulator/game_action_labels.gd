@@ -2,7 +2,7 @@ class_name GameActionLabels
 extends RefCounted
 
 const LABEL_WAIT: String = "Подождать"
-const LABEL_WAIT_ONE_DAY: String = "Подождать 1 день"
+const LABEL_SKIP_TO_08_00: String = "Пропустить до 08:00"
 const LABEL_WORK: String = "Работать"
 const LABEL_WORK_ACTION: String = "РАБОТАТЬ"
 const LABEL_SPEND: String = "Потратить 50"
@@ -13,8 +13,8 @@ static func for_id(action_id: StringName) -> String:
 	match action_id:
 		GameActionCatalog.ID_TEST_WAIT:
 			return LABEL_WAIT
-		GameActionCatalog.ID_WAIT_ONE_DAY:
-			return LABEL_WAIT_ONE_DAY
+		GameActionCatalog.ID_SKIP_TO_08_00:
+			return LABEL_SKIP_TO_08_00
 		GameActionCatalog.ID_TEST_EARN_MONEY:
 			return LABEL_WORK
 		WorkService.ID_WORK_BASIC:

@@ -45,7 +45,7 @@ func run_all() -> PackedStringArray:
 	_test_dates_for_home_city_girls()
 	_test_manual_progression_sonya_path()
 	_test_manual_progression_factory_rating_path()
-	_test_wait_one_day()
+	_test_skip_to_08_00()
 	_test_character_progression()
 	_test_automation()
 	return _failures
@@ -3936,9 +3936,26 @@ func _first_date_location_id(dating: Variant, girl_id: StringName) -> StringName
 	return &"cafe"
 
 
-func _wait_one_day_action() -> GameAction:
-	return GameActionCatalog.make_wait_one_day()
+func _skip_to_08_00_action() -> GameAction:
+	return GameActionCatalog.make_skip_to_08_00()
 
+
+func _assert_skip_to_08_00(gs: Variant, clock: Variant, actions: Variant, label: String, start_minutes: int, expected_delta: int, expected_day: int) -> void:
+	gs.flow.game_time_minutes = start_minutes
+	var events: Array = []
+	var on_time := func(delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
+		events.append(delta_minutes)
+	clock.time_advanced.connect(on_time)
+	var action: GameAction = _skip_to_08_00_action()
+	_ok("%s factory id" % label, action != null and action.id == GameActionCatalog.ID_SKIP_TO_08_00)
+	_ok("%s cost" % label, action != null and action.time_cost_minutes == expected_delta)
+	_ok("%s money 0" % label, action != null and action.money_cost == 0)
+	var result: ActionResult = actions.execute(action)
+	clock.time_advanced.disconnect(on_time)
+	_ok("%s success" % label, result.success)
+	_ok("%s time spent" % label, int(result.time_spent_minutes) == expected_delta)
+	_assert_clock(label, clock, start_minutes + expected_delta, expected_day, 8, 0)
+	_ok("%s time_advanced" % label, events.size() == 1 and int(events[0]) == expected_delta)
 
 func _play_real_date_session(dating: Variant, girl_id: StringName, date_location_id: StringName, outfit_id: StringName) -> bool:
 	if not dating.start_date(girl_id, date_location_id, outfit_id):
@@ -4337,46 +4354,45 @@ func _test_manual_progression_factory_rating_path() -> void:
 	sm.new_game()
 
 
-func _test_wait_one_day() -> void:
+func _test_skip_to_08_00() -> void:
 	var gs: Variant = _game_state()
 	var sm: Variant = _save_manager()
 	var clock: Variant = _time_service()
 	var world: Variant = _world_service()
 	var actions: Variant = _action_service()
-	_ok("wait GameState", gs != null)
-	_ok("wait SaveManager", sm != null)
-	_ok("wait TimeService", clock != null)
-	_ok("wait WorldService", world != null)
-	_ok("wait ActionService", actions != null)
+	_ok("skip GameState", gs != null)
+	_ok("skip SaveManager", sm != null)
+	_ok("skip TimeService", clock != null)
+	_ok("skip WorldService", world != null)
+	_ok("skip ActionService", actions != null)
 	if gs == null or sm == null or clock == null or world == null or actions == null:
 		return
 	var original_path: String = sm.save_path
-	sm.save_path = "user://saves/wait_one_day.json"
+	sm.save_path = "user://saves/skip_to_08_00.json"
 	sm.delete_save()
 	sm.new_game()
 	gs.flow.game_time_minutes = 0
 	var test_wait: ActionResult = actions.execute(GameActionCatalog.make_test_wait())
 	_ok("test_wait success", test_wait.success)
 	_ok("test_wait +120", int(clock.get_game_time_minutes()) == 120)
+	_ok("03:20 calc", int(clock.minutes_until_next_morning(3 * 60 + 20)) == 280)
+	_ok("07:59 calc", int(clock.minutes_until_next_morning(7 * 60 + 59)) == 1)
+	_ok("08:00 calc", int(clock.minutes_until_next_morning(8 * 60)) == 1440)
+	_ok("23:30 calc", int(clock.minutes_until_next_morning(23 * 60 + 30)) == 510)
 	sm.new_game()
 	world.enter_location(LocationCatalog.ID_APARTMENT)
 	gs.player.money = 40
-	gs.flow.game_time_minutes = 0
-	var wait_one_day: GameAction = _wait_one_day_action()
-	_ok("wait_one_day factory id", wait_one_day != null and wait_one_day.id == GameActionCatalog.ID_WAIT_ONE_DAY)
-	_ok("wait_one_day 1440", wait_one_day != null and wait_one_day.time_cost_minutes == 1440)
-	_ok("wait_one_day money 0", wait_one_day != null and wait_one_day.money_cost == 0)
-	var wait_result: ActionResult = actions.execute(wait_one_day)
-	_ok("wait_one_day success", wait_result.success)
-	_ok("wait_one_day time", int(clock.get_game_time_minutes()) == 1440)
-	_ok("wait_one_day money unchanged", int(gs.player.money) == 40)
-	_ok("wait_one_day label", GameActionLabels.for_id(GameActionCatalog.ID_WAIT_ONE_DAY) == GameActionLabels.LABEL_WAIT_ONE_DAY)
-	_ok("wait_one_day not test label", GameActionLabels.for_id(GameActionCatalog.ID_WAIT_ONE_DAY) != GameActionLabels.for_id(GameActionCatalog.ID_TEST_WAIT))
-	_ok("wait_one_day not TEST_WAIT", GameActionLabels.for_id(GameActionCatalog.ID_WAIT_ONE_DAY).contains("TEST_WAIT") == false)
+	_assert_skip_to_08_00(gs, clock, actions, "03:20", 3 * 60 + 20, 280, 1)
+	_assert_skip_to_08_00(gs, clock, actions, "07:59", 7 * 60 + 59, 1, 1)
+	_assert_skip_to_08_00(gs, clock, actions, "08:00", 8 * 60, 1440, 2)
+	_assert_skip_to_08_00(gs, clock, actions, "23:30", 23 * 60 + 30, 510, 2)
+	_ok("skip money unchanged", int(gs.player.money) == 40)
+	_ok("skip label", GameActionLabels.for_id(GameActionCatalog.ID_SKIP_TO_08_00) == GameActionLabels.LABEL_SKIP_TO_08_00)
+	_ok("skip not test label", GameActionLabels.for_id(GameActionCatalog.ID_SKIP_TO_08_00) != GameActionLabels.for_id(GameActionCatalog.ID_TEST_WAIT))
+	_ok("skip not TEST_WAIT", GameActionLabels.for_id(GameActionCatalog.ID_SKIP_TO_08_00).contains("TEST_WAIT") == false)
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
-
 
 func _write_v10_automation_save(sm: Variant, stage: int) -> void:
 	sm.delete_save()
