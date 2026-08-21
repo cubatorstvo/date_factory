@@ -29,13 +29,27 @@ func reveal_tag(tag_id: StringName, positive: bool, girl: GirlProfile = null) ->
 
 
 func unknown_tag_count(girl: GirlProfile, catalog: DateContentCatalog = null) -> int:
+	return unknown_positive_tag_count(girl, catalog) + unknown_negative_tag_count(girl, catalog)
+
+
+func unknown_positive_tag_count(girl: GirlProfile, catalog: DateContentCatalog = null) -> int:
+	return _unknown_tag_count_for(girl, catalog, true)
+
+
+func unknown_negative_tag_count(girl: GirlProfile, catalog: DateContentCatalog = null) -> int:
+	return _unknown_tag_count_for(girl, catalog, false)
+
+
+func _unknown_tag_count_for(girl: GirlProfile, catalog: DateContentCatalog, positive: bool) -> int:
 	if girl == null or catalog == null:
 		return 0
 	var unknown: int = 0
 	for tag in catalog.enabled_tags():
 		if tag == null:
 			continue
-		if tag_knowledge(tag.id, girl) == DateTypes.TagKnowledge.UNKNOWN:
+		if tag_knowledge(tag.id, girl) != DateTypes.TagKnowledge.UNKNOWN:
+			continue
+		if (girl.prefers_tag(tag.id) > 0) == positive:
 			unknown += 1
 	return unknown
 

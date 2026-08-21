@@ -106,7 +106,7 @@ static func tag_label(display_name: String, knowledge: DateTypes.TagKnowledge, _
 	return rtl
 
 
-static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: Array[StringName], knowledge: DateTypes.TagKnowledge) -> Control:
+static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: Array[StringName], knowledge: DateTypes.TagKnowledge, unknown_count: int = -1) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	var title_label := Label.new()
@@ -118,6 +118,8 @@ static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: A
 		empty.text = "—"
 		empty.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		row.add_child(empty)
+		if unknown_count >= 0:
+			row.add_child(_unknown_preference_label(unknown_count))
 		return row
 	var flow := HFlowContainer.new()
 	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -129,8 +131,18 @@ static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: A
 			if tag != null:
 				tag_name = tag.display_name
 		flow.add_child(tag_label(tag_name, knowledge))
+	if unknown_count >= 0:
+		flow.add_child(_unknown_preference_label(unknown_count))
 	row.add_child(flow)
 	return row
+
+
+static func _unknown_preference_label(unknown_count: int) -> Label:
+	var unknown := Label.new()
+	unknown.text = "(Неизвестно %d)" % unknown_count
+	unknown.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	unknown.add_theme_color_override("font_color", MUTED)
+	return unknown
 
 
 static func trait_block(catalog: DateContentCatalog, girl: GirlProfile) -> Control:
@@ -159,11 +171,15 @@ static func known_preference_block(catalog: DateContentCatalog, progress: GirlPr
 	box.add_theme_constant_override("separation", 4)
 	var likes: Array[StringName] = []
 	var dislikes: Array[StringName] = []
+	var unknown_likes: int = 0
+	var unknown_dislikes: int = 0
 	if progress != null:
 		likes = progress.known_positive_tag_ids(girl)
 		dislikes = progress.known_negative_tag_ids(girl)
-	box.add_child(tag_knowledge_row("Любит:", catalog, likes, DateTypes.TagKnowledge.POSITIVE))
-	box.add_child(tag_knowledge_row("Не любит:", catalog, dislikes, DateTypes.TagKnowledge.NEGATIVE))
+		unknown_likes = progress.unknown_positive_tag_count(girl, catalog)
+		unknown_dislikes = progress.unknown_negative_tag_count(girl, catalog)
+	box.add_child(tag_knowledge_row("Любит:", catalog, likes, DateTypes.TagKnowledge.POSITIVE, unknown_likes))
+	box.add_child(tag_knowledge_row("Не любит:", catalog, dislikes, DateTypes.TagKnowledge.NEGATIVE, unknown_dislikes))
 	return box
 
 

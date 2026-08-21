@@ -1043,9 +1043,6 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 	box.add_child(LabUi.trait_block(catalog, profile))
 	var progress: GirlProgress = _girl_date_progress(girls, definition.id)
 	box.add_child(LabUi.known_preference_block(catalog, progress, profile))
-	var unknown := Label.new()
-	unknown.text = "Неизвестно: %d" % progress.unknown_tag_count(profile, catalog)
-	box.add_child(unknown)
 	var date_statuses: Array[RequirementStatus] = []
 	if dating != null:
 		date_statuses = dating.get_date_requirements_status(definition.id)
