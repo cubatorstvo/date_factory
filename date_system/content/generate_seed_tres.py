@@ -72,10 +72,21 @@ LOCATIONS = [
     ("planetarium", "Планетарий", False, False, []),
 ]
 
+# id, name, price, stat_id or "", min_story_stage, outfit_move_id or ""
 OUTFITS = [
-    ("casual", "Повседневный", 0),
-    ("business", "Деловой", 500),
-    ("luxury", "Роскошный", 800),
+    ("casual", "Повседневная", 0, "", 1, ""),
+    ("sport", "Спортивный комплект", 250, "muscle", 1, ""),
+    ("stylish", "Стильный комплект", 250, "appearance", 1, ""),
+    ("business", "Деловой костюм", 250, "capital", 1, ""),
+    ("minimal_black", "Минималистичный чёрный образ", 250, "aura", 1, ""),
+    ("wrestling", "Борцовка", 700, "muscle", 2, "outfit_flex_bicep"),
+    ("magician", "Костюм фокусника", 700, "appearance", 2, "outfit_card_trick"),
+    ("luxury", "Роскошный костюм", 700, "capital", 2, "outfit_premium_card"),
+    ("leather_jacket", "Кожаная куртка", 700, "aura", 2, "outfit_dramatic_entrance"),
+    ("stunt", "Костюм каскадёра", 1200, "muscle", 4, "outfit_dangerous_idea"),
+    ("model", "Модельный образ", 1200, "appearance", 4, "outfit_beautiful_couple"),
+    ("philanthropist", "Образ филантропа", 1200, "capital", 4, "outfit_pay_extra"),
+    ("black_turtleneck", "Чёрная водолазка", 1200, "aura", 4, "outfit_silent_hold"),
 ]
 
 DIFFICULTIES = [
@@ -209,29 +220,32 @@ BASE_MOVES = [
     ]),
 ]
 
-UNLOCK_MOVES = [
-    ("punch", "Дать в жбан", "muscle", 4, [
-        ("rival_provocation", "dominance", "Дать самцу в жбан."),
-    ]),
-    ("solve_with_money", "Решить деньгами", "capital", 3, [
-        ("money_request", "generosity", "Полностью оплатить проблему незнакомца и его следующий день."),
-        ("rival_provocation", "status", "Предложить самцу сумму, за которую он сам объявит поражение."),
-        ("spontaneous_bet", "status", "Заменить условие пари на крупную денежную ставку."),
-    ]),
-    ("play_with_looks", "Сыграть внешностью", "appearance", 3, [
-        ("appearance_question", "audacity", "Предложить сначала оценить твой образ."),
-        ("rival_provocation", "status", "Продемонстрировать себя и предложить сравнить результат."),
-        ("date_verdict", "flattery", "Сказать, что вечер выглядел хорошо, потому что вы хорошо смотрелись вместе."),
-    ]),
-    ("silent_pressure", "Молча продавить", "aura", 3, [
-        ("money_request", "dominance", "Смотреть на незнакомца до завершения разговора с его стороны."),
-        ("rival_provocation", "dominance", "Смотреть на самца до его отступления."),
-        ("date_verdict", "composure", "Выдержать паузу до реакции девушки."),
-    ]),
-    ("raise_stakes", "Поднять ставки", "capital", 5, [
-        ("money_request", "risk", "Предложить удвоить сумму после немедленного доказательства истории."),
-        ("spontaneous_bet", "risk", "Удвоить ставку и усложнить условие проигравшему."),
-    ]),
+# id, name, tag, option, positive, negative, stat, level
+CHARACTERISTIC_MOVES = [
+    ("char_say_plain", "Сказать по-простому", "directness", "Сказать всё прямо, без лишних конструкций.", "Прямолинейность без обёртки ей зашла.", "Сказал слишком прямо — ей это режет.", "muscle", 1),
+    ("char_stress_test", "Проверить на прочность", "risk", "Предложить немедленно проверить идею на практике, даже если это выглядит сомнительно.", "Готовность сразу проверить идею ей зашла.", "Предложил проверить идею на практике — ей это слишком рискованно.", "muscle", 3),
+    ("char_force_argument", "Силовой аргумент", "dominance", "Продемонстрировать физическое превосходство как окончательный аргумент.", "Силовой аргумент закрыл тему — ей это зашло.", "Показал физическое превосходство — ей это слишком грубо.", "muscle", 5),
+    ("char_gallantry", "Включить галантность", "politeness", "Принять максимально учтивый вид и повести себя безупречно воспитанно.", "Галантность к месту — ей приятно.", "Включил галантность слишком театрально — ей это фальшиво.", "appearance", 1),
+    ("char_polished_compliment", "Красиво подать комплимент", "flattery", "Сделать комплимент так, будто это профессионально подготовленная презентация.", "Комплимент подан как витрина — ей это зашло.", "Комплимент прозвучал как презентация — ей это слишком подобострастно.", "appearance", 3),
+    ("char_play_with_looks", "Сыграть внешностью", "audacity", "Демонстративно использовать собственную внешность как аргумент.", "Сыграл внешностью как аргументом — ей это зашло.", "Выставил внешность аргументом — ей это слишком нагло.", "appearance", 5),
+    ("char_cover_expenses", "Взять расходы на себя", "generosity", "Немедленно предложить оплатить вопрос за свой счёт.", "Взял расходы на себя — ей это приятно.", "Сразу предложил всё оплатить — ей это покупка настроения.", "capital", 1),
+    ("char_propose_scheme", "Предложить схему", "cunning", "Предложить подозрительно эффективную схему, в которой формально все остаются в выигрыше.", "Схема звучит ловко — ей это зашло.", "Предложил схему, в которой все «в выигрыше» — ей это слишком скользко.", "capital", 3),
+    ("char_status_solve", "Решить вопрос статусом", "status", "Небрежно задействовать деньги, связи или статус как решение ситуации.", "Статус закрыл вопрос — ей это зашло.", "Решил вопрос статусом — ей это слишком демонстративно.", "capital", 5),
+    ("char_support_mode", "Включить поддержку", "care", "Переключиться в режим уверенной и спокойной поддержки.", "Спокойная поддержка к месту — ей спокойнее.", "Включил режим поддержки — ей это кажется лишней опекой.", "aura", 1),
+    ("char_joke_relief", "Разрядить шуткой", "humor", "Снять напряжение уместной или неуместной шуткой.", "Шутка сняла напряжение — ей смешно.", "Шутка не попала — ей это ломает тон.", "aura", 3),
+    ("char_hold_pause", "Выдержать паузу", "composure", "Молча выдерживать ситуацию до тех пор, пока первой не сдастся она.", "Выдержал паузу — ей это спокойствие по делу.", "Молча ждал, пока она сдастся — ей это давление.", "aura", 5),
+]
+
+# id, name, tag, option, positive, negative
+OUTFIT_MOVES = [
+    ("outfit_flex_bicep", "Напрячь бицепс без причины", "dominance", "Внезапно перевести внимание на собственную физическую форму.", "Внезапный акцент на форме зашёл как контроль сцены.", "Напряг бицепс без причины — ей это слишком театрально."),
+    ("outfit_card_trick", "Показать фокус с исчезновением", "humor", "Достать реквизит и немедленно устроить карточный фокус.", "Карточный фокус сработал как шутка — ей смешно.", "Достал реквизит посреди разговора — ей это не к месту."),
+    ("outfit_premium_card", "Показать премиальную карту", "status", "Небрежно продемонстрировать максимально статусный способ оплаты.", "Премиальная карта закрыла вопрос статусом — ей это зашло.", "Показал премиальную карту — ей это слишком демонстративно."),
+    ("outfit_dramatic_entrance", "Сделать демонстративный выход", "audacity", "На несколько секунд превратить обычную ситуацию в собственную сцену.", "Демонстративный выход зашёл как наглость к месту.", "Превратил ситуацию в собственную сцену — ей это слишком нагло."),
+    ("outfit_dangerous_idea", "Предложить опасную идею", "risk", "Немедленно предложить сделать что-нибудь неоправданно рискованное.", "Опасная идея зашла как ставка.", "Предложил неоправданный риск — ей это слишком лихо."),
+    ("outfit_beautiful_couple", "Объявить вас красивой парой", "flattery", "Вслух констатировать, насколько эффектно вы смотритесь вместе.", "Комплимент паре зашёл.", "Объявил вас красивой парой слишком презентационно — ей это льстит не к месту."),
+    ("outfit_pay_extra", "Оплатить что-нибудь лишнее", "generosity", "Демонстративно потратить деньги на вещь, которую никто не просил покупать.", "Лишняя покупка сработала как щедрый жест.", "Оплатил то, что никто не просил — ей это покупка настроения."),
+    ("outfit_silent_hold", "Молча выдержать ситуацию", "composure", "Сохранять абсолютное спокойствие до тех пор, пока неловко не станет всем остальным.", "Молчаливое спокойствие закрыло паузу — ей это по делу.", "Держал молчание, пока неловко не стало всем — ей это давление."),
 ]
 
 
@@ -329,7 +343,7 @@ def write_move(move_id: str, name: str, kind: int, mappings: list, req=None, max
     write(CONTENT / "moves" / f"{move_id}.tres", "".join(parts))
 
 
-def write_local_move(move_id: str, name: str, tag: str, option: str, pos: str, neg: str, req=None) -> None:
+def write_fixed_move(move_id: str, name: str, kind: int, tag: str, option: str, pos: str, neg: str, req=None) -> None:
     parts = [
         f'[gd_resource type="Resource" script_class="DateMove" load_steps={3 if req else 2} format=3]\n',
         '[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]\n',
@@ -349,9 +363,9 @@ def write_local_move(move_id: str, name: str, tag: str, option: str, pos: str, n
     parts.append(f'id = &"{move_id}"\n')
     parts.append(f'display_name = "{esc(name)}"\n')
     parts.append(f'description = "{esc(name)}"\n')
-    parts.append("kind = 2\n")
+    parts.append(f"kind = {kind}\n")
     parts.append("enabled = true\n")
-    parts.append("max_uses_per_date = 0\n")
+    parts.append("max_uses_per_date = 1\n")
     if req:
         parts.append('unlock_requirement = SubResource("req_1")\n')
     parts.append("situation_mappings = []\n")
@@ -360,6 +374,10 @@ def write_local_move(move_id: str, name: str, tag: str, option: str, pos: str, n
     parts.append(f'local_positive_result_text = "{esc(pos)}"\n')
     parts.append(f'local_negative_result_text = "{esc(neg)}"\n')
     write(CONTENT / "moves" / f"{move_id}.tres", "".join(parts))
+
+
+def write_local_move(move_id: str, name: str, tag: str, option: str, pos: str, neg: str, req=None) -> None:
+    write_fixed_move(move_id, name, 2, tag, option, pos, neg, req)
 
 
 def main() -> None:
@@ -407,14 +425,22 @@ def main() -> None:
             CONTENT / "locations" / f"{loc_id}.tres",
             simple_resource("DateLocation", "res://date_system/content/date_location.gd", fields),
         )
-    for outfit_id, name, price in OUTFITS:
+    for outfit_id, name, price, stat_id, stage, move_id in OUTFITS:
+        bonus = 1 if stat_id else 0
+        fields = (
+            f'id = &"{outfit_id}"\n'
+            f'display_name = "{esc(name)}"\n'
+            f'description = "{esc(name)}"\n'
+            "enabled = true\n"
+            f"price = {price}\n"
+            f'stat_id = &"{stat_id}"\n'
+            f"stat_bonus = {bonus}\n"
+            f"min_story_stage = {stage}\n"
+            f'outfit_move_id = &"{move_id}"\n'
+        )
         write(
             CONTENT / "outfits" / f"{outfit_id}.tres",
-            simple_resource(
-                "Outfit",
-                "res://date_system/content/outfit.gd",
-                f'id = &"{outfit_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(name)}"\nenabled = true\nprice = {price}\n',
-            ),
+            simple_resource("Outfit", "res://date_system/content/outfit.gd", fields),
         )
     for sit_id, name, text, phase in SITUATIONS:
         write(
@@ -433,8 +459,10 @@ def main() -> None:
         )
     for move_id, name, mappings in BASE_MOVES:
         write_move(move_id, name, 0, mappings, max_uses=0)
-    for move_id, name, stat, level, mappings in UNLOCK_MOVES:
-        write_move(move_id, name, 1, mappings, req=(stat, level), max_uses=1)
+    for move_id, name, tag, option, pos, neg, stat, level in CHARACTERISTIC_MOVES:
+        write_fixed_move(move_id, name, 1, tag, option, pos, neg, req=(stat, level))
+    for move_id, name, tag, option, pos, neg in OUTFIT_MOVES:
+        write_fixed_move(move_id, name, 3, tag, option, pos, neg)
     for move_id, name, tag, option, pos, neg, req in LOCAL_MOVES:
         write_local_move(move_id, name, tag, option, pos, neg, req)
 
@@ -493,7 +521,8 @@ def main() -> None:
 
     tag_ids = [add_res(f"res://date_system/content/tags/{i}.tres", "tags") for i, *_ in TAGS]
     move_ids = [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in BASE_MOVES]
-    move_ids += [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in UNLOCK_MOVES]
+    move_ids += [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in CHARACTERISTIC_MOVES]
+    move_ids += [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in OUTFIT_MOVES]
     move_ids += [add_res(f"res://date_system/content/moves/{i}.tres", "moves") for i, *_ in LOCAL_MOVES]
     sit_ids = [add_res(f"res://date_system/content/situations/{i}.tres", "situations") for i, *_ in SITUATIONS]
     girl_ids = [add_res(f"res://date_system/content/girls/{girl[0]}.tres", "girls") for girl in GIRLS]

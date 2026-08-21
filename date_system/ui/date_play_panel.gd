@@ -26,6 +26,7 @@ var _tally_box: VBoxContainer
 var _tally_footer: Control
 var _result_tweens: Array[Tween] = []
 var _playthrough: bool = false
+var _open_source: int = -1
 
 
 func setup(p_catalog: DateCatalogService, p_store: DateProgressStore) -> void:
@@ -33,6 +34,27 @@ func setup(p_catalog: DateCatalogService, p_store: DateProgressStore) -> void:
 	progress_store = p_store
 	if is_node_ready():
 		rebuild()
+
+func get_lab_outfit_id() -> StringName:
+	return _outfit_id
+
+
+func set_lab_outfit_id(outfit_id: StringName) -> void:
+	_outfit_id = outfit_id
+	rebuild()
+
+
+func apply_lab_source_used(characteristic_used: bool, outfit_used: bool, location_used: bool) -> void:
+	if _engine == null:
+		return
+	var session: DateSession = _engine.get_session_state()
+	if session == null:
+		return
+	session.characteristic_source_used = characteristic_used
+	session.outfit_source_used = outfit_used
+	session.location_source_used = location_used
+	_open_source = -1
+	rebuild()
 
 
 func attach_playthrough(engine: DateEngine, catalog: DateCatalogService) -> void:
@@ -93,16 +115,19 @@ func _maybe_request_playthrough_guidance(view: DateEpisodeView) -> void:
 	if view == null:
 		return
 	var has_local: bool = false
-	for local_view in view.local_object_views:
-		if local_view != null and not local_view.options.is_empty():
+	for source_view in view.source_views:
+		if source_view.source == DateTypes.DateMoveSource.LOCATION and not source_view.options.is_empty():
 			has_local = true
 			break
 	if has_local:
 		guidance.request_tutorial(GuidanceCatalog.ID_LOCAL_OBJECTS_INTRO)
-	for option in view.unlockable_options:
-		if option.availability == DateTypes.MoveAvailability.LOCKED:
-			guidance.request_tutorial(GuidanceCatalog.ID_LOCKED_MOVES_INTRO)
-			break
+	for source_view in view.source_views:
+		if source_view.source != DateTypes.DateMoveSource.CHARACTERISTIC:
+			continue
+		for option in source_view.options:
+			if option.availability == DateTypes.MoveAvailability.LOCKED:
+				guidance.request_tutorial(GuidanceCatalog.ID_LOCKED_MOVES_INTRO)
+				return
 
 
 func _guidance_service() -> Variant:
@@ -243,6 +268,7 @@ func _build_launch() -> void:
 	LabUi.fill_selector(outfit_sel, _catalog().outfits, _outfit_id)
 	outfit_sel.item_selected.connect(func(index: int) -> void:
 		_outfit_id = outfit_sel.get_item_metadata(index)
+		rebuild()
 	)
 	_host.add_child(LabUi.labeled_row("Одежда", outfit_sel))
 
@@ -273,8 +299,11 @@ func _build_launch() -> void:
 		spin.value_changed.connect(func(value: float) -> void:
 			progress_store.player_state.set_stat(captured_id, int(value))
 			progress_store.save_store()
+			rebuild()
 		)
 		_host.add_child(LabUi.labeled_row(stat.display_name, spin))
+
+	_host.add_child(_lab_prep_preview())
 
 	var seed_box := SpinBox.new()
 	seed_box.min_value = 0
@@ -303,6 +332,65 @@ func _build_launch() -> void:
 	reset_all_btn.pressed.connect(_reset_all)
 	reset_row.add_child(reset_all_btn)
 	_host.add_child(reset_row)
+
+func _lab_prep_preview() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	box.add_child(LabUi.heading("Итоговые характеристики"))
+	var catalog: DateContentCatalog = _catalog()
+	var player: TestPlayerState = progress_store.player_state if progress_store != null else null
+	var outfit: Outfit = catalog.find_outfit(_outfit_id) if catalog != null else null
+	if catalog == null or player == null:
+		return box
+	for stat in catalog.progression_stats:
+		if stat == null:
+			continue
+		var base_value: int = player.get_stat(stat.id)
+		var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
+		var bonus: int = outfit.bonus_for(stat.id) if outfit != null else 0
+		var line := Label.new()
+		if bonus > 0:
+			line.text = "%s: %d (%d + 1 от одежды)" % [stat.display_name, effective, base_value]
+		else:
+			line.text = "%s: %d" % [stat.display_name, effective]
+		box.add_child(line)
+	var opened := PackedStringArray()
+	var newly_opened := PackedStringArray()
+	for move in catalog.characteristic_moves():
+		if move == null or move.unlock_requirement == null:
+			continue
+		var base_value: int = player.get_stat(move.unlock_requirement.stat_id)
+		var with_outfit: int = DateTypes.effective_stat(base_value, outfit, move.unlock_requirement.stat_id)
+		if with_outfit < move.unlock_requirement.required_level:
+			continue
+		var tag: DateTag = catalog.find_tag(move.local_tag_id)
+		var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
+		var line_text: String = "[%s] %s" % [tag_name, move.display_name]
+		opened.append(line_text)
+		if base_value < move.unlock_requirement.required_level:
+			newly_opened.append(line_text)
+	if not opened.is_empty():
+		box.add_child(LabUi.heading("Открытые Characteristic Moves"))
+		for line_text in opened:
+			var opened_line := Label.new()
+			opened_line.text = line_text
+			box.add_child(opened_line)
+	if not newly_opened.is_empty():
+		box.add_child(LabUi.heading("Открывается Characteristic Move"))
+		for line_text in newly_opened:
+			var new_line := Label.new()
+			new_line.text = line_text
+			box.add_child(new_line)
+	if outfit != null and outfit.has_outfit_move():
+		var outfit_move: DateMove = catalog.find_move(outfit.outfit_move_id)
+		if outfit_move != null:
+			box.add_child(LabUi.heading("Outfit Move"))
+			var tag: DateTag = catalog.find_tag(outfit_move.local_tag_id)
+			var tag_name: String = tag.display_name if tag != null else String(outfit_move.local_tag_id)
+			var move_line := Label.new()
+			move_line.text = "[%s] %s" % [tag_name, outfit_move.display_name]
+			box.add_child(move_line)
+	return box
 
 
 func _girl_card() -> PanelContainer:
@@ -431,37 +519,18 @@ func _build_runner() -> void:
 		_host.add_child(sit_text)
 
 	if session.stage == DateSession.Stage.AWAITING_MOVE and view != null:
-		_host.add_child(LabUi.heading("БАЗОВЫЕ ХОДЫ"))
-		for option in view.base_options:
-			_host.add_child(_move_button(option))
-		_host.add_child(LabUi.heading("ОТКРЫВАЕМЫЕ ХОДЫ"))
-		if view.unlockable_options.is_empty():
-			var empty := Label.new()
-			empty.text = "Нет применимых открываемых ходов."
-			_host.add_child(empty)
-		for option in view.unlockable_options:
-			_host.add_child(_move_button(option))
-		var location: DateLocation = _engine.catalog().find_location(session.location_id)
-		var location_name: String = location.display_name if location != null else String(session.location_id)
-		_host.add_child(LabUi.heading("ЛОКАЛЬНЫЕ ХОДЫ — %s" % location_name.to_upper()))
-		if view.local_object_views.is_empty():
-			var empty_local := Label.new()
-			empty_local.text = "Нет локальных объектов."
-			_host.add_child(empty_local)
-		for local_view in view.local_object_views:
-			var object_title: RichTextLabel = GameTermView.create(
-				"%s — Использовано" % local_view.display_name if local_view.used else local_view.display_name
-			)
-			object_title.add_theme_font_size_override("normal_font_size", 18)
-			if local_view.used:
-				object_title.modulate = _unavailable_modulate()
-			_host.add_child(object_title)
-			for option in local_view.options:
+		if _open_source >= 0:
+			_host.add_child(_build_source_list(view))
+		else:
+			_host.add_child(LabUi.heading("БАЗОВЫЕ ХОДЫ"))
+			for option in view.base_options:
 				_host.add_child(_move_button(option))
+			_host.add_child(_build_source_buttons(view))
 	elif session.stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
 		_host.add_child(_episode_result_block(session))
 		var cont := LabUi.button("ПРОДОЛЖИТЬ")
 		cont.pressed.connect(func() -> void:
+			_open_source = -1
 			_engine.advance()
 			_persist()
 			rebuild()
@@ -474,6 +543,70 @@ func _build_runner() -> void:
 
 func _unavailable_modulate() -> Color:
 	return Color(0.7, 0.7, 0.7)
+
+
+func _build_source_buttons(view: DateEpisodeView) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	for source_view in view.source_views:
+		if not source_view.visible:
+			continue
+		var btn: Button = LabUi.button(source_view.display_name.to_upper())
+		btn.modulate = _source_state_color(source_view.state)
+		if source_view.used:
+			btn.disabled = true
+			btn.tooltip_text = "Уже использовано на этом свидании."
+		else:
+			var source_value: int = int(source_view.source)
+			btn.pressed.connect(func() -> void:
+				_open_source = source_value
+				rebuild()
+			)
+		row.add_child(btn)
+	return row
+
+
+func _build_source_list(view: DateEpisodeView) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	var source_view: DateMoveSourceView = _find_open_source(view)
+	var title: String = source_view.display_name if source_view != null else "Источник"
+	box.add_child(LabUi.heading(title.to_upper()))
+	if source_view == null or source_view.options.is_empty():
+		var empty := Label.new()
+		empty.text = "Нет ходов в этом источнике."
+		box.add_child(empty)
+	else:
+		for option in source_view.options:
+			box.add_child(_move_button(option))
+	var back := LabUi.button("НАЗАД")
+	back.pressed.connect(func() -> void:
+		_open_source = -1
+		rebuild()
+	)
+	box.add_child(back)
+	return box
+
+
+func _find_open_source(view: DateEpisodeView) -> DateMoveSourceView:
+	for source_view in view.source_views:
+		if int(source_view.source) == _open_source:
+			return source_view
+	return null
+
+
+func _source_state_color(state: DateTypes.DateMoveSourceState) -> Color:
+	match state:
+		DateTypes.DateMoveSourceState.POSITIVE:
+			return LabUi.POSITIVE
+		DateTypes.DateMoveSourceState.UNKNOWN:
+			return LabUi.MUTED
+		DateTypes.DateMoveSourceState.NEGATIVE:
+			return LabUi.NEGATIVE
+		DateTypes.DateMoveSourceState.USED:
+			return LabUi.LOCKED
+		_:
+			return LabUi.TEXT
 
 
 func _date_start_relationship_block(session: DateSession) -> Control:
@@ -519,7 +652,10 @@ func _combo_compact_text(session: DateSession) -> String:
 func _requirement_reason(option: DateMoveOption) -> String:
 	var stat: ProgressionStat = _catalog().find_stat(option.requirement_stat_id)
 	var stat_name: String = stat.display_name if stat != null else String(option.requirement_stat_id)
-	return "Требуется: %s %d (сейчас %d)" % [stat_name, option.requirement_level, option.current_stat_level]
+	var now_text: String = "Сейчас: %s %d" % [stat_name, option.current_stat_level]
+	if option.outfit_stat_bonus > 0:
+		now_text = "Сейчас: %s %d (%d + 1 от одежды)" % [stat_name, option.current_stat_level, option.current_base_stat_level]
+	return "Требуется: %s %d\n%s" % [stat_name, option.requirement_level, now_text]
 
 
 func _move_button(option: DateMoveOption) -> Button:
@@ -529,12 +665,11 @@ func _move_button(option: DateMoveOption) -> Button:
 	var unavailable: bool = not option.is_selectable()
 	btn.disabled = unavailable
 	var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN if unavailable else option.tag_knowledge
-	var header: String = "[%s] %s" % [option.tag_display_name, option.option_text if option.kind == DateTypes.DateMoveKind.LOCAL else option.display_name]
+	var header: String = "[%s] %s" % [option.tag_display_name, option.display_name]
 	if unavailable:
 		btn.modulate = _unavailable_modulate()
 	var lines := PackedStringArray([header])
-	if option.kind != DateTypes.DateMoveKind.LOCAL:
-		lines.append(option.option_text)
+	lines.append(option.option_text)
 	if unavailable:
 		if option.availability == DateTypes.MoveAvailability.LOCKED:
 			lines.append(_requirement_reason(option))
@@ -558,6 +693,7 @@ func _move_button(option: DateMoveOption) -> Button:
 	var choose := func() -> void:
 		if unavailable:
 			return
+		_open_source = -1
 		_engine.choose_move(move_id)
 		_persist()
 		rebuild()
@@ -757,14 +893,15 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 		"combo_chain: %s" % str(session.combo_distinct_success_tag_ids),
 		"combo_achieved: %s" % str(session.combo_achieved),
 		"combo_rewards_earned: %d" % session.combo_rewards_earned,
+		"characteristic_source_used: %s" % str(session.characteristic_source_used),
+		"outfit_source_used: %s" % str(session.outfit_source_used),
+		"location_source_used: %s" % str(session.location_source_used),
 		"score_breakdown: %s" % str(session.score_breakdown.to_dictionary() if session.score_breakdown != null else {}),
 	])
 	lines.append_array(_debug_move_block("applicable_unlockable_moves", session.current_applicable_unlockable_move_ids, situation_id, session, true))
 	lines.append_array(_debug_move_block("available_unlockable_moves", session.current_available_unlockable_move_ids, situation_id, session, true))
 	lines.append_array(_debug_move_block("locked_unlockable_moves", session.current_locked_unlockable_move_ids, situation_id, session, true))
 	lines.append_array(_debug_move_block("used_unlockable_moves", session.current_used_unlockable_move_ids, situation_id, session, true))
-	lines.append("reserved_unlockable_tags")
-	lines.append_array(_debug_id_lines(session.current_reserved_unlockable_tag_ids))
 	lines.append_array(_debug_move_block("preferred_base_candidates", session.current_preferred_base_move_ids, situation_id, session, false))
 	lines.append_array(_debug_move_block("fallback_base_candidates", session.current_fallback_base_move_ids, situation_id, session, false))
 	lines.append_array(_debug_move_block("selected_base_moves", session.current_selected_base_move_ids, situation_id, session, false))

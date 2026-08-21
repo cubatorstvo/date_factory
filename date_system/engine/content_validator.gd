@@ -13,6 +13,7 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_girl_tags(catalog, issues)
 	_check_move_mappings(catalog, issues)
 	_check_unlockables(catalog, issues)
+	_check_outfits(catalog, issues)
 	_check_base_usage(catalog, issues)
 	_check_situation_base_pool(catalog, issues)
 	_check_local_objects(catalog, issues)
@@ -26,7 +27,6 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_stage_relationship_max(issues)
 	_check_display_copy(catalog, issues)
 	_check_game_terms(catalog, issues)
-	_check_duplicate_unlockable_tags(catalog, issues)
 	_check_tag_move_usage(catalog, issues)
 	_check_base_tag_diversity(catalog, issues)
 	return issues
@@ -76,13 +76,13 @@ func _check_references(catalog: DateContentCatalog, issues: Array[ContentValidat
 				issues.append(_issue("DateMove", String(move.id), "tag_id", "Неизвестный Tag: %s." % String(mapping.tag_id)))
 		if move.unlock_requirement != null and catalog.find_stat(move.unlock_requirement.stat_id) == null:
 			issues.append(_issue("DateMove", String(move.id), "unlock_requirement.stat_id", "Неизвестная характеристика: %s." % String(move.unlock_requirement.stat_id)))
-		if move.is_local():
+		if move.has_fixed_presentation():
 			if catalog.find_tag(move.local_tag_id) == null:
-				issues.append(_issue("DateMove", String(move.id), "local_tag_id", "LOCAL Move должен иметь существующий Tag."))
+				issues.append(_issue("DateMove", String(move.id), "local_tag_id", "Ход с фиксированным текстом должен иметь существующий Tag."))
 			if move.local_option_text.strip_edges().is_empty():
-				issues.append(_issue("DateMove", String(move.id), "local_option_text", "LOCAL Move должен иметь option text."))
+				issues.append(_issue("DateMove", String(move.id), "local_option_text", "Ход с фиксированным текстом должен иметь option text."))
 			if move.local_positive_result_text.strip_edges().is_empty() or move.local_negative_result_text.strip_edges().is_empty():
-				issues.append(_issue("DateMove", String(move.id), "local_result_text", "LOCAL Move должен иметь positive и negative result text."))
+				issues.append(_issue("DateMove", String(move.id), "local_result_text", "Ход с фиксированным текстом должен иметь positive и negative result text."))
 
 
 func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -180,12 +180,79 @@ func _check_move_mappings(catalog: DateContentCatalog, issues: Array[ContentVali
 
 
 func _check_unlockables(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var characteristic_moves: Array[DateMove] = []
 	for move in catalog.moves:
-		if move == null or move.kind != DateTypes.DateMoveKind.UNLOCKABLE:
+		if move == null or not move.is_characteristic():
 			continue
+		characteristic_moves.append(move)
+		if not move.situation_mappings.is_empty():
+			issues.append(_issue("DateMove", String(move.id), "situation_mappings", "Characteristic Move имеет постоянный Tag и не использует situation mappings."))
 		if move.unlock_requirement == null or String(move.unlock_requirement.stat_id).is_empty():
 			issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "UNLOCKABLE должен содержать UnlockRequirement."))
+		elif not DateTypes.CHARACTERISTIC_LEVELS.has(move.unlock_requirement.required_level):
+			issues.append(_issue("DateMove", String(move.id), "unlock_requirement.required_level", "Characteristic Move открывается на уровнях 1, 3 или 5."))
+	if characteristic_moves.size() != 12:
+		issues.append(_issue("DateMove", "", "kind", "Должно быть ровно 12 Characteristic Moves.", DateTypes.ValidationSeverity.ERROR, "CHARACTERISTIC_MOVE_COUNT"))
+	var tags_to_moves: Dictionary = {}
+	var slots: Dictionary = {}
+	for move in characteristic_moves:
+		var tag_key: String = String(move.local_tag_id)
+		if tag_key.is_empty():
+			continue
+		if tags_to_moves.has(tag_key):
+			issues.append(_issue(
+				"DateMove",
+				String(move.id),
+				"local_tag_id",
+				"Characteristic Moves дублируют Tag \"%s\": %s, %s" % [tag_key, String(tags_to_moves[tag_key]), String(move.id)],
+				DateTypes.ValidationSeverity.ERROR,
+				"CHARACTERISTIC_TAG_DUPLICATE"
+			))
+		else:
+			tags_to_moves[tag_key] = move.id
+		if move.unlock_requirement == null:
+			continue
+		var slot_key: String = "%s:%d" % [String(move.unlock_requirement.stat_id), move.unlock_requirement.required_level]
+		if slots.has(slot_key):
+			issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "Characteristic Move дублирует слот %s." % slot_key))
+		else:
+			slots[slot_key] = true
+	for tag in catalog.enabled_tags():
+		if tag == null:
+			continue
+		if tags_to_moves.has(String(tag.id)):
+			continue
+		issues.append(_issue("DateTag", String(tag.id), "characteristic_moves", "Активный Tag не покрыт Characteristic Move.", DateTypes.ValidationSeverity.ERROR, "CHARACTERISTIC_TAG_COVERAGE"))
+	for stat_id in DateTypes.CHARACTERISTIC_STAT_ORDER:
+		for level in DateTypes.CHARACTERISTIC_LEVELS:
+			var slot_key: String = "%s:%d" % [String(stat_id), level]
+			if slots.has(slot_key):
+				continue
+			issues.append(_issue("DateMove", "", "unlock_requirement", "Нет Characteristic Move для %s %d." % [String(stat_id), level]))
 
+func _check_outfits(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var referenced_outfit_moves: Dictionary = {}
+	for outfit in catalog.outfits:
+		if outfit == null:
+			continue
+		if outfit.stat_bonus < 0 or outfit.stat_bonus > 1:
+			issues.append(_issue("Outfit", String(outfit.id), "stat_bonus", "Outfit даёт максимум +1 к одной характеристике."))
+		if outfit.stat_bonus == 1 and (outfit.stat_id == &"" or catalog.find_stat(outfit.stat_id) == null):
+			issues.append(_issue("Outfit", String(outfit.id), "stat_id", "Outfit с бонусом должен указывать существующую характеристику."))
+		if not outfit.has_outfit_move():
+			continue
+		var outfit_move: DateMove = catalog.find_move(outfit.outfit_move_id)
+		if outfit_move == null or not outfit_move.is_outfit_move():
+			issues.append(_issue("Outfit", String(outfit.id), "outfit_move_id", "Outfit Move должен существовать и иметь kind OUTFIT."))
+		else:
+			referenced_outfit_moves[String(outfit.outfit_move_id)] = true
+	for move in catalog.moves:
+		if move == null or not move.is_outfit_move():
+			continue
+		if not move.situation_mappings.is_empty():
+			issues.append(_issue("DateMove", String(move.id), "situation_mappings", "Outfit Move имеет постоянный Tag и не использует situation mappings."))
+		if not referenced_outfit_moves.has(String(move.id)):
+			issues.append(_issue("DateMove", String(move.id), "kind", "Outfit Move должен быть привязан к Outfit."))
 
 func _check_base_usage(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	for move in catalog.moves:
@@ -436,6 +503,8 @@ func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentVal
 			if mapping == null:
 				continue
 			used[String(mapping.tag_id)] = true
+		if move.has_fixed_presentation() and move.local_tag_id != &"":
+			used[String(move.local_tag_id)] = true
 	for tag in catalog.enabled_tags():
 		if tag == null:
 			continue
@@ -449,7 +518,6 @@ func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentVal
 			DateTypes.ValidationSeverity.WARNING,
 			"TAG_WITHOUT_MOVE_MAPPING"
 		))
-
 
 func _check_base_tag_diversity(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	var min_distinct: int = 6
@@ -477,38 +545,7 @@ func _check_base_tag_diversity(catalog: DateContentCatalog, issues: Array[Conten
 
 
 func _check_duplicate_unlockable_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
-	for situation in catalog.situations:
-		if situation == null or not situation.enabled:
-			continue
-		var tag_to_moves: Dictionary = {}
-		for move in catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.UNLOCKABLE):
-			var mapping: DateMoveSituationMapping = move.mapping_for(situation.id)
-			if mapping == null:
-				continue
-			var tag_key: String = String(mapping.tag_id)
-			if not tag_to_moves.has(tag_key):
-				var ids: PackedStringArray = PackedStringArray()
-				tag_to_moves[tag_key] = ids
-			var listed: PackedStringArray = tag_to_moves[tag_key]
-			listed.append(String(move.id))
-			tag_to_moves[tag_key] = listed
-		for tag_key in tag_to_moves.keys():
-			var move_ids: PackedStringArray = tag_to_moves[tag_key]
-			if move_ids.size() < 2:
-				continue
-			var sorted_ids: PackedStringArray = move_ids.duplicate()
-			sorted_ids.sort()
-			var message: String = "Ситуация \"%s\" содержит несколько Открываемых ходов с одинаковым тегом \"%s\":\n%s" % [String(situation.id), String(tag_key), ", ".join(sorted_ids)]
-			issues.append(_issue(
-				"DateSituation",
-				String(situation.id),
-				"unlockable_tags",
-				message,
-				DateTypes.ValidationSeverity.WARNING,
-				"DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION"
-			))
-
-
+	pass
 func _issue(
 	resource_type: String,
 	resource_id: String,

@@ -4,48 +4,6 @@ extends RefCounted
 const START_OUTFIT_ID: StringName = &"casual"
 const ID_BUSINESS: StringName = &"business"
 const ID_LUXURY: StringName = &"luxury"
-const PRICE_CASUAL: int = 0
-const PRICE_BUSINESS: int = 500
-const PRICE_LUXURY: int = 800
-
-
-static func chain_ids() -> Array[StringName]:
-	var ids: Array[StringName] = []
-	ids.append(START_OUTFIT_ID)
-	ids.append(ID_BUSINESS)
-	ids.append(ID_LUXURY)
-	return ids
-
-
-static func chain_index(outfit_id: StringName) -> int:
-	return chain_ids().find(outfit_id)
-
-
-static func next_outfit_id(current_outfit_id: StringName) -> StringName:
-	var ids: Array[StringName] = chain_ids()
-	var index: int = ids.find(current_outfit_id)
-	if index < 0 or index >= ids.size() - 1:
-		return &""
-	return ids[index + 1]
-
-
-static func owns_in_chain(current_outfit_id: StringName, outfit_id: StringName) -> bool:
-	var current_index: int = chain_index(current_outfit_id)
-	var target_index: int = chain_index(outfit_id)
-	if current_index < 0 or target_index < 0:
-		return false
-	return current_index >= target_index
-
-
-static func current_from_owned(owned_ids: Array) -> StringName:
-	var owned: Dictionary = {}
-	for item in owned_ids:
-		owned[StringName(str(item))] = true
-	if owned.has(ID_LUXURY):
-		return ID_LUXURY
-	if owned.has(ID_BUSINESS):
-		return ID_BUSINESS
-	return START_OUTFIT_ID
 
 
 func get_outfit(outfit_id: StringName) -> Outfit:
@@ -70,6 +28,14 @@ func get_purchasable_outfits() -> Array[Outfit]:
 	var result: Array[Outfit] = []
 	for outfit in get_all_outfits():
 		if outfit.price > 0:
+			result.append(outfit)
+	return result
+
+
+func get_shop_outfits(story_stage: int) -> Array[Outfit]:
+	var result: Array[Outfit] = []
+	for outfit in get_purchasable_outfits():
+		if outfit.min_story_stage <= story_stage:
 			result.append(outfit)
 	return result
 

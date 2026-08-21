@@ -5,6 +5,21 @@ enum DateMoveKind {
 	BASE,
 	UNLOCKABLE,
 	LOCAL,
+	OUTFIT,
+}
+
+enum DateMoveSource {
+	CHARACTERISTIC,
+	OUTFIT,
+	LOCATION,
+}
+
+enum DateMoveSourceState {
+	POSITIVE,
+	UNKNOWN,
+	NEGATIVE,
+	BLOCKED,
+	USED,
 }
 
 enum DatePhase {
@@ -30,6 +45,9 @@ enum MoveAvailability {
 	USED,
 }
 
+const CHARACTERISTIC_STAT_ORDER: Array[StringName] = [&"muscle", &"appearance", &"capital", &"aura"]
+const CHARACTERISTIC_LEVELS: Array[int] = [1, 3, 5]
+
 
 static func phase_name(phase: DatePhase) -> String:
 	match phase:
@@ -48,11 +66,39 @@ static func move_kind_name(kind: DateMoveKind) -> String:
 		DateMoveKind.BASE:
 			return "BASE"
 		DateMoveKind.UNLOCKABLE:
-			return "UNLOCKABLE"
+			return "CHARACTERISTIC"
 		DateMoveKind.LOCAL:
 			return "LOCAL"
+		DateMoveKind.OUTFIT:
+			return "OUTFIT"
 		_:
 			return "?"
+
+
+static func source_name(source: DateMoveSource) -> String:
+	match source:
+		DateMoveSource.CHARACTERISTIC:
+			return "Характеристика"
+		DateMoveSource.OUTFIT:
+			return "Одежда"
+		DateMoveSource.LOCATION:
+			return "Локация"
+		_:
+			return "?"
+
+
+static func source_state_name(state: DateMoveSourceState) -> String:
+	match state:
+		DateMoveSourceState.POSITIVE:
+			return "POSITIVE"
+		DateMoveSourceState.UNKNOWN:
+			return "UNKNOWN"
+		DateMoveSourceState.NEGATIVE:
+			return "NEGATIVE"
+		DateMoveSourceState.USED:
+			return "USED"
+		_:
+			return "BLOCKED"
 
 
 static func knowledge_label(knowledge: TagKnowledge) -> String:
@@ -73,3 +119,22 @@ static func availability_name(state: MoveAvailability) -> String:
 			return "USED"
 		_:
 			return "AVAILABLE"
+
+
+static func effective_stat(base_stat: int, outfit: Outfit, stat_id: StringName) -> int:
+	var bonus: int = 0
+	if outfit != null:
+		bonus = outfit.bonus_for(stat_id)
+	return mini(maxi(base_stat, 0) + bonus, 5)
+
+
+static func characteristic_sort_key(move: DateMove) -> int:
+	if move == null or move.unlock_requirement == null:
+		return 999
+	var stat_index: int = CHARACTERISTIC_STAT_ORDER.find(move.unlock_requirement.stat_id)
+	if stat_index < 0:
+		stat_index = 9
+	var level_index: int = CHARACTERISTIC_LEVELS.find(move.unlock_requirement.required_level)
+	if level_index < 0:
+		level_index = 9
+	return stat_index * 10 + level_index

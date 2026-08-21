@@ -5,7 +5,11 @@
 [resource]
 script = ExtResource("1_script")
 id = &"casual"
-display_name = "Повседневный"
-description = "Повседневный"
+display_name = "Повседневная"
+description = "Повседневная"
 enabled = true
 price = 0
+stat_id = &""
+stat_bonus = 0
+min_story_stage = 1
+outfit_move_id = &""

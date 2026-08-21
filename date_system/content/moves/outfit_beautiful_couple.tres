@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"outfit_beautiful_couple"
+display_name = "Объявить вас красивой парой"
+description = "Объявить вас красивой парой"
+kind = 3
+enabled = true
+max_uses_per_date = 1
+situation_mappings = []
+local_tag_id = &"flattery"
+local_option_text = "Вслух констатировать, насколько эффектно вы смотритесь вместе."
+local_positive_result_text = "Комплимент паре зашёл."
+local_negative_result_text = "Объявил вас красивой парой слишком презентационно — ей это льстит не к месту."

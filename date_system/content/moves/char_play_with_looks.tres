@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"appearance"
+required_level = 5
+
+[resource]
+script = ExtResource("1_move")
+id = &"char_play_with_looks"
+display_name = "Сыграть внешностью"
+description = "Сыграть внешностью"
+kind = 1
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+situation_mappings = []
+local_tag_id = &"audacity"
+local_option_text = "Демонстративно использовать собственную внешность как аргумент."
+local_positive_result_text = "Сыграл внешностью как аргументом — ей это зашло."
+local_negative_result_text = "Выставил внешность аргументом — ей это слишком нагло."

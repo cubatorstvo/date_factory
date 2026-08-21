@@ -17,6 +17,10 @@ enum Stage {
 @export var outfit_id: StringName = &""
 @export var local_object_ids: Array[StringName] = []
 @export var used_local_object_ids: Array[StringName] = []
+@export var used_base_move_ids: Array[StringName] = []
+@export var characteristic_source_used: bool = false
+@export var outfit_source_used: bool = false
+@export var location_source_used: bool = false
 @export var relationship_before: int = 0
 @export var relationship_max: int = 0
 @export var girl_trait_applied: bool = false

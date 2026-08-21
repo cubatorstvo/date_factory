@@ -51,6 +51,28 @@ func get_value(characteristic_id: StringName) -> int:
 			return 0
 
 
+func get_outfit_bonus(characteristic_id: StringName, outfit: Outfit = null) -> int:
+	var resolved: Outfit = outfit
+	if resolved == null:
+		var equipment: Variant = get_node_or_null("/root/EquipmentService")
+		if equipment != null:
+			resolved = equipment.get_current_outfit()
+	if resolved == null:
+		return 0
+	return resolved.bonus_for(characteristic_id)
+
+
+func get_effective_value(characteristic_id: StringName, outfit: Outfit = null) -> int:
+	return DateTypes.effective_stat(get_value(characteristic_id), outfit if outfit != null else _current_outfit(), characteristic_id)
+
+
+func _current_outfit() -> Outfit:
+	var equipment: Variant = get_node_or_null("/root/EquipmentService")
+	if equipment == null:
+		return null
+	return equipment.get_current_outfit()
+
+
 func add_value(characteristic_id: StringName, amount: int) -> int:
 	var player: PlayerState = _player()
 	if player == null:

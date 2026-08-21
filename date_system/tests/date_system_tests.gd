@@ -14,6 +14,7 @@ func run_all() -> PackedStringArray:
 	_test_core_and_closing_scores()
 	_test_base_pool_and_rng()
 	_test_unlockables()
+	_test_character_build_sources()
 	_test_mapping_tags_differ_by_situation()
 	_test_combo_rules()
 	_test_location_outfit_apartment()
@@ -206,6 +207,21 @@ func _first_available(engine: DateEngine) -> StringName:
 			return option.move_id
 	return &""
 
+func _episode_option(view: DateEpisodeView, move_id: StringName) -> DateMoveOption:
+	if view == null:
+		return null
+	for option in view.base_options:
+		if option.move_id == move_id:
+			return option
+	for option in view.unlockable_options:
+		if option.move_id == move_id:
+			return option
+	for source_view in view.source_views:
+		for option in source_view.options:
+			if option.move_id == move_id:
+				return option
+	return null
+
 
 func _choose(engine: DateEngine, move_id: StringName) -> void:
 	engine.choose_move(move_id)
@@ -350,46 +366,97 @@ func _test_unlockables() -> void:
 	var catalog := _catalog()
 	var locked_player := _player()
 	var engine := _start(catalog, &"alina", &"cafe", &"casual", 8, _fresh_progress(catalog, &"alina"), locked_player)
-	_ok("12. UNLOCKABLE отображаются отдельным набором", true)
-	var found_unlock := false
-	while engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT and engine.get_session_state().stage != DateSession.Stage.COMPLETED:
-		if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
-			engine.advance()
-			continue
-		var view := engine.get_current_episode()
-		if view != null and view.situation != null and view.situation.id == &"rival_provocation":
-			found_unlock = view.unlockable_options.size() > 0
-			var punch: DateMoveOption = null
-			for option in view.unlockable_options:
-				if option.move_id == &"punch":
-					punch = option
-			_ok("13. применимые UNLOCKABLE присутствуют в эпизоде", punch != null)
-			_ok("14a. Requirement locked", punch != null and punch.availability == DateTypes.MoveAvailability.LOCKED)
-		_choose(engine, _first_available(engine))
-	_ok("13/14 found rival episode", found_unlock)
+	var view := engine.get_current_episode()
+	_ok("12. Characteristic Moves видны в каждом эпизоде", view != null and view.unlockable_options.size() == 12)
+	var say_plain: DateMoveOption = _episode_option(view, &"char_say_plain")
+	_ok("13. muscle 1 ход присутствует", say_plain != null)
+	_ok("14a. Requirement locked", say_plain != null and say_plain.availability == DateTypes.MoveAvailability.LOCKED)
+	engine.choose_move(&"char_say_plain")
+	_ok("14b. locked ход нельзя выбрать", engine.get_session_state().stage == DateSession.Stage.AWAITING_MOVE)
 	var unlocked_player := _player()
-	unlocked_player.muscle = 4
+	unlocked_player.muscle = 1
 	var engine2 := _start(_catalog(), &"alina", &"cafe", &"casual", 8, _fresh_progress(_catalog(), &"alina"), unlocked_player)
-	var used_ok := false
-	while engine2.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT:
-		if engine2.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
-			engine2.advance()
-			continue
-		var view2 := engine2.get_current_episode()
-		if view2 != null and view2.situation != null and view2.situation.id == &"rival_provocation":
-			var punch2: DateMoveOption = null
-			for option in view2.unlockable_options:
-				if option.move_id == &"punch":
-					punch2 = option
-			_ok("14. Requirement корректно меняет locked/unlocked", punch2 != null and punch2.availability == DateTypes.MoveAvailability.AVAILABLE)
-			engine2.choose_move(&"punch")
-			engine2.advance()
-			used_ok = true
-			continue
-		_choose(engine2, _first_available(engine2))
-	# replay same seed until another rival? only one rival per date. Check used count after punch.
-	_ok("15. max_uses_per_date tracked", used_ok and int(engine2.get_session_state().used_unlockable_move_counts.get("punch", 0)) == 1)
+	var say2: DateMoveOption = _episode_option(engine2.get_current_episode(), &"char_say_plain")
+	_ok("14. Requirement корректно меняет locked/unlocked", say2 != null and say2.availability == DateTypes.MoveAvailability.AVAILABLE)
+	engine2.choose_move(&"char_say_plain")
+	_ok("15. источник характеристики израсходован", engine2.get_session_state().characteristic_source_used)
+	engine2.advance()
+	var say3: DateMoveOption = _episode_option(engine2.get_current_episode(), &"char_say_plain")
+	_ok("15b. Used сохраняется в следующем эпизоде", say3 != null and say3.availability == DateTypes.MoveAvailability.USED)
 
+func _test_character_build_sources() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var char_moves: Array[DateMove] = catalog.characteristic_moves()
+	_ok("build 12 Characteristic Moves", char_moves.size() == 12)
+	var tags: Dictionary = {}
+	var slots: Dictionary = {}
+	for move in char_moves:
+		tags[String(move.local_tag_id)] = true
+		_ok("build %s at 1/3/5" % String(move.id), move.unlock_requirement != null and DateTypes.CHARACTERISTIC_LEVELS.has(move.unlock_requirement.required_level))
+		if move.unlock_requirement != null:
+			slots["%s:%d" % [String(move.unlock_requirement.stat_id), move.unlock_requirement.required_level]] = true
+	_ok("build 12 Tags", tags.size() == 12)
+	_ok("build 12 slots", slots.size() == 12)
+	var locked_player: TestPlayerState = _player()
+	locked_player.muscle = 0
+	var casual_engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 4, _fresh_progress(catalog, &"alina"), locked_player)
+	var locked_option: DateMoveOption = _episode_option(casual_engine.get_current_episode(), &"char_say_plain")
+	_ok("build casual muscle 1 locked", locked_option != null and locked_option.availability == DateTypes.MoveAvailability.LOCKED)
+	var sport_engine: DateEngine = _start(_catalog(), &"alina", &"cafe", &"sport", 4, _fresh_progress(_catalog(), &"alina"), _player())
+	var opened_by_outfit: DateMoveOption = _episode_option(sport_engine.get_current_episode(), &"char_say_plain")
+	_ok("build EffectiveStat opens muscle 1", opened_by_outfit != null and opened_by_outfit.availability == DateTypes.MoveAvailability.AVAILABLE)
+	_ok("build EffectiveStat cap 5", DateTypes.effective_stat(5, _catalog().find_outfit(&"sport"), &"muscle") == 5)
+	var source_player: TestPlayerState = _player()
+	source_player.muscle = 5
+	var source_engine: DateEngine = _start(_catalog(), &"alina", &"cafe", &"wrestling", 6, _fresh_progress(_catalog(), &"alina"), source_player)
+	var session: DateSession = source_engine.get_session_state()
+	_ok("build sources start unused", not session.characteristic_source_used and not session.outfit_source_used and not session.location_source_used)
+	source_engine.get_available_moves()
+	_ok("build peek does not spend", not source_engine.get_session_state().characteristic_source_used)
+	source_engine.choose_move(&"char_say_plain")
+	_ok("build characteristic spent independently", source_engine.get_session_state().characteristic_source_used and not source_engine.get_session_state().outfit_source_used and not source_engine.get_session_state().location_source_used)
+	source_engine.advance()
+	source_engine.choose_move(&"outfit_flex_bicep")
+	_ok("build outfit spent independently", source_engine.get_session_state().outfit_source_used and source_engine.get_session_state().characteristic_source_used and not source_engine.get_session_state().location_source_used)
+	source_engine.advance()
+	source_engine.choose_move(&"local_window_care")
+	_ok("build location spent independently", source_engine.get_session_state().location_source_used)
+	var used_char: DateMoveOption = _episode_option(source_engine.get_current_episode(), &"char_force_argument")
+	_ok("build used persists in episode", used_char != null and used_char.availability == DateTypes.MoveAvailability.USED)
+	source_engine.advance()
+	var next_char: DateMoveOption = _episode_option(source_engine.get_current_episode(), &"char_force_argument")
+	_ok("build used persists next episode", next_char != null and next_char.availability == DateTypes.MoveAvailability.USED)
+	var fresh: DateEngine = _start(_catalog(), &"alina", &"cafe", &"wrestling", 7, _fresh_progress(_catalog(), &"alina"), source_player)
+	_ok("build sources reset next date", not fresh.get_session_state().characteristic_source_used and not fresh.get_session_state().outfit_source_used and not fresh.get_session_state().location_source_used)
+	var locked_local_player: TestPlayerState = _player()
+	locked_local_player.aura = 0
+	var locked_local: DateEngine = _start(_catalog(), &"alina", &"apartment", &"casual", 12, _fresh_progress(_catalog(), &"alina"), locked_local_player)
+	var sofa: DateMoveOption = _episode_option(locked_local.get_current_episode(), &"local_sofa_dominance")
+	_ok("build locked local listed", sofa != null and sofa.availability == DateTypes.MoveAvailability.LOCKED)
+	locked_local.choose_move(&"local_sofa_dominance")
+	_ok("build locked local not selectable", locked_local.get_session_state().stage == DateSession.Stage.AWAITING_MOVE)
+	var phase_player: TestPlayerState = _player()
+	phase_player.muscle = 5
+	var phase_engine: DateEngine = _start(_catalog(), &"alina", &"cafe", &"casual", 9, _fresh_progress(_catalog(), &"alina"), phase_player)
+	var seen_phases: Dictionary = {}
+	while phase_engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT and phase_engine.get_session_state().stage != DateSession.Stage.COMPLETED:
+		if phase_engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+			phase_engine.advance()
+			continue
+		var episode: DateEpisodeView = phase_engine.get_current_episode()
+		var source: DateMoveSourceView = null
+		for source_view in episode.source_views:
+			if source_view.source == DateTypes.DateMoveSource.CHARACTERISTIC:
+				source = source_view
+				break
+		var phase_name: String = DateTypes.phase_name(episode.phase)
+		seen_phases[phase_name] = true
+		_ok("build %s has characteristic source" % phase_name, source != null and source.visible)
+		_ok("build %s source unused until spend" % phase_name, source != null and not source.used)
+		_choose(phase_engine, _first_available(phase_engine))
+	_ok("build opening present", seen_phases.has("OPENING"))
+	_ok("build core present", seen_phases.has("CORE"))
+	_ok("build closing present", seen_phases.has("CLOSING"))
 
 func _test_mapping_tags_differ_by_situation() -> void:
 	var move: DateMove = _catalog().find_move(&"compliment")
@@ -661,6 +728,7 @@ func _test_local_moves() -> void:
 	cafe_engine.choose_move(&"local_window_audacity")
 	var used_view: DateEpisodeView = cafe_engine.get_current_episode()
 	_ok("11. audacity помечает window USED", _local_object_used(used_view, &"window") and _local_option_used(used_view, &"local_window_care"))
+	_ok("11b. location source used after one local", cafe_engine.get_session_state().location_source_used)
 	cafe_engine.advance()
 	var next_view: DateEpisodeView = cafe_engine.get_current_episode()
 	_ok("12. window USED на следующем эпизоде", _local_object_used(next_view, &"window"))
@@ -894,16 +962,16 @@ func _test_validator() -> void:
 	_ok("35d. Validator catalog has kira", _catalog().find_girl(&"kira") != null)
 	_ok("35e. Validator catalog has eva", _catalog().find_girl(&"eva") != null)
 	var unlock := _catalog()
-	unlock.find_move(&"punch").unlock_requirement = null
+	unlock.find_move(&"char_say_plain").unlock_requirement = null
 	_ok("36. Validator проверяет UnlockRequirement", _has_issue(validator.validate(unlock), "UnlockRequirement"))
 	var dup_unlock := _diversity_catalog(
 		[["base_a", "directness"], ["base_b", "risk"], ["base_c", "status"]],
-		[["unlock_status_a", "status", 0, 1], ["unlock_status_b", "status", 0, 1]]
+		[["unlock_status_a", "status", 1, 1], ["unlock_status_b", "status", 1, 1]]
 	)
 	var dup_issues: Array[ContentValidationIssue] = validator.validate(dup_unlock)
-	var dup_warning: ContentValidationIssue = _find_code(dup_issues, "DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION")
-	_ok("8. WARNING DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION", dup_warning != null and dup_warning.severity == DateTypes.ValidationSeverity.WARNING)
-	_ok("8. warning names status unlockables", dup_warning != null and "status" in dup_warning.message and "unlock_status_a" in dup_warning.message and "unlock_status_b" in dup_warning.message)
+	var dup_error: ContentValidationIssue = _find_code(dup_issues, "CHARACTERISTIC_TAG_DUPLICATE")
+	_ok("8. ERROR CHARACTERISTIC_TAG_DUPLICATE", dup_error != null and dup_error.severity == DateTypes.ValidationSeverity.ERROR)
+	_ok("8. error names status unlockables", dup_error != null and "status" in dup_error.message and "unlock_status_a" in dup_error.message and "unlock_status_b" in dup_error.message)
 
 
 func _has_issue(issues: Array[ContentValidationIssue], needle: String) -> bool:
@@ -934,26 +1002,8 @@ func _test_unlockable_tag_reservation() -> void:
 	available_player.capital = 6
 	var available_engine: DateEngine = _start(available_catalog, &"alina", &"cafe", &"casual", 3, _fresh_progress(available_catalog, &"alina"), available_player)
 	var available_session: DateSession = available_engine.get_session_state()
-	_ok("1. AVAILABLE reserves risk", available_session.current_reserved_unlockable_tag_ids.has(&"risk"))
-	_ok("1. BASE tags are the non-reserved set", _same_tag_set(available_session.current_selected_base_tag_ids, ["directness", "status", "dominance"]))
-	_ok("1. risk BASE is fallback", available_session.current_fallback_base_move_ids.has(&"base_risk") and not available_session.current_preferred_base_move_ids.has(&"base_risk"))
-
-	var locked_catalog: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]])
-	var locked_engine: DateEngine = _start(locked_catalog, &"alina", &"cafe", &"casual", 3, _fresh_progress(locked_catalog, &"alina"), _player())
-	var locked_session: DateSession = locked_engine.get_session_state()
-	_ok("2. LOCKED does not reserve", locked_session.current_locked_unlockable_move_ids.has(&"unlock_risk") and not locked_session.current_reserved_unlockable_tag_ids.has(&"risk"))
-	_ok("2. BASE risk is in preferred pool", locked_session.current_preferred_base_move_ids.has(&"base_risk"))
-
-	var used_catalog: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]], 0, 2, true)
-	var used_player: TestPlayerState = _player()
-	used_player.capital = 6
-	var used_engine: DateEngine = _start(used_catalog, &"alina", &"cafe", &"casual", 3, _fresh_progress(used_catalog, &"alina"), used_player)
-	_ok("3 pre AVAILABLE", used_engine.get_session_state().current_available_unlockable_move_ids.has(&"unlock_risk"))
-	used_engine.choose_move(&"unlock_risk")
-	used_engine.advance()
-	var used_session: DateSession = used_engine.get_session_state()
-	_ok("3. USED does not reserve", used_session.current_used_unlockable_move_ids.has(&"unlock_risk") and not used_session.current_reserved_unlockable_tag_ids.has(&"risk"))
-	_ok("3. BASE risk returns to preferred pool", used_session.current_preferred_base_move_ids.has(&"base_risk"))
+	_ok("1. Characteristic не резервирует BASE Tag", available_session.current_preferred_base_move_ids.has(&"base_risk"))
+	_ok("1. risk BASE остаётся в preferred", not available_session.current_fallback_base_move_ids.has(&"base_risk"))
 
 	var unique_catalog: DateContentCatalog = _diversity_catalog(four_base, [])
 	var unique_engine: DateEngine = _start(unique_catalog, &"alina", &"cafe", &"casual", 17, _fresh_progress(unique_catalog, &"alina"), _player())
@@ -967,43 +1017,11 @@ func _test_unlockable_tag_reservation() -> void:
 	var fallback_session: DateSession = fallback_engine.get_session_state()
 	_ok("5. three BASE with only two Tags", fallback_session.current_selected_base_move_ids.size() == 3 and _unique_count(fallback_session.current_selected_base_tag_ids) == 2)
 
-	var need_fallback: DateContentCatalog = _diversity_catalog(
-		[["base_risk", "risk"], ["base_directness", "directness"], ["base_status", "status"]],
-		[["unlock_risk", "risk", 3, 1]]
-	)
-	var need_player: TestPlayerState = _player()
-	need_player.capital = 6
-	var need_engine: DateEngine = _start(need_fallback, &"alina", &"cafe", &"casual", 23, _fresh_progress(need_fallback, &"alina"), need_player)
-	var need_session: DateSession = need_engine.get_session_state()
-	_ok("6. fallback includes reserved Tag", _same_tag_set(need_session.current_selected_base_tag_ids, ["risk", "directness", "status"]))
-	_ok("6. all three BASE selected", need_session.current_selected_base_move_ids.size() == 3)
-
-	var det_catalog_a: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]])
-	var det_catalog_b: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]])
-	var det_player_a: TestPlayerState = _player()
-	det_player_a.capital = 6
-	var det_player_b: TestPlayerState = _player()
-	det_player_b.capital = 6
-	var det_a: DateEngine = _start(det_catalog_a, &"alina", &"cafe", &"casual", 91, _fresh_progress(det_catalog_a, &"alina"), det_player_a)
-	var det_b: DateEngine = _start(det_catalog_b, &"alina", &"cafe", &"casual", 91, _fresh_progress(det_catalog_b, &"alina"), det_player_b)
+	var det_catalog_a: DateContentCatalog = _diversity_catalog(four_base, [])
+	var det_catalog_b: DateContentCatalog = _diversity_catalog(four_base, [])
+	var det_a: DateEngine = _start(det_catalog_a, &"alina", &"cafe", &"casual", 91, _fresh_progress(det_catalog_a, &"alina"), _player())
+	var det_b: DateEngine = _start(det_catalog_b, &"alina", &"cafe", &"casual", 91, _fresh_progress(det_catalog_b, &"alina"), _player())
 	_ok("7. same seed same BASE ids and order", det_a.get_session_state().current_selected_base_move_ids == det_b.get_session_state().current_selected_base_move_ids)
-
-	var seed_catalog: DateContentCatalog = _catalog()
-	for situation in seed_catalog.situations:
-		if situation.id != &"appearance_question" and situation.id != &"spontaneous_bet":
-			situation.enabled = false
-	seed_catalog.date_rules.core_episode_count = 1
-	seed_catalog.date_rules.closing_episode_count = 0
-	var seed_player: TestPlayerState = _player()
-	seed_player.capital = 6
-	var seed_engine: DateEngine = _start(seed_catalog, &"alina", &"cafe", &"casual", 5, _fresh_progress(seed_catalog, &"alina"), seed_player)
-	_choose(seed_engine, _first_available(seed_engine))
-	var seed_session: DateSession = seed_engine.get_session_state()
-	_ok("seed spontaneous_bet episode", seed_session.selected_situation_ids.size() >= 2 and seed_session.selected_situation_ids[1] == &"spontaneous_bet")
-	_ok("seed reserved STATUS", seed_session.current_reserved_unlockable_tag_ids.has(&"status"))
-	_ok("seed reserved RISK", seed_session.current_reserved_unlockable_tag_ids.has(&"risk"))
-	_ok("seed BASE prefers other tags", not seed_session.current_selected_base_tag_ids.has(&"status") and not seed_session.current_selected_base_tag_ids.has(&"risk"))
-
 
 func _test_twelve_tag_rebalance() -> void:
 	var catalog: DateContentCatalog = _catalog()
@@ -1050,7 +1068,7 @@ func _test_twelve_tag_rebalance() -> void:
 	_ok("22.11 smooth rival composure", _mapping_tag(&"smooth", &"rival_provocation") == &"composure")
 	_ok("22.11 refuse money composure", _mapping_tag(&"refuse", &"money_request") == &"composure")
 	_ok("22.11 refuse bet composure", _mapping_tag(&"refuse", &"spontaneous_bet") == &"composure")
-	_ok("22.11 silent verdict composure", _mapping_tag(&"silent_pressure", &"date_verdict") == &"composure")
+	_ok("22.11 hold pause composure", _catalog().find_move(&"char_hold_pause").local_tag_id == &"composure")
 	var reset_progress: GirlProgress = _fresh_progress(catalog, &"alina")
 	for tag_id in [&"care", &"humor", &"composure", &"cunning"]:
 		_ok("22.12 UNKNOWN %s" % String(tag_id), reset_progress.tag_knowledge(tag_id) == DateTypes.TagKnowledge.UNKNOWN)
@@ -1169,12 +1187,8 @@ func _test_twelve_tag_reservation_regression() -> void:
 	player.capital = 6
 	var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 11, _fresh_progress(catalog, &"alina"), player)
 	var session: DateSession = engine.get_session_state()
-	_ok("22.14 reserved care", session.current_reserved_unlockable_tag_ids.has(&"care"))
-	_ok("22.14 care not preferred", not session.current_preferred_base_move_ids.has(&"base_care"))
-	_ok("22.14 care is fallback", session.current_fallback_base_move_ids.has(&"base_care"))
-	_ok("22.14 selected BASE omits reserved care", not session.current_selected_base_tag_ids.has(&"care"))
+	_ok("22.14 care stays preferred", session.current_preferred_base_move_ids.has(&"base_care"))
 	_ok("22.14 three BASE selected", session.current_selected_base_move_ids.size() == 3)
-
 
 func _test_twelve_tag_balance_simulation() -> void:
 	var cases: Array = [
@@ -1272,15 +1286,15 @@ func _test_unlock_move(move_id: String, tag_id: String, required_level: int, max
 	move.kind = DateTypes.DateMoveKind.UNLOCKABLE
 	move.enabled = true
 	move.max_uses_per_date = max_uses
+	move.local_tag_id = StringName(tag_id)
+	move.local_option_text = move_id
+	move.local_positive_result_text = "ok"
+	move.local_negative_result_text = "bad"
 	var requirement: UnlockRequirement = UnlockRequirement.new()
 	requirement.stat_id = &"capital"
 	requirement.required_level = required_level
 	move.unlock_requirement = requirement
-	var mappings: Array[DateMoveSituationMapping] = []
-	mappings.append(_test_mapping(tag_id))
-	move.situation_mappings = mappings
 	return move
-
 
 func _test_mapping(tag_id: String) -> DateMoveSituationMapping:
 	var mapping: DateMoveSituationMapping = DateMoveSituationMapping.new()
@@ -1589,28 +1603,21 @@ func _test_venue_trait_and_apartment() -> void:
 
 
 func _test_raise_stakes_capital_gate() -> void:
-	var locked: DateMoveOption = _find_raise_stakes_option(4)
-	var open: DateMoveOption = _find_raise_stakes_option(5)
-	_ok("28. raise_stakes locked at capital 4", locked != null and locked.availability == DateTypes.MoveAvailability.LOCKED)
-	_ok("28. raise_stakes available at capital 5", open != null and open.availability == DateTypes.MoveAvailability.AVAILABLE)
-
+	var locked: DateMoveOption = _find_characteristic_option(4, &"char_status_solve")
+	var open: DateMoveOption = _find_characteristic_option(5, &"char_status_solve")
+	_ok("28. status solve locked at capital 4", locked != null and locked.availability == DateTypes.MoveAvailability.LOCKED)
+	_ok("28. status solve available at capital 5", open != null and open.availability == DateTypes.MoveAvailability.AVAILABLE)
 
 func _find_raise_stakes_option(capital: int) -> DateMoveOption:
-	for seed in range(1, 120):
-		var catalog: DateContentCatalog = _catalog()
-		var player: TestPlayerState = _player()
-		player.capital = capital
-		var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), player)
-		while engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT and engine.get_session_state().stage != DateSession.Stage.COMPLETED:
-			if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
-				engine.advance()
-				continue
-			for option in engine.get_available_moves():
-				if option.move_id == &"raise_stakes":
-					return option
-			_choose(engine, _first_available(engine))
-	return null
+	return _find_characteristic_option(capital, &"char_status_solve")
 
+
+func _find_characteristic_option(capital: int, move_id: StringName) -> DateMoveOption:
+	var catalog: DateContentCatalog = _catalog()
+	var player: TestPlayerState = _player()
+	player.capital = capital
+	var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 1, _fresh_progress(catalog, &"alina"), player)
+	return _episode_option(engine.get_current_episode(), move_id)
 
 func _test_full_date_cycle_result() -> void:
 	var catalog: DateContentCatalog = _catalog()
@@ -2260,7 +2267,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("load v14 core save", sm.load_game())
 	_ok("v14 migrated last_work_day_index", int(gs.player.last_work_day_index) == -1)
 	_ok("v14 migrated relationship floor", girls_svc != null and int(girls_svc.get_relationship(GirlCatalog.ID_ALINA)) == 0)
-	_ok("v14 migrated current outfit luxury", gs.progression.current_outfit_id == OutfitCatalog.ID_LUXURY)
+	_ok("v14 migrated current outfit business", gs.progression.current_outfit_id == OutfitCatalog.ID_BUSINESS)
 	if girls_svc != null:
 		var migrated_v14: GirlState = girls_svc.get_state(GirlCatalog.ID_ALINA)
 		_ok("v14 stripped secondary_revealed", migrated_v14 != null and not migrated_v14.to_dict().has("secondary_revealed"))
@@ -4324,23 +4331,19 @@ func _test_character_progression() -> void:
 	_ok("upgrade muscle at max fail", buy_muscle_again.success == false)
 	_ok("start outfit owned", bool(equipment.owns_outfit(OutfitCatalog.START_OUTFIT_ID)))
 	_ok("new player casual", equipment.get_current_outfit_id() == OutfitCatalog.START_OUTFIT_ID)
-	_ok("can upgrade from casual", bool(equipment.can_upgrade_outfit()))
-	gs.player.money = 500
-	var upgrade_business: ActionResult = actions.execute(equipment.create_upgrade_outfit_action())
-	_ok("upgrade 500 business", upgrade_business.success)
+	gs.player.money = 250
+	var buy_business: ActionResult = actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS))
+	_ok("buy 250 business", buy_business.success)
 	_ok("current business", equipment.get_current_outfit_id() == OutfitCatalog.ID_BUSINESS)
 	_ok("owns business", bool(equipment.owns_outfit(&"business")))
 	_ok("money 0 after business", gs.player.money == 0)
-	gs.player.money = 800
-	var upgrade_luxury: ActionResult = actions.execute(equipment.create_upgrade_outfit_action())
-	_ok("upgrade 800 luxury", upgrade_luxury.success)
-	_ok("current luxury", equipment.get_current_outfit_id() == OutfitCatalog.ID_LUXURY)
-	_ok("luxury is max", equipment.can_upgrade_outfit() == false)
-	_ok("next outfit none", equipment.get_next_outfit() == null)
+	gs.player.money = 700
+	var luxury_too_early: ActionResult = actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_LUXURY))
+	_ok("luxury gated by stage", luxury_too_early.success == false)
 	girls.give_contact(GirlCatalog.ID_ALINA)
 	_ok("date start uses current outfit", dating.start_date(GirlCatalog.ID_ALINA, &"cafe"))
-	_ok("dating current luxury", dating.get_active_outfit_id() == OutfitCatalog.ID_LUXURY)
-	_ok("session outfit luxury", _active_session_outfit(dating) == OutfitCatalog.ID_LUXURY)
+	_ok("dating current business", dating.get_active_outfit_id() == OutfitCatalog.ID_BUSINESS)
+	_ok("session outfit business", _active_session_outfit(dating) == OutfitCatalog.ID_BUSINESS)
 	var date_result := DateResult.new()
 	date_result.girl_id = GirlCatalog.ID_ALINA
 	date_result.relationship_delta = 0
@@ -4382,7 +4385,7 @@ func _test_character_progression() -> void:
 	gs.player.appearance = 2
 	gs.player.capital = 1
 	gs.player.aura = 3
-	actions.execute(equipment.create_upgrade_outfit_action())
+	actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS))
 	actions.execute(apartment.create_upgrade_action(ApartmentCatalog.ID_UPGRADE_1))
 	gs.player.money = 1000
 	sm.save_game()
@@ -4456,7 +4459,7 @@ func _test_character_progression() -> void:
 		v14_prog.store_string(JSON.stringify(v14_outfit, "\t"))
 		v14_prog.close()
 	_ok("load v14 outfit save", sm.load_game())
-	_ok("v14 outfit migrated luxury", equipment.get_current_outfit_id() == OutfitCatalog.ID_LUXURY)
+	_ok("v14 outfit keeps equipped business", equipment.get_current_outfit_id() == OutfitCatalog.ID_BUSINESS)
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
 	if tree != null and tree.root != null:
 		var sim := GameSimulator.new()
@@ -4469,9 +4472,9 @@ func _test_character_progression() -> void:
 		_ok("sim progression upgrade", progression_text.contains("Прокачать до"))
 		sim.show_section("clothing")
 		var clothing_text: String = sim.get_city_body_text()
-		_ok("sim clothing casual", clothing_text.contains("Повседневный"))
-		_ok("sim clothing worn", clothing_text.contains("Надето"))
-		_ok("sim clothing buy", clothing_text.contains("КУПИТЬ"))
+		_ok("sim clothing casual", clothing_text.contains("Повседневная"))
+		_ok("sim clothing worn", clothing_text.contains("Сейчас:"))
+		_ok("sim clothing buy", clothing_text.contains("Купить"))
 		sim.show_section("apartment")
 		var apartment_text: String = sim.get_city_body_text()
 		_ok("sim apartment level", apartment_text.contains("Уровень квартиры: 1"))

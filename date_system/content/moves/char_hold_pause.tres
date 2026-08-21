@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"aura"
+required_level = 5
+
+[resource]
+script = ExtResource("1_move")
+id = &"char_hold_pause"
+display_name = "Выдержать паузу"
+description = "Выдержать паузу"
+kind = 1
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+situation_mappings = []
+local_tag_id = &"composure"
+local_option_text = "Молча выдерживать ситуацию до тех пор, пока первой не сдастся она."
+local_positive_result_text = "Выдержал паузу — ей это спокойствие по делу."
+local_negative_result_text = "Молча ждал, пока она сдастся — ей это давление."

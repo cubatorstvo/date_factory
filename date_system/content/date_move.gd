@@ -32,22 +32,34 @@ func is_local() -> bool:
 	return kind == DateTypes.DateMoveKind.LOCAL
 
 
+func is_characteristic() -> bool:
+	return kind == DateTypes.DateMoveKind.UNLOCKABLE
+
+
+func is_outfit_move() -> bool:
+	return kind == DateTypes.DateMoveKind.OUTFIT
+
+
+func has_fixed_presentation() -> bool:
+	return is_local() or is_characteristic() or is_outfit_move()
+
+
 func resolved_tag_id(situation_id: StringName) -> StringName:
-	if is_local():
+	if has_fixed_presentation():
 		return local_tag_id
 	var mapping: DateMoveSituationMapping = mapping_for(situation_id)
 	return mapping.tag_id if mapping != null else &""
 
 
 func resolved_option_text(situation_id: StringName) -> String:
-	if is_local():
+	if has_fixed_presentation():
 		return local_option_text
 	var mapping: DateMoveSituationMapping = mapping_for(situation_id)
 	return mapping.option_text if mapping != null else ""
 
 
 func resolved_result_text(situation_id: StringName, positive: bool) -> String:
-	if is_local():
+	if has_fixed_presentation():
 		return local_positive_result_text if positive else local_negative_result_text
 	var mapping: DateMoveSituationMapping = mapping_for(situation_id)
 	if mapping == null:

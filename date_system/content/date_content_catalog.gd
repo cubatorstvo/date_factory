@@ -143,9 +143,25 @@ func applicable_moves(situation_id: StringName, kind: DateTypes.DateMoveKind) ->
 			continue
 		if kind == DateTypes.DateMoveKind.LOCAL:
 			continue
+		if kind == DateTypes.DateMoveKind.UNLOCKABLE or kind == DateTypes.DateMoveKind.OUTFIT:
+			result.append(move)
+			continue
 		if move.mapping_for(situation_id) != null:
 			result.append(move)
 	return result
+
+
+func enabled_moves_of_kind(kind: DateTypes.DateMoveKind) -> Array[DateMove]:
+	var result: Array[DateMove] = []
+	for move in enabled_moves():
+		if move.kind == kind:
+			result.append(move)
+	return result
+
+
+func characteristic_moves() -> Array[DateMove]:
+	return enabled_moves_of_kind(DateTypes.DateMoveKind.UNLOCKABLE)
+
 
 
 func snapshot() -> DateContentCatalog:

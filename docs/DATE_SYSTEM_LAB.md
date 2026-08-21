@@ -17,87 +17,69 @@ Design-content хранится в `res://`. Runtime-прогресс — в `us
 
 ## Ход — DateMove
 
-Одна сущность `DateMove` (Ход). Виды: `BASE` (Базовый ход) и `UNLOCKABLE` (Открываемый ход).
+Одна сущность `DateMove` (Ход). Виды: `BASE` (Базовый ход), `UNLOCKABLE` (ход характеристики), `OUTFIT` (ход одежды), `LOCAL` (локальный ход).
 
 ### BASE
 
 - Есть у героя с начала игры.
 - Применимость задаётся mapping к Ситуации.
 - Базовые ходы дают случайный набор тегов. При одинаковом теге два Хода механически эквивалентны: результат идёт через `Tag → preference девушки → +1/-1`.
-- Один BASE может снова появиться в следующих эпизодах того же свидания.
-- `max_uses_per_date = 0` означает unlimited.
+- Уже выбранный на этом свидании BASE не предлагается повторно. Неиспользованный BASE может снова попасть в другой эпизод.
+- Если после исключения использованных BASE пул ситуации меньше трёх, недостающие места заполняются уже использованными BASE, чтобы эпизод всегда получил три ответа.
+- Characteristic Tags не резервируются из BASE pool.
 - Несколько BASE одного Tag для одной Situation допустимы: это текстовые варианты одного механического направления.
 
-### UNLOCKABLE
+### Characteristic Move (`UNLOCKABLE`)
 
-- Есть требование к характеристике и mappings к Ситуациям.
-- Все подходящие текущей Ситуации UNLOCKABLE показываются игроку.
-- Открываемые ходы расширяют доступный игроку набор тегов.
-- Состояния каждого применимого UNLOCKABLE:
-  - `AVAILABLE` — `unlock_requirement` выполнен и `uses < max_uses_per_date`; Tag резервируется для BASE selection.
-  - `LOCKED` — требование ещё не выполнено; затемнён, рядом `Requirement: ...`; Tag свободен для BASE.
-  - `USED` — `uses >= max_uses_per_date`; затемнён, статус `Уже использован`; Tag свободен для BASE.
-- Без слова «ДОСТУПЕН»: доступный Ход выглядит как обычная кнопка.
-- Seed: `max_uses_per_date = 1`.
+- 12 ходов, по одному на каждый Tag. Постоянный Tag и постоянный player-facing текст, без situation mappings.
+- Открываются по `EffectiveStat` на уровнях `1 / 3 / 5`.
+- Доступны в любом эпизоде (OPENING / CORE / CLOSING). Situation не бросает их вероятность.
+- Источник «Характеристика» расходуется один раз за свидание после выбора хода.
+
+### Outfit Move (`OUTFIT`)
+
+- Постоянный Tag и текст. Есть только у тематической одежды.
+- Источник «Одежда» показывается, если экипированный Outfit имеет Outfit Move.
+- Расходуется один раз за свидание.
+
+### Location (`LOCAL`)
+
+- Ходы объектов выбранного Venue. Недоступные ходы видны с требованием.
+- После одного выбранного Local Move весь источник «Локация» израсходован до конца свидания.
 
 ### Формирование вариантов эпизода
 
-Для текущей `DateSituation` Date Engine выполняет строго этот порядок:
+Каждый эпизод предлагает три Base Moves и три дополнительных источника:
 
 ```text
-1. Получить применимые UNLOCKABLE Moves
-2. Определить состояние каждого UNLOCKABLE
-3. Зарезервировать Tags доступных UNLOCKABLE
-4. Сформировать BASE candidate pool
-5. Выбрать BASE Moves с максимальным количеством уникальных Tags
-6. Собрать итоговый список вариантов
+3 Base Moves
+[ХАРАКТЕРИСТИКА] [ОДЕЖДА] [ЛОКАЦИЯ]
 ```
 
-`reserved_unlockable_tags` содержит уникальные `tag_id` всех применимых UNLOCKABLE со статусом `AVAILABLE`.
+RNG выбирает Situation и три BASE. RNG не определяет доступность уже открытого Characteristic Move или Outfit Move.
 
-BASE candidate pool делится так:
+BASE candidate pool:
 
 ```text
-preferred_base_candidates  — Tag отсутствует в reserved_unlockable_tags
-fallback_base_candidates   — Tag присутствует в reserved_unlockable_tags
+preferred_base_candidates  — ещё не использованные на этом свидании
+fallback_base_candidates   — уже использованные BASE, если preferred не хватает до трёх
 ```
 
-Число выбранных BASE: `DateRules.base_moves_per_episode` (seed = 3). Выбор через RNG текущей `DateSession`. Порядок:
+Число выбранных BASE: `DateRules.base_moves_per_episode` (seed = 3).
 
-```text
-A. preferred, каждый раз новый Tag относительно уже выбранных BASE
-B. оставшиеся preferred
-C. fallback, сначала новые Tags относительно уже выбранных BASE
-D. оставшиеся fallback
-```
-
-Пока `selected_base_moves.size() != base_moves_per_episode`. Сначала покрывается максимум разных Tags, затем повторы как fallback.
-
-Итоговый доступный набор:
-
-```text
-уникальные Tags AVAILABLE UNLOCKABLE
-+ уникальные Tags BASE
-+ повторяющиеся Tags как fallback
-```
-
-Пример: AVAILABLE UNLOCKABLE → Tag A, BASE selection берёт B, C, D. Игрок видит BASE B/C/D и UNLOCKABLE A.
-
-LOCKED или USED UNLOCKABLE с Tag A оставляют этот Tag в обычном BASE pool: корректно получить `BASE → Tag A` рядом с затемнённым UNLOCKABLE → Tag A, потому что фактически доступен только BASE.
-
-Несколько AVAILABLE UNLOCKABLE одного Tag резервируют его один раз. Content Validator даёт WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION`.
+Источник расходуется только после фактического выбора хода. Открытие списка и «Назад» источник не тратят. Использованная кнопка остаётся видимой, disabled, tooltip `Уже использовано на этом свидании.`
 
 ## Формула эпизода
 
 ```text
-СИТУАЦИЯ → БАЗОВЫЕ + ОТКРЫВАЕМЫЕ + ЛОКАЛЬНЫЕ ХОДЫ → ВЫБОР ОДНОГО ХОДА
+СИТУАЦИЯ → 3 BASE + источники Характеристика / Одежда / Локация → ВЫБОР ОДНОГО ХОДА
 → ТЕГ
 → ПРЕДПОЧТЕНИЕ ДЕВУШКИ → +1 / -1
 ```
 
-Тег варианта показывается до выбора. BASE и UNLOCKABLE берут Tag из situation mapping. LOCAL — фиксированный Tag объекта места, независимо от Situation. LOCAL не резервирует теги BASE.
+Тег варианта показывается до выбора. BASE берёт Tag из situation mapping. Characteristic, Outfit и LOCAL имеют фиксированный Tag, независимо от Situation.
 
-Opening, Core и Closing: `+1` / `-1`. Local Object расходуется целиком после одного использования за свидание.
+Opening, Core и Closing используют одну source-модель. `+1` / `-1` по предпочтению.
 
 ## Dating Core
 
@@ -297,7 +279,7 @@ effects: Array[ActionEffect] = []
 
 `ActionRequirement`: `is_met() -> bool`, `get_failure_reason() -> String`. Проверяет текущее прохождение. `MoneyRequirement(required_money)`: `EconomyService.can_afford(required_money)`, отказ `"Недостаточно денег"`. `NotPurchasedRequirement(purchase_id)`: `purchase_id` отсутствует в `GameState.progression.purchased_ids`, отказ `"Уже куплено"`. `OutfitNotOwnedRequirement(outfit_id)`: `EquipmentService.owns_outfit(outfit_id) == false`, отказ `"Эта одежда уже куплена"`. `OutfitOwnedRequirement(outfit_id)`: игрок владеет нарядом, отказ `"Эта одежда ещё не куплена"`. `LocationRequirement(required_location_id)`: `WorldService.get_current_location_id() == required_location_id`, отказ `"Действие недоступно в этой локации"`. `GirlMeetAvailableRequirement(girl_id)`: `GirlsService.can_meet_girl(girl_id)`, отказ — `GirlsService.get_meet_failure_reason`. `GirlNotMetRequirement(girl_id)`: девушка ещё не `discovered`, отказ `"Вы уже знакомы"`. `GirlLocationRequirement(girl_id)`: `GirlDefinition.location_id` совпадает с текущей локацией, отказ `"Девушка находится в другой локации"`. `GirlDiscoveredRequirement(girl_id)`: `discovered`, отказ `"Вы ещё не знакомы"`. `GirlContactRequirement(girl_id)`: `has_contact`, отказ `"У вас нет контакта этой девушки"`. `RelationshipRequirement(girl_id, minimum_relationship)`: `relationship >= minimum`, отказ `"Недостаточный уровень отношений"`. `DateAvailableRequirement(girl_id)`: `DatingService.can_start_date(girl_id)`, отказ — первая причина `get_start_date_failure_reason`. `DateLocationAvailableRequirement(girl_id, date_location_id)`: `DatingService.is_date_location_available(girl_id, date_location_id)`, отказ `"Это место сейчас недоступно"`. `RivalLocationRequirement(rival_id)`: `RivalDefinition.location_id` совпадает с текущей локацией, отказ `"Соперник находится в другой локации"`. `RivalNotDiscoveredRequirement(rival_id)`: соперник ещё не `discovered`, отказ `"Вы уже встретили этого соперника"`. `RivalDiscoveredRequirement(rival_id)`: `discovered`, отказ `"Вы ещё не встретили этого соперника"`. `RivalNotDefeatedRequirement(rival_id)`: `defeated == false`, отказ `"Этот соперник уже побеждён"`. `CharacteristicBelowMaxRequirement(characteristic_id)`: текущее значение < 5, отказ `"Характеристика уже максимальная"`. `CompetitionAvailableRequirement(competition_id)`: `CompetitionService.can_start_competition(competition_id)`, отказ — `CompetitionService.get_failure_reason`. `AutomationUpgradeNotPurchasedRequirement(upgrade_id)`: upgrade ещё не куплен, отказ `"Уже куплено"`. `FactoryExpansionRequirement(from_scope)`: текущий масштаб фабрики совпадает и coverage 100%, отказ `"Охват текущего масштаба ещё не 100%"` / `"Неверный масштаб фабрики"`.
 
-`ActionEffect`: `apply() -> void`, `get_description() -> String`. `MoneyEffect(amount)`: при `amount > 0` вызывает `EconomyService.add_money(amount)`, при `amount < 0` — `EconomyService.spend_money(-amount)`. `PurchaseEffect(purchase_id)` добавляет ID в `ProgressionState.purchased_ids` не более одного раза. `CharacteristicEffect(characteristic_id, amount)` вызывает `CharacteristicService.add_value`. `OwnOutfitEffect(outfit_id)` вызывает `EquipmentService.add_owned_outfit` и поднимает `current_outfit_id` по цепочке `casual → business → luxury`. `ApartmentUpgradeEffect(upgrade_id, target_level)` ставит `ApartmentState.level = max(current, target_level)` и фиксирует `upgrade_id` в `purchased_upgrade_ids`. `UnlockLocationEffect(location_id)` вызывает `WorldService.unlock_location(location_id)`. `MeetGirlEffect(girl_id)` вызывает `GirlsService.discover_girl` и `give_contact`. `StartDateEffect(girl_id, date_location_id, outfit_id)` вызывает `DatingService.start_date(girl_id, date_location_id, outfit_id)`. `DiscoverRivalEffect(rival_id)` вызывает `RivalsService.discover_rival(rival_id)`. `CompetitionEffect(competition_id)` вызывает `CompetitionService.resolve_competition` и `complete_competition`. `AutomationUpgradeEffect(upgrade_id)` вызывает `AutomationService.apply_upgrade`. `FactoryExpansionEffect(target_scope)` вызывает `AutomationService.apply_expansion`.
+`ActionEffect`: `apply() -> void`, `get_description() -> String`. `MoneyEffect(amount)`: при `amount > 0` вызывает `EconomyService.add_money(amount)`, при `amount < 0` — `EconomyService.spend_money(-amount)`. `PurchaseEffect(purchase_id)` добавляет ID в `ProgressionState.purchased_ids` не более одного раза. `CharacteristicEffect(characteristic_id, amount)` вызывает `CharacteristicService.add_value`. `OwnOutfitEffect(outfit_id)` вызывает `EquipmentService.add_owned_outfit` и экипирует купленный наряд. `ApartmentUpgradeEffect(upgrade_id, target_level)` ставит `ApartmentState.level = max(current, target_level)` и фиксирует `upgrade_id` в `purchased_upgrade_ids`. `UnlockLocationEffect(location_id)` вызывает `WorldService.unlock_location(location_id)`. `MeetGirlEffect(girl_id)` вызывает `GirlsService.discover_girl` и `give_contact`. `StartDateEffect(girl_id, date_location_id, outfit_id)` вызывает `DatingService.start_date(girl_id, date_location_id, outfit_id)`. `DiscoverRivalEffect(rival_id)` вызывает `RivalsService.discover_rival(rival_id)`. `CompetitionEffect(competition_id)` вызывает `CompetitionService.resolve_competition` и `complete_competition`. `AutomationUpgradeEffect(upgrade_id)` вызывает `AutomationService.apply_upgrade`. `FactoryExpansionEffect(target_scope)` вызывает `AutomationService.apply_expansion`.
 
 `ActionResult` — ответ Presentation после попытки:
 
@@ -576,11 +558,12 @@ START_OUTFIT_ID = casual
 get_outfit(outfit_id)
 get_all_outfits()
 get_purchasable_outfits()
+get_shop_outfits(story_stage)
 ```
 
-`get_purchasable_outfits` — enabled outfits с `price > 0`. Seed: `casual` цена 0 (старт), `business` 500, `luxury` 800.
+`get_purchasable_outfits` — enabled outfits с `price > 0`. `get_shop_outfits` дополнительно фильтрует по `Outfit.min_story_stage`.
 
-`ProgressionState` хранит текущий уровень цепочки в `current_outfit_id`. New Game: `casual`.
+`ProgressionState` хранит набор купленных `owned_outfit_ids` и экипированный `current_outfit_id`. New Game: во владении и на герое `casual`.
 
 Autoload `EquipmentService`:
 
@@ -588,12 +571,15 @@ Autoload `EquipmentService`:
 get_current_outfit_id() -> StringName
 owns_outfit(outfit_id) -> bool
 get_owned_outfits() -> Array
-can_upgrade_outfit() -> bool
-create_upgrade_outfit_action() -> GameAction
+get_shop_outfits() -> Array[Outfit]
+create_buy_outfit_action(outfit_id) -> GameAction
+equip_outfit(outfit_id) -> bool
 signal outfit_equipped(previous_outfit_id, current_outfit_id)
 ```
 
-Покупка — последовательный upgrade `casual → business → luxury` через `create_upgrade_outfit_action`: `GameAction` с `money_cost = price` следующего наряда, `OutfitNotOwnedRequirement`, `OwnOutfitEffect`. `OwnOutfitEffect` поднимает `current_outfit_id` по цепочке. Наряд не даёт универсального бонуса к итогу свидания.
+Покупка — разовая, через `create_buy_outfit_action`: `money_cost = price`, `OutfitNotOwnedRequirement`, `MinStoryStageRequirement`, `OwnOutfitEffect`. Покупка добавляет Outfit во владение и делает его текущим. Перед свиданием можно бесплатно экипировать любой уже купленный Outfit. Один Outfit даёт максимум `+1` к одной характеристике; тематический наряд дополнительно даёт Outfit Move. Универсального бонуса к итогу свидания нет.
+
+`EffectiveStat = min(BaseStat + OutfitStatBonus, 5)`.
 
 `get_equipped_outfit_id()` — алиас `get_current_outfit_id()`.
 
@@ -1413,7 +1399,7 @@ Stage 1–5 строят подцели из meet/date requirements сюжетн
 
 Прокачка показывает четыре характеристики 0–5: `Мышца X/5` и кнопка `Прокачать до N — 300`. На 5/5 — «Максимум». Повышение идёт через `CharacteristicService.create_upgrade_action` → `ActionService.execute` и не зависит от `purchased_ids`.
 
-Раздел Одежда показывает текущий уровень цепочки: `Одежда: Деловая (+1)` и кнопку следующего апгрейда `Улучшить до Роскошной (+2) — 800` через `EquipmentService.create_upgrade_outfit_action()`. На максимуме: `Одежда: Роскошная (+2) — МАКСИМУМ`. Покупка следующего уровня сразу делает его текущим. Date System Lab сохраняет явный selector одежды как dev-инструмент.
+Раздел Одежда показывает текущий наряд и магазин по Story Stage: Stage 1 комплекты за 250, Stage 2 тематические за 700, Stage 4 за 1200. Купленные наряды надеваются бесплатно через `EquipmentService.equip_outfit`. Покупка — `create_buy_outfit_action(outfit_id)`. Date System Lab даёт явный selector любого Outfit как dev-инструмент.
 
 Раздел Квартира показывает уровень квартиры, текущие доступные Local Objects и карточки upgrades. Seed: «Купить телевизор», цена 500, открывает `tv` (ЮМОР / ХИТРОСТЬ); кнопка «КУПИТЬ» через `ApartmentService.create_upgrade_action`. После покупки уровень становится 2, в toolkit квартиры появляется телевизор. Там же игровое действие `skip_to_08_00`: кнопка «Пропустить до 08:00» → `GameActionCatalog.make_skip_to_08_00()` → `ActionService.execute` (`time_cost_minutes` из `TimeService.minutes_until_next_morning`, 0 денег).
 
@@ -1421,7 +1407,7 @@ Stage 1–5 строят подцели из meet/date requirements сюжетн
 
 Раздел Соперники показывает `RivalsService.get_discovered_rivals()`: имя, локация, «Статус: Не побеждён» / «Статус: Побеждён». Неоткрытые соперники в этот список не входят. Блок «СОРЕВНОВАНИЯ» показывает каждую `CompetitionDefinition`: название, время, характеристику, «Шанс победы: N%», `Взнос 100 -> Победа 200`. Story rival до первой победы: кнопка `Вызвать` сразу после поражения. После победы: `Побеждён`, линия завершена. Filler rival: `Вызвать` / `Реванш`, либо `Доступно через ...` во время City Stage cooldown; после первой победы остаётся repeatable. UI читает доступность только через `RivalsService.can_challenge_now` / `get_challenge_cooldown_remaining`. Победа в Action Result: «Победа.», «Соперник <Имя> побеждён.», выплата 200. Поражение: «Поражение.»; у filler — «<Имя> остаётся доступен для реванша.» Поражение — успешное игровое действие: `ActionResult.success = true`.
 
-Раздел Свидания показывает `GirlsService.get_contacted_girls()`. Доступная девушка: имя, отношения `X / MAX`, Trait (название и механическое описание), статусы `date_requirements` (`✓` если все выполнены; иначе заголовок «Требования:» и `✗` с progress), кнопка «ПРИГЛАСИТЬ» (`disabled`, пока `can_start_date() == false`). Приглашение не запускает свидание: оно открывает выбор места через `DatingService.get_available_date_locations(girl_id)`. Одежду DatingService берёт автоматически из `EquipmentService.get_current_outfit_id()`; после выбора места свидание начинается без отдельного шага выбора наряда. Сразу под именем выбранной девушки — Trait и уже открытые предпочтения: «Любит:» известные положительные теги зелёным, «Не любит:» известные отрицательные красным; неизвестные теги не показываются. У каждой строки свой счётчик оставшихся неизвестных этой полярности: «Любит: [теги] (Неизвестно X)», «Не любит: [теги] (Неизвестно Y)». Отдельной строки «Неизвестно N» нет. Для обычной девушки до первого свидания видны два начально известных Tag. Ряд `LabUi.tag_knowledge_row` прижимает теги влево, без растягивания по ширине. Карточка места показывает Trait девушки и toolkit: Local Objects и теги Local Moves через `DatingService.resolve_date_local_object_ids`. Каждый тег окрашивается знанием этой девушки тем же `GameTermFormatter`, что чипы «Любит» / «Не любит» и варианты ходов (весь `[ИМЯ]`); название объекта нейтрально; замок и требование неразлучны: невыполненное даёт `🔒` и `Требуется: <имя> <нужно> (сейчас <есть>)`, выполненное не показывает ни замок, ни текст (значения уже в HUD). Игрок сам сравнивает известные предпочтения с наборами Local Moves: без score, рейтинга, процента совместимости и рекомендации места. Карточка наряда не показывает бонус к свиданию. Обычное открытое место — стандартное оформление. Архитектура UI поддерживает закрытое место: «Название 🔒», кнопка disabled; сейчас список строится только из открытых мест сервиса. Выбор сохраняет presentation-состояние `selected_date_location_id` и `selected_outfit_id`. После выбора: «Девушка: <имя>», «Место: <название>», «Одежда: <название>», кнопка «НАЧАТЬ СВИДАНИЕ» → `DatingService.create_start_date_action(girl_id, selected_date_location_id, selected_outfit_id)` → `ActionService.execute`. «НАЗАД» возвращает к списку девушек. После успеха открывается существующий текстовый DatePlayPanel для активной девушки; Dev UI показывает `Active girl`, `Location` и `Outfit`. После итога Date System вызывает `DatingService.complete_date` и возвращает игрока в раздел Свидания. Cooldown: кнопка disabled, «Следующее свидание через N д. N ч.». Завершённая линия: «Линия завершена», без приглашения. При первом достижении максимума Action Result: «Отношения с <Имя> достигли максимума.» и «Rating +1». Выбор venue и outfit не создаёт отдельный cooldown.
+Раздел Свидания показывает `GirlsService.get_contacted_girls()`. Доступная девушка: имя, отношения `X / MAX`, Trait (название и механическое описание), статусы `date_requirements` (`✓` если все выполнены; иначе заголовок «Требования:» и `✗` с progress), кнопка «ПРИГЛАСИТЬ» (`disabled`, пока `can_start_date() == false`). Приглашение не запускает свидание: оно открывает подготовку. Игрок выбирает Venue и любой купленный Outfit. Экран показывает девушку, отношения, Trait, известные Tags и число неизвестных, Venue, Outfit и четыре итоговые характеристики с уже применённым бонусом одежды (`Внешность: 3 (2 + 1 от одежды)`). Карточка Outfit показывает бонус, открываемый Characteristic Move и Outfit Move. Одежда DatingService больше не берётся молча из текущего слота: `create_start_date_action(girl_id, location_id, outfit_id)` передаёт выбранный наряд, `start_date` экипирует его. Сразу под именем выбранной девушки — Trait и уже открытые предпочтения: «Любит:» известные положительные теги зелёным, «Не любит:» известные отрицательные красным; неизвестные теги не показываются. У каждой строки свой счётчик оставшихся неизвестных этой полярности: «Любит: [теги] (Неизвестно X)», «Не любит: [теги] (Неизвестно Y)». Отдельной строки «Неизвестно N» нет. Для обычной девушки до первого свидания видны два начально известных Tag. Ряд `LabUi.tag_knowledge_row` прижимает теги влево, без растягивания по ширине. Карточка места показывает Trait девушки и toolkit: Local Objects и теги Local Moves через `DatingService.resolve_date_local_object_ids`. Каждый тег окрашивается знанием этой девушки тем же `GameTermFormatter`, что чипы «Любит» / «Не любит» и варианты ходов (весь `[ИМЯ]`); название объекта нейтрально; замок и требование неразлучны: невыполненное даёт `🔒` и `Требуется: <имя> <нужно> (сейчас <есть>)`, выполненное не показывает ни замок, ни текст (значения уже в HUD). Игрок сам сравнивает известные предпочтения с наборами Local Moves: без score, рейтинга, процента совместимости и рекомендации места. Карточка наряда не показывает бонус к свиданию. Обычное открытое место — стандартное оформление. Архитектура UI поддерживает закрытое место: «Название 🔒», кнопка disabled; сейчас список строится только из открытых мест сервиса. Выбор сохраняет presentation-состояние `selected_date_location_id` и `selected_outfit_id`. После выбора: «Девушка: <имя>», «Место: <название>», «Одежда: <название>», кнопка «НАЧАТЬ СВИДАНИЕ» → `DatingService.create_start_date_action(girl_id, selected_date_location_id, selected_outfit_id)` → `ActionService.execute`. «НАЗАД» возвращает к списку девушек. После успеха открывается существующий текстовый DatePlayPanel для активной девушки; Dev UI показывает `Active girl`, `Location` и `Outfit`. После итога Date System вызывает `DatingService.complete_date` и возвращает игрока в раздел Свидания. Cooldown: кнопка disabled, «Следующее свидание через N д. N ч.». Завершённая линия: «Линия завершена», без приглашения. При первом достижении максимума Action Result: «Отношения с <Имя> достигли максимума.» и «Rating +1». Выбор venue и outfit не создаёт отдельный cooldown.
 
 Reusable `GameActionButton` получает `GameAction` и показывает label, `money_cost`, `time_cost_minutes`. Кнопка вызывает `ActionService.execute(action)` и возвращает `ActionResult` в `GameSimulator`. Человекочитаемые label живут в presentation-каталоге Simulator: `skip_to_08_00` → Пропустить до 08:00, `test_wait` → Подождать, `test_earn_money` → Работать, `test_spend_money` → Потратить 50. `skip_to_08_00` отображается как обычное игровое действие, не TEST_WAIT.
 
@@ -1469,7 +1455,7 @@ signal episode_presentation_finished
 
 Enums:
 
-- `DateMoveKind`: BASE, UNLOCKABLE, LOCAL
+- `DateMoveKind`: BASE, UNLOCKABLE, OUTFIT, LOCAL
 - `DatePhase`: OPENING, CORE, CLOSING
 
 LOCAL Move не использует `situation_mappings`. Tag, option и result берутся из фиксированных local-полей. Место не имеет quality/preference score.
@@ -1532,14 +1518,14 @@ abort()
 
 OPENING 1 → CORE 3 → CLOSING 1 → RESULT.
 
-Situations выбираются по `allowed_phases`, `weight`, DateRules и seed. В каждом эпизоде: случайные BASE + UNLOCKABLE + постоянные LOCAL выбранного места. OPENING, CORE и CLOSING дают `+1` / `-1` по предпочтению девушки. После Closing:
+Situations выбираются по `allowed_phases`, `weight`, DateRules и seed. В каждом эпизоде: три BASE и источники Характеристика / Одежда / Локация. OPENING, CORE и CLOSING дают `+1` / `-1` по предпочтению девушки. После Closing:
 
 ```text
-Combo + Outfit + Unprepared Apartment
+Combo + Unprepared Apartment
 = Final Date Score → изменение отношений
 ```
 
-Место не имеет общей строки бонуса. Неподготовленная квартира: `Неподготовленная квартира  -1`. Подготовленная квартира: `0`, отдельной строки нет. Одежда: casual `0`, business `+1`, luxury `+2`. Combo учитывает OPENING/CORE/CLOSING и BASE/UNLOCKABLE/LOCAL при `score_delta > 0`; outfit и apartment не входят в chain. Награда максимум один раз за свидание.
+Место не имеет общей строки бонуса. Неподготовленная квартира: `Неподготовленная квартира  -1`. Подготовленная квартира: `0`, отдельной строки нет. Одежда не даёт очков к итогу, только `EffectiveStat` и при наличии Outfit Move. Combo учитывает OPENING/CORE/CLOSING и любой выбранный ход при `score_delta > 0`; outfit и apartment не входят в chain. Награда максимум один раз за свидание.
 
 ## Раскрытие Tags
 
@@ -1588,7 +1574,13 @@ Venue — toolkit. Игровая ценность места = набор Local
 
 ## Seed Outfits
 
-casual Повседневный, цена 0 (старт); business Деловой, цена 500; luxury Роскошный, цена 800.
+13 Outfit. `casual` с начала, без бонуса и без Outfit Move.
+
+Stage 1, цена 250, только `+1`: `sport` мышца, `stylish` внешность, `business` капитал, `minimal_black` аура.
+
+Stage 2, цена 700, `+1` и Outfit Move: `wrestling`, `magician`, `luxury`, `leather_jacket`.
+
+Stage 4, цена 1200, `+1` и Outfit Move: `stunt`, `model`, `philanthropist`, `black_turtleneck`.
 
 ## Seed Stats
 
@@ -1725,15 +1717,24 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 | spontaneous_bet | directness, flattery, politeness, audacity, dominance, composure, risk, status | 8 |
 | date_verdict | directness, flattery, care, humor, dominance, status | 6 |
 
-## Seed UNLOCKABLE Moves
+## Seed Characteristic Moves
 
-| id | имя | req | mappings |
-|---|---|---|---|
-| punch | Дать в жбан | muscle >= 4 | rival_provocation → dominance |
-| solve_with_money | Решить деньгами | capital >= 3 | money_request generosity; rival_provocation status; spontaneous_bet status |
-| play_with_looks | Сыграть внешностью | appearance >= 3 | appearance_question audacity; rival_provocation status; date_verdict flattery |
-| silent_pressure | Молча продавить | aura >= 3 | money_request dominance; rival_provocation dominance; date_verdict composure |
-| raise_stakes | Поднять ставки | capital >= 5 | money_request risk; spontaneous_bet risk |
+12 ходов, kind `UNLOCKABLE`, фиксированный Tag, требования `EffectiveStat` 1/3/5.
+
+| id | характеристика | уровень | Tag | имя |
+|---|---|---:|---|---|
+| char_say_plain | muscle | 1 | directness | Сказать по-простому |
+| char_stress_test | muscle | 3 | risk | Проверить на прочность |
+| char_force_argument | muscle | 5 | dominance | Силовой аргумент |
+| char_gallantry | appearance | 1 | politeness | Включить галантность |
+| char_polished_compliment | appearance | 3 | flattery | Красиво подать комплимент |
+| char_play_with_looks | appearance | 5 | audacity | Сыграть внешностью |
+| char_cover_expenses | capital | 1 | generosity | Взять расходы на себя |
+| char_propose_scheme | capital | 3 | cunning | Предложить схему |
+| char_status_solve | capital | 5 | status | Решить вопрос статусом |
+| char_support_mode | aura | 1 | care | Включить поддержку |
+| char_joke_relief | aura | 3 | humor | Разрядить шуткой |
+| char_hold_pause | aura | 5 | composure | Выдержать паузу |
 
 ## Seed LOCAL Moves
 
@@ -1760,9 +1761,9 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 
 Сцена `res://date_system/dev_room/DateSystemLab.tscn` (Control). Это dev-инструмент Date System, не игровая оболочка прохождения. Игровой 2D-проход Game Core — `GameSimulator`.
 
-Разделы: СВИДАНИЕ, ДЕВУШКИ, СЛОЖНОСТЬ ДЕВУШЕК, ТЕГИ, БАЗОВЫЕ ХОДЫ, ОТКРЫВАЕМЫЕ ХОДЫ, СИТУАЦИИ, МЕСТА, ЛОКАЛЬНЫЕ ОБЪЕКТЫ, ЛОКАЛЬНЫЕ ХОДЫ, НАРЯДЫ, ХАРАКТЕРИСТИКИ, ПРАВИЛА СВИДАНИЯ, БАЛАНС, ТЕСТОВОЕ СОСТОЯНИЕ, ВАЛИДАЦИЯ.
+Разделы: СВИДАНИЕ, ДЕВУШКИ, СЛОЖНОСТЬ ДЕВУШЕК, ТЕГИ, БАЗОВЫЕ ХОДЫ, ХОДЫ ХАРАКТЕРИСТИК, ХОДЫ ОДЕЖДЫ, СИТУАЦИИ, МЕСТА, ЛОКАЛЬНЫЕ ОБЪЕКТЫ, ЛОКАЛЬНЫЕ ХОДЫ, НАРЯДЫ, ХАРАКТЕРИСТИКИ, ПРАВИЛА СВИДАНИЯ, БАЛАНС, ТЕСТОВОЕ СОСТОЯНИЕ, ВАЛИДАЦИЯ.
 
-Шапка: GAME TIME (`Day`, `Time`, `Absolute`) из `TimeService`, CAMPAIGN (`Stage`, `Finale`) из `StageService`, `money` из `GameState`, кнопки «Новая игра», «Сохранить», «Загрузить», тестовые действия `+30 MIN` / `+120 MIN` / `+1 DAY` через `GameAction.time_cost_minutes` и `COMPLETE CURRENT STAGE` через `StageService.force_complete_current_stage_for_dev()`. Блок GAME ACTIONS запускает definitions каталога через `ActionService.execute`: `WAIT +120 MIN`, `EARN 100`, `SPEND 50`, `REQUIRE 100`; после попытки обновляет money, game time и показывает `ActionResult` (`SUCCESS` / `FAILED`). Экран СВИДАНИЕ показывает день, часы, `stage` и `money`. ТЕСТОВОЕ СОСТОЯНИЕ показывает вычисляемое время и кампанию, редактирует `money`. Кампанию в лаборатории двигает только `force_complete_current_stage_for_dev()`, без свободного SpinBox Stage.
+Шапка: GAME TIME (`Day`, `Time`, `Absolute`) из `TimeService`, CAMPAIGN (`Stage`, `Finale`) из `StageService`, `money` из `GameState`, кнопки «Новая игра», «Сохранить», «Загрузить», тестовые действия `+30 MIN` / `+120 MIN` / `+1 DAY` через `GameAction.time_cost_minutes` и `COMPLETE CURRENT STAGE` через `StageService.force_complete_current_stage_for_dev()`. Блок GAME ACTIONS запускает definitions каталога через `ActionService.execute`: `WAIT +120 MIN`, `EARN 100`, `SPEND 50`, `REQUIRE 100`; после попытки обновляет money, game time и показывает `ActionResult` (`SUCCESS` / `FAILED`). Экран СВИДАНИЕ показывает день, часы, `stage` и `money`, итоговые характеристики с бонусом одежды, открытые Characteristic Moves и Outfit Move. ТЕСТОВОЕ СОСТОЯНИЕ редактирует BaseStat 0..5, любой Outfit, показывает EffectiveStat, открытые Characteristic Moves, Outfit Move и даёт восстановить/потратить три source-use. Кампанию в лаборатории двигает только `force_complete_current_stage_for_dev()`, без свободного SpinBox Stage.
 
 Редактор: список, поиск, создать, дублировать, редактировать, удалить, сохранить, отменить. Draft-копия Resource. Save: validate → `.tres` → catalog reload → статус. Удаление показывает зависимости.
 
@@ -1783,17 +1784,8 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 3. у GirlProfile authored-предпочтения только `positive_tag_ids`; остальные активные Tags автоматически negative  
 4. mapping → существующая Situation  
 5. mapping → существующий Tag  
-6. UNLOCKABLE имеет UnlockRequirement  
-7. BASE unlimited usage  
-8. Situation имеет минимум 3 применимых BASE при seed DateRules  
-9. enabled apartment/cafe/restaurant имеют минимум один Local Object  
-10. у каждой девушки задан ровно один существующий Trait  
-11. достаточно Situations на каждую DatePhase  
-12. initial known Tags совпадают с канонической таблицей: обычные — один positive и один negative, сюжетные — пусто  
-13. `DateLocation.local_object_id` и `DateLocalObject.move_id` существуют; Move объекта имеет kind LOCAL; LOCAL Move имеет tag, option и result texts  
-14. UnlockRequirement → существующий ProgressionStat  
-15. один Move — максимум один mapping на одну Situation  
-16. несколько UNLOCKABLE одной Situation с одинаковым Tag → WARNING `DUPLICATE_UNLOCKABLE_TAG_IN_SITUATION` (не блокирует запуск)
+6. Characteristic Move имеет UnlockRequirement на 1/3/5, постоянный Tag и не использует situation mappings; ровно 12 ходов покрывают 12 Tags  
+16. два Characteristic Move с одним Tag → ERROR `CHARACTERISTIC_TAG_DUPLICATE`
 17. `GirlProfile.difficulty_preset_id` не резолвится в enabled preset → ERROR `INVALID_GIRL_DIFFICULTY_REFERENCE`
 18. `girl.positive_tag_ids.size() != difficulty.positive_tag_count` → ERROR `INVALID_POSITIVE_TAG_COUNT`
 19. повторы или неизвестные id в `positive_tag_ids` → ERROR `INCOMPLETE_GIRL_TAG_COVERAGE`
@@ -1807,9 +1799,9 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 
 Запуск: девушка, место, наряд, квартира (если location uses apartment), тестовые статы, seed. Кнопки: НАЧАТЬ НОВОЕ СВИДАНИЕ, ПОВТОРИТЬ ПОСЛЕДНИЙ SEED, СБРОСИТЬ ПРОГРЕСС ДЕВУШКИ, СБРОСИТЬ ВЕСЬ ТЕСТОВЫЙ ПРОГРЕСС.
 
-Эпизод: фаза, номер, Situation, BASE×3, все applicable UNLOCKABLE, LOCAL по объектам места. Tag цветом знания конкретной девушки через `LabUi` (UNKNOWN — цвет текста по умолчанию, POSITIVE — зелёный, NEGATIVE — красный), option; у locked — `🔒` рядом с тегом (цвет знания сохраняется) и `Requirement: ...`; у used объекта — `Использовано` и disabled ходы. После выбора: ход, tag, реакция, score, новое знание, ПРОДОЛЖИТЬ.
+Эпизод: фаза, номер, Situation, BASE×3 и кнопки источников `[ХАРАКТЕРИСТИКА] [ОДЕЖДА] [ЛОКАЦИЯ]`. Цвет источника — зелёный / серый / красный по известным Tags девушки; заблокированный неиспользованный источник нейтральный; использованный погашен, tooltip `Уже использовано на этом свидании.` Внутри списка видны и доступные, и закрытые ходы с `Требуется` / `Сейчас`. После выбора: ход, tag, реакция, score, новое знание, ПРОДОЛЖИТЬ.
 
-Debug-панель эпизода дополнительно показывает: applicable/available/locked/used unlockable moves, reserved_unlockable_tags, preferred/fallback BASE candidates, selected_base_moves и selected_base_tags. У каждого Move: `move_id`, `tag_id`, `state`.
+Debug-панель эпизода дополнительно показывает source-used флаги, preferred/fallback BASE candidates, selected_base_moves и selected_base_tags.
 
 Result: построчный итог, строки появляются быстро одна за другой. Сначала `[ТЕГ] +1` / `[ТЕГ] -1` по эпизодам, включая OPENING. Затем Combo, особенность девушки, при неподготовленной квартире строка `Неподготовленная квартира  -1`. Далее `Итог свидания: N` (сырой итог), `Прогресс отношений: +N` (`max(raw, 0)`), `Отношения: X / MAX`. Без эпизодной статистики и без debug-панели.
 

@@ -57,6 +57,10 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.used_unlockable_move_counts = {}
 	_session.local_object_ids = config.local_object_ids.duplicate()
 	_session.used_local_object_ids = []
+	_session.used_base_move_ids = []
+	_session.characteristic_source_used = false
+	_session.outfit_source_used = false
+	_session.location_source_used = false
 	_rng.seed = config.seed
 	_session.current_episode_index = 0
 	_begin_episode()
@@ -82,7 +86,10 @@ func get_current_episode() -> DateEpisodeView:
 	if not _session.selected_situation_ids.is_empty() and _session.current_episode_index < _session.selected_situation_ids.size():
 		view.situation = _catalog.find_situation(_session.selected_situation_ids[_session.current_episode_index])
 	view.base_options = _build_options(_session.current_selected_base_move_ids, DateTypes.DateMoveKind.BASE)
-	view.unlockable_options = _build_options(_session.current_applicable_unlockable_move_ids, DateTypes.DateMoveKind.UNLOCKABLE)
+	view.source_views = _build_source_views()
+	for source_view in view.source_views:
+		if source_view.source == DateTypes.DateMoveSource.CHARACTERISTIC:
+			view.unlockable_options = source_view.options
 	view.local_object_views = _build_local_object_views()
 	return view
 
@@ -93,9 +100,8 @@ func get_available_moves() -> Array[DateMoveOption]:
 	if view == null:
 		return result
 	result.append_array(view.base_options)
-	result.append_array(view.unlockable_options)
-	for local_view in view.local_object_views:
-		result.append_array(local_view.options)
+	for source_view in view.source_views:
+		result.append_array(source_view.options)
 	return result
 
 
@@ -118,10 +124,16 @@ func choose_move(move_id: StringName) -> void:
 			var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.POSITIVE if preference > 0 else DateTypes.TagKnowledge.NEGATIVE
 			tag_revealed.emit(tag_id, knowledge)
 
-	if move.kind == DateTypes.DateMoveKind.UNLOCKABLE:
-		var used: int = int(_session.used_unlockable_move_counts.get(String(move_id), 0))
-		_session.used_unlockable_move_counts[String(move_id)] = used + 1
-	if move.is_local():
+	if move.kind == DateTypes.DateMoveKind.BASE:
+		if not _session.used_base_move_ids.has(move_id):
+			_session.used_base_move_ids.append(move_id)
+	elif move.is_characteristic():
+		_session.characteristic_source_used = true
+		_session.used_unlockable_move_counts[String(move_id)] = 1
+	elif move.is_outfit_move():
+		_session.outfit_source_used = true
+	elif move.is_local():
+		_session.location_source_used = true
 		var object_id: StringName = option.local_object_id
 		if object_id == &"":
 			var local_object: DateLocalObject = _catalog.find_local_object_for_move(move_id)
@@ -197,26 +209,16 @@ func _begin_episode() -> void:
 	_session.current_phase = rules.phase_for_episode_index(_session.current_episode_index)
 	var situation: DateSituation = _pick_situation(_session.current_phase)
 	_session.selected_situation_ids.append(situation.id)
-	var unlockables: Array[DateMove] = _catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.UNLOCKABLE)
-	if not rules.show_locked_unlockable_moves:
-		var visible: Array[DateMove] = []
-		for move in unlockables:
-			if _move_availability(move) != DateTypes.MoveAvailability.LOCKED:
-				visible.append(move)
-		unlockables = visible
-	_session.current_applicable_unlockable_move_ids = _ids_of(unlockables)
-	var reserved: Dictionary = {}
+	var characteristic_moves: Array[DateMove] = _catalog.characteristic_moves()
+	_session.current_applicable_unlockable_move_ids = _ids_of(characteristic_moves)
 	var available_unlockables: Array[DateMove] = []
 	var locked_unlockables: Array[DateMove] = []
 	var used_unlockables: Array[DateMove] = []
-	for move in unlockables:
+	for move in characteristic_moves:
 		var state: DateTypes.MoveAvailability = _move_availability(move)
 		match state:
 			DateTypes.MoveAvailability.AVAILABLE:
 				available_unlockables.append(move)
-				var mapping: DateMoveSituationMapping = move.mapping_for(situation.id)
-				if mapping != null:
-					reserved[mapping.tag_id] = true
 			DateTypes.MoveAvailability.LOCKED:
 				locked_unlockables.append(move)
 			DateTypes.MoveAvailability.USED:
@@ -224,14 +226,13 @@ func _begin_episode() -> void:
 	_session.current_available_unlockable_move_ids = _ids_of(available_unlockables)
 	_session.current_locked_unlockable_move_ids = _ids_of(locked_unlockables)
 	_session.current_used_unlockable_move_ids = _ids_of(used_unlockables)
-	_session.current_reserved_unlockable_tag_ids = _tag_ids_from_reserved(reserved)
+	_session.current_reserved_unlockable_tag_ids = []
 	var base_pool: Array[DateMove] = _catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE)
 	_session.current_candidate_base_move_ids = _ids_of(base_pool)
 	var preferred: Array[DateMove] = []
 	var fallback: Array[DateMove] = []
 	for move in base_pool:
-		var tag_id: StringName = _move_tag(move, situation.id)
-		if reserved.has(tag_id):
+		if _session.used_base_move_ids.has(move.id):
 			fallback.append(move)
 		else:
 			preferred.append(move)
@@ -300,10 +301,7 @@ func _selected_tag_set(selected: Array[DateMove], situation_id: StringName) -> D
 
 
 func _move_tag(move: DateMove, situation_id: StringName) -> StringName:
-	var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
-	if mapping == null:
-		return &""
-	return mapping.tag_id
+	return move.resolved_tag_id(situation_id)
 
 
 func _tags_of(moves: Array[DateMove], situation_id: StringName) -> Array[StringName]:
@@ -311,13 +309,6 @@ func _tags_of(moves: Array[DateMove], situation_id: StringName) -> Array[StringN
 	for move in moves:
 		tags.append(_move_tag(move, situation_id))
 	return tags
-
-
-func _tag_ids_from_reserved(reserved: Dictionary) -> Array[StringName]:
-	var ids: Array[StringName] = []
-	for key in reserved.keys():
-		ids.append(key as StringName)
-	return ids
 
 
 func _weighted_index(weights: Array[float]) -> int:
@@ -337,55 +328,189 @@ func _weighted_index(weights: Array[float]) -> int:
 
 func _build_options(move_ids: Array[StringName], kind: DateTypes.DateMoveKind) -> Array[DateMoveOption]:
 	var options: Array[DateMoveOption] = []
-	if _session.selected_situation_ids.is_empty() or _session.current_episode_index >= _session.selected_situation_ids.size():
-		return options
-	var situation_id: StringName = _session.selected_situation_ids[_session.current_episode_index]
+	var situation_id: StringName = &""
+	if not _session.selected_situation_ids.is_empty() and _session.current_episode_index < _session.selected_situation_ids.size():
+		situation_id = _session.selected_situation_ids[_session.current_episode_index]
 	for move_id in move_ids:
-		var move: DateMove = _catalog.find_move(move_id)
-		if move == null:
-			continue
-		if move.is_local():
-			continue
-		var tag_id: StringName = move.resolved_tag_id(situation_id)
-		if tag_id == &"":
-			continue
-		var option := DateMoveOption.new()
-		option.move_id = move.id
-		option.display_name = move.display_name
-		option.kind = kind
-		option.option_text = move.resolved_option_text(situation_id)
-		option.tag_id = tag_id
-		var tag: DateTag = _catalog.find_tag(tag_id)
-		option.tag_display_name = tag.display_name if tag != null else String(tag_id)
-		option.tag_knowledge = _girl_progress.tag_knowledge(tag_id, _girl)
-		if kind == DateTypes.DateMoveKind.UNLOCKABLE:
-			option.availability = _move_availability(move)
-			if move.unlock_requirement != null:
-				option.requirement_stat_id = move.unlock_requirement.stat_id
-				option.requirement_level = move.unlock_requirement.required_level
-				option.current_stat_level = _player.get_stat(move.unlock_requirement.stat_id)
-			option.uses_max = move.max_uses_per_date
-			option.uses_used = int(_session.used_unlockable_move_counts.get(String(move.id), 0))
-		else:
-			option.availability = DateTypes.MoveAvailability.AVAILABLE
-		options.append(option)
+		var option: DateMoveOption = _build_option(move_id, kind, situation_id, &"", "")
+		if option != null:
+			options.append(option)
 	return options
 
 
-func _move_availability(move: DateMove) -> DateTypes.MoveAvailability:
-	if move.is_local():
-		var local_object: DateLocalObject = _catalog.find_local_object_for_move(move.id)
-		if local_object != null and _session.used_local_object_ids.has(local_object.id):
-			return DateTypes.MoveAvailability.USED
-	else:
-		var used: int = int(_session.used_unlockable_move_counts.get(String(move.id), 0))
-		if not move.is_unlimited() and used >= move.max_uses_per_date:
-			return DateTypes.MoveAvailability.USED
+func _build_option(
+	move_id: StringName,
+	kind: DateTypes.DateMoveKind,
+	situation_id: StringName,
+	local_object_id: StringName,
+	local_object_display_name: String
+) -> DateMoveOption:
+	var move: DateMove = _catalog.find_move(move_id)
+	if move == null:
+		return null
+	var tag_id: StringName = move.resolved_tag_id(situation_id)
+	if tag_id == &"":
+		return null
+	var option := DateMoveOption.new()
+	option.move_id = move.id
+	option.display_name = move.display_name
+	option.kind = kind
+	option.option_text = move.resolved_option_text(situation_id)
+	option.tag_id = tag_id
+	var tag: DateTag = _catalog.find_tag(tag_id)
+	option.tag_display_name = tag.display_name if tag != null else String(tag_id)
+	option.tag_knowledge = _girl_progress.tag_knowledge(tag_id, _girl)
+	option.local_object_id = local_object_id
+	option.local_object_display_name = local_object_display_name
+	option.availability = DateTypes.MoveAvailability.AVAILABLE if kind == DateTypes.DateMoveKind.BASE else _move_availability(move)
 	if move.unlock_requirement != null:
-		var current: int = _player.get_stat(move.unlock_requirement.stat_id)
+		option.requirement_stat_id = move.unlock_requirement.stat_id
+		option.requirement_level = move.unlock_requirement.required_level
+		option.current_base_stat_level = _base_stat(move.unlock_requirement.stat_id)
+		option.outfit_stat_bonus = _outfit_bonus(move.unlock_requirement.stat_id)
+		option.current_stat_level = _effective_stat(move.unlock_requirement.stat_id)
+	return option
+
+
+func _move_availability(move: DateMove) -> DateTypes.MoveAvailability:
+	if move.is_characteristic() and _session.characteristic_source_used:
+		return DateTypes.MoveAvailability.USED
+	if move.is_outfit_move() and _session.outfit_source_used:
+		return DateTypes.MoveAvailability.USED
+	if move.is_local() and _session.location_source_used:
+		return DateTypes.MoveAvailability.USED
+	if move.unlock_requirement != null:
+		var current: int = _effective_stat(move.unlock_requirement.stat_id)
 		if current < move.unlock_requirement.required_level:
 			return DateTypes.MoveAvailability.LOCKED
 	return DateTypes.MoveAvailability.AVAILABLE
+
+
+func _build_source_views() -> Array[DateMoveSourceView]:
+	var views: Array[DateMoveSourceView] = []
+	var characteristic_view: DateMoveSourceView = _build_characteristic_source()
+	if characteristic_view != null:
+		views.append(characteristic_view)
+	var outfit_view: DateMoveSourceView = _build_outfit_source()
+	if outfit_view != null:
+		views.append(outfit_view)
+	var location_view: DateMoveSourceView = _build_location_source()
+	if location_view != null:
+		views.append(location_view)
+	return views
+
+
+func _build_characteristic_source() -> DateMoveSourceView:
+	var moves: Array[DateMove] = _catalog.characteristic_moves()
+	if moves.is_empty():
+		return null
+	var view := DateMoveSourceView.new()
+	view.source = DateTypes.DateMoveSource.CHARACTERISTIC
+	view.display_name = DateTypes.source_name(view.source)
+	view.visible = true
+	view.used = _session.characteristic_source_used
+	var situation_id: StringName = _current_situation_id()
+	var options: Array[DateMoveOption] = []
+	for move in moves:
+		var option: DateMoveOption = _build_option(move.id, DateTypes.DateMoveKind.UNLOCKABLE, situation_id, &"", "")
+		if option != null:
+			options.append(option)
+	options.sort_custom(_sort_characteristic_options)
+	view.options = options
+	view.state = _source_state(options, view.used)
+	return view
+
+
+func _build_outfit_source() -> DateMoveSourceView:
+	if _outfit == null or not _outfit.has_outfit_move():
+		return null
+	var move: DateMove = _catalog.find_move(_outfit.outfit_move_id)
+	if move == null:
+		return null
+	var view := DateMoveSourceView.new()
+	view.source = DateTypes.DateMoveSource.OUTFIT
+	view.display_name = DateTypes.source_name(view.source)
+	view.visible = true
+	view.used = _session.outfit_source_used
+	var option: DateMoveOption = _build_option(move.id, DateTypes.DateMoveKind.OUTFIT, _current_situation_id(), &"", "")
+	if option != null:
+		view.options.append(option)
+	view.state = _source_state(view.options, view.used)
+	return view
+
+
+func _build_location_source() -> DateMoveSourceView:
+	var options: Array[DateMoveOption] = []
+	for object_id in _session.local_object_ids:
+		var local_object: DateLocalObject = _catalog.find_local_object(object_id)
+		if local_object == null or not local_object.enabled:
+			continue
+		for move_id in local_object.move_ids:
+			var option: DateMoveOption = _build_option(
+				move_id,
+				DateTypes.DateMoveKind.LOCAL,
+				_current_situation_id(),
+				local_object.id,
+				local_object.display_name
+			)
+			if option != null:
+				options.append(option)
+	if options.is_empty():
+		return null
+	var view := DateMoveSourceView.new()
+	view.source = DateTypes.DateMoveSource.LOCATION
+	view.display_name = DateTypes.source_name(view.source)
+	view.visible = true
+	view.used = _session.location_source_used
+	view.options = options
+	view.state = _source_state(options, view.used)
+	return view
+
+
+func _source_state(options: Array[DateMoveOption], used: bool) -> DateTypes.DateMoveSourceState:
+	if used:
+		return DateTypes.DateMoveSourceState.USED
+	var has_positive: bool = false
+	var has_unknown: bool = false
+	var has_available: bool = false
+	for option in options:
+		if option.availability != DateTypes.MoveAvailability.AVAILABLE:
+			continue
+		has_available = true
+		match option.tag_knowledge:
+			DateTypes.TagKnowledge.POSITIVE:
+				has_positive = true
+			DateTypes.TagKnowledge.UNKNOWN:
+				has_unknown = true
+	if not has_available:
+		return DateTypes.DateMoveSourceState.BLOCKED
+	if has_positive:
+		return DateTypes.DateMoveSourceState.POSITIVE
+	if has_unknown:
+		return DateTypes.DateMoveSourceState.UNKNOWN
+	return DateTypes.DateMoveSourceState.NEGATIVE
+
+
+func _sort_characteristic_options(a: DateMoveOption, b: DateMoveOption) -> bool:
+	var a_group: int = _characteristic_option_group(a)
+	var b_group: int = _characteristic_option_group(b)
+	if a_group != b_group:
+		return a_group < b_group
+	var a_move: DateMove = _catalog.find_move(a.move_id)
+	var b_move: DateMove = _catalog.find_move(b.move_id)
+	return DateTypes.characteristic_sort_key(a_move) < DateTypes.characteristic_sort_key(b_move)
+
+
+func _characteristic_option_group(option: DateMoveOption) -> int:
+	if option.availability != DateTypes.MoveAvailability.AVAILABLE:
+		return 3
+	match option.tag_knowledge:
+		DateTypes.TagKnowledge.POSITIVE:
+			return 0
+		DateTypes.TagKnowledge.UNKNOWN:
+			return 1
+		_:
+			return 2
 
 
 func _build_local_object_views() -> Array[DateLocalObjectView]:
@@ -399,39 +524,41 @@ func _build_local_object_views() -> Array[DateLocalObjectView]:
 		var view := DateLocalObjectView.new()
 		view.object_id = local_object.id
 		view.display_name = local_object.display_name
-		view.used = _session.used_local_object_ids.has(local_object.id)
+		view.used = _session.location_source_used
 		for move_id in local_object.move_ids:
-			var option: DateMoveOption = _build_local_option(move_id, local_object, view.used)
+			var option: DateMoveOption = _build_option(
+				move_id,
+				DateTypes.DateMoveKind.LOCAL,
+				_current_situation_id(),
+				local_object.id,
+				local_object.display_name
+			)
 			if option != null:
 				view.options.append(option)
 		views.append(view)
 	return views
 
 
-func _build_local_option(move_id: StringName, local_object: DateLocalObject, object_used: bool) -> DateMoveOption:
-	var move: DateMove = _catalog.find_move(move_id)
-	if move == null or not move.is_local():
-		return null
-	var option := DateMoveOption.new()
-	option.move_id = move.id
-	option.display_name = move.display_name
-	option.kind = DateTypes.DateMoveKind.LOCAL
-	option.option_text = move.resolved_option_text(&"")
-	option.tag_id = move.resolved_tag_id(&"")
-	var tag: DateTag = _catalog.find_tag(option.tag_id)
-	option.tag_display_name = tag.display_name if tag != null else String(option.tag_id)
-	option.tag_knowledge = _girl_progress.tag_knowledge(option.tag_id, _girl)
-	option.local_object_id = local_object.id
-	option.local_object_display_name = local_object.display_name
-	if move.unlock_requirement != null:
-		option.requirement_stat_id = move.unlock_requirement.stat_id
-		option.requirement_level = move.unlock_requirement.required_level
-		option.current_stat_level = _player.get_stat(move.unlock_requirement.stat_id)
-	if object_used:
-		option.availability = DateTypes.MoveAvailability.USED
-	else:
-		option.availability = _move_availability(move)
-	return option
+func _current_situation_id() -> StringName:
+	if _session == null or _session.selected_situation_ids.is_empty():
+		return &""
+	if _session.current_episode_index >= _session.selected_situation_ids.size():
+		return &""
+	return _session.selected_situation_ids[_session.current_episode_index]
+
+
+func _base_stat(stat_id: StringName) -> int:
+	return _player.get_stat(stat_id)
+
+
+func _outfit_bonus(stat_id: StringName) -> int:
+	if _outfit == null:
+		return 0
+	return _outfit.bonus_for(stat_id)
+
+
+func _effective_stat(stat_id: StringName) -> int:
+	return DateTypes.effective_stat(_base_stat(stat_id), _outfit, stat_id)
 
 
 func _find_option(move_id: StringName) -> DateMoveOption:

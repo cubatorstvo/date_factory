@@ -7,7 +7,8 @@ const SECTIONS: Array[Array] = [
 	["girl_difficulty", "СЛОЖНОСТЬ ДЕВУШЕК"],
 	["tags", "ТЕГИ"],
 	["base_moves", "БАЗОВЫЕ ХОДЫ"],
-	["unlock_moves", "ОТКРЫВАЕМЫЕ ХОДЫ"],
+	["unlock_moves", "ХОДЫ ХАРАКТЕРИСТИК"],
+	["outfit_moves", "ХОДЫ ОДЕЖДЫ"],
 	["situations", "СИТУАЦИИ"],
 	["locations", "МЕСТА"],
 	["local_objects", "ЛОКАЛЬНЫЕ ОБЪЕКТЫ"],
@@ -521,7 +522,7 @@ func _build_test_state() -> Control:
 			progress_store.save_store()
 			_show_section("test_state")
 		)
-		root.add_child(LabUi.labeled_row(stat.display_name, spin))
+		root.add_child(LabUi.labeled_row("BaseStat: %s" % stat.display_name, spin))
 	var prepared := CheckBox.new()
 	prepared.text = "Подготовлена"
 	prepared.button_pressed = player.apartment_prepared
@@ -530,32 +531,89 @@ func _build_test_state() -> Control:
 		progress_store.save_store()
 	)
 	root.add_child(LabUi.labeled_row("Подготовка квартиры", prepared))
-	root.add_child(LabUi.heading("Открываемые ходы"))
-	var header := Label.new()
-	header.text = "Ход | Requirement | Current | State"
-	root.add_child(header)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(scroll)
-	var list := VBoxContainer.new()
-	scroll.add_child(list)
-	for move in catalog_service.catalog.moves:
-		if move.kind != DateTypes.DateMoveKind.UNLOCKABLE or move.unlock_requirement == null:
+	var current_outfit_id: StringName = _play_panel.get_lab_outfit_id() if _play_panel != null else &"casual"
+	var outfit_sel := OptionButton.new()
+	LabUi.fill_selector(outfit_sel, catalog_service.catalog.outfits, current_outfit_id)
+	outfit_sel.item_selected.connect(func(index: int) -> void:
+		if _play_panel != null:
+			_play_panel.set_lab_outfit_id(outfit_sel.get_item_metadata(index))
+		_show_section("test_state")
+	)
+	root.add_child(LabUi.labeled_row("Outfit", outfit_sel))
+	var outfit: Outfit = catalog_service.catalog.find_outfit(current_outfit_id)
+	var bonus_line := Label.new()
+	if outfit != null and outfit.stat_bonus > 0:
+		var bonus_stat: ProgressionStat = catalog_service.catalog.find_stat(outfit.stat_id)
+		var bonus_name: String = bonus_stat.display_name if bonus_stat != null else String(outfit.stat_id)
+		bonus_line.text = "Outfit bonus: %s +%d" % [bonus_name, outfit.stat_bonus]
+	else:
+		bonus_line.text = "Outfit bonus: нет"
+	root.add_child(bonus_line)
+	root.add_child(LabUi.heading("EffectiveStat"))
+	for stat in catalog_service.catalog.progression_stats:
+		var base_value: int = player.get_stat(stat.id)
+		var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
+		var bonus: int = outfit.bonus_for(stat.id) if outfit != null else 0
+		var line := Label.new()
+		if bonus > 0:
+			line.text = "%s: %d (%d + 1 от одежды)" % [stat.display_name, effective, base_value]
+		else:
+			line.text = "%s: %d" % [stat.display_name, effective]
+		root.add_child(line)
+	root.add_child(LabUi.heading("Открытые Characteristic Moves"))
+	for move in catalog_service.catalog.characteristic_moves():
+		if move == null or move.unlock_requirement == null:
 			continue
-		var current: int = player.get_stat(move.unlock_requirement.stat_id)
+		var current: int = DateTypes.effective_stat(player.get_stat(move.unlock_requirement.stat_id), outfit, move.unlock_requirement.stat_id)
 		var unlocked: bool = current >= move.unlock_requirement.required_level
 		var row := Label.new()
 		var stat: ProgressionStat = catalog_service.catalog.find_stat(move.unlock_requirement.stat_id)
-		row.text = "%s | %s %d | %d | %s" % [
+		row.text = "%s | %s %d | Effective %d | %s" % [
 			move.display_name,
 			stat.display_name if stat != null else String(move.unlock_requirement.stat_id),
 			move.unlock_requirement.required_level,
 			current,
 			"Unlocked" if unlocked else "Locked",
 		]
-		list.add_child(row)
+		root.add_child(row)
+	var outfit_move_line := Label.new()
+	if outfit != null and outfit.has_outfit_move():
+		var outfit_move: DateMove = catalog_service.catalog.find_move(outfit.outfit_move_id)
+		if outfit_move != null:
+			var tag: DateTag = catalog_service.catalog.find_tag(outfit_move.local_tag_id)
+			var tag_name: String = tag.display_name if tag != null else String(outfit_move.local_tag_id)
+			outfit_move_line.text = "Outfit Move: [%s] %s" % [tag_name, outfit_move.display_name]
+		else:
+			outfit_move_line.text = "Outfit Move: нет"
+	else:
+		outfit_move_line.text = "Outfit Move: нет"
+	root.add_child(outfit_move_line)
+	root.add_child(LabUi.heading("Source use"))
+	var session: DateSession = _play_panel._engine.get_session_state() if _play_panel != null and _play_panel._engine != null else null
+	var char_used := CheckBox.new()
+	char_used.text = "Characteristic used"
+	char_used.button_pressed = session != null and session.characteristic_source_used
+	char_used.disabled = session == null
+	var outfit_used := CheckBox.new()
+	outfit_used.text = "Outfit used"
+	outfit_used.button_pressed = session != null and session.outfit_source_used
+	outfit_used.disabled = session == null
+	var location_used := CheckBox.new()
+	location_used.text = "Location used"
+	location_used.button_pressed = session != null and session.location_source_used
+	location_used.disabled = session == null
+	var apply_sources := LabUi.button("ПРИМЕНИТЬ SOURCE USE")
+	apply_sources.disabled = session == null
+	apply_sources.pressed.connect(func() -> void:
+		if _play_panel != null:
+			_play_panel.apply_lab_source_used(char_used.button_pressed, outfit_used.button_pressed, location_used.button_pressed)
+		_show_section("test_state")
+	)
+	root.add_child(char_used)
+	root.add_child(outfit_used)
+	root.add_child(location_used)
+	root.add_child(apply_sources)
 	return root
-
 
 func _build_editor() -> Control:
 	_editor_root = VBoxContainer.new()
@@ -615,6 +673,8 @@ func _items() -> Array:
 			return _moves_of(DateTypes.DateMoveKind.BASE)
 		"unlock_moves":
 			return _moves_of(DateTypes.DateMoveKind.UNLOCKABLE)
+		"outfit_moves":
+			return _moves_of(DateTypes.DateMoveKind.OUTFIT)
 		"situations":
 			return catalog.situations
 		"locations":
@@ -691,6 +751,10 @@ func _rebuild_form() -> void:
 		"outfits":
 			_add_common_identity(_draft)
 			_add_int(_draft, "price", "price")
+			_add_id_selector(_draft, "stat_id", "stat", catalog_service.catalog.progression_stats)
+			_add_int(_draft, "stat_bonus", "stat_bonus")
+			_add_int(_draft, "min_story_stage", "min_story_stage")
+			_add_id_selector(_draft, "outfit_move_id", "outfit move", _moves_of(DateTypes.DateMoveKind.OUTFIT))
 		"locations":
 			_add_common_identity(_draft)
 			_add_bool(_draft, "uses_apartment_preparation", "uses_apartment_preparation")
@@ -709,7 +773,7 @@ func _rebuild_form() -> void:
 			_add_girl_form()
 		"girl_difficulty":
 			_add_difficulty_form()
-		"base_moves", "unlock_moves":
+		"base_moves", "unlock_moves", "outfit_moves":
 			_add_move_form()
 		"rules":
 			_add_rules_form()
@@ -1016,22 +1080,17 @@ func _set_girl_liked_tag(girl: GirlProfile, tag_id: StringName, liked: bool) -> 
 func _add_move_form() -> void:
 	var move: DateMove = _draft as DateMove
 	_add_common_identity(move)
-	if move.kind == DateTypes.DateMoveKind.LOCAL:
+	if move.kind == DateTypes.DateMoveKind.LOCAL or move.kind == DateTypes.DateMoveKind.OUTFIT or move.kind == DateTypes.DateMoveKind.UNLOCKABLE:
 		_add_id_selector(move, "local_tag_id", "local tag", catalog_service.catalog.tags)
 		_add_text(move, "local_option_text", "local_option_text")
 		_add_text(move, "local_positive_result_text", "local_positive_result_text")
 		_add_text(move, "local_negative_result_text", "local_negative_result_text")
-		if move.unlock_requirement == null:
-			move.unlock_requirement = UnlockRequirement.new()
-		_add_id_selector(move.unlock_requirement, "stat_id", "unlock stat", catalog_service.catalog.progression_stats)
-		_add_int(move.unlock_requirement, "required_level", "required_level")
+		if move.kind == DateTypes.DateMoveKind.UNLOCKABLE or move.kind == DateTypes.DateMoveKind.LOCAL:
+			if move.unlock_requirement == null:
+				move.unlock_requirement = UnlockRequirement.new()
+			_add_id_selector(move.unlock_requirement, "stat_id", "unlock stat", catalog_service.catalog.progression_stats)
+			_add_int(move.unlock_requirement, "required_level", "required_level")
 		return
-	if move.kind == DateTypes.DateMoveKind.UNLOCKABLE:
-		if move.unlock_requirement == null:
-			move.unlock_requirement = UnlockRequirement.new()
-		_add_id_selector(move.unlock_requirement, "stat_id", "unlock stat", catalog_service.catalog.progression_stats)
-		_add_int(move.unlock_requirement, "required_level", "required_level")
-		_add_int(move, "max_uses_per_date", "max_uses_per_date")
 	_form_host.add_child(LabUi.heading("Mappings"))
 	var add_btn := LabUi.button("Добавить mapping")
 	add_btn.pressed.connect(func() -> void:
@@ -1043,7 +1102,6 @@ func _add_move_form() -> void:
 	_form_host.add_child(add_btn)
 	for i in move.situation_mappings.size():
 		_form_host.add_child(_mapping_editor(move, i))
-
 
 func _add_local_object_form() -> void:
 	var local_object: DateLocalObject = _draft as DateLocalObject
@@ -1149,7 +1207,7 @@ func _kind_name() -> String:
 			return "GirlDifficultyPreset"
 		"tags":
 			return "DateTag"
-		"base_moves", "unlock_moves", "local_moves":
+		"base_moves", "unlock_moves", "outfit_moves", "local_moves":
 			return "DateMove"
 		"situations":
 			return "DateSituation"
@@ -1208,7 +1266,7 @@ func _new_resource() -> Resource:
 			tag.id = StringName("tag_%s" % suffix)
 			tag.display_name = "Новый тег"
 			return tag
-		"base_moves", "unlock_moves", "local_moves":
+		"base_moves", "unlock_moves", "outfit_moves", "local_moves":
 			var move := DateMove.new()
 			move.id = StringName("move_%s" % suffix)
 			move.display_name = "Новый ход"
@@ -1216,6 +1274,8 @@ func _new_resource() -> Resource:
 				move.kind = DateTypes.DateMoveKind.UNLOCKABLE
 				move.max_uses_per_date = 1
 				move.unlock_requirement = UnlockRequirement.new()
+			elif _section == "outfit_moves":
+				move.kind = DateTypes.DateMoveKind.OUTFIT
 			elif _section == "local_moves":
 				move.kind = DateTypes.DateMoveKind.LOCAL
 			else:

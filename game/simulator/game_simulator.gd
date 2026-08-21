@@ -209,13 +209,17 @@ func meet_girl(girl_id: StringName) -> ActionResult:
 func invite_girl(girl_id: StringName) -> void:
 	_invite_girl_id = girl_id
 	_selected_date_location_id = &""
-	_selected_outfit_id = &""
+	var equipment: Variant = _equipment_service()
+	if equipment != null:
+		_selected_outfit_id = equipment.get_current_outfit_id()
+	else:
+		_selected_outfit_id = OutfitCatalog.START_OUTFIT_ID
 	show_section("dates")
 
 
 func select_date_location(date_location_id: StringName) -> void:
 	_selected_date_location_id = date_location_id
-	start_selected_date()
+	refresh()
 
 
 func select_date_outfit(outfit_id: StringName) -> void:
@@ -244,7 +248,7 @@ func start_selected_date() -> ActionResult:
 		result.failure_reason = "Это место сейчас недоступно"
 		_on_action_resolved(result)
 		return result
-	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id)
+	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id, _selected_outfit_id)
 	result = actions.execute(action)
 	if result.success:
 		_clear_date_invite()
@@ -1004,7 +1008,7 @@ func _build_dates() -> Control:
 	if dating != null and bool(dating.has_active_date()):
 		box.add_child(_build_active_date_dev(girls, dating))
 	if _invite_girl_id != &"":
-		box.add_child(_build_date_location_picker(girls, dating))
+		box.add_child(_build_date_prep(girls, dating))
 		return box
 	var contacted: Array[GirlDefinition] = []
 	if girls != null:
@@ -1138,22 +1142,36 @@ func _build_clothing() -> Control:
 	var equipment: Variant = _equipment_service()
 	if equipment == null:
 		return box
-	var current_id: StringName = equipment.get_current_outfit_id()
-	if bool(equipment.can_upgrade_outfit()):
-		var status_text: String = "Одежда: %s" % _outfit_status_adjective(current_id)
-		box.add_child(GameTermView.create(status_text))
-		var next_outfit: Outfit = equipment.get_next_outfit()
-		if next_outfit != null:
-			var action: GameAction = equipment.create_upgrade_outfit_action()
-			var upgrade_label: String = "Улучшить до %s — %d" % [
-				_outfit_upgrade_adjective(next_outfit.id),
-				next_outfit.price,
-			]
-			_add_action_button(box, action, upgrade_label, false, false)
-	else:
-		var status_text: String = "Одежда: %s — МАКСИМУМ" % _outfit_status_adjective(current_id)
-		box.add_child(GameTermView.create(status_text))
+	var current: Outfit = equipment.get_current_outfit()
+	if current != null:
+		box.add_child(GameTermView.create("Сейчас: %s" % current.display_name))
+	for item in equipment.get_owned_outfits():
+		var owned: Outfit = item as Outfit
+		if owned == null or owned.id == equipment.get_current_outfit_id():
+			continue
+		var wear_btn: Button = LabUi.button("Надеть: %s" % owned.display_name)
+		wear_btn.pressed.connect(wear_owned_outfit.bind(owned.id))
+		box.add_child(wear_btn)
+	for shop_item in equipment.get_shop_outfits():
+		var shop_outfit: Outfit = shop_item as Outfit
+		if shop_outfit == null or bool(equipment.owns_outfit(shop_outfit.id)):
+			continue
+		var action: GameAction = equipment.create_buy_outfit_action(shop_outfit.id)
+		var bonus_text: String = _outfit_bonus_label(shop_outfit)
+		var label: String = "Купить %s — %d" % [shop_outfit.display_name, shop_outfit.price]
+		if not bonus_text.is_empty():
+			label += " (%s)" % bonus_text
+		_add_action_button(box, action, label, false, false)
 	return box
+
+
+func _outfit_bonus_label(outfit: Outfit) -> String:
+	if outfit == null or outfit.stat_id == &"":
+		return ""
+	var catalog: DateContentCatalog = _date_catalog()
+	var stat: ProgressionStat = catalog.find_stat(outfit.stat_id) if catalog != null else null
+	var stat_name: String = stat.display_name if stat != null else String(outfit.stat_id)
+	return "%s +1" % stat_name
 
 
 func _outfit_status_adjective(outfit_id: StringName) -> String:
@@ -1274,23 +1292,47 @@ func _build_active_date_dev(girls: Variant, dating: Variant) -> Control:
 	return box
 
 
-func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
+func _build_date_prep(girls: Variant, dating: Variant) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	var girl_name: String = String(_invite_girl_id)
+	var relationship_text := "Отношения: 0 / 0"
 	if girls != null:
 		var definition: GirlDefinition = girls.get_definition(_invite_girl_id)
 		if definition != null:
 			girl_name = definition.display_name
+		relationship_text = "Отношения: %d / %d" % [int(girls.get_relationship(_invite_girl_id)), int(girls.get_relationship_max(_invite_girl_id))]
 	var name_label := Label.new()
 	name_label.text = girl_name.to_upper()
 	box.add_child(name_label)
+	var rel := Label.new()
+	rel.text = relationship_text
+	box.add_child(rel)
 	var progress: GirlProgress = _girl_date_progress(girls, _invite_girl_id)
 	var catalog: DateContentCatalog = _date_catalog()
 	var profile: GirlProfile = catalog.find_girl(_invite_girl_id) if catalog != null else null
 	box.add_child(LabUi.trait_block(catalog, profile))
 	box.add_child(LabUi.known_preference_block(catalog, progress, profile))
+	box.add_child(_build_date_location_picker(girls, dating))
+	box.add_child(_build_date_outfit_picker(girls, dating))
+	box.add_child(_build_prep_stat_block(catalog))
+	var confirm := LabUi.button("НАЧАТЬ СВИДАНИЕ")
+	confirm.disabled = _selected_date_location_id == &"" or _selected_outfit_id == &""
+	confirm.pressed.connect(func() -> void:
+		start_selected_date()
+	)
+	box.add_child(confirm)
+	var back_btn: Button = LabUi.button("НАЗАД")
+	back_btn.pressed.connect(cancel_date_invite)
+	box.add_child(back_btn)
+	return box
+
+
+func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
+	var progress: GirlProgress = _girl_date_progress(girls, _invite_girl_id)
 	var locations: Array = []
 	if dating != null:
 		locations = dating.get_available_date_locations(_invite_girl_id)
@@ -1300,9 +1342,6 @@ func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
 			continue
 		var available: bool = bool(dating.is_date_location_available(_invite_girl_id, location.id))
 		box.add_child(_build_date_location_card(location, dating, available, progress))
-	var back_btn: Button = LabUi.button("НАЗАД")
-	back_btn.pressed.connect(cancel_date_invite)
-	box.add_child(back_btn)
 	return box
 
 
@@ -1392,13 +1431,74 @@ func _build_date_outfit_card(outfit: Outfit, dating: Variant) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
+	var selected: bool = outfit.id == _selected_outfit_id
 	var title := Label.new()
-	title.text = outfit.display_name
+	title.text = outfit.display_name if not selected else "%s — выбрано" % outfit.display_name
 	box.add_child(title)
+	var details := Label.new()
+	details.text = _outfit_prep_details(outfit)
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(details)
 	var choose_btn: Button = LabUi.button(outfit.display_name)
+	choose_btn.disabled = selected
 	choose_btn.pressed.connect(select_date_outfit.bind(outfit.id))
 	box.add_child(choose_btn)
 	return panel
+
+
+func _outfit_prep_details(outfit: Outfit) -> String:
+	var catalog: DateContentCatalog = _date_catalog()
+	var lines := PackedStringArray()
+	var bonus: String = _outfit_bonus_label(outfit)
+	if not bonus.is_empty():
+		lines.append(bonus)
+	var characteristics: Variant = _characteristic_service()
+	if characteristics != null and catalog != null:
+		for stat in catalog.progression_stats:
+			var base_value: int = int(characteristics.get_value(stat.id))
+			var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
+			var outfit_bonus: int = outfit.bonus_for(stat.id) if outfit != null else 0
+			if outfit_bonus > 0:
+				lines.append("%s: %d (%d + 1 от одежды)" % [stat.display_name, effective, base_value])
+			else:
+				lines.append("%s: %d" % [stat.display_name, effective])
+		for move in catalog.characteristic_moves():
+			if move.unlock_requirement == null:
+				continue
+			var without_outfit: int = int(characteristics.get_value(move.unlock_requirement.stat_id))
+			var with_outfit: int = DateTypes.effective_stat(without_outfit, outfit, move.unlock_requirement.stat_id)
+			if without_outfit < move.unlock_requirement.required_level and with_outfit >= move.unlock_requirement.required_level:
+				var tag: DateTag = catalog.find_tag(move.local_tag_id)
+				var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
+				lines.append("Открывается Characteristic Move:\n[%s] %s" % [tag_name, move.display_name])
+	if outfit != null and outfit.has_outfit_move() and catalog != null:
+		var outfit_move: DateMove = catalog.find_move(outfit.outfit_move_id)
+		if outfit_move != null:
+			var tag: DateTag = catalog.find_tag(outfit_move.local_tag_id)
+			var tag_name: String = tag.display_name if tag != null else String(outfit_move.local_tag_id)
+			lines.append("Outfit Move:\n[%s] %s" % [tag_name, outfit_move.display_name])
+	return "\n".join(lines)
+
+
+func _build_prep_stat_block(catalog: DateContentCatalog) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.add_child(LabUi.heading("ХАРАКТЕРИСТИКИ"))
+	var outfit: Outfit = catalog.find_outfit(_selected_outfit_id) if catalog != null else null
+	var characteristics: Variant = _characteristic_service()
+	if characteristics == null or catalog == null:
+		return box
+	for stat in catalog.progression_stats:
+		var base_value: int = int(characteristics.get_value(stat.id))
+		var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
+		var outfit_bonus: int = outfit.bonus_for(stat.id) if outfit != null else 0
+		var line := Label.new()
+		if outfit_bonus > 0:
+			line.text = "%s: %d (%d + 1 от одежды)" % [stat.display_name, effective, base_value]
+		else:
+			line.text = "%s: %d" % [stat.display_name, effective]
+		box.add_child(line)
+	return box
 
 
 func _build_date_start_summary(girls: Variant, dating: Variant, selected_location: DateLocation) -> Control:

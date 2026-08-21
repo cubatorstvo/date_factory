@@ -3,7 +3,6 @@ extends Node
 signal outfit_equipped(previous_outfit_id: StringName, current_outfit_id: StringName)
 
 const BUY_ACTION_PREFIX: String = "buy_outfit_"
-const UPGRADE_ACTION_ID: StringName = &"upgrade_outfit"
 
 var _catalog: OutfitCatalog
 
@@ -29,26 +28,22 @@ func get_current_outfit() -> Outfit:
 	return get_catalog().get_outfit(get_current_outfit_id())
 
 
-func get_next_outfit() -> Outfit:
-	var next_id: StringName = OutfitCatalog.next_outfit_id(get_current_outfit_id())
-	if next_id == &"":
-		return null
-	return get_catalog().get_outfit(next_id)
-
-
-func can_upgrade_outfit() -> bool:
-	return get_next_outfit() != null
-
-
 func owns_outfit(outfit_id: StringName) -> bool:
-	return OutfitCatalog.owns_in_chain(get_current_outfit_id(), outfit_id)
+	var progression: ProgressionState = _progression()
+	if progression == null:
+		return outfit_id == OutfitCatalog.START_OUTFIT_ID
+	return progression.owns_outfit(outfit_id)
 
 
 func get_owned_outfits() -> Array:
 	var result: Array[Outfit] = []
-	for outfit_id in OutfitCatalog.chain_ids():
-		if not owns_outfit(outfit_id):
-			break
+	var progression: ProgressionState = _progression()
+	if progression == null:
+		var start: Outfit = get_catalog().get_outfit(OutfitCatalog.START_OUTFIT_ID)
+		if start != null:
+			result.append(start)
+		return result
+	for outfit_id in progression.owned_outfit_ids:
 		var outfit: Outfit = get_catalog().get_outfit(outfit_id)
 		if outfit != null:
 			result.append(outfit)
@@ -57,6 +52,14 @@ func get_owned_outfits() -> Array:
 
 func get_equipped_outfit_id() -> StringName:
 	return get_current_outfit_id()
+
+
+func get_shop_outfits() -> Array[Outfit]:
+	var stage: int = 1
+	var stages: Variant = _stage_service()
+	if stages != null:
+		stage = int(stages.get_current_stage())
+	return get_catalog().get_shop_outfits(stage)
 
 
 func add_owned_outfit(outfit_id: StringName) -> void:
@@ -76,8 +79,6 @@ func equip_outfit(outfit_id: StringName) -> bool:
 	var previous_outfit_id: StringName = get_current_outfit_id()
 	if previous_outfit_id == outfit_id:
 		return true
-	if OutfitCatalog.chain_index(outfit_id) < OutfitCatalog.chain_index(previous_outfit_id):
-		return false
 	var progression: ProgressionState = _progression()
 	if progression == null:
 		return false
@@ -86,28 +87,20 @@ func equip_outfit(outfit_id: StringName) -> bool:
 	return true
 
 
-func create_upgrade_outfit_action() -> GameAction:
-	var next_outfit: Outfit = get_next_outfit()
-	if next_outfit == null:
-		return GameAction.new()
-	return _create_set_outfit_action(next_outfit.id, UPGRADE_ACTION_ID)
-
-
 func create_buy_outfit_action(outfit_id: StringName) -> GameAction:
-	return _create_set_outfit_action(outfit_id, StringName("%s%s" % [BUY_ACTION_PREFIX, String(outfit_id)]))
-
-
-func _create_set_outfit_action(outfit_id: StringName, action_id: StringName) -> GameAction:
 	var action := GameAction.new()
 	var outfit: Outfit = get_catalog().get_outfit(outfit_id)
 	if outfit == null:
 		return action
-	action.id = action_id
+	action.id = StringName("%s%s" % [BUY_ACTION_PREFIX, String(outfit_id)])
 	action.money_cost = outfit.price
 	action.time_cost_minutes = 0
-	var requirement := OutfitNotOwnedRequirement.new()
-	requirement.outfit_id = outfit_id
-	action.requirements.append(requirement)
+	var owned := OutfitNotOwnedRequirement.new()
+	owned.outfit_id = outfit_id
+	action.requirements.append(owned)
+	var stage := MinStoryStageRequirement.new()
+	stage.min_stage = outfit.min_story_stage
+	action.requirements.append(stage)
 	var effect := OwnOutfitEffect.new()
 	effect.outfit_id = outfit_id
 	action.effects.append(effect)
@@ -125,5 +118,12 @@ func _game_state() -> Variant:
 	var node: Node = get_node_or_null("/root/GameState")
 	if not is_instance_valid(node):
 		push_error("GameState autoload missing")
+		return null
+	return node
+
+
+func _stage_service() -> Variant:
+	var node: Node = get_node_or_null("/root/StageService")
+	if not is_instance_valid(node):
 		return null
 	return node

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"outfit_silent_hold"
+display_name = "Молча выдержать ситуацию"
+description = "Молча выдержать ситуацию"
+kind = 3
+enabled = true
+max_uses_per_date = 1
+situation_mappings = []
+local_tag_id = &"composure"
+local_option_text = "Сохранять абсолютное спокойствие до тех пор, пока неловко не станет всем остальным."
+local_positive_result_text = "Молчаливое спокойствие закрыло паузу — ей это по делу."
+local_negative_result_text = "Держал молчание, пока неловко не стало всем — ей это давление."

@@ -8,3 +8,4 @@ var situation: DateSituation
 var base_options: Array[DateMoveOption] = []
 var unlockable_options: Array[DateMoveOption] = []
 var local_object_views: Array[DateLocalObjectView] = []
+var source_views: Array[DateMoveSourceView] = []

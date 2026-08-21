@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"capital"
+required_level = 3
+
+[resource]
+script = ExtResource("1_move")
+id = &"char_propose_scheme"
+display_name = "Предложить схему"
+description = "Предложить схему"
+kind = 1
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+situation_mappings = []
+local_tag_id = &"cunning"
+local_option_text = "Предложить подозрительно эффективную схему, в которой формально все остаются в выигрыше."
+local_positive_result_text = "Схема звучит ловко — ей это зашло."
+local_negative_result_text = "Предложил схему, в которой все «в выигрыше» — ей это слишком скользко."

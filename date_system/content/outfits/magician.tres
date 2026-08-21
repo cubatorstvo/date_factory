@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Outfit" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/outfit.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"magician"
+display_name = "Костюм фокусника"
+description = "Костюм фокусника"
+enabled = true
+price = 700
+stat_id = &"appearance"
+stat_bonus = 1
+min_story_stage = 2
+outfit_move_id = &"outfit_card_trick"

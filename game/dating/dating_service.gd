@@ -157,6 +157,7 @@ func start_date(
 	var equipment: Variant = _equipment_service()
 	if equipment == null or not bool(equipment.owns_outfit(resolved_outfit_id)):
 		return false
+	equipment.equip_outfit(resolved_outfit_id)
 	var dating: DatingState = _dating()
 	var clock: Variant = _time_service()
 	if dating == null or clock == null:

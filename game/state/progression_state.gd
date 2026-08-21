@@ -2,6 +2,7 @@ class_name ProgressionState
 extends RefCounted
 
 var purchased_ids: Array[StringName] = []
+var owned_outfit_ids: Array[StringName] = []
 var current_outfit_id: StringName = OutfitCatalog.START_OUTFIT_ID
 var apartment: ApartmentState = ApartmentState.new()
 
@@ -11,6 +12,8 @@ func _init() -> void:
 
 
 func apply_start_equipment() -> void:
+	owned_outfit_ids.clear()
+	owned_outfit_ids.append(OutfitCatalog.START_OUTFIT_ID)
 	current_outfit_id = OutfitCatalog.START_OUTFIT_ID
 	if apartment == null:
 		apartment = ApartmentState.new()
@@ -34,26 +37,27 @@ func add(id: StringName) -> void:
 
 
 func owns_outfit(outfit_id: StringName) -> bool:
-	return OutfitCatalog.owns_in_chain(current_outfit_id, outfit_id)
+	return owned_outfit_ids.has(outfit_id)
 
 
 func add_owned_outfit(outfit_id: StringName) -> void:
 	if outfit_id == &"":
 		return
-	var target_index: int = OutfitCatalog.chain_index(outfit_id)
-	if target_index < 0:
-		return
-	var current_index: int = OutfitCatalog.chain_index(current_outfit_id)
-	if current_index < 0 or target_index > current_index:
-		current_outfit_id = outfit_id
+	if not owned_outfit_ids.has(outfit_id):
+		owned_outfit_ids.append(outfit_id)
+	current_outfit_id = outfit_id
 
 
 func to_dict() -> Dictionary:
 	var ids: Array = []
 	for purchase_id in purchased_ids:
 		ids.append(String(purchase_id))
+	var owned: Array = []
+	for outfit_id in owned_outfit_ids:
+		owned.append(String(outfit_id))
 	return {
 		"purchased_ids": ids,
+		"owned_outfit_ids": owned,
 		"current_outfit_id": String(current_outfit_id),
 		"apartment": apartment.to_dict() if apartment != null else ApartmentState.new().to_dict(),
 	}
@@ -66,17 +70,39 @@ func from_dict(data: Dictionary) -> void:
 		for item in raw:
 			add(StringName(str(item)))
 	apply_start_equipment()
+	var owned_raw: Variant = data.get("owned_outfit_ids", [])
+	if owned_raw is Array and not owned_raw.is_empty():
+		owned_outfit_ids.clear()
+		for item in owned_raw:
+			var outfit_id: StringName = StringName(str(item))
+			if outfit_id != &"" and not owned_outfit_ids.has(outfit_id):
+				owned_outfit_ids.append(outfit_id)
+	else:
+		_migrate_owned_from_chain(StringName(str(data.get("current_outfit_id", ""))))
+	if not owned_outfit_ids.has(OutfitCatalog.START_OUTFIT_ID):
+		owned_outfit_ids.insert(0, OutfitCatalog.START_OUTFIT_ID)
 	var current_text: String = str(data.get("current_outfit_id", ""))
 	if current_text.is_empty():
-		var owned_raw: Variant = data.get("owned_outfit_ids", [])
-		var owned_ids: Array = owned_raw if owned_raw is Array else []
-		current_outfit_id = OutfitCatalog.current_from_owned(owned_ids)
+		current_text = str(data.get("equipped_outfit_id", ""))
+	if current_text.is_empty():
+		current_outfit_id = OutfitCatalog.START_OUTFIT_ID
 	else:
 		current_outfit_id = StringName(current_text)
-	if OutfitCatalog.chain_index(current_outfit_id) < 0:
+	if not owns_outfit(current_outfit_id):
 		current_outfit_id = OutfitCatalog.START_OUTFIT_ID
 	if apartment == null:
 		apartment = ApartmentState.new()
 	var apartment_raw: Variant = data.get("apartment", {})
 	if apartment_raw is Dictionary:
 		apartment.from_dict(apartment_raw)
+
+
+func _migrate_owned_from_chain(outfit_id: StringName) -> void:
+	owned_outfit_ids.clear()
+	owned_outfit_ids.append(OutfitCatalog.START_OUTFIT_ID)
+	match outfit_id:
+		OutfitCatalog.ID_LUXURY:
+			owned_outfit_ids.append(OutfitCatalog.ID_BUSINESS)
+			owned_outfit_ids.append(OutfitCatalog.ID_LUXURY)
+		OutfitCatalog.ID_BUSINESS:
+			owned_outfit_ids.append(OutfitCatalog.ID_BUSINESS)

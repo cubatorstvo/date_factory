@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Outfit" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/outfit.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"sport"
+display_name = "Спортивный комплект"
+description = "Спортивный комплект"
+enabled = true
+price = 250
+stat_id = &"muscle"
+stat_bonus = 1
+min_story_stage = 1
+outfit_move_id = &""

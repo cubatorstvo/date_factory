@@ -150,21 +150,35 @@ func _locations() -> Array[DateLocation]:
 	]
 
 
-func _outfit(id: String, name: String, price: int) -> Outfit:
+func _outfit(id: String, name: String, price: int, stat_id: String = "", min_story_stage: int = 1, outfit_move_id: String = "") -> Outfit:
 	var outfit := Outfit.new()
 	outfit.id = StringName(id)
 	outfit.display_name = name
 	outfit.description = name
 	outfit.enabled = true
 	outfit.price = price
+	outfit.stat_id = StringName(stat_id)
+	outfit.stat_bonus = 1 if not stat_id.is_empty() else 0
+	outfit.min_story_stage = min_story_stage
+	outfit.outfit_move_id = StringName(outfit_move_id)
 	return outfit
 
 
 func _outfits() -> Array[Outfit]:
 	return [
-		_outfit("casual", "Повседневный", 0),
-		_outfit("business", "Деловой", 500),
-		_outfit("luxury", "Роскошный", 800),
+		_outfit("casual", "Повседневная", 0),
+		_outfit("sport", "Спортивный комплект", 250, "muscle", 1),
+		_outfit("stylish", "Стильный комплект", 250, "appearance", 1),
+		_outfit("business", "Деловой костюм", 250, "capital", 1),
+		_outfit("minimal_black", "Минималистичный чёрный образ", 250, "aura", 1),
+		_outfit("wrestling", "Борцовка", 700, "muscle", 2, "outfit_flex_bicep"),
+		_outfit("magician", "Костюм фокусника", 700, "appearance", 2, "outfit_card_trick"),
+		_outfit("luxury", "Роскошный костюм", 700, "capital", 2, "outfit_premium_card"),
+		_outfit("leather_jacket", "Кожаная куртка", 700, "aura", 2, "outfit_dramatic_entrance"),
+		_outfit("stunt", "Костюм каскадёра", 1200, "muscle", 4, "outfit_dangerous_idea"),
+		_outfit("model", "Модельный образ", 1200, "appearance", 4, "outfit_beautiful_couple"),
+		_outfit("philanthropist", "Образ филантропа", 1200, "capital", 4, "outfit_pay_extra"),
+		_outfit("black_turtleneck", "Чёрная водолазка", 1200, "aura", 4, "outfit_silent_hold"),
 	]
 
 
@@ -216,22 +230,31 @@ func _base_move(id: String, name: String, mappings: Array) -> DateMove:
 	return move
 
 
-func _unlock_move(id: String, name: String, stat_id: String, level: int, mappings: Array) -> DateMove:
+func _characteristic_move(id: String, name: String, tag_id: String, option_text: String, positive_text: String, negative_text: String, stat_id: String, level: int) -> DateMove:
+	return _fixed_move(id, name, DateTypes.DateMoveKind.UNLOCKABLE, tag_id, option_text, positive_text, negative_text, stat_id, level)
+
+
+func _outfit_move(id: String, name: String, tag_id: String, option_text: String, positive_text: String, negative_text: String) -> DateMove:
+	return _fixed_move(id, name, DateTypes.DateMoveKind.OUTFIT, tag_id, option_text, positive_text, negative_text, "", 0)
+
+
+func _fixed_move(id: String, name: String, kind: DateTypes.DateMoveKind, tag_id: String, option_text: String, positive_text: String, negative_text: String, stat_id: String, level: int) -> DateMove:
 	var move := DateMove.new()
 	move.id = StringName(id)
 	move.display_name = name
 	move.description = name
-	move.kind = DateTypes.DateMoveKind.UNLOCKABLE
+	move.kind = kind
 	move.enabled = true
 	move.max_uses_per_date = 1
-	var requirement := UnlockRequirement.new()
-	requirement.stat_id = StringName(stat_id)
-	requirement.required_level = level
-	move.unlock_requirement = requirement
-	var typed: Array[DateMoveSituationMapping] = []
-	for mapping in mappings:
-		typed.append(mapping)
-	move.situation_mappings = typed
+	move.local_tag_id = StringName(tag_id)
+	move.local_option_text = option_text
+	move.local_positive_result_text = positive_text
+	move.local_negative_result_text = negative_text
+	if not stat_id.is_empty():
+		var requirement := UnlockRequirement.new()
+		requirement.stat_id = StringName(stat_id)
+		requirement.required_level = level
+		move.unlock_requirement = requirement
 	return move
 
 
@@ -323,28 +346,26 @@ func _moves() -> Array[DateMove]:
 			_mapping("spontaneous_bet", "status", "Сказать, что предложенная ставка слишком мала."),
 			_mapping("date_verdict", "status", "Сказать, что для первого раза она справилась неплохо."),
 		]),
-		_unlock_move("punch", "Дать в жбан", "muscle", 4, [
-			_mapping("rival_provocation", "dominance", "Дать самцу в жбан."),
-		]),
-		_unlock_move("solve_with_money", "Решить деньгами", "capital", 3, [
-			_mapping("money_request", "generosity", "Полностью оплатить проблему незнакомца и его следующий день."),
-			_mapping("rival_provocation", "status", "Предложить самцу сумму, за которую он сам объявит поражение."),
-			_mapping("spontaneous_bet", "status", "Заменить условие пари на крупную денежную ставку."),
-		]),
-		_unlock_move("play_with_looks", "Сыграть внешностью", "appearance", 3, [
-			_mapping("appearance_question", "audacity", "Предложить сначала оценить твой образ."),
-			_mapping("rival_provocation", "status", "Продемонстрировать себя и предложить сравнить результат."),
-			_mapping("date_verdict", "flattery", "Сказать, что вечер выглядел хорошо, потому что вы хорошо смотрелись вместе."),
-		]),
-		_unlock_move("silent_pressure", "Молча продавить", "aura", 3, [
-			_mapping("money_request", "dominance", "Смотреть на незнакомца до завершения разговора с его стороны."),
-			_mapping("rival_provocation", "dominance", "Смотреть на самца до его отступления."),
-			_mapping("date_verdict", "composure", "Выдержать паузу до реакции девушки."),
-		]),
-		_unlock_move("raise_stakes", "Поднять ставки", "capital", 5, [
-			_mapping("money_request", "risk", "Предложить удвоить сумму после немедленного доказательства истории."),
-			_mapping("spontaneous_bet", "risk", "Удвоить ставку и усложнить условие проигравшему."),
-		]),
+		_characteristic_move("char_say_plain", "Сказать по-простому", "directness", "Сказать всё прямо, без лишних конструкций.", "Прямолинейность без обёртки ей зашла.", "Сказал слишком прямо — ей это режет.", "muscle", 1),
+		_characteristic_move("char_stress_test", "Проверить на прочность", "risk", "Предложить немедленно проверить идею на практике, даже если это выглядит сомнительно.", "Готовность сразу проверить идею ей зашла.", "Предложил проверить идею на практике — ей это слишком рискованно.", "muscle", 3),
+		_characteristic_move("char_force_argument", "Силовой аргумент", "dominance", "Продемонстрировать физическое превосходство как окончательный аргумент.", "Силовой аргумент закрыл тему — ей это зашло.", "Показал физическое превосходство — ей это слишком грубо.", "muscle", 5),
+		_characteristic_move("char_gallantry", "Включить галантность", "politeness", "Принять максимально учтивый вид и повести себя безупречно воспитанно.", "Галантность к месту — ей приятно.", "Включил галантность слишком театрально — ей это фальшиво.", "appearance", 1),
+		_characteristic_move("char_polished_compliment", "Красиво подать комплимент", "flattery", "Сделать комплимент так, будто это профессионально подготовленная презентация.", "Комплимент подан как витрина — ей это зашло.", "Комплимент прозвучал как презентация — ей это слишком подобострастно.", "appearance", 3),
+		_characteristic_move("char_play_with_looks", "Сыграть внешностью", "audacity", "Демонстративно использовать собственную внешность как аргумент.", "Сыграл внешностью как аргументом — ей это зашло.", "Выставил внешность аргументом — ей это слишком нагло.", "appearance", 5),
+		_characteristic_move("char_cover_expenses", "Взять расходы на себя", "generosity", "Немедленно предложить оплатить вопрос за свой счёт.", "Взял расходы на себя — ей это приятно.", "Сразу предложил всё оплатить — ей это покупка настроения.", "capital", 1),
+		_characteristic_move("char_propose_scheme", "Предложить схему", "cunning", "Предложить подозрительно эффективную схему, в которой формально все остаются в выигрыше.", "Схема звучит ловко — ей это зашло.", "Предложил схему, в которой все «в выигрыше» — ей это слишком скользко.", "capital", 3),
+		_characteristic_move("char_status_solve", "Решить вопрос статусом", "status", "Небрежно задействовать деньги, связи или статус как решение ситуации.", "Статус закрыл вопрос — ей это зашло.", "Решил вопрос статусом — ей это слишком демонстративно.", "capital", 5),
+		_characteristic_move("char_support_mode", "Включить поддержку", "care", "Переключиться в режим уверенной и спокойной поддержки.", "Спокойная поддержка к месту — ей спокойнее.", "Включил режим поддержки — ей это кажется лишней опекой.", "aura", 1),
+		_characteristic_move("char_joke_relief", "Разрядить шуткой", "humor", "Снять напряжение уместной или неуместной шуткой.", "Шутка сняла напряжение — ей смешно.", "Шутка не попала — ей это ломает тон.", "aura", 3),
+		_characteristic_move("char_hold_pause", "Выдержать паузу", "composure", "Молча выдерживать ситуацию до тех пор, пока первой не сдастся она.", "Выдержал паузу — ей это спокойствие по делу.", "Молча ждал, пока она сдастся — ей это давление.", "aura", 5),
+		_outfit_move("outfit_flex_bicep", "Напрячь бицепс без причины", "dominance", "Внезапно перевести внимание на собственную физическую форму.", "Внезапный акцент на форме зашёл как контроль сцены.", "Напряг бицепс без причины — ей это слишком театрально."),
+		_outfit_move("outfit_card_trick", "Показать фокус с исчезновением", "humor", "Достать реквизит и немедленно устроить карточный фокус.", "Карточный фокус сработал как шутка — ей смешно.", "Достал реквизит посреди разговора — ей это не к месту."),
+		_outfit_move("outfit_premium_card", "Показать премиальную карту", "status", "Небрежно продемонстрировать максимально статусный способ оплаты.", "Премиальная карта закрыла вопрос статусом — ей это зашло.", "Показал премиальную карту — ей это слишком демонстративно."),
+		_outfit_move("outfit_dramatic_entrance", "Сделать демонстративный выход", "audacity", "На несколько секунд превратить обычную ситуацию в собственную сцену.", "Демонстративный выход зашёл как наглость к месту.", "Превратил ситуацию в собственную сцену — ей это слишком нагло."),
+		_outfit_move("outfit_dangerous_idea", "Предложить опасную идею", "risk", "Немедленно предложить сделать что-нибудь неоправданно рискованное.", "Опасная идея зашла как ставка.", "Предложил неоправданный риск — ей это слишком лихо."),
+		_outfit_move("outfit_beautiful_couple", "Объявить вас красивой парой", "flattery", "Вслух констатировать, насколько эффектно вы смотритесь вместе.", "Комплимент паре зашёл.", "Объявил вас красивой парой слишком презентационно — ей это льстит не к месту."),
+		_outfit_move("outfit_pay_extra", "Оплатить что-нибудь лишнее", "generosity", "Демонстративно потратить деньги на вещь, которую никто не просил покупать.", "Лишняя покупка сработала как щедрый жест.", "Оплатил то, что никто не просил — ей это покупка настроения."),
+		_outfit_move("outfit_silent_hold", "Молча выдержать ситуацию", "composure", "Сохранять абсолютное спокойствие до тех пор, пока неловко не станет всем остальным.", "Молчаливое спокойствие закрыло паузу — ей это по делу.", "Держал молчание, пока неловко не стало всем — ей это давление."),
 		_local_move("local_window_audacity", "Распахнуть окно", "audacity", "Распахнуть окно настежь и продолжить разговор с улицей.", "Окно настежь, улица в разговоре — ей это зашло.", "Распахнул окно настежь — ей слишком шумно и демонстративно."),
 		_local_move("local_window_care", "Приоткрыть окно", "care", "Слегка приоткрыть окно для свежего воздуха.", "Свежий воздух к месту — ей спокойнее.", "Приоткрыл окно «для воздуха» — ей это кажется лишней заботой не к месту."),
 		_local_move("local_sofa_composure", "Откинуться на диван", "composure", "Откинуться на диван и невозмутимо продолжить разговор.", "Откинулся и держишь тон — ей это спокойствие по делу.", "Откинулся на диван слишком расслабленно — ей это выглядит как равнодушие."),

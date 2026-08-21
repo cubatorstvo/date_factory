@@ -435,10 +435,10 @@ func _migrate_v14_game_core(state_data: Dictionary) -> Dictionary:
 	if progression_value is Dictionary:
 		progression = progression_value
 	if not progression.has("current_outfit_id") or str(progression.get("current_outfit_id", "")).is_empty():
-		var owned_raw: Variant = progression.get("owned_outfit_ids", [])
-		var owned_ids: Array = owned_raw if owned_raw is Array else []
-		progression["current_outfit_id"] = String(OutfitCatalog.current_from_owned(owned_ids))
-	progression.erase("owned_outfit_ids")
+		var equipped_text: String = str(progression.get("equipped_outfit_id", ""))
+		if equipped_text.is_empty():
+			equipped_text = String(OutfitCatalog.START_OUTFIT_ID)
+		progression["current_outfit_id"] = equipped_text
 	progression.erase("equipped_outfit_id")
 	migrated["progression"] = progression
 	return migrated

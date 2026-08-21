@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"outfit_pay_extra"
+display_name = "Оплатить что-нибудь лишнее"
+description = "Оплатить что-нибудь лишнее"
+kind = 3
+enabled = true
+max_uses_per_date = 1
+situation_mappings = []
+local_tag_id = &"generosity"
+local_option_text = "Демонстративно потратить деньги на вещь, которую никто не просил покупать."
+local_positive_result_text = "Лишняя покупка сработала как щедрый жест."
+local_negative_result_text = "Оплатил то, что никто не просил — ей это покупка настроения."

@@ -5,7 +5,11 @@
 [resource]
 script = ExtResource("1_script")
 id = &"business"
-display_name = "Деловой"
-description = "Деловой"
+display_name = "Деловой костюм"
+description = "Деловой костюм"
 enabled = true
-price = 500
+price = 250
+stat_id = &"capital"
+stat_bonus = 1
+min_story_stage = 1
+outfit_move_id = &""

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"muscle"
+required_level = 5
+
+[resource]
+script = ExtResource("1_move")
+id = &"char_force_argument"
+display_name = "Силовой аргумент"
+description = "Силовой аргумент"
+kind = 1
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+situation_mappings = []
+local_tag_id = &"dominance"
+local_option_text = "Продемонстрировать физическое превосходство как окончательный аргумент."
+local_positive_result_text = "Силовой аргумент закрыл тему — ей это зашло."
+local_negative_result_text = "Показал физическое превосходство — ей это слишком грубо."

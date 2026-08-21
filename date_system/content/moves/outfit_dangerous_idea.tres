@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"outfit_dangerous_idea"
+display_name = "Предложить опасную идею"
+description = "Предложить опасную идею"
+kind = 3
+enabled = true
+max_uses_per_date = 1
+situation_mappings = []
+local_tag_id = &"risk"
+local_option_text = "Немедленно предложить сделать что-нибудь неоправданно рискованное."
+local_positive_result_text = "Опасная идея зашла как ставка."
+local_negative_result_text = "Предложил неоправданный риск — ей это слишком лихо."
