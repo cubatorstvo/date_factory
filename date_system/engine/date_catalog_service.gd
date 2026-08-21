@@ -123,7 +123,7 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 			if move.fixed_tag_id == resource_id:
 				result.append({"type": "DateMove", "id": String(move.id), "field": "fixed_tag_id"})
 		for girl in catalog.girls:
-			if girl.positive_tag_ids.has(resource_id) or girl.initial_known_tag_ids.has(resource_id):
+			if girl.positive_tag_ids.has(resource_id):
 				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "tags"})
 	elif kind == "DateSituation":
 		for move in catalog.moves:

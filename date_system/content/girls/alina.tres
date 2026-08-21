@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+﻿[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
 
@@ -6,9 +6,9 @@
 script = ExtResource("1_script")
 id = &"alina"
 display_name = "Алина"
-description = "Алина"
+description = "Тренер городского спортзала. Считает, что почти любую жизненную проблему можно решить ещё одним подходом."
 enabled = true
 difficulty_preset_id = &"starter"
 trait_id = &"homebody"
 positive_tag_ids = Array[StringName]([&"politeness", &"directness", &"care", &"generosity", &"composure", &"humor"])
-initial_known_tag_ids = Array[StringName]([&"politeness", &"audacity"])
+initial_known_tag_count = 2

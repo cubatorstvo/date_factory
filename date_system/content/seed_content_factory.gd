@@ -114,6 +114,7 @@ func _local_objects() -> Array[DateLocalObject]:
 		_local_object("barista", "Бариста", "Бариста, который может принести десерт или подыграть истории.", ["local_barista_generosity", "local_barista_cunning"]),
 		_local_object("waiter", "Официант", "Официант, через которого заказывают десерт и «то самое».", ["local_waiter_generosity", "local_waiter_status"]),
 		_local_object("piano", "Рояль", "Рояль в зале — сыграть самому или занять место музыканта.", ["local_piano_humor", "local_piano_dominance"]),
+		_local_object("emperor_chair", "Массажное кресло «Император»", "Закрытый каталог Кати: странное дорогое кресло с несколькими режимами.", ["local_emperor_care", "local_emperor_status", "local_emperor_humor"]),
 	]
 
 
@@ -380,6 +381,9 @@ func _moves() -> Array[DateMove]:
 		_local_move("local_waiter_status", "То самое", "status", "Попросить принести «то самое», будто ты здесь постоянный гость.", "«То самое» принесли как постоянному гостю — ей это зашло.", "Попросил «то самое» как завсегдатай — ей это выглядит как игра в статус.", "capital", 2),
 		_local_move("local_piano_humor", "Пафосный марш", "humor", "Сыграть одним пальцем максимально пафосный марш.", "Пафосный марш одним пальцем сработал — ей смешно.", "Сыграл пафосный марш одним пальцем — ей это не смешно, а жалко."),
 		_local_move("local_piano_dominance", "Занять рояль", "dominance", "Попросить музыканта уступить тебе рояль и занять его место.", "Занял рояль вместо музыканта — ей это зашло как контроль сцены.", "Попросил уступить рояль — ей это слишком театрально и навязчиво.", "aura", 3),
+		_local_move("local_emperor_care", "Предложить массаж", "care", "Включить нормальный режим и предложить ей расслабиться.", "Нормальный режим и забота зашли — она расслабляется.", "Предложение массажа выглядит лишним — ей это не забота."),
+		_local_move("local_emperor_status", "Назвать цену кресла", "status", "Небрежно сообщить, сколько стоило это чудовище.", "Цена кресла сработала как статус — ей это впечатлило.", "Назвать цену кресла выглядит хвастовством — ей это лишнее."),
+		_local_move("local_emperor_humor", "Включить режим «Космонавт»", "humor", "Запустить максимальную программу и попытаться сохранить достоинство.", "Режим «Космонавт» сработал как шутка — ей смешно.", "Максимальная программа выглядит нелепо — ей это не юмор."),
 	]
 
 
@@ -434,7 +438,6 @@ func _girl(
 	difficulty_id: String,
 	positives: Array,
 	trait_id: String,
-	initial_known: Array,
 	description: String = ""
 ) -> GirlProfile:
 	var girl: GirlProfile = GirlProfile.new()
@@ -448,32 +451,29 @@ func _girl(
 	for item in positives:
 		pos.append(StringName(str(item)))
 	girl.positive_tag_ids = pos
-	var known: Array[StringName] = []
-	for item in initial_known:
-		known.append(StringName(str(item)))
-	girl.initial_known_tag_ids = known
+	girl.initial_known_tag_count = FillerRewardCatalog.initial_known_tag_count_for(girl.id)
 	return girl
 
 
 func _girls() -> Array[GirlProfile]:
 	return [
-		_girl("alina", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "homebody", ["politeness", "audacity"]),
-		_girl("marina", "Марина", "mid", ["care", "composure", "directness", "humor"], "senses_aura", ["care", "risk"], "держит спокойный тон и предпочитает ясную заботу без суеты"),
-		_girl("girl_actress", "Актриса", "early", ["flattery", "audacity", "generosity", "status", "humor"], "values_appearance", [], "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
-		_girl("vika", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "values_appearance", ["humor", "politeness"]),
-		_girl("dasha", "Даша", "mid", ["audacity", "risk", "humor", "dominance"], "loves_strong", ["risk", "care"], "любит дерзкие ставки и человека, который не боится задать тон"),
-		_girl("girl_mine_boss", "Начальница шахты", "mid", ["directness", "dominance", "generosity", "composure"], "loves_restaurants", [], "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
-		_girl("katya", "Катя", "mid", ["directness", "risk", "humor", "cunning"], "loves_cafe", ["humor", "status"], "любит спонтанность, игры, подколы и быстрые нестандартные решения"),
-		_girl("girl_magazine_editor", "Редактор журнала", "mid", ["directness", "status", "composure", "cunning"], "senses_aura", [], "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),
-		_girl("lera", "Лера", "mid", ["politeness", "flattery", "status", "composure"], "loves_restaurants", ["status", "audacity"], "любит красивую спокойную подачу, хороший вкус и социальную уверенность"),
-		_girl("kira", "Кира", "mid", ["directness", "audacity", "cunning", "composure"], "loves_strong", ["audacity", "flattery"], "режет лишнее напрямую, проверяет наглостью и держит самообладание дольше, чем удобно"),
-		_girl("olya", "Оля", "mid", ["generosity", "status", "care", "politeness"], "loves_wealthy", ["generosity", "dominance"], "ценит щедрый жест, статус и вежливый уход за атмосферой"),
-		_girl("girl_scientist", "Учёная", "mid", ["directness", "composure", "cunning", "care"], "loves_cafe", [], "ценит ясность, спокойствие, наблюдательность и необычные решения"),
-		_girl("sonya", "Соня", "late", ["audacity", "risk", "humor"], "homebody", ["risk", "composure"], "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"),
-		_girl("nika", "Ника", "mid", ["cunning", "directness", "audacity", "composure"], "senses_aura", ["cunning", "flattery"], "проверяет собеседника прямым ходом и обходным правилом"),
-		_girl("rita", "Рита", "mid", ["status", "dominance", "generosity", "risk"], "loves_wealthy", ["status", "care"], "любит дорогой жест, контроль сцены и риск напоказ"),
-		_girl("eva", "Ева", "mid", ["status", "dominance", "risk", "generosity"], "loves_restaurants", ["dominance", "humor"], "занимает зал статусом, щедрым жестом и ставкой, которую нельзя тихо отменить"),
-		_girl("girl_president", "Президент", "late", ["dominance", "status", "composure"], "loves_wealthy", [], "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание"),
+		_girl("alina", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "homebody", "Тренер городского спортзала. Считает, что почти любую жизненную проблему можно решить ещё одним подходом."),
+		_girl("marina", "Марина", "mid", ["care", "composure", "directness", "humor"], "senses_aura", "Продавец магазина одежды. Знает ассортимент лучше владельца и всегда знает, что можно провести как «служебную необходимость»."),
+		_girl("girl_actress", "Актриса", "early", ["flattery", "audacity", "generosity", "status", "humor"], "values_appearance", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
+		_girl("vika", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "values_appearance", "Бариста Café. Видела достаточно неудачных свиданий, чтобы научиться быстро перезапускать разговор."),
+		_girl("dasha", "Даша", "mid", ["audacity", "risk", "humor", "dominance"], "loves_strong", "Менеджер клиентского сервиса. Профессионально умеет превращать катастрофический разговор в просто неловкий."),
+		_girl("girl_mine_boss", "Начальница шахты", "mid", ["directness", "dominance", "generosity", "composure"], "loves_restaurants", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
+		_girl("katya", "Катя", "mid", ["directness", "risk", "humor", "cunning"], "loves_cafe", "Продавец мебельного магазина. Имеет доступ к закрытому каталогу вещей, которые нормальному человеку в квартире не нужны."),
+		_girl("girl_magazine_editor", "Редактор журнала", "mid", ["directness", "status", "composure", "cunning"], "senses_aura", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),
+		_girl("lera", "Лера", "mid", ["politeness", "flattery", "status", "composure"], "loves_restaurants", "Работает в клининговом сервисе. Уверена, что большинство проблем дома начинается с того, что кто-то давно не убирался."),
+		_girl("kira", "Кира", "mid", ["directness", "audacity", "cunning", "composure"], "loves_strong", "Стилист. Умеет за короткое время сделать человека визуально убедительнее, чем он есть на самом деле."),
+		_girl("olya", "Оля", "mid", ["generosity", "status", "care", "politeness"], "loves_wealthy", "Предпринимательница. Любой свободный час воспринимает как подозрительно плохо монетизированный ресурс."),
+		_girl("girl_scientist", "Учёная", "mid", ["directness", "composure", "cunning", "care"], "loves_cafe", "ценит ясность, спокойствие, наблюдательность и необычные решения"),
+		_girl("sonya", "Соня", "late", ["audacity", "risk", "humor"], "homebody", "VIP-менеджер Restaurant. Может организовать постоянному гостю немного больше возможностей, чем предусмотрено обычным обслуживанием."),
+		_girl("nika", "Ника", "mid", ["cunning", "directness", "audacity", "composure"], "senses_aura", "Директор магазина одежды. Считает один комплект одежды недостаточной подготовкой к серьёзному вечеру."),
+		_girl("rita", "Рита", "mid", ["status", "dominance", "generosity", "risk"], "loves_wealthy", "Организатор мероприятий. Если что-то нужно устроить срочно, у неё уже есть номер человека, который это сделает."),
+		_girl("eva", "Ева", "mid", ["status", "dominance", "risk", "generosity"], "loves_restaurants", "Рекрутер и профессиональный интервьюер. Быстро понимает людей по нескольким реакциям и учит героя замечать то же самое."),
+		_girl("girl_president", "Президент", "late", ["dominance", "status", "composure"], "loves_wealthy", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание"),
 	]
 func _rules() -> DateRules:
 	var rules := DateRules.new()

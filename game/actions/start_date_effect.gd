@@ -4,13 +4,20 @@ extends ActionEffect
 @export var girl_id: StringName = &""
 @export var date_venue_id: StringName = &""
 @export var outfit_id: StringName = &""
+@export var backup_outfit_id: StringName = &""
+@export var express_styling: bool = false
+@export var urgent_taxi: bool = false
 
 
 func apply() -> void:
 	var dating: Variant = _dating_service()
 	if dating == null:
 		return
-	dating.start_date(girl_id, date_venue_id, outfit_id)
+	dating.start_date(girl_id, date_venue_id, outfit_id, {
+		"backup_outfit_id": backup_outfit_id,
+		"express_styling": express_styling,
+		"urgent_taxi": urgent_taxi,
+	})
 
 
 func get_description() -> String:

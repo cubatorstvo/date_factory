@@ -29,6 +29,34 @@ func is_prepared() -> bool:
 	return apartment.prepared
 
 
+func set_prepared(value: bool) -> void:
+	var apartment: ApartmentState = _apartment()
+	if apartment == null:
+		return
+	apartment.prepared = value
+
+
+func is_upgrade_visible(upgrade: ApartmentUpgradeDefinition) -> bool:
+	if upgrade == null:
+		return false
+	if upgrade.required_filler_reward_id == &"":
+		return true
+	var girls: Variant = get_node_or_null("/root/GirlsService")
+	if girls == null:
+		return false
+	return bool(girls.has_filler_reward(upgrade.required_filler_reward_id))
+
+
+func create_clean_action() -> GameAction:
+	var action := GameAction.new()
+	action.id = &"apartment_clean"
+	action.money_cost = 0
+	action.time_cost_minutes = FillerRewardCatalog.APARTMENT_CLEAN_MINUTES
+	var effect := ApartmentPrepareEffect.new()
+	action.effects.append(effect)
+	return action
+
+
 func get_granted_local_object_ids() -> Array[StringName]:
 	var result: Array[StringName] = []
 	var apartment: ApartmentState = _apartment()
@@ -69,6 +97,10 @@ func create_upgrade_action(upgrade_id: StringName) -> GameAction:
 	var requirement := ApartmentUpgradeNotPurchasedRequirement.new()
 	requirement.upgrade_id = definition.id
 	action.requirements.append(requirement)
+	if definition.required_filler_reward_id != &"":
+		var reward_req := FillerRewardUnlockedRequirement.new()
+		reward_req.reward_id = definition.required_filler_reward_id
+		action.requirements.append(reward_req)
 	var effect := ApartmentUpgradeEffect.new()
 	effect.upgrade_id = definition.id
 	effect.target_level = definition.level_granted

@@ -34,6 +34,24 @@ func can_upgrade(characteristic_id: StringName) -> bool:
 	return get_value(characteristic_id) < get_max_level(characteristic_id)
 
 
+func is_upgrade_visible(upgrade: CharacteristicUpgradeDefinition) -> bool:
+	if upgrade == null:
+		return false
+	if upgrade.required_filler_reward_id == &"":
+		return true
+	var girls: Variant = get_node_or_null("/root/GirlsService")
+	if girls == null:
+		return false
+	return bool(girls.has_filler_reward(upgrade.required_filler_reward_id))
+
+
+func can_buy_upgrade(upgrade_id: StringName) -> bool:
+	var upgrade: CharacteristicUpgradeDefinition = get_catalog().get_upgrade(upgrade_id)
+	if upgrade == null or not is_upgrade_visible(upgrade):
+		return false
+	return can_upgrade(upgrade.characteristic_id)
+
+
 func get_value(characteristic_id: StringName) -> int:
 	var player: PlayerState = _player()
 	if player == null:
@@ -101,11 +119,15 @@ func create_upgrade_action(upgrade_id: StringName) -> GameAction:
 	if upgrade == null:
 		return action
 	action.id = upgrade.id
-	action.money_cost = get_cost_per_level(upgrade.characteristic_id)
-	action.time_cost_minutes = 0
+	action.money_cost = upgrade.price
+	action.time_cost_minutes = upgrade.time_cost_minutes
 	var below_max := CharacteristicBelowMaxRequirement.new()
 	below_max.characteristic_id = upgrade.characteristic_id
 	action.requirements.append(below_max)
+	if upgrade.required_filler_reward_id != &"":
+		var reward_req := FillerRewardUnlockedRequirement.new()
+		reward_req.reward_id = upgrade.required_filler_reward_id
+		action.requirements.append(reward_req)
 	var effect := CharacteristicEffect.new()
 	effect.characteristic_id = upgrade.characteristic_id
 	effect.amount = upgrade.amount

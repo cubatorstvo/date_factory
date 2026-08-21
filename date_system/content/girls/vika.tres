@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+﻿[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
 
@@ -6,9 +6,9 @@
 script = ExtResource("1_script")
 id = &"vika"
 display_name = "Вика"
-description = "Вика"
+description = "Бариста Café. Видела достаточно неудачных свиданий, чтобы научиться быстро перезапускать разговор."
 enabled = true
 difficulty_preset_id = &"early"
 trait_id = &"values_appearance"
 positive_tag_ids = Array[StringName]([&"audacity", &"dominance", &"risk", &"humor", &"cunning"])
-initial_known_tag_ids = Array[StringName]([&"humor", &"politeness"])
+initial_known_tag_count = 2

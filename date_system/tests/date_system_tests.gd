@@ -50,6 +50,7 @@ func run_all() -> PackedStringArray:
 	_test_manual_progression_factory_rating_path()
 	_test_skip_to_08_00()
 	_test_character_progression()
+	_test_filler_girl_rewards()
 	_test_city_density_progression()
 	_test_automation()
 	_test_availability_ui()
@@ -1469,16 +1470,16 @@ func _test_dating_core_model() -> void:
 	var actress: GirlProfile = catalog.find_girl(GirlCatalog.ID_ACTRESS)
 	var fresh: GirlProgress = _fresh_progress(catalog, &"alina")
 	_ok("4. relationships start at 0", fresh.relationship == 0)
-	_ok("13. alina knows politeness", fresh.tag_knowledge(&"politeness", alina) == DateTypes.TagKnowledge.POSITIVE)
-	_ok("13. alina knows audacity", fresh.tag_knowledge(&"audacity", alina) == DateTypes.TagKnowledge.NEGATIVE)
-	_ok("13. initial known not copied into save", fresh.revealed_positive_tag_ids.is_empty() and fresh.revealed_negative_tag_ids.is_empty())
+	_ok("13. filler initial known count 2", alina.initial_known_tag_count == 2)
+	_ok("13. engine progress starts UNKNOWN until first meet", fresh.tag_knowledge(&"politeness", alina) == DateTypes.TagKnowledge.UNKNOWN)
+	_ok("13. revealed tags empty before first meet", fresh.revealed_positive_tag_ids.is_empty() and fresh.revealed_negative_tag_ids.is_empty())
 	var actress_progress: GirlProgress = _fresh_progress(catalog, GirlCatalog.ID_ACTRESS)
 	var actress_unknown: bool = true
 	for tag in catalog.enabled_tags():
 		if actress_progress.tag_knowledge(tag.id, actress) != DateTypes.TagKnowledge.UNKNOWN:
 			actress_unknown = false
 			break
-	_ok("14. story girl starts UNKNOWN", actress_unknown and actress.initial_known_tag_ids.is_empty())
+	_ok("14. story girl starts UNKNOWN", actress_unknown and actress.initial_known_tag_count == 0)
 	var good: DateEngine = _finish_with_preference(catalog, true, true)
 	var good_bd: DateScoreBreakdown = good.get_result().score_breakdown
 	_ok("5. five positive episodes give positive raw", good_bd.total > 0)
@@ -2219,8 +2220,8 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 16", int(root.get("save_version", 0)) == 16)
-	_ok("SAVE_VERSION constant 16", int(sm.SAVE_VERSION) == 16)
+	_ok("save_version == 17", int(root.get("save_version", 0)) == 17)
+	_ok("SAVE_VERSION constant 17", int(sm.SAVE_VERSION) == 17)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -3464,7 +3465,7 @@ func _test_girls() -> void:
 	sim.show_section("girls")
 	var girls_text: String = sim.get_city_body_text()
 	_ok("sim girls alina", girls_text.contains("АЛИНА"))
-	_ok("sim girls relationship", girls_text.contains("Отношения: 0 / 5"))
+	_ok("sim girls relationship", girls_text.contains("Отношения: 0 / %d" % int(girls.get_relationship_max(GirlCatalog.ID_ALINA))))
 	_ok("sim girls contact", girls_text.contains("Контакт: Да"))
 	_ok("sim girls no vika", girls_text.contains("ВИКА") == false)
 	sim.queue_free()
@@ -3505,19 +3506,20 @@ func _test_dating_and_rating() -> void:
 	clock.real_time_progression_enabled = false
 	sm.new_game()
 	var alina_id: StringName = GirlCatalog.ID_ALINA
+	var alina_max: int = int(girls.get_relationship_max(alina_id))
 	_ok("rating new game 0", int(rating.get_rating()) == 0)
-	girls.get_state(alina_id).relationship = 4
-	_ok("rating plus one at max", girls.change_relationship(alina_id, 1) == 5)
-	_ok("relationship at max", girls.get_relationship(alina_id) == 5)
+	girls.get_state(alina_id).relationship = alina_max - 1
+	_ok("rating plus one at max", girls.change_relationship(alina_id, 1) == alina_max)
+	_ok("relationship at max", girls.get_relationship(alina_id) == alina_max)
 	_ok("rating after max", int(rating.get_rating()) == 1)
 	_ok("relationship completed", girls.is_relationship_completed(alina_id))
 	sm.new_game()
-	girls.get_state(alina_id).relationship = 4
-	_ok("rating large delta clamps", girls.change_relationship(alina_id, 10) == 5)
+	girls.get_state(alina_id).relationship = alina_max - 1
+	_ok("rating large delta clamps", girls.change_relationship(alina_id, 10) == alina_max)
 	_ok("rating large delta once", int(rating.get_rating()) == 1)
-	_ok("rating repeat no extra", girls.change_relationship(alina_id, 1) == 5)
+	_ok("rating repeat no extra", girls.change_relationship(alina_id, 1) == alina_max)
 	_ok("rating stays 1", int(rating.get_rating()) == 1)
-	_ok("relationship stays max", girls.get_relationship(alina_id) == 5)
+	_ok("relationship stays max", girls.get_relationship(alina_id) == alina_max)
 	gs.player.rating = 3
 	sm.save_game()
 	sm.new_game()
@@ -3548,12 +3550,13 @@ func _test_dating_and_rating() -> void:
 	_ok("start without contact fail", no_contact.success == false)
 	sm.new_game()
 	girls.give_contact(alina_id)
-	girls.get_state(alina_id).last_date_completed_at = int(clock.get_game_time_minutes())
+	clock.advance_time(60)
+	girls.mark_date_completed(alina_id)
 	_ok("start during cooldown", dating.can_start_date(alina_id) == false)
 	_ok("start cooldown reason", dating.get_start_date_failure_reason(alina_id) == "До следующего свидания нужно подождать")
 	sm.new_game()
 	girls.give_contact(alina_id)
-	girls.get_state(alina_id).relationship = 5
+	girls.get_state(alina_id).relationship = int(girls.get_relationship_max(alina_id))
 	_ok("start after max", dating.can_start_date(alina_id) == false)
 	_ok("start after max reason", dating.get_start_date_failure_reason(alina_id) == "Отношения с этой девушкой уже достигли максимума")
 	sm.new_game()
@@ -3611,6 +3614,7 @@ func _test_dating_and_rating() -> void:
 	_ok("load knowledge save", sm.load_game())
 	var loaded_state: GirlState = girls.get_state(alina_id)
 	_ok("knowledge loaded", loaded_state != null and (loaded_state.revealed_positive_tag_ids.has(revealed_id) or loaded_state.revealed_negative_tag_ids.has(revealed_id)))
+	girls.get_state(alina_id).last_date_completed_at = 0
 	girls.get_state(alina_id).next_date_available_at = 0
 	_ok("knowledge second start", dating.start_date(alina_id, &"cafe"))
 	var second_engine: DateEngine = dating.get_date_engine()
@@ -3619,7 +3623,7 @@ func _test_dating_and_rating() -> void:
 	sm.delete_save()
 	sm.new_game()
 	girls.give_contact(alina_id)
-	girls.get_state(alina_id).relationship = 4
+	girls.get_state(alina_id).relationship = alina_max - 1
 	gs.flow.game_time_minutes = 0
 	_ok("cycle start", dating.start_date(alina_id, &"cafe"))
 	var cycle_result := DateResult.new()
@@ -3627,7 +3631,7 @@ func _test_dating_and_rating() -> void:
 	cycle_result.relationship_delta = 1
 	cycle_result.duration_minutes = 120
 	_ok("cycle complete", dating.complete_date(cycle_result))
-	_ok("cycle relationship 5", girls.get_relationship(alina_id) == 5)
+	_ok("cycle relationship max", girls.get_relationship(alina_id) == alina_max)
 	_ok("cycle rating 1", int(rating.get_rating()) == 1)
 	_ok("cycle completed", girls.is_relationship_completed(alina_id))
 	_ok("cycle cannot start", dating.can_start_date(alina_id) == false)
@@ -3718,7 +3722,7 @@ func _test_dating_and_rating() -> void:
 	sim.show_section("dates")
 	var dates_text: String = sim.get_city_body_text()
 	_ok("sim dates alina", dates_text.contains("АЛИНА"))
-	_ok("sim dates relationship", dates_text.contains("Отношения: 0 / 5"))
+	_ok("sim dates relationship", dates_text.contains("Отношения: 0 / %d" % int(girls.get_relationship_max(alina_id))))
 	_ok("sim dates invite", dates_text.contains("ПРИГЛАСИТЬ"))
 	sim.invite_girl(alina_id)
 	var picker_text: String = sim.get_city_body_text()
@@ -4375,13 +4379,15 @@ func _test_character_progression() -> void:
 	_ok("char effect success", muscle_result.success)
 	_ok("char effect muscle 1", gs.player.muscle == 1)
 	sm.new_game()
-	gs.player.money = 300
+	gs.player.money = FillerRewardCatalog.ALINA_GYM_BASE_PRICE
+	var muscle_time_before: int = int(gs.flow.game_time_minutes)
 	var buy_muscle: ActionResult = actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1))
 	_ok("upgrade muscle success", buy_muscle.success)
 	_ok("upgrade muscle money 0", gs.player.money == 0)
 	_ok("upgrade muscle value 1", gs.player.muscle == 1)
+	_ok("upgrade muscle 60 min", int(gs.flow.game_time_minutes) == muscle_time_before + FillerRewardCatalog.ALINA_GYM_MINUTES)
 	_ok("upgrade muscle max 5", int(characteristics.get_max_level(CharacteristicIds.MUSCLE)) == 5)
-	gs.player.money = 1200
+	gs.player.money = FillerRewardCatalog.ALINA_GYM_BASE_PRICE * 4
 	for _level in range(4):
 		actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1))
 	_ok("upgrade muscle sequential 5", gs.player.muscle == 5)
@@ -4528,7 +4534,7 @@ func _test_character_progression() -> void:
 		sim.show_section("progression")
 		var progression_text: String = sim.get_city_body_text()
 		_ok("sim progression heading", progression_text.contains("ХАРАКТЕРИСТИКИ"))
-		_ok("sim progression upgrade", progression_text.contains("Прокачать до"))
+		_ok("sim progression upgrade", progression_text.contains("Тренажёр 1"))
 		sim.show_section("clothing")
 		var clothing_text: String = sim.get_city_body_text()
 		_ok("sim clothing casual", clothing_text.contains("Повседневная"))
@@ -4539,6 +4545,168 @@ func _test_character_progression() -> void:
 		_ok("sim apartment level", apartment_text.contains("Уровень квартиры: 1"))
 		_ok("sim apartment upgrade", apartment_text.contains("Купить телевизор"))
 		sim.queue_free()
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _revealed_tag_count(girls: Variant, girl_id: StringName) -> int:
+	var state: GirlState = girls.get_state(girl_id)
+	if state == null:
+		return 0
+	return state.revealed_positive_tag_ids.size() + state.revealed_negative_tag_ids.size()
+
+
+func _engine_with_flags(catalog: DateContentCatalog, girl_id: StringName, venue_id: StringName, outfit_id: StringName, seed: int, progress: GirlProgress, player: DatePlayerSnapshot, flags: Dictionary = {}) -> DateEngine:
+	var engine := DateEngine.new()
+	var config := DateSessionConfig.new()
+	config.catalog = catalog
+	config.girl_id = girl_id
+	config.venue_id = venue_id
+	config.outfit_id = outfit_id
+	config.seed = seed
+	config.girl_progress = progress
+	config.player_snapshot = player
+	config.relationship_max = GirlCatalog.seed_relationship_max(girl_id)
+	config.venue_source_limit = int(flags.get("venue_source_limit", 1))
+	config.vika_reroll_available = bool(flags.get("vika_reroll_available", false))
+	config.dasha_soften_available = bool(flags.get("dasha_soften_available", false))
+	config.nika_swap_available = bool(flags.get("nika_swap_available", false))
+	config.backup_outfit_id = StringName(str(flags.get("backup_outfit_id", "")))
+	config.express_styling_bonus = int(flags.get("express_styling_bonus", 0))
+	var venue: DateVenue = catalog.find_venue(venue_id)
+	if venue != null:
+		config.local_object_ids = venue.local_object_ids.duplicate()
+	engine.create_date_session(config)
+	return engine
+
+
+func _test_filler_girl_rewards() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var rewards: FillerRewardCatalog = FillerRewardCatalog.create_seed()
+	_ok("filler catalog 12 rewards", rewards.get_all_rewards().size() == 12)
+	var dasha_found: bool = false
+	for seed in range(1, 400):
+		var engine: DateEngine = _engine_with_flags(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player(), {"dasha_soften_available": true})
+		if not _has_preference(engine, false):
+			continue
+		_choose(engine, _pick_preference(engine, false))
+		var first: DateEpisodeResult = engine.get_session_state().episode_history[0]
+		if first.score_delta != 0 or not first.soften_applied:
+			continue
+		engine.advance()
+		if not _has_preference(engine, false):
+			continue
+		_choose(engine, _pick_preference(engine, false))
+		var second: DateEpisodeResult = engine.get_session_state().episode_history[1]
+		if second.score_delta != -1:
+			continue
+		dasha_found = true
+		break
+	_ok("dasha first negative 0 then -1", dasha_found)
+	var sonya_rest: DateEngine = _engine_with_flags(catalog, &"alina", &"restaurant", &"casual", 8, _fresh_progress(catalog, &"alina"), _player(), {"venue_source_limit": 2})
+	sonya_rest.choose_move(&"local_window_care")
+	var rest_session: DateSession = sonya_rest.get_session_state()
+	_ok("sonya restaurant first venue still available", rest_session.venue_source_uses == 1 and not rest_session.venue_source_used)
+	sonya_rest.advance()
+	sonya_rest.choose_move(&"local_window_audacity")
+	rest_session = sonya_rest.get_session_state()
+	_ok("sonya restaurant second venue spent", rest_session.venue_source_uses == 2 and rest_session.venue_source_used)
+	var cafe_limit: DateEngine = _engine_with_flags(catalog, &"alina", &"cafe", &"casual", 8, _fresh_progress(catalog, &"alina"), _player(), {})
+	cafe_limit.choose_move(&"local_window_care")
+	_ok("sonya cafe still one venue use", cafe_limit.get_session_state().venue_source_used)
+	var nika_player: DatePlayerSnapshot = _player()
+	nika_player.muscle = 5
+	nika_player.appearance = 2
+	var nika: DateEngine = _engine_with_flags(catalog, &"alina", &"cafe", &"wrestling", 6, _fresh_progress(catalog, &"alina"), nika_player, {"nika_swap_available": true, "backup_outfit_id": &"stylish"})
+	nika.choose_move(&"outfit_flex_bicep")
+	_ok("nika outfit source used before swap", nika.get_session_state().outfit_source_used)
+	nika.set_pending_outfit_swap(true)
+	nika.advance()
+	var nika_session: DateSession = nika.get_session_state()
+	_ok("nika swapped outfit", nika_session.outfit_id == &"stylish")
+	_ok("nika outfit source kept", nika_session.outfit_source_used)
+	_ok("nika appearance after swap", DateTypes.effective_stat(nika_player.appearance, catalog.find_outfit(nika_session.outfit_id), &"appearance") == 3)
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var girls: Variant = _girls_service()
+	var dating: Variant = _dating_service()
+	var actions: Variant = _action_service()
+	var rating: Variant = _rating_service()
+	_ok("filler services", gs != null and sm != null and clock != null and girls != null and dating != null and actions != null and rating != null)
+	if gs == null or sm == null or clock == null or girls == null or dating == null or actions == null or rating == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/filler_girl_rewards.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	girls.give_contact(GirlCatalog.ID_ALINA)
+	girls.give_contact(GirlCatalog.ID_ACTRESS)
+	_ok("first meet filler 2 tags", _revealed_tag_count(girls, GirlCatalog.ID_ALINA) == 2)
+	_ok("first meet story 0 tags", _revealed_tag_count(girls, GirlCatalog.ID_ACTRESS) == 0)
+	var alina_before_eva: int = _revealed_tag_count(girls, GirlCatalog.ID_ALINA)
+	girls.give_contact(GirlCatalog.ID_EVA)
+	girls.change_relationship(GirlCatalog.ID_EVA, girls.get_relationship_max(GirlCatalog.ID_EVA))
+	_ok("eva retro +1 unfinished girl", _revealed_tag_count(girls, GirlCatalog.ID_ALINA) == alina_before_eva + 1)
+	_ok("eva retro +1 unfinished story", _revealed_tag_count(girls, GirlCatalog.ID_ACTRESS) == 1)
+	girls.give_contact(GirlCatalog.ID_MARINA)
+	girls.give_contact(GirlCatalog.ID_MINE_BOSS)
+	_ok("after eva filler first meet 3", _revealed_tag_count(girls, GirlCatalog.ID_MARINA) == 3)
+	_ok("after eva story first meet 1", _revealed_tag_count(girls, GirlCatalog.ID_MINE_BOSS) == 1)
+	sm.new_game()
+	girls.give_contact(GirlCatalog.ID_ALINA)
+	var alina_max: int = int(girls.get_relationship_max(GirlCatalog.ID_ALINA))
+	girls.change_relationship(GirlCatalog.ID_ALINA, alina_max)
+	_ok("max grants rating once", int(rating.get_rating()) == 1)
+	_ok("max grants alina reward", bool(girls.has_filler_reward(FillerRewardCatalog.ID_ALINA_IMPROVED_GYM)))
+	girls.change_relationship(GirlCatalog.ID_ALINA, alina_max)
+	_ok("repeat max no extra rating", int(rating.get_rating()) == 1)
+	girls.give_contact(GirlCatalog.ID_MARINA)
+	girls.change_relationship(GirlCatalog.ID_MARINA, int(girls.get_relationship_max(GirlCatalog.ID_MARINA)))
+	_ok("second filler max rating 2", int(rating.get_rating()) == 2)
+	_ok("marina reward once", bool(girls.has_filler_reward(FillerRewardCatalog.ID_MARINA_FREE_OUTFIT)))
+	sm.new_game()
+	girls.grant_filler_reward_for_girl(GirlCatalog.ID_VIKA)
+	girls.give_contact(GirlCatalog.ID_VIKA)
+	gs.player.money = FillerRewardCatalog.VIKA_REROLL_COST
+	var vika_ok: bool = false
+	if dating.start_date(GirlCatalog.ID_VIKA, &"cafe"):
+		var vika_engine: DateEngine = dating.get_date_engine()
+		if vika_engine != null:
+			var situation_id: StringName = vika_engine.get_session_state().selected_situation_ids[0]
+			var bases: Array[StringName] = vika_engine.get_session_state().current_selected_base_move_ids.duplicate()
+			var reroll_error: String = dating.try_vika_reroll()
+			var after_bases: Array[StringName] = vika_engine.get_session_state().current_selected_base_move_ids.duplicate()
+			vika_ok = reroll_error.is_empty() and gs.player.money == 0 and vika_engine.get_session_state().selected_situation_ids[0] == situation_id and after_bases != bases and not dating.try_vika_reroll().is_empty()
+	_ok("vika reroll 25 once keeps situation", vika_ok)
+	sm.new_game()
+	girls.grant_filler_reward_for_girl(GirlCatalog.ID_OLYA)
+	var overtime_time: int = int(gs.flow.game_time_minutes)
+	var combined: ActionResult = actions.execute(WorkService.create_work_with_overtime_action())
+	_ok("olya checkbox 150/120", combined.success and gs.player.money == 150 and int(gs.flow.game_time_minutes) == overtime_time + 120)
+	sm.new_game()
+	girls.grant_filler_reward_for_girl(GirlCatalog.ID_OLYA)
+	var split_time: int = int(gs.flow.game_time_minutes)
+	var first_shift: ActionResult = actions.execute(WorkService.create_work_action(WorkService.make_work_basic()))
+	var second_shift: ActionResult = actions.execute(WorkService.create_overtime_action())
+	_ok("olya two shifts 150/120", first_shift.success and second_shift.success and gs.player.money == 150 and int(gs.flow.game_time_minutes) == split_time + 120)
+	sm.new_game()
+	girls.grant_filler_reward_for_girl(GirlCatalog.ID_RITA)
+	girls.give_contact(GirlCatalog.ID_RITA)
+	clock.advance_time(60)
+	girls.mark_date_completed(GirlCatalog.ID_RITA)
+	_ok("rita cooldown blocks", dating.can_start_date(GirlCatalog.ID_RITA) == false)
+	gs.player.money = FillerRewardCatalog.RITA_TAXI_COST
+	var taxi: ActionResult = actions.execute(dating.create_start_date_action(GirlCatalog.ID_RITA, &"cafe", OutfitCatalog.START_OUTFIT_ID, {"urgent_taxi": true}))
+	_ok("rita taxi starts for 75", taxi.success and gs.player.money == 0 and dating.has_active_date())
+	var taxi_result := DateResult.new()
+	taxi_result.girl_id = GirlCatalog.ID_RITA
+	taxi_result.relationship_delta = 0
+	taxi_result.duration_minutes = 120
+	dating.complete_date(taxi_result)
+	_ok("rita cooldown returns", dating.can_start_date(GirlCatalog.ID_RITA) == false)
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()

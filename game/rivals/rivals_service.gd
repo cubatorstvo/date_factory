@@ -31,15 +31,27 @@ func get_state(rival_id: StringName) -> RivalState:
 	return rivals.get_or_create(rival_id)
 
 
+func peek_state(rival_id: StringName) -> RivalState:
+	if get_definition(rival_id) == null:
+		return null
+	var rivals: RivalsState = _rivals()
+	if rivals == null:
+		return null
+	var existing: Variant = rivals.rivals_by_id.get(rival_id, null)
+	if existing is RivalState:
+		return existing
+	return null
+
+
 func is_discovered(rival_id: StringName) -> bool:
-	var state: RivalState = get_state(rival_id)
+	var state: RivalState = peek_state(rival_id)
 	if state == null:
 		return false
 	return state.discovered
 
 
 func is_defeated(rival_id: StringName) -> bool:
-	var state: RivalState = get_state(rival_id)
+	var state: RivalState = peek_state(rival_id)
 	if state == null:
 		return false
 	return state.defeated
@@ -130,7 +142,7 @@ func get_challenge_cooldown_remaining(rival_id: StringName) -> int:
 
 
 func get_last_challenge_completed_at(rival_id: StringName) -> int:
-	var state: RivalState = get_state(rival_id)
+	var state: RivalState = peek_state(rival_id)
 	if state == null:
 		return 0
 	return state.last_challenge_completed_at

@@ -5,6 +5,8 @@ var purchased_ids: Array[StringName] = []
 var owned_outfit_ids: Array[StringName] = []
 var current_outfit_id: StringName = OutfitCatalog.START_OUTFIT_ID
 var apartment: ApartmentState = ApartmentState.new()
+var unlocked_filler_reward_ids: Array[StringName] = []
+var marina_free_outfit_pending: bool = false
 
 
 func _init() -> void:
@@ -48,6 +50,21 @@ func add_owned_outfit(outfit_id: StringName) -> void:
 	current_outfit_id = outfit_id
 
 
+func has_filler_reward(reward_id: StringName) -> bool:
+	return unlocked_filler_reward_ids.has(reward_id)
+
+
+func add_filler_reward(reward_id: StringName) -> bool:
+	if reward_id == &"" or has_filler_reward(reward_id):
+		return false
+	unlocked_filler_reward_ids.append(reward_id)
+	return true
+
+
+func remove_filler_reward(reward_id: StringName) -> void:
+	unlocked_filler_reward_ids.erase(reward_id)
+
+
 func to_dict() -> Dictionary:
 	var ids: Array = []
 	for purchase_id in purchased_ids:
@@ -60,6 +77,8 @@ func to_dict() -> Dictionary:
 		"owned_outfit_ids": owned,
 		"current_outfit_id": String(current_outfit_id),
 		"apartment": apartment.to_dict() if apartment != null else ApartmentState.new().to_dict(),
+		"unlocked_filler_reward_ids": _ids_to_strings(unlocked_filler_reward_ids),
+		"marina_free_outfit_pending": marina_free_outfit_pending,
 	}
 
 
@@ -95,6 +114,26 @@ func from_dict(data: Dictionary) -> void:
 	var apartment_raw: Variant = data.get("apartment", {})
 	if apartment_raw is Dictionary:
 		apartment.from_dict(apartment_raw)
+	unlocked_filler_reward_ids = _strings_to_ids(data.get("unlocked_filler_reward_ids", []))
+	marina_free_outfit_pending = bool(data.get("marina_free_outfit_pending", false))
+
+
+func _ids_to_strings(ids: Array[StringName]) -> Array:
+	var result: Array = []
+	for item_id in ids:
+		result.append(String(item_id))
+	return result
+
+
+func _strings_to_ids(value: Variant) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	if not (value is Array):
+		return ids
+	for item in value:
+		var item_id: StringName = StringName(str(item))
+		if item_id != &"" and not ids.has(item_id):
+			ids.append(item_id)
+	return ids
 
 
 func _migrate_owned_from_chain(outfit_id: StringName) -> void:

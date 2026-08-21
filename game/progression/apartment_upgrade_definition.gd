@@ -7,3 +7,4 @@ extends Resource
 @export var price: int = 0
 @export var level_granted: int = 1
 @export var granted_local_object_ids: Array[StringName] = []
+@export var required_filler_reward_id: StringName = &""

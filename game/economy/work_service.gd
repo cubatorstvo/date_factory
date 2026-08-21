@@ -80,6 +80,84 @@ static func is_work_available_today() -> bool:
 	return int(gs.player.last_work_day_index) != get_calendar_day_index()
 
 
+static func has_olya_overtime() -> bool:
+	var girls: Variant = _girls_service()
+	if girls == null:
+		return false
+	return bool(girls.has_filler_reward(FillerRewardCatalog.ID_OLYA_OVERTIME))
+
+
+static func get_overtime_pay() -> int:
+	return int(get_current_hourly_pay() * FillerRewardCatalog.OLYA_OVERTIME_PAY_PERCENT / 100)
+
+
+static func is_overtime_available_today() -> bool:
+	if not has_olya_overtime():
+		return false
+	var gs: Variant = _game_state()
+	if gs == null or gs.player == null:
+		return false
+	var day_index: int = get_calendar_day_index()
+	return int(gs.player.last_work_day_index) == day_index and int(gs.player.last_overtime_day_index) != day_index
+
+
+static func make_overtime_work() -> WorkDefinition:
+	var work := WorkDefinition.new()
+	work.id = &"work_overtime"
+	work.display_name = "Выйти на подработку"
+	work.income = get_overtime_pay()
+	work.time_cost_minutes = WORK_MINUTES
+	return work
+
+
+static func create_overtime_action() -> GameAction:
+	var work: WorkDefinition = make_overtime_work()
+	var action := GameAction.new()
+	action.id = work.id
+	action.time_cost_minutes = work.time_cost_minutes
+	action.money_cost = 0
+	var availability := WorkOvertimeAvailableRequirement.new()
+	action.requirements.append(availability)
+	var effect := MoneyEffect.new()
+	effect.amount = work.income
+	action.effects.append(effect)
+	var record := RecordOvertimeDayEffect.new()
+	action.effects.append(record)
+	return action
+
+
+static func create_work_with_overtime_action() -> GameAction:
+	var regular: WorkDefinition = make_current_work()
+	var overtime_pay: int = get_overtime_pay()
+	var action := GameAction.new()
+	action.id = &"work_basic_with_overtime"
+	action.time_cost_minutes = regular.time_cost_minutes + WORK_MINUTES
+	action.money_cost = 0
+	var availability := WorkAvailableTodayRequirement.new()
+	action.requirements.append(availability)
+	var reward_req := FillerRewardUnlockedRequirement.new()
+	reward_req.reward_id = FillerRewardCatalog.ID_OLYA_OVERTIME
+	action.requirements.append(reward_req)
+	var effect := MoneyEffect.new()
+	effect.amount = regular.income + overtime_pay
+	action.effects.append(effect)
+	var record := RecordWorkDayEffect.new()
+	action.effects.append(record)
+	var overtime_record := RecordOvertimeDayEffect.new()
+	action.effects.append(overtime_record)
+	return action
+
+
+static func _girls_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("GirlsService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
 static func _make_tier(min_story_stage: int, income: int, time_cost_minutes: int) -> WorkTierDefinition:
 	var tier := WorkTierDefinition.new()
 	tier.min_story_stage = min_story_stage

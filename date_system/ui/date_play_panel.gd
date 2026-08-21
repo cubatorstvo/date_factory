@@ -53,6 +53,10 @@ func apply_lab_source_used(characteristic_used: bool, outfit_used: bool, venue_u
 	session.characteristic_source_used = characteristic_used
 	session.outfit_source_used = outfit_used
 	session.venue_source_used = venue_used
+	if venue_used:
+		session.venue_source_uses = maxi(session.venue_source_limit, 1)
+	else:
+		session.venue_source_uses = 0
 	_open_source = -1
 	rebuild()
 
@@ -525,6 +529,12 @@ func _build_runner() -> void:
 			_host.add_child(LabUi.heading("БАЗОВЫЕ ХОДЫ"))
 			for option in view.base_options:
 				_host.add_child(_move_button(option))
+			var reroll_block: Control = _build_vika_reroll_button(session)
+			if reroll_block != null:
+				_host.add_child(reroll_block)
+			var swap_block: Control = _build_nika_swap_checkbox(session)
+			if swap_block != null:
+				_host.add_child(swap_block)
 			_host.add_child(_build_source_buttons(view))
 	elif session.stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
 		_host.add_child(_episode_result_block(session))
@@ -545,6 +555,39 @@ func _unavailable_modulate() -> Color:
 	return Color(0.7, 0.7, 0.7)
 
 
+func _build_vika_reroll_button(session: DateSession) -> Control:
+	if session == null or not session.vika_reroll_available or session.vika_reroll_used:
+		return null
+	var btn: Button = LabUi.button("$25 — Пересобрать ответы")
+	btn.pressed.connect(func() -> void:
+		var error_text := ""
+		if _playthrough:
+			var dating: Variant = _dating_service()
+			if dating != null:
+				error_text = str(dating.try_vika_reroll())
+			else:
+				error_text = "Других вариантов сейчас нет."
+		else:
+			error_text = _engine.reroll_base_moves()
+		if not error_text.is_empty():
+			status_message.emit(error_text)
+		rebuild()
+	)
+	return btn
+
+
+func _build_nika_swap_checkbox(session: DateSession) -> Control:
+	if session == null or not _engine.can_queue_outfit_swap():
+		return null
+	var box := CheckBox.new()
+	box.text = "Переодеться после эпизода"
+	box.button_pressed = session.pending_outfit_swap
+	box.toggled.connect(func(pressed: bool) -> void:
+		_engine.set_pending_outfit_swap(pressed)
+	)
+	return box
+
+
 func _build_source_buttons(view: DateEpisodeView) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -556,6 +599,8 @@ func _build_source_buttons(view: DateEpisodeView) -> Control:
 		if source_view.used:
 			btn.disabled = true
 			btn.tooltip_text = "Уже использовано на этом свидании."
+		elif source_view.source == DateTypes.DateMoveSource.VENUE and source_view.use_limit > 1 and source_view.remaining_uses == 1:
+			btn.tooltip_text = "1 использование осталось"
 		else:
 			var source_value: int = int(source_view.source)
 			btn.pressed.connect(func() -> void:
@@ -731,6 +776,10 @@ func _episode_result_block(session: DateSession) -> PanelContainer:
 	box.add_child(score)
 	if session.episode_history.size() > 0:
 		var last_episode: DateEpisodeResult = session.episode_history[session.episode_history.size() - 1]
+		if last_episode.soften_applied:
+			var soften := Label.new()
+			soften.text = "Сгладить неловкость: -1 → 0"
+			box.add_child(soften)
 		if not last_episode.trait_bonus_text.is_empty():
 			var trait_line := Label.new()
 			trait_line.text = last_episode.trait_bonus_text
@@ -807,6 +856,9 @@ func _build_result() -> void:
 		var rating: RichTextLabel = GameTermView.create("Рейтинг +1")
 		rating.add_theme_font_size_override("normal_font_size", 18)
 		_tally_lines.append(rating)
+		var reward_block: Control = _max_reward_result_block(session.girl_id)
+		if reward_block != null:
+			_tally_lines.append(reward_block)
 	var footer := VBoxContainer.new()
 	footer.add_theme_constant_override("separation", 10)
 	if _playthrough:
@@ -827,6 +879,27 @@ func _build_result() -> void:
 	_host.add_child(timer)
 	_reveal_tally_line()
 	timer.start()
+
+
+func _max_reward_result_block(girl_id: StringName) -> Control:
+	var girls: Variant = null
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree != null and tree.root != null:
+		girls = tree.root.get_node_or_null("GirlsService")
+	if girls == null or not girls.has_method("get_filler_reward_for_girl"):
+		return null
+	var reward: FillerRewardDefinition = girls.get_filler_reward_for_girl(girl_id)
+	if reward == null:
+		return null
+	var box := VBoxContainer.new()
+	var title := Label.new()
+	title.text = "Новая награда:\n%s" % reward.display_name
+	box.add_child(title)
+	var body := Label.new()
+	body.text = reward.granted_description
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(body)
+	return box
 
 
 func _reveal_tally_line() -> void:

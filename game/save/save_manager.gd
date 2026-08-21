@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 16
+const SAVE_VERSION: int = 17
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -131,6 +131,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v14_game_core(migrated)
 	if from_version < 16:
 		migrated = _migrate_v15_guidance(migrated)
+	if from_version < 17:
+		migrated = _migrate_v16_filler_rewards(migrated)
 	return migrated
 
 
@@ -454,4 +456,25 @@ func _migrate_v15_guidance(state_data: Dictionary) -> Dictionary:
 	if not guidance.has("shown_milestone_ids"):
 		guidance["shown_milestone_ids"] = []
 	migrated["guidance"] = guidance
+	return migrated
+
+
+func _migrate_v16_filler_rewards(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var player_value: Variant = migrated.get("player", {})
+	var player: Dictionary = {}
+	if player_value is Dictionary:
+		player = player_value
+	if not player.has("last_overtime_day_index"):
+		player["last_overtime_day_index"] = -1
+	migrated["player"] = player
+	var progression_value: Variant = migrated.get("progression", {})
+	var progression: Dictionary = {}
+	if progression_value is Dictionary:
+		progression = progression_value
+	if not progression.has("unlocked_filler_reward_ids"):
+		progression["unlocked_filler_reward_ids"] = []
+	if not progression.has("marina_free_outfit_pending"):
+		progression["marina_free_outfit_pending"] = false
+	migrated["progression"] = progression
 	return migrated

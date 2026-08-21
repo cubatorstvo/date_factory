@@ -429,18 +429,14 @@ func _balance_overview_text() -> String:
 		var theory: String = DateBalanceMath.format_percent(diagnostics.theoretical_availability(catalog, girl))
 		var girl_trait: GirlTrait = catalog.find_trait(girl.trait_id)
 		var trait_name: String = girl_trait.display_name if girl_trait != null else String(girl.trait_id)
-		var known_names: PackedStringArray = PackedStringArray()
-		for tag_id in girl.initial_known_tag_ids:
-			var tag: DateTag = catalog.find_tag(tag_id)
-			known_names.append(tag.display_name if tag != null else String(tag_id))
-		lines.append("%s | %s | %d / %d | %d | %s | %s | %s" % [
+		lines.append("%s | %s | %d / %d | %d | %s | %d | %s" % [
 			girl.display_name,
 			difficulty_name,
 			positive_count,
 			enabled_count,
 			GirlCatalog.seed_relationship_max(girl.id),
 			trait_name,
-			", ".join(known_names) if not known_names.is_empty() else "—",
+			girl.initial_known_tag_count,
 			theory,
 		])
 	return "\n".join(lines)
@@ -975,7 +971,7 @@ func _add_girl_form() -> void:
 		grid.add_child(like)
 		grid.add_child(dislike)
 	_form_host.add_child(grid)
-	_add_girl_initial_known(girl)
+	_add_bounded_int(girl, "initial_known_tag_count", "Начально известных Tags", 0, 12)
 
 
 
@@ -1001,28 +997,6 @@ func _add_girl_trait_selector(girl: GirlProfile) -> void:
 		_dirty = true
 	)
 	_form_host.add_child(LabUi.labeled_row("Trait", button))
-
-
-func _add_girl_initial_known(girl: GirlProfile) -> void:
-	var heading := Label.new()
-	heading.text = "Начально известные Tags"
-	_form_host.add_child(heading)
-	for tag in catalog_service.catalog.enabled_tags():
-		if tag == null:
-			continue
-		var box := CheckBox.new()
-		box.text = tag.display_name
-		box.button_pressed = girl.initial_known_tag_ids.has(tag.id)
-		var tag_id: StringName = tag.id
-		box.toggled.connect(func(pressed: bool) -> void:
-			if pressed:
-				if not girl.initial_known_tag_ids.has(tag_id):
-					girl.initial_known_tag_ids.append(tag_id)
-			else:
-				girl.initial_known_tag_ids.erase(tag_id)
-			_dirty = true
-		)
-		_form_host.add_child(box)
 
 
 func _add_girl_difficulty_selector(girl: GirlProfile) -> void:

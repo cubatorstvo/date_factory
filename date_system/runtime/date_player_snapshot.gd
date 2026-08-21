@@ -7,6 +7,7 @@ extends Resource
 @export var aura: int = 0
 @export var apartment_quality: int = 0
 @export var apartment_prepared: bool = true
+@export var express_styling_bonus: int = 0
 
 
 func get_stat(stat_id: StringName) -> int:
@@ -43,6 +44,7 @@ func to_dictionary() -> Dictionary:
 		"aura": aura,
 		"apartment_quality": apartment_quality,
 		"apartment_prepared": apartment_prepared,
+		"express_styling_bonus": express_styling_bonus,
 	}
 
 
@@ -54,4 +56,5 @@ static func from_dictionary(data: Dictionary) -> DatePlayerSnapshot:
 	state.aura = int(data.get("aura", 0))
 	state.apartment_quality = int(data.get("apartment_quality", 0))
 	state.apartment_prepared = bool(data.get("apartment_prepared", true))
+	state.express_styling_bonus = int(data.get("express_styling_bonus", 0))
 	return state

@@ -7,3 +7,5 @@ var visible: bool = false
 var used: bool = false
 var state: DateTypes.DateMoveSourceState = DateTypes.DateMoveSourceState.BLOCKED
 var options: Array[DateMoveOption] = []
+var remaining_uses: int = 0
+var use_limit: int = 1

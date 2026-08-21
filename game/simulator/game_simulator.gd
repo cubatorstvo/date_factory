@@ -39,6 +39,9 @@ var _date_overlay_layer: CanvasLayer
 var _invite_girl_id: StringName = &""
 var _selected_date_venue_id: StringName = &""
 var _selected_outfit_id: StringName = &""
+var _selected_backup_outfit_id: StringName = &""
+var _express_styling: bool = false
+var _work_include_overtime: bool = false
 var _hud_characteristics_label: RichTextLabel
 var _factory_status: Label
 var _factory_slider: HSlider
@@ -224,6 +227,8 @@ func select_date_venue(date_venue_id: StringName) -> void:
 
 func select_date_outfit(outfit_id: StringName) -> void:
 	_selected_outfit_id = outfit_id
+	if _selected_backup_outfit_id == outfit_id:
+		_selected_backup_outfit_id = &""
 	refresh()
 
 
@@ -248,7 +253,14 @@ func start_selected_date() -> ActionResult:
 		result.failure_reason = "Это место сейчас недоступно"
 		_on_action_resolved(result)
 		return result
-	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_venue_id, _selected_outfit_id)
+	var girls: Variant = _girls_service()
+	var on_cooldown: bool = dating != null and int(dating.get_date_cooldown_remaining_minutes(_invite_girl_id)) > 0
+	var urgent_taxi: bool = on_cooldown and girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_RITA_URGENT_TAXI))
+	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_venue_id, _selected_outfit_id, {
+		"backup_outfit_id": _selected_backup_outfit_id,
+		"express_styling": _express_styling,
+		"urgent_taxi": urgent_taxi,
+	})
 	result = actions.execute(action)
 	if result.success:
 		_clear_date_invite()
@@ -576,6 +588,7 @@ func _build_home() -> Control:
 	_home_result = Label.new()
 	_home_result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_home_result)
+	box.add_child(_build_filler_rewards_dev())
 	return box
 
 func _build_work() -> Control:
@@ -584,9 +597,29 @@ func _build_work() -> Control:
 	box.add_child(LabUi.heading("РАБОТА"))
 	var work: WorkDefinition = WorkService.make_current_work()
 	if WorkService.is_work_available_today():
-		var action: GameAction = WorkService.create_work_action(work)
-		var hours: int = maxi(1, int(work.time_cost_minutes / 60))
-		_add_action_button(box, action, "Работать — %d ч — +%d" % [hours, work.income], false, false)
+		if WorkService.has_olya_overtime():
+			var overtime := CheckBox.new()
+			overtime.text = "Остаться на подработку\n+50% к выплате, ×2 времени"
+			overtime.button_pressed = _work_include_overtime
+			overtime.toggled.connect(func(pressed: bool) -> void:
+				_work_include_overtime = pressed
+				refresh()
+			)
+			box.add_child(overtime)
+		var action: GameAction = WorkService.create_work_with_overtime_action() if _work_include_overtime and WorkService.has_olya_overtime() else WorkService.create_work_action(work)
+		var hours: int = maxi(1, int(action.time_cost_minutes / 60))
+		var pay: int = 0
+		for effect in action.effects:
+			if effect is MoneyEffect:
+				pay += int((effect as MoneyEffect).amount)
+		_add_action_button(box, action, "Работать — %d ч — +%d" % [hours, pay], false, false)
+	elif WorkService.is_overtime_available_today():
+		var done := Label.new()
+		done.text = "Обычная смена выполнена"
+		box.add_child(done)
+		var overtime_work: WorkDefinition = WorkService.make_overtime_work()
+		var overtime_action: GameAction = WorkService.create_overtime_action()
+		_add_action_button(box, overtime_action, "Выйти на подработку — 1 ч — +%d" % overtime_work.income, false, false)
 	else:
 		var done := Label.new()
 		done.text = "Работа на сегодня выполнена"
@@ -807,8 +840,41 @@ func _build_progression() -> Control:
 	if characteristics == null:
 		return box
 	var catalog: CharacteristicCatalog = characteristics.get_catalog()
+	var seen: Dictionary = {}
 	for upgrade in catalog.get_all_upgrades():
-		box.add_child(_build_characteristic_upgrade_card(upgrade, characteristics))
+		if upgrade == null or not bool(characteristics.is_upgrade_visible(upgrade)):
+			continue
+		var key: String = String(upgrade.characteristic_id)
+		if seen.has(key):
+			continue
+		seen[key] = true
+		box.add_child(_build_characteristic_group(upgrade.characteristic_id, characteristics))
+	return box
+
+
+func _build_characteristic_group(characteristic_id: StringName, characteristics: Variant) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var current_value: int = int(characteristics.get_value(characteristic_id))
+	var max_level: int = int(characteristics.get_max_level(characteristic_id))
+	box.add_child(GameTermView.create("%s: %d/%d" % [CharacteristicIds.display_name(characteristic_id), current_value, max_level]))
+	var catalog: CharacteristicCatalog = characteristics.get_catalog()
+	var visible: Array[CharacteristicUpgradeDefinition] = []
+	for upgrade in catalog.get_upgrades_for_characteristic(characteristic_id):
+		if upgrade != null and bool(characteristics.is_upgrade_visible(upgrade)):
+			visible.append(upgrade)
+	if current_value >= max_level:
+		var done := Label.new()
+		done.text = "Максимум"
+		box.add_child(done)
+		return box
+	for upgrade in visible:
+		var action: GameAction = characteristics.create_upgrade_action(upgrade.id)
+		var minutes: int = upgrade.time_cost_minutes
+		var label: String = "%s — %d" % [upgrade.display_name, upgrade.price]
+		if minutes > 0:
+			label += " — %d мин" % minutes
+		_add_action_button(box, action, label, false, false)
 	return box
 
 
@@ -874,6 +940,9 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 	var contact_label := Label.new()
 	contact_label.text = "Контакт: %s" % ("Да" if has_contact else "Нет")
 	box.add_child(contact_label)
+	var reward_block: Control = _filler_reward_block(definition.id, girls)
+	if reward_block != null:
+		box.add_child(reward_block)
 	var dating: Variant = _dating_service()
 	var date_statuses: Array[RequirementStatus] = []
 	if dating != null:
@@ -1047,6 +1116,9 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 	box.add_child(LabUi.trait_block(catalog, profile))
 	var progress: GirlProgress = _girl_date_progress(girls, definition.id)
 	box.add_child(LabUi.known_preference_block(catalog, progress, profile))
+	var reward_block: Control = _filler_reward_block(definition.id, girls)
+	if reward_block != null:
+		box.add_child(reward_block)
 	var date_statuses: Array[RequirementStatus] = []
 	if dating != null:
 		date_statuses = dating.get_date_requirements_status(definition.id)
@@ -1054,13 +1126,14 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 	if completed:
 		return box
 	var can_start: bool = dating != null and bool(dating.can_start_date(definition.id))
+	var can_taxi: bool = dating != null and girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_RITA_URGENT_TAXI)) and bool(dating.can_start_date(definition.id, true)) and not can_start
 	if can_start:
 		var available := Label.new()
 		available.text = "Свидание доступно"
 		box.add_child(available)
 	var invite_btn: Button = LabUi.button("ПРИГЛАСИТЬ")
-	invite_btn.disabled = not can_start
-	if can_start:
+	invite_btn.disabled = not can_start and not can_taxi
+	if can_start or can_taxi:
 		invite_btn.pressed.connect(invite_girl.bind(definition.id))
 	box.add_child(invite_btn)
 	if not can_start:
@@ -1152,6 +1225,24 @@ func _build_clothing() -> Control:
 		var wear_btn: Button = LabUi.button("Надеть: %s" % owned.display_name)
 		wear_btn.pressed.connect(wear_owned_outfit.bind(owned.id))
 		box.add_child(wear_btn)
+	var gift_outfits: Array[Outfit] = equipment.get_marina_gift_outfits()
+	if not gift_outfits.is_empty():
+		var gift_heading := Label.new()
+		gift_heading.text = "Подарок Марины — выбрать бесплатно"
+		box.add_child(gift_heading)
+		for gift_item in gift_outfits:
+			var gift_outfit: Outfit = gift_item as Outfit
+			if gift_outfit == null:
+				continue
+			var gift_action: GameAction = equipment.create_claim_marina_gift_action(gift_outfit.id)
+			_add_action_button(box, gift_action, "Забрать %s — $0" % gift_outfit.display_name, false, false)
+	elif equipment != null:
+		var girls: Variant = _girls_service()
+		if girls != null and bool(girls.is_marina_free_outfit_pending()):
+			var waiting := Label.new()
+			waiting.text = "Подарок Марины сохранён. Когда появится новый доступный комплект, его можно забрать бесплатно."
+			waiting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			box.add_child(waiting)
 	for shop_item in equipment.get_shop_outfits():
 		var shop_outfit: Outfit = shop_item as Outfit
 		if shop_outfit == null or bool(equipment.owns_outfit(shop_outfit.id)):
@@ -1208,6 +1299,18 @@ func _build_apartment() -> Control:
 	var level_label := Label.new()
 	level_label.text = "Уровень квартиры: %d" % int(apartment.get_level())
 	box.add_child(level_label)
+	var prepared := Label.new()
+	prepared.text = "Подготовлена: %s" % ("да" if bool(apartment.is_prepared()) else "нет")
+	box.add_child(prepared)
+	var girls: Variant = _girls_service()
+	if girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_LERA_APARTMENT_CLEANING)):
+		var cleaning := Label.new()
+		cleaning.text = "Клининг Леры: квартира будет подготовлена автоматически."
+		cleaning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(cleaning)
+	elif not bool(apartment.is_prepared()):
+		var clean_action: GameAction = apartment.create_clean_action()
+		_add_action_button(box, clean_action, "Убраться в квартире — 30 мин", false, false)
 	var objects_heading := Label.new()
 	objects_heading.text = "Доступные Local Objects"
 	box.add_child(objects_heading)
@@ -1226,6 +1329,8 @@ func _build_apartment() -> Control:
 			box.add_child(LabUi.bbcode_block(_local_object_toolkit_line(catalog, object_id)))
 	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
 	for upgrade in apartment_catalog.get_all_upgrades():
+		if upgrade == null or not bool(apartment.is_upgrade_visible(upgrade)):
+			continue
 		box.add_child(_build_apartment_upgrade_card(upgrade, apartment, catalog))
 	_add_action_button(box, GameActionCatalog.make_skip_to_08_00(), GameActionLabels.for_id(GameActionCatalog.ID_SKIP_TO_08_00), false, true)
 	return box
@@ -1315,7 +1420,25 @@ func _build_date_prep(girls: Variant, dating: Variant) -> Control:
 	box.add_child(LabUi.known_preference_block(catalog, progress, profile))
 	box.add_child(_build_date_venue_picker(girls, dating))
 	box.add_child(_build_date_outfit_picker(girls, dating))
+	box.add_child(_build_backup_outfit_picker(girls, dating))
 	box.add_child(_build_prep_stat_block(catalog))
+	if _selected_date_venue_id != &"" and catalog != null:
+		box.add_child(_build_date_start_summary(girls, dating, catalog.find_venue(_selected_date_venue_id)))
+	if girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_KIRA_EXPRESS_STYLING)):
+		var styling := CheckBox.new()
+		styling.text = "Экспресс-стайлинг — $40\nВнешность +1 на это свидание"
+		styling.button_pressed = _express_styling
+		styling.toggled.connect(func(pressed: bool) -> void:
+			_express_styling = pressed
+			refresh()
+		)
+		box.add_child(styling)
+	var remaining: int = int(dating.get_date_cooldown_remaining_minutes(_invite_girl_id)) if dating != null else 0
+	if remaining > 0 and girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_RITA_URGENT_TAXI)):
+		var taxi := Label.new()
+		taxi.text = "Срочное такси — $75\nОплата идёт сервису такси. Свидание можно начать прямо сейчас."
+		taxi.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(taxi)
 	var confirm := LabUi.button("НАЧАТЬ СВИДАНИЕ")
 	confirm.disabled = _selected_date_venue_id == &"" or _selected_outfit_id == &""
 	confirm.pressed.connect(func() -> void:
@@ -1411,6 +1534,53 @@ func _local_object_toolkit_line(catalog: DateContentCatalog, object_id: StringNa
 	return LabUi.local_object_toolkit_bbcode(catalog, object_id, progress, _date_player_snapshot())
 
 
+func _build_backup_outfit_picker(_girls: Variant, _dating: Variant) -> Control:
+	var box := VBoxContainer.new()
+	var girls: Variant = _girls_service()
+	if girls == null or not bool(girls.has_filler_reward(FillerRewardCatalog.ID_NIKA_BACKUP_OUTFIT)):
+		return box
+	box.add_theme_constant_override("separation", 8)
+	var main_name: String = String(_selected_outfit_id)
+	var backup_name: String = "не выбран"
+	var catalog: DateContentCatalog = _date_catalog()
+	if catalog != null:
+		var main_outfit: Outfit = catalog.find_outfit(_selected_outfit_id)
+		if main_outfit != null:
+			main_name = main_outfit.display_name
+		var backup_outfit: Outfit = catalog.find_outfit(_selected_backup_outfit_id)
+		if backup_outfit != null:
+			backup_name = backup_outfit.display_name
+	var main_label := Label.new()
+	main_label.text = "Основной наряд: %s" % main_name
+	box.add_child(main_label)
+	var equipment: Variant = _equipment_service()
+	var owned_count: int = 0
+	if equipment != null:
+		owned_count = equipment.get_owned_outfits().size()
+	if owned_count <= 1:
+		var wait := Label.new()
+		wait.text = "Запасной наряд появится после покупки второго комплекта."
+		wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(wait)
+		return box
+	var backup_label := Label.new()
+	backup_label.text = "Запасной наряд: %s" % backup_name
+	box.add_child(backup_label)
+	box.add_child(LabUi.heading("ЗАПАСНОЙ НАРЯД"))
+	for item in equipment.get_owned_outfits():
+		var outfit: Outfit = item as Outfit
+		if outfit == null or outfit.id == _selected_outfit_id:
+			continue
+		var btn: Button = LabUi.button(outfit.display_name if outfit.id != _selected_backup_outfit_id else "%s — выбрано" % outfit.display_name)
+		btn.disabled = outfit.id == _selected_backup_outfit_id
+		btn.pressed.connect(func() -> void:
+			_selected_backup_outfit_id = outfit.id
+			refresh()
+		)
+		box.add_child(btn)
+	return box
+
+
 func _build_date_outfit_picker(_girls: Variant, dating: Variant) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
@@ -1490,10 +1660,15 @@ func _build_prep_stat_block(catalog: DateContentCatalog) -> Control:
 		return box
 	for stat in catalog.characteristics:
 		var base_value: int = int(characteristics.get_value(stat.id))
-		var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
 		var outfit_bonus: int = outfit.bonus_for(stat.id) if outfit != null else 0
+		var styling_bonus: int = 1 if _express_styling and String(stat.id) == "appearance" else 0
+		var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id, styling_bonus)
 		var line := Label.new()
-		if outfit_bonus > 0:
+		if outfit_bonus > 0 and styling_bonus > 0:
+			line.text = "%s: %d (%d + 1 от одежды + 1 от стайлинга)" % [stat.display_name, effective, base_value]
+		elif styling_bonus > 0:
+			line.text = "%s: %d (%d + 1 от стайлинга)" % [stat.display_name, effective, base_value]
+		elif outfit_bonus > 0:
 			line.text = "%s: %d (%d + 1 от одежды)" % [stat.display_name, effective, base_value]
 		else:
 			line.text = "%s: %d" % [stat.display_name, effective]
@@ -1533,6 +1708,106 @@ func _clear_date_invite() -> void:
 	_invite_girl_id = &""
 	_selected_date_venue_id = &""
 	_selected_outfit_id = &""
+	_selected_backup_outfit_id = &""
+	_express_styling = false
+
+
+func _filler_reward_block(girl_id: StringName, girls: Variant) -> Control:
+	if girls == null or not girls.has_method("get_filler_reward_for_girl"):
+		return null
+	var reward: FillerRewardDefinition = girls.get_filler_reward_for_girl(girl_id)
+	if reward == null:
+		return null
+	var box := VBoxContainer.new()
+	var title := Label.new()
+	if bool(girls.has_filler_reward(reward.id)):
+		title.text = "Награда получена:\n%s" % reward.display_name
+		box.add_child(title)
+		return box
+	title.text = "Награда за MAX:\n%s" % reward.display_name
+	box.add_child(title)
+	var body := Label.new()
+	body.text = reward.preview_description
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(body)
+	return box
+
+
+func _build_filler_rewards_dev() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	box.add_child(LabUi.heading("FILLER REWARDS DEV"))
+	var girls: Variant = _girls_service()
+	var economy: Variant = _economy_service()
+	var characteristics: Variant = _characteristic_service()
+	var apartment: Variant = _apartment_service()
+	if girls == null:
+		return box
+	var money_row := HBoxContainer.new()
+	for amount in [100, 500, 1000]:
+		var btn: Button = LabUi.button("+%d$" % amount)
+		btn.modulate = Color(0.75, 0.7, 0.6)
+		btn.pressed.connect(func() -> void:
+			if economy != null:
+				economy.add_money(amount)
+			refresh()
+		)
+		money_row.add_child(btn)
+	box.add_child(money_row)
+	if characteristics != null:
+		var stat_row := HBoxContainer.new()
+		for stat_id in [CharacteristicIds.MUSCLE, CharacteristicIds.APPEARANCE, CharacteristicIds.CAPITAL, CharacteristicIds.AURA]:
+			var btn: Button = LabUi.button("%s +1" % CharacteristicIds.display_name(stat_id))
+			btn.modulate = Color(0.75, 0.7, 0.6)
+			btn.pressed.connect(func() -> void:
+				characteristics.add_value(stat_id, 1)
+				refresh()
+			)
+			stat_row.add_child(btn)
+		box.add_child(stat_row)
+	if apartment != null:
+		var prep_btn: Button = LabUi.button("Квартира prepared: %s" % ("да" if bool(apartment.is_prepared()) else "нет"))
+		prep_btn.modulate = Color(0.75, 0.7, 0.6)
+		prep_btn.pressed.connect(func() -> void:
+			apartment.set_prepared(not bool(apartment.is_prepared()))
+			refresh()
+		)
+		box.add_child(prep_btn)
+	var catalog: FillerRewardCatalog = girls.get_filler_reward_catalog()
+	for reward in catalog.get_all_rewards():
+		if reward == null:
+			continue
+		var row := VBoxContainer.new()
+		var status: String = "получена" if bool(girls.has_filler_reward(reward.id)) else "не получена"
+		var label := Label.new()
+		label.text = "%s — %s — %s" % [reward.display_name, String(reward.girl_id), status]
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.add_child(label)
+		var buttons := HBoxContainer.new()
+		var max_btn: Button = LabUi.button("MAX")
+		max_btn.modulate = Color(0.75, 0.7, 0.6)
+		max_btn.pressed.connect(func() -> void:
+			girls.force_complete_filler_for_dev(reward.girl_id)
+			refresh()
+		)
+		buttons.add_child(max_btn)
+		var reset_btn: Button = LabUi.button("Сброс")
+		reset_btn.modulate = Color(0.75, 0.7, 0.6)
+		reset_btn.pressed.connect(func() -> void:
+			girls.reset_filler_reward_for_dev(reward.girl_id)
+			refresh()
+		)
+		buttons.add_child(reset_btn)
+		var cd_btn: Button = LabUi.button("Cooldown")
+		cd_btn.modulate = Color(0.75, 0.7, 0.6)
+		cd_btn.pressed.connect(func() -> void:
+			girls.mark_date_completed(reward.girl_id)
+			refresh()
+		)
+		buttons.add_child(cd_btn)
+		row.add_child(buttons)
+		box.add_child(row)
+	return box
 
 
 func _add_action_button(host: Node, action: GameAction, label: String, show_title: bool = true, show_meta: bool = true) -> void:
@@ -1787,7 +2062,12 @@ func _on_girl_relationship_completed(girl_id: StringName) -> void:
 		var definition: GirlDefinition = girls.get_definition(girl_id)
 		if definition != null:
 			display_name = definition.display_name
-	_last_result_text = "Отношения с %s достигли максимума.\nRating +1" % display_name
+	var text: String = "ОТНОШЕНИЯ MAX\n\nRating +1"
+	if girls != null and girls.has_method("get_filler_reward_for_girl"):
+		var reward: FillerRewardDefinition = girls.get_filler_reward_for_girl(girl_id)
+		if reward != null:
+			text += "\n\nНовая награда:\n%s\n\n%s" % [reward.display_name, reward.granted_description]
+	_last_result_text = "Отношения с %s достигли максимума.\n\n%s" % [display_name, text]
 	refresh()
 
 

@@ -60,6 +60,18 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.characteristic_source_used = false
 	_session.outfit_source_used = false
 	_session.venue_source_used = false
+	_session.venue_source_uses = 0
+	_session.venue_source_limit = maxi(1, config.venue_source_limit)
+	_session.vika_reroll_available = config.vika_reroll_available
+	_session.vika_reroll_used = false
+	_session.dasha_soften_available = config.dasha_soften_available
+	_session.dasha_soften_used = false
+	_session.nika_swap_available = config.nika_swap_available
+	_session.backup_outfit_id = config.backup_outfit_id
+	_session.pending_outfit_swap = false
+	_session.outfit_swap_used = false
+	_session.express_styling_bonus = config.express_styling_bonus
+	_session.used_local_move_ids = []
 	_rng.seed = config.seed
 	_session.current_episode_index = 0
 	_begin_episode()
@@ -109,6 +121,11 @@ func choose_move(move_id: StringName) -> void:
 	var tag_id: StringName = move.resolved_tag_id(situation_id)
 	var preference: int = _girl.prefers_tag(tag_id)
 	var score: int = _score_for_phase(_session.current_phase, preference)
+	var soften_applied: bool = false
+	if preference <= 0 and _session.dasha_soften_available and not _session.dasha_soften_used:
+		score = 0
+		soften_applied = true
+		_session.dasha_soften_used = true
 	var revealed: bool = false
 	if _catalog.date_rules.reveal_tag_after_use:
 		revealed = _girl_progress.reveal_tag(tag_id, preference > 0, _girl)
@@ -125,7 +142,10 @@ func choose_move(move_id: StringName) -> void:
 	elif move.is_outfit():
 		_session.outfit_source_used = true
 	elif move.is_local():
-		_session.venue_source_used = true
+		if not _session.used_local_move_ids.has(move_id):
+			_session.used_local_move_ids.append(move_id)
+		_session.venue_source_uses += 1
+		_session.venue_source_used = _session.venue_source_uses >= _session.venue_source_limit
 		var object_id: StringName = option.local_object_id
 		if object_id == &"":
 			var local_object: DateLocalObject = _catalog.find_local_object_for_move(move_id)
@@ -143,6 +163,7 @@ func choose_move(move_id: StringName) -> void:
 	episode.tag_preference = preference
 	episode.score_delta = score
 	episode.revealed_tag = revealed
+	episode.soften_applied = soften_applied
 	episode.result_text = move.resolved_result_text(situation_id, preference > 0)
 	_apply_characteristic_trait(episode, move)
 
@@ -157,10 +178,57 @@ func choose_move(move_id: StringName) -> void:
 	_session.stage = DateSession.Stage.SHOWING_EPISODE_RESULT
 	move_selected.emit(move_id)
 
+func set_pending_outfit_swap(enabled: bool) -> void:
+	if _session == null:
+		return
+	if not _session.nika_swap_available or _session.outfit_swap_used or _session.backup_outfit_id == &"":
+		_session.pending_outfit_swap = false
+		return
+	_session.pending_outfit_swap = enabled
+
+
+func can_queue_outfit_swap() -> bool:
+	if _session == null:
+		return false
+	if not _session.nika_swap_available or _session.outfit_swap_used or _session.backup_outfit_id == &"":
+		return false
+	return _session.current_phase != DateTypes.DatePhase.CLOSING
+
+
+func reroll_base_moves() -> String:
+	if _session == null or _session.stage != DateSession.Stage.AWAITING_MOVE:
+		return "Других вариантов сейчас нет."
+	if not _session.vika_reroll_available or _session.vika_reroll_used:
+		return "Других вариантов сейчас нет."
+	var situation_id: StringName = _current_situation_id()
+	var pool: Array[DateMove] = _catalog.applicable_moves(situation_id, DateTypes.DateMoveKind.BASE)
+	var alternatives: Array[DateMove] = []
+	for move in pool:
+		if move == null:
+			continue
+		if _session.used_base_move_ids.has(move.id):
+			continue
+		if _session.current_selected_base_move_ids.has(move.id):
+			continue
+		alternatives.append(move)
+	if alternatives.size() < _catalog.date_rules.base_moves_per_episode:
+		return "Других вариантов сейчас нет."
+	var empty_fallback: Array[DateMove] = []
+	var selected: Array[DateMove] = _pick_base_moves(alternatives, empty_fallback, _catalog.date_rules.base_moves_per_episode, situation_id)
+	if selected.size() < _catalog.date_rules.base_moves_per_episode:
+		return "Других вариантов сейчас нет."
+	_session.current_selected_base_move_ids = _ids_of(selected)
+	_session.current_selected_base_tag_ids = _tags_of(selected, situation_id)
+	_session.vika_reroll_used = true
+	return ""
+
+
 func advance() -> void:
 	if _session == null:
 		return
 	if _session.stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+		if _session.pending_outfit_swap:
+			_apply_outfit_swap()
 		_session.current_episode_index += 1
 		if _session.current_episode_index >= _catalog.date_rules.total_episode_count():
 			_finish_date()
@@ -349,8 +417,9 @@ func _move_availability(move: DateMove) -> DateTypes.MoveAvailability:
 		return DateTypes.MoveAvailability.USED
 	if move.is_outfit() and _session.outfit_source_used:
 		return DateTypes.MoveAvailability.USED
-	if move.is_local() and _session.venue_source_used:
-		return DateTypes.MoveAvailability.USED
+	if move.is_local():
+		if _session.used_local_move_ids.has(move.id) or _session.venue_source_uses >= _session.venue_source_limit:
+			return DateTypes.MoveAvailability.USED
 	if move.unlock_requirement != null:
 		var current: int = _effective_stat(move.unlock_requirement.stat_id)
 		if current < move.unlock_requirement.required_level:
@@ -433,6 +502,8 @@ func _build_venue_source() -> DateMoveSourceView:
 	view.display_name = DateTypes.source_name(view.source)
 	view.visible = true
 	view.used = _session.venue_source_used
+	view.remaining_uses = maxi(0, _session.venue_source_limit - _session.venue_source_uses)
+	view.use_limit = _session.venue_source_limit
 	view.options = options
 	view.state = _source_state(options, view.used)
 	return view
@@ -503,7 +574,25 @@ func _outfit_bonus(stat_id: StringName) -> int:
 
 
 func _effective_stat(stat_id: StringName) -> int:
-	return DateTypes.effective_stat(_base_stat(stat_id), _outfit, stat_id)
+	var extra: int = 0
+	if String(stat_id) == "appearance" and _session != null:
+		extra = _session.express_styling_bonus
+	return DateTypes.effective_stat(_base_stat(stat_id), _outfit, stat_id, extra)
+
+
+func _apply_outfit_swap() -> void:
+	if _session == null or _session.backup_outfit_id == &"" or _session.outfit_swap_used:
+		_session.pending_outfit_swap = false
+		return
+	var next_outfit: Outfit = _catalog.find_outfit(_session.backup_outfit_id)
+	if next_outfit == null:
+		_session.pending_outfit_swap = false
+		return
+	_outfit = next_outfit
+	_session.outfit_id = next_outfit.id
+	_session.outfit_swap_used = true
+	_session.pending_outfit_swap = false
+	_session.backup_outfit_id = &""
 
 
 func _find_option(move_id: StringName) -> DateMoveOption:

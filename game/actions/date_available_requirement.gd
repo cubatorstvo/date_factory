@@ -2,20 +2,21 @@ class_name DateAvailableRequirement
 extends ActionRequirement
 
 @export var girl_id: StringName = &""
+@export var bypass_cooldown: bool = false
 
 
 func is_met() -> bool:
 	var dating: Variant = _dating_service()
 	if dating == null:
 		return false
-	return bool(dating.can_start_date(girl_id))
+	return bool(dating.can_start_date(girl_id, bypass_cooldown))
 
 
 func get_failure_reason() -> String:
 	var dating: Variant = _dating_service()
 	if dating == null:
 		return "Свидание уже идёт"
-	return str(dating.get_start_date_failure_reason(girl_id))
+	return str(dating.get_start_date_failure_reason(girl_id, bypass_cooldown))
 
 
 func _dating_service() -> Variant:

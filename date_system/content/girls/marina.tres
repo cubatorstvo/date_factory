@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+﻿[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
 
@@ -6,9 +6,9 @@
 script = ExtResource("1_script")
 id = &"marina"
 display_name = "Марина"
-description = "держит спокойный тон и предпочитает ясную заботу без суеты"
+description = "Продавец магазина одежды. Знает ассортимент лучше владельца и всегда знает, что можно провести как «служебную необходимость»."
 enabled = true
 difficulty_preset_id = &"mid"
 trait_id = &"senses_aura"
 positive_tag_ids = Array[StringName]([&"care", &"composure", &"directness", &"humor"])
-initial_known_tag_ids = Array[StringName]([&"care", &"risk"])
+initial_known_tag_count = 2

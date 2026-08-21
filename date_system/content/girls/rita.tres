@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+﻿[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
 
@@ -6,9 +6,9 @@
 script = ExtResource("1_script")
 id = &"rita"
 display_name = "Рита"
-description = "любит дорогой жест, контроль сцены и риск напоказ"
+description = "Организатор мероприятий. Если что-то нужно устроить срочно, у неё уже есть номер человека, который это сделает."
 enabled = true
 difficulty_preset_id = &"mid"
 trait_id = &"loves_wealthy"
 positive_tag_ids = Array[StringName]([&"status", &"dominance", &"generosity", &"risk"])
-initial_known_tag_ids = Array[StringName]([&"status", &"care"])
+initial_known_tag_count = 2

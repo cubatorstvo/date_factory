@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+﻿[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
 
@@ -11,4 +11,4 @@ enabled = true
 difficulty_preset_id = &"late"
 trait_id = &"loves_wealthy"
 positive_tag_ids = Array[StringName]([&"dominance", &"status", &"composure"])
-initial_known_tag_ids = Array[StringName]([])
+initial_known_tag_count = 0

@@ -10,10 +10,12 @@ const MEET_ACTION_PREFIX: String = "meet_"
 const MEET_TIME_MINUTES: int = 30
 
 var _catalog: GirlCatalog
+var _reward_catalog: FillerRewardCatalog
 
 
 func _ready() -> void:
 	_catalog = GirlCatalog.create_seed()
+	_reward_catalog = FillerRewardCatalog.create_seed()
 	_connect_girl_access_signals()
 
 
@@ -36,22 +38,34 @@ func get_state(girl_id: StringName) -> GirlState:
 	return girls.get_or_create(girl_id)
 
 
+func peek_state(girl_id: StringName) -> GirlState:
+	if get_definition(girl_id) == null:
+		return null
+	var girls: GirlsState = _girls()
+	if girls == null:
+		return null
+	var existing: Variant = girls.girls_by_id.get(girl_id, null)
+	if existing is GirlState:
+		return existing
+	return null
+
+
 func is_discovered(girl_id: StringName) -> bool:
-	var state: GirlState = get_state(girl_id)
+	var state: GirlState = peek_state(girl_id)
 	if state == null:
 		return false
 	return state.discovered
 
 
 func has_contact(girl_id: StringName) -> bool:
-	var state: GirlState = get_state(girl_id)
+	var state: GirlState = peek_state(girl_id)
 	if state == null:
 		return false
 	return state.has_contact
 
 
 func get_relationship(girl_id: StringName) -> int:
-	var state: GirlState = get_state(girl_id)
+	var state: GirlState = peek_state(girl_id)
 	if state == null:
 		return 0
 	return state.relationship
@@ -117,6 +131,7 @@ func give_contact(girl_id: StringName) -> bool:
 	if state.has_contact:
 		return false
 	state.has_contact = true
+	apply_initial_known_tags(girl_id)
 	girl_contact_received.emit(girl_id)
 	return true
 
@@ -145,8 +160,178 @@ func change_relationship(girl_id: StringName, delta: int) -> int:
 		var rating: Variant = _rating_service()
 		if rating != null:
 			rating.add_rating(1)
+		grant_filler_reward_for_girl(girl_id)
 	girl_relationship_changed.emit(girl_id, previous_value, next_value, delta)
 	return next_value
+
+
+func get_filler_reward_catalog() -> FillerRewardCatalog:
+	if _reward_catalog == null:
+		_reward_catalog = FillerRewardCatalog.create_seed()
+	return _reward_catalog
+
+
+func has_filler_reward(reward_id: StringName) -> bool:
+	var progression: ProgressionState = _progression()
+	if progression == null:
+		return false
+	return progression.has_filler_reward(reward_id)
+
+
+func get_filler_reward_for_girl(girl_id: StringName) -> FillerRewardDefinition:
+	return get_filler_reward_catalog().get_reward_for_girl(girl_id)
+
+
+func grant_filler_reward_for_girl(girl_id: StringName) -> bool:
+	var reward: FillerRewardDefinition = get_filler_reward_for_girl(girl_id)
+	if reward == null:
+		return false
+	var progression: ProgressionState = _progression()
+	if progression == null:
+		return false
+	if not progression.add_filler_reward(reward.id):
+		return false
+	if reward.id == FillerRewardCatalog.ID_MARINA_FREE_OUTFIT:
+		progression.marina_free_outfit_pending = true
+	elif reward.id == FillerRewardCatalog.ID_EVA_READ_PEOPLE:
+		apply_eva_retro_reveal()
+	return true
+
+
+func is_marina_free_outfit_pending() -> bool:
+	var progression: ProgressionState = _progression()
+	if progression == null:
+		return false
+	return progression.marina_free_outfit_pending and has_filler_reward(FillerRewardCatalog.ID_MARINA_FREE_OUTFIT)
+
+
+func clear_marina_free_outfit_pending() -> void:
+	var progression: ProgressionState = _progression()
+	if progression == null:
+		return
+	progression.marina_free_outfit_pending = false
+
+
+func get_effective_initial_known_tag_count(girl_id: StringName) -> int:
+	var profile: GirlProfile = _date_girl(girl_id)
+	var count: int = FillerRewardCatalog.initial_known_tag_count_for(girl_id)
+	if profile != null:
+		count = profile.initial_known_tag_count
+	if has_filler_reward(FillerRewardCatalog.ID_EVA_READ_PEOPLE):
+		count += FillerRewardCatalog.EVA_INITIAL_KNOWN_TAG_BONUS
+	return maxi(0, count)
+
+
+func apply_initial_known_tags(girl_id: StringName, rng: RandomNumberGenerator = null) -> int:
+	var state: GirlState = get_state(girl_id)
+	if state == null:
+		return 0
+	if not state.revealed_positive_tag_ids.is_empty() or not state.revealed_negative_tag_ids.is_empty():
+		return 0
+	return reveal_random_unknown_tags(girl_id, get_effective_initial_known_tag_count(girl_id), rng)
+
+
+func apply_eva_retro_reveal(rng: RandomNumberGenerator = null) -> void:
+	var girls: GirlsState = _girls()
+	if girls == null:
+		return
+	for girl in get_catalog().get_all_girls():
+		if girl == null:
+			continue
+		var existing: Variant = girls.girls_by_id.get(girl.id, null)
+		if not (existing is GirlState):
+			continue
+		var state: GirlState = existing
+		if not state.discovered:
+			continue
+		if state.relationship >= girl.relationship_max:
+			continue
+		reveal_random_unknown_tags(girl.id, 1, rng)
+
+
+func reveal_random_unknown_tags(girl_id: StringName, count: int, rng: RandomNumberGenerator = null) -> int:
+	if count <= 0:
+		return 0
+	var state: GirlState = get_state(girl_id)
+	var profile: GirlProfile = _date_girl(girl_id)
+	var catalog: DateContentCatalog = _date_catalog()
+	if state == null or profile == null or catalog == null:
+		return 0
+	var unknown: Array[StringName] = []
+	for tag in catalog.enabled_tags():
+		if tag == null:
+			continue
+		if state.revealed_positive_tag_ids.has(tag.id) or state.revealed_negative_tag_ids.has(tag.id):
+			continue
+		unknown.append(tag.id)
+	var generator: RandomNumberGenerator = rng
+	if generator == null:
+		generator = RandomNumberGenerator.new()
+		generator.randomize()
+	var revealed: int = 0
+	while revealed < count and not unknown.is_empty():
+		var index: int = generator.randi_range(0, unknown.size() - 1)
+		var tag_id: StringName = unknown[index]
+		unknown.remove_at(index)
+		if profile.prefers_tag(tag_id) > 0:
+			state.revealed_positive_tag_ids.append(tag_id)
+		else:
+			state.revealed_negative_tag_ids.append(tag_id)
+		revealed += 1
+	return revealed
+
+
+func force_complete_filler_for_dev(girl_id: StringName) -> bool:
+	if get_filler_reward_for_girl(girl_id) == null:
+		return false
+	discover_girl(girl_id)
+	give_contact(girl_id)
+	var max_value: int = get_relationship_max(girl_id)
+	var current: int = get_relationship(girl_id)
+	if current >= max_value:
+		return grant_filler_reward_for_girl(girl_id)
+	change_relationship(girl_id, max_value - current)
+	return has_filler_reward(get_filler_reward_for_girl(girl_id).id)
+
+
+func reset_filler_reward_for_dev(girl_id: StringName) -> bool:
+	var reward: FillerRewardDefinition = get_filler_reward_for_girl(girl_id)
+	if reward == null:
+		return false
+	var progression: ProgressionState = _progression()
+	if progression == null:
+		return false
+	progression.remove_filler_reward(reward.id)
+	if reward.id == FillerRewardCatalog.ID_MARINA_FREE_OUTFIT:
+		progression.marina_free_outfit_pending = false
+	var state: GirlState = get_state(girl_id)
+	if state != null:
+		state.relationship = maxi(0, get_relationship_max(girl_id) - 1)
+	return true
+
+
+func _date_girl(girl_id: StringName) -> GirlProfile:
+	var catalog: DateContentCatalog = _date_catalog()
+	if catalog == null:
+		return null
+	return catalog.find_girl(girl_id)
+
+
+func _date_catalog() -> DateContentCatalog:
+	var dating: Variant = get_node_or_null("/root/DatingService")
+	if dating == null or not dating.has_method("get_catalog_service"):
+		return null
+	var catalog_service: DateCatalogService = dating.get_catalog_service()
+	if catalog_service == null:
+		return null
+	return catalog_service.catalog
+
+
+func _progression() -> ProgressionState:
+	var gs: Variant = _game_state()
+	if gs == null:
+		return null
+	return gs.progression as ProgressionState
 
 
 func get_next_date_available_at(girl_id: StringName) -> int:
@@ -157,7 +342,7 @@ func get_next_date_available_at(girl_id: StringName) -> int:
 
 
 func get_last_date_completed_at(girl_id: StringName) -> int:
-	var state: GirlState = get_state(girl_id)
+	var state: GirlState = peek_state(girl_id)
 	if state == null:
 		return 0
 	return state.last_date_completed_at
@@ -187,7 +372,7 @@ func mark_date_completed(girl_id: StringName) -> void:
 
 
 func fill_date_progress(girl_id: StringName, progress: GirlProgress) -> void:
-	var state: GirlState = get_state(girl_id)
+	var state: GirlState = peek_state(girl_id)
 	if state == null or progress == null:
 		return
 	progress.relationship = state.relationship

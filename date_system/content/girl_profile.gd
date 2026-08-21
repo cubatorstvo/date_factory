@@ -8,7 +8,7 @@ extends Resource
 @export var difficulty_preset_id: StringName = &""
 @export var trait_id: StringName = &""
 @export var positive_tag_ids: Array[StringName] = []
-@export var initial_known_tag_ids: Array[StringName] = []
+@export var initial_known_tag_count: int = 0
 @export var portrait: Texture2D
 @export var future_character_scene: PackedScene
 

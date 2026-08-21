@@ -2,6 +2,7 @@ class_name ApartmentCatalog
 extends Resource
 
 const ID_UPGRADE_1: StringName = &"apartment_upgrade_1"
+const ID_EMPEROR_CHAIR: StringName = &"apartment_emperor_chair"
 
 @export var upgrades: Array[ApartmentUpgradeDefinition] = []
 
@@ -27,6 +28,8 @@ static func create_seed() -> ApartmentCatalog:
 	var catalog := ApartmentCatalog.new()
 	var tv_ids: Array[StringName] = [&"tv"]
 	catalog.upgrades.append(_make(ID_UPGRADE_1, "Купить телевизор", 500, 2, tv_ids))
+	var chair_ids: Array[StringName] = [FillerRewardCatalog.EMPEROR_CHAIR_OBJECT_ID]
+	catalog.upgrades.append(_make(ID_EMPEROR_CHAIR, "Массажное кресло «Император»", FillerRewardCatalog.EMPEROR_CHAIR_PRICE, 2, chair_ids, FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR))
 	return catalog
 
 
@@ -35,7 +38,8 @@ static func _make(
 	display_name: String,
 	price: int,
 	level_granted: int,
-	granted_local_object_ids: Array[StringName] = []
+	granted_local_object_ids: Array[StringName] = [],
+	required_filler_reward_id: StringName = &""
 ) -> ApartmentUpgradeDefinition:
 	var upgrade := ApartmentUpgradeDefinition.new()
 	upgrade.id = id
@@ -44,4 +48,5 @@ static func _make(
 	upgrade.price = price
 	upgrade.level_granted = level_granted
 	upgrade.granted_local_object_ids = granted_local_object_ids
+	upgrade.required_filler_reward_id = required_filler_reward_id
 	return upgrade

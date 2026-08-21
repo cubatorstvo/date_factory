@@ -121,10 +121,10 @@ static func availability_name(state: MoveAvailability) -> String:
 			return "AVAILABLE"
 
 
-static func effective_stat(base_stat: int, outfit: Outfit, stat_id: StringName) -> int:
-	var bonus: int = 0
+static func effective_stat(base_stat: int, outfit: Outfit, stat_id: StringName, extra_bonus: int = 0) -> int:
+	var bonus: int = extra_bonus
 	if outfit != null:
-		bonus = outfit.bonus_for(stat_id)
+		bonus += outfit.bonus_for(stat_id)
 	return mini(maxi(base_stat, 0) + bonus, 5)
 
 

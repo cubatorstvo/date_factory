@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+﻿[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
 
@@ -6,9 +6,9 @@
 script = ExtResource("1_script")
 id = &"nika"
 display_name = "Ника"
-description = "проверяет собеседника прямым ходом и обходным правилом"
+description = "Директор магазина одежды. Считает один комплект одежды недостаточной подготовкой к серьёзному вечеру."
 enabled = true
 difficulty_preset_id = &"mid"
 trait_id = &"senses_aura"
 positive_tag_ids = Array[StringName]([&"cunning", &"directness", &"audacity", &"composure"])
-initial_known_tag_ids = Array[StringName]([&"cunning", &"flattery"])
+initial_known_tag_count = 2

@@ -385,67 +385,13 @@ func _check_girl_traits(catalog: DateContentCatalog, issues: Array[ContentValida
 					issues.append(_issue("GirlTrait", String(girl_trait.id), "date_venue_id", "Trait места должен ссылаться на существующий DateVenue."))
 
 
-func _expected_initial_known(girl_id: StringName) -> Array[StringName]:
-	match String(girl_id):
-		"alina":
-			return [&"politeness", &"audacity"]
-		"marina":
-			return [&"care", &"risk"]
-		"vika":
-			return [&"humor", &"politeness"]
-		"dasha":
-			return [&"risk", &"care"]
-		"katya":
-			return [&"humor", &"status"]
-		"lera":
-			return [&"status", &"audacity"]
-		"kira":
-			return [&"audacity", &"flattery"]
-		"olya":
-			return [&"generosity", &"dominance"]
-		"sonya":
-			return [&"risk", &"composure"]
-		"nika":
-			return [&"cunning", &"flattery"]
-		"rita":
-			return [&"status", &"care"]
-		"eva":
-			return [&"dominance", &"humor"]
-		_:
-			var empty: Array[StringName] = []
-			return empty
-
-
 func _check_initial_known_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	for girl in catalog.girls:
 		if girl == null or not girl.enabled:
 			continue
-		var expected: Array[StringName] = _expected_initial_known(girl.id)
-		if GirlCatalog.is_story_girl_id(girl.id):
-			if not girl.initial_known_tag_ids.is_empty():
-				issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_ids", "У сюжетной девушки начально известные Tags должны быть пустыми."))
-			continue
-		var positive_count: int = 0
-		var negative_count: int = 0
-		for tag_id in girl.initial_known_tag_ids:
-			var tag: DateTag = catalog.find_tag(tag_id)
-			if tag == null or not tag.enabled:
-				issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_ids", "Начально известный Tag не существует или отключён: %s." % String(tag_id)))
-				continue
-			if girl.prefers_tag(tag_id) > 0:
-				positive_count += 1
-			else:
-				negative_count += 1
-		if girl.initial_known_tag_ids.size() != 2 or positive_count != 1 or negative_count != 1:
-			issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_ids", "У обычной девушки должны быть ровно один положительный и один отрицательный начально известный Tag."))
-		if girl.initial_known_tag_ids.size() == expected.size():
-			var matches: bool = true
-			for tag_id in expected:
-				if not girl.initial_known_tag_ids.has(tag_id):
-					matches = false
-					break
-			if not matches:
-				issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_ids", "Начально известные Tags не совпадают с канонической таблицей."))
+		var expected: int = FillerRewardCatalog.initial_known_tag_count_for(girl.id)
+		if girl.initial_known_tag_count != expected:
+			issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_count", "Начальное число известных Tags должно быть %d." % expected))
 
 
 func _check_requirement_range(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:

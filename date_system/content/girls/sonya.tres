@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
+﻿[gd_resource type="Resource" script_class="GirlProfile" load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/girl_profile.gd" id="1_script"]
 
@@ -6,9 +6,9 @@
 script = ExtResource("1_script")
 id = &"sonya"
 display_name = "Соня"
-description = "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"
+description = "VIP-менеджер Restaurant. Может организовать постоянному гостю немного больше возможностей, чем предусмотрено обычным обслуживанием."
 enabled = true
 difficulty_preset_id = &"late"
 trait_id = &"homebody"
 positive_tag_ids = Array[StringName]([&"audacity", &"risk", &"humor"])
-initial_known_tag_ids = Array[StringName]([&"risk", &"composure"])
+initial_known_tag_count = 2

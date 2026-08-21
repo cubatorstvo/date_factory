@@ -13,8 +13,6 @@ func tag_knowledge(tag_id: StringName, girl: GirlProfile = null) -> DateTypes.Ta
 		return DateTypes.TagKnowledge.POSITIVE
 	if revealed_negative_tag_ids.has(tag_id):
 		return DateTypes.TagKnowledge.NEGATIVE
-	if girl != null and girl.initial_known_tag_ids.has(tag_id):
-		return DateTypes.TagKnowledge.POSITIVE if girl.prefers_tag(tag_id) > 0 else DateTypes.TagKnowledge.NEGATIVE
 	return DateTypes.TagKnowledge.UNKNOWN
 
 
@@ -60,13 +58,6 @@ func known_positive_tag_ids(girl: GirlProfile) -> Array[StringName]:
 	for tag_id in revealed_positive_tag_ids:
 		seen[String(tag_id)] = true
 		ids.append(tag_id)
-	if girl != null:
-		for tag_id in girl.initial_known_tag_ids:
-			if seen.has(String(tag_id)):
-				continue
-			if girl.prefers_tag(tag_id) > 0:
-				seen[String(tag_id)] = true
-				ids.append(tag_id)
 	return ids
 
 
@@ -76,13 +67,6 @@ func known_negative_tag_ids(girl: GirlProfile) -> Array[StringName]:
 	for tag_id in revealed_negative_tag_ids:
 		seen[String(tag_id)] = true
 		ids.append(tag_id)
-	if girl != null:
-		for tag_id in girl.initial_known_tag_ids:
-			if seen.has(String(tag_id)):
-				continue
-			if girl.prefers_tag(tag_id) <= 0:
-				seen[String(tag_id)] = true
-				ids.append(tag_id)
 	return ids
 
 
