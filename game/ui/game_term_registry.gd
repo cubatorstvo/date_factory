@@ -124,7 +124,6 @@ static func _aliases_of(term: GameTerm) -> PackedStringArray:
 	var result: PackedStringArray = PackedStringArray()
 	var seen: Dictionary = {}
 	_push_alias(result, seen, term.display_name)
-	_push_alias(result, seen, String(term.id))
 	for alias in term.aliases:
 		_push_alias(result, seen, alias)
 	return result

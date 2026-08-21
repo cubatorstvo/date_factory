@@ -83,6 +83,22 @@ func _test_game_terms() -> void:
 	_ok("unknown tag stays bold", unknown.contains("[b]") and not unknown.contains(LabUi.POSITIVE.to_html(false)))
 	var formatted: String = GameTermFormatter.format_bbcode("ЮМОР Мышца Рейтинг КОМБО Одежда", {}, registry)
 	_ok("bold Game Term spans", formatted.contains("[b]") and formatted.contains("game_term:humor") and formatted.contains("game_term:muscle") and formatted.contains("game_term:rating") and formatted.contains("game_term:combo") and formatted.contains("game_term:outfit"))
+	var tag_aliases: PackedStringArray = PackedStringArray()
+	if tag_term != null:
+		tag_aliases = registry.aliases_of(tag_term)
+	_ok("term id is not a text alias", not tag_aliases.has("tag"))
+	_ok("Stage: 1 has no GameTerm", GameTermFormatter.longest_alias_term("Stage: 1", registry) == null)
+	_ok("Stage: 1 stays plain", not GameTermFormatter.format_bbcode("Stage: 1", {}, registry).contains("game_term:"))
+	var stage_hit: GameTerm = GameTermFormatter.longest_alias_term("Stage", registry)
+	_ok("tag is not detected inside Stage", stage_hit == null or stage_hit.id != &"tag")
+	var standalone_tag: GameTerm = GameTermFormatter.longest_alias_term("тег", registry)
+	_ok("standalone тег is GameTerm tag", standalone_tag != null and standalone_tag.id == &"tag")
+	var humor_bracket: GameTerm = GameTermFormatter.longest_alias_term("[ЮМОР]", registry)
+	_ok("[ЮМОР] is GameTerm humor", humor_bracket != null and humor_bracket.id == &"humor")
+	var humor_bb: String = GameTermFormatter.format_bbcode("[ЮМОР]", {}, registry)
+	_ok("[ЮМОР] keeps brackets", humor_bb.contains("game_term:humor") and humor_bb.contains("[lb]") and humor_bb.contains("[rb]"))
+	var rating_hit: GameTerm = GameTermFormatter.longest_alias_term("Рейтинг", registry)
+	_ok("Рейтинг stays a GameTerm", rating_hit != null and rating_hit.id == &"rating")
 
 
 func summary() -> String:

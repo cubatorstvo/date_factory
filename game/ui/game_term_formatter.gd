@@ -70,16 +70,31 @@ static func _collect_matches(text: String, registry: GameTermRegistry) -> Array[
 			var idx: int = lower.find(alias, from)
 			if idx < 0:
 				break
-			var start: int = idx
+			from = idx + 1
 			var stop: int = idx + alias.length()
+			if _is_word_char(text, idx - 1) or _is_word_char(text, stop):
+				continue
+			var start: int = idx
 			if start > 0 and stop < text.length() and text.substr(start - 1, 1) == "[" and text.substr(stop, 1) == "]":
 				start -= 1
 				stop += 1
 			if _range_free(occupied, start, stop):
 				_mark_range(occupied, start, stop)
 				matches.append({"start": start, "end": stop, "term": term})
-			from = idx + 1
 	return matches
+
+
+static func _is_word_char(text: String, index: int) -> bool:
+	if index < 0 or index >= text.length():
+		return false
+	var code: int = text.unicode_at(index)
+	if code == 95 or (code >= 48 and code <= 57):
+		return true
+	var ts: TextServer = TextServerManager.get_primary_interface()
+	if ts != null and ts.is_valid_letter(code):
+		return true
+	var ch: String = text.substr(index, 1)
+	return ch.to_lower() != ch.to_upper()
 
 
 static func _range_free(occupied: PackedByteArray, start: int, stop: int) -> bool:
