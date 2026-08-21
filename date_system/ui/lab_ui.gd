@@ -100,7 +100,10 @@ static func tag_label(display_name: String, knowledge: DateTypes.TagKnowledge, _
 	var knowledge_map: Dictionary = {}
 	if term != null:
 		knowledge_map[term.id] = knowledge
-	return GameTermView.create("[%s]" % display_name, knowledge_map, registry)
+	var rtl: RichTextLabel = GameTermView.create("[%s]" % display_name, knowledge_map, registry)
+	rtl.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	rtl.autowrap_mode = TextServer.AUTOWRAP_OFF
+	return rtl
 
 
 static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: Array[StringName], knowledge: DateTypes.TagKnowledge) -> Control:
@@ -108,14 +111,17 @@ static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: A
 	row.add_theme_constant_override("separation", 8)
 	var title_label := Label.new()
 	title_label.text = title
+	title_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	row.add_child(title_label)
 	if ids.is_empty():
 		var empty := Label.new()
 		empty.text = "—"
+		empty.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		row.add_child(empty)
 		return row
 	var flow := HFlowContainer.new()
 	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	flow.alignment = FlowContainer.ALIGNMENT_BEGIN
 	for tag_id in ids:
 		var tag_name: String = String(tag_id)
 		if catalog != null:
@@ -140,13 +146,24 @@ static func known_preference_block(catalog: DateContentCatalog, progress: GirlPr
 	return box
 
 
-static func bbcode_block(text: String, default_color: Color = TEXT) -> RichTextLabel:
-	var rtl: RichTextLabel = GameTermView.create(text)
+static func bbcode_block(text: String, default_color: Color = TEXT, tag_knowledge: Dictionary = {}) -> RichTextLabel:
+	var rtl: RichTextLabel = GameTermView.create(text, tag_knowledge)
 	rtl.add_theme_color_override("default_color", default_color)
 	return rtl
 
 
-static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: StringName, progress: GirlProgress = null, player: TestPlayerState = null) -> String:
+static func tag_knowledge_map(progress: GirlProgress) -> Dictionary:
+	var result: Dictionary = {}
+	if progress == null:
+		return result
+	for tag_id in progress.revealed_positive_tag_ids:
+		result[tag_id] = DateTypes.TagKnowledge.POSITIVE
+	for tag_id in progress.revealed_negative_tag_ids:
+		result[tag_id] = DateTypes.TagKnowledge.NEGATIVE
+	return result
+
+
+static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: StringName, _progress: GirlProgress = null, player: TestPlayerState = null) -> String:
 	if catalog == null:
 		return String(object_id)
 	var local_object: DateLocalObject = catalog.find_local_object(object_id)
@@ -159,18 +176,20 @@ static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: 
 			continue
 		var tag: DateTag = catalog.find_tag(move.local_tag_id)
 		var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
-		var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN
-		if progress != null:
-			knowledge = progress.tag_knowledge(move.local_tag_id)
 		var locked: bool = false
-		var req_text: String = ""
-		if move.unlock_requirement != null:
-			var stat: ProgressionStat = catalog.find_stat(move.unlock_requirement.stat_id)
-			var stat_name: String = stat.display_name if stat != null else String(move.unlock_requirement.stat_id)
-			req_text = " (%s %d)" % [stat_name, move.unlock_requirement.required_level]
-			if player != null:
-				locked = player.get_stat(move.unlock_requirement.stat_id) < move.unlock_requirement.required_level
-		parts.append("%s%s" % [tag_bbcode(tag_name, knowledge, locked), req_text])
+		var lock_suffix: String = ""
+		if move.unlock_requirement != null and player != null:
+			var current_level: int = player.get_stat(move.unlock_requirement.stat_id)
+			var required_level: int = move.unlock_requirement.required_level
+			if current_level < required_level:
+				locked = true
+				var stat: ProgressionStat = catalog.find_stat(move.unlock_requirement.stat_id)
+				var stat_name: String = stat.display_name if stat != null else String(move.unlock_requirement.stat_id)
+				lock_suffix = " 🔒 Требуется: %s %d (сейчас %d)" % [stat_name, required_level, current_level]
+		var chip: String = "[%s]" % tag_name
+		if locked:
+			chip += lock_suffix
+		parts.append(chip)
 	var tags_text: String = " / ".join(parts) if not parts.is_empty() else "—"
 	return "%s — %s" % [local_object.display_name, tags_text]
 

@@ -102,8 +102,6 @@ static func _wrap(term: GameTerm, matched: String, tag_knowledge: Dictionary) ->
 		inner_text = matched.substr(1, matched.length() - 2)
 		open_bracket = "[lb]"
 		close_bracket = "[rb]"
-	var inner: String = "%s[url=%s%s]%s[/url]%s" % [open_bracket, META_PREFIX, String(term.id), inner_text, close_bracket]
-	var bold: String = "[b]%s[/b]" % inner
 	var color: Color = LabUi.ACCENT
 	if term.visual == GameTerm.Visual.TAG:
 		var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN
@@ -113,4 +111,5 @@ static func _wrap(term: GameTerm, matched: String, tag_knowledge: Dictionary) ->
 		elif typed is int:
 			knowledge = typed as DateTypes.TagKnowledge
 		color = LabUi.tag_knowledge_color(knowledge)
-	return "[color=#%s]%s[/color]" % [color.to_html(false), bold]
+	var colored: String = "[color=#%s][b]%s%s%s[/b][/color]" % [color.to_html(false), open_bracket, inner_text, close_bracket]
+	return "[url=%s%s]%s[/url]" % [META_PREFIX, String(term.id), colored]

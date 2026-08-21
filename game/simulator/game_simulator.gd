@@ -1314,7 +1314,7 @@ func _build_date_location_card(location: DateLocation, dating: Variant, availabl
 	else:
 		title.text = "%s 🔒" % location.display_name
 	box.add_child(title)
-	box.add_child(LabUi.bbcode_block(_date_location_details(location, dating, progress), LabUi.MUTED))
+	box.add_child(LabUi.bbcode_block(_date_location_details(location, dating, progress), LabUi.MUTED, LabUi.tag_knowledge_map(progress)))
 	var choose_btn: Button = LabUi.button(location.display_name)
 	choose_btn.disabled = not available
 	if available:
@@ -1614,6 +1614,7 @@ func _ensure_guidance_popup() -> void:
 	add_child(_guidance_layer)
 	_guidance_popup = GuidancePopup.new()
 	_guidance_layer.add_child(_guidance_popup)
+	_guidance_popup.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_guidance_popup.dismissed.connect(_on_guidance_popup_dismissed)
 
 
