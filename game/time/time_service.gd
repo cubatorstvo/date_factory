@@ -69,6 +69,18 @@ func days_to_minutes(days: int) -> int:
 func hours_to_minutes(hours: int) -> int:
 	return hours * MINUTES_PER_HOUR
 
+func format_duration(minutes: int) -> String:
+	var safe_minutes: int = maxi(0, minutes)
+	var days: int = int(safe_minutes / MINUTES_PER_DAY)
+	var hours: int = int((safe_minutes % MINUTES_PER_DAY) / MINUTES_PER_HOUR)
+	if days > 0 and hours > 0:
+		return "%d д. %d ч." % [days, hours]
+	if days > 0:
+		return "%d д." % days
+	if hours > 0:
+		return "%d ч." % hours
+	return "1 ч."
+
 
 func minutes_until_next_morning(game_time_minutes: int) -> int:
 	var target_minute_of_day: int = MORNING_HOUR * MINUTES_PER_HOUR

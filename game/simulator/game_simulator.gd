@@ -42,6 +42,9 @@ var _selected_outfit_id: StringName = &""
 var _hud_characteristics_label: RichTextLabel
 var _factory_status: Label
 var _factory_slider: HSlider
+var _objective_panel: ObjectivePanel
+var _guidance_layer: CanvasLayer
+var _guidance_popup: GuidancePopup
 
 
 func _ready() -> void:
@@ -53,7 +56,9 @@ func _ready() -> void:
 	add_child(bg)
 	_build_shell()
 	_connect_core_signals()
+	_ensure_guidance_popup()
 	show_section("home")
+	_request_objectives_intro()
 
 
 func refresh() -> void:
@@ -65,6 +70,7 @@ func refresh() -> void:
 	if _section == "city" or _section == "girls" or _section == "dates" or _section == "rivals" or _section == "progression" or _section == "apartment" or _section == "clothing" or _section == "factory":
 		_rebuild_section()
 	_refresh_hud()
+	_refresh_objective_panel()
 	_refresh_home()
 	_refresh_progression()
 	_refresh_save_buttons()
@@ -99,6 +105,7 @@ func start_new_game() -> void:
 	sm.new_game()
 	_last_result_text = ""
 	refresh()
+	_request_objectives_intro()
 
 
 func save_playthrough() -> void:
@@ -335,6 +342,24 @@ func _collect_label_text(node: Node, lines: PackedStringArray) -> void:
 func get_hud_text() -> String:
 	return _format_hud_text()
 
+func get_objective_text() -> String:
+	if _objective_panel != null:
+		return _objective_panel.collect_text()
+	var objectives: Variant = _objective_service()
+	if objectives == null:
+		return ""
+	var view: ObjectiveView = objectives.get_current() as ObjectiveView
+	if view == null:
+		return ""
+	return view.title
+
+
+func get_current_objective() -> ObjectiveView:
+	var objectives: Variant = _objective_service()
+	if objectives == null:
+		return null
+	return objectives.get_current() as ObjectiveView
+
 
 func get_result_text() -> String:
 	return _last_result_text
@@ -438,6 +463,8 @@ func _build_hud() -> Control:
 	box.add_child(stats)
 	_hud_characteristics_label = GameTermView.create("")
 	box.add_child(_hud_characteristics_label)
+	_objective_panel = ObjectivePanel.new()
+	box.add_child(_objective_panel)
 	var save_row := HBoxContainer.new()
 	save_row.add_theme_constant_override("separation", 8)
 	var new_btn := LabUi.button("НОВАЯ ИГРА")
@@ -662,6 +689,7 @@ func _build_city() -> Control:
 func _build_city_place_row(interior: LocationDefinition, world: Variant) -> Control:
 	var unlocked: bool = world != null and bool(world.is_location_unlocked(interior.id))
 	var title: String = interior.display_name if unlocked else "%s 🔒" % interior.display_name
+	title += _objective_marker_suffix(&"", &"", interior.id)
 	var row: Button = LabUi.button(title)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -695,7 +723,7 @@ func _build_city_rival_row(definition: RivalDefinition, rivals: Variant) -> Cont
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var name_label := Label.new()
-	name_label.text = definition.display_name
+	name_label.text = definition.display_name + _objective_marker_suffix(ObjectiveView.TARGET_RIVAL, definition.id, definition.location_id)
 	box.add_child(name_label)
 	var discovered: bool = rivals != null and bool(rivals.is_discovered(definition.id))
 	if not discovered:
@@ -714,12 +742,11 @@ func _build_city_rival_row(definition: RivalDefinition, rivals: Variant) -> Cont
 		box.add_child(_build_rival_competition_row(competition, defeated, competitions, rivals))
 	return box
 
-
 func _build_city_girl_row(definition: GirlDefinition, girls: Variant) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var name_label := Label.new()
-	name_label.text = definition.display_name
+	name_label.text = definition.display_name + _objective_marker_suffix(ObjectiveView.TARGET_GIRL, definition.id, definition.location_id)
 	box.add_child(name_label)
 	var discovered: bool = girls != null and bool(girls.is_discovered(definition.id))
 	if discovered:
@@ -741,7 +768,6 @@ func _build_city_girl_row(definition: GirlDefinition, girls: Variant) -> Control
 		var action: GameAction = girls.create_meet_girl_action(definition.id)
 		_add_action_button(box, action, "ПОЗНАКОМИТЬСЯ", false, false)
 	return box
-
 
 func _build_world_dev(world: Variant) -> Control:
 	var box := VBoxContainer.new()
@@ -828,7 +854,7 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var name_label := Label.new()
-	name_label.text = definition.display_name.to_upper()
+	name_label.text = definition.display_name.to_upper() + _objective_marker_suffix(ObjectiveView.TARGET_GIRL, definition.id, definition.location_id)
 	box.add_child(name_label)
 	var relationship_value: int = 0
 	var has_contact: bool = false
@@ -888,7 +914,7 @@ func _build_discovered_rival_card(definition: RivalDefinition, rivals: Variant, 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var name_label := Label.new()
-	name_label.text = definition.display_name.to_upper()
+	name_label.text = definition.display_name.to_upper() + _objective_marker_suffix(ObjectiveView.TARGET_RIVAL, definition.id, definition.location_id)
 	box.add_child(name_label)
 	var location_label := Label.new()
 	location_label.text = "Локация: %s" % _location_display_name(definition.location_id)
@@ -949,6 +975,9 @@ func _build_rival_competition_row(
 			box.add_child(wait)
 		return box
 	if competitions != null:
+		var guidance: Variant = _guidance_service()
+		if guidance != null:
+			guidance.request_tutorial(GuidanceCatalog.ID_RIVAL_INTRO)
 		var action: GameAction = competitions.create_competition_action(competition.id)
 		var label: String = ("Реванш — взнос %d" % competition.entry_fee) if defeated else ("Вызвать — взнос %d" % competition.entry_fee)
 		_add_action_button(box, action, label, false, false)
@@ -995,7 +1024,7 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var name_label := Label.new()
-	name_label.text = definition.display_name.to_upper()
+	name_label.text = definition.display_name.to_upper() + _objective_marker_suffix(ObjectiveView.TARGET_DATING, definition.id)
 	box.add_child(name_label)
 	var relationship_value: int = 0
 	var relationship_max: int = 0
@@ -1069,6 +1098,9 @@ func _add_requirement_lines(
 
 
 func _format_cooldown(minutes: int) -> String:
+	var clock: Variant = _time_service()
+	if clock != null and clock.has_method("format_duration"):
+		return str(clock.format_duration(minutes))
 	var safe_minutes: int = maxi(0, minutes)
 	var days: int = int(safe_minutes / 1440)
 	var hours: int = int((safe_minutes % 1440) / 60)
@@ -1434,11 +1466,9 @@ func _refresh_home() -> void:
 	if _home_summary != null:
 		_home_summary.text = _format_home_summary()
 	if _home_goal != null:
-		_home_goal.text = _format_stage_goal()
-		_home_goal.visible = not _home_goal.text.is_empty()
+		_home_goal.visible = false
 	if _home_result != null:
 		_home_result.text = _last_result_text
-
 func _refresh_progression() -> void:
 	pass
 
@@ -1458,11 +1488,11 @@ func _refresh_nav() -> void:
 		var btn: Button = _nav_buttons[section_id]
 		if section_id == "factory":
 			btn.visible = factory_unlocked
+			btn.text = "Фабрика" + _objective_marker_suffix(ObjectiveView.TARGET_FACTORY)
 		if section_id == _section:
 			btn.modulate = Color(1, 0.92, 0.65)
 		else:
 			btn.modulate = Color.WHITE
-
 
 func _connect_core_signals() -> void:
 	var clock: Variant = _time_service()
@@ -1539,6 +1569,79 @@ func _connect_core_signals() -> void:
 		automation.upgrade_purchased.connect(_on_automation_upgrade_purchased)
 	if automation != null and not automation.expansion_changed.is_connected(_on_automation_expansion_changed):
 		automation.expansion_changed.connect(_on_automation_expansion_changed)
+	var objectives: Variant = _objective_service()
+	if objectives != null and not objectives.objective_changed.is_connected(_on_objective_changed):
+		objectives.objective_changed.connect(_on_objective_changed)
+	var guidance: Variant = _guidance_service()
+	if guidance != null and not guidance.tutorial_requested.is_connected(_on_tutorial_requested):
+		guidance.tutorial_requested.connect(_on_tutorial_requested)
+	if guidance != null and not guidance.milestone_requested.is_connected(_on_milestone_requested):
+		guidance.milestone_requested.connect(_on_milestone_requested)
+	if guidance != null and not guidance.message_closed.is_connected(_on_guidance_closed):
+		guidance.message_closed.connect(_on_guidance_closed)
+
+func _on_objective_changed() -> void:
+	_refresh_objective_panel()
+
+
+func _refresh_objective_panel() -> void:
+	if _objective_panel == null:
+		return
+	var objectives: Variant = _objective_service()
+	if objectives == null:
+		_objective_panel.visible = false
+		return
+	var view: ObjectiveView = objectives.get_current() as ObjectiveView
+	var stages: Variant = _stage_service()
+	if stages != null and bool(stages.is_finale_reached()) and view != null and view.completed:
+		_objective_panel.bind(view)
+		return
+	_objective_panel.bind(view)
+
+
+func _objective_marker_suffix(target_type: StringName, target_id: StringName = &"", location_id: StringName = &"") -> String:
+	var objectives: Variant = _objective_service()
+	if objectives == null:
+		return ""
+	return str(objectives.marker_suffix(target_type, target_id, location_id))
+
+
+func _ensure_guidance_popup() -> void:
+	if _guidance_popup != null and is_instance_valid(_guidance_popup):
+		return
+	_guidance_layer = CanvasLayer.new()
+	_guidance_layer.layer = 30
+	add_child(_guidance_layer)
+	_guidance_popup = GuidancePopup.new()
+	_guidance_layer.add_child(_guidance_popup)
+	_guidance_popup.dismissed.connect(_on_guidance_popup_dismissed)
+
+
+func _request_objectives_intro() -> void:
+	var guidance: Variant = _guidance_service()
+	if guidance == null:
+		return
+	guidance.request_tutorial(GuidanceCatalog.ID_OBJECTIVES_INTRO)
+
+
+func _on_tutorial_requested(definition: TutorialDefinition) -> void:
+	_ensure_guidance_popup()
+	_guidance_popup.present_tutorial(definition)
+
+
+func _on_milestone_requested(definition: MilestoneDefinition) -> void:
+	_ensure_guidance_popup()
+	_guidance_popup.present_milestone(definition)
+
+
+func _on_guidance_popup_dismissed() -> void:
+	var guidance: Variant = _guidance_service()
+	if guidance != null:
+		guidance.dismiss_current()
+
+
+func _on_guidance_closed() -> void:
+	refresh()
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
@@ -1910,22 +2013,7 @@ func _format_home_summary() -> String:
 		lines.append("%s — %.1f%%" % [String(automation.get_scope_display_name()), float(automation.get_expansion_percent())])
 	return "\n".join(lines)
 func _format_stage_goal() -> String:
-	var stages: Variant = _stage_service()
-	if stages == null:
-		return ""
-	if bool(stages.is_finale_reached()):
-		return ""
-	var stage: int = int(stages.get_current_stage())
-	var requirement: Variant = stages.get_current_requirement()
-	if requirement == null:
-		return ""
-	var goal_name: String = _stage_goal_display_name(requirement)
-	var current_value: int = int(requirement.get_current_value())
-	var target_value: int = int(requirement.get_target_value())
-	if requirement is WorldReachRequirement:
-		return "STAGE %d\n\nЦЕЛЬ\n\n%s\n\n%d / %d" % [stage, goal_name, current_value, target_value]
-	return "STAGE %d\n\nЦЕЛЬ\n\n%s\n\nОтношения:\n%d / %d" % [stage, goal_name, current_value, target_value]
-
+	return get_objective_text()
 func _stage_goal_display_name(requirement: Variant) -> String:
 	var description: String = String(requirement.get_description())
 	var prefix: String = "Отношения с "
@@ -2104,6 +2192,19 @@ func _apartment_service() -> Variant:
 
 func _automation_service() -> Variant:
 	var node: Node = get_node_or_null("/root/AutomationService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+func _objective_service() -> Variant:
+	var node: Node = get_node_or_null("/root/ObjectiveService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _guidance_service() -> Variant:
+	var node: Node = get_node_or_null("/root/GuidanceService")
 	if not is_instance_valid(node):
 		return null
 	return node

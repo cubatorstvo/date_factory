@@ -102,6 +102,8 @@ func _ingest_system_terms() -> void:
 	_add_term(&"local_move", "Локальный ход", "Ход от объекта текущего места свидания. После одного локального хода весь его объект считается использованным до конца свидания.", PackedStringArray(["LOCAL"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"combo", "Комбо", "Бонус за три последовательных успешных хода с тремя разными тегами.", PackedStringArray(["КОМБО", "Combo"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"outfit", "Одежда", "Текущая одежда героя. Цепочка Casual +0 → Business +1 → Luxury +2; на свидании используется автоматически.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
+	_add_term(&"date_factory", "Date Factory", "Автоматическая фабрика клонов. Они зарабатывают деньги и ходят на свидания, повышая Рейтинг и охват текущего масштаба.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
+	_add_term(&"tag", "тег", "Игровой признак хода. Известное предпочтение девушки окрашивает тег и показывает, сработает ход или нет.", PackedStringArray(["теги", "Тег"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 
 
 func _add_term(term_id: StringName, display_name: String, description: String, extra_aliases: PackedStringArray, category: GameTerm.Category, visual: GameTerm.Visual) -> void:

@@ -25,12 +25,12 @@ static func create_seed(girl_catalog: GirlCatalog = null) -> StageCatalog:
 		girls = GirlCatalog.create_seed()
 	var catalog: StageCatalog = StageCatalog.new()
 	var empty_effects: Array[StageEnterEffect] = []
-	catalog.stages.append(_make_stage(1, "Stage 1", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_ACTRESS)), empty_effects))
-	catalog.stages.append(_make_stage(2, "Stage 2", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_MINE_BOSS)), make_stage_2_enter_effects()))
-	catalog.stages.append(_make_stage(3, "Stage 3", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_MAGAZINE_EDITOR)), empty_effects))
-	catalog.stages.append(_make_stage(4, "Stage 4", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_SCIENTIST)), make_stage_4_enter_effects()))
-	catalog.stages.append(_make_stage(5, "Stage 5", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_PRESIDENT)), make_stage_5_enter_effects()))
-	catalog.stages.append(_make_stage(6, "Stage 6", WorldReachRequirement.new(), empty_effects))
+	catalog.stages.append(_make_stage(1, "Stage 1", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_ACTRESS)), empty_effects, "Актриса", "Добейся внимания Актрисы. Для знакомства понадобится достаточный Рейтинг, а её нынешний ухажёр уступать место не собирается."))
+	catalog.stages.append(_make_stage(2, "Stage 2", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_MINE_BOSS)), make_stage_2_enter_effects(), "Начальница шахты", "Добейся расположения Начальницы шахты. Сначала докажи свой уровень, затем разберись с её нынешним ухажёром."))
+	catalog.stages.append(_make_stage(3, "Stage 3", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_MAGAZINE_EDITOR)), empty_effects, "Редактор журнала", "Заинтересуй Редактора журнала. Твой Рейтинг должен соответствовать её кругу, а рядом уже есть конкурент."))
+	catalog.stages.append(_make_stage(4, "Stage 4", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_SCIENTIST)), make_stage_4_enter_effects(), "Учёная", "Добейся Учёной. Для знакомства понадобится высокий Рейтинг, а её нынешний соперник уже считает эту гонку своей."))
+	catalog.stages.append(_make_stage(5, "Stage 5", make_girl_relationship_requirement(girls.get_girl(GirlCatalog.ID_PRESIDENT)), make_stage_5_enter_effects(), "Президент", "Добейся Президента. Сначала достигни нужного Рейтинга, затем реши вопрос с человеком, который уже занимает место рядом с ней."))
+	catalog.stages.append(_make_stage(6, "Stage 6", WorldReachRequirement.new(), empty_effects, "Date Factory", "Расширь Date Factory до мирового масштаба и доведи охват Мира до 100%."))
 	return catalog
 
 
@@ -84,11 +84,15 @@ static func _make_stage(
 	stage: int,
 	display_name: String,
 	completion_requirement: StageRequirement,
-	on_enter_effects: Array[StageEnterEffect]
+	on_enter_effects: Array[StageEnterEffect],
+	objective_title: String = "",
+	objective_description: String = ""
 ) -> StageDefinition:
 	var definition: StageDefinition = StageDefinition.new()
 	definition.stage = stage
 	definition.display_name = display_name
+	definition.objective_title = objective_title
+	definition.objective_description = objective_description
 	definition.completion_requirement = completion_requirement
 	definition.on_enter_effects = on_enter_effects.duplicate()
 	return definition

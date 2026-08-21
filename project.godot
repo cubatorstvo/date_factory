@@ -38,6 +38,8 @@ ApartmentService="*res://game/progression/apartment_service.gd"
 RivalsService="*res://game/rivals/rivals_service.gd"
 CompetitionService="*res://game/rivals/competition_service.gd"
 SceneTransitionService="*res://game/world/scene_transition_service.gd"
+ObjectiveService="*res://game/story/objective_service.gd"
+GuidanceService="*res://game/guidance/guidance_service.gd"
 
 [debug]
 

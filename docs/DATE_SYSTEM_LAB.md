@@ -1337,12 +1337,13 @@ GameState
 GameSimulator.refresh()
 ```
 
-Autoload `StageService`, `ActionService`, `EconomyService`, `AutomationService`, `PurchaseService`, `CharacteristicService`, `WorldService`, `GirlsService`, `RatingService`, `DatingService`, `EquipmentService`, `ApartmentService`, `RivalsService`, `CompetitionService` и `SceneTransitionService` регистрируются в `project.godot` как `/root/StageService`, `/root/ActionService`, `/root/EconomyService`, `/root/AutomationService`, `/root/PurchaseService`, `/root/CharacteristicService`, `/root/WorldService`, `/root/GirlsService`, `/root/RatingService`, `/root/DatingService`, `/root/EquipmentService`, `/root/ApartmentService`, `/root/RivalsService`, `/root/CompetitionService` и `/root/SceneTransitionService`.
+Autoload `StageService`, `ActionService`, `EconomyService`, `AutomationService`, `PurchaseService`, `CharacteristicService`, `WorldService`, `GirlsService`, `RatingService`, `DatingService`, `EquipmentService`, `ApartmentService`, `RivalsService`, `CompetitionService`, `SceneTransitionService`, `ObjectiveService` и `GuidanceService` регистрируются в `project.godot` как `/root/StageService`, `/root/ActionService`, `/root/EconomyService`, `/root/AutomationService`, `/root/PurchaseService`, `/root/CharacteristicService`, `/root/WorldService`, `/root/GirlsService`, `/root/RatingService`, `/root/DatingService`, `/root/EquipmentService`, `/root/ApartmentService`, `/root/RivalsService`, `/root/CompetitionService`, `/root/SceneTransitionService`, `/root/ObjectiveService` и `/root/GuidanceService`.
 
 Интерфейс — 2D Control, контейнеры и anchors, читаемый в 1280×720 и 1920×1080:
 
 ```text
 HUD: Day / Time | Money | Rating | Stage | City Stage | Cooldown | Finale | compact characteristics X/5
+HUD Objective Panel: текущая сюжетная цель, подцели, следующий шаг
 Navigation | Current Section
 Action Result / Event Log
 ```
@@ -1362,21 +1363,22 @@ CharacteristicService.get_value(muscle / appearance / capital / aura)
 
 Разделы навигации: Главная, Работа, Фабрика, Город, Девушки, Соперники, Свидания, Квартира, Одежда, Прокачка. Раздел Фабрика виден только при `AutomationState.unlocked == true`; до Stage 5 его нет в основной навигации. Смена раздела — только presentation: не меняет `GameState`, не двигает время, не является `GameAction`. Распределение клонов на экране Фабрики сразу пишет `work_allocation_percent` через `AutomationService`.
 
-Главная показывает краткое состояние прохождения (`День`, время, `Stage`, деньги, глобальный Rating, охват родного города `completed / total — percent`; после unlock Automation — текущий масштаб фабрики и его процент), блок текущей сюжетной цели, кнопку «СОХРАНИТЬ» и последний результат действия.
-
-Блок цели читает `StageService.get_current_definition()` и `get_current_requirement()`:
+Главная показывает краткое состояние прохождения (`День`, время, `Stage`, деньги, глобальный Rating, охват родного города `completed / total — percent`; после unlock Automation — текущий масштаб фабрики и его процент), кнопку «СОХРАНИТЬ» и последний результат действия. Постоянный блок цели живёт в HUD и читает `ObjectiveService.get_current()`:
 
 ```text
-STAGE N
+ЦЕЛЬ — <objective_title>
 
-ЦЕЛЬ
+<objective_description>
 
-<описание цели из requirement.get_description()>
-
-current / target
+○ / ✓ подцели текущего Stage
+Следующий шаг: <next_step_text>
 ```
 
-Для Stage 6: «STAGE 6», «Мировой охват», текущий мировой progress / 10 000. После `stage_completed` Action Result / Event Log: «Stage завершён.» После `stage_changed`: «Начат Stage N.» и новая цель. `refresh()` после `stage_changed` обновляет World / Girls / Rivals / Dating / Progression / Factory — новый unlock из `on_enter_effects` уже виден. После входа в Stage 5 появляется раздел Фабрика: фабрика в другом городе, клоны, один slider Work ↔ Dating, hourly Money и Rating из `AutomationService`, текущий Expansion progress и % / час, кнопка расширения при 100% текущего масштаба, три upgrades и dev «+1 ИГРОВОЙ ЧАС» через `TimeService.advance_time(60)`.
+Stage 1–5 строят подцели из meet/date requirements сюжетной девушки (Rating, знакомство, сюжетный соперник, отношения до `relationship_max`). MinStage не показывается: его закрывает сам текущий Stage. Stage 6 строит подцели из `AutomationService` (охват текущего масштаба, затем расширение). Marker `← ЦЕЛЬ` помечает локацию, девушку, соперника, свидание или Фабрику текущей подцели и не запрещает остальные активности. Game Terms внутри цели, tutorial и milestone остаются глобальными.
+
+`GuidanceService` показывает одно overlay-сообщение за раз: first-use tutorial (`objectives_intro`, `dating_intro`, `local_objects_intro`, `locked_moves_intro`, `rival_intro`, `factory_intro`) и milestone смены Stage. История показа — только `GuidanceState`, не игровой прогресс.
+
+После `stage_completed` Action Result / Event Log: «Stage завершён.» После `stage_changed`: «Начат Stage N.» и новая цель. `refresh()` после `stage_changed` / `objective_changed` / закрытия guidance обновляет World / Girls / Rivals / Dating / Progression / Factory — новый unlock из `on_enter_effects` уже виден. После входа в Stage 5 появляется раздел Фабрика: фабрика в другом городе, клоны, один slider Work ↔ Dating, hourly Money и Rating из `AutomationService`, текущий Expansion progress и % / час, кнопка расширения при 100% текущего масштаба, три upgrades и dev «+1 ИГРОВОЙ ЧАС» через `TimeService.advance_time(60)`.
 
 Работа показывает текущую ставку на кнопке: `Работать — 1 ч — +100`, после Mine Boss `+200`. После успешной работы в этом календарном дне: `Работа на сегодня выполнена` и рядом `Снова доступно завтра`. Календарный день: `day_index = game_time_minutes / 1440`. Доступность — typed `WorkAvailableTodayRequirement`; запись дня — effect через `WorkService`. Пока игрок работает, клоны продолжают производство за те же игровые минуты. Город отображает `WorldState`: текущая локация (`LocationDefinition.display_name`); если это `CITY_ZONE` — связанные `INTERIOR` через `parent_location_id` как кликабельные строки; клик по открытой строке входит в место. Если `INTERIOR` — кнопка «ВЫЙТИ» в родительскую зону. Вход и выход вызывают `WorldService.enter_location` и `refresh()`, без загрузки 3D-сцены и без сдвига времени. Закрытая локация: «Название 🔒», строка `disabled`. В текущей локации блок «ЛЮДИ» показывает `GirlsService.get_girls_at_current_location()` и `RivalsService.get_rivals_at_current_location()`. Незнакомая девушка видна всегда, даже при невыполненном Rating: имя; если `meet_requirements` непустые — блок «Требования для знакомства:» со статусами `✓` / `✗`, description и progress_text; кнопка «ПОЗНАКОМИТЬСЯ» → `create_meet_girl_action` → `ActionService.execute`, `disabled` при `can_meet_girl() == false`. Связанный соперник в «ЛЮДИ» появляется только после знакомства с его `linked_girl_id`. Неоткрытый соперник: имя, кнопка «ВСТРЕТИТЬ» → `create_meet_rival_action` → `ActionService.execute`. После знакомства девушка отображается как знакомая. После встречи соперник отображается как открытый. Успешное знакомство в Action Result: «Вы познакомились с <Имя>.», «Получен контакт.», «Прошло времени: 30 минут.» Dev-блок `WORLD DEV` / «UNLOCK LOCATION» открывает существующую закрытую локацию через `WorldService.unlock_location`. Работа идёт только через `ActionService.execute(action)`. UI деньги, время и локацию не меняет напрямую.
 

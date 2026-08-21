@@ -52,4 +52,5 @@
 - Combo: три последовательных успешных разных тега, максимум +1 за свидание
 - Game Terms: глобальные жирные термины с tooltip во всех player-facing экранах
 - Story rival: повтор сразу до первой победы; filler rival: City Stage cooldown и остаётся repeatable
-- Save version 15
+- Save version 16: секция `guidance` (`shown_tutorial_ids`, `shown_milestone_ids`); v15→v16 только добавляет пустую guidance, остальной прогресс не преобразуется
+- `ObjectiveService` считает текущую сюжетную цель из Stage / Girls / Rivals / Automation; `GuidanceService` показывает first-use tutorial и milestone, не храня игровой прогресс

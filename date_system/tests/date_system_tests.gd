@@ -51,6 +51,9 @@ func run_all() -> PackedStringArray:
 	_test_automation()
 	_test_availability_ui()
 	_test_game_terms()
+	_test_objectives()
+	_test_guidance()
+	_test_objective_markers()
 	return _failures
 
 
@@ -63,6 +66,10 @@ func _test_game_terms() -> void:
 	_ok("Мышца is ProgressionStat Game Term", muscle != null and muscle.category == GameTerm.Category.STAT and muscle.id == &"muscle")
 	var rating: GameTerm = registry.find_by_alias("Рейтинг")
 	_ok("Рейтинг is system Game Term", rating != null and rating.category == GameTerm.Category.SYSTEM and rating.id == &"rating")
+	var factory_term: GameTerm = registry.find_by_alias("Date Factory")
+	_ok("Date Factory is system Game Term", factory_term != null and factory_term.category == GameTerm.Category.SYSTEM and factory_term.id == &"date_factory")
+	var tag_term: GameTerm = registry.find_by_alias("тег")
+	_ok("тег is system Game Term", tag_term != null and tag_term.category == GameTerm.Category.SYSTEM and tag_term.id == &"tag")
 	var outfit_term: GameTerm = registry.find_by_alias("Одежда")
 	_ok("Одежда is system Game Term", outfit_term != null and outfit_term.category == GameTerm.Category.SYSTEM and outfit_term.id == &"outfit")
 	_ok("tooltip description", rating != null and not rating.description.strip_edges().is_empty())
@@ -1529,6 +1536,258 @@ func _automation_service() -> Variant:
 		return null
 	return node
 
+func _objective_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("ObjectiveService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _guidance_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("GuidanceService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+
+func _rebuild_objective() -> ObjectiveView:
+	var objectives: Variant = _objective_service()
+	if objectives == null:
+		return null
+	objectives.rebuild()
+	return objectives.get_current() as ObjectiveView
+
+
+func _subgoal_by_id(view: ObjectiveView, id: StringName) -> ObjectiveSubgoalView:
+	if view == null:
+		return null
+	for subgoal in view.subgoals:
+		if subgoal.id == id:
+			return subgoal
+	return null
+
+
+func _current_subgoal(view: ObjectiveView) -> ObjectiveSubgoalView:
+	if view == null:
+		return null
+	return view.current_subgoal()
+
+
+func _test_objectives() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var objectives: Variant = _objective_service()
+	var girls: Variant = _girls_service()
+	var rating: Variant = _rating_service()
+	var rivals: Variant = _rivals_service()
+	var dating: Variant = _dating_service()
+	var clock: Variant = _time_service()
+	_ok("ObjectiveService autoload", objectives != null)
+	if gs == null or sm == null or objectives == null or girls == null or rating == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/objectives_stage20.json"
+	sm.delete_save()
+	sm.new_game()
+	var view: ObjectiveView = _rebuild_objective()
+	_ok("stage 1 actress title", view != null and view.title == "Актриса")
+	_ok("stage 1 description", view != null and view.description.contains("Актрисы"))
+	var rating_goal: ObjectiveSubgoalView = _subgoal_by_id(view, &"meet_rating")
+	_ok("stage 1 rating current", rating_goal != null and rating_goal.is_current and rating_goal.progress_text == "0 / 2")
+	_ok("stage 1 next rating", view.next_step_text.contains("Рейтинг для знакомства") and view.next_step_text.contains("0 / 2"))
+	_ok("rating target empty", view.target_type == &"" and view.target_location_id == &"")
+	rating.add_rating(1)
+	view = _rebuild_objective()
+	rating_goal = _subgoal_by_id(view, &"meet_rating")
+	_ok("rating progress 1/2", rating_goal != null and rating_goal.progress_text == "1 / 2" and not rating_goal.completed)
+	rating.add_rating(1)
+	view = _rebuild_objective()
+	rating_goal = _subgoal_by_id(view, &"meet_rating")
+	var meet_goal: ObjectiveSubgoalView = _subgoal_by_id(view, &"meet_girl")
+	_ok("rating complete", rating_goal != null and rating_goal.completed and rating_goal.progress_text == "2 / 2")
+	_ok("next is meet", meet_goal != null and meet_goal.is_current and view.next_step_text.contains("Познакомиться с Актрисой"))
+	_ok("meet target girl", view.target_type == ObjectiveView.TARGET_GIRL and view.target_id == GirlCatalog.ID_ACTRESS)
+	_ok("meet target location", view.target_location_id == LocationCatalog.ID_CITY_CENTER)
+	girls.discover_girl(GirlCatalog.ID_ACTRESS)
+	view = _rebuild_objective()
+	var rival_goal: ObjectiveSubgoalView = _subgoal_by_id(view, StringName("date_rival_%s" % String(RivalCatalog.ID_BORIS)))
+	_ok("next is rival", rival_goal != null and rival_goal.is_current and view.next_step_text.contains("Борис"))
+	_ok("rival target", view.target_type == ObjectiveView.TARGET_RIVAL and view.target_id == RivalCatalog.ID_BORIS)
+	_ok("rival location", view.target_location_id == LocationCatalog.ID_CITY_CENTER)
+	if rivals != null:
+		rivals.defeat_rival(RivalCatalog.ID_BORIS)
+	view = _rebuild_objective()
+	var rel_goal: ObjectiveSubgoalView = _subgoal_by_id(view, &"relationship")
+	_ok("relationship uses max", rel_goal != null and rel_goal.progress_text == "0 / %d" % int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS)))
+	_ok("next is invite", rel_goal != null and rel_goal.is_current and view.next_step_text.contains("Пригласить Актрису на свидание"))
+	_ok("dating target", view.target_type == ObjectiveView.TARGET_DATING and view.target_id == GirlCatalog.ID_ACTRESS)
+	girls.mark_date_completed(GirlCatalog.ID_ACTRESS)
+	view = _rebuild_objective()
+	_ok("cooldown next step", view.next_step_text.contains("Следующее свидание с Актрисой через"))
+	if clock != null:
+		clock.advance_time(CityProgressionService.get_social_cooldown_minutes())
+	view = _rebuild_objective()
+	_ok("after cooldown invite again", view.next_step_text.contains("Пригласить Актрису на свидание"))
+	girls.change_relationship(GirlCatalog.ID_ACTRESS, int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS)))
+	view = _rebuild_objective()
+	_ok("max advances to stage 2", view != null and view.stage == 2 and view.title == "Начальница шахты")
+	gs.story.stage = 3
+	view = _rebuild_objective()
+	_ok("stage 3 editor", view != null and view.title == "Редактор журнала")
+	gs.story.stage = 4
+	view = _rebuild_objective()
+	_ok("stage 4 scientist", view != null and view.title == "Учёная")
+	gs.story.stage = 5
+	view = _rebuild_objective()
+	_ok("stage 5 president", view != null and view.title == "Президент")
+	gs.story.stage = 6
+	gs.automation.unlocked = true
+	gs.automation.current_expansion_scope = &"city"
+	gs.automation.expansion_progress = 40.0
+	view = _rebuild_objective()
+	_ok("stage 6 factory title", view != null and view.title == "Date Factory")
+	var city_reach: ObjectiveSubgoalView = _subgoal_by_id(view, &"factory_reach")
+	_ok("stage 6 city progress", city_reach != null and city_reach.progress_text == "40 / 100" and city_reach.is_current)
+	gs.automation.expansion_progress = 100.0
+	view = _rebuild_objective()
+	var expand: ObjectiveSubgoalView = _subgoal_by_id(view, &"factory_expand")
+	_ok("city expand cost", expand != null and expand.is_current and expand.progress_text == "10 000")
+	gs.automation.current_expansion_scope = &"country"
+	gs.automation.expansion_progress = 250.0
+	view = _rebuild_objective()
+	var country_reach: ObjectiveSubgoalView = _subgoal_by_id(view, &"factory_reach")
+	_ok("country progress", country_reach != null and country_reach.progress_text == "250 / 1000")
+	_ok("country has city done", _subgoal_by_id(view, &"factory_scope_city") != null and _subgoal_by_id(view, &"factory_scope_city").completed)
+	gs.automation.expansion_progress = 1000.0
+	view = _rebuild_objective()
+	expand = _subgoal_by_id(view, &"factory_expand")
+	_ok("country expand cost", expand != null and expand.progress_text == "1 000 000")
+	gs.automation.current_expansion_scope = &"world"
+	gs.automation.expansion_progress = 5000.0
+	view = _rebuild_objective()
+	var world_reach: ObjectiveSubgoalView = _subgoal_by_id(view, &"factory_reach")
+	_ok("world progress", world_reach != null and world_reach.progress_text == "5000 / 10000")
+	gs.automation.expansion_progress = 10000.0
+	view = _rebuild_objective()
+	world_reach = _subgoal_by_id(view, &"factory_reach")
+	_ok("world 100 percent completed", view.completed and world_reach != null and world_reach.progress_text == "100%" and world_reach.completed)
+	_ok("world completed before finale", gs.story.finale_reached == false)
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_guidance() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var guidance: Variant = _guidance_service()
+	_ok("GuidanceService autoload", guidance != null)
+	if gs == null or sm == null or guidance == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/guidance_stage20.json"
+	sm.delete_save()
+	sm.new_game()
+	_ok("new save empty guidance", gs.guidance.shown_tutorial_ids.is_empty() and gs.guidance.shown_milestone_ids.is_empty())
+	guidance.on_playthrough_reset()
+	_ok("objectives intro queued", guidance.request_tutorial(GuidanceCatalog.ID_OBJECTIVES_INTRO))
+	_ok("objectives intro active", guidance.get_active_id() == GuidanceCatalog.ID_OBJECTIVES_INTRO)
+	guidance.dismiss_current()
+	_ok("objectives intro saved", gs.guidance.has_seen_tutorial(GuidanceCatalog.ID_OBJECTIVES_INTRO))
+	_ok("repeat objectives intro skipped", guidance.request_tutorial(GuidanceCatalog.ID_OBJECTIVES_INTRO) == false and not guidance.has_active_message())
+	_ok("dating intro once", guidance.request_tutorial(GuidanceCatalog.ID_DATING_INTRO))
+	guidance.dismiss_current()
+	_ok("local objects intro once", guidance.request_tutorial(GuidanceCatalog.ID_LOCAL_OBJECTS_INTRO))
+	guidance.dismiss_current()
+	_ok("locked moves intro once", guidance.request_tutorial(GuidanceCatalog.ID_LOCKED_MOVES_INTRO))
+	guidance.dismiss_current()
+	_ok("rival intro once", guidance.request_tutorial(GuidanceCatalog.ID_RIVAL_INTRO))
+	guidance.dismiss_current()
+	_ok("factory intro once", guidance.request_tutorial(GuidanceCatalog.ID_FACTORY_INTRO))
+	guidance.dismiss_current()
+	_ok("repeat dating skipped", guidance.request_tutorial(GuidanceCatalog.ID_DATING_INTRO) == false)
+	guidance.request_milestone(GuidanceCatalog.ID_STAGE_2)
+	guidance.dismiss_current()
+	guidance.request_milestone(GuidanceCatalog.ID_STAGE_3)
+	guidance.dismiss_current()
+	guidance.request_milestone(GuidanceCatalog.ID_STAGE_4)
+	guidance.dismiss_current()
+	_ok("stage 2-4 milestones once", gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_2) and gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_3) and gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_4))
+	_ok("repeat stage 2 skipped", guidance.request_milestone(GuidanceCatalog.ID_STAGE_2) == false)
+	guidance.request_milestone(GuidanceCatalog.ID_STAGE_5)
+	guidance.request_tutorial(GuidanceCatalog.ID_FACTORY_INTRO)
+	_ok("stage 5 milestone first", guidance.get_active_id() == GuidanceCatalog.ID_STAGE_5)
+	guidance.dismiss_current()
+	_ok("factory already seen after stage 5", not guidance.has_active_message() and gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_5))
+	guidance.on_playthrough_reset()
+	gs.guidance.shown_tutorial_ids.clear()
+	gs.guidance.shown_milestone_ids.clear()
+	guidance.request_milestone(GuidanceCatalog.ID_STAGE_5)
+	guidance.request_tutorial(GuidanceCatalog.ID_FACTORY_INTRO)
+	_ok("queue milestone then factory", guidance.get_active_id() == GuidanceCatalog.ID_STAGE_5)
+	guidance.dismiss_current()
+	_ok("queue factory after milestone", guidance.get_active_id() == GuidanceCatalog.ID_FACTORY_INTRO)
+	guidance.dismiss_current()
+	guidance.request_milestone(GuidanceCatalog.ID_STAGE_6)
+	guidance.dismiss_current()
+	_ok("stage 6 milestone once", gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_6))
+	_ok("repeat stage 6 skipped", guidance.request_milestone(GuidanceCatalog.ID_STAGE_6) == false)
+	sm.save_game()
+	sm.new_game()
+	_ok("new game clears guidance history", gs.guidance.shown_tutorial_ids.is_empty())
+	sm.load_game()
+	_ok("load keeps factory tutorial", gs.guidance.has_seen_tutorial(GuidanceCatalog.ID_FACTORY_INTRO))
+	_ok("load keeps stage 5 milestone", gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_5))
+	_ok("load keeps stage 6 milestone", gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_6))
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_objective_markers() -> void:
+	var sm: Variant = _save_manager()
+	var objectives: Variant = _objective_service()
+	var girls: Variant = _girls_service()
+	var rating: Variant = _rating_service()
+	var rivals: Variant = _rivals_service()
+	var gs: Variant = _game_state()
+	if sm == null or objectives == null or girls == null or rating == null or gs == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/objective_markers_stage20.json"
+	sm.delete_save()
+	sm.new_game()
+	rating.add_rating(2)
+	var view: ObjectiveView = _rebuild_objective()
+	_ok("meet marks location", objectives.marker_suffix(&"", &"", LocationCatalog.ID_CITY_CENTER) == ObjectiveView.MARKER_SUFFIX)
+	_ok("meet marks girl", objectives.marker_suffix(ObjectiveView.TARGET_GIRL, GirlCatalog.ID_ACTRESS) == ObjectiveView.MARKER_SUFFIX)
+	_ok("meet does not mark factory", objectives.marker_suffix(ObjectiveView.TARGET_FACTORY) == "")
+	girls.discover_girl(GirlCatalog.ID_ACTRESS)
+	view = _rebuild_objective()
+	_ok("rival marks location", objectives.marker_suffix(&"", &"", LocationCatalog.ID_CITY_CENTER) == ObjectiveView.MARKER_SUFFIX)
+	_ok("rival marks rival", objectives.marker_suffix(ObjectiveView.TARGET_RIVAL, RivalCatalog.ID_BORIS) == ObjectiveView.MARKER_SUFFIX)
+	if rivals != null:
+		rivals.defeat_rival(RivalCatalog.ID_BORIS)
+	view = _rebuild_objective()
+	_ok("dating marks girl", objectives.marker_suffix(ObjectiveView.TARGET_DATING, GirlCatalog.ID_ACTRESS) == ObjectiveView.MARKER_SUFFIX)
+	_ok("dating does not mark city location", objectives.marker_suffix(&"", &"", LocationCatalog.ID_CITY_CENTER) == "")
+	gs.story.stage = 6
+	gs.automation.unlocked = true
+	gs.automation.current_expansion_scope = &"city"
+	gs.automation.expansion_progress = 10.0
+	view = _rebuild_objective()
+	_ok("stage 6 marks factory", objectives.marker_suffix(ObjectiveView.TARGET_FACTORY) == ObjectiveView.MARKER_SUFFIX)
+	_ok("factory does not mark actress", objectives.marker_suffix(ObjectiveView.TARGET_GIRL, GirlCatalog.ID_ACTRESS) == "")
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
 
 func _assert_clock(label: String, clock: Variant, minutes: int, day: int, hour: int, minute: int) -> void:
 	_ok("%s game_time_minutes" % label, clock.get_game_time_minutes() == minutes)
@@ -1589,8 +1848,8 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 15", int(root.get("save_version", 0)) == 15)
-	_ok("SAVE_VERSION constant 15", int(sm.SAVE_VERSION) == 15)
+	_ok("save_version == 16", int(root.get("save_version", 0)) == 16)
+	_ok("SAVE_VERSION constant 16", int(sm.SAVE_VERSION) == 16)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -1622,6 +1881,8 @@ func _test_game_state_round_trip() -> void:
 	_ok("section dating", gs.dating != null)
 	_ok("section rivals", gs.rivals != null)
 	_ok("section automation", gs.automation != null)
+	_ok("section guidance", gs.guidance != null)
+	_ok("new_game guidance empty", gs.guidance.shown_tutorial_ids.is_empty() and gs.guidance.shown_milestone_ids.is_empty())
 	gs.from_dict({"flow": {}, "story": {}, "player": {}})
 	_ok("missing keys default game_time_minutes", gs.flow.game_time_minutes == 0)
 	_ok("missing keys default day", clock.get_day() == 1)

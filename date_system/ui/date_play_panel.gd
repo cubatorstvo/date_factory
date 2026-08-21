@@ -83,6 +83,34 @@ func _dating_service() -> Variant:
 		return null
 	return node
 
+func _maybe_request_playthrough_guidance(view: DateEpisodeView) -> void:
+	if not _playthrough:
+		return
+	var guidance: Variant = _guidance_service()
+	if guidance == null:
+		return
+	guidance.request_tutorial(GuidanceCatalog.ID_DATING_INTRO)
+	if view == null:
+		return
+	var has_local: bool = false
+	for local_view in view.local_object_views:
+		if local_view != null and not local_view.options.is_empty():
+			has_local = true
+			break
+	if has_local:
+		guidance.request_tutorial(GuidanceCatalog.ID_LOCAL_OBJECTS_INTRO)
+	for option in view.unlockable_options:
+		if option.availability == DateTypes.MoveAvailability.LOCKED:
+			guidance.request_tutorial(GuidanceCatalog.ID_LOCKED_MOVES_INTRO)
+			break
+
+
+func _guidance_service() -> Variant:
+	var node: Node = get_node_or_null("/root/GuidanceService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -441,6 +469,7 @@ func _build_runner() -> void:
 		_host.add_child(cont)
 	if not _playthrough:
 		_host.add_child(_debug_panel(session, view))
+	_maybe_request_playthrough_guidance(view)
 
 
 func _unavailable_modulate() -> Color:

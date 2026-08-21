@@ -9,6 +9,7 @@ res://
         save/
         time/
         story/
+        guidance/
         actions/
         economy/
         progression/

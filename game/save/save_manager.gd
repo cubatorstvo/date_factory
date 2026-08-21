@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 15
+const SAVE_VERSION: int = 16
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -27,6 +27,15 @@ func _stage_service() -> Node:
 		push_error("StageService autoload missing")
 	return node
 
+func _notify_playthrough_rebuilt(reset_guidance: bool) -> void:
+	var guidance: Variant = get_node_or_null("/root/GuidanceService")
+	if guidance != null:
+		if reset_guidance and guidance.has_method("on_playthrough_reset"):
+			guidance.on_playthrough_reset()
+	var objectives: Variant = get_node_or_null("/root/ObjectiveService")
+	if objectives != null and objectives.has_method("rebuild"):
+		objectives.rebuild()
+
 
 func new_game() -> void:
 	_playthrough().apply_new_game()
@@ -36,7 +45,7 @@ func new_game() -> void:
 	var stages: Variant = _stage_service()
 	if stages != null:
 		stages.reconcile_stage_entry_state()
-
+	_notify_playthrough_rebuilt(true)
 
 func save_game() -> void:
 	var folder: String = save_path.get_base_dir()
@@ -75,8 +84,8 @@ func load_game() -> bool:
 	var stages: Variant = _stage_service()
 	if stages != null:
 		stages.reconcile_stage_entry_state()
+	_notify_playthrough_rebuilt(false)
 	return true
-
 
 func has_save() -> bool:
 	return FileAccess.file_exists(save_path)
@@ -120,6 +129,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v13_city_density(migrated)
 	if from_version < 15:
 		migrated = _migrate_v14_game_core(migrated)
+	if from_version < 16:
+		migrated = _migrate_v15_guidance(migrated)
 	return migrated
 
 
@@ -430,4 +441,17 @@ func _migrate_v14_game_core(state_data: Dictionary) -> Dictionary:
 	progression.erase("owned_outfit_ids")
 	progression.erase("equipped_outfit_id")
 	migrated["progression"] = progression
+	return migrated
+
+func _migrate_v15_guidance(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var guidance_value: Variant = migrated.get("guidance", {})
+	var guidance: Dictionary = {}
+	if guidance_value is Dictionary:
+		guidance = guidance_value
+	if not guidance.has("shown_tutorial_ids"):
+		guidance["shown_tutorial_ids"] = []
+	if not guidance.has("shown_milestone_ids"):
+		guidance["shown_milestone_ids"] = []
+	migrated["guidance"] = guidance
 	return migrated

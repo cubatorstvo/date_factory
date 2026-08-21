@@ -9,6 +9,7 @@ var girls: GirlsState
 var dating: DatingState
 var rivals: RivalsState
 var automation: AutomationState
+var guidance: GuidanceState
 
 
 func _ready() -> void:
@@ -25,6 +26,7 @@ func apply_new_game() -> void:
 	dating = DatingState.new()
 	rivals = RivalsState.new()
 	automation = AutomationState.new()
+	guidance = GuidanceState.new()
 
 
 func to_dict() -> Dictionary:
@@ -38,6 +40,7 @@ func to_dict() -> Dictionary:
 		"dating": dating.to_dict(),
 		"rivals": rivals.to_dict(),
 		"automation": automation.to_dict(),
+		"guidance": guidance.to_dict(),
 	}
 
 
@@ -52,6 +55,7 @@ func from_dict(data: Dictionary) -> void:
 	dating.from_dict(_section(data, "dating"))
 	rivals.from_dict(_section(data, "rivals"))
 	automation.from_dict(_section(data, "automation"))
+	guidance.from_dict(_section(data, "guidance"))
 
 
 func _section(data: Dictionary, key: String) -> Dictionary:
