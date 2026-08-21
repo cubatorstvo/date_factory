@@ -11,5 +11,4 @@ enabled = true
 difficulty_preset_id = &"mid"
 trait_id = &"loves_strong"
 positive_tag_ids = Array[StringName]([&"audacity", &"risk", &"humor", &"dominance"])
-negative_tag_ids = Array[StringName]([&"politeness", &"directness", &"flattery", &"generosity", &"status", &"care", &"composure", &"cunning"])
 initial_known_tag_ids = Array[StringName]([&"risk", &"care"])

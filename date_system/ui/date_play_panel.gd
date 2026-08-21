@@ -333,7 +333,7 @@ func _girl_card() -> PanelContainer:
 	box.add_child(LabUi.trait_block(_catalog(), girl))
 	box.add_child(LabUi.known_preference_block(_catalog(), progress, girl))
 	var unknown := Label.new()
-	unknown.text = "Неизвестно: %d" % progress.unknown_tag_count(girl)
+	unknown.text = "Неизвестно: %d" % progress.unknown_tag_count(girl, _catalog())
 	box.add_child(unknown)
 	return panel
 

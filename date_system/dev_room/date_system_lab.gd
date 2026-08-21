@@ -858,7 +858,6 @@ func _add_situation_move_lists() -> void:
 
 func _add_girl_form() -> void:
 	var girl: GirlProfile = _draft as GirlProfile
-	girl.sync_negative_tags(catalog_service.catalog.enabled_tags())
 	_add_common_identity(girl)
 	var rel_max := Label.new()
 	rel_max.text = "Relationship Max: %d" % GirlCatalog.seed_relationship_max(girl.id)
@@ -901,16 +900,11 @@ func _add_girl_form() -> void:
 		var selected: bool = girl.positive_tag_ids.has(tag.id)
 		var like := CheckBox.new()
 		like.button_pressed = selected
-		var dislike := CheckBox.new()
-		dislike.button_pressed = not selected
+		var dislike := Label.new()
+		dislike.text = "да" if not selected else "—"
 		var tag_id: StringName = tag.id
 		like.toggled.connect(func(pressed: bool) -> void:
 			_set_girl_liked_tag(girl, tag_id, pressed)
-			_dirty = true
-			_rebuild_form.call_deferred()
-		)
-		dislike.toggled.connect(func(pressed: bool) -> void:
-			_set_girl_liked_tag(girl, tag_id, not pressed)
 			_dirty = true
 			_rebuild_form.call_deferred()
 		)
@@ -1017,7 +1011,6 @@ func _set_girl_liked_tag(girl: GirlProfile, tag_id: StringName, liked: bool) -> 
 	girl.positive_tag_ids.erase(tag_id)
 	if liked:
 		girl.positive_tag_ids.append(tag_id)
-	girl.sync_negative_tags(catalog_service.catalog.enabled_tags())
 
 
 func _add_move_form() -> void:
@@ -1307,8 +1300,6 @@ func _delete_item() -> void:
 func _save_item() -> void:
 	if _draft == null:
 		return
-	if _draft is GirlProfile:
-		(_draft as GirlProfile).sync_negative_tags(catalog_service.catalog.enabled_tags())
 	var temp_catalog: DateContentCatalog = catalog_service.catalog.snapshot()
 	_swap_into(temp_catalog, _draft)
 	var issues: Array[ContentValidationIssue] = validator.validate(temp_catalog)

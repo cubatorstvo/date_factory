@@ -120,38 +120,26 @@ func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidati
 				"INVALID_POSITIVE_TAG_COUNT"
 			))
 		var liked: Dictionary = {}
-		var disliked: Dictionary = {}
 		var duplicate_state: PackedStringArray = PackedStringArray()
 		var unknown_ids: PackedStringArray = PackedStringArray()
 		for tag_id in girl.positive_tag_ids:
 			var key: String = String(tag_id)
+			if liked.has(key):
+				if not duplicate_state.has(key):
+					duplicate_state.append(key)
 			liked[key] = true
 			if not enabled_ids.has(key) and not unknown_ids.has(key):
 				unknown_ids.append(key)
-		for tag_id in girl.negative_tag_ids:
-			var key: String = String(tag_id)
-			disliked[key] = true
-			if liked.has(key) and not duplicate_state.has(key):
-				duplicate_state.append(key)
-			if not enabled_ids.has(key) and not unknown_ids.has(key):
-				unknown_ids.append(key)
-		var missing: PackedStringArray = PackedStringArray()
-		for tag_key in enabled_ids.keys():
-			var key: String = String(tag_key)
-			if not liked.has(key) and not disliked.has(key):
-				missing.append(key)
-		if missing.is_empty() and duplicate_state.is_empty() and unknown_ids.is_empty():
+		if duplicate_state.is_empty() and unknown_ids.is_empty():
 			continue
-		missing.sort()
 		duplicate_state.sort()
 		unknown_ids.sort()
 		issues.append(_issue(
 			"GirlProfile",
 			String(girl.id),
-			"tags",
-			"Девушка \"%s\": неполный охват тегов. missing_tag_ids: %s. duplicate_state_tag_ids: %s. unknown_tag_ids: %s." % [
+			"positive_tag_ids",
+			"Девушка \"%s\": повторы или неизвестные положительные теги. duplicate_state_tag_ids: %s. unknown_tag_ids: %s." % [
 				String(girl.id),
-				", ".join(missing) if not missing.is_empty() else "нет",
 				", ".join(duplicate_state) if not duplicate_state.is_empty() else "нет",
 				", ".join(unknown_ids) if not unknown_ids.is_empty() else "нет",
 			],

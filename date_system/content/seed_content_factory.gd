@@ -431,8 +431,9 @@ func _girl(
 	for item in initial_known:
 		known.append(StringName(str(item)))
 	girl.initial_known_tag_ids = known
-	girl.sync_negative_tags(_tags())
 	return girl
+
+
 func _girls() -> Array[GirlProfile]:
 	return [
 		_girl("alina", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "homebody", ["politeness", "audacity"]),

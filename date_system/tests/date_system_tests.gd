@@ -26,6 +26,7 @@ func run_all() -> PackedStringArray:
 	_test_twelve_tag_rebalance()
 	_test_girl_difficulty()
 	_test_dating_core_model()
+	_test_catalog_snapshot()
 	_test_game_state_round_trip()
 	_test_game_time()
 	_test_campaign_stages()
@@ -1011,12 +1012,12 @@ func _test_twelve_tag_rebalance() -> void:
 	var alina: GirlProfile = catalog.find_girl(&"alina")
 	_ok("22.2 Alina difficulty starter", alina.difficulty_preset_id == &"starter")
 	_ok("22.2 Alina positives", _same_tag_set(alina.positive_tag_ids, ["politeness", "directness", "care", "generosity", "composure", "humor"]))
-	_ok("22.2 Alina sizes", alina.positive_tag_ids.size() == 6 and alina.negative_tag_ids.size() == 6)
+	_ok("22.2 Alina sizes", alina.positive_tag_ids.size() == 6 and _computed_negative_count(alina, catalog) == 6)
 	_ok("22.2 Alina range", GirlCatalog.seed_relationship_max(&"alina") == 10)
 	var vika: GirlProfile = catalog.find_girl(&"vika")
 	_ok("22.3 Vika difficulty preset", catalog.find_girl_difficulty(vika.difficulty_preset_id) != null)
 	_ok("22.3 Vika positives exist", vika.positive_tag_ids.size() > 0)
-	_ok("22.3 Vika sizes", vika.positive_tag_ids.size() + vika.negative_tag_ids.size() == catalog.enabled_tags().size())
+	_ok("22.3 Vika sizes", vika.positive_tag_ids.size() + _computed_negative_count(vika, catalog) == catalog.enabled_tags().size())
 	_ok("22.3 Vika range", GirlCatalog.seed_relationship_max(&"vika") == 10)
 	for girl in catalog.girls:
 		_ok("22.4 coverage %s" % String(girl.id), _girl_covers_enabled_tags(girl, enabled))
@@ -1024,12 +1025,10 @@ func _test_twelve_tag_rebalance() -> void:
 	var two: DateContentCatalog = _catalog()
 	var two_girl: GirlProfile = two.find_girl(&"alina")
 	two_girl.positive_tag_ids = [&"care", &"generosity"] as Array[StringName]
-	two_girl.sync_negative_tags(two.enabled_tags())
 	_ok("22.5 two positives", _find_code(validator.validate(two), "INVALID_POSITIVE_TAG_COUNT") != null)
 	var four: DateContentCatalog = _catalog()
 	var four_girl: GirlProfile = four.find_girl(&"alina")
 	four_girl.positive_tag_ids = [&"care", &"generosity", &"composure", &"humor"] as Array[StringName]
-	four_girl.sync_negative_tags(four.enabled_tags())
 	_ok("22.5 four positives", _find_code(validator.validate(four), "INVALID_POSITIVE_TAG_COUNT") != null)
 	var three_issues: Array[ContentValidationIssue] = validator.validate(_catalog())
 	_ok("22.5 six positives pass count", _find_code(three_issues, "INVALID_POSITIVE_TAG_COUNT") == null)
@@ -1073,25 +1072,37 @@ func _test_twelve_tag_rebalance() -> void:
 
 func _girl_covers_enabled_tags(girl: GirlProfile, enabled: Array[DateTag]) -> bool:
 	var positive: Dictionary = {}
-	var negative: Dictionary = {}
 	for tag_id in girl.positive_tag_ids:
-		positive[String(tag_id)] = true
-	for tag_id in girl.negative_tag_ids:
-		negative[String(tag_id)] = true
-	for tag_id in positive.keys():
-		if negative.has(String(tag_id)):
+		var key: String = String(tag_id)
+		if positive.has(key):
 			return false
-	var union: Dictionary = {}
-	for tag_id in positive.keys():
-		union[String(tag_id)] = true
-	for tag_id in negative.keys():
-		union[String(tag_id)] = true
-	if union.size() != enabled.size():
-		return false
+		positive[key] = true
 	for tag in enabled:
-		if not union.has(String(tag.id)):
+		if tag == null:
+			continue
+		var pref: int = girl.prefers_tag(tag.id)
+		if positive.has(String(tag.id)):
+			if pref <= 0:
+				return false
+		elif pref >= 0:
+			return false
+	for key in positive.keys():
+		var found: bool = false
+		for tag in enabled:
+			if tag != null and String(tag.id) == String(key):
+				found = true
+				break
+		if not found:
 			return false
 	return true
+
+
+func _computed_negative_count(girl: GirlProfile, catalog: DateContentCatalog) -> int:
+	var count: int = 0
+	for tag in catalog.enabled_tags():
+		if girl.prefers_tag(tag.id) < 0:
+			count += 1
+	return count
 
 
 func _distinct_base_tags(catalog: DateContentCatalog, situation_id: StringName) -> int:
@@ -1192,7 +1203,6 @@ func _uniform_positive_share(positive_count: int) -> float:
 			break
 		positives.append(tag.id)
 	girl.positive_tag_ids = positives
-	girl.sync_negative_tags(catalog.enabled_tags())
 	var liked: Dictionary = {}
 	for tag_id in girl.positive_tag_ids:
 		liked[String(tag_id)] = true
@@ -1317,15 +1327,14 @@ func _test_girl_difficulty() -> void:
 	mid_girl.difficulty_preset_id = &"mid"
 	mid_girl.trait_id = &"loves_cafe"
 	mid_girl.positive_tag_ids = [&"care", &"generosity", &"composure", &"humor"] as Array[StringName]
-	mid_girl.sync_negative_tags(catalog.enabled_tags())
 	_ok("save mid positive 4", mid_girl.positive_tag_ids.size() == 4)
-	_ok("save mid negative 8", mid_girl.negative_tag_ids.size() == 8)
+	_ok("save mid negative 8", _computed_negative_count(mid_girl, catalog) == 8)
 	_ok("save mid coverage", _girl_covers_enabled_tags(mid_girl, catalog.enabled_tags()))
 	DirAccess.make_dir_recursive_absolute("user://date_system")
 	var path: String = "user://date_system/test_mid_girl.tres"
 	_ok("save mid girl", ResourceSaver.save(mid_girl, path) == OK)
 	var loaded: GirlProfile = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as GirlProfile
-	_ok("reload mid girl", loaded != null and loaded.positive_tag_ids.size() == 4 and loaded.negative_tag_ids.size() == 8)
+	_ok("reload mid girl", loaded != null and loaded.positive_tag_ids.size() == 4 and _computed_negative_count(loaded, catalog) == 8)
 	_ok("reload mid coverage", loaded != null and _girl_covers_enabled_tags(loaded, catalog.enabled_tags()))
 	var starter_girl: GirlProfile = catalog.find_girl(&"alina").duplicate(true) as GirlProfile
 	_ok("starter current 6", starter_girl.positive_tag_ids.size() == 6)
@@ -1333,8 +1342,7 @@ func _test_girl_difficulty() -> void:
 	var required: int = catalog.find_girl_difficulty(&"mid").positive_tag_count
 	_ok("editor shows 6 / 4", starter_girl.positive_tag_ids.size() == 6 and required == 4)
 	starter_girl.positive_tag_ids = [&"care", &"generosity", &"composure", &"humor"] as Array[StringName]
-	starter_girl.sync_negative_tags(catalog.enabled_tags())
-	_ok("after MID save 4/8", starter_girl.difficulty_preset_id == &"mid" and starter_girl.positive_tag_ids.size() == 4 and starter_girl.negative_tag_ids.size() == 8)
+	_ok("after MID save 4/8", starter_girl.difficulty_preset_id == &"mid" and starter_girl.positive_tag_ids.size() == 4 and _computed_negative_count(starter_girl, catalog) == 8)
 	var progress := GirlProgress.new()
 	var alina: GirlProfile = catalog.find_girl(&"alina")
 	progress.reset_to_profile(alina)
@@ -1343,7 +1351,6 @@ func _test_girl_difficulty() -> void:
 	var swapped: GirlProfile = alina.duplicate(true) as GirlProfile
 	swapped.positive_tag_ids.erase(&"care")
 	swapped.positive_tag_ids.append(&"flattery")
-	swapped.sync_negative_tags(catalog.enabled_tags())
 	progress.realign_revealed_to_profile(swapped, catalog)
 	_ok("known care stays known", progress.tag_knowledge(&"care") != DateTypes.TagKnowledge.UNKNOWN)
 	_ok("known flattery stays known", progress.tag_knowledge(&"flattery") != DateTypes.TagKnowledge.UNKNOWN)
@@ -1441,6 +1448,58 @@ func _test_dating_core_model() -> void:
 	_test_venue_trait_and_apartment()
 	_test_raise_stakes_capital_gate()
 	_test_full_date_cycle_result()
+
+
+func _test_catalog_snapshot() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var snap: DateContentCatalog = catalog.snapshot()
+	_ok("snapshot is separate catalog", snap != null and snap != catalog)
+	_ok("snapshot find_girl", snap.find_girl(&"alina") != null)
+	_ok("snapshot find_situation", snap.find_situation(&"appearance_question") != null)
+	_ok("snapshot find_outfit", snap.find_outfit(&"casual") != null)
+	_ok("snapshot find_location", snap.find_location(&"cafe") != null)
+	_ok("snapshot find_trait", snap.find_trait(&"homebody") != null)
+	var opening: DateSituation = snap.find_situation(&"appearance_question")
+	_ok("snapshot allows_phase", opening != null and opening.allows_phase(DateTypes.DatePhase.OPENING))
+	var original_girl_count: int = catalog.girls.size()
+	catalog.girls = []
+	_ok("snapshot arrays independent", snap.girls.size() == original_girl_count and catalog.girls.is_empty())
+	catalog.girls = snap.girls.duplicate()
+	_ok("snapshot shares girl resource", snap.find_girl(&"alina") == catalog.find_girl(&"alina"))
+	_ok("snapshot shares date_rules", snap.date_rules == catalog.date_rules)
+	var girl: GirlProfile = catalog.find_girl(&"alina")
+	var location: DateLocation = catalog.find_location(&"cafe")
+	var progress: GirlProgress = _fresh_progress(catalog, &"alina")
+	var engine: DateEngine = DateEngine.new()
+	var config: DateSessionConfig = DateSessionConfig.new()
+	config.catalog = snap
+	config.girl_id = &"alina"
+	config.location_id = &"cafe"
+	config.outfit_id = &"casual"
+	config.seed = 1
+	config.girl_progress = progress
+	config.player_state = _player()
+	config.relationship_max = 10
+	if location != null:
+		config.local_object_ids = location.local_object_ids.duplicate()
+	var session: DateSession = engine.create_date_session(config)
+	_ok("engine session on snapshot catalog", session != null and engine.get_available_moves().size() > 0)
+	_ok("prefers positive tag +1", girl.prefers_tag(&"politeness") == 1)
+	_ok("prefers other tag -1", girl.prefers_tag(&"audacity") == -1)
+	_ok("seed has no authored negatives", not ("negative_tag_ids" in girl))
+	for item in catalog.girls:
+		_ok("coverage %s" % String(item.id), _girl_covers_enabled_tags(item, catalog.enabled_tags()))
+	var issues: Array[ContentValidationIssue] = ContentValidator.new().validate(catalog)
+	var blocking: bool = false
+	for issue in issues:
+		if issue.severity == DateTypes.ValidationSeverity.ERROR:
+			blocking = true
+			break
+	_ok("seed validator has no errors", not blocking)
+	var roundtrip: GirlProgress = GirlProgress.from_dictionary(progress.to_dictionary())
+	progress.reveal_tag(&"flattery", false, girl)
+	roundtrip = GirlProgress.from_dictionary(progress.to_dictionary())
+	_ok("revealed negatives persist", roundtrip.revealed_negative_tag_ids.has(&"flattery"))
 
 
 func _test_characteristic_trait_rules() -> void:

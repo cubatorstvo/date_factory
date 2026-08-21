@@ -11,10 +11,7 @@ func load_catalog(path: String = CATALOG_PATH) -> DateContentCatalog:
 	var loaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	catalog = loaded as DateContentCatalog
 	if catalog != null:
-		for girl in catalog.girls:
-			if girl != null:
-				girl.sync_negative_tags(catalog.enabled_tags())
-	_rebuild_paths()
+		_rebuild_paths()
 	return catalog
 
 
@@ -126,7 +123,7 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 			if move.local_tag_id == resource_id:
 				result.append({"type": "DateMove", "id": String(move.id), "field": "local_tag_id"})
 		for girl in catalog.girls:
-			if girl.positive_tag_ids.has(resource_id) or girl.negative_tag_ids.has(resource_id):
+			if girl.positive_tag_ids.has(resource_id) or girl.initial_known_tag_ids.has(resource_id):
 				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "tags"})
 	elif kind == "DateSituation":
 		for move in catalog.moves:

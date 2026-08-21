@@ -120,11 +120,6 @@ GIRLS = [
 ]
 
 
-def negative_tags(positives: list[str]) -> list[str]:
-    pos = set(positives)
-    return [tag_id for tag_id in TAG_IDS if tag_id not in pos]
-
-
 def girl_resource_fields(girl: tuple) -> str:
     girl_id, name, description, difficulty, positives, trait_id, initial_known = girl
     return (
@@ -135,7 +130,6 @@ def girl_resource_fields(girl: tuple) -> str:
         f'difficulty_preset_id = &"{difficulty}"\n'
         f'trait_id = &"{trait_id}"\n'
         f"positive_tag_ids = {string_name_array(positives)}\n"
-        f"negative_tag_ids = {string_name_array(negative_tags(positives))}\n"
         f"initial_known_tag_ids = {string_name_array(initial_known)}\n"
     )
 

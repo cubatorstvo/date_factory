@@ -149,6 +149,8 @@ func applicable_moves(situation_id: StringName, kind: DateTypes.DateMoveKind) ->
 
 
 func snapshot() -> DateContentCatalog:
+	# Resource.duplicate() on DateContentCatalog strips scripted methods (find_girl).
+	# Deep-duplicating nested resources also strips methods (DateSituation.allows_phase).
 	var copy := DateContentCatalog.new()
 	copy.tags = tags.duplicate()
 	copy.moves = moves.duplicate()
