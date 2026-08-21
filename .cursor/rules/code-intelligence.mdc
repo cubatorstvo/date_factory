@@ -1,15 +1,87 @@
 ---
-description: Use codebase-memory-mcp and Serena before Grep/Read
+description: DATE FACTORY tool routing — one primary owner per work type, reuse context, batch verification
 alwaysApply: true
 ---
 
 # Code intelligence
 
-Enabled MCPs are required, not optional. Do not start with Grep/Read if they can answer.
+This file is the authoritative project-specific tool routing for `date_factory`. Use it as the specialization of generic MCP/server instructions.
 
-- Architecture, callers, impact, “where is X used” → **codebase-memory-mcp** (`search_graph`, `trace_path`, `detect_changes`).
-- GDScript symbols (def/refs/rename/body) → **Serena** (`relative_path`).
-- Scenes, `.tscn`/`.gd`/`.tres`, editor, runtime → **GodotIQ** (`godotiq_*`).
-- Grep/Read only for docs, JSON, unknown names, or when those miss. One tool, not a chain.
+## Core rule
 
-If a required MCP is down, do not work around it. Diagnose why, report the reasons, and stop.
+Choose one primary information/edit route for each work type and keep that route for the current logical block. Reuse results already present in the conversation.
+
+## GDScript source (`.gd`) — Serena owns source work
+
+Use Serena as the primary tool for GDScript navigation, code reading, references, and targeted source edits.
+
+- Unknown file structure → `get_symbols_overview` once for that file, then reuse it.
+- Known symbol body → `find_symbol`.
+- Symbol references/callers → `find_referencing_symbols`.
+- Text that has no stable symbol → `search_for_pattern`.
+- Targeted edits → Serena symbol/content edit tools (`replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `replace_content`, `safe_delete_symbol` as appropriate).
+- An unchanged symbol/file already returned by Serena remains the active context for the rest of the logical block.
+
+For ordinary `.gd` edits, Serena context satisfies the project's pre-edit code-context step. Proceed from Serena context directly to Serena edit.
+
+## GodotIQ — scene/editor/runtime and batched verification
+
+Use GodotIQ for:
+
+- `.tscn` scene structure and scene-safe edits;
+- `.tres` operations where Godot-aware structured context matters;
+- editor/runtime state, signals, UI map/input, scene/runtime debugging, visual/spatial work;
+- parser/compiler verification after GDScript work.
+
+For `.gd`, reserve `godotiq_file_context`, `godotiq_impact_check`, and `godotiq_script_ops` for cases that specifically require GodotIQ-only information such as scene ownership, editor-buffer state, Godot signal/dependency analysis, or a Godot-editor-routed write.
+
+Verification schedule:
+
+- one-file logical change → one `godotiq_check_errors(scope=file)` after the edit is complete;
+- multi-file logical batch → one `godotiq_check_errors(scope="project")` after the batch;
+- substantial multi-file refactor where convention analysis adds value → one `godotiq_validate(target="project", detail="brief")` after the batch;
+- after a failed check, fix the reported issue and run one focused check again.
+
+This project schedule replaces generic per-edit and per-script validation loops for GDScript.
+
+## codebase-memory — architecture pass
+
+Use codebase-memory for cross-file architecture questions that genuinely need a graph.
+
+Per logical block:
+
+1. one `search_graph` pass for architecture/impact when needed;
+2. one `trace_path` when a concrete cross-file execution path remains unclear;
+3. carry those results forward and use Serena for concrete GDScript symbols, bodies and edits.
+
+Use `get_code_snippet` for a graph hit that requires a snippet and has not already been obtained through Serena.
+
+## Native Cursor tools
+
+Use native tools for:
+
+- docs, Markdown, JSON, config, logs and generated text;
+- filename/path discovery with Glob/Search;
+- shell commands, tests, git and scripts;
+- file edits outside GDScript and Godot scene/resource files.
+
+For GDScript source, Serena is the normal source route.
+
+## Retrieval reuse
+
+Once a tool returns sufficient code/context for a file or symbol, continue from that result. Use a second retrieval route when the first result lacks a concrete piece of information required for the next action.
+
+## Tool discovery
+
+Call known MCP tools directly. Perform tool-schema discovery once when a required tool name/schema is unknown or unavailable, then reuse that schema/result for the session.
+
+## Large tasks
+
+Work in cohesive logical batches. For a cross-system Date Factory feature, prefer this order when applicable:
+
+1. content/domain model;
+2. engine/runtime logic;
+3. UI / Developer Room / Simulator;
+4. regression tests and docs.
+
+Complete the edits in a batch, then perform its verification pass. Carry discovered symbols, architecture and file context forward within the batch.

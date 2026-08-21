@@ -6,13 +6,17 @@ alwaysApply: false
 
 # No `:=` on untyped RHS
 
-Parser error: `Cannot infer the type of "X"`. `:=` needs a concrete RHS type; a left-side hint does not help.
+Parser error: `Cannot infer the type of "X"` means the RHS does not provide a concrete type for `:=`.
 
-`Game.*`, `Dictionary.get`, `get_first_node_in_group` / `find_child` are usually Variant.
+`Game.*`, `Dictionary.get`, `get_first_node_in_group` and `find_child` commonly produce Variant-like values.
+
+Use explicit typing or a typed cast:
 
 ```gdscript
 var tid: String = Game.dating.schedule.target_id()
 var node := tree.get_first_node_in_group("player") as Node3D
 ```
 
-`:=` only for literals, constructors, typed locals. Then `check_errors` on that file.
+Use `:=` for literals, constructors and typed locals.
+
+Compilation verification follows the batched verification schedule in `code-intelligence.mdc`.
