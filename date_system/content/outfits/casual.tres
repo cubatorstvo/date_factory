@@ -8,5 +8,4 @@ id = &"casual"
 display_name = "Повседневный"
 description = "Повседневный"
 enabled = true
-score_bonus = 0
 price = 0

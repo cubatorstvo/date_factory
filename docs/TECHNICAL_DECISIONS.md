@@ -12,7 +12,7 @@
 - Typed `Resource` + `class_name` для каждой сущности
 - Seed-контент — реальные `.tres` в `res://`
 - Сохранение из Developer Room через `ResourceSaver`
-- Date Engine получает snapshot каталога на старте DateSession; уже запущенное свидание не подменяет Resources на лету
+- Date Engine получает snapshot каталога на старте DateSession: новый `DateContentCatalog` с копиями массивов и теми же Resources. `Resource.duplicate()` в Godot 4.7 снимает методы с custom Resource, поэтому глубокое дублирование каталога нельзя использовать. Уже запущенное свидание не подменяет Resources на лету
 
 ## Runtime
 
@@ -28,7 +28,7 @@
 
 - Универсальное правило Date Engine: три последовательных успешных хода с тремя разными тегами дают `Combo +1`
 - Параметры живут в `DateRules` (`combo_required_distinct_success_tags`, `combo_bonus_score`, `combo_max_rewards_per_date`)
-- Старая система Secondary удалена и не восстанавливается
+- Relationship Gain = `max(Raw Date Score, 0)`; свидание не снижает отношения
 
 ## Эпизоды будущего
 
@@ -47,8 +47,8 @@
 - `WorldState.city_stage` 1–3; social cooldown 3/2/1 дня для девушек и соперников
 - Filler-девушки и filler-rivals открываются пачками City Stage; сюжетные цели — Stage + Rating
 - Работа 100/ч, затем 200/ч после Story Stage 3; один shift на календарный игровой день
-- Одежда — последовательный upgrade: Повседневный +0 → Деловой +1 (500) → Роскошный +2 (800)
-- Обычные девушки `0..5`, сложные filler Кира и Ева `0..10`
+- Одежда — последовательный upgrade `casual → business → luxury` без универсального бонуса к итогу свидания
+- Обычные девушки `0..10`, сюжетные `0..15`
 - Combo: три последовательных успешных разных тега, максимум +1 за свидание
 - Game Terms: глобальные жирные термины с tooltip во всех player-facing экранах
 - Story rival: повтор сразу до первой победы; filler rival: City Stage cooldown и остаётся repeatable

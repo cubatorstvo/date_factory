@@ -5,12 +5,11 @@ extends Resource
 @export var display_name: String = ""
 @export var description: String = ""
 @export var enabled: bool = true
-@export var relationship_min: int = -5
-@export var relationship_start: int = 0
-@export var relationship_max: int = 5
 @export var difficulty_preset_id: StringName = &""
+@export var trait_id: StringName = &""
 @export var positive_tag_ids: Array[StringName] = []
 @export var negative_tag_ids: Array[StringName] = []
+@export var initial_known_tag_ids: Array[StringName] = []
 @export var portrait: Texture2D
 @export var future_character_scene: PackedScene
 

@@ -20,6 +20,10 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_phase_coverage(catalog, issues)
 	_check_girl_relationship_bounds(catalog, issues)
 	_check_required_girl_profiles(catalog, issues)
+	_check_girl_traits(catalog, issues)
+	_check_initial_known_tags(catalog, issues)
+	_check_requirement_range(catalog, issues)
+	_check_stage_relationship_max(issues)
 	_check_display_copy(catalog, issues)
 	_check_game_terms(catalog, issues)
 	_check_duplicate_unlockable_tags(catalog, issues)
@@ -36,6 +40,7 @@ func _check_unique_ids(catalog: DateContentCatalog, issues: Array[ContentValidat
 	_unique_group("DateLocalObject", catalog.local_objects, issues)
 	_unique_group("DateLocation", catalog.locations, issues)
 	_unique_group("Outfit", catalog.outfits, issues)
+	_unique_group("GirlTrait", catalog.traits, issues)
 	_unique_group("ProgressionStat", catalog.progression_stats, issues)
 	_unique_group("GirlDifficultyPreset", catalog.girl_difficulty_presets, issues)
 
@@ -282,28 +287,135 @@ func _check_girl_relationship_bounds(catalog: DateContentCatalog, issues: Array[
 	for girl in catalog.girls:
 		if girl == null:
 			continue
-		if girl.relationship_min != 0:
-			issues.append(_issue("GirlProfile", String(girl.id), "relationship_min", "relationship_min должен быть 0."))
-		if girl.relationship_start != 0:
-			issues.append(_issue("GirlProfile", String(girl.id), "relationship_start", "relationship_start должен быть 0."))
-		var expected_max: int = 10 if girl.id == &"kira" or girl.id == &"eva" else 5
-		if girl.relationship_max != expected_max:
-			issues.append(_issue("GirlProfile", String(girl.id), "relationship_max", "relationship_max должен быть %d." % expected_max))
-		if girl.relationship_start < girl.relationship_min or girl.relationship_start > girl.relationship_max:
-			issues.append(_issue("GirlProfile", String(girl.id), "relationship_start", "relationship_start должен быть внутри relationship_min..relationship_max."))
 		var world_girl: GirlDefinition = world_catalog.get_girl(girl.id)
 		if world_girl == null:
 			issues.append(_issue("GirlProfile", String(girl.id), "id", "GirlProfile не имеет пары в GirlCatalog."))
 			continue
-		if world_girl.relationship_min != girl.relationship_min or world_girl.relationship_max != girl.relationship_max:
-			issues.append(_issue("GirlProfile", String(girl.id), "relationship_max", "Границы отношений GirlProfile и GirlCatalog не совпадают."))
+		var expected_max: int = GirlCatalog.seed_relationship_max(girl.id)
+		if world_girl.relationship_min != 0:
+			issues.append(_issue("GirlDefinition", String(girl.id), "relationship_min", "relationship_min должен быть 0."))
+		if world_girl.relationship_max != expected_max:
+			issues.append(_issue("GirlDefinition", String(girl.id), "relationship_max", "relationship_max должен быть %d." % expected_max))
 
 
 func _check_required_girl_profiles(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
-	for required_id in [&"kira", &"eva"]:
-		if catalog.find_girl(required_id) != null:
+	var world_catalog: GirlCatalog = GirlCatalog.create_seed()
+	var world_girls: Array[GirlDefinition] = world_catalog.get_all_girls()
+	if catalog.girls.size() != world_girls.size():
+		issues.append(_issue("GirlProfile", "", "id", "Date Content должен содержать ровно %d профилей." % world_girls.size()))
+	for definition in world_girls:
+		if definition == null:
 			continue
-		issues.append(_issue("GirlProfile", String(required_id), "id", "В каталоге должна быть девушка \"%s\"." % String(required_id)))
+		if catalog.find_girl(definition.id) != null:
+			continue
+		issues.append(_issue("GirlProfile", String(definition.id), "id", "В каталоге должна быть девушка \"%s\"." % String(definition.id)))
+
+
+func _check_girl_traits(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	for girl in catalog.girls:
+		if girl == null or not girl.enabled:
+			continue
+		var girl_trait: GirlTrait = catalog.find_trait(girl.trait_id)
+		if girl_trait == null or not girl_trait.enabled:
+			issues.append(_issue("GirlProfile", String(girl.id), "trait_id", "У девушки должен быть ровно один существующий Trait."))
+			continue
+		match girl_trait.kind:
+			GirlTrait.Kind.CHARACTERISTIC:
+				var stat: ProgressionStat = catalog.find_stat(girl_trait.characteristic_id)
+				if stat == null:
+					issues.append(_issue("GirlTrait", String(girl_trait.id), "characteristic_id", "Trait характеристики должен ссылаться на каноническую характеристику."))
+			GirlTrait.Kind.VENUE:
+				var location: DateLocation = catalog.find_location(girl_trait.date_location_id)
+				if location == null:
+					issues.append(_issue("GirlTrait", String(girl_trait.id), "date_location_id", "Trait места должен ссылаться на существующий DateLocation."))
+
+
+func _expected_initial_known(girl_id: StringName) -> Array[StringName]:
+	match String(girl_id):
+		"alina":
+			return [&"politeness", &"audacity"]
+		"marina":
+			return [&"care", &"risk"]
+		"vika":
+			return [&"humor", &"politeness"]
+		"dasha":
+			return [&"risk", &"care"]
+		"katya":
+			return [&"humor", &"status"]
+		"lera":
+			return [&"status", &"audacity"]
+		"kira":
+			return [&"audacity", &"flattery"]
+		"olya":
+			return [&"generosity", &"dominance"]
+		"sonya":
+			return [&"risk", &"composure"]
+		"nika":
+			return [&"cunning", &"flattery"]
+		"rita":
+			return [&"status", &"care"]
+		"eva":
+			return [&"dominance", &"humor"]
+		_:
+			var empty: Array[StringName] = []
+			return empty
+
+
+func _check_initial_known_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	for girl in catalog.girls:
+		if girl == null or not girl.enabled:
+			continue
+		var expected: Array[StringName] = _expected_initial_known(girl.id)
+		if GirlCatalog.is_story_girl_id(girl.id):
+			if not girl.initial_known_tag_ids.is_empty():
+				issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_ids", "У сюжетной девушки начально известные Tags должны быть пустыми."))
+			continue
+		var positive_count: int = 0
+		var negative_count: int = 0
+		for tag_id in girl.initial_known_tag_ids:
+			var tag: DateTag = catalog.find_tag(tag_id)
+			if tag == null or not tag.enabled:
+				issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_ids", "Начально известный Tag не существует или отключён: %s." % String(tag_id)))
+				continue
+			if girl.prefers_tag(tag_id) > 0:
+				positive_count += 1
+			else:
+				negative_count += 1
+		if girl.initial_known_tag_ids.size() != 2 or positive_count != 1 or negative_count != 1:
+			issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_ids", "У обычной девушки должны быть ровно один положительный и один отрицательный начально известный Tag."))
+		if girl.initial_known_tag_ids.size() == expected.size():
+			var matches: bool = true
+			for tag_id in expected:
+				if not girl.initial_known_tag_ids.has(tag_id):
+					matches = false
+					break
+			if not matches:
+				issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_ids", "Начально известные Tags не совпадают с канонической таблицей."))
+
+
+func _check_requirement_range(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	for move in catalog.moves:
+		if move == null or move.unlock_requirement == null:
+			continue
+		var required: int = move.unlock_requirement.required_level
+		if required < 0 or required > 5:
+			issues.append(_issue("DateMove", String(move.id), "unlock_requirement.required_level", "Требование характеристики должно быть в диапазоне 0..5."))
+	for stat in catalog.progression_stats:
+		if stat == null:
+			continue
+		if stat.min_level != 0 or stat.max_level != 5:
+			issues.append(_issue("ProgressionStat", String(stat.id), "max_level", "Характеристика должна иметь диапазон 0..5."))
+
+
+func _check_stage_relationship_max(issues: Array[ContentValidationIssue]) -> void:
+	var world_catalog: GirlCatalog = GirlCatalog.create_seed()
+	for girl_id in [GirlCatalog.ID_ACTRESS, GirlCatalog.ID_MINE_BOSS, GirlCatalog.ID_MAGAZINE_EDITOR, GirlCatalog.ID_SCIENTIST, GirlCatalog.ID_PRESIDENT]:
+		var definition: GirlDefinition = world_catalog.get_girl(girl_id)
+		if definition == null:
+			continue
+		var requirement: GirlRelationshipRequirement = StageCatalog.make_girl_relationship_requirement(definition)
+		if requirement == null or requirement.target_relationship != definition.relationship_max:
+			issues.append(_issue("StageCatalog", String(girl_id), "target_relationship", "StageCatalog должен использовать relationship_max сюжетной девушки."))
 
 
 func _check_game_terms(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:

@@ -14,6 +14,7 @@ func build_catalog() -> DateContentCatalog:
 	catalog.local_objects = _local_objects()
 	catalog.locations = _locations()
 	catalog.outfits = _outfits()
+	catalog.traits = _traits()
 	catalog.situations = _situations()
 	catalog.moves = _moves()
 	catalog.girl_difficulty_presets = _difficulties()
@@ -29,6 +30,7 @@ func export_to_disk() -> void:
 	_save_group(catalog.local_objects, "res://date_system/content/local_objects")
 	_save_group(catalog.locations, "res://date_system/content/locations")
 	_save_group(catalog.outfits, "res://date_system/content/outfits")
+	_save_group(catalog.traits, "res://date_system/content/traits")
 	_save_group(catalog.situations, "res://date_system/content/situations")
 	_save_group(catalog.moves, "res://date_system/content/moves")
 	_save_group(catalog.girl_difficulty_presets, "res://date_system/content/girl_difficulty")
@@ -148,22 +150,21 @@ func _locations() -> Array[DateLocation]:
 	]
 
 
-func _outfit(id: String, name: String, bonus: int, price: int) -> Outfit:
+func _outfit(id: String, name: String, price: int) -> Outfit:
 	var outfit := Outfit.new()
 	outfit.id = StringName(id)
 	outfit.display_name = name
 	outfit.description = name
 	outfit.enabled = true
-	outfit.score_bonus = bonus
 	outfit.price = price
 	return outfit
 
 
 func _outfits() -> Array[Outfit]:
 	return [
-		_outfit("casual", "Повседневный", 0, 0),
-		_outfit("business", "Деловой", 1, 500),
-		_outfit("luxury", "Роскошный", 2, 800),
+		_outfit("casual", "Повседневный", 0),
+		_outfit("business", "Деловой", 500),
+		_outfit("luxury", "Роскошный", 800),
 	]
 
 
@@ -382,13 +383,37 @@ func _difficulties() -> Array[GirlDifficultyPreset]:
 	]
 
 
+func _trait(id: String, name: String, description: String, kind: GirlTrait.Kind, characteristic_id: String = "", location_id: String = "") -> GirlTrait:
+	var girl_trait := GirlTrait.new()
+	girl_trait.id = StringName(id)
+	girl_trait.display_name = name
+	girl_trait.description = description
+	girl_trait.enabled = true
+	girl_trait.kind = kind
+	girl_trait.characteristic_id = StringName(characteristic_id)
+	girl_trait.date_location_id = StringName(location_id)
+	return girl_trait
+
+
+func _traits() -> Array[GirlTrait]:
+	return [
+		_trait("loves_strong", "Любит сильных", "Первый за свидание положительный ход с требованием Мышца даёт +1.", GirlTrait.Kind.CHARACTERISTIC, "muscle"),
+		_trait("values_appearance", "Ценит внешность", "Первый за свидание положительный ход с требованием Внешность даёт +1.", GirlTrait.Kind.CHARACTERISTIC, "appearance"),
+		_trait("loves_wealthy", "Любит обеспеченных", "Первый за свидание положительный ход с требованием Капитал даёт +1.", GirlTrait.Kind.CHARACTERISTIC, "capital"),
+		_trait("senses_aura", "Чувствует ауру", "Первый за свидание положительный ход с требованием Аура даёт +1.", GirlTrait.Kind.CHARACTERISTIC, "aura"),
+		_trait("homebody", "Домоседка", "Свидание в Квартире даёт +1 к итогу.", GirlTrait.Kind.VENUE, "", "apartment"),
+		_trait("loves_cafe", "Любит кафе", "Свидание в Кафе даёт +1 к итогу.", GirlTrait.Kind.VENUE, "", "cafe"),
+		_trait("loves_restaurants", "Любит рестораны", "Свидание в Ресторане даёт +1 к итогу.", GirlTrait.Kind.VENUE, "", "restaurant"),
+	]
+
+
 func _girl(
 	id: String,
 	name: String,
 	difficulty_id: String,
-	rel_min: int,
-	rel_max: int,
 	positives: Array,
+	trait_id: String,
+	initial_known: Array,
 	description: String = ""
 ) -> GirlProfile:
 	var girl: GirlProfile = GirlProfile.new()
@@ -396,38 +421,38 @@ func _girl(
 	girl.display_name = name
 	girl.description = name if description.is_empty() else description
 	girl.enabled = true
-	girl.relationship_min = rel_min
-	girl.relationship_start = 0
-	girl.relationship_max = rel_max
 	girl.difficulty_preset_id = StringName(difficulty_id)
+	girl.trait_id = StringName(trait_id)
 	var pos: Array[StringName] = []
 	for item in positives:
 		pos.append(StringName(str(item)))
 	girl.positive_tag_ids = pos
+	var known: Array[StringName] = []
+	for item in initial_known:
+		known.append(StringName(str(item)))
+	girl.initial_known_tag_ids = known
 	girl.sync_negative_tags(_tags())
 	return girl
-
 func _girls() -> Array[GirlProfile]:
 	return [
-		_girl("alina", "Алина", "starter", 0, 5, ["politeness", "directness", "care", "generosity", "composure", "humor"]),
-		_girl("marina", "Марина", "mid", 0, 5, ["care", "composure", "directness", "humor"], "держит спокойный тон и предпочитает ясную заботу без суеты"),
-		_girl("girl_actress", "Актриса", "early", 0, 5, ["flattery", "audacity", "generosity", "status", "humor"], "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
-		_girl("vika", "Вика", "early", 0, 5, ["audacity", "dominance", "risk", "humor", "cunning"]),
-		_girl("dasha", "Даша", "mid", 0, 5, ["audacity", "risk", "humor", "dominance"], "любит дерзкие ставки и человека, который не боится задать тон"),
-		_girl("girl_mine_boss", "Начальница шахты", "mid", 0, 5, ["directness", "dominance", "generosity", "composure"], "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
-		_girl("katya", "Катя", "mid", 0, 5, ["directness", "risk", "humor", "cunning"], "любит спонтанность, игры, подколы и быстрые нестандартные решения"),
-		_girl("girl_magazine_editor", "Редактор журнала", "mid", 0, 5, ["directness", "status", "composure", "cunning"], "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),
-		_girl("lera", "Лера", "mid", 0, 5, ["politeness", "flattery", "status", "composure"], "любит красивую спокойную подачу, хороший вкус и социальную уверенность"),
-		_girl("kira", "Кира", "mid", 0, 10, ["directness", "audacity", "cunning", "composure"], "режет лишнее напрямую, проверяет наглостью и держит самообладание дольше, чем удобно"),
-		_girl("olya", "Оля", "mid", 0, 5, ["generosity", "status", "care", "politeness"], "ценит щедрый жест, статус и вежливый уход за атмосферой"),
-		_girl("girl_scientist", "Учёная", "mid", 0, 5, ["directness", "composure", "cunning", "care"], "ценит ясность, спокойствие, наблюдательность и необычные решения"),
-		_girl("sonya", "Соня", "late", 0, 5, ["audacity", "risk", "humor"], "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"),
-		_girl("nika", "Ника", "mid", 0, 5, ["cunning", "directness", "audacity", "composure"], "проверяет собеседника прямым ходом и обходным правилом"),
-		_girl("rita", "Рита", "mid", 0, 5, ["status", "dominance", "generosity", "risk"], "любит дорогой жест, контроль сцены и риск напоказ"),
-		_girl("eva", "Ева", "mid", 0, 10, ["status", "dominance", "risk", "generosity"], "занимает зал статусом, щедрым жестом и ставкой, которую нельзя тихо отменить"),
-		_girl("girl_president", "Президент", "late", 0, 5, ["dominance", "status", "composure"], "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание"),
+		_girl("alina", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "homebody", ["politeness", "audacity"]),
+		_girl("marina", "Марина", "mid", ["care", "composure", "directness", "humor"], "senses_aura", ["care", "risk"], "держит спокойный тон и предпочитает ясную заботу без суеты"),
+		_girl("girl_actress", "Актриса", "early", ["flattery", "audacity", "generosity", "status", "humor"], "values_appearance", [], "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
+		_girl("vika", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "values_appearance", ["humor", "politeness"]),
+		_girl("dasha", "Даша", "mid", ["audacity", "risk", "humor", "dominance"], "loves_strong", ["risk", "care"], "любит дерзкие ставки и человека, который не боится задать тон"),
+		_girl("girl_mine_boss", "Начальница шахты", "mid", ["directness", "dominance", "generosity", "composure"], "loves_restaurants", [], "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
+		_girl("katya", "Катя", "mid", ["directness", "risk", "humor", "cunning"], "loves_cafe", ["humor", "status"], "любит спонтанность, игры, подколы и быстрые нестандартные решения"),
+		_girl("girl_magazine_editor", "Редактор журнала", "mid", ["directness", "status", "composure", "cunning"], "senses_aura", [], "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),
+		_girl("lera", "Лера", "mid", ["politeness", "flattery", "status", "composure"], "loves_restaurants", ["status", "audacity"], "любит красивую спокойную подачу, хороший вкус и социальную уверенность"),
+		_girl("kira", "Кира", "mid", ["directness", "audacity", "cunning", "composure"], "loves_strong", ["audacity", "flattery"], "режет лишнее напрямую, проверяет наглостью и держит самообладание дольше, чем удобно"),
+		_girl("olya", "Оля", "mid", ["generosity", "status", "care", "politeness"], "loves_wealthy", ["generosity", "dominance"], "ценит щедрый жест, статус и вежливый уход за атмосферой"),
+		_girl("girl_scientist", "Учёная", "mid", ["directness", "composure", "cunning", "care"], "loves_cafe", [], "ценит ясность, спокойствие, наблюдательность и необычные решения"),
+		_girl("sonya", "Соня", "late", ["audacity", "risk", "humor"], "homebody", ["risk", "composure"], "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю"),
+		_girl("nika", "Ника", "mid", ["cunning", "directness", "audacity", "composure"], "senses_aura", ["cunning", "flattery"], "проверяет собеседника прямым ходом и обходным правилом"),
+		_girl("rita", "Рита", "mid", ["status", "dominance", "generosity", "risk"], "loves_wealthy", ["status", "care"], "любит дорогой жест, контроль сцены и риск напоказ"),
+		_girl("eva", "Ева", "mid", ["status", "dominance", "risk", "generosity"], "loves_restaurants", ["dominance", "humor"], "занимает зал статусом, щедрым жестом и ставкой, которую нельзя тихо отменить"),
+		_girl("girl_president", "Президент", "late", ["dominance", "status", "composure"], "loves_wealthy", [], "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание"),
 	]
-
 func _rules() -> DateRules:
 	var rules := DateRules.new()
 	rules.opening_episode_count = 1

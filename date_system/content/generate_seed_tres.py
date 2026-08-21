@@ -73,9 +73,9 @@ LOCATIONS = [
 ]
 
 OUTFITS = [
-    ("casual", "Повседневный", 0, 0),
-    ("business", "Деловой", 1, 500),
-    ("luxury", "Роскошный", 2, 800),
+    ("casual", "Повседневный", 0),
+    ("business", "Деловой", 500),
+    ("luxury", "Роскошный", 800),
 ]
 
 DIFFICULTIES = [
@@ -88,25 +88,35 @@ DIFFICULTIES = [
 
 TAG_IDS = [tag_id for tag_id, *_ in TAGS]
 
-# id, name, description, difficulty, positives, relationship_max
+TRAITS = [
+    ("loves_strong", "Любит сильных", "Первый за свидание положительный ход с требованием Мышца даёт +1.", 0, "muscle", ""),
+    ("values_appearance", "Ценит внешность", "Первый за свидание положительный ход с требованием Внешность даёт +1.", 0, "appearance", ""),
+    ("loves_wealthy", "Любит обеспеченных", "Первый за свидание положительный ход с требованием Капитал даёт +1.", 0, "capital", ""),
+    ("senses_aura", "Чувствует ауру", "Первый за свидание положительный ход с требованием Аура даёт +1.", 0, "aura", ""),
+    ("homebody", "Домоседка", "Свидание в Квартире даёт +1 к итогу.", 1, "", "apartment"),
+    ("loves_cafe", "Любит кафе", "Свидание в Кафе даёт +1 к итогу.", 1, "", "cafe"),
+    ("loves_restaurants", "Любит рестораны", "Свидание в Ресторане даёт +1 к итогу.", 1, "", "restaurant"),
+]
+
+# id, name, description, difficulty, positives, trait_id, initial_known
 GIRLS = [
-    ("alina", "Алина", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], 5),
-    ("marina", "Марина", "держит спокойный тон и предпочитает ясную заботу без суеты", "mid", ["care", "composure", "directness", "humor"], 5),
-    ("girl_actress", "Актриса", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу", "early", ["flattery", "audacity", "generosity", "status", "humor"], 5),
-    ("vika", "Вика", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], 5),
-    ("dasha", "Даша", "любит дерзкие ставки и человека, который не боится задать тон", "mid", ["audacity", "risk", "humor", "dominance"], 5),
-    ("girl_mine_boss", "Начальница шахты", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением", "mid", ["directness", "dominance", "generosity", "composure"], 5),
-    ("katya", "Катя", "любит спонтанность, игры, подколы и быстрые нестандартные решения", "mid", ["directness", "risk", "humor", "cunning"], 5),
-    ("girl_magazine_editor", "Редактор журнала", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова", "mid", ["directness", "status", "composure", "cunning"], 5),
-    ("lera", "Лера", "любит красивую спокойную подачу, хороший вкус и социальную уверенность", "mid", ["politeness", "flattery", "status", "composure"], 5),
-    ("kira", "Кира", "режет лишнее напрямую, проверяет наглостью и держит самообладание дольше, чем удобно", "mid", ["directness", "audacity", "cunning", "composure"], 10),
-    ("olya", "Оля", "ценит щедрый жест, статус и вежливый уход за атмосферой", "mid", ["generosity", "status", "care", "politeness"], 5),
-    ("girl_scientist", "Учёная", "ценит ясность, спокойствие, наблюдательность и необычные решения", "mid", ["directness", "composure", "cunning", "care"], 5),
-    ("sonya", "Соня", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю", "late", ["audacity", "risk", "humor"], 5),
-    ("nika", "Ника", "проверяет собеседника прямым ходом и обходным правилом", "mid", ["cunning", "directness", "audacity", "composure"], 5),
-    ("rita", "Рита", "любит дорогой жест, контроль сцены и риск напоказ", "mid", ["status", "dominance", "generosity", "risk"], 5),
-    ("eva", "Ева", "занимает зал статусом, щедрым жестом и ставкой, которую нельзя тихо отменить", "mid", ["status", "dominance", "risk", "generosity"], 10),
-    ("girl_president", "Президент", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание", "late", ["dominance", "status", "composure"], 5),
+    ("alina", "Алина", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "homebody", ["politeness", "audacity"]),
+    ("marina", "Марина", "держит спокойный тон и предпочитает ясную заботу без суеты", "mid", ["care", "composure", "directness", "humor"], "senses_aura", ["care", "risk"]),
+    ("girl_actress", "Актриса", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу", "early", ["flattery", "audacity", "generosity", "status", "humor"], "values_appearance", []),
+    ("vika", "Вика", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "values_appearance", ["humor", "politeness"]),
+    ("dasha", "Даша", "любит дерзкие ставки и человека, который не боится задать тон", "mid", ["audacity", "risk", "humor", "dominance"], "loves_strong", ["risk", "care"]),
+    ("girl_mine_boss", "Начальница шахты", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением", "mid", ["directness", "dominance", "generosity", "composure"], "loves_restaurants", []),
+    ("katya", "Катя", "любит спонтанность, игры, подколы и быстрые нестандартные решения", "mid", ["directness", "risk", "humor", "cunning"], "loves_cafe", ["humor", "status"]),
+    ("girl_magazine_editor", "Редактор журнала", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова", "mid", ["directness", "status", "composure", "cunning"], "senses_aura", []),
+    ("lera", "Лера", "любит красивую спокойную подачу, хороший вкус и социальную уверенность", "mid", ["politeness", "flattery", "status", "composure"], "loves_restaurants", ["status", "audacity"]),
+    ("kira", "Кира", "режет лишнее напрямую, проверяет наглостью и держит самообладание дольше, чем удобно", "mid", ["directness", "audacity", "cunning", "composure"], "loves_strong", ["audacity", "flattery"]),
+    ("olya", "Оля", "ценит щедрый жест, статус и вежливый уход за атмосферой", "mid", ["generosity", "status", "care", "politeness"], "loves_wealthy", ["generosity", "dominance"]),
+    ("girl_scientist", "Учёная", "ценит ясность, спокойствие, наблюдательность и необычные решения", "mid", ["directness", "composure", "cunning", "care"], "loves_cafe", []),
+    ("sonya", "Соня", "поздняя необязательная девушка, которая любит хаос, риск и человека, способного превратить свидание в историю", "late", ["audacity", "risk", "humor"], "homebody", ["risk", "composure"]),
+    ("nika", "Ника", "проверяет собеседника прямым ходом и обходным правилом", "mid", ["cunning", "directness", "audacity", "composure"], "senses_aura", ["cunning", "flattery"]),
+    ("rita", "Рита", "любит дорогой жест, контроль сцены и риск напоказ", "mid", ["status", "dominance", "generosity", "risk"], "loves_wealthy", ["status", "care"]),
+    ("eva", "Ева", "занимает зал статусом, щедрым жестом и ставкой, которую нельзя тихо отменить", "mid", ["status", "dominance", "risk", "generosity"], "loves_restaurants", ["dominance", "humor"]),
+    ("girl_president", "Президент", "максимально статусная ручная сюжетная цель; ценит контроль, положение и абсолютное самообладание", "late", ["dominance", "status", "composure"], "loves_wealthy", []),
 ]
 
 
@@ -116,18 +126,17 @@ def negative_tags(positives: list[str]) -> list[str]:
 
 
 def girl_resource_fields(girl: tuple) -> str:
-    girl_id, name, description, difficulty, positives, relationship_max = girl
+    girl_id, name, description, difficulty, positives, trait_id, initial_known = girl
     return (
         f'id = &"{girl_id}"\n'
         f'display_name = "{esc(name)}"\n'
         f'description = "{esc(description)}"\n'
         "enabled = true\n"
-        "relationship_min = 0\n"
-        "relationship_start = 0\n"
-        f"relationship_max = {relationship_max}\n"
         f'difficulty_preset_id = &"{difficulty}"\n'
+        f'trait_id = &"{trait_id}"\n'
         f"positive_tag_ids = {string_name_array(positives)}\n"
         f"negative_tag_ids = {string_name_array(negative_tags(positives))}\n"
+        f"initial_known_tag_ids = {string_name_array(initial_known)}\n"
     )
 
 
@@ -404,13 +413,13 @@ def main() -> None:
             CONTENT / "locations" / f"{loc_id}.tres",
             simple_resource("DateLocation", "res://date_system/content/date_location.gd", fields),
         )
-    for outfit_id, name, bonus, price in OUTFITS:
+    for outfit_id, name, price in OUTFITS:
         write(
             CONTENT / "outfits" / f"{outfit_id}.tres",
             simple_resource(
                 "Outfit",
                 "res://date_system/content/outfit.gd",
-                f'id = &"{outfit_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(name)}"\nenabled = true\nscore_bonus = {bonus}\nprice = {price}\n',
+                f'id = &"{outfit_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(name)}"\nenabled = true\nprice = {price}\n',
             ),
         )
     for sit_id, name, text, phase in SITUATIONS:
@@ -451,6 +460,21 @@ def main() -> None:
         )
 
     write_girls()
+    for trait_id, name, desc, kind, characteristic_id, location_id in TRAITS:
+        write(
+            CONTENT / "traits" / f"{trait_id}.tres",
+            simple_resource(
+                "GirlTrait",
+                "res://date_system/content/girl_trait.gd",
+                f'id = &"{trait_id}"\n'
+                f'display_name = "{esc(name)}"\n'
+                f'description = "{esc(desc)}"\n'
+                "enabled = true\n"
+                f"kind = {kind}\n"
+                f'characteristic_id = &"{characteristic_id}"\n'
+                f'date_location_id = &"{location_id}"\n',
+            ),
+        )
 
     write(
         CONTENT / "rules" / "date_rules.tres",
@@ -483,6 +507,7 @@ def main() -> None:
     object_ids = [add_res(f"res://date_system/content/local_objects/{i}.tres", "obj") for i, *_ in LOCAL_OBJECTS]
     loc_ids = [add_res(f"res://date_system/content/locations/{i}.tres", "loc") for i, *_ in LOCATIONS]
     outfit_ids = [add_res(f"res://date_system/content/outfits/{i}.tres", "outfit") for i, *_ in OUTFITS]
+    trait_ids = [add_res(f"res://date_system/content/traits/{i}.tres", "trait") for i, *_ in TRAITS]
     stat_ids = [add_res(f"res://date_system/content/progression/{i}.tres", "stat") for i, *_ in STATS]
     rules_id = add_res("res://date_system/content/rules/date_rules.tres", "rules")
 
@@ -503,6 +528,7 @@ def main() -> None:
         + f"local_objects = {arr(object_ids)}\n"
         + f"locations = {arr(loc_ids)}\n"
         + f"outfits = {arr(outfit_ids)}\n"
+        + f"traits = {arr(trait_ids)}\n"
         + f"progression_stats = {arr(stat_ids)}\n"
         + f'date_rules = ExtResource("{rules_id}")\n'
     )

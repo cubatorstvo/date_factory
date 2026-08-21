@@ -53,6 +53,7 @@ func default_path_for(kind: String, resource_id: String) -> String:
 		"DateLocalObject": "res://date_system/content/local_objects",
 		"DateLocation": "res://date_system/content/locations",
 		"Outfit": "res://date_system/content/outfits",
+		"GirlTrait": "res://date_system/content/traits",
 		"ProgressionStat": "res://date_system/content/progression",
 		"GirlDifficultyPreset": "res://date_system/content/girl_difficulty",
 		"DateRules": "res://date_system/content/rules",
@@ -78,6 +79,8 @@ func add_to_catalog(resource: Resource) -> void:
 		catalog.locations.append(resource)
 	elif resource is Outfit:
 		catalog.outfits.append(resource)
+	elif resource is GirlTrait:
+		catalog.traits.append(resource)
 	elif resource is ProgressionStat:
 		catalog.progression_stats.append(resource)
 	elif resource is GirlDifficultyPreset:
@@ -103,6 +106,8 @@ func remove_from_catalog(resource: Resource) -> void:
 		catalog.locations.erase(resource)
 	elif resource is Outfit:
 		catalog.outfits.erase(resource)
+	elif resource is GirlTrait:
+		catalog.traits.erase(resource)
 	elif resource is ProgressionStat:
 		catalog.progression_stats.erase(resource)
 	elif resource is GirlDifficultyPreset:
@@ -144,6 +149,10 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 		for girl in catalog.girls:
 			if girl.difficulty_preset_id == resource_id:
 				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "difficulty_preset_id"})
+	elif kind == "GirlTrait":
+		for girl in catalog.girls:
+			if girl.trait_id == resource_id:
+				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "trait_id"})
 	return result
 
 
@@ -158,6 +167,7 @@ func _rebuild_paths() -> void:
 	_capture_array(catalog.local_objects, "DateLocalObject")
 	_capture_array(catalog.locations, "DateLocation")
 	_capture_array(catalog.outfits, "Outfit")
+	_capture_array(catalog.traits, "GirlTrait")
 	_capture_array(catalog.progression_stats, "ProgressionStat")
 	_capture_array(catalog.girl_difficulty_presets, "GirlDifficultyPreset")
 	if catalog.date_rules != null:

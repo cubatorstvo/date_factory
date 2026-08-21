@@ -5,9 +5,11 @@ extends Resource
 @export var core_scores: Array[int] = []
 @export var closing_scores: Array[int] = []
 @export var combo_score: int = 0
-@export var outfit_score: int = 0
+@export var girl_trait_score: int = 0
+@export var girl_trait_display_name: String = ""
 @export var apartment_preparation_score: int = 0
 @export var total: int = 0
+@export var relationship_gain: int = 0
 
 
 func recompute() -> void:
@@ -19,8 +21,9 @@ func recompute() -> void:
 	for value in closing_scores:
 		total += value
 	total += combo_score
-	total += outfit_score
+	total += girl_trait_score
 	total += apartment_preparation_score
+	relationship_gain = maxi(total, 0)
 
 
 func to_dictionary() -> Dictionary:
@@ -29,7 +32,9 @@ func to_dictionary() -> Dictionary:
 		"core_scores": core_scores.duplicate(),
 		"closing_scores": closing_scores.duplicate(),
 		"combo_score": combo_score,
-		"outfit_score": outfit_score,
+		"girl_trait_score": girl_trait_score,
+		"girl_trait_display_name": girl_trait_display_name,
 		"apartment_preparation_score": apartment_preparation_score,
 		"total": total,
+		"relationship_gain": relationship_gain,
 	}

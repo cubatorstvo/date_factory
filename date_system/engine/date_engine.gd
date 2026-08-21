@@ -48,7 +48,12 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.outfit_id = config.outfit_id
 	_session.relationship_before = _girl_progress.relationship
 	_session.relationship_after = _girl_progress.relationship
+	_session.relationship_max = config.relationship_max
+	_session.girl_trait_applied = false
 	_session.score_breakdown = DateScoreBreakdown.new()
+	var girl_trait: GirlTrait = _catalog.find_trait(_girl.trait_id)
+	if girl_trait != null:
+		_session.score_breakdown.girl_trait_display_name = girl_trait.display_name
 	_session.used_unlockable_move_counts = {}
 	_session.local_object_ids = config.local_object_ids.duplicate()
 	_session.used_local_object_ids = []
@@ -107,7 +112,7 @@ func choose_move(move_id: StringName) -> void:
 	var score: int = _score_for_phase(_session.current_phase, preference)
 	var revealed: bool = false
 	if _catalog.date_rules.reveal_tag_after_use:
-		revealed = _girl_progress.reveal_tag(tag_id, preference > 0)
+		revealed = _girl_progress.reveal_tag(tag_id, preference > 0, _girl)
 		if revealed:
 			_session.revealed_tags_during_session.append(tag_id)
 			var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.POSITIVE if preference > 0 else DateTypes.TagKnowledge.NEGATIVE
@@ -135,6 +140,7 @@ func choose_move(move_id: StringName) -> void:
 	episode.score_delta = score
 	episode.revealed_tag = revealed
 	episode.result_text = move.resolved_result_text(situation_id, preference > 0)
+	_apply_characteristic_trait(episode, move)
 
 	_session.episode_history.append(episode)
 	_session.current_selected_move_id = move_id
@@ -351,7 +357,7 @@ func _build_options(move_ids: Array[StringName], kind: DateTypes.DateMoveKind) -
 		option.tag_id = tag_id
 		var tag: DateTag = _catalog.find_tag(tag_id)
 		option.tag_display_name = tag.display_name if tag != null else String(tag_id)
-		option.tag_knowledge = _girl_progress.tag_knowledge(tag_id)
+		option.tag_knowledge = _girl_progress.tag_knowledge(tag_id, _girl)
 		if kind == DateTypes.DateMoveKind.UNLOCKABLE:
 			option.availability = _move_availability(move)
 			if move.unlock_requirement != null:
@@ -414,7 +420,7 @@ func _build_local_option(move_id: StringName, local_object: DateLocalObject, obj
 	option.tag_id = move.resolved_tag_id(&"")
 	var tag: DateTag = _catalog.find_tag(option.tag_id)
 	option.tag_display_name = tag.display_name if tag != null else String(option.tag_id)
-	option.tag_knowledge = _girl_progress.tag_knowledge(option.tag_id)
+	option.tag_knowledge = _girl_progress.tag_knowledge(option.tag_id, _girl)
 	option.local_object_id = local_object.id
 	option.local_object_display_name = local_object.display_name
 	if move.unlock_requirement != null:
@@ -495,21 +501,19 @@ func _update_combo(episode: DateEpisodeResult) -> void:
 
 
 func _finish_date() -> void:
-	_session.score_breakdown.outfit_score = _outfit.score_bonus
+	_apply_venue_trait()
 	_session.score_breakdown.apartment_preparation_score = _apartment_preparation_score()
 	_session.score_breakdown.recompute()
 
-	var next_rel: int = clampi(
-		_session.relationship_before + _session.score_breakdown.total,
-		_girl.relationship_min,
-		_girl.relationship_max
-	)
+	var rel_max: int = maxi(0, _session.relationship_max)
+	var next_rel: int = mini(_session.relationship_before + _session.score_breakdown.relationship_gain, rel_max)
+	next_rel = maxi(next_rel, 0)
 	_session.relationship_after = next_rel
 	_girl_progress.relationship = next_rel
 	relationship_changed.emit(_girl.id, next_rel)
 	_girl_progress.completed_dates += 1
 
-	var max_reached: bool = next_rel >= _girl.relationship_max and _session.relationship_before < _girl.relationship_max
+	var max_reached: bool = rel_max > 0 and next_rel >= rel_max and _session.relationship_before < rel_max
 	if max_reached:
 		_relationship_max_emitted = true
 		relationship_max_reached.emit(_girl.id)
@@ -522,6 +526,36 @@ func _finish_date() -> void:
 	_last_result.score_breakdown = _session.score_breakdown
 	_last_result.relationship_max_reached = max_reached
 	date_completed.emit()
+
+
+func _apply_characteristic_trait(episode: DateEpisodeResult, move: DateMove) -> void:
+	if episode.score_delta <= 0:
+		return
+	if _session.girl_trait_applied:
+		return
+	var girl_trait: GirlTrait = _catalog.find_trait(_girl.trait_id)
+	if girl_trait == null or girl_trait.kind != GirlTrait.Kind.CHARACTERISTIC:
+		return
+	if move == null or move.unlock_requirement == null:
+		return
+	if move.unlock_requirement.stat_id != girl_trait.characteristic_id:
+		return
+	_session.girl_trait_applied = true
+	_session.score_breakdown.girl_trait_score = 1
+	_session.score_breakdown.girl_trait_display_name = girl_trait.display_name
+	episode.trait_bonus_text = girl_trait.result_line(1)
+	_session.score_breakdown.recompute()
+
+
+func _apply_venue_trait() -> void:
+	var girl_trait: GirlTrait = _catalog.find_trait(_girl.trait_id)
+	if girl_trait == null:
+		return
+	_session.score_breakdown.girl_trait_display_name = girl_trait.display_name
+	if girl_trait.kind != GirlTrait.Kind.VENUE:
+		return
+	var score: int = 1 if _location != null and _location.id == girl_trait.date_location_id else 0
+	_session.score_breakdown.girl_trait_score = score
 
 
 func _apartment_preparation_score() -> int:

@@ -18,6 +18,8 @@ enum Stage {
 @export var local_object_ids: Array[StringName] = []
 @export var used_local_object_ids: Array[StringName] = []
 @export var relationship_before: int = 0
+@export var relationship_max: int = 0
+@export var girl_trait_applied: bool = false
 @export var selected_situation_ids: Array[StringName] = []
 @export var current_phase: DateTypes.DatePhase = DateTypes.DatePhase.OPENING
 @export var current_episode_index: int = 0

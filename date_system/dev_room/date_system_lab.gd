@@ -416,7 +416,7 @@ func _build_balance() -> Control:
 
 func _balance_overview_text() -> String:
 	var catalog: DateContentCatalog = catalog_service.catalog
-	var lines := PackedStringArray(["Girl | Difficulty | Positive Tags | Negative Tags | Relationship Range | Theoretical positive availability"])
+	var lines := PackedStringArray(["Girl | Difficulty | Positive Tags / 12 | Relationship Max | Trait | Initial Known Tags | Theoretical positive BASE availability"])
 	var diagnostics := DateBalanceDiagnostics.new()
 	for girl in catalog.girls:
 		if girl == null or not girl.enabled:
@@ -426,14 +426,20 @@ func _balance_overview_text() -> String:
 		var enabled_count: int = catalog.enabled_tags().size()
 		var positive_count: int = girl.positive_tag_ids.size()
 		var theory: String = DateBalanceMath.format_percent(diagnostics.theoretical_availability(catalog, girl))
-		lines.append("%s | %s | %d / %d | %d negative | %d..%d | %s" % [
+		var girl_trait: GirlTrait = catalog.find_trait(girl.trait_id)
+		var trait_name: String = girl_trait.display_name if girl_trait != null else String(girl.trait_id)
+		var known_names: PackedStringArray = PackedStringArray()
+		for tag_id in girl.initial_known_tag_ids:
+			var tag: DateTag = catalog.find_tag(tag_id)
+			known_names.append(tag.display_name if tag != null else String(tag_id))
+		lines.append("%s | %s | %d / %d | %d | %s | %s | %s" % [
 			girl.display_name,
 			difficulty_name,
 			positive_count,
 			enabled_count,
-			girl.negative_tag_ids.size(),
-			girl.relationship_min,
-			girl.relationship_max,
+			GirlCatalog.seed_relationship_max(girl.id),
+			trait_name,
+			", ".join(known_names) if not known_names.is_empty() else "—",
 			theory,
 		])
 	return "\n".join(lines)
@@ -648,9 +654,12 @@ func _refresh_list() -> void:
 		if _section == "girl_difficulty":
 			var positive_count: int = int(item.positive_tag_count)
 			label = "%s | %d | %d" % [str(item.display_name), positive_count, maxi(0, enabled_count - positive_count)]
-		else:
-			if "display_name" in item:
-				label = str(item.display_name)
+		elif _section == "girls":
+			var girl_trait: GirlTrait = catalog_service.catalog.find_trait(item.trait_id) if catalog_service.catalog != null else null
+			var trait_name: String = girl_trait.display_name if girl_trait != null else String(item.trait_id)
+			label = "%s | %s  [%s]" % [str(item.display_name), trait_name, String(item.id)]
+		elif "display_name" in item:
+			label = str(item.display_name)
 			if "id" in item:
 				label = "%s  [%s]" % [label, String(item.id)]
 		if query.is_empty() or query in label.to_lower():
@@ -681,7 +690,7 @@ func _rebuild_form() -> void:
 			_add_int(_draft, "max_level", "max_level")
 		"outfits":
 			_add_common_identity(_draft)
-			_add_int(_draft, "score_bonus", "score_bonus")
+			_add_int(_draft, "price", "price")
 		"locations":
 			_add_common_identity(_draft)
 			_add_bool(_draft, "uses_apartment_preparation", "uses_apartment_preparation")
@@ -851,9 +860,10 @@ func _add_girl_form() -> void:
 	var girl: GirlProfile = _draft as GirlProfile
 	girl.sync_negative_tags(catalog_service.catalog.enabled_tags())
 	_add_common_identity(girl)
-	_add_int(girl, "relationship_min", "relationship_min")
-	_add_int(girl, "relationship_start", "relationship_start")
-	_add_int(girl, "relationship_max", "relationship_max")
+	var rel_max := Label.new()
+	rel_max.text = "Relationship Max: %d" % GirlCatalog.seed_relationship_max(girl.id)
+	_form_host.add_child(rel_max)
+	_add_girl_trait_selector(girl)
 	_add_girl_difficulty_selector(girl)
 	var enabled_count: int = catalog_service.catalog.enabled_tags().size()
 	var required: int = _positive_tag_required(girl)
@@ -907,7 +917,54 @@ func _add_girl_form() -> void:
 		grid.add_child(like)
 		grid.add_child(dislike)
 	_form_host.add_child(grid)
+	_add_girl_initial_known(girl)
 
+
+
+func _add_girl_trait_selector(girl: GirlProfile) -> void:
+	var button := OptionButton.new()
+	var selected: int = 0
+	for i in catalog_service.catalog.traits.size():
+		var girl_trait: GirlTrait = catalog_service.catalog.traits[i]
+		if girl_trait == null or not girl_trait.enabled:
+			continue
+		var index: int = button.item_count
+		button.add_item(girl_trait.display_name, index)
+		button.set_item_metadata(index, girl_trait.id)
+		if girl_trait.id == girl.trait_id:
+			selected = index
+	if button.item_count == 0:
+		button.add_item("—", 0)
+		button.set_item_metadata(0, StringName())
+	else:
+		button.select(selected)
+	button.item_selected.connect(func(index: int) -> void:
+		girl.trait_id = button.get_item_metadata(index)
+		_dirty = true
+	)
+	_form_host.add_child(LabUi.labeled_row("Trait", button))
+
+
+func _add_girl_initial_known(girl: GirlProfile) -> void:
+	var heading := Label.new()
+	heading.text = "Начально известные Tags"
+	_form_host.add_child(heading)
+	for tag in catalog_service.catalog.enabled_tags():
+		if tag == null:
+			continue
+		var box := CheckBox.new()
+		box.text = tag.display_name
+		box.button_pressed = girl.initial_known_tag_ids.has(tag.id)
+		var tag_id: StringName = tag.id
+		box.toggled.connect(func(pressed: bool) -> void:
+			if pressed:
+				if not girl.initial_known_tag_ids.has(tag_id):
+					girl.initial_known_tag_ids.append(tag_id)
+			else:
+				girl.initial_known_tag_ids.erase(tag_id)
+			_dirty = true
+		)
+		_form_host.add_child(box)
 
 
 func _add_girl_difficulty_selector(girl: GirlProfile) -> void:
@@ -1139,6 +1196,11 @@ func _new_resource() -> Resource:
 			var starter: GirlDifficultyPreset = catalog_service.catalog.find_girl_difficulty(&"starter")
 			if starter != null:
 				girl.difficulty_preset_id = starter.id
+			var homebody: GirlTrait = catalog_service.catalog.find_trait(&"homebody") if catalog_service.catalog != null else null
+			if homebody != null:
+				girl.trait_id = homebody.id
+			elif catalog_service.catalog != null and not catalog_service.catalog.traits.is_empty():
+				girl.trait_id = catalog_service.catalog.traits[0].id
 			return girl
 		"girl_difficulty":
 			var preset := GirlDifficultyPreset.new()

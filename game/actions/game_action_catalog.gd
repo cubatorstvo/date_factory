@@ -36,8 +36,11 @@ static func make_skip_to_08_00() -> GameAction:
 	var action: GameAction = GameAction.new()
 	action.id = ID_SKIP_TO_08_00
 	action.money_cost = 0
-	if is_instance_valid(TimeService):
-		action.time_cost_minutes = TimeService.minutes_until_next_morning(TimeService.get_game_time_minutes())
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree != null and tree.root != null:
+		var time_service: Node = tree.root.get_node_or_null("TimeService")
+		if is_instance_valid(time_service):
+			action.time_cost_minutes = time_service.minutes_until_next_morning(time_service.get_game_time_minutes())
 	return action
 
 

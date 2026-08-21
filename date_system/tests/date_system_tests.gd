@@ -25,6 +25,7 @@ func run_all() -> PackedStringArray:
 	_test_unlockable_tag_reservation()
 	_test_twelve_tag_rebalance()
 	_test_girl_difficulty()
+	_test_dating_core_model()
 	_test_game_state_round_trip()
 	_test_game_time()
 	_test_campaign_stages()
@@ -139,6 +140,7 @@ func _start(catalog: DateContentCatalog, girl_id: StringName, location_id: Strin
 	config.seed = seed
 	config.girl_progress = progress
 	config.player_state = player
+	config.relationship_max = GirlCatalog.seed_relationship_max(girl_id)
 	var location: DateLocation = catalog.find_location(location_id)
 	if location != null:
 		config.local_object_ids = location.local_object_ids.duplicate()
@@ -164,6 +166,22 @@ func _pick_preference(engine: DateEngine, want_positive: bool) -> StringName:
 		if not want_positive and pref < 0:
 			return option.move_id
 	return _first_available(engine)
+
+
+func _pick_unknown_preference(engine: DateEngine, want_positive: bool) -> StringName:
+	var girl: GirlProfile = engine.catalog().find_girl(engine.get_session_state().girl_id)
+	var progress: GirlProgress = engine.girl_progress()
+	for option in engine.get_available_moves():
+		if not option.is_selectable():
+			continue
+		if progress.tag_knowledge(option.tag_id, girl) != DateTypes.TagKnowledge.UNKNOWN:
+			continue
+		var pref: int = girl.prefers_tag(option.tag_id)
+		if want_positive and pref > 0:
+			return option.move_id
+		if not want_positive and pref < 0:
+			return option.move_id
+	return &""
 
 
 func _has_preference(engine: DateEngine, want_positive: bool) -> bool:
@@ -197,15 +215,16 @@ func _test_unknown_plus_becomes_positive() -> void:
 	var found: bool = false
 	for seed in range(1, 80):
 		var probe_catalog: DateContentCatalog = _catalog()
+		var girl: GirlProfile = probe_catalog.find_girl(&"alina")
 		var progress: GirlProgress = _fresh_progress(probe_catalog, &"alina")
 		var probe_engine: DateEngine = _start(probe_catalog, &"alina", &"cafe", &"casual", seed, progress, _player())
-		if not _has_preference(probe_engine, true):
+		var move_id: StringName = _pick_unknown_preference(probe_engine, true)
+		if move_id == &"":
 			continue
-		var move_id: StringName = _pick_preference(probe_engine, true)
 		var option: DateMoveOption = _option(probe_engine, move_id)
-		_ok("1. UNKNOWN before +1", progress.tag_knowledge(option.tag_id) == DateTypes.TagKnowledge.UNKNOWN)
+		_ok("1. UNKNOWN before +1", progress.tag_knowledge(option.tag_id, girl) == DateTypes.TagKnowledge.UNKNOWN)
 		_choose(probe_engine, move_id)
-		_ok("1. UNKNOWN Tag after +1 becomes POSITIVE", progress.tag_knowledge(option.tag_id) == DateTypes.TagKnowledge.POSITIVE)
+		_ok("1. UNKNOWN Tag after +1 becomes POSITIVE", progress.tag_knowledge(option.tag_id, girl) == DateTypes.TagKnowledge.POSITIVE)
 		found = true
 		break
 	_ok("1. found positive selectable Tag", found)
@@ -215,27 +234,37 @@ func _test_unknown_minus_becomes_negative() -> void:
 	var found: bool = false
 	for seed in range(1, 80):
 		var catalog := _catalog()
+		var girl: GirlProfile = catalog.find_girl(&"alina")
 		var progress := _fresh_progress(catalog, &"alina")
 		var engine := _start(catalog, &"alina", &"cafe", &"casual", seed, progress, _player())
-		if not _has_preference(engine, false):
+		var move_id: StringName = _pick_unknown_preference(engine, false)
+		if move_id == &"":
 			continue
-		var move_id: StringName = _pick_preference(engine, false)
 		var option: DateMoveOption = _option(engine, move_id)
 		_choose(engine, move_id)
-		_ok("2. UNKNOWN Tag after -1 becomes NEGATIVE", progress.tag_knowledge(option.tag_id) == DateTypes.TagKnowledge.NEGATIVE)
+		_ok("2. UNKNOWN Tag after -1 becomes NEGATIVE", progress.tag_knowledge(option.tag_id, girl) == DateTypes.TagKnowledge.NEGATIVE)
 		found = true
 		break
 	_ok("2. found negative selectable Tag", found)
 
 
 func _test_opening_reveals_and_zero() -> void:
-	var catalog := _catalog()
-	var progress := _fresh_progress(catalog, &"alina")
-	var engine := _start(catalog, &"alina", &"cafe", &"casual", 3, progress, _player())
-	_ok("opening situation", engine.get_session_state().current_phase == DateTypes.DatePhase.OPENING)
-	_choose(engine, _pick_preference(engine, true))
-	_ok("3. Opening раскрывает Tag", progress.revealed_positive_tag_ids.size() + progress.revealed_negative_tag_ids.size() == 1)
-	_ok("4. Opening даёт +1", engine.get_session_state().score_breakdown.opening_scores[0] == 1)
+	var found: bool = false
+	for seed in range(1, 80):
+		var catalog := _catalog()
+		var progress := _fresh_progress(catalog, &"alina")
+		var engine := _start(catalog, &"alina", &"cafe", &"casual", seed, progress, _player())
+		if engine.get_session_state().current_phase != DateTypes.DatePhase.OPENING:
+			continue
+		var move_id: StringName = _pick_unknown_preference(engine, true)
+		if move_id == &"":
+			continue
+		_choose(engine, move_id)
+		_ok("3. Opening раскрывает Tag", progress.revealed_positive_tag_ids.size() + progress.revealed_negative_tag_ids.size() == 1)
+		_ok("4. Opening даёт +1", engine.get_session_state().score_breakdown.opening_scores[0] == 1)
+		found = true
+		break
+	_ok("3/4 found opening reveal", found)
 
 
 func _test_core_and_closing_scores() -> void:
@@ -388,7 +417,7 @@ func _test_combo_rules() -> void:
 		for value in bd.closing_scores:
 			expected_total += value
 		expected_total += bd.combo_score
-		expected_total += bd.outfit_score
+		expected_total += bd.girl_trait_score
 		expected_total += bd.apartment_preparation_score
 		_ok("combo included in total", bd.total == expected_total)
 		var replay: DateEngine = _replay_combo_engine(three)
@@ -558,7 +587,7 @@ func _combo_outfit_apartment_not_in_chain() -> bool:
 	var unprepared := _player()
 	unprepared.apartment_prepared = false
 	var apt := _finish_at(catalog, &"apartment", &"casual", unprepared)
-	return casual.score_breakdown.combo_score == luxury.score_breakdown.combo_score and luxury.score_breakdown.outfit_score == 2 and apt.score_breakdown.apartment_preparation_score == -1
+	return casual.score_breakdown.combo_score == luxury.score_breakdown.combo_score and not luxury.score_breakdown.to_dictionary().has("outfit_score") and apt.score_breakdown.apartment_preparation_score == -1
 
 
 func _combo_local_counts() -> bool:
@@ -586,7 +615,7 @@ func _test_location_outfit_apartment() -> void:
 	var apt2 := _finish_at(catalog, &"apartment", &"casual", unprepared)
 	_ok("25. неподготовленная квартира даёт -1", apt2.score_breakdown.apartment_preparation_score == -1)
 	var luxury := _finish_at(catalog, &"cafe", &"luxury", _player())
-	_ok("26. Outfit bonus рассчитывается корректно", luxury.score_breakdown.outfit_score == 2)
+	_ok("26. Outfit bonus не входит в Dating Core", not luxury.score_breakdown.to_dictionary().has("outfit_score"))
 
 
 func _test_local_moves() -> void:
@@ -610,7 +639,7 @@ func _test_local_moves() -> void:
 	var prepared_result := _finish_at(catalog, &"apartment", &"casual", prepared)
 	_ok("5. подготовленная квартира даёт 0", prepared_result.score_breakdown.apartment_preparation_score == 0)
 	var luxury := _finish_at(catalog, &"cafe", &"luxury", _player())
-	_ok("6. outfit bonus считается", luxury.score_breakdown.outfit_score == 2)
+	_ok("6. outfit bonus отсутствует", not luxury.score_breakdown.to_dictionary().has("outfit_score"))
 	var progress := _fresh_progress(catalog, &"alina")
 	var opening_engine := _start(catalog, &"alina", &"cafe", &"casual", 3, progress, _player())
 	opening_engine.choose_move(&"local_window_care")
@@ -660,6 +689,7 @@ func _test_local_moves() -> void:
 	without_config.seed = 21
 	without_config.girl_progress = _fresh_progress(catalog, &"alina")
 	without_config.player_state = _player()
+	without_config.relationship_max = GirlCatalog.seed_relationship_max(&"alina")
 	without_local.create_date_session(without_config)
 	var with_local := _start(catalog, &"alina", &"cafe", &"casual", 21, _fresh_progress(catalog, &"alina"), _player())
 	_ok("18. LOCAL не влияет на random BASE", without_local.get_session_state().current_selected_base_move_ids == with_local.get_session_state().current_selected_base_move_ids)
@@ -708,6 +738,7 @@ func _test_local_moves_progression_and_validator(catalog: DateContentCatalog) ->
 	replay_config.seed = 33
 	replay_config.girl_progress = _fresh_progress(catalog, &"alina")
 	replay_config.player_state = _player()
+	replay_config.relationship_max = GirlCatalog.seed_relationship_max(&"alina")
 	replay_config.local_object_ids = store.last_replay.local_object_ids.duplicate()
 	replay_engine.create_date_session(replay_config)
 	_ok("23. replay сохраняет toolkit", replay_engine.get_session_state().local_object_ids == replay_ids)
@@ -789,11 +820,11 @@ func _test_relationship_clamp_and_reset() -> void:
 	var alina := _fresh_progress(catalog, &"alina")
 	alina.relationship = 5
 	var engine := _finish_progress(catalog, &"alina", alina, true)
-	_ok("27. отношения АЛИНЫ clamp в 0..+5", engine.get_session_state().relationship_after <= 5 and engine.get_session_state().relationship_after >= 0)
+	_ok("27. отношения АЛИНЫ clamp в 0..+10", engine.get_session_state().relationship_after <= 10 and engine.get_session_state().relationship_after >= 0)
 	var vika := _fresh_progress(catalog, &"vika")
 	vika.relationship = 5
 	var engine_v := _finish_progress(catalog, &"vika", vika, true)
-	_ok("28. отношения ВИКИ clamp в 0..+5", engine_v.get_session_state().relationship_after <= 5 and engine_v.get_session_state().relationship_after >= 0)
+	_ok("28. отношения ВИКИ clamp в 0..+10", engine_v.get_session_state().relationship_after <= 10 and engine_v.get_session_state().relationship_after >= 0)
 	var store := DateProgressStore.new()
 	store.reset_all(catalog)
 	var girl: GirlProfile = catalog.find_girl(&"alina")
@@ -981,12 +1012,12 @@ func _test_twelve_tag_rebalance() -> void:
 	_ok("22.2 Alina difficulty starter", alina.difficulty_preset_id == &"starter")
 	_ok("22.2 Alina positives", _same_tag_set(alina.positive_tag_ids, ["politeness", "directness", "care", "generosity", "composure", "humor"]))
 	_ok("22.2 Alina sizes", alina.positive_tag_ids.size() == 6 and alina.negative_tag_ids.size() == 6)
-	_ok("22.2 Alina range", alina.relationship_min == 0 and alina.relationship_max == 5)
+	_ok("22.2 Alina range", GirlCatalog.seed_relationship_max(&"alina") == 10)
 	var vika: GirlProfile = catalog.find_girl(&"vika")
 	_ok("22.3 Vika difficulty preset", catalog.find_girl_difficulty(vika.difficulty_preset_id) != null)
 	_ok("22.3 Vika positives exist", vika.positive_tag_ids.size() > 0)
 	_ok("22.3 Vika sizes", vika.positive_tag_ids.size() + vika.negative_tag_ids.size() == catalog.enabled_tags().size())
-	_ok("22.3 Vika range", vika.relationship_min == 0 and vika.relationship_max == 5)
+	_ok("22.3 Vika range", GirlCatalog.seed_relationship_max(&"vika") == 10)
 	for girl in catalog.girls:
 		_ok("22.4 coverage %s" % String(girl.id), _girl_covers_enabled_tags(girl, enabled))
 	var validator := ContentValidator.new()
@@ -1284,8 +1315,7 @@ func _test_girl_difficulty() -> void:
 	mid_girl.display_name = "Lab Mid"
 	mid_girl.enabled = true
 	mid_girl.difficulty_preset_id = &"mid"
-	mid_girl.relationship_min = 0
-	mid_girl.relationship_max = 5
+	mid_girl.trait_id = &"loves_cafe"
 	mid_girl.positive_tag_ids = [&"care", &"generosity", &"composure", &"humor"] as Array[StringName]
 	mid_girl.sync_negative_tags(catalog.enabled_tags())
 	_ok("save mid positive 4", mid_girl.positive_tag_ids.size() == 4)
@@ -1338,6 +1368,206 @@ func _test_girl_difficulty() -> void:
 	var vika_pos: int = int(catalog.find_girl(&"vika").positive_tag_ids.size())
 	if alina_pos > vika_pos:
 		_ok("Alina BASE availability above Vika", float(alina_sim["at_least_one"]) > float(vika_sim["at_least_one"]))
+
+func _test_dating_core_model() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var world_ids: Array[StringName] = [
+		GirlCatalog.ID_ALINA, GirlCatalog.ID_MARINA, GirlCatalog.ID_VIKA, GirlCatalog.ID_DASHA,
+		GirlCatalog.ID_KATYA, GirlCatalog.ID_LERA, GirlCatalog.ID_KIRA, GirlCatalog.ID_OLYA,
+		GirlCatalog.ID_SONYA, GirlCatalog.ID_NIKA, GirlCatalog.ID_RITA, GirlCatalog.ID_EVA,
+		GirlCatalog.ID_ACTRESS, GirlCatalog.ID_MINE_BOSS, GirlCatalog.ID_MAGAZINE_EDITOR,
+		GirlCatalog.ID_SCIENTIST, GirlCatalog.ID_PRESIDENT,
+	]
+	_ok("1. 17 girls in Date Content", catalog.girls.size() == 17)
+	for girl_id in world_ids:
+		_ok("1. date profile %s" % String(girl_id), catalog.find_girl(girl_id) != null)
+	_ok("2. ordinary MAX 10", GirlCatalog.seed_relationship_max(&"alina") == 10)
+	_ok("2. story MAX 15", GirlCatalog.seed_relationship_max(GirlCatalog.ID_ACTRESS) == 15)
+	var actress_req: GirlRelationshipRequirement = StageCatalog.make_girl_relationship_requirement(GirlCatalog.create_seed().get_girl(GirlCatalog.ID_ACTRESS))
+	_ok("3. story requirement reads MAX 15", actress_req != null and actress_req.target_relationship == 15)
+	var alina: GirlProfile = catalog.find_girl(&"alina")
+	var actress: GirlProfile = catalog.find_girl(GirlCatalog.ID_ACTRESS)
+	var fresh: GirlProgress = _fresh_progress(catalog, &"alina")
+	_ok("4. relationships start at 0", fresh.relationship == 0)
+	_ok("13. alina knows politeness", fresh.tag_knowledge(&"politeness", alina) == DateTypes.TagKnowledge.POSITIVE)
+	_ok("13. alina knows audacity", fresh.tag_knowledge(&"audacity", alina) == DateTypes.TagKnowledge.NEGATIVE)
+	_ok("13. initial known not copied into save", fresh.revealed_positive_tag_ids.is_empty() and fresh.revealed_negative_tag_ids.is_empty())
+	var actress_progress: GirlProgress = _fresh_progress(catalog, GirlCatalog.ID_ACTRESS)
+	var actress_unknown: bool = true
+	for tag in catalog.enabled_tags():
+		if actress_progress.tag_knowledge(tag.id, actress) != DateTypes.TagKnowledge.UNKNOWN:
+			actress_unknown = false
+			break
+	_ok("14. story girl starts UNKNOWN", actress_unknown and actress.initial_known_tag_ids.is_empty())
+	var good: DateEngine = _finish_with_preference(catalog, true, true)
+	var good_bd: DateScoreBreakdown = good.get_result().score_breakdown
+	_ok("5. five positive episodes give positive raw", good_bd.total > 0)
+	_ok("29. raw separate from gain", good_bd.relationship_gain == maxi(good_bd.total, 0))
+	var bad_found: bool = false
+	for seed in range(1, 200):
+		var progress: GirlProgress = _fresh_progress(catalog, &"alina")
+		progress.relationship = 4
+		var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", seed, progress, _player())
+		var valid: bool = true
+		while engine.get_session_state().stage == DateSession.Stage.AWAITING_MOVE or engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+			if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+				engine.advance()
+				continue
+			if not _has_preference(engine, false):
+				valid = false
+				break
+			_choose(engine, _pick_preference(engine, false))
+		if not valid or engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT:
+			continue
+		var bd: DateScoreBreakdown = engine.get_result().score_breakdown
+		_ok("6. negative raw gives gain 0", bd.total < 0 and bd.relationship_gain == 0)
+		_ok("7. bad date keeps relationship", engine.get_session_state().relationship_after == 4)
+		bad_found = true
+		break
+	_ok("6/7 found negative date", bad_found)
+	var clamp_progress: GirlProgress = _fresh_progress(catalog, &"alina")
+	clamp_progress.relationship = 9
+	var clamp_engine: DateEngine = _finish_progress(catalog, &"alina", clamp_progress, true)
+	_ok("8. positive gain clamps to MAX", clamp_engine.get_session_state().relationship_after == 10)
+	var persist_progress: GirlProgress = _fresh_progress(catalog, &"alina")
+	var persist_engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 11, persist_progress, _player())
+	var persist_move: StringName = _pick_unknown_preference(persist_engine, true)
+	if persist_move != &"":
+		var persist_option: DateMoveOption = _option(persist_engine, persist_move)
+		_choose(persist_engine, persist_move)
+		var second: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 12, persist_progress, _player())
+		_ok("12. knowledge persists between dates", persist_option != null and persist_progress.tag_knowledge(persist_option.tag_id, alina) == DateTypes.TagKnowledge.POSITIVE and second.girl_progress().tag_knowledge(persist_option.tag_id, alina) == DateTypes.TagKnowledge.POSITIVE)
+	_test_characteristic_trait_rules()
+	_test_venue_trait_and_apartment()
+	_test_raise_stakes_capital_gate()
+	_test_full_date_cycle_result()
+
+
+func _test_characteristic_trait_rules() -> void:
+	var hit: DateContentCatalog = _diversity_catalog(
+		[["base_a", "directness"], ["base_b", "care"], ["base_c", "humor"]],
+		[["unlock_muscle", "care", 1, 1]],
+		1, 0, true
+	)
+	hit.find_move(&"unlock_muscle").unlock_requirement.stat_id = &"muscle"
+	hit.find_girl(&"alina").trait_id = &"loves_strong"
+	var hit_player: TestPlayerState = _player()
+	hit_player.muscle = 5
+	var hit_engine: DateEngine = _start(hit, &"alina", &"cafe", &"casual", 3, _fresh_progress(hit, &"alina"), hit_player)
+	_choose(hit_engine, &"unlock_muscle")
+	while hit_engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+		hit_engine.advance()
+	var hit_bd: DateScoreBreakdown = hit_engine.get_result().score_breakdown
+	_ok("18. characteristic Trait +1", hit_bd.girl_trait_score == 1)
+	var other: DateContentCatalog = _diversity_catalog(
+		[["base_a", "directness"], ["base_b", "care"], ["base_c", "humor"]],
+		[["unlock_looks", "care", 1, 1]],
+		1, 0, true
+	)
+	other.find_move(&"unlock_looks").unlock_requirement.stat_id = &"appearance"
+	other.find_girl(&"alina").trait_id = &"loves_strong"
+	var other_player: TestPlayerState = _player()
+	other_player.appearance = 5
+	var other_engine: DateEngine = _start(other, &"alina", &"cafe", &"casual", 3, _fresh_progress(other, &"alina"), other_player)
+	_choose(other_engine, &"unlock_looks")
+	while other_engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+		other_engine.advance()
+	_ok("19. Trait ignores other characteristic", other_engine.get_result().score_breakdown.girl_trait_score == 0)
+	var miss: DateContentCatalog = _diversity_catalog(
+		[["base_a", "directness"], ["base_b", "care"], ["base_c", "humor"]],
+		[["unlock_muscle_bad", "audacity", 1, 1]],
+		1, 0, true
+	)
+	miss.find_move(&"unlock_muscle_bad").unlock_requirement.stat_id = &"muscle"
+	miss.find_girl(&"alina").trait_id = &"loves_strong"
+	var miss_player: TestPlayerState = _player()
+	miss_player.muscle = 5
+	var miss_engine: DateEngine = _start(miss, &"alina", &"cafe", &"casual", 3, _fresh_progress(miss, &"alina"), miss_player)
+	_choose(miss_engine, &"unlock_muscle_bad")
+	while miss_engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+		miss_engine.advance()
+	_ok("20. Trait ignores negative reaction", miss_engine.get_result().score_breakdown.girl_trait_score == 0)
+	var twice: DateContentCatalog = _diversity_catalog(
+		[["base_a", "directness"], ["base_b", "care"], ["base_c", "humor"]],
+		[["unlock_muscle_a", "care", 1, 1], ["unlock_muscle_b", "humor", 1, 1]],
+		1, 1, true
+	)
+	twice.find_move(&"unlock_muscle_a").unlock_requirement.stat_id = &"muscle"
+	twice.find_move(&"unlock_muscle_b").unlock_requirement.stat_id = &"muscle"
+	twice.find_girl(&"alina").trait_id = &"loves_strong"
+	var twice_player: TestPlayerState = _player()
+	twice_player.muscle = 5
+	var twice_engine: DateEngine = _start(twice, &"alina", &"cafe", &"casual", 3, _fresh_progress(twice, &"alina"), twice_player)
+	while twice_engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT:
+		if twice_engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+			twice_engine.advance()
+			continue
+		var chosen: StringName = &""
+		for option in twice_engine.get_available_moves():
+			if option.move_id == &"unlock_muscle_a" or option.move_id == &"unlock_muscle_b":
+				if option.is_selectable():
+					chosen = option.move_id
+					break
+		if chosen == &"":
+			chosen = _first_available(twice_engine)
+		_choose(twice_engine, chosen)
+	_ok("21. characteristic Trait once per date", twice_engine.get_result().score_breakdown.girl_trait_score == 1)
+
+
+func _test_venue_trait_and_apartment() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var prepared: TestPlayerState = _player()
+	prepared.apartment_prepared = true
+	var apt: DateRunResult = _finish_at(catalog, &"apartment", &"casual", prepared)
+	_ok("22. venue Trait +1 at matching place", apt.score_breakdown.girl_trait_score == 1)
+	_ok("24. prepared apartment 0", apt.score_breakdown.apartment_preparation_score == 0)
+	var cafe: DateRunResult = _finish_at(catalog, &"cafe", &"casual", _player())
+	_ok("23. venue Trait +0 at other place", cafe.score_breakdown.girl_trait_score == 0)
+	var unprepared: TestPlayerState = _player()
+	unprepared.apartment_prepared = false
+	var apt2: DateRunResult = _finish_at(catalog, &"apartment", &"casual", unprepared)
+	_ok("25. unprepared apartment -1", apt2.score_breakdown.apartment_preparation_score == -1)
+
+
+func _test_raise_stakes_capital_gate() -> void:
+	var locked: DateMoveOption = _find_raise_stakes_option(4)
+	var open: DateMoveOption = _find_raise_stakes_option(5)
+	_ok("28. raise_stakes locked at capital 4", locked != null and locked.availability == DateTypes.MoveAvailability.LOCKED)
+	_ok("28. raise_stakes available at capital 5", open != null and open.availability == DateTypes.MoveAvailability.AVAILABLE)
+
+
+func _find_raise_stakes_option(capital: int) -> DateMoveOption:
+	for seed in range(1, 120):
+		var catalog: DateContentCatalog = _catalog()
+		var player: TestPlayerState = _player()
+		player.capital = capital
+		var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), player)
+		while engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT and engine.get_session_state().stage != DateSession.Stage.COMPLETED:
+			if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+				engine.advance()
+				continue
+			for option in engine.get_available_moves():
+				if option.move_id == &"raise_stakes":
+					return option
+			_choose(engine, _first_available(engine))
+	return null
+
+
+func _test_full_date_cycle_result() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var progress: GirlProgress = _fresh_progress(catalog, &"alina")
+	var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 21, progress, _player())
+	var episodes: int = 0
+	while engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT:
+		if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+			engine.advance()
+			continue
+		_choose(engine, _first_available(engine))
+		episodes += 1
+	var result: DateRunResult = engine.get_result()
+	_ok("30. five episodes then result", episodes == 5 and result != null and result.score_breakdown != null)
+	_ok("30. gain is non-negative", result.score_breakdown.relationship_gain >= 0)
+	_ok("30. no outfit_score", not result.score_breakdown.to_dictionary().has("outfit_score"))
 
 
 func _same_tag_set(actual: Array[StringName], expected: Array) -> bool:
@@ -2988,9 +3218,10 @@ func _test_girls() -> void:
 	_ok("relationship after minus", girls.get_relationship(alina_id) == 1)
 	_ok("relationship plus to 3", girls.change_relationship(alina_id, 2) == 3)
 	_ok("relationship drop from 3", girls.change_relationship(alina_id, -1) == 2)
-	_ok("relationship ordinary max 5", int(girls.get_relationship_max(alina_id)) == 5)
+	_ok("relationship ordinary max 10", int(girls.get_relationship_max(alina_id)) == 10)
 	_ok("kira max 10", int(girls.get_relationship_max(GirlCatalog.ID_KIRA)) == 10)
 	_ok("eva max 10", int(girls.get_relationship_max(GirlCatalog.ID_EVA)) == 10)
+	_ok("actress max 15", int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS)) == 15)
 	sm.new_game()
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	var at_city: Array[GirlDefinition] = girls.get_girls_at_current_location()
@@ -4876,8 +5107,8 @@ func _test_home_city_catalog_consistency() -> void:
 			_ok("runtime profile %s" % String(definition.id), runtime_catalog.find_girl(definition.id) != null)
 		if seed_profile != null:
 			_ok("id match %s" % String(definition.id), seed_profile.id == definition.id)
-			_ok("range match %s" % String(definition.id), seed_profile.relationship_min == definition.relationship_min and seed_profile.relationship_max == definition.relationship_max)
-			var expected_max: int = 10 if definition.id == GirlCatalog.ID_KIRA or definition.id == GirlCatalog.ID_EVA else 5
+			_ok("trait %s" % String(definition.id), seed_catalog.find_trait(seed_profile.trait_id) != null)
+			var expected_max: int = GirlCatalog.seed_relationship_max(definition.id)
 			_ok("range floor %s" % String(definition.id), definition.relationship_min == 0 and definition.relationship_max == expected_max)
 			_ok("difficulty %s" % String(definition.id), seed_catalog.find_girl_difficulty(seed_profile.difficulty_preset_id) != null)
 			_ok("positives %s" % String(definition.id), seed_profile.positive_tag_ids.size() > 0)

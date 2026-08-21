@@ -8,16 +8,18 @@ extends Resource
 @export var completed_dates: int = 0
 
 
-func tag_knowledge(tag_id: StringName) -> DateTypes.TagKnowledge:
+func tag_knowledge(tag_id: StringName, girl: GirlProfile = null) -> DateTypes.TagKnowledge:
 	if revealed_positive_tag_ids.has(tag_id):
 		return DateTypes.TagKnowledge.POSITIVE
 	if revealed_negative_tag_ids.has(tag_id):
 		return DateTypes.TagKnowledge.NEGATIVE
+	if girl != null and girl.initial_known_tag_ids.has(tag_id):
+		return DateTypes.TagKnowledge.POSITIVE if girl.prefers_tag(tag_id) > 0 else DateTypes.TagKnowledge.NEGATIVE
 	return DateTypes.TagKnowledge.UNKNOWN
 
 
-func reveal_tag(tag_id: StringName, positive: bool) -> bool:
-	if tag_knowledge(tag_id) != DateTypes.TagKnowledge.UNKNOWN:
+func reveal_tag(tag_id: StringName, positive: bool, girl: GirlProfile = null) -> bool:
+	if tag_knowledge(tag_id, girl) != DateTypes.TagKnowledge.UNKNOWN:
 		return false
 	if positive:
 		revealed_positive_tag_ids.append(tag_id)
@@ -29,15 +31,53 @@ func reveal_tag(tag_id: StringName, positive: bool) -> bool:
 func unknown_tag_count(girl: GirlProfile) -> int:
 	if girl == null:
 		return 0
-	var known: int = revealed_positive_tag_ids.size() + revealed_negative_tag_ids.size()
-	return maxi(0, girl.positive_tag_ids.size() + girl.negative_tag_ids.size() - known)
+	var unknown: int = 0
+	for tag_id in girl.positive_tag_ids:
+		if tag_knowledge(tag_id, girl) == DateTypes.TagKnowledge.UNKNOWN:
+			unknown += 1
+	for tag_id in girl.negative_tag_ids:
+		if tag_knowledge(tag_id, girl) == DateTypes.TagKnowledge.UNKNOWN:
+			unknown += 1
+	return unknown
+
+
+func known_positive_tag_ids(girl: GirlProfile) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	var seen: Dictionary = {}
+	for tag_id in revealed_positive_tag_ids:
+		seen[String(tag_id)] = true
+		ids.append(tag_id)
+	if girl != null:
+		for tag_id in girl.initial_known_tag_ids:
+			if seen.has(String(tag_id)):
+				continue
+			if girl.prefers_tag(tag_id) > 0:
+				seen[String(tag_id)] = true
+				ids.append(tag_id)
+	return ids
+
+
+func known_negative_tag_ids(girl: GirlProfile) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	var seen: Dictionary = {}
+	for tag_id in revealed_negative_tag_ids:
+		seen[String(tag_id)] = true
+		ids.append(tag_id)
+	if girl != null:
+		for tag_id in girl.initial_known_tag_ids:
+			if seen.has(String(tag_id)):
+				continue
+			if girl.prefers_tag(tag_id) <= 0:
+				seen[String(tag_id)] = true
+				ids.append(tag_id)
+	return ids
 
 
 func reset_to_profile(girl: GirlProfile) -> void:
 	if girl == null:
 		return
 	girl_id = girl.id
-	relationship = girl.relationship_start
+	relationship = 0
 	revealed_positive_tag_ids.clear()
 	revealed_negative_tag_ids.clear()
 	completed_dates = 0
@@ -83,7 +123,7 @@ func to_dictionary() -> Dictionary:
 static func from_dictionary(data: Dictionary) -> GirlProgress:
 	var progress := GirlProgress.new()
 	progress.girl_id = StringName(str(data.get("girl_id", "")))
-	progress.relationship = int(data.get("relationship", 0))
+	progress.relationship = maxi(0, int(data.get("relationship", 0)))
 	progress.completed_dates = int(data.get("completed_dates", 0))
 	var positives: Array = data.get("revealed_positive_tag_ids", [])
 	for item in positives:

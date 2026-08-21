@@ -283,6 +283,10 @@ func _create_engine(girl_id: StringName, date_location_id: StringName, outfit_id
 	config.girl_progress = progress
 	config.local_object_ids = resolve_date_local_object_ids(date_location_id)
 	config.player_state = _make_player_state(catalog.find_location(date_location_id))
+	if girls != null:
+		config.relationship_max = int(girls.get_relationship_max(girl_id))
+	else:
+		config.relationship_max = GirlCatalog.seed_relationship_max(girl_id)
 	_engine = DateEngine.new()
 	_engine.create_date_session(config)
 	return true

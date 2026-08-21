@@ -328,9 +328,10 @@ func _girl_card() -> PanelContainer:
 	theory.text = "Теоретическая базовая доступность:\n%s" % DateBalanceMath.format_percent(chance)
 	box.add_child(theory)
 	var rel := Label.new()
-	rel.text = "Отношения:\n%d / %d" % [progress.relationship, girl.relationship_max]
+	rel.text = "Отношения:\n%d / %d" % [progress.relationship, GirlCatalog.seed_relationship_max(girl.id)]
 	box.add_child(rel)
-	box.add_child(LabUi.known_preference_block(_catalog(), progress))
+	box.add_child(LabUi.trait_block(_catalog(), girl))
+	box.add_child(LabUi.known_preference_block(_catalog(), progress, girl))
 	var unknown := Label.new()
 	unknown.text = "Неизвестно: %d" % progress.unknown_tag_count(girl)
 	box.add_child(unknown)
@@ -372,6 +373,7 @@ func _begin_session(seed: int, is_replay: bool) -> void:
 	config.catalog = _catalog()
 	config.girl_progress = progress
 	config.player_state = progress_store.player_state
+	config.relationship_max = GirlCatalog.seed_relationship_max(_girl_id)
 	_engine = DateEngine.new()
 	_engine.create_date_session(config)
 	status_message.emit("Свидание запущено. Seed %d" % seed)
@@ -406,8 +408,8 @@ func _reset_all() -> void:
 func _build_runner() -> void:
 	var session: DateSession = _engine.get_session_state()
 	var view: DateEpisodeView = _engine.get_current_episode()
+	var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id)
 	if _playthrough:
-		var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id)
 		var location: DateLocation = _engine.catalog().find_location(session.location_id)
 		var girl_name: String = girl.display_name if girl != null else String(session.girl_id)
 		var location_name: String = location.display_name if location != null else String(session.location_id)
@@ -416,6 +418,7 @@ func _build_runner() -> void:
 		_host.add_child(active)
 	_host.add_child(LabUi.heading("Свидание"))
 	_host.add_child(_date_start_relationship_block(session))
+	_host.add_child(LabUi.trait_block(_engine.catalog(), girl))
 	_host.add_child(_combo_status_label(session))
 	var meta := Label.new()
 	meta.text = "Фаза: %s    Эпизод: %d    Seed: %d" % [DateTypes.phase_name(session.current_phase), session.current_episode_index + 1, session.seed]
@@ -477,8 +480,7 @@ func _unavailable_modulate() -> Color:
 
 
 func _date_start_relationship_block(session: DateSession) -> Control:
-	var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id)
-	var rel_max: int = girl.relationship_max if girl != null else 0
+	var rel_max: int = session.relationship_max
 	var box := VBoxContainer.new()
 	var start: RichTextLabel = GameTermView.create("Отношения на начало свидания: %d / %d" % [session.relationship_before, rel_max])
 	box.add_child(start)
@@ -594,6 +596,12 @@ func _episode_result_block(session: DateSession) -> PanelContainer:
 	var score := Label.new()
 	score.text = "Score: %+d" % session.current_score_delta
 	box.add_child(score)
+	if session.episode_history.size() > 0:
+		var last_episode: DateEpisodeResult = session.episode_history[session.episode_history.size() - 1]
+		if not last_episode.trait_bonus_text.is_empty():
+			var trait_line := Label.new()
+			trait_line.text = last_episode.trait_bonus_text
+			box.add_child(trait_line)
 	var revealed := Label.new()
 	if session.episode_history.size() > 0 and session.episode_history[session.episode_history.size() - 1].revealed_tag:
 		revealed.text = "Новое раскрытое знание: %s" % DateTypes.knowledge_label(knowledge)
@@ -614,7 +622,8 @@ func _episode_result_block(session: DateSession) -> PanelContainer:
 
 func _tag_knowledge(tag_id: StringName) -> DateTypes.TagKnowledge:
 	var session: DateSession = _engine.get_session_state()
-	return _session_progress(session.girl_id).tag_knowledge(tag_id)
+	var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id) if _engine != null else null
+	return _session_progress(session.girl_id).tag_knowledge(tag_id, girl)
 
 
 func _build_result() -> void:
@@ -637,21 +646,24 @@ func _build_result() -> void:
 		var tag: DateTag = _engine.catalog().find_tag(episode.tag_id)
 		var tag_name: String = tag.display_name if tag != null else String(episode.tag_id)
 		_tally_lines.append(LabUi.tally_row("[%s]" % tag_name, episode.score_delta))
+		if not episode.trait_bonus_text.is_empty():
+			_tally_lines.append(GameTermView.create(episode.trait_bonus_text))
 	if bd.combo_score != 0:
 		_tally_lines.append(LabUi.tally_row("Комбо", bd.combo_score))
+	if not bd.girl_trait_display_name.is_empty():
+		_tally_lines.append(LabUi.tally_row("Особенность «%s»" % bd.girl_trait_display_name, bd.girl_trait_score))
 	if bd.apartment_preparation_score != 0:
 		_tally_lines.append(LabUi.tally_row("Неподготовленная квартира", bd.apartment_preparation_score))
-	_tally_lines.append(LabUi.tally_row("Одежда", bd.outfit_score))
-	var total_row := LabUi.tally_row("Итого", bd.total)
+	var total_row := LabUi.tally_row("Итог свидания", bd.total)
 	for child in total_row.get_children():
 		if child is Label:
 			(child as Label).add_theme_font_size_override("font_size", 26)
 		elif child is RichTextLabel:
 			(child as RichTextLabel).add_theme_font_size_override("normal_font_size", 26)
 	_tally_lines.append(total_row)
-	var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id)
-	var rel_max: int = girl.relationship_max if girl != null else 0
-	var rel_text: String = "Отношения: %d / %d -> %d / %d" % [session.relationship_before, rel_max, session.relationship_after, rel_max]
+	var rel_max: int = session.relationship_max
+	_tally_lines.append(LabUi.tally_row("Прогресс отношений", bd.relationship_gain))
+	var rel_text: String = "Отношения: %d / %d" % [session.relationship_after, rel_max]
 	if session.relationship_after >= rel_max and rel_max > 0:
 		rel_text += " — МАКСИМУМ"
 	var rel: RichTextLabel = GameTermView.create(rel_text)

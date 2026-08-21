@@ -8,5 +8,4 @@ id = &"business"
 display_name = "Деловой"
 description = "Деловой"
 enabled = true
-score_bonus = 1
 price = 500

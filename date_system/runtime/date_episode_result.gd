@@ -11,3 +11,4 @@ extends Resource
 @export var result_text: String = ""
 @export var revealed_tag: bool = false
 @export var combo_granted: bool = false
+@export var trait_bonus_text: String = ""

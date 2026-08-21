@@ -1,11 +1,17 @@
 extends SceneTree
 
+var _started: bool = false
+
 
 func _init() -> void:
 	call_deferred("_run_tests")
 
 
 func _run_tests() -> void:
+	if _started:
+		return
+	_started = true
+	print("DATE SYSTEM TESTS: start")
 	var tests := DateSystemTests.new()
 	var failures: PackedStringArray = tests.run_all()
 	print("DATE SYSTEM TESTS: %s" % tests.summary())

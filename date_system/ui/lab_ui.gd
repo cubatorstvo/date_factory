@@ -133,14 +133,35 @@ static func tag_knowledge_row(title: String, catalog: DateContentCatalog, ids: A
 	return row
 
 
-static func known_preference_block(catalog: DateContentCatalog, progress: GirlProgress) -> Control:
+static func trait_block(catalog: DateContentCatalog, girl: GirlProfile) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	var girl_trait: GirlTrait = null
+	if catalog != null and girl != null:
+		girl_trait = catalog.find_trait(girl.trait_id)
+	var title := Label.new()
+	if girl_trait == null:
+		title.text = "Особенность: —"
+		box.add_child(title)
+		return box
+	title.text = "Особенность: %s" % girl_trait.display_name
+	box.add_child(title)
+	var description := Label.new()
+	description.text = girl_trait.description
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.add_theme_color_override("font_color", MUTED)
+	box.add_child(description)
+	return box
+
+
+static func known_preference_block(catalog: DateContentCatalog, progress: GirlProgress, girl: GirlProfile = null) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var likes: Array[StringName] = []
 	var dislikes: Array[StringName] = []
 	if progress != null:
-		likes = progress.revealed_positive_tag_ids
-		dislikes = progress.revealed_negative_tag_ids
+		likes = progress.known_positive_tag_ids(girl)
+		dislikes = progress.known_negative_tag_ids(girl)
 	box.add_child(tag_knowledge_row("Любит:", catalog, likes, DateTypes.TagKnowledge.POSITIVE))
 	box.add_child(tag_knowledge_row("Не любит:", catalog, dislikes, DateTypes.TagKnowledge.NEGATIVE))
 	return box
@@ -152,13 +173,13 @@ static func bbcode_block(text: String, default_color: Color = TEXT, tag_knowledg
 	return rtl
 
 
-static func tag_knowledge_map(progress: GirlProgress) -> Dictionary:
+static func tag_knowledge_map(progress: GirlProgress, girl: GirlProfile = null) -> Dictionary:
 	var result: Dictionary = {}
 	if progress == null:
 		return result
-	for tag_id in progress.revealed_positive_tag_ids:
+	for tag_id in progress.known_positive_tag_ids(girl):
 		result[tag_id] = DateTypes.TagKnowledge.POSITIVE
-	for tag_id in progress.revealed_negative_tag_ids:
+	for tag_id in progress.known_negative_tag_ids(girl):
 		result[tag_id] = DateTypes.TagKnowledge.NEGATIVE
 	return result
 

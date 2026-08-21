@@ -9,6 +9,7 @@ extends Resource
 @export var local_objects: Array[DateLocalObject] = []
 @export var locations: Array[DateLocation] = []
 @export var outfits: Array[Outfit] = []
+@export var traits: Array[GirlTrait] = []
 @export var progression_stats: Array[ProgressionStat] = []
 @export var date_rules: DateRules
 
@@ -97,6 +98,13 @@ func find_outfit(outfit_id: StringName) -> Outfit:
 	return null
 
 
+func find_trait(trait_id: StringName) -> GirlTrait:
+	for item in traits:
+		if item != null and item.id == trait_id:
+			return item
+	return null
+
+
 func find_stat(stat_id: StringName) -> ProgressionStat:
 	for item in progression_stats:
 		if item != null and item.id == stat_id:
@@ -141,4 +149,16 @@ func applicable_moves(situation_id: StringName, kind: DateTypes.DateMoveKind) ->
 
 
 func snapshot() -> DateContentCatalog:
-	return duplicate(true) as DateContentCatalog
+	var copy := DateContentCatalog.new()
+	copy.tags = tags.duplicate()
+	copy.moves = moves.duplicate()
+	copy.situations = situations.duplicate()
+	copy.girls = girls.duplicate()
+	copy.girl_difficulty_presets = girl_difficulty_presets.duplicate()
+	copy.local_objects = local_objects.duplicate()
+	copy.locations = locations.duplicate()
+	copy.outfits = outfits.duplicate()
+	copy.traits = traits.duplicate()
+	copy.progression_stats = progression_stats.duplicate()
+	copy.date_rules = date_rules
+	return copy

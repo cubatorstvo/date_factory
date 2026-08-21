@@ -1038,6 +1038,14 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 	else:
 		relationship_label.text = "Отношения: %d / %d" % [relationship_value, relationship_max]
 	box.add_child(relationship_label)
+	var catalog: DateContentCatalog = _date_catalog()
+	var profile: GirlProfile = catalog.find_girl(definition.id) if catalog != null else null
+	box.add_child(LabUi.trait_block(catalog, profile))
+	var progress: GirlProgress = _girl_date_progress(girls, definition.id)
+	box.add_child(LabUi.known_preference_block(catalog, progress, profile))
+	var unknown := Label.new()
+	unknown.text = "Неизвестно: %d" % progress.unknown_tag_count(profile)
+	box.add_child(unknown)
 	var date_statuses: Array[RequirementStatus] = []
 	if dating != null:
 		date_statuses = dating.get_date_requirements_status(definition.id)
@@ -1133,25 +1141,20 @@ func _build_clothing() -> Control:
 	var equipment: Variant = _equipment_service()
 	if equipment == null:
 		return box
-	var current: Outfit = equipment.get_current_outfit()
 	var current_id: StringName = equipment.get_current_outfit_id()
-	var bonus: int = 0
-	if current != null:
-		bonus = current.score_bonus
 	if bool(equipment.can_upgrade_outfit()):
-		var status_text: String = "Одежда: %s (+%d)" % [_outfit_status_adjective(current_id), bonus]
+		var status_text: String = "Одежда: %s" % _outfit_status_adjective(current_id)
 		box.add_child(GameTermView.create(status_text))
 		var next_outfit: Outfit = equipment.get_next_outfit()
 		if next_outfit != null:
 			var action: GameAction = equipment.create_upgrade_outfit_action()
-			var upgrade_label: String = "Улучшить до %s (+%d) — %d" % [
+			var upgrade_label: String = "Улучшить до %s — %d" % [
 				_outfit_upgrade_adjective(next_outfit.id),
-				next_outfit.score_bonus,
 				next_outfit.price,
 			]
 			_add_action_button(box, action, upgrade_label, false, false)
 	else:
-		var status_text: String = "Одежда: %s (+%d) — МАКСИМУМ" % [_outfit_status_adjective(current_id), bonus]
+		var status_text: String = "Одежда: %s — МАКСИМУМ" % _outfit_status_adjective(current_id)
 		box.add_child(GameTermView.create(status_text))
 	return box
 
@@ -1286,7 +1289,10 @@ func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
 	name_label.text = girl_name.to_upper()
 	box.add_child(name_label)
 	var progress: GirlProgress = _girl_date_progress(girls, _invite_girl_id)
-	box.add_child(LabUi.known_preference_block(_date_catalog(), progress))
+	var catalog: DateContentCatalog = _date_catalog()
+	var profile: GirlProfile = catalog.find_girl(_invite_girl_id) if catalog != null else null
+	box.add_child(LabUi.trait_block(catalog, profile))
+	box.add_child(LabUi.known_preference_block(catalog, progress, profile))
 	box.add_child(LabUi.heading("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
 	var locations: Array = []
 	if dating != null:
@@ -1314,7 +1320,7 @@ func _build_date_location_card(location: DateLocation, dating: Variant, availabl
 	else:
 		title.text = "%s 🔒" % location.display_name
 	box.add_child(title)
-	box.add_child(LabUi.bbcode_block(_date_location_details(location, dating, progress), LabUi.MUTED, LabUi.tag_knowledge_map(progress)))
+	box.add_child(LabUi.bbcode_block(_date_location_details(location, dating, progress), LabUi.MUTED, LabUi.tag_knowledge_map(progress, _date_catalog().find_girl(_invite_girl_id) if _date_catalog() != null else null)))
 	var choose_btn: Button = LabUi.button(location.display_name)
 	choose_btn.disabled = not available
 	if available:
@@ -1392,10 +1398,6 @@ func _build_date_outfit_card(outfit: Outfit, dating: Variant) -> Control:
 	var title := Label.new()
 	title.text = outfit.display_name
 	box.add_child(title)
-	var bonus := Label.new()
-	bonus.text = "Бонус свидания: %+d" % outfit.score_bonus
-	bonus.add_theme_color_override("font_color", LabUi.MUTED)
-	box.add_child(bonus)
 	var choose_btn: Button = LabUi.button(outfit.display_name)
 	choose_btn.pressed.connect(select_date_outfit.bind(outfit.id))
 	box.add_child(choose_btn)

@@ -9,3 +9,4 @@ var local_object_ids: Array[StringName] = []
 var catalog: DateContentCatalog
 var girl_progress: GirlProgress
 var player_state: TestPlayerState
+var relationship_max: int = 0

@@ -6,7 +6,7 @@
 
 1. Content Resources + seed `.tres` + Catalog
 2. Runtime models + `user://` store
-3. Date Engine (session, RNG, mappings, scores, Secondary)
+3. Date Engine (session, RNG, mappings, Tags, Trait, Combo, scores)
 4. DateEpisodeController (text)
 5. Text Date Runner + Result + Debug
 6. Developer Room (редакторы, валидация, запуск)

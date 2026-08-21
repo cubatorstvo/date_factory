@@ -91,6 +91,10 @@ func _ingest_catalog(catalog: DateContentCatalog) -> void:
 		if local_object == null or not _content_enabled(local_object):
 			continue
 		_add_term(local_object.id, local_object.display_name, local_object.description, PackedStringArray(), GameTerm.Category.LOCAL_OBJECT, GameTerm.Visual.ACCENT)
+	for girl_trait in catalog.traits:
+		if girl_trait == null or not _content_enabled(girl_trait):
+			continue
+		_add_term(girl_trait.id, girl_trait.display_name, girl_trait.description, PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 
 
 func _ingest_system_terms() -> void:
@@ -101,7 +105,7 @@ func _ingest_system_terms() -> void:
 	_add_term(&"unlockable_move", "Открываемый ход", "Дополнительный ситуационный ход, доступность которого зависит от развития героя.", PackedStringArray(["UNLOCKABLE"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"local_move", "Локальный ход", "Ход от объекта текущего места свидания. После одного локального хода весь его объект считается использованным до конца свидания.", PackedStringArray(["LOCAL"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"combo", "Комбо", "Бонус за три последовательных успешных хода с тремя разными тегами.", PackedStringArray(["КОМБО", "Combo"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
-	_add_term(&"outfit", "Одежда", "Текущая одежда героя. Цепочка Casual +0 → Business +1 → Luxury +2; на свидании используется автоматически.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
+	_add_term(&"outfit", "Одежда", "Текущая одежда героя. Цепочка casual → business → luxury; наряд остаётся частью подготовки к свиданию без универсального бонуса к итогу.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"date_factory", "Date Factory", "Автоматическая фабрика клонов. Они зарабатывают деньги и ходят на свидания, повышая Рейтинг и охват текущего масштаба.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"tag", "тег", "Игровой признак хода. Известное предпочтение девушки окрашивает тег и показывает, сработает ход или нет.", PackedStringArray(["теги", "Тег"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 
