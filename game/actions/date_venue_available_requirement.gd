@@ -1,15 +1,15 @@
-class_name DateLocationAvailableRequirement
+class_name DateVenueAvailableRequirement
 extends ActionRequirement
 
 @export var girl_id: StringName = &""
-@export var date_location_id: StringName = &""
+@export var date_venue_id: StringName = &""
 
 
 func is_met() -> bool:
 	var dating: Variant = _dating_service()
 	if dating == null:
 		return false
-	return bool(dating.is_date_location_available(girl_id, date_location_id))
+	return bool(dating.is_date_venue_available(girl_id, date_venue_id))
 
 
 func get_failure_reason() -> String:

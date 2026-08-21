@@ -3,7 +3,7 @@ extends RefCounted
 
 enum DateMoveKind {
 	BASE,
-	UNLOCKABLE,
+	CHARACTERISTIC,
 	LOCAL,
 	OUTFIT,
 }
@@ -11,7 +11,7 @@ enum DateMoveKind {
 enum DateMoveSource {
 	CHARACTERISTIC,
 	OUTFIT,
-	LOCATION,
+	VENUE,
 }
 
 enum DateMoveSourceState {
@@ -65,7 +65,7 @@ static func move_kind_name(kind: DateMoveKind) -> String:
 	match kind:
 		DateMoveKind.BASE:
 			return "BASE"
-		DateMoveKind.UNLOCKABLE:
+		DateMoveKind.CHARACTERISTIC:
 			return "CHARACTERISTIC"
 		DateMoveKind.LOCAL:
 			return "LOCAL"
@@ -81,8 +81,8 @@ static func source_name(source: DateMoveSource) -> String:
 			return "Характеристика"
 		DateMoveSource.OUTFIT:
 			return "Одежда"
-		DateMoveSource.LOCATION:
-			return "Локация"
+		DateMoveSource.VENUE:
+			return "Место свидания"
 		_:
 			return "?"
 

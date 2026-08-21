@@ -1,4 +1,4 @@
-class_name DateLocation
+class_name DateVenue
 extends Resource
 
 @export var id: StringName = &""

@@ -3,7 +3,7 @@ extends RefCounted
 
 const STORE_PATH := "user://date_system/runtime.json"
 
-var player_state: TestPlayerState = TestPlayerState.new()
+var player_snapshot: DatePlayerSnapshot = DatePlayerSnapshot.new()
 var girl_progress_by_id: Dictionary = {}
 var last_replay: DateReplaySnapshot
 
@@ -49,22 +49,22 @@ func reset_girl(girl: GirlProfile) -> void:
 
 
 func reset_all(catalog: DateContentCatalog) -> void:
-	player_state = TestPlayerState.new()
+	player_snapshot = DatePlayerSnapshot.new()
 	last_replay = null
 	girl_progress_by_id.clear()
 	_ensure_defaults(catalog)
 	save_store()
 
 
-func capture_replay(seed: int, girl_id: StringName, location_id: StringName, outfit_id: StringName, progress: GirlProgress, local_object_ids: Array[StringName] = []) -> void:
+func capture_replay(seed: int, girl_id: StringName, venue_id: StringName, outfit_id: StringName, progress: GirlProgress, local_object_ids: Array[StringName] = []) -> void:
 	last_replay = DateReplaySnapshot.new()
 	last_replay.seed = seed
 	last_replay.girl_id = girl_id
-	last_replay.location_id = location_id
+	last_replay.venue_id = venue_id
 	last_replay.outfit_id = outfit_id
 	last_replay.local_object_ids = local_object_ids.duplicate()
 	last_replay.girl_progress = GirlProgress.from_dictionary(progress.to_dictionary())
-	last_replay.player_state = TestPlayerState.from_dictionary(player_state.to_dictionary())
+	last_replay.player_snapshot = DatePlayerSnapshot.from_dictionary(player_snapshot.to_dictionary())
 	save_store()
 
 
@@ -72,8 +72,8 @@ func restore_replay() -> bool:
 	if last_replay == null or last_replay.girl_progress == null:
 		return false
 	girl_progress_by_id[String(last_replay.girl_id)] = GirlProgress.from_dictionary(last_replay.girl_progress.to_dictionary())
-	if last_replay.player_state != null:
-		player_state = TestPlayerState.from_dictionary(last_replay.player_state.to_dictionary())
+	if last_replay.player_snapshot != null:
+		player_snapshot = DatePlayerSnapshot.from_dictionary(last_replay.player_snapshot.to_dictionary())
 	save_store()
 	return true
 
@@ -97,16 +97,16 @@ func _to_dictionary() -> Dictionary:
 		var progress: GirlProgress = girl_progress_by_id[key]
 		girls[str(key)] = progress.to_dictionary()
 	return {
-		"player_state": player_state.to_dictionary(),
+		"player_snapshot": player_snapshot.to_dictionary(),
 		"girl_progress": girls,
 		"last_replay": last_replay.to_dictionary() if last_replay != null else {},
 	}
 
 
 func _from_dictionary(data: Dictionary, catalog: DateContentCatalog) -> void:
-	var player_data: Variant = data.get("player_state", {})
+	var player_data: Variant = data.get("player_snapshot", data.get("player_state", {}))
 	if player_data is Dictionary:
-		player_state = TestPlayerState.from_dictionary(player_data)
+		player_snapshot = DatePlayerSnapshot.from_dictionary(player_data)
 	girl_progress_by_id.clear()
 	var girls_data: Variant = data.get("girl_progress", {})
 	if girls_data is Dictionary:

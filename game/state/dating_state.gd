@@ -12,7 +12,7 @@ func to_dict() -> Dictionary:
 	return {
 		"active_date": {
 			"girl_id": String(active_date.get("girl_id", "")),
-			"location_id": String(active_date.get("location_id", "")),
+			"venue_id": String(active_date.get("venue_id", "")),
 			"outfit_id": String(active_date.get("outfit_id", "")),
 			"started_at_game_time": int(active_date.get("started_at_game_time", 0)),
 		},
@@ -31,9 +31,10 @@ func from_dict(data: Dictionary) -> void:
 	var outfit_text: String = str(entry.get("outfit_id", ""))
 	if outfit_text.is_empty():
 		outfit_text = String(OutfitCatalog.START_OUTFIT_ID)
+	var venue_text: String = str(entry.get("venue_id", entry.get("location_id", "")))
 	active_date = {
 		"girl_id": StringName(girl_text),
-		"location_id": StringName(str(entry.get("location_id", ""))),
+		"venue_id": StringName(venue_text),
 		"outfit_id": StringName(outfit_text),
 		"started_at_game_time": int(entry.get("started_at_game_time", 0)),
 	}

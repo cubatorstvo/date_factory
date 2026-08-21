@@ -48,10 +48,10 @@ func default_path_for(kind: String, resource_id: String) -> String:
 		"DateSituation": "res://date_system/content/situations",
 		"GirlProfile": "res://date_system/content/girls",
 		"DateLocalObject": "res://date_system/content/local_objects",
-		"DateLocation": "res://date_system/content/locations",
+		"DateVenue": "res://date_system/content/venues",
 		"Outfit": "res://date_system/content/outfits",
 		"GirlTrait": "res://date_system/content/traits",
-		"ProgressionStat": "res://date_system/content/progression",
+		"CharacteristicDefinition": "res://date_system/content/characteristics",
 		"GirlDifficultyPreset": "res://date_system/content/girl_difficulty",
 		"DateRules": "res://date_system/content/rules",
 	}
@@ -72,14 +72,14 @@ func add_to_catalog(resource: Resource) -> void:
 		catalog.girls.append(resource)
 	elif resource is DateLocalObject:
 		catalog.local_objects.append(resource)
-	elif resource is DateLocation:
-		catalog.locations.append(resource)
+	elif resource is DateVenue:
+		catalog.date_venues.append(resource)
 	elif resource is Outfit:
 		catalog.outfits.append(resource)
 	elif resource is GirlTrait:
 		catalog.traits.append(resource)
-	elif resource is ProgressionStat:
-		catalog.progression_stats.append(resource)
+	elif resource is CharacteristicDefinition:
+		catalog.characteristics.append(resource)
 	elif resource is GirlDifficultyPreset:
 		catalog.girl_difficulty_presets.append(resource)
 	elif resource is DateRules:
@@ -99,14 +99,14 @@ func remove_from_catalog(resource: Resource) -> void:
 		catalog.girls.erase(resource)
 	elif resource is DateLocalObject:
 		catalog.local_objects.erase(resource)
-	elif resource is DateLocation:
-		catalog.locations.erase(resource)
+	elif resource is DateVenue:
+		catalog.date_venues.erase(resource)
 	elif resource is Outfit:
 		catalog.outfits.erase(resource)
 	elif resource is GirlTrait:
 		catalog.traits.erase(resource)
-	elif resource is ProgressionStat:
-		catalog.progression_stats.erase(resource)
+	elif resource is CharacteristicDefinition:
+		catalog.characteristics.erase(resource)
 	elif resource is GirlDifficultyPreset:
 		catalog.girl_difficulty_presets.erase(resource)
 
@@ -120,8 +120,8 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 			for mapping in move.situation_mappings:
 				if mapping.tag_id == resource_id:
 					result.append({"type": "DateMove", "id": String(move.id), "field": "situation_mappings.tag_id"})
-			if move.local_tag_id == resource_id:
-				result.append({"type": "DateMove", "id": String(move.id), "field": "local_tag_id"})
+			if move.fixed_tag_id == resource_id:
+				result.append({"type": "DateMove", "id": String(move.id), "field": "fixed_tag_id"})
 		for girl in catalog.girls:
 			if girl.positive_tag_ids.has(resource_id) or girl.initial_known_tag_ids.has(resource_id):
 				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "tags"})
@@ -131,14 +131,14 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 				if mapping.situation_id == resource_id:
 					result.append({"type": "DateMove", "id": String(move.id), "field": "situation_mappings.situation_id"})
 	elif kind == "DateLocalObject":
-		for location in catalog.locations:
+		for location in catalog.date_venues:
 			if location.local_object_ids.has(resource_id):
-				result.append({"type": "DateLocation", "id": String(location.id), "field": "local_object_ids"})
+				result.append({"type": "DateVenue", "id": String(location.id), "field": "local_object_ids"})
 	elif kind == "DateMove":
 		for local_object in catalog.local_objects:
 			if local_object != null and local_object.move_ids.has(resource_id):
 				result.append({"type": "DateLocalObject", "id": String(local_object.id), "field": "move_ids"})
-	elif kind == "ProgressionStat":
+	elif kind == "CharacteristicDefinition":
 		for move in catalog.moves:
 			if move.unlock_requirement != null and move.unlock_requirement.stat_id == resource_id:
 				result.append({"type": "DateMove", "id": String(move.id), "field": "unlock_requirement.stat_id"})
@@ -162,10 +162,10 @@ func _rebuild_paths() -> void:
 	_capture_array(catalog.situations, "DateSituation")
 	_capture_array(catalog.girls, "GirlProfile")
 	_capture_array(catalog.local_objects, "DateLocalObject")
-	_capture_array(catalog.locations, "DateLocation")
+	_capture_array(catalog.date_venues, "DateVenue")
 	_capture_array(catalog.outfits, "Outfit")
 	_capture_array(catalog.traits, "GirlTrait")
-	_capture_array(catalog.progression_stats, "ProgressionStat")
+	_capture_array(catalog.characteristics, "CharacteristicDefinition")
 	_capture_array(catalog.girl_difficulty_presets, "GirlDifficultyPreset")
 	if catalog.date_rules != null:
 		var rules_path: String = catalog.date_rules.resource_path

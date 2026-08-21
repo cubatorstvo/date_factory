@@ -200,7 +200,7 @@ static func tag_knowledge_map(progress: GirlProgress, girl: GirlProfile = null) 
 	return result
 
 
-static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: StringName, _progress: GirlProgress = null, player: TestPlayerState = null) -> String:
+static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: StringName, _progress: GirlProgress = null, player: DatePlayerSnapshot = null) -> String:
 	if catalog == null:
 		return String(object_id)
 	var local_object: DateLocalObject = catalog.find_local_object(object_id)
@@ -211,8 +211,8 @@ static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: 
 		var move: DateMove = catalog.find_move(move_id)
 		if move == null:
 			continue
-		var tag: DateTag = catalog.find_tag(move.local_tag_id)
-		var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
+		var tag: DateTag = catalog.find_tag(move.fixed_tag_id)
+		var tag_name: String = tag.display_name if tag != null else String(move.fixed_tag_id)
 		var locked: bool = false
 		var lock_suffix: String = ""
 		if move.unlock_requirement != null and player != null:
@@ -220,7 +220,7 @@ static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: 
 			var required_level: int = move.unlock_requirement.required_level
 			if current_level < required_level:
 				locked = true
-				var stat: ProgressionStat = catalog.find_stat(move.unlock_requirement.stat_id)
+				var stat: CharacteristicDefinition = catalog.find_characteristic(move.unlock_requirement.stat_id)
 				var stat_name: String = stat.display_name if stat != null else String(move.unlock_requirement.stat_id)
 				lock_suffix = " 🔒 Требуется: %s %d (сейчас %d)" % [stat_name, required_level, current_level]
 		var chip: String = "[%s]" % tag_name

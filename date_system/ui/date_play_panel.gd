@@ -10,7 +10,7 @@ var validator: ContentValidator = ContentValidator.new()
 
 var _engine: DateEngine
 var _girl_id: StringName = &"alina"
-var _location_id: StringName = &"cafe"
+var _venue_id: StringName = &"cafe"
 var _outfit_id: StringName = &"casual"
 var _seed: int = 1
 var _grant_tv: bool = false
@@ -44,7 +44,7 @@ func set_lab_outfit_id(outfit_id: StringName) -> void:
 	rebuild()
 
 
-func apply_lab_source_used(characteristic_used: bool, outfit_used: bool, location_used: bool) -> void:
+func apply_lab_source_used(characteristic_used: bool, outfit_used: bool, venue_used: bool) -> void:
 	if _engine == null:
 		return
 	var session: DateSession = _engine.get_session_state()
@@ -52,7 +52,7 @@ func apply_lab_source_used(characteristic_used: bool, outfit_used: bool, locatio
 		return
 	session.characteristic_source_used = characteristic_used
 	session.outfit_source_used = outfit_used
-	session.location_source_used = location_used
+	session.venue_source_used = venue_used
 	_open_source = -1
 	rebuild()
 
@@ -116,7 +116,7 @@ func _maybe_request_playthrough_guidance(view: DateEpisodeView) -> void:
 		return
 	var has_local: bool = false
 	for source_view in view.source_views:
-		if source_view.source == DateTypes.DateMoveSource.LOCATION and not source_view.options.is_empty():
+		if source_view.source == DateTypes.DateMoveSource.VENUE and not source_view.options.is_empty():
 			has_local = true
 			break
 	if has_local:
@@ -258,9 +258,9 @@ func _build_launch() -> void:
 	)
 	_host.add_child(LabUi.labeled_row("Девушка", girl_sel))
 	var loc_sel := OptionButton.new()
-	LabUi.fill_selector(loc_sel, _catalog().locations, _location_id)
+	LabUi.fill_selector(loc_sel, _catalog().date_venues, _venue_id)
 	loc_sel.item_selected.connect(func(index: int) -> void:
-		_location_id = loc_sel.get_item_metadata(index)
+		_venue_id = loc_sel.get_item_metadata(index)
 		rebuild()
 	)
 	_host.add_child(LabUi.labeled_row("Место", loc_sel))
@@ -272,13 +272,13 @@ func _build_launch() -> void:
 	)
 	_host.add_child(LabUi.labeled_row("Одежда", outfit_sel))
 
-	var location: DateLocation = _catalog().find_location(_location_id)
+	var location: DateVenue = _catalog().find_venue(_venue_id)
 	if location != null and location.uses_apartment_preparation:
 		var prepared := CheckBox.new()
 		prepared.text = "Подготовлена"
-		prepared.button_pressed = progress_store.player_state.apartment_prepared
+		prepared.button_pressed = progress_store.player_snapshot.apartment_prepared
 		prepared.toggled.connect(func(pressed: bool) -> void:
-			progress_store.player_state.apartment_prepared = pressed
+			progress_store.player_snapshot.apartment_prepared = pressed
 			progress_store.save_store()
 		)
 		_host.add_child(LabUi.labeled_row("Подготовка квартиры", prepared))
@@ -290,14 +290,14 @@ func _build_launch() -> void:
 		)
 		_host.add_child(LabUi.labeled_row("Локальный объект", tv))
 
-	for stat in _catalog().progression_stats:
+	for stat in _catalog().characteristics:
 		var spin := SpinBox.new()
 		spin.min_value = stat.min_level
 		spin.max_value = stat.max_level
-		spin.value = progress_store.player_state.get_stat(stat.id)
+		spin.value = progress_store.player_snapshot.get_stat(stat.id)
 		var captured_id: StringName = stat.id
 		spin.value_changed.connect(func(value: float) -> void:
-			progress_store.player_state.set_stat(captured_id, int(value))
+			progress_store.player_snapshot.set_stat(captured_id, int(value))
 			progress_store.save_store()
 			rebuild()
 		)
@@ -338,11 +338,11 @@ func _lab_prep_preview() -> Control:
 	box.add_theme_constant_override("separation", 6)
 	box.add_child(LabUi.heading("Итоговые характеристики"))
 	var catalog: DateContentCatalog = _catalog()
-	var player: TestPlayerState = progress_store.player_state if progress_store != null else null
+	var player: DatePlayerSnapshot = progress_store.player_snapshot if progress_store != null else null
 	var outfit: Outfit = catalog.find_outfit(_outfit_id) if catalog != null else null
 	if catalog == null or player == null:
 		return box
-	for stat in catalog.progression_stats:
+	for stat in catalog.characteristics:
 		if stat == null:
 			continue
 		var base_value: int = player.get_stat(stat.id)
@@ -363,8 +363,8 @@ func _lab_prep_preview() -> Control:
 		var with_outfit: int = DateTypes.effective_stat(base_value, outfit, move.unlock_requirement.stat_id)
 		if with_outfit < move.unlock_requirement.required_level:
 			continue
-		var tag: DateTag = catalog.find_tag(move.local_tag_id)
-		var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
+		var tag: DateTag = catalog.find_tag(move.fixed_tag_id)
+		var tag_name: String = tag.display_name if tag != null else String(move.fixed_tag_id)
 		var line_text: String = "[%s] %s" % [tag_name, move.display_name]
 		opened.append(line_text)
 		if base_value < move.unlock_requirement.required_level:
@@ -385,8 +385,8 @@ func _lab_prep_preview() -> Control:
 		var outfit_move: DateMove = catalog.find_move(outfit.outfit_move_id)
 		if outfit_move != null:
 			box.add_child(LabUi.heading("Outfit Move"))
-			var tag: DateTag = catalog.find_tag(outfit_move.local_tag_id)
-			var tag_name: String = tag.display_name if tag != null else String(outfit_move.local_tag_id)
+			var tag: DateTag = catalog.find_tag(outfit_move.fixed_tag_id)
+			var tag_name: String = tag.display_name if tag != null else String(outfit_move.fixed_tag_id)
 			var move_line := Label.new()
 			move_line.text = "[%s] %s" % [tag_name, outfit_move.display_name]
 			box.add_child(move_line)
@@ -434,7 +434,7 @@ func _replay() -> void:
 		return
 	var snap: DateReplaySnapshot = progress_store.last_replay
 	_girl_id = snap.girl_id
-	_location_id = snap.location_id
+	_venue_id = snap.venue_id
 	_outfit_id = snap.outfit_id
 	_seed = snap.seed
 	_begin_session(_seed, true)
@@ -448,16 +448,16 @@ func _begin_session(seed: int, is_replay: bool) -> void:
 		local_object_ids = progress_store.last_replay.local_object_ids.duplicate()
 	else:
 		local_object_ids = _lab_local_object_ids()
-		progress_store.capture_replay(seed, _girl_id, _location_id, _outfit_id, progress, local_object_ids)
+		progress_store.capture_replay(seed, _girl_id, _venue_id, _outfit_id, progress, local_object_ids)
 	var config := DateSessionConfig.new()
 	config.seed = seed
 	config.girl_id = _girl_id
-	config.location_id = _location_id
+	config.venue_id = _venue_id
 	config.outfit_id = _outfit_id
 	config.local_object_ids = local_object_ids
 	config.catalog = _catalog()
 	config.girl_progress = progress
-	config.player_state = progress_store.player_state
+	config.player_snapshot = progress_store.player_snapshot
 	config.relationship_max = GirlCatalog.seed_relationship_max(_girl_id)
 	_engine = DateEngine.new()
 	_engine.create_date_session(config)
@@ -467,7 +467,7 @@ func _begin_session(seed: int, is_replay: bool) -> void:
 
 func _lab_local_object_ids() -> Array[StringName]:
 	var result: Array[StringName] = []
-	var location: DateLocation = _catalog().find_location(_location_id)
+	var location: DateVenue = _catalog().find_venue(_venue_id)
 	if location != null:
 		for object_id in location.local_object_ids:
 			if object_id != &"" and not result.has(object_id):
@@ -495,9 +495,9 @@ func _build_runner() -> void:
 	var view: DateEpisodeView = _engine.get_current_episode()
 	var girl: GirlProfile = _engine.catalog().find_girl(session.girl_id)
 	if _playthrough:
-		var location: DateLocation = _engine.catalog().find_location(session.location_id)
+		var location: DateVenue = _engine.catalog().find_venue(session.venue_id)
 		var girl_name: String = girl.display_name if girl != null else String(session.girl_id)
-		var location_name: String = location.display_name if location != null else String(session.location_id)
+		var location_name: String = location.display_name if location != null else String(session.venue_id)
 		var active := Label.new()
 		active.text = "Active girl: %s\nLocation: %s" % [girl_name, location_name]
 		_host.add_child(active)
@@ -650,7 +650,7 @@ func _combo_compact_text(session: DateSession) -> String:
 
 
 func _requirement_reason(option: DateMoveOption) -> String:
-	var stat: ProgressionStat = _catalog().find_stat(option.requirement_stat_id)
+	var stat: CharacteristicDefinition = _catalog().find_characteristic(option.requirement_stat_id)
 	var stat_name: String = stat.display_name if stat != null else String(option.requirement_stat_id)
 	var now_text: String = "Сейчас: %s %d" % [stat_name, option.current_stat_level]
 	if option.outfit_stat_bonus > 0:
@@ -878,14 +878,13 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 		"seed: %d" % session.seed,
 		"session_id: %s" % session.session_id,
 		"girl_id: %s" % String(session.girl_id),
-		"location_id: %s" % String(session.location_id),
+		"venue_id: %s" % String(session.venue_id),
 		"outfit_id: %s" % String(session.outfit_id),
 		"phase: %s" % DateTypes.phase_name(session.current_phase),
 		"episode_index: %d" % session.current_episode_index,
 		"situation_id: %s" % String(situation_id),
 		"candidate_base_move_ids: %s" % str(session.current_candidate_base_move_ids),
 		"selected_base_move_ids: %s" % str(session.current_selected_base_move_ids),
-		"applicable_unlockable_move_ids: %s" % str(session.current_applicable_unlockable_move_ids),
 		"selected_move_id: %s" % String(session.current_selected_move_id),
 		"resolved_tag_id: %s" % String(session.current_resolved_tag_id),
 		"tag_preference: %d" % session.current_tag_preference,
@@ -895,13 +894,14 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 		"combo_rewards_earned: %d" % session.combo_rewards_earned,
 		"characteristic_source_used: %s" % str(session.characteristic_source_used),
 		"outfit_source_used: %s" % str(session.outfit_source_used),
-		"location_source_used: %s" % str(session.location_source_used),
+		"venue_source_used: %s" % str(session.venue_source_used),
 		"score_breakdown: %s" % str(session.score_breakdown.to_dictionary() if session.score_breakdown != null else {}),
 	])
-	lines.append_array(_debug_move_block("applicable_unlockable_moves", session.current_applicable_unlockable_move_ids, situation_id, session, true))
-	lines.append_array(_debug_move_block("available_unlockable_moves", session.current_available_unlockable_move_ids, situation_id, session, true))
-	lines.append_array(_debug_move_block("locked_unlockable_moves", session.current_locked_unlockable_move_ids, situation_id, session, true))
-	lines.append_array(_debug_move_block("used_unlockable_moves", session.current_used_unlockable_move_ids, situation_id, session, true))
+	if view != null:
+		for source_view in view.source_views:
+			lines.append("source %s used=%s state=%s" % [DateTypes.source_name(source_view.source), str(source_view.used), DateTypes.source_state_name(source_view.state)])
+			for option in source_view.options:
+				lines.append("  move_id=%s tag_id=%s state=%s" % [String(option.move_id), String(option.tag_id), DateTypes.availability_name(option.availability)])
 	lines.append_array(_debug_move_block("preferred_base_candidates", session.current_preferred_base_move_ids, situation_id, session, false))
 	lines.append_array(_debug_move_block("fallback_base_candidates", session.current_fallback_base_move_ids, situation_id, session, false))
 	lines.append_array(_debug_move_block("selected_base_moves", session.current_selected_base_move_ids, situation_id, session, false))
@@ -914,8 +914,8 @@ func _debug_move_block(
 	title: String,
 	move_ids: Array[StringName],
 	situation_id: StringName,
-	session: DateSession,
-	unlockable: bool
+	_session: DateSession,
+	_unused: bool
 ) -> PackedStringArray:
 	var lines: PackedStringArray = PackedStringArray([title])
 	if move_ids.is_empty():
@@ -930,20 +930,9 @@ func _debug_move_block(
 			var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
 			if mapping != null:
 				tag_id = String(mapping.tag_id)
-			if unlockable:
-				state = _debug_unlockable_state(session, move_id)
+		
 		lines.append("  move_id=%s tag_id=%s state=%s" % [String(move_id), tag_id, state])
 	return lines
-
-
-func _debug_unlockable_state(session: DateSession, move_id: StringName) -> String:
-	if session.current_available_unlockable_move_ids.has(move_id):
-		return DateTypes.availability_name(DateTypes.MoveAvailability.AVAILABLE)
-	if session.current_locked_unlockable_move_ids.has(move_id):
-		return DateTypes.availability_name(DateTypes.MoveAvailability.LOCKED)
-	if session.current_used_unlockable_move_ids.has(move_id):
-		return DateTypes.availability_name(DateTypes.MoveAvailability.USED)
-	return DateTypes.availability_name(DateTypes.MoveAvailability.AVAILABLE)
 
 
 func _debug_id_lines(ids: Array[StringName]) -> PackedStringArray:

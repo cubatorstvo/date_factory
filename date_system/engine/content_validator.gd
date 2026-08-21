@@ -12,7 +12,7 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_difficulty_presets(catalog, issues)
 	_check_girl_tags(catalog, issues)
 	_check_move_mappings(catalog, issues)
-	_check_unlockables(catalog, issues)
+	_check_characteristic_moves(catalog, issues)
 	_check_outfits(catalog, issues)
 	_check_base_usage(catalog, issues)
 	_check_situation_base_pool(catalog, issues)
@@ -38,10 +38,10 @@ func _check_unique_ids(catalog: DateContentCatalog, issues: Array[ContentValidat
 	_unique_group("DateSituation", catalog.situations, issues)
 	_unique_group("GirlProfile", catalog.girls, issues)
 	_unique_group("DateLocalObject", catalog.local_objects, issues)
-	_unique_group("DateLocation", catalog.locations, issues)
+	_unique_group("DateVenue", catalog.date_venues, issues)
 	_unique_group("Outfit", catalog.outfits, issues)
 	_unique_group("GirlTrait", catalog.traits, issues)
-	_unique_group("ProgressionStat", catalog.progression_stats, issues)
+	_unique_group("CharacteristicDefinition", catalog.characteristics, issues)
 	_unique_group("GirlDifficultyPreset", catalog.girl_difficulty_presets, issues)
 
 
@@ -74,15 +74,15 @@ func _check_references(catalog: DateContentCatalog, issues: Array[ContentValidat
 				issues.append(_issue("DateMove", String(move.id), "situation_id", "Неизвестная Situation: %s." % String(mapping.situation_id)))
 			if catalog.find_tag(mapping.tag_id) == null:
 				issues.append(_issue("DateMove", String(move.id), "tag_id", "Неизвестный Tag: %s." % String(mapping.tag_id)))
-		if move.unlock_requirement != null and catalog.find_stat(move.unlock_requirement.stat_id) == null:
+		if move.unlock_requirement != null and catalog.find_characteristic(move.unlock_requirement.stat_id) == null:
 			issues.append(_issue("DateMove", String(move.id), "unlock_requirement.stat_id", "Неизвестная характеристика: %s." % String(move.unlock_requirement.stat_id)))
 		if move.has_fixed_presentation():
-			if catalog.find_tag(move.local_tag_id) == null:
-				issues.append(_issue("DateMove", String(move.id), "local_tag_id", "Ход с фиксированным текстом должен иметь существующий Tag."))
-			if move.local_option_text.strip_edges().is_empty():
-				issues.append(_issue("DateMove", String(move.id), "local_option_text", "Ход с фиксированным текстом должен иметь option text."))
-			if move.local_positive_result_text.strip_edges().is_empty() or move.local_negative_result_text.strip_edges().is_empty():
-				issues.append(_issue("DateMove", String(move.id), "local_result_text", "Ход с фиксированным текстом должен иметь positive и negative result text."))
+			if catalog.find_tag(move.fixed_tag_id) == null:
+				issues.append(_issue("DateMove", String(move.id), "fixed_tag_id", "Ход с фиксированным текстом должен иметь существующий Tag."))
+			if move.fixed_option_text.strip_edges().is_empty():
+				issues.append(_issue("DateMove", String(move.id), "fixed_option_text", "Ход с фиксированным текстом должен иметь option text."))
+			if move.fixed_positive_result_text.strip_edges().is_empty() or move.fixed_negative_result_text.strip_edges().is_empty():
+				issues.append(_issue("DateMove", String(move.id), "fixed_result_text", "Ход с фиксированным текстом должен иметь positive и negative result text."))
 
 
 func _check_girl_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -179,7 +179,7 @@ func _check_move_mappings(catalog: DateContentCatalog, issues: Array[ContentVali
 			seen[key] = true
 
 
-func _check_unlockables(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+func _check_characteristic_moves(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	var characteristic_moves: Array[DateMove] = []
 	for move in catalog.moves:
 		if move == null or not move.is_characteristic():
@@ -188,7 +188,7 @@ func _check_unlockables(catalog: DateContentCatalog, issues: Array[ContentValida
 		if not move.situation_mappings.is_empty():
 			issues.append(_issue("DateMove", String(move.id), "situation_mappings", "Characteristic Move имеет постоянный Tag и не использует situation mappings."))
 		if move.unlock_requirement == null or String(move.unlock_requirement.stat_id).is_empty():
-			issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "UNLOCKABLE должен содержать UnlockRequirement."))
+			issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "CHARACTERISTIC должен содержать UnlockRequirement."))
 		elif not DateTypes.CHARACTERISTIC_LEVELS.has(move.unlock_requirement.required_level):
 			issues.append(_issue("DateMove", String(move.id), "unlock_requirement.required_level", "Characteristic Move открывается на уровнях 1, 3 или 5."))
 	if characteristic_moves.size() != 12:
@@ -196,14 +196,14 @@ func _check_unlockables(catalog: DateContentCatalog, issues: Array[ContentValida
 	var tags_to_moves: Dictionary = {}
 	var slots: Dictionary = {}
 	for move in characteristic_moves:
-		var tag_key: String = String(move.local_tag_id)
+		var tag_key: String = String(move.fixed_tag_id)
 		if tag_key.is_empty():
 			continue
 		if tags_to_moves.has(tag_key):
 			issues.append(_issue(
 				"DateMove",
 				String(move.id),
-				"local_tag_id",
+				"fixed_tag_id",
 				"Characteristic Moves дублируют Tag \"%s\": %s, %s" % [tag_key, String(tags_to_moves[tag_key]), String(move.id)],
 				DateTypes.ValidationSeverity.ERROR,
 				"CHARACTERISTIC_TAG_DUPLICATE"
@@ -237,17 +237,17 @@ func _check_outfits(catalog: DateContentCatalog, issues: Array[ContentValidation
 			continue
 		if outfit.stat_bonus < 0 or outfit.stat_bonus > 1:
 			issues.append(_issue("Outfit", String(outfit.id), "stat_bonus", "Outfit даёт максимум +1 к одной характеристике."))
-		if outfit.stat_bonus == 1 and (outfit.stat_id == &"" or catalog.find_stat(outfit.stat_id) == null):
+		if outfit.stat_bonus == 1 and (outfit.stat_id == &"" or catalog.find_characteristic(outfit.stat_id) == null):
 			issues.append(_issue("Outfit", String(outfit.id), "stat_id", "Outfit с бонусом должен указывать существующую характеристику."))
 		if not outfit.has_outfit_move():
 			continue
 		var outfit_move: DateMove = catalog.find_move(outfit.outfit_move_id)
-		if outfit_move == null or not outfit_move.is_outfit_move():
+		if outfit_move == null or not outfit_move.is_outfit():
 			issues.append(_issue("Outfit", String(outfit.id), "outfit_move_id", "Outfit Move должен существовать и иметь kind OUTFIT."))
 		else:
 			referenced_outfit_moves[String(outfit.outfit_move_id)] = true
 	for move in catalog.moves:
-		if move == null or not move.is_outfit_move():
+		if move == null or not move.is_outfit():
 			continue
 		if not move.situation_mappings.is_empty():
 			issues.append(_issue("DateMove", String(move.id), "situation_mappings", "Outfit Move имеет постоянный Tag и не использует situation mappings."))
@@ -285,15 +285,15 @@ func _check_local_objects(catalog: DateContentCatalog, issues: Array[ContentVali
 				continue
 			if not move.is_local():
 				issues.append(_issue("DateLocalObject", String(local_object.id), "move_ids", "Ход %s должен иметь kind LOCAL." % String(move_id)))
-	for location in catalog.locations:
+	for location in catalog.date_venues:
 		if location == null:
 			continue
 		for object_id in location.local_object_ids:
 			if catalog.find_local_object(object_id) == null:
-				issues.append(_issue("DateLocation", String(location.id), "local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
+				issues.append(_issue("DateVenue", String(location.id), "local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
 		if location.enabled and [&"apartment", &"cafe", &"restaurant"].has(location.id):
 			if location.local_object_ids.is_empty():
-				issues.append(_issue("DateLocation", String(location.id), "local_object_ids", "Активное место должно иметь хотя бы один Local Object."))
+				issues.append(_issue("DateVenue", String(location.id), "local_object_ids", "Активное место должно иметь хотя бы один Local Object."))
 	var apartment_catalog: ApartmentCatalog = ApartmentCatalog.create_seed()
 	for upgrade in apartment_catalog.get_all_upgrades():
 		if upgrade == null:
@@ -376,13 +376,13 @@ func _check_girl_traits(catalog: DateContentCatalog, issues: Array[ContentValida
 			continue
 		match girl_trait.kind:
 			GirlTrait.Kind.CHARACTERISTIC:
-				var stat: ProgressionStat = catalog.find_stat(girl_trait.characteristic_id)
+				var stat: CharacteristicDefinition = catalog.find_characteristic(girl_trait.characteristic_id)
 				if stat == null:
 					issues.append(_issue("GirlTrait", String(girl_trait.id), "characteristic_id", "Trait характеристики должен ссылаться на каноническую характеристику."))
 			GirlTrait.Kind.VENUE:
-				var location: DateLocation = catalog.find_location(girl_trait.date_location_id)
+				var location: DateVenue = catalog.find_venue(girl_trait.date_venue_id)
 				if location == null:
-					issues.append(_issue("GirlTrait", String(girl_trait.id), "date_location_id", "Trait места должен ссылаться на существующий DateLocation."))
+					issues.append(_issue("GirlTrait", String(girl_trait.id), "date_venue_id", "Trait места должен ссылаться на существующий DateVenue."))
 
 
 func _expected_initial_known(girl_id: StringName) -> Array[StringName]:
@@ -455,11 +455,11 @@ func _check_requirement_range(catalog: DateContentCatalog, issues: Array[Content
 		var required: int = move.unlock_requirement.required_level
 		if required < 0 or required > 5:
 			issues.append(_issue("DateMove", String(move.id), "unlock_requirement.required_level", "Требование характеристики должно быть в диапазоне 0..5."))
-	for stat in catalog.progression_stats:
+	for stat in catalog.characteristics:
 		if stat == null:
 			continue
 		if stat.min_level != 0 or stat.max_level != 5:
-			issues.append(_issue("ProgressionStat", String(stat.id), "max_level", "Характеристика должна иметь диапазон 0..5."))
+			issues.append(_issue("CharacteristicDefinition", String(stat.id), "max_level", "Характеристика должна иметь диапазон 0..5."))
 
 
 func _check_stage_relationship_max(issues: Array[ContentValidationIssue]) -> void:
@@ -487,11 +487,11 @@ func _check_display_copy(catalog: DateContentCatalog, issues: Array[ContentValid
 			continue
 		if tag.display_name.strip_edges().is_empty() or tag.description.strip_edges().is_empty():
 			issues.append(_issue("DateTag", String(tag.id), "description", "Активный тег должен иметь display_name и description."))
-	for stat in catalog.progression_stats:
+	for stat in catalog.characteristics:
 		if stat == null:
 			continue
 		if stat.display_name.strip_edges().is_empty() or stat.description.strip_edges().is_empty():
-			issues.append(_issue("ProgressionStat", String(stat.id), "description", "Характеристика должна иметь display_name и description."))
+			issues.append(_issue("CharacteristicDefinition", String(stat.id), "description", "Характеристика должна иметь display_name и description."))
 
 
 func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -503,8 +503,8 @@ func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentVal
 			if mapping == null:
 				continue
 			used[String(mapping.tag_id)] = true
-		if move.has_fixed_presentation() and move.local_tag_id != &"":
-			used[String(move.local_tag_id)] = true
+		if move.has_fixed_presentation() and move.fixed_tag_id != &"":
+			used[String(move.fixed_tag_id)] = true
 	for tag in catalog.enabled_tags():
 		if tag == null:
 			continue
@@ -544,7 +544,7 @@ func _check_base_tag_diversity(catalog: DateContentCatalog, issues: Array[Conten
 		))
 
 
-func _check_duplicate_unlockable_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+func _check_duplicate_characteristic_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	pass
 func _issue(
 	resource_type: String,

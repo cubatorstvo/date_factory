@@ -12,7 +12,7 @@ enum Kind {
 @export var enabled: bool = true
 @export var kind: Kind = Kind.CHARACTERISTIC
 @export var characteristic_id: StringName = &""
-@export var date_location_id: StringName = &""
+@export var date_venue_id: StringName = &""
 
 
 func result_line(score: int) -> String:

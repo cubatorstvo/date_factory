@@ -7,14 +7,14 @@ const SECTIONS: Array[Array] = [
 	["girl_difficulty", "СЛОЖНОСТЬ ДЕВУШЕК"],
 	["tags", "ТЕГИ"],
 	["base_moves", "БАЗОВЫЕ ХОДЫ"],
-	["unlock_moves", "ХОДЫ ХАРАКТЕРИСТИК"],
+	["characteristic_moves", "ХОДЫ ХАРАКТЕРИСТИК"],
 	["outfit_moves", "ХОДЫ ОДЕЖДЫ"],
 	["situations", "СИТУАЦИИ"],
-	["locations", "МЕСТА"],
+	["venues", "МЕСТА СВИДАНИЯ"],
 	["local_objects", "ЛОКАЛЬНЫЕ ОБЪЕКТЫ"],
 	["local_moves", "ЛОКАЛЬНЫЕ ХОДЫ"],
 	["outfits", "НАРЯДЫ"],
-	["stats", "ХАРАКТЕРИСТИКИ"],
+	["characteristics", "ХАРАКТЕРИСТИКИ"],
 	["rules", "ПРАВИЛА СВИДАНИЯ"],
 	["balance", "БАЛАНС"],
 	["test_state", "ТЕСТОВОЕ СОСТОЯНИЕ"],
@@ -510,8 +510,8 @@ func _build_test_state() -> Control:
 		_refresh_run_label()
 	)
 	root.add_child(LabUi.labeled_row("Деньги", money))
-	var player: TestPlayerState = progress_store.player_state
-	for stat in catalog_service.catalog.progression_stats:
+	var player: DatePlayerSnapshot = progress_store.player_snapshot
+	for stat in catalog_service.catalog.characteristics:
 		var spin := SpinBox.new()
 		spin.min_value = stat.min_level
 		spin.max_value = stat.max_level
@@ -543,14 +543,14 @@ func _build_test_state() -> Control:
 	var outfit: Outfit = catalog_service.catalog.find_outfit(current_outfit_id)
 	var bonus_line := Label.new()
 	if outfit != null and outfit.stat_bonus > 0:
-		var bonus_stat: ProgressionStat = catalog_service.catalog.find_stat(outfit.stat_id)
+		var bonus_stat: CharacteristicDefinition = catalog_service.catalog.find_characteristic(outfit.stat_id)
 		var bonus_name: String = bonus_stat.display_name if bonus_stat != null else String(outfit.stat_id)
 		bonus_line.text = "Outfit bonus: %s +%d" % [bonus_name, outfit.stat_bonus]
 	else:
 		bonus_line.text = "Outfit bonus: нет"
 	root.add_child(bonus_line)
 	root.add_child(LabUi.heading("EffectiveStat"))
-	for stat in catalog_service.catalog.progression_stats:
+	for stat in catalog_service.catalog.characteristics:
 		var base_value: int = player.get_stat(stat.id)
 		var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
 		var bonus: int = outfit.bonus_for(stat.id) if outfit != null else 0
@@ -567,7 +567,7 @@ func _build_test_state() -> Control:
 		var current: int = DateTypes.effective_stat(player.get_stat(move.unlock_requirement.stat_id), outfit, move.unlock_requirement.stat_id)
 		var unlocked: bool = current >= move.unlock_requirement.required_level
 		var row := Label.new()
-		var stat: ProgressionStat = catalog_service.catalog.find_stat(move.unlock_requirement.stat_id)
+		var stat: CharacteristicDefinition = catalog_service.catalog.find_characteristic(move.unlock_requirement.stat_id)
 		row.text = "%s | %s %d | Effective %d | %s" % [
 			move.display_name,
 			stat.display_name if stat != null else String(move.unlock_requirement.stat_id),
@@ -580,8 +580,8 @@ func _build_test_state() -> Control:
 	if outfit != null and outfit.has_outfit_move():
 		var outfit_move: DateMove = catalog_service.catalog.find_move(outfit.outfit_move_id)
 		if outfit_move != null:
-			var tag: DateTag = catalog_service.catalog.find_tag(outfit_move.local_tag_id)
-			var tag_name: String = tag.display_name if tag != null else String(outfit_move.local_tag_id)
+			var tag: DateTag = catalog_service.catalog.find_tag(outfit_move.fixed_tag_id)
+			var tag_name: String = tag.display_name if tag != null else String(outfit_move.fixed_tag_id)
 			outfit_move_line.text = "Outfit Move: [%s] %s" % [tag_name, outfit_move.display_name]
 		else:
 			outfit_move_line.text = "Outfit Move: нет"
@@ -598,20 +598,20 @@ func _build_test_state() -> Control:
 	outfit_used.text = "Outfit used"
 	outfit_used.button_pressed = session != null and session.outfit_source_used
 	outfit_used.disabled = session == null
-	var location_used := CheckBox.new()
-	location_used.text = "Location used"
-	location_used.button_pressed = session != null and session.location_source_used
-	location_used.disabled = session == null
+	var venue_used := CheckBox.new()
+	venue_used.text = "Venue used"
+	venue_used.button_pressed = session != null and session.venue_source_used
+	venue_used.disabled = session == null
 	var apply_sources := LabUi.button("ПРИМЕНИТЬ SOURCE USE")
 	apply_sources.disabled = session == null
 	apply_sources.pressed.connect(func() -> void:
 		if _play_panel != null:
-			_play_panel.apply_lab_source_used(char_used.button_pressed, outfit_used.button_pressed, location_used.button_pressed)
+			_play_panel.apply_lab_source_used(char_used.button_pressed, outfit_used.button_pressed, venue_used.button_pressed)
 		_show_section("test_state")
 	)
 	root.add_child(char_used)
 	root.add_child(outfit_used)
-	root.add_child(location_used)
+	root.add_child(venue_used)
 	root.add_child(apply_sources)
 	return root
 
@@ -671,22 +671,22 @@ func _items() -> Array:
 			return catalog.tags
 		"base_moves":
 			return _moves_of(DateTypes.DateMoveKind.BASE)
-		"unlock_moves":
-			return _moves_of(DateTypes.DateMoveKind.UNLOCKABLE)
+		"characteristic_moves":
+			return _moves_of(DateTypes.DateMoveKind.CHARACTERISTIC)
 		"outfit_moves":
 			return _moves_of(DateTypes.DateMoveKind.OUTFIT)
 		"situations":
 			return catalog.situations
-		"locations":
-			return catalog.locations
+		"venues":
+			return catalog.date_venues
 		"local_objects":
 			return catalog.local_objects
 		"local_moves":
 			return _moves_of(DateTypes.DateMoveKind.LOCAL)
 		"outfits":
 			return catalog.outfits
-		"stats":
-			return catalog.progression_stats
+		"characteristics":
+			return catalog.characteristics
 		"rules":
 			return [catalog.date_rules]
 		_:
@@ -744,21 +744,21 @@ func _rebuild_form() -> void:
 	match _section:
 		"tags":
 			_add_common_identity(_draft)
-		"stats":
+		"characteristics":
 			_add_common_identity(_draft)
 			_add_int(_draft, "min_level", "min_level")
 			_add_int(_draft, "max_level", "max_level")
 		"outfits":
 			_add_common_identity(_draft)
 			_add_int(_draft, "price", "price")
-			_add_id_selector(_draft, "stat_id", "stat", catalog_service.catalog.progression_stats)
+			_add_id_selector(_draft, "stat_id", "stat", catalog_service.catalog.characteristics)
 			_add_int(_draft, "stat_bonus", "stat_bonus")
 			_add_int(_draft, "min_story_stage", "min_story_stage")
 			_add_id_selector(_draft, "outfit_move_id", "outfit move", _moves_of(DateTypes.DateMoveKind.OUTFIT))
-		"locations":
+		"venues":
 			_add_common_identity(_draft)
 			_add_bool(_draft, "uses_apartment_preparation", "uses_apartment_preparation")
-			_add_local_object_id_checks(_draft as DateLocation)
+			_add_local_object_id_checks(_draft as DateVenue)
 		"local_objects":
 			_add_local_object_form()
 		"local_moves":
@@ -773,7 +773,7 @@ func _rebuild_form() -> void:
 			_add_girl_form()
 		"girl_difficulty":
 			_add_difficulty_form()
-		"base_moves", "unlock_moves", "outfit_moves":
+		"base_moves", "characteristic_moves", "outfit_moves":
 			_add_move_form()
 		"rules":
 			_add_rules_form()
@@ -907,14 +907,14 @@ func _add_situation_move_lists() -> void:
 	var unlock_names: PackedStringArray = PackedStringArray()
 	for move in catalog_service.catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE):
 		base_names.append(move.display_name)
-	for move in catalog_service.catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.UNLOCKABLE):
+	for move in catalog_service.catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.CHARACTERISTIC):
 		unlock_names.append(move.display_name)
 	var base := Label.new()
 	base.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	base.text = "Applicable BASE Moves: %s" % ", ".join(base_names)
 	var unlock := Label.new()
 	unlock.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	unlock.text = "Applicable UNLOCKABLE Moves: %s" % ", ".join(unlock_names)
+	unlock.text = "Applicable CHARACTERISTIC Moves: %s" % ", ".join(unlock_names)
 	_form_host.add_child(base)
 	_form_host.add_child(unlock)
 
@@ -1080,15 +1080,15 @@ func _set_girl_liked_tag(girl: GirlProfile, tag_id: StringName, liked: bool) -> 
 func _add_move_form() -> void:
 	var move: DateMove = _draft as DateMove
 	_add_common_identity(move)
-	if move.kind == DateTypes.DateMoveKind.LOCAL or move.kind == DateTypes.DateMoveKind.OUTFIT or move.kind == DateTypes.DateMoveKind.UNLOCKABLE:
-		_add_id_selector(move, "local_tag_id", "local tag", catalog_service.catalog.tags)
-		_add_text(move, "local_option_text", "local_option_text")
-		_add_text(move, "local_positive_result_text", "local_positive_result_text")
-		_add_text(move, "local_negative_result_text", "local_negative_result_text")
-		if move.kind == DateTypes.DateMoveKind.UNLOCKABLE or move.kind == DateTypes.DateMoveKind.LOCAL:
+	if move.kind == DateTypes.DateMoveKind.LOCAL or move.kind == DateTypes.DateMoveKind.OUTFIT or move.kind == DateTypes.DateMoveKind.CHARACTERISTIC:
+		_add_id_selector(move, "fixed_tag_id", "local tag", catalog_service.catalog.tags)
+		_add_text(move, "fixed_option_text", "fixed_option_text")
+		_add_text(move, "fixed_positive_result_text", "fixed_positive_result_text")
+		_add_text(move, "fixed_negative_result_text", "fixed_negative_result_text")
+		if move.kind == DateTypes.DateMoveKind.CHARACTERISTIC or move.kind == DateTypes.DateMoveKind.LOCAL:
 			if move.unlock_requirement == null:
 				move.unlock_requirement = UnlockRequirement.new()
-			_add_id_selector(move.unlock_requirement, "stat_id", "unlock stat", catalog_service.catalog.progression_stats)
+			_add_id_selector(move.unlock_requirement, "stat_id", "unlock stat", catalog_service.catalog.characteristics)
 			_add_int(move.unlock_requirement, "required_level", "required_level")
 		return
 	_form_host.add_child(LabUi.heading("Mappings"))
@@ -1122,7 +1122,7 @@ func _add_local_object_form() -> void:
 		_form_host.add_child(box)
 
 
-func _add_local_object_id_checks(location: DateLocation) -> void:
+func _add_local_object_id_checks(location: DateVenue) -> void:
 	_form_host.add_child(LabUi.heading("Local Objects"))
 	for local_object in catalog_service.catalog.local_objects:
 		if local_object == null:
@@ -1185,14 +1185,13 @@ func _add_rules_form() -> void:
 	var rules: DateRules = _draft as DateRules
 	for prop in [
 		"opening_episode_count", "core_episode_count", "closing_episode_count", "base_moves_per_episode",
-		"opening_positive_score", "opening_negative_score", "core_positive_score", "core_negative_score", "closing_positive_score", "closing_negative_score",
+		"positive_move_score", "negative_move_score",
 		"apartment_unprepared_penalty",
 	]:
 		_add_int(rules, prop, prop)
 	var enabled_count: int = catalog_service.catalog.enabled_tags().size()
 	_add_bounded_int(rules, "min_distinct_base_tags_per_situation", "Минимум разных базовых тегов в ситуации", 1, maxi(1, enabled_count))
 	_add_bool(rules, "allow_situation_repeats", "allow_situation_repeats")
-	_add_bool(rules, "show_locked_unlockable_moves", "show_locked_unlockable_moves")
 	_add_bool(rules, "reveal_tag_after_use", "reveal_tag_after_use")
 	_add_int(rules, "combo_required_distinct_success_tags", "combo_required_distinct_success_tags")
 	_add_int(rules, "combo_bonus_score", "combo_bonus_score")
@@ -1207,18 +1206,18 @@ func _kind_name() -> String:
 			return "GirlDifficultyPreset"
 		"tags":
 			return "DateTag"
-		"base_moves", "unlock_moves", "outfit_moves", "local_moves":
+		"base_moves", "characteristic_moves", "outfit_moves", "local_moves":
 			return "DateMove"
 		"situations":
 			return "DateSituation"
-		"locations":
-			return "DateLocation"
+		"venues":
+			return "DateVenue"
 		"local_objects":
 			return "DateLocalObject"
 		"outfits":
 			return "Outfit"
-		"stats":
-			return "ProgressionStat"
+		"characteristics":
+			return "CharacteristicDefinition"
 		"rules":
 			return "DateRules"
 		_:
@@ -1266,12 +1265,12 @@ func _new_resource() -> Resource:
 			tag.id = StringName("tag_%s" % suffix)
 			tag.display_name = "Новый тег"
 			return tag
-		"base_moves", "unlock_moves", "outfit_moves", "local_moves":
+		"base_moves", "characteristic_moves", "outfit_moves", "local_moves":
 			var move := DateMove.new()
 			move.id = StringName("move_%s" % suffix)
 			move.display_name = "Новый ход"
-			if _section == "unlock_moves":
-				move.kind = DateTypes.DateMoveKind.UNLOCKABLE
+			if _section == "characteristic_moves":
+				move.kind = DateTypes.DateMoveKind.CHARACTERISTIC
 				move.max_uses_per_date = 1
 				move.unlock_requirement = UnlockRequirement.new()
 			elif _section == "outfit_moves":
@@ -1288,8 +1287,8 @@ func _new_resource() -> Resource:
 			situation.display_name = "Новая ситуация"
 			situation.allowed_phases = [int(DateTypes.DatePhase.CORE)]
 			return situation
-		"locations":
-			var location := DateLocation.new()
+		"venues":
+			var location := DateVenue.new()
 			location.id = StringName("location_%s" % suffix)
 			location.display_name = "Новое место"
 			return location
@@ -1303,8 +1302,8 @@ func _new_resource() -> Resource:
 			outfit.id = StringName("outfit_%s" % suffix)
 			outfit.display_name = "Новый наряд"
 			return outfit
-		"stats":
-			var stat := ProgressionStat.new()
+		"characteristics":
+			var stat := CharacteristicDefinition.new()
 			stat.id = StringName("stat_%s" % suffix)
 			stat.display_name = "Новая характеристика"
 			return stat
@@ -1400,7 +1399,7 @@ func _swap_into(catalog: DateContentCatalog, draft: Resource) -> void:
 	if draft is DateRules:
 		catalog.date_rules = draft
 		return
-	var arrays: Array = [catalog.tags, catalog.moves, catalog.situations, catalog.girls, catalog.girl_difficulty_presets, catalog.local_objects, catalog.locations, catalog.outfits, catalog.progression_stats]
+	var arrays: Array = [catalog.tags, catalog.moves, catalog.situations, catalog.girls, catalog.girl_difficulty_presets, catalog.local_objects, catalog.date_venues, catalog.outfits, catalog.characteristics]
 	for arr in arrays:
 		for i in arr.size():
 			if arr[i] != null and arr[i].id == draft.get("id"):
@@ -1418,12 +1417,12 @@ func _swap_into(catalog: DateContentCatalog, draft: Resource) -> void:
 		catalog.girl_difficulty_presets.append(draft)
 	elif draft is DateLocalObject:
 		catalog.local_objects.append(draft)
-	elif draft is DateLocation:
-		catalog.locations.append(draft)
+	elif draft is DateVenue:
+		catalog.date_venues.append(draft)
 	elif draft is Outfit:
 		catalog.outfits.append(draft)
-	elif draft is ProgressionStat:
-		catalog.progression_stats.append(draft)
+	elif draft is CharacteristicDefinition:
+		catalog.characteristics.append(draft)
 
 
 func _replace_original(draft: Resource) -> void:
@@ -1434,7 +1433,7 @@ func _replace_original(draft: Resource) -> void:
 	var arrays: Array = [
 		catalog_service.catalog.tags, catalog_service.catalog.moves, catalog_service.catalog.situations,
 		catalog_service.catalog.girls, catalog_service.catalog.girl_difficulty_presets, catalog_service.catalog.local_objects,
-		catalog_service.catalog.locations, catalog_service.catalog.outfits, catalog_service.catalog.progression_stats,
+		catalog_service.catalog.date_venues, catalog_service.catalog.outfits, catalog_service.catalog.characteristics,
 	]
 	for arr in arrays:
 		for i in arr.size():

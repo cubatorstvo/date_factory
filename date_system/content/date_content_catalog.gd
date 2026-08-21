@@ -7,10 +7,10 @@ extends Resource
 @export var girls: Array[GirlProfile] = []
 @export var girl_difficulty_presets: Array[GirlDifficultyPreset] = []
 @export var local_objects: Array[DateLocalObject] = []
-@export var locations: Array[DateLocation] = []
+@export var date_venues: Array[DateVenue] = []
 @export var outfits: Array[Outfit] = []
 @export var traits: Array[GirlTrait] = []
-@export var progression_stats: Array[ProgressionStat] = []
+@export var characteristics: Array[CharacteristicDefinition] = []
 @export var date_rules: DateRules
 
 
@@ -84,9 +84,9 @@ func enabled_local_objects() -> Array[DateLocalObject]:
 	return result
 
 
-func find_location(location_id: StringName) -> DateLocation:
-	for item in locations:
-		if item != null and item.id == location_id:
+func find_venue(venue_id: StringName) -> DateVenue:
+	for item in date_venues:
+		if item != null and item.id == venue_id:
 			return item
 	return null
 
@@ -105,8 +105,8 @@ func find_trait(trait_id: StringName) -> GirlTrait:
 	return null
 
 
-func find_stat(stat_id: StringName) -> ProgressionStat:
-	for item in progression_stats:
+func find_characteristic(stat_id: StringName) -> CharacteristicDefinition:
+	for item in characteristics:
 		if item != null and item.id == stat_id:
 			return item
 	return null
@@ -143,7 +143,7 @@ func applicable_moves(situation_id: StringName, kind: DateTypes.DateMoveKind) ->
 			continue
 		if kind == DateTypes.DateMoveKind.LOCAL:
 			continue
-		if kind == DateTypes.DateMoveKind.UNLOCKABLE or kind == DateTypes.DateMoveKind.OUTFIT:
+		if kind == DateTypes.DateMoveKind.CHARACTERISTIC or kind == DateTypes.DateMoveKind.OUTFIT:
 			result.append(move)
 			continue
 		if move.mapping_for(situation_id) != null:
@@ -160,7 +160,7 @@ func enabled_moves_of_kind(kind: DateTypes.DateMoveKind) -> Array[DateMove]:
 
 
 func characteristic_moves() -> Array[DateMove]:
-	return enabled_moves_of_kind(DateTypes.DateMoveKind.UNLOCKABLE)
+	return enabled_moves_of_kind(DateTypes.DateMoveKind.CHARACTERISTIC)
 
 
 
@@ -174,9 +174,9 @@ func snapshot() -> DateContentCatalog:
 	copy.girls = girls.duplicate()
 	copy.girl_difficulty_presets = girl_difficulty_presets.duplicate()
 	copy.local_objects = local_objects.duplicate()
-	copy.locations = locations.duplicate()
+	copy.date_venues = date_venues.duplicate()
 	copy.outfits = outfits.duplicate()
 	copy.traits = traits.duplicate()
-	copy.progression_stats = progression_stats.duplicate()
+	copy.characteristics = characteristics.duplicate()
 	copy.date_rules = date_rules
 	return copy

@@ -34,9 +34,9 @@ func _init() -> void:
 	_ok("Alina combo_achieved", typeof(alina_result.session.combo_achieved) == TYPE_BOOL)
 	_play_girl(catalog, store, &"vika", "Вика 1")
 	_play_girl(catalog, store, &"vika", "Вика 2")
-	var locked: TestPlayerState = store.player_state
+	var locked: DatePlayerSnapshot = store.player_snapshot
 	locked.muscle = 0
-	var unlocked: TestPlayerState = TestPlayerState.from_dictionary(locked.to_dictionary())
+	var unlocked: DatePlayerSnapshot = DatePlayerSnapshot.from_dictionary(locked.to_dictionary())
 	unlocked.muscle = 4
 	_ok("locked punch", not _punch_available(catalog, locked))
 	_ok("unlocked punch", _punch_available(catalog, unlocked))
@@ -54,12 +54,12 @@ func _play_girl(catalog: DateContentCatalog, store: DateProgressStore, girl_id: 
 	var config := DateSessionConfig.new()
 	config.catalog = catalog
 	config.girl_id = girl_id
-	config.location_id = &"park"
+	config.venue_id = &"park"
 	config.outfit_id = &"business"
 	config.seed = Time.get_ticks_msec()
 	config.girl_progress = progress
-	config.player_state = store.player_state
-	store.capture_replay(config.seed, girl_id, config.location_id, config.outfit_id, progress)
+	config.player_snapshot = store.player_snapshot
+	store.capture_replay(config.seed, girl_id, config.venue_id, config.outfit_id, progress)
 	engine.create_date_session(config)
 	while engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT:
 		if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
@@ -91,17 +91,17 @@ func _play_girl(catalog: DateContentCatalog, store: DateProgressStore, girl_id: 
 	return result
 
 
-func _punch_available(catalog: DateContentCatalog, player: TestPlayerState) -> bool:
+func _punch_available(catalog: DateContentCatalog, player: DatePlayerSnapshot) -> bool:
 	var engine := DateEngine.new()
 	var config := DateSessionConfig.new()
 	config.catalog = catalog
 	config.girl_id = &"alina"
-	config.location_id = &"cafe"
+	config.venue_id = &"cafe"
 	config.outfit_id = &"casual"
 	config.seed = 8
 	config.girl_progress = GirlProgress.new()
 	config.girl_progress.reset_to_profile(catalog.find_girl(&"alina"))
-	config.player_state = player
+	config.player_snapshot = player
 	engine.create_date_session(config)
 	while engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT:
 		if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
@@ -109,9 +109,10 @@ func _punch_available(catalog: DateContentCatalog, player: TestPlayerState) -> b
 			continue
 		var view: DateEpisodeView = engine.get_current_episode()
 		if view != null and view.situation != null and view.situation.id == &"rival_provocation":
-			for option in view.unlockable_options:
-				if option.move_id == &"punch":
-					return option.availability == DateTypes.MoveAvailability.AVAILABLE
+			for source_view in view.source_views:
+				for option in source_view.options:
+					if option.move_id == &"punch":
+						return option.availability == DateTypes.MoveAvailability.AVAILABLE
 		for option in engine.get_available_moves():
 			if option.is_selectable():
 				engine.choose_move(option.move_id)

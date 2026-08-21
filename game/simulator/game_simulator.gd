@@ -37,7 +37,7 @@ var _refreshing: bool = false
 var _date_overlay: DatePlayPanel
 var _date_overlay_layer: CanvasLayer
 var _invite_girl_id: StringName = &""
-var _selected_date_location_id: StringName = &""
+var _selected_date_venue_id: StringName = &""
 var _selected_outfit_id: StringName = &""
 var _hud_characteristics_label: RichTextLabel
 var _factory_status: Label
@@ -208,7 +208,7 @@ func meet_girl(girl_id: StringName) -> ActionResult:
 
 func invite_girl(girl_id: StringName) -> void:
 	_invite_girl_id = girl_id
-	_selected_date_location_id = &""
+	_selected_date_venue_id = &""
 	var equipment: Variant = _equipment_service()
 	if equipment != null:
 		_selected_outfit_id = equipment.get_current_outfit_id()
@@ -217,8 +217,8 @@ func invite_girl(girl_id: StringName) -> void:
 	show_section("dates")
 
 
-func select_date_location(date_location_id: StringName) -> void:
-	_selected_date_location_id = date_location_id
+func select_date_venue(date_venue_id: StringName) -> void:
+	_selected_date_venue_id = date_venue_id
 	refresh()
 
 
@@ -243,12 +243,12 @@ func start_selected_date() -> ActionResult:
 		result.failure_reason = "DatingService autoload missing"
 		_on_action_resolved(result)
 		return result
-	if _invite_girl_id == &"" or _selected_date_location_id == &"":
+	if _invite_girl_id == &"" or _selected_date_venue_id == &"":
 		result.success = false
 		result.failure_reason = "Это место сейчас недоступно"
 		_on_action_resolved(result)
 		return result
-	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_location_id, _selected_outfit_id)
+	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_venue_id, _selected_outfit_id)
 	result = actions.execute(action)
 	if result.success:
 		_clear_date_invite()
@@ -1169,7 +1169,7 @@ func _outfit_bonus_label(outfit: Outfit) -> String:
 	if outfit == null or outfit.stat_id == &"":
 		return ""
 	var catalog: DateContentCatalog = _date_catalog()
-	var stat: ProgressionStat = catalog.find_stat(outfit.stat_id) if catalog != null else null
+	var stat: CharacteristicDefinition = catalog.find_characteristic(outfit.stat_id) if catalog != null else null
 	var stat_name: String = stat.display_name if stat != null else String(outfit.stat_id)
 	return "%s +1" % stat_name
 
@@ -1262,7 +1262,7 @@ func _build_active_date_dev(girls: Variant, dating: Variant) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var girl_id: StringName = dating.get_active_girl_id()
-	var location_id: StringName = dating.get_active_location_id()
+	var location_id: StringName = dating.get_active_venue_id()
 	var girl_name: String = String(girl_id)
 	if girls != null:
 		var definition: GirlDefinition = girls.get_definition(girl_id)
@@ -1271,7 +1271,7 @@ func _build_active_date_dev(girls: Variant, dating: Variant) -> Control:
 	var location_name: String = String(location_id)
 	var catalog_service: DateCatalogService = dating.get_catalog_service()
 	if catalog_service != null and catalog_service.catalog != null:
-		var location: DateLocation = catalog_service.catalog.find_location(location_id)
+		var location: DateVenue = catalog_service.catalog.find_venue(location_id)
 		if location != null:
 			location_name = location.display_name
 	var girl_label := Label.new()
@@ -1313,11 +1313,11 @@ func _build_date_prep(girls: Variant, dating: Variant) -> Control:
 	var profile: GirlProfile = catalog.find_girl(_invite_girl_id) if catalog != null else null
 	box.add_child(LabUi.trait_block(catalog, profile))
 	box.add_child(LabUi.known_preference_block(catalog, progress, profile))
-	box.add_child(_build_date_location_picker(girls, dating))
+	box.add_child(_build_date_venue_picker(girls, dating))
 	box.add_child(_build_date_outfit_picker(girls, dating))
 	box.add_child(_build_prep_stat_block(catalog))
 	var confirm := LabUi.button("НАЧАТЬ СВИДАНИЕ")
-	confirm.disabled = _selected_date_location_id == &"" or _selected_outfit_id == &""
+	confirm.disabled = _selected_date_venue_id == &"" or _selected_outfit_id == &""
 	confirm.pressed.connect(func() -> void:
 		start_selected_date()
 	)
@@ -1328,24 +1328,24 @@ func _build_date_prep(girls: Variant, dating: Variant) -> Control:
 	return box
 
 
-func _build_date_location_picker(girls: Variant, dating: Variant) -> Control:
+func _build_date_venue_picker(girls: Variant, dating: Variant) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
 	var progress: GirlProgress = _girl_date_progress(girls, _invite_girl_id)
 	var locations: Array = []
 	if dating != null:
-		locations = dating.get_available_date_locations(_invite_girl_id)
+		locations = dating.get_available_date_venues(_invite_girl_id)
 	for item in locations:
-		var location: DateLocation = item as DateLocation
+		var location: DateVenue = item as DateVenue
 		if location == null:
 			continue
-		var available: bool = bool(dating.is_date_location_available(_invite_girl_id, location.id))
-		box.add_child(_build_date_location_card(location, dating, available, progress))
+		var available: bool = bool(dating.is_date_venue_available(_invite_girl_id, location.id))
+		box.add_child(_build_date_venue_card(location, dating, available, progress))
 	return box
 
 
-func _build_date_location_card(location: DateLocation, dating: Variant, available: bool, progress: GirlProgress) -> Control:
+func _build_date_venue_card(location: DateVenue, dating: Variant, available: bool, progress: GirlProgress) -> Control:
 	var panel := PanelContainer.new()
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
@@ -1356,16 +1356,16 @@ func _build_date_location_card(location: DateLocation, dating: Variant, availabl
 	else:
 		title.text = "%s 🔒" % location.display_name
 	box.add_child(title)
-	box.add_child(LabUi.bbcode_block(_date_location_details(location, dating, progress), LabUi.MUTED, LabUi.tag_knowledge_map(progress, _date_catalog().find_girl(_invite_girl_id) if _date_catalog() != null else null)))
+	box.add_child(LabUi.bbcode_block(_date_venue_details(location, dating, progress), LabUi.MUTED, LabUi.tag_knowledge_map(progress, _date_catalog().find_girl(_invite_girl_id) if _date_catalog() != null else null)))
 	var choose_btn: Button = LabUi.button(location.display_name)
 	choose_btn.disabled = not available
 	if available:
-		choose_btn.pressed.connect(select_date_location.bind(location.id))
+		choose_btn.pressed.connect(select_date_venue.bind(location.id))
 	box.add_child(choose_btn)
 	return panel
 
 
-func _date_location_details(location: DateLocation, dating: Variant, progress: GirlProgress) -> String:
+func _date_venue_details(location: DateVenue, dating: Variant, progress: GirlProgress) -> String:
 	var catalog: DateContentCatalog = _date_catalog()
 	var object_ids: Array[StringName] = []
 	if dating != null:
@@ -1396,8 +1396,8 @@ func _girl_date_progress(girls: Variant, girl_id: StringName) -> GirlProgress:
 	return progress
 
 
-func _date_player_preview() -> TestPlayerState:
-	var player := TestPlayerState.new()
+func _date_player_snapshot() -> DatePlayerSnapshot:
+	var player := DatePlayerSnapshot.new()
 	var characteristics: Variant = _characteristic_service()
 	if characteristics != null:
 		player.muscle = int(characteristics.get_value(CharacteristicIds.MUSCLE))
@@ -1408,7 +1408,7 @@ func _date_player_preview() -> TestPlayerState:
 
 
 func _local_object_toolkit_line(catalog: DateContentCatalog, object_id: StringName, progress: GirlProgress = null) -> String:
-	return LabUi.local_object_toolkit_bbcode(catalog, object_id, progress, _date_player_preview())
+	return LabUi.local_object_toolkit_bbcode(catalog, object_id, progress, _date_player_snapshot())
 
 
 func _build_date_outfit_picker(_girls: Variant, dating: Variant) -> Control:
@@ -1454,7 +1454,7 @@ func _outfit_prep_details(outfit: Outfit) -> String:
 		lines.append(bonus)
 	var characteristics: Variant = _characteristic_service()
 	if characteristics != null and catalog != null:
-		for stat in catalog.progression_stats:
+		for stat in catalog.characteristics:
 			var base_value: int = int(characteristics.get_value(stat.id))
 			var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
 			var outfit_bonus: int = outfit.bonus_for(stat.id) if outfit != null else 0
@@ -1468,14 +1468,14 @@ func _outfit_prep_details(outfit: Outfit) -> String:
 			var without_outfit: int = int(characteristics.get_value(move.unlock_requirement.stat_id))
 			var with_outfit: int = DateTypes.effective_stat(without_outfit, outfit, move.unlock_requirement.stat_id)
 			if without_outfit < move.unlock_requirement.required_level and with_outfit >= move.unlock_requirement.required_level:
-				var tag: DateTag = catalog.find_tag(move.local_tag_id)
-				var tag_name: String = tag.display_name if tag != null else String(move.local_tag_id)
+				var tag: DateTag = catalog.find_tag(move.fixed_tag_id)
+				var tag_name: String = tag.display_name if tag != null else String(move.fixed_tag_id)
 				lines.append("Открывается Characteristic Move:\n[%s] %s" % [tag_name, move.display_name])
 	if outfit != null and outfit.has_outfit_move() and catalog != null:
 		var outfit_move: DateMove = catalog.find_move(outfit.outfit_move_id)
 		if outfit_move != null:
-			var tag: DateTag = catalog.find_tag(outfit_move.local_tag_id)
-			var tag_name: String = tag.display_name if tag != null else String(outfit_move.local_tag_id)
+			var tag: DateTag = catalog.find_tag(outfit_move.fixed_tag_id)
+			var tag_name: String = tag.display_name if tag != null else String(outfit_move.fixed_tag_id)
 			lines.append("Outfit Move:\n[%s] %s" % [tag_name, outfit_move.display_name])
 	return "\n".join(lines)
 
@@ -1488,7 +1488,7 @@ func _build_prep_stat_block(catalog: DateContentCatalog) -> Control:
 	var characteristics: Variant = _characteristic_service()
 	if characteristics == null or catalog == null:
 		return box
-	for stat in catalog.progression_stats:
+	for stat in catalog.characteristics:
 		var base_value: int = int(characteristics.get_value(stat.id))
 		var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
 		var outfit_bonus: int = outfit.bonus_for(stat.id) if outfit != null else 0
@@ -1501,7 +1501,7 @@ func _build_prep_stat_block(catalog: DateContentCatalog) -> Control:
 	return box
 
 
-func _build_date_start_summary(girls: Variant, dating: Variant, selected_location: DateLocation) -> Control:
+func _build_date_start_summary(girls: Variant, dating: Variant, selected_venue: DateVenue) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var girl_name: String = String(_invite_girl_id)
@@ -1509,9 +1509,9 @@ func _build_date_start_summary(girls: Variant, dating: Variant, selected_locatio
 		var definition: GirlDefinition = girls.get_definition(_invite_girl_id)
 		if definition != null:
 			girl_name = definition.display_name
-	var location_name: String = String(_selected_date_location_id)
-	if selected_location != null:
-		location_name = selected_location.display_name
+	var location_name: String = String(_selected_date_venue_id)
+	if selected_venue != null:
+		location_name = selected_venue.display_name
 	var outfit_name: String = String(_selected_outfit_id)
 	if dating != null:
 		var catalog_service: DateCatalogService = dating.get_catalog_service()
@@ -1531,7 +1531,7 @@ func _build_date_start_summary(girls: Variant, dating: Variant, selected_locatio
 
 func _clear_date_invite() -> void:
 	_invite_girl_id = &""
-	_selected_date_location_id = &""
+	_selected_date_venue_id = &""
 	_selected_outfit_id = &""
 
 

@@ -52,12 +52,12 @@ func _simulate_situation(
 		var config: DateSessionConfig = DateSessionConfig.new()
 		config.catalog = lean
 		config.girl_id = girl.id
-		config.location_id = &"cafe"
+		config.venue_id = &"cafe"
 		config.outfit_id = &"casual"
 		config.seed = seed
 		config.girl_progress = GirlProgress.new()
 		config.girl_progress.reset_to_profile(girl)
-		config.player_state = TestPlayerState.new()
+		config.player_snapshot = DatePlayerSnapshot.new()
 		engine.create_date_session(config)
 		var hit: int = 0
 		for tag_id in engine.get_session_state().current_selected_base_tag_ids:
@@ -85,7 +85,7 @@ func _lean_catalog(catalog: DateContentCatalog, girl: GirlProfile, situation: Da
 	var lean := DateContentCatalog.new()
 	lean.tags = catalog.tags
 	lean.moves = catalog.moves
-	lean.progression_stats = catalog.progression_stats
+	lean.characteristics = catalog.characteristics
 	lean.girl_difficulty_presets = catalog.girl_difficulty_presets
 	var girls: Array[GirlProfile] = []
 	girls.append(girl)
@@ -93,11 +93,11 @@ func _lean_catalog(catalog: DateContentCatalog, girl: GirlProfile, situation: Da
 	var situations: Array[DateSituation] = []
 	situations.append(situation)
 	lean.situations = situations
-	var locations: Array[DateLocation] = []
-	var cafe: DateLocation = catalog.find_location(&"cafe")
+	var venues: Array[DateVenue] = []
+	var cafe: DateVenue = catalog.find_venue(&"cafe")
 	if cafe != null:
-		locations.append(cafe)
-	lean.locations = locations
+		venues.append(cafe)
+	lean.date_venues = venues
 	var outfits: Array[Outfit] = []
 	var casual: Outfit = catalog.find_outfit(&"casual")
 	if casual != null:

@@ -1,4 +1,4 @@
-class_name ProgressionStat
+class_name CharacteristicDefinition
 extends Resource
 
 @export var id: StringName = &""

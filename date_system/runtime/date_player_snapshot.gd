@@ -1,4 +1,4 @@
-class_name TestPlayerState
+class_name DatePlayerSnapshot
 extends Resource
 
 @export var muscle: int = 0
@@ -46,8 +46,8 @@ func to_dictionary() -> Dictionary:
 	}
 
 
-static func from_dictionary(data: Dictionary) -> TestPlayerState:
-	var state := TestPlayerState.new()
+static func from_dictionary(data: Dictionary) -> DatePlayerSnapshot:
+	var state := DatePlayerSnapshot.new()
 	state.muscle = int(data.get("muscle", 0))
 	state.appearance = int(data.get("appearance", 0))
 	state.capital = int(data.get("capital", 0))

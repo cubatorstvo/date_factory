@@ -13,10 +13,10 @@ signal relationship_max_reached(girl_id: StringName)
 var _catalog: DateContentCatalog
 var _session: DateSession
 var _girl: GirlProfile
-var _location: DateLocation
+var _venue: DateVenue
 var _outfit: Outfit
 var _girl_progress: GirlProgress
-var _player: TestPlayerState
+var _player: DatePlayerSnapshot
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _last_result: DateRunResult
 var _relationship_max_emitted: bool = false
@@ -27,14 +27,14 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	assert(config.catalog != null)
 	_catalog = config.catalog.snapshot()
 	_girl = _catalog.find_girl(config.girl_id)
-	_location = _catalog.find_location(config.location_id)
+	_venue = _catalog.find_venue(config.venue_id)
 	_outfit = _catalog.find_outfit(config.outfit_id)
 	_girl_progress = config.girl_progress
-	_player = config.player_state
+	_player = config.player_snapshot
 	_last_result = null
 	_relationship_max_emitted = false
 	assert(_girl != null)
-	assert(_location != null)
+	assert(_venue != null)
 	assert(_outfit != null)
 	assert(_girl_progress != null)
 	assert(_player != null)
@@ -44,7 +44,7 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.seed = config.seed
 	_session.session_id = "%d-%d" % [config.seed, Time.get_ticks_msec()]
 	_session.girl_id = config.girl_id
-	_session.location_id = config.location_id
+	_session.venue_id = config.venue_id
 	_session.outfit_id = config.outfit_id
 	_session.relationship_before = _girl_progress.relationship
 	_session.relationship_after = _girl_progress.relationship
@@ -54,19 +54,17 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	var girl_trait: GirlTrait = _catalog.find_trait(_girl.trait_id)
 	if girl_trait != null:
 		_session.score_breakdown.girl_trait_display_name = girl_trait.display_name
-	_session.used_unlockable_move_counts = {}
 	_session.local_object_ids = config.local_object_ids.duplicate()
 	_session.used_local_object_ids = []
 	_session.used_base_move_ids = []
 	_session.characteristic_source_used = false
 	_session.outfit_source_used = false
-	_session.location_source_used = false
+	_session.venue_source_used = false
 	_rng.seed = config.seed
 	_session.current_episode_index = 0
 	_begin_episode()
 	date_started.emit()
 	return _session
-
 
 func get_session_state() -> DateSession:
 	return _session
@@ -87,12 +85,7 @@ func get_current_episode() -> DateEpisodeView:
 		view.situation = _catalog.find_situation(_session.selected_situation_ids[_session.current_episode_index])
 	view.base_options = _build_options(_session.current_selected_base_move_ids, DateTypes.DateMoveKind.BASE)
 	view.source_views = _build_source_views()
-	for source_view in view.source_views:
-		if source_view.source == DateTypes.DateMoveSource.CHARACTERISTIC:
-			view.unlockable_options = source_view.options
-	view.local_object_views = _build_local_object_views()
 	return view
-
 
 func get_available_moves() -> Array[DateMoveOption]:
 	var view := get_current_episode()
@@ -129,11 +122,10 @@ func choose_move(move_id: StringName) -> void:
 			_session.used_base_move_ids.append(move_id)
 	elif move.is_characteristic():
 		_session.characteristic_source_used = true
-		_session.used_unlockable_move_counts[String(move_id)] = 1
-	elif move.is_outfit_move():
+	elif move.is_outfit():
 		_session.outfit_source_used = true
 	elif move.is_local():
-		_session.location_source_used = true
+		_session.venue_source_used = true
 		var object_id: StringName = option.local_object_id
 		if object_id == &"":
 			var local_object: DateLocalObject = _catalog.find_local_object_for_move(move_id)
@@ -164,7 +156,6 @@ func choose_move(move_id: StringName) -> void:
 	_update_combo(episode)
 	_session.stage = DateSession.Stage.SHOWING_EPISODE_RESULT
 	move_selected.emit(move_id)
-
 
 func advance() -> void:
 	if _session == null:
@@ -200,7 +191,7 @@ func girl_progress() -> GirlProgress:
 	return _girl_progress
 
 
-func player_state() -> TestPlayerState:
+func player_snapshot() -> DatePlayerSnapshot:
 	return _player
 
 
@@ -209,24 +200,6 @@ func _begin_episode() -> void:
 	_session.current_phase = rules.phase_for_episode_index(_session.current_episode_index)
 	var situation: DateSituation = _pick_situation(_session.current_phase)
 	_session.selected_situation_ids.append(situation.id)
-	var characteristic_moves: Array[DateMove] = _catalog.characteristic_moves()
-	_session.current_applicable_unlockable_move_ids = _ids_of(characteristic_moves)
-	var available_unlockables: Array[DateMove] = []
-	var locked_unlockables: Array[DateMove] = []
-	var used_unlockables: Array[DateMove] = []
-	for move in characteristic_moves:
-		var state: DateTypes.MoveAvailability = _move_availability(move)
-		match state:
-			DateTypes.MoveAvailability.AVAILABLE:
-				available_unlockables.append(move)
-			DateTypes.MoveAvailability.LOCKED:
-				locked_unlockables.append(move)
-			DateTypes.MoveAvailability.USED:
-				used_unlockables.append(move)
-	_session.current_available_unlockable_move_ids = _ids_of(available_unlockables)
-	_session.current_locked_unlockable_move_ids = _ids_of(locked_unlockables)
-	_session.current_used_unlockable_move_ids = _ids_of(used_unlockables)
-	_session.current_reserved_unlockable_tag_ids = []
 	var base_pool: Array[DateMove] = _catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE)
 	_session.current_candidate_base_move_ids = _ids_of(base_pool)
 	var preferred: Array[DateMove] = []
@@ -248,7 +221,6 @@ func _begin_episode() -> void:
 	_session.current_result_text = ""
 	_session.stage = DateSession.Stage.AWAITING_MOVE
 	episode_started.emit()
-
 
 func _pick_situation(phase: DateTypes.DatePhase) -> DateSituation:
 	var pool: Array[DateSituation] = []
@@ -375,9 +347,9 @@ func _build_option(
 func _move_availability(move: DateMove) -> DateTypes.MoveAvailability:
 	if move.is_characteristic() and _session.characteristic_source_used:
 		return DateTypes.MoveAvailability.USED
-	if move.is_outfit_move() and _session.outfit_source_used:
+	if move.is_outfit() and _session.outfit_source_used:
 		return DateTypes.MoveAvailability.USED
-	if move.is_local() and _session.location_source_used:
+	if move.is_local() and _session.venue_source_used:
 		return DateTypes.MoveAvailability.USED
 	if move.unlock_requirement != null:
 		var current: int = _effective_stat(move.unlock_requirement.stat_id)
@@ -394,11 +366,10 @@ func _build_source_views() -> Array[DateMoveSourceView]:
 	var outfit_view: DateMoveSourceView = _build_outfit_source()
 	if outfit_view != null:
 		views.append(outfit_view)
-	var location_view: DateMoveSourceView = _build_location_source()
-	if location_view != null:
-		views.append(location_view)
+	var venue_view: DateMoveSourceView = _build_venue_source()
+	if venue_view != null:
+		views.append(venue_view)
 	return views
-
 
 func _build_characteristic_source() -> DateMoveSourceView:
 	var moves: Array[DateMove] = _catalog.characteristic_moves()
@@ -412,7 +383,7 @@ func _build_characteristic_source() -> DateMoveSourceView:
 	var situation_id: StringName = _current_situation_id()
 	var options: Array[DateMoveOption] = []
 	for move in moves:
-		var option: DateMoveOption = _build_option(move.id, DateTypes.DateMoveKind.UNLOCKABLE, situation_id, &"", "")
+		var option: DateMoveOption = _build_option(move.id, DateTypes.DateMoveKind.CHARACTERISTIC, situation_id, &"", "")
 		if option != null:
 			options.append(option)
 	options.sort_custom(_sort_characteristic_options)
@@ -439,7 +410,7 @@ func _build_outfit_source() -> DateMoveSourceView:
 	return view
 
 
-func _build_location_source() -> DateMoveSourceView:
+func _build_venue_source() -> DateMoveSourceView:
 	var options: Array[DateMoveOption] = []
 	for object_id in _session.local_object_ids:
 		var local_object: DateLocalObject = _catalog.find_local_object(object_id)
@@ -458,10 +429,10 @@ func _build_location_source() -> DateMoveSourceView:
 	if options.is_empty():
 		return null
 	var view := DateMoveSourceView.new()
-	view.source = DateTypes.DateMoveSource.LOCATION
+	view.source = DateTypes.DateMoveSource.VENUE
 	view.display_name = DateTypes.source_name(view.source)
 	view.visible = true
-	view.used = _session.location_source_used
+	view.used = _session.venue_source_used
 	view.options = options
 	view.state = _source_state(options, view.used)
 	return view
@@ -513,32 +484,6 @@ func _characteristic_option_group(option: DateMoveOption) -> int:
 			return 2
 
 
-func _build_local_object_views() -> Array[DateLocalObjectView]:
-	var views: Array[DateLocalObjectView] = []
-	if _session == null:
-		return views
-	for object_id in _session.local_object_ids:
-		var local_object: DateLocalObject = _catalog.find_local_object(object_id)
-		if local_object == null or not local_object.enabled:
-			continue
-		var view := DateLocalObjectView.new()
-		view.object_id = local_object.id
-		view.display_name = local_object.display_name
-		view.used = _session.location_source_used
-		for move_id in local_object.move_ids:
-			var option: DateMoveOption = _build_option(
-				move_id,
-				DateTypes.DateMoveKind.LOCAL,
-				_current_situation_id(),
-				local_object.id,
-				local_object.display_name
-			)
-			if option != null:
-				view.options.append(option)
-		views.append(view)
-	return views
-
-
 func _current_situation_id() -> StringName:
 	if _session == null or _session.selected_situation_ids.is_empty():
 		return &""
@@ -568,18 +513,9 @@ func _find_option(move_id: StringName) -> DateMoveOption:
 	return null
 
 
-func _score_for_phase(phase: DateTypes.DatePhase, preference: int) -> int:
+func _score_for_phase(_phase: DateTypes.DatePhase, preference: int) -> int:
 	var rules: DateRules = _catalog.date_rules
-	match phase:
-		DateTypes.DatePhase.OPENING:
-			return rules.opening_positive_score if preference > 0 else rules.opening_negative_score
-		DateTypes.DatePhase.CORE:
-			return rules.core_positive_score if preference > 0 else rules.core_negative_score
-		DateTypes.DatePhase.CLOSING:
-			return rules.closing_positive_score if preference > 0 else rules.closing_negative_score
-		_:
-			return 0
-
+	return rules.positive_move_score if preference > 0 else rules.negative_move_score
 
 func _append_episode_score(episode: DateEpisodeResult) -> void:
 	match episode.phase:
@@ -681,12 +617,12 @@ func _apply_venue_trait() -> void:
 	_session.score_breakdown.girl_trait_display_name = girl_trait.display_name
 	if girl_trait.kind != GirlTrait.Kind.VENUE:
 		return
-	var score: int = 1 if _location != null and _location.id == girl_trait.date_location_id else 0
+	var score: int = 1 if _venue != null and _venue.id == girl_trait.date_venue_id else 0
 	_session.score_breakdown.girl_trait_score = score
 
 
 func _apartment_preparation_score() -> int:
-	if not _location.uses_apartment_preparation:
+	if not _venue.uses_apartment_preparation:
 		return 0
 	if _player.apartment_prepared:
 		return 0

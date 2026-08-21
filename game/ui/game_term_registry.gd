@@ -83,7 +83,7 @@ func _ingest_catalog(catalog: DateContentCatalog) -> void:
 		if tag == null or not _content_enabled(tag):
 			continue
 		_add_term(tag.id, tag.display_name, tag.description, PackedStringArray(), GameTerm.Category.TAG, GameTerm.Visual.TAG)
-	for stat in catalog.progression_stats:
+	for stat in catalog.characteristics:
 		if stat == null or not _content_enabled(stat):
 			continue
 		_add_term(stat.id, stat.display_name, stat.description, PackedStringArray(), GameTerm.Category.STAT, GameTerm.Visual.ACCENT)
@@ -102,8 +102,8 @@ func _ingest_system_terms() -> void:
 	_add_term(&"relationship", "Отношения", "Прогресс конкретной девушки. Максимальное значение завершает её линию и даёт +1 Рейтинг.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"city_stage", "Этап города", "Уровень развития домашнего города. Открывает новые знакомства и соперников и сокращает social cooldown.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"base_move", "Базовый ход", "Обычный вариант действия, случайно доступный в текущей ситуации.", PackedStringArray(["BASE"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
-	_add_term(&"unlockable_move", "Ход характеристики", "Специальный ход характеристики. Открывается при итоговой характеристике 1, 3 или 5 и доступен в любом эпизоде. Источник «Характеристика» расходуется один раз за свидание.", PackedStringArray(["UNLOCKABLE", "Characteristic Move", "Характеристика"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
-	_add_term(&"local_move", "Локальный ход", "Ход объекта выбранного места. Источник «Локация» расходуется целиком после одного локального хода за свидание.", PackedStringArray(["LOCAL"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
+	_add_term(&"characteristic_move", "Ход характеристики", "Специальный ход характеристики. Открывается при итоговой характеристике 1, 3 или 5 и доступен в любом эпизоде. Источник «Характеристика» расходуется один раз за свидание.", PackedStringArray(["CHARACTERISTIC", "Characteristic Move", "Характеристика"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
+	_add_term(&"local_move", "Локальный ход", "Ход объекта выбранного места. Источник «Место свидания» расходуется целиком после одного локального хода за свидание.", PackedStringArray(["LOCAL", "Local Move"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"combo", "Комбо", "Бонус за три последовательных успешных хода с тремя разными тегами.", PackedStringArray(["КОМБО", "Combo"]), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"outfit", "Одежда", "Экипированная одежда. Даёт максимум +1 к одной характеристике; тематический наряд добавляет ход одежды. Покупка постоянная, перед свиданием можно бесплатно выбрать любой купленный наряд.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)
 	_add_term(&"date_factory", "Date Factory", "Автоматическая фабрика клонов. Они зарабатывают деньги и ходят на свидания, повышая Рейтинг и охват текущего масштаба.", PackedStringArray(), GameTerm.Category.SYSTEM, GameTerm.Visual.ACCENT)

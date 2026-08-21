@@ -3,22 +3,22 @@ extends Resource
 
 @export var seed: int = 0
 @export var girl_id: StringName = &""
-@export var location_id: StringName = &""
+@export var venue_id: StringName = &""
 @export var outfit_id: StringName = &""
 @export var local_object_ids: Array[StringName] = []
 @export var girl_progress: GirlProgress
-@export var player_state: TestPlayerState
+@export var player_snapshot: DatePlayerSnapshot
 
 
 func to_dictionary() -> Dictionary:
 	return {
 		"seed": seed,
 		"girl_id": String(girl_id),
-		"location_id": String(location_id),
+		"venue_id": String(venue_id),
 		"outfit_id": String(outfit_id),
 		"local_object_ids": _ids_to_strings(local_object_ids),
 		"girl_progress": girl_progress.to_dictionary() if girl_progress != null else {},
-		"player_state": player_state.to_dictionary() if player_state != null else {},
+		"player_snapshot": player_snapshot.to_dictionary() if player_snapshot != null else {},
 	}
 
 
@@ -26,15 +26,16 @@ static func from_dictionary(data: Dictionary) -> DateReplaySnapshot:
 	var snapshot := DateReplaySnapshot.new()
 	snapshot.seed = int(data.get("seed", 0))
 	snapshot.girl_id = StringName(str(data.get("girl_id", "")))
-	snapshot.location_id = StringName(str(data.get("location_id", "")))
+	var venue_text: String = str(data.get("venue_id", data.get("location_id", "")))
+	snapshot.venue_id = StringName(venue_text)
 	snapshot.outfit_id = StringName(str(data.get("outfit_id", "")))
 	snapshot.local_object_ids = _strings_to_ids(data.get("local_object_ids", []))
 	var progress_data: Variant = data.get("girl_progress", {})
 	if progress_data is Dictionary:
 		snapshot.girl_progress = GirlProgress.from_dictionary(progress_data)
-	var player_data: Variant = data.get("player_state", {})
+	var player_data: Variant = data.get("player_snapshot", data.get("player_state", {}))
 	if player_data is Dictionary:
-		snapshot.player_state = TestPlayerState.from_dictionary(player_data)
+		snapshot.player_snapshot = DatePlayerSnapshot.from_dictionary(player_data)
 	return snapshot
 
 

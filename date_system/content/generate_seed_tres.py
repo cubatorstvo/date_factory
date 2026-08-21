@@ -256,13 +256,8 @@ def date_rules_fields() -> str:
         "closing_episode_count = 1\n"
         "base_moves_per_episode = 3\n"
         "allow_situation_repeats = false\n"
-        "show_locked_unlockable_moves = true\n"
-        "opening_positive_score = 1\n"
-        "opening_negative_score = -1\n"
-        "core_positive_score = 1\n"
-        "core_negative_score = -1\n"
-        "closing_positive_score = 1\n"
-        "closing_negative_score = -1\n"
+        "positive_move_score = 1\n"
+        "negative_move_score = -1\n"
         "reveal_tag_after_use = true\n"
         "combo_required_distinct_success_tags = 3\n"
         "combo_bonus_score = 1\n"
@@ -369,10 +364,10 @@ def write_fixed_move(move_id: str, name: str, kind: int, tag: str, option: str, 
     if req:
         parts.append('unlock_requirement = SubResource("req_1")\n')
     parts.append("situation_mappings = []\n")
-    parts.append(f'local_tag_id = &"{tag}"\n')
-    parts.append(f'local_option_text = "{esc(option)}"\n')
-    parts.append(f'local_positive_result_text = "{esc(pos)}"\n')
-    parts.append(f'local_negative_result_text = "{esc(neg)}"\n')
+    parts.append(f'fixed_tag_id = &"{tag}"\n')
+    parts.append(f'fixed_option_text = "{esc(option)}"\n')
+    parts.append(f'fixed_positive_result_text = "{esc(pos)}"\n')
+    parts.append(f'fixed_negative_result_text = "{esc(neg)}"\n')
     write(CONTENT / "moves" / f"{move_id}.tres", "".join(parts))
 
 
@@ -392,10 +387,10 @@ def main() -> None:
         )
     for stat_id, name, desc in STATS:
         write(
-            CONTENT / "progression" / f"{stat_id}.tres",
+            CONTENT / "characteristics" / f"{stat_id}.tres",
             simple_resource(
-                "ProgressionStat",
-                "res://date_system/content/progression_stat.gd",
+                "CharacteristicDefinition",
+                "res://date_system/content/characteristic_definition.gd",
                 f'id = &"{stat_id}"\ndisplay_name = "{esc(name)}"\ndescription = "{esc(desc)}"\nmin_level = 0\nmax_level = 5\n',
             ),
         )
@@ -422,8 +417,8 @@ def main() -> None:
             f"local_object_ids = {string_name_array(object_ids)}\n"
         )
         write(
-            CONTENT / "locations" / f"{loc_id}.tres",
-            simple_resource("DateLocation", "res://date_system/content/date_location.gd", fields),
+            CONTENT / "venues" / f"{loc_id}.tres",
+            simple_resource("DateVenue", "res://date_system/content/date_venue.gd", fields),
         )
     for outfit_id, name, price, stat_id, stage, move_id in OUTFITS:
         bonus = 1 if stat_id else 0
@@ -494,7 +489,7 @@ def main() -> None:
                 "enabled = true\n"
                 f"kind = {kind}\n"
                 f'characteristic_id = &"{characteristic_id}"\n'
-                f'date_location_id = &"{location_id}"\n',
+                f'date_venue_id = &"{location_id}"\n',
             ),
         )
 
@@ -528,10 +523,10 @@ def main() -> None:
     girl_ids = [add_res(f"res://date_system/content/girls/{girl[0]}.tres", "girls") for girl in GIRLS]
     difficulty_ids = [add_res(f"res://date_system/content/girl_difficulty/{i}.tres", "diff") for i, *_ in DIFFICULTIES]
     object_ids = [add_res(f"res://date_system/content/local_objects/{i}.tres", "obj") for i, *_ in LOCAL_OBJECTS]
-    loc_ids = [add_res(f"res://date_system/content/locations/{i}.tres", "loc") for i, *_ in LOCATIONS]
+    loc_ids = [add_res(f"res://date_system/content/venues/{i}.tres", "loc") for i, *_ in LOCATIONS]
     outfit_ids = [add_res(f"res://date_system/content/outfits/{i}.tres", "outfit") for i, *_ in OUTFITS]
     trait_ids = [add_res(f"res://date_system/content/traits/{i}.tres", "trait") for i, *_ in TRAITS]
-    stat_ids = [add_res(f"res://date_system/content/progression/{i}.tres", "stat") for i, *_ in STATS]
+    stat_ids = [add_res(f"res://date_system/content/characteristics/{i}.tres", "stat") for i, *_ in STATS]
     rules_id = add_res("res://date_system/content/rules/date_rules.tres", "rules")
 
     def arr(ids: list[str]) -> str:
@@ -549,10 +544,10 @@ def main() -> None:
         + f"girls = {arr(girl_ids)}\n"
         + f"girl_difficulty_presets = {arr(difficulty_ids)}\n"
         + f"local_objects = {arr(object_ids)}\n"
-        + f"locations = {arr(loc_ids)}\n"
+        + f"date_venues = {arr(loc_ids)}\n"
         + f"outfits = {arr(outfit_ids)}\n"
         + f"traits = {arr(trait_ids)}\n"
-        + f"progression_stats = {arr(stat_ids)}\n"
+        + f"characteristics = {arr(stat_ids)}\n"
         + f'date_rules = ExtResource("{rules_id}")\n'
     )
     write(CONTENT / "catalog" / "date_content_catalog.tres", body)

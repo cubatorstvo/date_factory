@@ -10,4 +10,4 @@ description = "Первый за свидание положительный х�
 enabled = true
 kind = 0
 characteristic_id = &"aura"
-date_location_id = &""
+date_venue_id = &""

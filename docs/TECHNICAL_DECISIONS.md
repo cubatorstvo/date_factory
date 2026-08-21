@@ -16,7 +16,7 @@
 
 ## Runtime
 
-- `GirlProgress`, `TestPlayerState` и replay snapshot хранятся в `user://date_system/`
+- `GirlProgress`, `DatePlayerSnapshot` и replay snapshot хранятся в `user://date_system/`
 - JSON, не `res://`: прогресс игрока не является design-content
 
 ## RNG

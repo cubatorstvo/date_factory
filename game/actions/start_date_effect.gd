@@ -2,7 +2,7 @@ class_name StartDateEffect
 extends ActionEffect
 
 @export var girl_id: StringName = &""
-@export var date_location_id: StringName = &""
+@export var date_venue_id: StringName = &""
 @export var outfit_id: StringName = &""
 
 
@@ -10,7 +10,7 @@ func apply() -> void:
 	var dating: Variant = _dating_service()
 	if dating == null:
 		return
-	dating.start_date(girl_id, date_location_id, outfit_id)
+	dating.start_date(girl_id, date_venue_id, outfit_id)
 
 
 func get_description() -> String:

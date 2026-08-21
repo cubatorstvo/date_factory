@@ -10,4 +10,4 @@ description = "Свидание в Квартире даёт +1 к итогу."
 enabled = true
 kind = 1
 characteristic_id = &""
-date_location_id = &"apartment"
+date_venue_id = &"apartment"

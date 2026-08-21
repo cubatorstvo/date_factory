@@ -10,9 +10,9 @@ const REQ_SCRIPT := "res://date_system/content/unlock_requirement.gd"
 func build_catalog() -> DateContentCatalog:
 	var catalog := DateContentCatalog.new()
 	catalog.tags = _tags()
-	catalog.progression_stats = _stats()
+	catalog.characteristics = _stats()
 	catalog.local_objects = _local_objects()
-	catalog.locations = _locations()
+	catalog.date_venues = _venues()
 	catalog.outfits = _outfits()
 	catalog.traits = _traits()
 	catalog.situations = _situations()
@@ -26,9 +26,9 @@ func build_catalog() -> DateContentCatalog:
 func export_to_disk() -> void:
 	var catalog := build_catalog()
 	_save_group(catalog.tags, "res://date_system/content/tags")
-	_save_group(catalog.progression_stats, "res://date_system/content/progression")
+	_save_group(catalog.characteristics, "res://date_system/content/characteristics")
 	_save_group(catalog.local_objects, "res://date_system/content/local_objects")
-	_save_group(catalog.locations, "res://date_system/content/locations")
+	_save_group(catalog.date_venues, "res://date_system/content/venues")
 	_save_group(catalog.outfits, "res://date_system/content/outfits")
 	_save_group(catalog.traits, "res://date_system/content/traits")
 	_save_group(catalog.situations, "res://date_system/content/situations")
@@ -73,8 +73,8 @@ func _tags() -> Array[DateTag]:
 	]
 
 
-func _stat(id: String, name: String, description: String) -> ProgressionStat:
-	var stat := ProgressionStat.new()
+func _stat(id: String, name: String, description: String) -> CharacteristicDefinition:
+	var stat := CharacteristicDefinition.new()
 	stat.id = StringName(id)
 	stat.display_name = name
 	stat.description = description
@@ -83,7 +83,7 @@ func _stat(id: String, name: String, description: String) -> ProgressionStat:
 	return stat
 
 
-func _stats() -> Array[ProgressionStat]:
+func _stats() -> Array[CharacteristicDefinition]:
 	return [
 		_stat("muscle", "Мышца", "Физическая сила. Открывает силовые ходы и повышает шанс победы в силовых соревнованиях."),
 		_stat("appearance", "Внешность", "Внешняя привлекательность. Открывает специальные ходы и повышает шанс победы в соревнованиях на внешность."),
@@ -123,8 +123,8 @@ func _location(
 	enabled: bool,
 	apartment_prep: bool,
 	local_object_ids: Array
-) -> DateLocation:
-	var location: DateLocation = DateLocation.new()
+) -> DateVenue:
+	var location: DateVenue = DateVenue.new()
 	location.id = StringName(id)
 	location.display_name = name
 	location.description = name
@@ -137,7 +137,7 @@ func _location(
 	return location
 
 
-func _locations() -> Array[DateLocation]:
+func _venues() -> Array[DateVenue]:
 	return [
 		_location("apartment", "Квартира", true, true, ["window", "sofa"]),
 		_location("cafe", "Кафе", true, false, ["window", "jukebox", "barista"]),
@@ -231,7 +231,7 @@ func _base_move(id: String, name: String, mappings: Array) -> DateMove:
 
 
 func _characteristic_move(id: String, name: String, tag_id: String, option_text: String, positive_text: String, negative_text: String, stat_id: String, level: int) -> DateMove:
-	return _fixed_move(id, name, DateTypes.DateMoveKind.UNLOCKABLE, tag_id, option_text, positive_text, negative_text, stat_id, level)
+	return _fixed_move(id, name, DateTypes.DateMoveKind.CHARACTERISTIC, tag_id, option_text, positive_text, negative_text, stat_id, level)
 
 
 func _outfit_move(id: String, name: String, tag_id: String, option_text: String, positive_text: String, negative_text: String) -> DateMove:
@@ -246,10 +246,10 @@ func _fixed_move(id: String, name: String, kind: DateTypes.DateMoveKind, tag_id:
 	move.kind = kind
 	move.enabled = true
 	move.max_uses_per_date = 1
-	move.local_tag_id = StringName(tag_id)
-	move.local_option_text = option_text
-	move.local_positive_result_text = positive_text
-	move.local_negative_result_text = negative_text
+	move.fixed_tag_id = StringName(tag_id)
+	move.fixed_option_text = option_text
+	move.fixed_positive_result_text = positive_text
+	move.fixed_negative_result_text = negative_text
 	if not stat_id.is_empty():
 		var requirement := UnlockRequirement.new()
 		requirement.stat_id = StringName(stat_id)
@@ -275,10 +275,10 @@ func _local_move(
 	move.kind = DateTypes.DateMoveKind.LOCAL
 	move.enabled = true
 	move.max_uses_per_date = 0
-	move.local_tag_id = StringName(tag_id)
-	move.local_option_text = option_text
-	move.local_positive_result_text = positive_text
-	move.local_negative_result_text = negative_text
+	move.fixed_tag_id = StringName(tag_id)
+	move.fixed_option_text = option_text
+	move.fixed_positive_result_text = positive_text
+	move.fixed_negative_result_text = negative_text
 	if not stat_id.is_empty():
 		var requirement: UnlockRequirement = UnlockRequirement.new()
 		requirement.stat_id = StringName(stat_id)
@@ -412,7 +412,7 @@ func _trait(id: String, name: String, description: String, kind: GirlTrait.Kind,
 	girl_trait.enabled = true
 	girl_trait.kind = kind
 	girl_trait.characteristic_id = StringName(characteristic_id)
-	girl_trait.date_location_id = StringName(location_id)
+	girl_trait.date_venue_id = StringName(location_id)
 	return girl_trait
 
 
@@ -482,13 +482,8 @@ func _rules() -> DateRules:
 	rules.closing_episode_count = 1
 	rules.base_moves_per_episode = 3
 	rules.allow_situation_repeats = false
-	rules.show_locked_unlockable_moves = true
-	rules.opening_positive_score = 1
-	rules.opening_negative_score = -1
-	rules.core_positive_score = 1
-	rules.core_negative_score = -1
-	rules.closing_positive_score = 1
-	rules.closing_negative_score = -1
+	rules.positive_move_score = 1
+	rules.negative_move_score = -1
 	rules.reveal_tag_after_use = true
 	rules.combo_required_distinct_success_tags = 3
 	rules.combo_bonus_score = 1
