@@ -9,7 +9,6 @@ description = "Переключить музыку"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"audacity"
 fixed_option_text = "Переключить музыку на свой выбор посреди чужой композиции."
 fixed_positive_result_text = "Переключил чужую композицию на свою — ей это зашло как наглость к месту."

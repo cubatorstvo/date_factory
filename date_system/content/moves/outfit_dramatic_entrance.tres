@@ -9,7 +9,6 @@ description = "Сделать демонстративный выход"
 kind = 3
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"audacity"
 fixed_option_text = "На несколько секунд превратить обычную ситуацию в собственную сцену."
 fixed_positive_result_text = "Демонстративный выход зашёл как наглость к месту."

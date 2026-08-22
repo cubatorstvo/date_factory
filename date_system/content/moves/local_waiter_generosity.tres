@@ -9,7 +9,6 @@ description = "Дорогой десерт"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"generosity"
 fixed_option_text = "Заказать для неё самый дорогой десерт."
 fixed_positive_result_text = "Самый дорогой десерт к месту — ей приятно."

@@ -10,7 +10,6 @@ description = "«Иногда правильная ложь полезнее н�
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"cunning"
 fixed_option_text = "«Иногда правильная ложь полезнее неправильной правды.»"
 fixed_positive_result_text = "Она оценивает находчивость."

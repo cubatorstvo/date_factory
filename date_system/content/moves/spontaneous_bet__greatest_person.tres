@@ -10,7 +10,6 @@ description = "«Проигравший официально признаёт п
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"humor"
 fixed_option_text = "«Проигравший официально признаёт победителя величайшим человеком вечера.»"
 fixed_positive_result_text = "Она смеётся — шутка попала в её вкус."

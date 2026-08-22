@@ -10,7 +10,6 @@ description = "«Стоп. Одно решение теперь моё.»"
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"dominance"
 fixed_option_text = "«Стоп. Одно решение теперь моё.»"
 fixed_positive_result_text = "Уверенный контроль ей нравится."

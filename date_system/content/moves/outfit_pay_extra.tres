@@ -9,7 +9,6 @@ description = "Оплатить что-нибудь лишнее"
 kind = 3
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"generosity"
 fixed_option_text = "Демонстративно потратить деньги на вещь, которую никто не просил покупать."
 fixed_positive_result_text = "Лишняя покупка сработала как щедрый жест."

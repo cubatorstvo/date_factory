@@ -10,7 +10,6 @@ description = "«Куплю что-нибудь, что видно из косм
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"status"
 fixed_option_text = "«Куплю что-нибудь, что видно из космоса.»"
 fixed_positive_result_text = "Демонстрация статуса производит впечатление."

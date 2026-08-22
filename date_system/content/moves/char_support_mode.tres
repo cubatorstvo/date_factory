@@ -16,7 +16,6 @@ kind = 1
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"care"
 fixed_option_text = "Переключиться в режим уверенной и спокойной поддержки."
 fixed_positive_result_text = "Спокойная поддержка к месту — ей спокойнее."

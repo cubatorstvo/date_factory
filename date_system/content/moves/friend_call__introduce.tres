@@ -10,7 +10,6 @@ description = "Вежливо представиться."
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"politeness"
 fixed_option_text = "Вежливо представиться."
 fixed_positive_result_text = "Ей нравится твоя корректность."

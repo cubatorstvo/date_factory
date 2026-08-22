@@ -16,7 +16,6 @@ kind = 2
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"dominance"
 fixed_option_text = "Попросить музыканта уступить тебе рояль и занять его место."
 fixed_positive_result_text = "Занял рояль вместо музыканта — ей это зашло как контроль сцены."

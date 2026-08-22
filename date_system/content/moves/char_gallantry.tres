@@ -16,7 +16,6 @@ kind = 1
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"politeness"
 fixed_option_text = "Принять максимально учтивый вид и повести себя безупречно воспитанно."
 fixed_positive_result_text = "Галантность к месту — ей приятно."

@@ -16,7 +16,6 @@ kind = 1
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"status"
 fixed_option_text = "Небрежно задействовать деньги, связи или статус как решение ситуации."
 fixed_positive_result_text = "Статус закрыл вопрос — ей это зашло."

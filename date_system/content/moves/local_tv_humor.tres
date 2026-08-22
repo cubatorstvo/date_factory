@@ -9,7 +9,6 @@ description = "Неуместная передача"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"humor"
 fixed_option_text = "Включить максимально неуместную передачу и сделать вид, что так и было задумано."
 fixed_positive_result_text = "Неуместная передача сработала как шутка — ей смешно."

@@ -9,7 +9,6 @@ description = "Подтверждающий ролик"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"cunning"
 fixed_option_text = "Найти ролик, который неожиданно подтверждает твою версию."
 fixed_positive_result_text = "Ролик неожиданно подтвердил твою версию — ей это ловко."

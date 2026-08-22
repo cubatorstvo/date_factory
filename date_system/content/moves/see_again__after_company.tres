@@ -10,7 +10,6 @@ description = "«После такой компании — обязательн
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"flattery"
 fixed_option_text = "«После такой компании — обязательно.»"
 fixed_positive_result_text = "Лесть попадает в цель."

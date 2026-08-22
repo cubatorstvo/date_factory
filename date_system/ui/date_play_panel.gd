@@ -1135,7 +1135,7 @@ func _debug_move_block(
 		var tag_id: String = ""
 		var state: String = DateTypes.availability_name(DateTypes.MoveAvailability.AVAILABLE)
 		if move != null:
-			tag_id = String(move.resolved_tag_id(situation_id))
+			tag_id = String(move.resolved_tag_id())
 		lines.append("  move_id=%s tag_id=%s state=%s" % [String(move_id), tag_id, state])
 		if with_texts and move != null:
 			lines.append("    option: %s" % move.fixed_option_text)

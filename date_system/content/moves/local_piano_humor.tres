@@ -9,7 +9,6 @@ description = "Пафосный марш"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"humor"
 fixed_option_text = "Сыграть одним пальцем максимально пафосный марш."
 fixed_positive_result_text = "Пафосный марш одним пальцем сработал — ей смешно."

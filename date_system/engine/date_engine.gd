@@ -120,7 +120,7 @@ func choose_move(move_id: StringName) -> void:
 		return
 	var situation_id: StringName = _session.selected_situation_ids[_session.current_episode_index]
 	var move: DateMove = _catalog.find_move(move_id)
-	var tag_id: StringName = move.resolved_tag_id(situation_id)
+	var tag_id: StringName = move.resolved_tag_id()
 	var preference: int = _girl.prefers_tag(tag_id)
 	var score: int = _score_for_phase(_session.current_phase, preference)
 	var soften_applied: bool = false
@@ -166,7 +166,7 @@ func choose_move(move_id: StringName) -> void:
 	episode.score_delta = score
 	episode.revealed_tag = revealed
 	episode.soften_applied = soften_applied
-	episode.result_text = move.resolved_result_text(situation_id, preference > 0)
+	episode.result_text = move.resolved_result_text(preference > 0)
 	_apply_characteristic_trait(episode, move)
 
 	_session.episode_history.append(episode)
@@ -215,7 +215,7 @@ func reroll_base_moves() -> String:
 		var move: DateMove = _catalog.find_move(move_id)
 		if move != null:
 			selected.append(move)
-	_session.current_selected_base_tag_ids = _tags_of(selected, situation_id)
+	_session.current_selected_base_tag_ids = _tags_of(selected)
 	_session.vika_reroll_used = true
 	return ""
 
@@ -278,7 +278,7 @@ func _begin_episode() -> void:
 			reroll.append(shuffled[i])
 	_session.current_selected_base_move_ids = _ids_of(selected)
 	_session.current_reroll_base_move_ids = _ids_of(reroll)
-	_session.current_selected_base_tag_ids = _tags_of(selected, situation.id)
+	_session.current_selected_base_tag_ids = _tags_of(selected)
 	_session.current_selected_move_id = &""
 	_session.current_resolved_tag_id = &""
 	_session.current_tag_preference = 0
@@ -328,14 +328,14 @@ func _shuffled_moves(moves: Array[DateMove]) -> Array[DateMove]:
 	return copy
 
 
-func _move_tag(move: DateMove, situation_id: StringName) -> StringName:
-	return move.resolved_tag_id(situation_id)
+func _move_tag(move: DateMove) -> StringName:
+	return move.resolved_tag_id()
 
 
-func _tags_of(moves: Array[DateMove], situation_id: StringName) -> Array[StringName]:
+func _tags_of(moves: Array[DateMove]) -> Array[StringName]:
 	var tags: Array[StringName] = []
 	for move in moves:
-		tags.append(_move_tag(move, situation_id))
+		tags.append(_move_tag(move))
 	return tags
 
 
@@ -376,14 +376,14 @@ func _build_option(
 	var move: DateMove = _catalog.find_move(move_id)
 	if move == null:
 		return null
-	var tag_id: StringName = move.resolved_tag_id(situation_id)
+	var tag_id: StringName = move.resolved_tag_id()
 	if tag_id == &"":
 		return null
 	var option := DateMoveOption.new()
 	option.move_id = move.id
 	option.display_name = move.display_name
 	option.kind = kind
-	option.option_text = move.resolved_option_text(situation_id)
+	option.option_text = move.resolved_option_text()
 	option.tag_id = tag_id
 	var tag: DateTag = _catalog.find_tag(tag_id)
 	option.tag_display_name = tag.display_name if tag != null else String(tag_id)

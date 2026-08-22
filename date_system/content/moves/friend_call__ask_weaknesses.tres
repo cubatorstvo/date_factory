@@ -10,7 +10,6 @@ description = "Сразу спросить подругу, какие у дев�
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"audacity"
 fixed_option_text = "Сразу спросить подругу, какие у девушки слабые места."
 fixed_positive_result_text = "Наглость её цепляет."

@@ -9,7 +9,6 @@ description = "Показать фокус с исчезновением"
 kind = 3
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"humor"
 fixed_option_text = "Достать реквизит и немедленно устроить карточный фокус."
 fixed_positive_result_text = "Карточный фокус сработал как шутка — ей смешно."

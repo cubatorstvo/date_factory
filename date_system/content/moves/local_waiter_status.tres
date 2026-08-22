@@ -16,7 +16,6 @@ kind = 2
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"status"
 fixed_option_text = "Попросить принести «то самое», будто ты здесь постоянный гость."
 fixed_positive_result_text = "«То самое» принесли как постоянному гостю — ей это зашло."

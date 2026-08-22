@@ -32,7 +32,7 @@ Design-content хранится в `res://`. Runtime-прогресс — в `us
 
 ### Characteristic Move (`CHARACTERISTIC`)
 
-- 12 ходов, по одному на каждый Tag. Постоянный Tag и постоянный player-facing текст, без situation mappings.
+- 12 ходов, по одному на каждый Tag. Постоянный Tag и постоянный player-facing текст через `fixed_*`.
 - Открываются по `EffectiveStat` на уровнях `1 / 3 / 5`.
 - Доступны в любом эпизоде (OPENING / CORE / CLOSING). Situation не бросает их вероятность.
 - Источник «Характеристика» расходуется один раз за свидание после выбора хода.
@@ -166,7 +166,7 @@ automation.expansion_progress = 0
 automation.purchased_upgrade_ids = []
 ```
 
-`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`. Кампания: `stage` — текущая/последняя достигнутая игровая стадия 1–6, `finale_reached` — завершение основной последовательности после Stage 6. Мир: `current_location_id` — семантическое место игрока, `unlocked_location_ids` — открытые `LocationDefinition`. Definitions локаций живут в `LocationCatalog`; `GameState` хранит только ID. Девушки: `GirlState` создаётся при первом обращении (`discovered = false`, `has_contact = false`, `relationship = 0`, `next_date_available_at = 0`, пустые revealed tags, `completed_dates = 0`); definitions живут в `GirlCatalog`. `player.rating` — глобальный Rating прохождения: ручное завершение authored-девушки даёт +1, dating production фабрики начисляет те же целые единицы через `RatingService`. `player.muscle` / `appearance` / `capital` / `aura` — постоянные характеристики прохождения; definitions и цены upgrades живут отдельно. `player.last_work_day_index` — календарный день последней работы (`game_time_minutes / 1440`, `-1` если ещё не работал). `progression.current_outfit_id` — текущий уровень одежды; канонический outfit-контент — Date System `Outfit`. `progression.apartment` — постоянный уровень квартиры прохождения. `dating.active_date` — текущее свидание прохождения (`girl_id`, выбранный `venue_id` свидания, выбранный `outfit_id`, `started_at_game_time`) или `{}`. `GirlDefinition.location_id` не является местом свидания. Соперники: `RivalState` создаётся при первом обращении (`discovered = false`, `defeated = false`); definitions живут в `RivalCatalog`.
+`game_time_minutes = 0` — Day 1, 00:00. День, час и минута не хранятся: их даёт `TimeService`. Кампания: `stage` — текущая/последняя достигнутая игровая стадия 1–6, `finale_reached` — завершение основной последовательности после Stage 6. Мир: `current_location_id` — семантическое место игрока, `unlocked_location_ids` — открытые `LocationDefinition`. Definitions локаций живут в `LocationCatalog`; `GameState` хранит только ID. Девушки: `GirlState` создаётся при первом обращении (`discovered = false`, `has_contact = false`, `relationship = 0`, пустые revealed tags, `completed_dates = 0`, пустой `last_date_situation_ids`); definitions живут в `GirlCatalog`. `player.rating` — глобальный Rating прохождения: ручное завершение authored-девушки даёт +1, dating production фабрики начисляет те же целые единицы через `RatingService`. `player.muscle` / `appearance` / `capital` / `aura` — постоянные характеристики прохождения; definitions и цены upgrades живут отдельно. `player.last_work_day_index` — календарный день последней работы (`game_time_minutes / 1440`, `-1` если ещё не работал). `progression.current_outfit_id` — текущий уровень одежды; канонический outfit-контент — Date System `Outfit`. `progression.apartment` — постоянный уровень квартиры прохождения. `dating.active_date` — текущее свидание прохождения (`girl_id`, выбранный `venue_id` свидания, выбранный `outfit_id`, `started_at_game_time`) или `{}`. `GirlDefinition.location_id` не является местом свидания. Соперники: `RivalState` создаётся при первом обращении (`discovered = false`, `defeated = false`); definitions живут в `RivalCatalog`.
 
 `automation` — runtime-прогресс фабрики клонов. `rivals` сериализует `rivals_by_id`. Поля читаются через `data.get(key, default)`. Отсутствующие поля `world` восстанавливаются стартовым состоянием нового прохождения. Отсутствующие `girls.girls_by_id` — `{}`. Отсутствующий `player.rating` — `0`. Отсутствующие характеристики игрока — `0`. Отсутствующий `dating.active_date` — `{}`. Отсутствующий `outfit_id` у активного свидания — стартовый `casual`. Отсутствующий `rivals.rivals_by_id` — `{}`. Отсутствующий `current_outfit_id` восстанавливается стартовым `casual`. Отсутствующий `last_work_day_index` — `-1`. Отсутствующий `apartment` — уровень 1 и пустой список upgrades. Отсутствующий или пустой `automation` — New Game defaults.
 
@@ -612,7 +612,7 @@ equip_outfit(outfit_id) -> bool
 signal outfit_equipped(previous_outfit_id, current_outfit_id)
 ```
 
-Покупка — разовая, через `create_buy_outfit_action`: обычный `money_cost = price`, `OutfitNotOwnedRequirement`, `MinStoryStageRequirement`, `OwnOutfitEffect`. Если `marina_free_outfit_pending` и Outfit открыт текущим progression, ещё не owned и присутствует в обычном магазине, effective price = `$0`, player-facing `$0 · Подарок Марины`, та же кнопка покупки. Первая успешная покупка выдаёт выбранный Outfit, ставит `marina_free_outfit_pending = false`; остальные сразу снова по обычной цене. Если выбрать нечего, pending сохраняется. Отдельного gift-списка и `create_claim_marina_gift_action` в player-facing магазине нет. Покупка добавляет Outfit во владение и делает его текущим. Перед свиданием можно бесплатно экипировать любой уже купленный Outfit. Один Outfit даёт максимум `+1` к одной характеристике; тематический наряд дополнительно даёт Outfit Move. Универсального бонуса к итогу свидания нет.
+Покупка — разовая, через `create_buy_outfit_action`: обычный `money_cost = price`, `OutfitNotOwnedRequirement`, `MinStoryStageRequirement`, `OwnOutfitEffect`. Если `marina_free_outfit_pending` и Outfit открыт текущим progression, ещё не owned и присутствует в обычном магазине, effective price = `$0`, player-facing `$0 · Подарок Марины`, та же кнопка покупки. Первая успешная покупка выдаёт выбранный Outfit, ставит `marina_free_outfit_pending = false`; остальные сразу снова по обычной цене. Если выбрать нечего, pending сохраняется. Отдельного gift-списка в player-facing магазине нет. Покупка добавляет Outfit во владение и делает его текущим. Перед свиданием можно бесплатно экипировать любой уже купленный Outfit. Один Outfit даёт максимум `+1` к одной характеристике; тематический наряд дополнительно даёт Outfit Move. Универсального бонуса к итогу свидания нет.
 
 `EffectiveStat = min(BaseStat + OutfitStatBonus, 5)`.
 
@@ -1017,18 +1017,17 @@ get_girls_for_location(location_id) -> Array[GirlDefinition]
 discovered: bool = false
 has_contact: bool = false
 relationship: int = 0
-last_date_completed_at: int = 0
-next_date_available_at: int = 0
 revealed_positive_tag_ids: Array[StringName] = []
 revealed_negative_tag_ids: Array[StringName] = []
 completed_dates: int = 0
+last_date_situation_ids: Array[StringName] = []
 ```
 
-`last_date_completed_at` — абсолютные игровые минуты завершения последнего свидания. Доступность: `last_date_completed_at + CityProgressionService.get_social_cooldown_minutes()`. `next_date_available_at` — производный кэш. `0` у `last_date_completed_at` означает, что cooldown ещё не начат. Раскрытые теги и `completed_dates` — то же знание, что у Date System `GirlProgress`; definitions тегов живут в Date Catalog. Канонические границы отношений — `GirlDefinition.relationship_min` / `relationship_max` (обычные `0..10`, сюжетные `0..15`). Date System читает этот максимум и не хранит отдельную копию на `GirlProfile`. Завершённая линия: `relationship == relationship_max`, player-facing `Отношения: N / N — МАКСИМУМ`. Отдельный persistent-флаг завершения не нужен.
+Раскрытые теги, `completed_dates` и `last_date_situation_ids` — то же знание, что у Date System `GirlProgress`; definitions тегов живут в Date Catalog. Доступность свидания не хранится на `GirlState`: её даёт `DailyActivityService` key `date:<girl_id>` (1 бесплатный слот в календарный день, следующий слот завтра; Рита — `$75` за extra same-day). Канонические границы отношений — `GirlDefinition.relationship_min` / `relationship_max` (обычные, Actress, Mine Boss и Editor `0..10`; Scientist и President `0..15`). Date System читает этот максимум и не хранит отдельную копию на `GirlProfile`. Завершённая линия: `relationship == relationship_max`, player-facing `Отношения: N / N — МАКСИМУМ`. Отдельный persistent-флаг завершения не нужен.
 
 `GirlsState.girls_by_id`: `girl_id → GirlState`. При первом `GirlsService.get_state` для существующей девушки создаётся стандартный `GirlState` и кладётся в `GameState.girls.girls_by_id`. New Game: `girls_by_id = {}`.
 
-Autoload `GirlsService` — единственная точка discovery, контакта, relationship, cooldown свиданий и знания тегов прохождения. Читает definitions из каталога и пишет `GameState.girls`.
+Autoload `GirlsService` — единственная точка discovery, контакта, relationship и знания тегов прохождения. Читает definitions из каталога и пишет `GameState.girls`. Доступность свидания — `DailyActivityService` key `date:<girl_id>`.
 
 ```text
 get_definition(girl_id) -> GirlDefinition
@@ -1044,9 +1043,6 @@ get_home_city_coverage_percent() -> float
 discover_girl(girl_id) -> bool
 give_contact(girl_id) -> bool
 change_relationship(girl_id, delta) -> int
-get_next_date_available_at(girl_id) -> int
-is_date_cooldown_finished(girl_id) -> bool
-set_date_cooldown(girl_id, duration_minutes) -> void
 fill_date_progress(girl_id, progress) -> void
 apply_date_knowledge(girl_id, progress) -> void
 get_girls_at_current_location() -> Array[GirlDefinition]
@@ -1063,7 +1059,7 @@ signal girl_relationship_completed(girl_id)
 signal girl_access_changed(girl_id)
 ```
 
-`discover_girl`: при первом открытии `discovered = true`, сигнал `girl_discovered`, `true`; повтор — состояние прежнее, `false`. `give_contact`: `discovered = true` и `has_contact = true`; при первом контакте сигнал `girl_contact_received` и `true`. `change_relationship`: если линия уже завершена, `relationship` остаётся `relationship_max` и Rating не начисляется повторно. Иначе `relationship += delta`, clamp в `relationship_min..relationship_max` девушки. Если переход впервые достигает максимума, испускается `girl_relationship_completed` и `RatingService.add_rating(1)`. Затем `girl_relationship_changed`, возврат нового значения. `is_relationship_completed` — каноническая проверка завершённой линии: `get_relationship(girl_id) >= get_relationship_max(girl_id)`. Охват родного города считается из `GirlCatalog` + существующих `GirlState` без persistent `city_coverage` и без создания `GirlState` для нетронутых девушек. `is_date_cooldown_finished`: `TimeService.get_game_time_minutes() >= next_date_available_at`. `fill_date_progress` копирует в snapshot `GirlProgress` канонические `relationship`, revealed tags, `secondary_revealed` и `completed_dates`. `apply_date_knowledge` пишет обратно revealed tags, `secondary_revealed` и `completed_dates`; `relationship` по-прежнему меняет только `change_relationship`.
+`discover_girl`: при первом открытии `discovered = true`, сигнал `girl_discovered`, `true`; повтор — состояние прежнее, `false`. `give_contact`: `discovered = true` и `has_contact = true`; при первом контакте сигнал `girl_contact_received` и `true`. `change_relationship`: если линия уже завершена, `relationship` остаётся `relationship_max` и Rating не начисляется повторно. Иначе `relationship += delta`, clamp в `relationship_min..relationship_max` девушки. Если переход впервые достигает максимума, испускается `girl_relationship_completed` и `RatingService.add_rating(1)`. Затем `girl_relationship_changed`, возврат нового значения. `is_relationship_completed` — каноническая проверка завершённой линии: `get_relationship(girl_id) >= get_relationship_max(girl_id)`. Охват родного города считается из `GirlCatalog` + существующих `GirlState` без persistent `city_coverage` и без создания `GirlState` для нетронутых девушек. `fill_date_progress` копирует в snapshot `GirlProgress` канонические `relationship`, revealed tags, `completed_dates` и `last_date_situation_ids`. `apply_date_knowledge` пишет обратно revealed tags, `completed_dates` и `last_date_situation_ids`; `relationship` по-прежнему меняет только `change_relationship`.
 
 `get_girls_at_current_location` читает `WorldService.get_current_location_id()` и возвращает `GirlDefinition` с тем же `location_id`, независимо от `meet_requirements`. Этот контракт общий для 2D GameSimulator и будущего 3D NPC (`girl_id` → тот же `GameAction`). Невыполненный Rating не скрывает девушку в открытой локации.
 
@@ -1597,7 +1593,7 @@ UNKNOWN / POSITIVE / NEGATIVE. UI: жирный `[ТЕГ]` без символа
 
 LOCKED и USED ходы имеют один disabled-стиль; причина текстом внутри блока. Символ `🔒` в player-facing BASE-ходах отсутствует; в Characteristic Source locked-строка использует `🔒` и `требуется ур. N`.
 
-Базовое стартовое количество известных Tags хранится только в `GirlProfile.initial_known_tag_count` (filler 2, story 0). Ева добавляет `eva_initial_known_tag_bonus = 1`.
+Базовое стартовое количество известных Tags хранится только в `GirlProfile.initial_known_tag_count` (обычные / filler 2, сюжетные 0). Ева добавляет `+1`.
 
 Во время свидания сверху фиксировано: `Отношения на начало свидания: N / MAX`, `До максимума: K`, Trait, затем постоянный preference-блок `LabUi.known_preference_block` (`Любит:` / `Не любит:` и `(Неизвестно X)` / `(Неизвестно Y)`). Блок виден во всех пяти эпизодах и обновляется сразу после раскрытия Tag. Компактный Combo: `КОМБО: 0 / 3`, затем теги chain, затем `КОМБО: ПОЛУЧЕНО +1`.
 
@@ -1896,7 +1892,7 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 5. шесть `fixed_tag_id` заполнены, существуют в Tag catalog и различны; option/positive/negative texts заполнены  
 6. каждый BASE Move authored catalog referenced ровно одной DateSituation  
 7. `allowed_venue_ids` / `allowed_girl_ids` ссылаются на существующие DateVenue / GirlProfile  
-8. Characteristic Move имеет UnlockRequirement на 1/3/5, постоянный Tag и не использует situation mappings; ровно 12 ходов покрывают 12 Tags  
+8. Characteristic Move имеет UnlockRequirement на 1/3/5 и постоянный Tag через `fixed_*`; ровно 12 ходов покрывают 12 Tags  
 16. два Characteristic Move с одним Tag → ERROR `CHARACTERISTIC_TAG_DUPLICATE`
 17. `GirlProfile.difficulty_preset_id` не резолвится в enabled preset → ERROR `INVALID_GIRL_DIFFICULTY_REFERENCE`
 18. `girl.positive_tag_ids.size() != difficulty.positive_tag_count` → ERROR `INVALID_POSITIVE_TAG_COUNT`

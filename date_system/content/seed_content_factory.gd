@@ -3,7 +3,6 @@ extends RefCounted
 
 const TAG_SCRIPT := "res://date_system/content/date_tag.gd"
 const MOVE_SCRIPT := "res://date_system/content/date_move.gd"
-const MAPPING_SCRIPT := "res://date_system/content/date_move_situation_mapping.gd"
 const REQ_SCRIPT := "res://date_system/content/unlock_requirement.gd"
 
 

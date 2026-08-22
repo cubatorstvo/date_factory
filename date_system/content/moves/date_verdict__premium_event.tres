@@ -10,7 +10,6 @@ description = "«Мероприятие уверенно держит преми
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"status"
 fixed_option_text = "«Мероприятие уверенно держит премиальный уровень.»"
 fixed_positive_result_text = "Демонстрация статуса производит впечатление."

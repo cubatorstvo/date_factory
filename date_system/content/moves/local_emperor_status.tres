@@ -9,7 +9,6 @@ description = "Назвать цену кресла"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"status"
 fixed_option_text = "Небрежно сообщить, сколько стоило это чудовище."
 fixed_positive_result_text = "Цена кресла сработала как статус — ей это впечатлило."

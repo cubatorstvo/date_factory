@@ -10,7 +10,6 @@ description = "Выбрать сразу, без голосования."
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"dominance"
 fixed_option_text = "Выбрать сразу, без голосования."
 fixed_positive_result_text = "Уверенный контроль ей нравится."

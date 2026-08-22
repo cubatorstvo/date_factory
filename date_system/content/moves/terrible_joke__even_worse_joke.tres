@@ -10,7 +10,6 @@ description = "Ответить ещё более плохой шуткой."
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"risk"
 fixed_option_text = "Ответить ещё более плохой шуткой."
 fixed_positive_result_text = "Ей нравится готовность рискнуть."

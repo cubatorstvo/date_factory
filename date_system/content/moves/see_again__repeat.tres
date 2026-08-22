@@ -10,7 +10,6 @@ description = "Кивнуть: «Повторим.»"
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"composure"
 fixed_option_text = "Кивнуть: «Повторим.»"
 fixed_positive_result_text = "Спокойствие ей нравится."

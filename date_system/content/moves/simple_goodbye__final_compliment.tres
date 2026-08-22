@@ -10,7 +10,6 @@ description = "Оставить напоследок короткий краси
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"flattery"
 fixed_option_text = "Оставить напоследок короткий красивый комплимент."
 fixed_positive_result_text = "Лесть попадает в цель."

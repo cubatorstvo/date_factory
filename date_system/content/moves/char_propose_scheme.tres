@@ -16,7 +16,6 @@ kind = 1
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"cunning"
 fixed_option_text = "Предложить подозрительно эффективную схему, в которой формально все остаются в выигрыше."
 fixed_positive_result_text = "Схема звучит ловко — ей это зашло."

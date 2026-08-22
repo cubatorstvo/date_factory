@@ -10,7 +10,6 @@ description = "Спросить прямо: «Лучше или хуже?»"
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"directness"
 fixed_option_text = "Спросить прямо: «Лучше или хуже?»"
 fixed_positive_result_text = "Прямота ей нравится."

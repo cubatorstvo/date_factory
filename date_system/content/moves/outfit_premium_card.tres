@@ -9,7 +9,6 @@ description = "Показать премиальную карту"
 kind = 3
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"status"
 fixed_option_text = "Небрежно продемонстрировать максимально статусный способ оплаты."
 fixed_positive_result_text = "Премиальная карта закрыла вопрос статусом — ей это зашло."

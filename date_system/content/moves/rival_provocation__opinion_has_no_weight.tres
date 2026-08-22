@@ -10,7 +10,6 @@ description = "Дать понять, что его мнение здесь ни
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"status"
 fixed_option_text = "Дать понять, что его мнение здесь ничего не весит."
 fixed_positive_result_text = "Демонстрация статуса производит впечатление."

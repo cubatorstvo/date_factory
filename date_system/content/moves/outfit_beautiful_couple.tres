@@ -9,7 +9,6 @@ description = "Объявить вас красивой парой"
 kind = 3
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"flattery"
 fixed_option_text = "Вслух констатировать, насколько эффектно вы смотритесь вместе."
 fixed_positive_result_text = "Комплимент паре зашёл."

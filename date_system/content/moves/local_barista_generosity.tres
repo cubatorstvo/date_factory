@@ -9,7 +9,6 @@ description = "Фирменный десерт"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"generosity"
 fixed_option_text = "Заказать девушке фирменный десерт."
 fixed_positive_result_text = "Фирменный десерт к месту — ей приятно."

@@ -10,7 +10,6 @@ description = "«Ладно, сегодня твой маршрут.»"
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"composure"
 fixed_option_text = "«Ладно, сегодня твой маршрут.»"
 fixed_positive_result_text = "Спокойствие ей нравится."

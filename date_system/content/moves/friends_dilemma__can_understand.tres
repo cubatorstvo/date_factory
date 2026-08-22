@@ -10,7 +10,6 @@ description = "«Если она действительно пыталась з�
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"care"
 fixed_option_text = "«Если она действительно пыталась защитить человека, я могу понять.»"
 fixed_positive_result_text = "Она ценит заботу."

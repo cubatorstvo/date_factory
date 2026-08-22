@@ -11,7 +11,7 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_references(catalog, issues)
 	_check_difficulty_presets(catalog, issues)
 	_check_girl_tags(catalog, issues)
-	_check_move_mappings(catalog, issues)
+	_check_fixed_presentation(catalog, issues)
 	_check_characteristic_moves(catalog, issues)
 	_check_outfits(catalog, issues)
 	_check_base_usage(catalog, issues)
@@ -66,14 +66,6 @@ func _check_references(catalog: DateContentCatalog, issues: Array[ContentValidat
 	for move in catalog.moves:
 		if move == null:
 			continue
-		for mapping in move.situation_mappings:
-			if mapping == null:
-				issues.append(_issue("DateMove", String(move.id), "situation_mappings", "Пустой mapping."))
-				continue
-			if catalog.find_situation(mapping.situation_id) == null:
-				issues.append(_issue("DateMove", String(move.id), "situation_id", "Неизвестная Situation: %s." % String(mapping.situation_id)))
-			if catalog.find_tag(mapping.tag_id) == null:
-				issues.append(_issue("DateMove", String(move.id), "tag_id", "Неизвестный Tag: %s." % String(mapping.tag_id)))
 		if move.unlock_requirement != null and catalog.find_characteristic(move.unlock_requirement.stat_id) == null:
 			issues.append(_issue("DateMove", String(move.id), "unlock_requirement.stat_id", "Неизвестная характеристика: %s." % String(move.unlock_requirement.stat_id)))
 		if move.has_fixed_presentation():
@@ -165,18 +157,12 @@ func _check_difficulty_presets(catalog: DateContentCatalog, issues: Array[Conten
 		))
 
 
-func _check_move_mappings(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+func _check_fixed_presentation(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	for move in catalog.moves:
-		if move == null:
+		if move == null or not move.enabled:
 			continue
-		var seen: Dictionary = {}
-		for mapping in move.situation_mappings:
-			if mapping == null:
-				continue
-			var key: String = String(mapping.situation_id)
-			if seen.has(key):
-				issues.append(_issue("DateMove", String(move.id), "situation_mappings", "Больше одного mapping на Situation %s." % key))
-			seen[key] = true
+		if not move.has_fixed_presentation() or move.fixed_tag_id == &"":
+			issues.append(_issue("DateMove", String(move.id), "fixed_tag_id", "Ход должен иметь постоянный Tag и player-facing текст."))
 
 
 func _check_characteristic_moves(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -185,8 +171,6 @@ func _check_characteristic_moves(catalog: DateContentCatalog, issues: Array[Cont
 		if move == null or not move.is_characteristic():
 			continue
 		characteristic_moves.append(move)
-		if not move.situation_mappings.is_empty():
-			issues.append(_issue("DateMove", String(move.id), "situation_mappings", "Characteristic Move имеет постоянный Tag и не использует situation mappings."))
 		if move.unlock_requirement == null or String(move.unlock_requirement.stat_id).is_empty():
 			issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "CHARACTERISTIC должен содержать UnlockRequirement."))
 		elif not DateTypes.CHARACTERISTIC_LEVELS.has(move.unlock_requirement.required_level):
@@ -249,8 +233,6 @@ func _check_outfits(catalog: DateContentCatalog, issues: Array[ContentValidation
 	for move in catalog.moves:
 		if move == null or not move.is_outfit():
 			continue
-		if not move.situation_mappings.is_empty():
-			issues.append(_issue("DateMove", String(move.id), "situation_mappings", "Outfit Move имеет постоянный Tag и не использует situation mappings."))
 		if not referenced_outfit_moves.has(String(move.id)):
 			issues.append(_issue("DateMove", String(move.id), "kind", "Outfit Move должен быть привязан к Outfit."))
 
@@ -436,7 +418,7 @@ func _check_initial_known_tags(catalog: DateContentCatalog, issues: Array[Conten
 	for girl in catalog.girls:
 		if girl == null or not girl.enabled:
 			continue
-		var expected: int = FillerRewardCatalog.initial_known_tag_count_for(girl.id)
+		var expected: int = 0 if GirlCatalog.is_story_girl_id(girl.id) else 2
 		if girl.initial_known_tag_count != expected:
 			issues.append(_issue("GirlProfile", String(girl.id), "initial_known_tag_count", "Начальное число известных Tags должно быть %d." % expected))
 

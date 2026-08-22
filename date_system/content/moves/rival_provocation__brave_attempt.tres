@@ -10,7 +10,6 @@ description = "Похвалить его за очень смелую попыт
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"humor"
 fixed_option_text = "Похвалить его за очень смелую попытку испортить вечер."
 fixed_positive_result_text = "Она смеётся — шутка попала в её вкус."

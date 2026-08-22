@@ -10,7 +10,6 @@ description = "«Если уж соврала ради него — потом �
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"generosity"
 fixed_option_text = "«Если уж соврала ради него — потом помоги исправить последствия.»"
 fixed_positive_result_text = "Щедрый жест ей нравится."

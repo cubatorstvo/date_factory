@@ -16,7 +16,6 @@ kind = 1
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"directness"
 fixed_option_text = "Сказать всё прямо, без лишних конструкций."
 fixed_positive_result_text = "Прямолинейность без обёртки ей зашла."

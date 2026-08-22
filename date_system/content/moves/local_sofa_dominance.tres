@@ -16,7 +16,6 @@ kind = 2
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"dominance"
 fixed_option_text = "Пересесть в центр дивана и самому задать темп разговору."
 fixed_positive_result_text = "Занял центр дивана и темп разговора — ей это зашло."

@@ -16,7 +16,6 @@ kind = 1
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"risk"
 fixed_option_text = "Предложить немедленно проверить идею на практике, даже если это выглядит сомнительно."
 fixed_positive_result_text = "Готовность сразу проверить идею ей зашла."

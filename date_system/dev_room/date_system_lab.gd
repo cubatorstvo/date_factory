@@ -1122,17 +1122,6 @@ func _add_move_form() -> void:
 			_add_id_selector(move.unlock_requirement, "stat_id", "unlock stat", catalog_service.catalog.characteristics)
 			_add_int(move.unlock_requirement, "required_level", "required_level")
 		return
-	_form_host.add_child(LabUi.heading("Mappings"))
-	var add_btn := LabUi.button("Добавить mapping")
-	add_btn.pressed.connect(func() -> void:
-		var mapping := DateMoveSituationMapping.new()
-		move.situation_mappings.append(mapping)
-		_dirty = true
-		_rebuild_form()
-	)
-	_form_host.add_child(add_btn)
-	for i in move.situation_mappings.size():
-		_form_host.add_child(_mapping_editor(move, i))
 
 func _add_local_object_form() -> void:
 	var local_object: DateLocalObject = _draft as DateLocalObject
@@ -1170,46 +1159,6 @@ func _add_local_object_id_checks(location: DateVenue) -> void:
 			_dirty = true
 		)
 		_form_host.add_child(box)
-
-
-func _mapping_editor(move: DateMove, index: int) -> PanelContainer:
-	var mapping: DateMoveSituationMapping = move.situation_mappings[index]
-	var panel := PanelContainer.new()
-	var box := VBoxContainer.new()
-	panel.add_child(box)
-	var sit := OptionButton.new()
-	LabUi.fill_selector(sit, catalog_service.catalog.situations, mapping.situation_id)
-	sit.item_selected.connect(func(selected: int) -> void:
-		mapping.situation_id = sit.get_item_metadata(selected)
-		_dirty = true
-	)
-	box.add_child(LabUi.labeled_row("Situation", sit))
-	var tag := OptionButton.new()
-	LabUi.fill_selector(tag, catalog_service.catalog.tags, mapping.tag_id)
-	tag.item_selected.connect(func(selected: int) -> void:
-		mapping.tag_id = tag.get_item_metadata(selected)
-		_dirty = true
-	)
-	box.add_child(LabUi.labeled_row("Tag", tag))
-	for pair in [["option_text", mapping.option_text], ["positive_result_text", mapping.positive_result_text], ["negative_result_text", mapping.negative_result_text]]:
-		var edit := TextEdit.new()
-		edit.custom_minimum_size = Vector2(0, 60)
-		edit.text = str(pair[1])
-		var field: String = str(pair[0])
-		edit.text_changed.connect(func() -> void:
-			mapping.set(field, edit.text)
-			_dirty = true
-		)
-		box.add_child(LabUi.labeled_row(field, edit))
-	var remove := Button.new()
-	remove.text = "Удалить mapping"
-	remove.pressed.connect(func() -> void:
-		move.situation_mappings.remove_at(index)
-		_dirty = true
-		_rebuild_form()
-	)
-	box.add_child(remove)
-	return panel
 
 
 func _add_rules_form() -> void:

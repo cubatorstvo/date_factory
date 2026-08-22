@@ -10,7 +10,6 @@ description = "«Ну что, как добралась?»"
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"politeness"
 fixed_option_text = "«Ну что, как добралась?»"
 fixed_positive_result_text = "Ей нравится твоя корректность."

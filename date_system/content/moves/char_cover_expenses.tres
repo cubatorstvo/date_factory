@@ -16,7 +16,6 @@ kind = 1
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"generosity"
 fixed_option_text = "Немедленно предложить оплатить вопрос за свой счёт."
 fixed_positive_result_text = "Взял расходы на себя — ей это приятно."

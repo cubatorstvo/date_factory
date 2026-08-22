@@ -10,7 +10,6 @@ description = "«Ну что, будем молчать профессионал
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"audacity"
 fixed_option_text = "«Ну что, будем молчать профессионально или уже знакомиться?»"
 fixed_positive_result_text = "Наглость её цепляет."

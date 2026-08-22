@@ -10,7 +10,6 @@ description = "«Ты первые два часа точно не успееш�
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"flattery"
 fixed_option_text = "«Ты первые два часа точно не успеешь мне надоесть.»"
 fixed_positive_result_text = "Лесть попадает в цель."

@@ -1789,7 +1789,9 @@ func _build_filler_rewards_dev() -> Control:
 		var cd_btn: Button = LabUi.button("Cooldown")
 		cd_btn.modulate = Color(0.75, 0.7, 0.6)
 		cd_btn.pressed.connect(func() -> void:
-			girls.mark_date_completed(reward.girl_id)
+			var daily: Variant = get_node_or_null("/root/DailyActivityService")
+			if daily != null:
+				daily.register_usage(daily.date_key(reward.girl_id), 1)
 			refresh()
 		)
 		buttons.add_child(cd_btn)

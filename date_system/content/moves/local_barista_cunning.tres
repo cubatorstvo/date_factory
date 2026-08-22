@@ -16,7 +16,6 @@ kind = 2
 enabled = true
 max_uses_per_date = 1
 unlock_requirement = SubResource("req_1")
-situation_mappings = []
 fixed_tag_id = &"cunning"
 fixed_option_text = "Попросить бариста подыграть твоей истории."
 fixed_positive_result_text = "Бариста подыграл истории — ей это ловко."

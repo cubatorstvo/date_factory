@@ -10,7 +10,6 @@ description = "«Прямо сейчас вложил бы часть в хор�
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"flattery"
 fixed_option_text = "«Прямо сейчас вложил бы часть в хороший вечер с тобой.»"
 fixed_positive_result_text = "Лесть попадает в цель."

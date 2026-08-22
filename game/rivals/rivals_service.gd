@@ -152,10 +152,15 @@ func get_last_challenge_completed_at(rival_id: StringName) -> int:
 
 
 func get_next_challenge_available_at(rival_id: StringName) -> int:
-	var last_completed_at: int = get_last_challenge_completed_at(rival_id)
-	if last_completed_at <= 0:
+	if can_challenge_now(rival_id):
 		return 0
-	return last_completed_at + CityProgressionService.get_social_cooldown_minutes()
+	if is_story_rival(rival_id) and is_defeated(rival_id):
+		return 0
+	var clock: Variant = _time_service()
+	if clock == null:
+		return 0
+	var minutes: int = int(clock.get_game_time_minutes())
+	return (int(minutes / 1440) + 1) * 1440
 
 
 func is_challenge_cooldown_finished(rival_id: StringName) -> bool:

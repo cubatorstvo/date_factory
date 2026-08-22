@@ -10,7 +10,6 @@ description = "Сказать, что у её подруги всё хорошо
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"care"
 fixed_option_text = "Сказать, что у её подруги всё хорошо и можно не переживать."
 fixed_positive_result_text = "Она ценит заботу."

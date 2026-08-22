@@ -10,7 +10,6 @@ description = "Говорить так, будто проходишь собес
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"status"
 fixed_option_text = "Говорить так, будто проходишь собеседование в совет директоров."
 fixed_positive_result_text = "Демонстрация статуса производит впечатление."

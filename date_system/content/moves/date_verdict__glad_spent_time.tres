@@ -10,7 +10,6 @@ description = "«Рад, что потратил этот вечер именн�
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"generosity"
 fixed_option_text = "«Рад, что потратил этот вечер именно на тебя.»"
 fixed_positive_result_text = "Щедрый жест ей нравится."

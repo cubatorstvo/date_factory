@@ -10,7 +10,6 @@ description = "«Через десять минут я введу правила
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"dominance"
 fixed_option_text = "«Через десять минут я введу правила поведения в лифте.»"
 fixed_positive_result_text = "Уверенный контроль ей нравится."

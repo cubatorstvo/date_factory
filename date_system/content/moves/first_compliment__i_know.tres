@@ -10,7 +10,6 @@ description = "«Знаю. Но от тебя звучит особенно уб
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"audacity"
 fixed_option_text = "«Знаю. Но от тебя звучит особенно убедительно.»"
 fixed_positive_result_text = "Наглость её цепляет."

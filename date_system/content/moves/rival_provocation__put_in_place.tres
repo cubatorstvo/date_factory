@@ -10,7 +10,6 @@ description = "Жёстко поставить его на место."
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"dominance"
 fixed_option_text = "Жёстко поставить его на место."
 fixed_positive_result_text = "Уверенный контроль ей нравится."

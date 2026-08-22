@@ -9,7 +9,6 @@ description = "Включить режим «Космонавт»"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"humor"
 fixed_option_text = "Запустить максимальную программу и попытаться сохранить достоинство."
 fixed_positive_result_text = "Режим «Космонавт» сработал как шутка — ей смешно."

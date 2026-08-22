@@ -9,7 +9,6 @@ description = "Предложить опасную идею"
 kind = 3
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"risk"
 fixed_option_text = "Немедленно предложить сделать что-нибудь неоправданно рискованное."
 fixed_positive_result_text = "Опасная идея зашла как ставка."

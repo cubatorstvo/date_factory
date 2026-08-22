@@ -14,8 +14,6 @@ const ID_NIKA_BACKUP_OUTFIT: StringName = &"nika_backup_outfit"
 const ID_RITA_URGENT_TAXI: StringName = &"rita_urgent_taxi"
 const ID_EVA_READ_PEOPLE: StringName = &"eva_read_people"
 
-const FILLER_INITIAL_KNOWN_TAG_COUNT: int = 2
-const STORY_INITIAL_KNOWN_TAG_COUNT: int = 0
 const EVA_INITIAL_KNOWN_TAG_BONUS: int = 1
 const VIKA_REROLL_COST: int = 25
 const KIRA_STYLING_COST: int = 40
@@ -144,13 +142,6 @@ static func create_seed() -> FillerRewardCatalog:
 		"При знакомстве сразу открывается на один Tag больше.\nУ уже знакомых незавершённых девушек сейчас откроется ещё один неизвестный Tag."
 	))
 	return catalog
-
-
-static func initial_known_tag_count_for(girl_id: StringName) -> int:
-	if GirlCatalog.is_story_girl_id(girl_id):
-		return STORY_INITIAL_KNOWN_TAG_COUNT
-
-	return FILLER_INITIAL_KNOWN_TAG_COUNT
 
 
 static func _make(

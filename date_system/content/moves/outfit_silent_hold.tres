@@ -9,7 +9,6 @@ description = "Молча выдержать ситуацию"
 kind = 3
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"composure"
 fixed_option_text = "Сохранять абсолютное спокойствие до тех пор, пока неловко не станет всем остальным."
 fixed_positive_result_text = "Молчаливое спокойствие закрыло паузу — ей это по делу."

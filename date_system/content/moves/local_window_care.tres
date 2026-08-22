@@ -9,7 +9,6 @@ description = "Приоткрыть окно"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"care"
 fixed_option_text = "Слегка приоткрыть окно для свежего воздуха."
 fixed_positive_result_text = "Свежий воздух к месту — ей спокойнее."

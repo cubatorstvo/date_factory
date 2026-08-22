@@ -214,7 +214,7 @@ func clear_marina_free_outfit_pending() -> void:
 
 func get_effective_initial_known_tag_count(girl_id: StringName) -> int:
 	var profile: GirlProfile = _date_girl(girl_id)
-	var count: int = FillerRewardCatalog.initial_known_tag_count_for(girl_id)
+	var count: int = 0
 	if profile != null:
 		count = profile.initial_known_tag_count
 	if has_filler_reward(FillerRewardCatalog.ID_EVA_READ_PEOPLE):
@@ -333,46 +333,6 @@ func _progression() -> ProgressionState:
 	if gs == null:
 		return null
 	return gs.progression as ProgressionState
-
-
-func get_next_date_available_at(girl_id: StringName) -> int:
-	var last_completed_at: int = get_last_date_completed_at(girl_id)
-	if last_completed_at <= 0:
-		return 0
-	return last_completed_at + CityProgressionService.get_social_cooldown_minutes()
-
-
-func get_last_date_completed_at(girl_id: StringName) -> int:
-	var state: GirlState = peek_state(girl_id)
-	if state == null:
-		return 0
-	return state.last_date_completed_at
-
-
-func is_date_cooldown_finished(girl_id: StringName) -> bool:
-	var dating: Variant = get_node_or_null("/root/DatingService")
-	if dating != null and dating.has_method("is_free_date_available_today"):
-		return bool(dating.is_free_date_available_today(girl_id))
-	var daily: Variant = get_node_or_null("/root/DailyActivityService")
-	if daily == null:
-		return true
-	return bool(daily.is_available(daily.date_key(girl_id), 1))
-
-
-func set_date_cooldown(girl_id: StringName, _duration_minutes: int = 0) -> void:
-	mark_date_completed(girl_id)
-
-
-func mark_date_completed(girl_id: StringName) -> void:
-	var state: GirlState = get_state(girl_id)
-	if state == null:
-		return
-	var clock: Variant = _time_service()
-	var current_time: int = 0
-	if clock != null:
-		current_time = int(clock.get_game_time_minutes())
-	state.last_date_completed_at = current_time
-	state.next_date_available_at = get_next_date_available_at(girl_id)
 
 
 func fill_date_progress(girl_id: StringName, progress: GirlProgress) -> void:

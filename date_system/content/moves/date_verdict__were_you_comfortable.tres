@@ -10,7 +10,6 @@ description = "«А тебе было комфортно?»"
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"care"
 fixed_option_text = "«А тебе было комфортно?»"
 fixed_positive_result_text = "Она ценит заботу."

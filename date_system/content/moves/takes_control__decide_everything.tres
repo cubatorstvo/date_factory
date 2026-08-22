@@ -10,7 +10,6 @@ description = "«Сегодня вообще всё решай ты. Прове�
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"risk"
 fixed_option_text = "«Сегодня вообще всё решай ты. Проверим, куда попадём.»"
 fixed_positive_result_text = "Ей нравится готовность рискнуть."

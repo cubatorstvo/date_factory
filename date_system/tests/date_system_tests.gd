@@ -14,6 +14,7 @@ func run_all() -> PackedStringArray:
 	_test_core_and_closing_scores()
 	_test_base_pool_and_rng()
 	_test_situation_owned_architecture()
+	_test_cleanup_contracts()
 	_test_characteristic_moves()
 	_test_character_build_sources()
 	_test_mapping_tags_differ_by_situation()
@@ -62,6 +63,38 @@ func run_all() -> PackedStringArray:
 	_test_semantic_cleanup()
 	_test_playtest_daily_activity()
 	return _failures
+
+
+func _test_cleanup_contracts() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var situation: DateSituation = catalog.find_situation(&"appearance_question")
+	_ok("cleanup situation owns six BASE", situation != null and situation.base_move_ids.size() == 6)
+	var move: DateMove = catalog.find_move(situation.base_move_ids[0]) if situation != null else null
+	_ok(
+		"cleanup resolved fixed api",
+		move != null
+		and move.has_fixed_presentation()
+		and move.resolved_tag_id() != &""
+		and not move.resolved_option_text().strip_edges().is_empty()
+		and not move.resolved_positive_result_text().strip_edges().is_empty()
+		and not move.resolved_negative_result_text().strip_edges().is_empty()
+	)
+	_ok("cleanup situation-owned lookup", catalog.base_moves_for_situation(&"appearance_question").size() == 6)
+	var base_count: int = 0
+	for item in catalog.moves:
+		if item != null and item.enabled and item.is_base():
+			base_count += 1
+	_ok("cleanup 180 baseline BASE", base_count == 180)
+	var validator := ContentValidator.new()
+	_ok("cleanup catalog validates without mapping layer", not _has_error(validator.validate(catalog)))
+	var alina: GirlProfile = catalog.find_girl(GirlCatalog.ID_ALINA)
+	var actress: GirlProfile = catalog.find_girl(GirlCatalog.ID_ACTRESS)
+	_ok("cleanup alina known from profile", alina != null and alina.initial_known_tag_count == 2)
+	_ok("cleanup actress known from profile", actress != null and actress.initial_known_tag_count == 0)
+	var girls: Variant = _girls_service()
+	if girls != null:
+		_ok("cleanup effective alina", int(girls.get_effective_initial_known_tag_count(GirlCatalog.ID_ALINA)) == 2)
+		_ok("cleanup effective actress", int(girls.get_effective_initial_known_tag_count(GirlCatalog.ID_ACTRESS)) == 0)
 
 
 func _test_semantic_cleanup() -> void:
@@ -1525,16 +1558,6 @@ func _test_unlock_move(move_id: String, tag_id: String, required_level: int, max
 	move.unlock_requirement = requirement
 	return move
 
-func _test_mapping(tag_id: String) -> DateMoveSituationMapping:
-	var mapping: DateMoveSituationMapping = DateMoveSituationMapping.new()
-	mapping.situation_id = &"lab_episode"
-	mapping.tag_id = StringName(tag_id)
-	mapping.option_text = tag_id
-	mapping.positive_result_text = "ok"
-	mapping.negative_result_text = "no"
-	return mapping
-
-
 func _test_girl_difficulty() -> void:
 	var catalog: DateContentCatalog = _catalog()
 	var presets: Array[GirlDifficultyPreset] = catalog.enabled_girl_difficulty_presets()
@@ -2178,7 +2201,6 @@ func _test_objectives() -> void:
 	_ok("relationship uses max", rel_goal != null and rel_goal.progress_text == "0 / %d" % int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS)))
 	_ok("next is invite", rel_goal != null and rel_goal.is_current and view.next_step_text.contains("Пригласить Актрису на свидание"))
 	_ok("dating target", view.target_type == ObjectiveView.TARGET_DATING and view.target_id == GirlCatalog.ID_ACTRESS)
-	girls.mark_date_completed(GirlCatalog.ID_ACTRESS)
 	var daily_obj: Variant = _daily_activity()
 	if daily_obj != null:
 		daily_obj.register_usage(daily_obj.date_key(GirlCatalog.ID_ACTRESS), 1)
@@ -3490,7 +3512,7 @@ func _test_girls() -> void:
 	_ok("default discovered false", default_state.discovered == false)
 	_ok("default has_contact false", default_state.has_contact == false)
 	_ok("default relationship 0", default_state.relationship == 0)
-	_ok("default next_date_available_at 0", default_state.next_date_available_at == 0)
+	_ok("default last_date_situation_ids empty", default_state.last_date_situation_ids.is_empty())
 	_ok("default revealed tags empty", default_state.revealed_positive_tag_ids.is_empty() and default_state.revealed_negative_tag_ids.is_empty())
 	_ok("default serialize no secondary_revealed", not default_state.to_dict().has("secondary_revealed"))
 	_ok("default completed_dates 0", default_state.completed_dates == 0)
@@ -3530,7 +3552,7 @@ func _test_girls() -> void:
 	_ok("relationship ordinary max 10", int(girls.get_relationship_max(alina_id)) == 10)
 	_ok("kira max 10", int(girls.get_relationship_max(GirlCatalog.ID_KIRA)) == 10)
 	_ok("eva max 10", int(girls.get_relationship_max(GirlCatalog.ID_EVA)) == 10)
-	_ok("actress max 15", int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS)) == 15)
+	_ok("actress max 10", int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS)) == 10)
 	sm.new_game()
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	var at_city: Array[GirlDefinition] = girls.get_girls_at_current_location()
@@ -3756,15 +3778,14 @@ func _test_dating_and_rating() -> void:
 	_ok("complete date", dating.complete_date(date_result))
 	_ok("complete relationship 2", girls.get_relationship(alina_id) == 2)
 	_ok("complete time 1120", int(clock.get_game_time_minutes()) == 1120)
-	_ok("complete cooldown", girls.get_next_date_available_at(alina_id) == 1120 + int(clock.days_to_minutes(3)))
+	_ok("complete daily used", dating.is_free_date_available_today(alina_id) == false)
 	_ok("complete active cleared", dating.has_active_date() == false)
 	_ok("complete active dict empty", gs.dating.active_date.is_empty())
 	sm.save_game()
-	var cooldown_at: int = girls.get_next_date_available_at(alina_id)
 	sm.new_game()
-	_ok("cooldown reset new game", girls.get_next_date_available_at(alina_id) == 0)
+	_ok("daily reset new game", dating.is_free_date_available_today(alina_id))
 	_ok("load cooldown save", sm.load_game())
-	_ok("loaded cooldown", girls.get_next_date_available_at(alina_id) == cooldown_at)
+	_ok("loaded daily used", dating.is_free_date_available_today(alina_id) == false)
 	sm.delete_save()
 	sm.new_game()
 	girls.give_contact(alina_id)
@@ -3799,8 +3820,9 @@ func _test_dating_and_rating() -> void:
 	_ok("load knowledge save", sm.load_game())
 	var loaded_state: GirlState = girls.get_state(alina_id)
 	_ok("knowledge loaded", loaded_state != null and (loaded_state.revealed_positive_tag_ids.has(revealed_id) or loaded_state.revealed_negative_tag_ids.has(revealed_id)))
-	girls.get_state(alina_id).last_date_completed_at = 0
-	girls.get_state(alina_id).next_date_available_at = 0
+	var daily_knowledge: Variant = _daily_activity()
+	if daily_knowledge != null:
+		daily_knowledge.set_usage_today(daily_knowledge.date_key(alina_id), 0)
 	_ok("knowledge second start", dating.start_date(alina_id, &"cafe"))
 	var second_engine: DateEngine = dating.get_date_engine()
 	var second_progress: GirlProgress = second_engine.girl_progress() if second_engine != null else null
@@ -3885,7 +3907,6 @@ func _test_dating_and_rating() -> void:
 							"discovered": true,
 							"has_contact": true,
 							"relationship": 1,
-							"next_date_available_at": 0,
 						},
 					},
 				},
@@ -4239,7 +4260,9 @@ func _test_date_venue_choice() -> void:
 	complete_a.relationship_delta = 0
 	complete_a.duration_minutes = 120
 	_ok("venue A complete", dating.complete_date(complete_a))
-	girls.get_state(alina_id).next_date_available_at = 0
+	var daily_venue: Variant = _daily_activity()
+	if daily_venue != null:
+		daily_venue.set_usage_today(daily_venue.date_key(alina_id), 0)
 	_ok("venue B start", dating.start_date(alina_id, location_b))
 	_ok("venue B independent", _active_session_venue(dating) == location_b)
 	_ok("venue B not world cafe", _active_session_venue(dating) != definition.location_id)
@@ -4366,7 +4389,9 @@ func _test_rivals() -> void:
 	_ok("loss still discovered", rivals.is_discovered(boris_id))
 	_ok("loss money 0", gs.player.money == 0)
 	_ok("loss time 60", int(clock.get_game_time_minutes()) == 60)
-	_ok("story after loss can challenge", rivals.can_challenge_now(boris_id))
+	_ok("story after loss blocked same day", rivals.can_challenge_now(boris_id) == false)
+	clock.advance_time(1440)
+	_ok("story after loss next day", rivals.can_challenge_now(boris_id))
 	_ok("story rival after loss", rivals.is_story_rival(boris_id))
 	competitions.set_forced_won(null)
 	sm.new_game()
@@ -4431,9 +4456,9 @@ func _test_rivals() -> void:
 	_ok("filler loss after cooldown", rivals.can_challenge_now(RivalCatalog.ID_GLEB))
 	competitions.set_forced_won(null)
 	world.set_city_stage(2)
-	_ok("cooldown days city 2", CityProgressionService.get_social_cooldown_days() == 2)
+	_ok("city 2 stage", CityProgressionService.get_city_stage() == 2)
 	world.set_city_stage(3)
-	_ok("cooldown days city 3", CityProgressionService.get_social_cooldown_days() == 1)
+	_ok("city 3 stage", CityProgressionService.get_city_stage() == 3)
 	sm.new_game()
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	actions.execute(rivals.create_meet_rival_action(boris_id))
@@ -4936,7 +4961,7 @@ func _test_city_density_progression() -> void:
 	_ok("5. reset then load", sm.load_game() and gs.player.muscle == 5)
 	sm.new_game()
 	_ok("6. new game city 1", int(world.get_city_stage()) == 1)
-	_ok("10. cooldown 4320", CityProgressionService.get_social_cooldown_minutes() == 4320)
+	_ok("10. date free city 1", dating.is_free_date_available_today(GirlCatalog.ID_ALINA))
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	_ok("14. alina open", girls.can_meet_girl(GirlCatalog.ID_ALINA))
 	_ok("14. marina open", girls.can_meet_girl(GirlCatalog.ID_MARINA))
@@ -4988,7 +5013,7 @@ func _test_city_density_progression() -> void:
 	_ok("25. work minutes still 60", WorkService.make_current_work().time_cost_minutes == 60)
 	_ok("advance editor city 3", stages.force_complete_current_stage_for_dev())
 	_ok("8. after editor city 3", int(world.get_city_stage()) == 3)
-	_ok("12. cooldown 1440", CityProgressionService.get_social_cooldown_minutes() == 1440)
+	_ok("12. date free city 3", dating.is_free_date_available_today(GirlCatalog.ID_ALINA))
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	_ok("19. sonya open city 3", girls.can_meet_girl(GirlCatalog.ID_SONYA))
 	world.enter_location(LocationCatalog.ID_CAFE)
@@ -5780,8 +5805,6 @@ func _test_dates_for_home_city_girls() -> void:
 			completed = _complete_simple_date(dating, girl_id, date_venue_id, &"casual", 1)
 		_ok("date %s" % String(girl_id), completed)
 		_ok("date applied %s" % String(girl_id), int(girls.get_relationship(girl_id)) != before_rel or before_rel == int(girls.get_relationship_max(girl_id)))
-		girls.get_state(girl_id).last_date_completed_at = 0
-		girls.get_state(girl_id).next_date_available_at = 0
 	_ok("alina real session", alina_played)
 	sm.delete_save()
 	sm.save_path = original_path
@@ -6166,7 +6189,7 @@ func _test_playtest_daily_activity() -> void:
 	_ok("date available first", dating.can_start_date(GirlCatalog.ID_ALINA))
 	_ok("start date registers", dating.start_date(GirlCatalog.ID_ALINA, &"cafe"))
 	_ok("same girl blocked", dating.can_start_date(GirlCatalog.ID_ALINA) == false)
-	_ok("other girl free", dating.can_start_date(GirlCatalog.ID_MARINA))
+	_ok("other girl daily free", dating.is_free_date_available_today(GirlCatalog.ID_MARINA))
 	var date_result := DateResult.new()
 	date_result.girl_id = GirlCatalog.ID_ALINA
 	date_result.relationship_delta = 0

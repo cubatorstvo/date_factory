@@ -9,7 +9,6 @@ description = "Неуместная песня"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"humor"
 fixed_option_text = "Поставить максимально неуместную песню."
 fixed_positive_result_text = "Неуместная песня попала в тон — ей смешно."

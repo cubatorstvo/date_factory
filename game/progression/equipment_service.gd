@@ -87,42 +87,6 @@ func equip_outfit(outfit_id: StringName) -> bool:
 	return true
 
 
-func get_marina_gift_outfits() -> Array[Outfit]:
-	var result: Array[Outfit] = []
-	var girls: Variant = get_node_or_null("/root/GirlsService")
-	if girls == null or not bool(girls.is_marina_free_outfit_pending()):
-		return result
-	for outfit in get_shop_outfits():
-		if outfit == null or owns_outfit(outfit.id):
-			continue
-		result.append(outfit)
-	return result
-
-
-func create_claim_marina_gift_action(outfit_id: StringName) -> GameAction:
-	var action := GameAction.new()
-	var outfit: Outfit = get_catalog().get_outfit(outfit_id)
-	if outfit == null:
-		return action
-	action.id = StringName("marina_gift_%s" % String(outfit_id))
-	action.money_cost = 0
-	action.time_cost_minutes = 0
-	var pending := MarinaGiftPendingRequirement.new()
-	action.requirements.append(pending)
-	var owned := OutfitNotOwnedRequirement.new()
-	owned.outfit_id = outfit_id
-	action.requirements.append(owned)
-	var stage := MinStoryStageRequirement.new()
-	stage.min_stage = outfit.min_story_stage
-	action.requirements.append(stage)
-	var effect := OwnOutfitEffect.new()
-	effect.outfit_id = outfit_id
-	action.effects.append(effect)
-	var clear := ClearMarinaGiftEffect.new()
-	action.effects.append(clear)
-	return action
-
-
 func create_buy_outfit_action(outfit_id: StringName) -> GameAction:
 	var action := GameAction.new()
 	var outfit: Outfit = get_catalog().get_outfit(outfit_id)

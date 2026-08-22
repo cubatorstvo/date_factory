@@ -9,7 +9,6 @@ description = "Откинуться на диван"
 kind = 2
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"composure"
 fixed_option_text = "Откинуться на диван и невозмутимо продолжить разговор."
 fixed_positive_result_text = "Откинулся и держишь тон — ей это спокойствие по делу."

@@ -235,7 +235,6 @@ func complete_date(result: DateResult) -> bool:
 	if session_progress != null:
 		girls.apply_date_knowledge(girl_id, session_progress)
 	clock.advance_time(result.duration_minutes)
-	girls.mark_date_completed(girl_id)
 	var venue: DateVenue = _catalog().find_venue(StringName(str(dating.active_date.get("venue_id", "")))) if _catalog() != null else null
 	if venue != null and venue.uses_apartment_preparation:
 		var apartment: Variant = _apartment_service()

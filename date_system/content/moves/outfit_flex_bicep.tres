@@ -9,7 +9,6 @@ description = "Напрячь бицепс без причины"
 kind = 3
 enabled = true
 max_uses_per_date = 1
-situation_mappings = []
 fixed_tag_id = &"dominance"
 fixed_option_text = "Внезапно перевести внимание на собственную физическую форму."
 fixed_positive_result_text = "Внезапный акцент на форме зашёл как контроль сцены."

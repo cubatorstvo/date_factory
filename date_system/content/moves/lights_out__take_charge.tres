@@ -10,7 +10,6 @@ description = "Взять на себя поиск света или выход�
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"dominance"
 fixed_option_text = "Взять на себя поиск света или выхода."
 fixed_positive_result_text = "Уверенный контроль ей нравится."

@@ -10,7 +10,6 @@ description = "«Раз всё вскрылось, начну именно с р
 kind = 0
 enabled = true
 max_uses_per_date = 0
-situation_mappings = []
 fixed_tag_id = &"risk"
 fixed_option_text = "«Раз всё вскрылось, начну именно с рассказа о себе.»"
 fixed_positive_result_text = "Ей нравится готовность рискнуть."
