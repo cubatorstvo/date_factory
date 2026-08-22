@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"see_again"
+display_name = "Увидимся ещё?"
+description = "Увидимся ещё?"
+situation_text = "Девушка спрашивает: «Ну… повторим когда-нибудь?»"
+enabled = true
+allowed_phases = Array[int]([2])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"see_again__yes_again", &"see_again__after_company", &"see_again__if_you_want", &"see_again__tomorrow_free", &"see_again__repeat", &"see_again__something_different"])

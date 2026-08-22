@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"small_lie__why_lied"
+display_name = "Спросить прямо, зачем она соврала."
+description = "Спросить прямо, зачем она соврала."
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"directness"
+fixed_option_text = "Спросить прямо, зачем она соврала."
+fixed_positive_result_text = "Прямота ей нравится."
+fixed_negative_result_text = "Прямота кажется ей грубой."

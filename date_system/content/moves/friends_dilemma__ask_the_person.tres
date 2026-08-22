@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"friends_dilemma__ask_the_person"
+display_name = "«Сначала спросил бы самого человека, чего он хочет.»"
+description = "«Сначала спросил бы самого человека, чего он хочет.»"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"politeness"
+fixed_option_text = "«Сначала спросил бы самого человека, чего он хочет.»"
+fixed_positive_result_text = "Ей нравится твоя корректность."
+fixed_negative_result_text = "Ей кажется, что ты слишком церемонишься."

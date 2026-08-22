@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"friends_dilemma"
+display_name = "Чужая проблема"
+description = "Чужая проблема"
+situation_text = "Девушка рассказывает про подругу, которая соврала человеку «ради его же блага», и спрашивает, нормально ли это."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"friends_dilemma__can_understand", &"friends_dilemma__lie_is_lie", &"friends_dilemma__ask_the_person", &"friends_dilemma__useful_lie", &"friends_dilemma__truth_and_responsibility", &"friends_dilemma__fix_consequences"])

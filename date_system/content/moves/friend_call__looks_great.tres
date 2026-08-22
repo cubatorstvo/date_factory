@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"friend_call__looks_great"
+display_name = "Сообщить, что её подруга сегодня выглядит великолепно."
+description = "Сообщить, что её подруга сегодня выглядит великолепно."
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"flattery"
+fixed_option_text = "Сообщить, что её подруга сегодня выглядит великолепно."
+fixed_positive_result_text = "Лесть попадает в цель."
+fixed_negative_result_text = "Лесть кажется ей натянутой."

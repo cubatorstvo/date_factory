@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_script")
 id = &"spontaneous_bet"
-display_name = "Пари"
-description = "Пари"
-situation_text = "Девушка предлагает пари: проигравший выполняет условие победителя."
+display_name = "Спонтанное пари"
+description = "Спонтанное пари"
+situation_text = "Девушка предлагает поспорить на небольшую ставку и ждёт твоей реакции."
 enabled = true
 allowed_phases = Array[int]([1])
 allowed_venue_ids = Array[StringName]([])
 allowed_girl_ids = Array[StringName]([])
 weight = 1.0
-base_move_ids = Array[StringName]([&"spontaneous_bet__tease", &"spontaneous_bet__pay", &"spontaneous_bet__refuse", &"spontaneous_bet__say_directly", &"spontaneous_bet__take_initiative", &"spontaneous_bet__accept_challenge"])
+base_move_ids = Array[StringName]([&"spontaneous_bet__accept_blind", &"spontaneous_bet__raise_stakes", &"spontaneous_bet__negotiate_terms", &"spontaneous_bet__set_prize", &"spontaneous_bet__greatest_person", &"spontaneous_bet__loser_gets_prize"])

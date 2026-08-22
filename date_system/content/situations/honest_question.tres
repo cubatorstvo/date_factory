@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"honest_question"
+display_name = "Один честный вопрос"
+description = "Один честный вопрос"
+situation_text = "Девушка задерживается перед уходом: «Можно честный вопрос? Ты часто делаешь вид, что увереннее, чем есть?»"
+enabled = true
+allowed_phases = Array[int]([2])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"honest_question__sometimes_yes", &"honest_question__why_important", &"honest_question__confidence_skill", &"honest_question__when_useful", &"honest_question__honest_thanks", &"honest_question__expensive_trim"])

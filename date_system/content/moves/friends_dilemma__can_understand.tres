@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"friends_dilemma__can_understand"
+display_name = "«Если она действительно пыталась защитить человека, я могу понять.»"
+description = "«Если она действительно пыталась защитить человека, я могу понять.»"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"care"
+fixed_option_text = "«Если она действительно пыталась защитить человека, я могу понять.»"
+fixed_positive_result_text = "Она ценит заботу."
+fixed_negative_result_text = "Забота кажется ей лишней."

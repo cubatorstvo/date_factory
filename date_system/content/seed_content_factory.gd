@@ -183,7 +183,7 @@ func _outfits() -> Array[Outfit]:
 	]
 
 
-func _situation(id: String, name: String, text: String, phase: DateTypes.DatePhase, base_move_ids: Array = []) -> DateSituation:
+func _situation(id: String, name: String, text: String, phase: DateTypes.DatePhase, base_move_ids: Array = [], venue_ids: Array = []) -> DateSituation:
 	var situation := DateSituation.new()
 	situation.id = StringName(id)
 	situation.display_name = name
@@ -196,50 +196,255 @@ func _situation(id: String, name: String, text: String, phase: DateTypes.DatePha
 	for move_id in base_move_ids:
 		typed.append(StringName(str(move_id)))
 	situation.base_move_ids = typed
+	var venues: Array[StringName] = []
+	for venue_id in venue_ids:
+		venues.append(StringName(str(venue_id)))
+	situation.allowed_venue_ids = venues
 	return situation
+
 
 
 func _situations() -> Array[DateSituation]:
 	return [
-		_situation("appearance_question", "Оценка внешности", "В начале встречи девушка спрашивает:\n«Ну что, как я выгляжу?»", DateTypes.DatePhase.OPENING, [
-			"appearance_question__compliment",
-			"appearance_question__tease",
-			"appearance_question__say_directly",
-			"appearance_question__show_off",
-			"appearance_question__support",
-			"appearance_question__smooth",
+		_situation("appearance_question", "Ты не такой, как я представляла", "Девушка пару секунд рассматривает тебя. «Хм. Я тебя почему-то вообще другим представляла.»", DateTypes.DatePhase.OPENING, [
+			"appearance_question__better_live",
+			"appearance_question__more_surprises",
+			"appearance_question__better_or_worse",
+			"appearance_question__get_used_to_it",
+			"appearance_question__scale",
+			"appearance_question__update_image",
 		]),
-		_situation("money_request", "Просьба о деньгах", "К вам подходит незнакомец и просит денег на срочную проблему.", DateTypes.DatePhase.CORE, [
-			"money_request__pay",
-			"money_request__refuse",
-			"money_request__say_directly",
-			"money_request__take_initiative",
-			"money_request__show_off",
-			"money_request__tease",
+		_situation("awkward_silence", "Пауза затянулась", "Вы уже встретились, но первые десять секунд оба молчите. Пауза начинает жить собственной жизнью.", DateTypes.DatePhase.OPENING, [
+			"awkward_silence__minute_of_silence",
+			"awkward_silence__beautiful_pause",
+			"awkward_silence__how_arrived",
+			"awkward_silence__pleasant_start",
+			"awkward_silence__professional_silence",
+			"awkward_silence__awkward_question",
 		]),
-		_situation("rival_provocation", "Провокация самца", "К вам подходит другой самец, заявляет, что рейтинг героя выглядит подозрительно, и начинает провоцировать.", DateTypes.DatePhase.CORE, [
-			"rival_provocation__tease",
-			"rival_provocation__refuse",
-			"rival_provocation__say_directly",
-			"rival_provocation__show_off",
-			"rival_provocation__accept_challenge",
-			"rival_provocation__smooth",
+		_situation("why_me", "Почему именно я?", "Девушка спрашивает: «А почему ты вообще решил позвать именно меня?»", DateTypes.DatePhase.OPENING, [
+			"why_me__most_interesting",
+			"why_me__liked_invited",
+			"why_me__same_level",
+			"why_me__rare_quest",
+			"why_me__theory",
+			"why_me__good_evening",
 		]),
-		_situation("spontaneous_bet", "Пари", "Девушка предлагает пари: проигравший выполняет условие победителя.", DateTypes.DatePhase.CORE, [
-			"spontaneous_bet__tease",
-			"spontaneous_bet__pay",
-			"spontaneous_bet__refuse",
-			"spontaneous_bet__say_directly",
-			"spontaneous_bet__take_initiative",
-			"spontaneous_bet__accept_challenge",
+		_situation("first_compliment", "Она делает первый комплимент", "Девушка неожиданно говорит: «Кстати, сегодня ты хорошо выглядишь.»", DateTypes.DatePhase.OPENING, [
+			"first_compliment__simple_thanks",
+			"first_compliment__i_know",
+			"first_compliment__because_of_you",
+			"first_compliment__official_review",
+			"first_compliment__independent_expertise",
+			"first_compliment__surprise",
 		]),
-		_situation("date_verdict", "Оценка свидания", "Перед расставанием девушка спрашивает:\n«Ну и как тебе сегодняшний вечер?»", DateTypes.DatePhase.CLOSING, [
-			"date_verdict__compliment",
-			"date_verdict__tease",
-			"date_verdict__say_directly",
-			"date_verdict__take_initiative",
-			"date_verdict__show_off",
-			"date_verdict__support",
+		_situation("phone_reminder", "Телефон сдаёт тебя с потрохами", "Экран телефона загорается крупным напоминанием: «НЕ НАЧИНАТЬ С РАССКАЗА ПРО СЕБЯ». Девушка успевает прочитать.", DateTypes.DatePhase.OPENING, [
+			"phone_reminder__technology_script",
+			"phone_reminder__other_person",
+			"phone_reminder__already_broke",
+			"phone_reminder__ignore_evidence",
+			"phone_reminder__organized_failures",
+			"phone_reminder__do_exactly_that",
+		]),
+		_situation("takes_control", "Она берёт всё на себя", "С первых минут девушка начинает решать за двоих: что выбрать, куда двигаться и о чём говорить дальше.", DateTypes.DatePhase.OPENING, [
+			"takes_control__take_one_decision",
+			"takes_control__official_tour",
+			"takes_control__your_route",
+			"takes_control__if_convenient",
+			"takes_control__split_decisions",
+			"takes_control__decide_everything",
+		]),
+		_situation("money_request", "Кто платит?", "Возникает вопрос расходов. Девушка смотрит на тебя: «Ну и как делим?»", DateTypes.DatePhase.CORE, [
+			"money_request__pay_all",
+			"money_request__bill_is_mine",
+			"money_request__next_expense_yours",
+			"money_request__split_half",
+			"money_request__your_preference",
+			"money_request__i_decided",
+		]),
+		_situation("spontaneous_bet", "Спонтанное пари", "Девушка предлагает поспорить на небольшую ставку и ждёт твоей реакции.", DateTypes.DatePhase.CORE, [
+			"spontaneous_bet__accept_blind",
+			"spontaneous_bet__raise_stakes",
+			"spontaneous_bet__negotiate_terms",
+			"spontaneous_bet__set_prize",
+			"spontaneous_bet__greatest_person",
+			"spontaneous_bet__loser_gets_prize",
+		]),
+		_situation("rival_provocation", "Провокация соперника", "Другой мужчина вклинивается в разговор и явно пытается задеть тебя при девушке.", DateTypes.DatePhase.CORE, [
+			"rival_provocation__put_in_place",
+			"rival_provocation__no_reaction",
+			"rival_provocation__repeat_it",
+			"rival_provocation__you_are_interrupting",
+			"rival_provocation__brave_attempt",
+			"rival_provocation__opinion_has_no_weight",
+		]),
+		_situation("terrible_joke", "Ужасная шутка", "Девушка рассказывает откровенно плохую шутку. Пауза после панчлайна становится отдельным событием.", DateTypes.DatePhase.CORE, [
+			"terrible_joke__worse_punchline",
+			"terrible_joke__that_was_awful",
+			"terrible_joke__laugh_with_her",
+			"terrible_joke__delivery_saved_it",
+			"terrible_joke__repeat_for_record",
+			"terrible_joke__even_worse_joke",
+		]),
+		_situation("embarrassing_hobby", "Стыдное увлечение", "Девушка признаётся: «Ладно, только не смейся…» — и рассказывает про немного странное хобби.", DateTypes.DatePhase.CORE, [
+			"embarrassing_hobby__ask_without_mockery",
+			"embarrassing_hobby__hobby_suits_you",
+			"embarrassing_hobby__strange_but_interesting",
+			"embarrassing_hobby__thanks_for_telling",
+			"embarrassing_hobby__elite_hobby",
+			"embarrassing_hobby__help_with_hobby",
+		]),
+		_situation("stranger_flirts", "К ней подкатывает другой", "Посторонний человек начинает явно флиртовать с девушкой прямо во время вашего свидания.", DateTypes.DatePhase.CORE, [
+			"stranger_flirts__she_is_with_me",
+			"stranger_flirts__take_a_number",
+			"stranger_flirts__let_her_handle",
+			"stranger_flirts__rate_pickup",
+			"stranger_flirts__you_are_interrupting",
+			"stranger_flirts__if_she_wants",
+		], ["cafe", "restaurant"]),
+		_situation("small_rule", "Маленькое нарушение", "Девушка замечает формальное ограничение и предлагает слегка его обойти ради удобства или интереса.", DateTypes.DatePhase.CORE, [
+			"small_rule__agree_immediately",
+			"small_rule__follow_rule",
+			"small_rule__legal_loophole",
+			"small_rule__charm_staff",
+			"small_rule__check_problem",
+			"small_rule__pay_normal_option",
+		], ["cafe", "restaurant"]),
+		_situation("small_lie", "Маленькая ложь", "Девушка признаётся, что немного приукрасила один факт о себе при знакомстве.", DateTypes.DatePhase.CORE, [
+			"small_lie__why_lied",
+			"small_lie__great_betrayal",
+			"small_lie__no_more_tricks",
+			"small_lie__move_on",
+			"small_lie__value_confession",
+			"small_lie__press_service",
+		]),
+		_situation("friends_dilemma", "Чужая проблема", "Девушка рассказывает про подругу, которая соврала человеку «ради его же блага», и спрашивает, нормально ли это.", DateTypes.DatePhase.CORE, [
+			"friends_dilemma__can_understand",
+			"friends_dilemma__lie_is_lie",
+			"friends_dilemma__ask_the_person",
+			"friends_dilemma__useful_lie",
+			"friends_dilemma__truth_and_responsibility",
+			"friends_dilemma__fix_consequences",
+		]),
+		_situation("staff_conflict", "Она спорит с персоналом", "Возникает небольшая проблема с обслуживанием, и девушка начинает разбираться с сотрудником заведения.", DateTypes.DatePhase.CORE, [
+			"staff_conflict__explain_problem",
+			"staff_conflict__demand_fix",
+			"staff_conflict__lower_temperature",
+			"staff_conflict__what_would_satisfy",
+			"staff_conflict__call_manager",
+			"staff_conflict__cover_difference",
+		], ["cafe", "restaurant"]),
+		_situation("compatibility_test", "Тест на совместимость", "Девушка вспоминает тест на совместимость, который недавно нашла: «Если мы застрянем в лифте на три часа, кто первым начнёт бесить другого?»", DateTypes.DatePhase.CORE, [
+			"compatibility_test__annoy_on_purpose",
+			"compatibility_test__you_annoy_me",
+			"compatibility_test__annoyance_schedule",
+			"compatibility_test__test_it",
+			"compatibility_test__two_hours",
+			"compatibility_test__elevator_rules",
+		]),
+		_situation("lost_in_hand", "Потерянная вещь", "Девушка начинает искать небольшую вещь. Через несколько секунд становится очевидно, что она всё это время держит её в руке.", DateTypes.DatePhase.CORE, [
+			"lost_in_hand__search_together",
+			"lost_in_hand__point_softly",
+			"lost_in_hand__what_in_hand",
+			"lost_in_hand__wait_for_notice",
+			"lost_in_hand__international_search",
+			"lost_in_hand__gone_forever",
+		]),
+		_situation("mistaken_married", "Вас приняли за супругов", "Незнакомец уверенно замечает: «Сразу видно — вы уже лет десять вместе.»", DateTypes.DatePhase.CORE, [
+			"mistaken_married__eleven_hard_years",
+			"mistaken_married__still_tolerates",
+			"mistaken_married__with_her_possible",
+			"mistaken_married__clarify_first_date",
+			"mistaken_married__what_gave_us_away",
+			"mistaken_married__under_control",
+		], ["cafe", "restaurant"]),
+		_situation("take_photo", "Сфоткаемся?", "Девушка предлагает сделать совместную фотографию.", DateTypes.DatePhase.CORE, [
+			"take_photo__good_with_you",
+			"take_photo__confident_pose",
+			"take_photo__how_you_want",
+			"take_photo__luxury_frame",
+			"take_photo__normal_photo",
+			"take_photo__stupid_photo",
+		]),
+		_situation("big_money", "Большие деньги", "Девушка спрашивает: «Представь, завтра у тебя появляется очень большая сумма денег. Что делаешь первым?»", DateTypes.DatePhase.CORE, [
+			"big_money__give_to_close_people",
+			"big_money__visible_from_space",
+			"big_money__x10_project",
+			"big_money__secure_people",
+			"big_money__money_makes_money",
+			"big_money__invest_in_evening",
+		]),
+		_situation("choose_for_me", "Выбери за меня", "Девушка просит тебя принять за неё небольшое решение.", DateTypes.DatePhase.CORE, [
+			"choose_for_me__choose_immediately",
+			"choose_for_me__suspicious_destiny",
+			"choose_for_me__two_questions",
+			"choose_for_me__choose_and_explain",
+			"choose_for_me__choose_without_arguing",
+			"choose_for_me__better_for_her",
+		]),
+		_situation("friend_call", "Звонит её подруга", "Девушке звонит подруга, понимает, что та на свидании, и просит: «А ну дай его сюда на секунду.» Тебе передают разговор.", DateTypes.DatePhase.CORE, [
+			"friend_call__introduce",
+			"friend_call__board_interview",
+			"friend_call__ask_weaknesses",
+			"friend_call__she_is_fine",
+			"friend_call__looks_great",
+			"friend_call__interview_passed",
+		]),
+		_situation("lights_out", "Выключается свет", "Свет внезапно гаснет. На несколько секунд место свидания оказывается в темноте.", DateTypes.DatePhase.CORE, [
+			"lights_out__romance_mode",
+			"lights_out__are_you_okay",
+			"lights_out__continue_in_dark",
+			"lights_out__take_charge",
+			"lights_out__practical_solution",
+			"lights_out__give_light",
+		]),
+		_situation("date_verdict", "Ну и как тебе вечер?", "Перед расставанием девушка спрашивает: «Ну и как тебе сегодняшний вечер?»", DateTypes.DatePhase.CLOSING, [
+			"date_verdict__liked_it",
+			"date_verdict__best_part_you",
+			"date_verdict__were_you_comfortable",
+			"date_verdict__good_no_analysis",
+			"date_verdict__premium_event",
+			"date_verdict__glad_spent_time",
+		]),
+		_situation("see_again", "Увидимся ещё?", "Девушка спрашивает: «Ну… повторим когда-нибудь?»", DateTypes.DatePhase.CLOSING, [
+			"see_again__yes_again",
+			"see_again__after_company",
+			"see_again__if_you_want",
+			"see_again__tomorrow_free",
+			"see_again__repeat",
+			"see_again__something_different",
+		]),
+		_situation("honest_question", "Один честный вопрос", "Девушка задерживается перед уходом: «Можно честный вопрос? Ты часто делаешь вид, что увереннее, чем есть?»", DateTypes.DatePhase.CLOSING, [
+			"honest_question__sometimes_yes",
+			"honest_question__why_important",
+			"honest_question__confidence_skill",
+			"honest_question__when_useful",
+			"honest_question__honest_thanks",
+			"honest_question__expensive_trim",
+		]),
+		_situation("lost_wallet", "Чужой кошелёк", "На выходе вы находите чужой кошелёк. Внутри есть деньги и данные владельца.", DateTypes.DatePhase.CLOSING, [
+			"lost_wallet__give_to_staff",
+			"lost_wallet__find_owner",
+			"lost_wallet__call_business_card",
+			"lost_wallet__pay_delivery",
+			"lost_wallet__return_it",
+			"lost_wallet__i_will_handle",
+		], ["cafe", "restaurant"]),
+		_situation("simple_goodbye", "Просто «пока»", "Встреча закончилась. Девушка совершенно обычно говорит: «Ладно. Пока.»", DateTypes.DatePhase.CLOSING, [
+			"simple_goodbye__good_evening",
+			"simple_goodbye__write_when_home",
+			"simple_goodbye__final_compliment",
+			"simple_goodbye__dont_miss_me",
+			"simple_goodbye__see_you",
+			"simple_goodbye__theatrical_bow",
+		]),
+		_situation("sudden_rain", "Начинается дождь", "Вы уже собираетесь расходиться, когда внезапно начинается сильный дождь.", DateTypes.DatePhase.CLOSING, [
+			"sudden_rain__give_umbrella",
+			"sudden_rain__call_taxi",
+			"sudden_rain__wait_it_out",
+			"sudden_rain__walk_in_rain",
+			"sudden_rain__car_to_door",
+			"sudden_rain__run_for_cover",
 		]),
 	]
 
@@ -254,9 +459,70 @@ func _base_move(id: String, name: String, tag_id: String, option_text: String) -
 	move.max_uses_per_date = 0
 	move.fixed_tag_id = StringName(tag_id)
 	move.fixed_option_text = option_text
-	move.fixed_positive_result_text = "Ей это откликается. Тег «%s» работает в её пользу." % tag_id
-	move.fixed_negative_result_text = "Ей это режет. Тег «%s» играет против вас." % tag_id
+	move.fixed_positive_result_text = _base_positive_result(tag_id)
+	move.fixed_negative_result_text = _base_negative_result(tag_id)
 	return move
+
+
+func _base_positive_result(tag_id: String) -> String:
+	match tag_id:
+		"politeness":
+			return "Ей нравится твоя корректность."
+		"directness":
+			return "Прямота ей нравится."
+		"care":
+			return "Она ценит заботу."
+		"generosity":
+			return "Щедрый жест ей нравится."
+		"composure":
+			return "Спокойствие ей нравится."
+		"humor":
+			return "Она смеётся — шутка попала в её вкус."
+		"audacity":
+			return "Наглость её цепляет."
+		"dominance":
+			return "Уверенный контроль ей нравится."
+		"risk":
+			return "Ей нравится готовность рискнуть."
+		"cunning":
+			return "Она оценивает находчивость."
+		"flattery":
+			return "Лесть попадает в цель."
+		"status":
+			return "Демонстрация статуса производит впечатление."
+		_:
+			return ""
+
+
+func _base_negative_result(tag_id: String) -> String:
+	match tag_id:
+		"politeness":
+			return "Ей кажется, что ты слишком церемонишься."
+		"directness":
+			return "Прямота кажется ей грубой."
+		"care":
+			return "Забота кажется ей лишней."
+		"generosity":
+			return "Она воспринимает щедрость как лишнее давление."
+		"composure":
+			return "Спокойствие кажется ей безразличием."
+		"humor":
+			return "Шутка ей не заходит."
+		"audacity":
+			return "Наглость её раздражает."
+		"dominance":
+			return "Ей не нравится, что ты командуешь."
+		"risk":
+			return "Она считает риск лишним."
+		"cunning":
+			return "Хитрость ей не нравится."
+		"flattery":
+			return "Лесть кажется ей натянутой."
+		"status":
+			return "Пафос её раздражает."
+		_:
+			return ""
+
 
 
 func _characteristic_move(id: String, name: String, tag_id: String, option_text: String, positive_text: String, negative_text: String, stat_id: String, level: int) -> DateMove:
@@ -318,36 +584,186 @@ func _local_move(
 
 func _moves() -> Array[DateMove]:
 	return [
-		_base_move("appearance_question__compliment", "Сделать комплимент", "politeness", "Сказать, что она отлично выглядит."),
-		_base_move("appearance_question__tease", "Подколоть", "humor", "Сказать, что ожидал увидеть что-то хуже."),
-		_base_move("appearance_question__say_directly", "Сказать прямо", "directness", "Сказать, что именно в её образе нравится и что вызывает вопросы."),
-		_base_move("appearance_question__show_off", "Показать себя", "status", "Перевести разговор на собственный образ и сравнить его с её образом."),
-		_base_move("appearance_question__support", "Поддержать", "care", "Спросить, нравится ли образ ей самой, и поддержать её выбор."),
-		_base_move("appearance_question__smooth", "Сгладить ситуацию", "flattery", "Сказать, что к её образу невозможно придраться."),
-		_base_move("money_request__pay", "Заплатить", "generosity", "Оплатить всю заявленную сумму."),
-		_base_move("money_request__refuse", "Отказаться", "composure", "Спокойно отказать и закончить разговор."),
-		_base_move("money_request__say_directly", "Сказать прямо", "directness", "Спросить, на что конкретно нужны деньги."),
-		_base_move("money_request__take_initiative", "Взять инициативу", "dominance", "Самому определить сумму и закончить разговор."),
-		_base_move("money_request__show_off", "Показать себя", "status", "Дать крупную сумму так, чтобы это заметили окружающие."),
-		_base_move("money_request__tease", "Подколоть", "cunning", "Попросить сначала доказать историю, а потом вернуться к вопросу денег."),
-		_base_move("rival_provocation__tease", "Подколоть", "humor", "Высмеять его претензию."),
-		_base_move("rival_provocation__refuse", "Отказаться", "cunning", "Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис."),
-		_base_move("rival_provocation__say_directly", "Сказать прямо", "directness", "Сказать самцу, что он мешает свиданию и должен уйти."),
-		_base_move("rival_provocation__show_off", "Показать себя", "status", "Назвать свой рейтинг и предложить сравнить показатели."),
-		_base_move("rival_provocation__accept_challenge", "Принять вызов", "risk", "Принять предложенное соревнование."),
-		_base_move("rival_provocation__smooth", "Сгладить ситуацию", "composure", "Спокойно предложить завершить конфликт и разойтись."),
-		_base_move("spontaneous_bet__tease", "Подколоть", "audacity", "Добавить унизительное условие для проигравшего."),
-		_base_move("spontaneous_bet__pay", "Заплатить", "status", "Сделать денежную ставку существенно выше предложенной."),
-		_base_move("spontaneous_bet__refuse", "Отказаться", "composure", "Спокойно отказаться от пари."),
-		_base_move("spontaneous_bet__say_directly", "Сказать прямо", "directness", "Сразу сказать своё мнение об идее пари."),
-		_base_move("spontaneous_bet__take_initiative", "Взять инициативу", "dominance", "Самому переписать условия пари."),
-		_base_move("spontaneous_bet__accept_challenge", "Принять вызов", "risk", "Согласиться на исходные условия пари."),
-		_base_move("date_verdict__compliment", "Сделать комплимент", "flattery", "Сказать, что это было идеальное свидание."),
-		_base_move("date_verdict__tease", "Подколоть", "humor", "Сказать, что бывало и хуже."),
-		_base_move("date_verdict__say_directly", "Сказать прямо", "directness", "Сказать, что именно в вечере понравилось и что хотелось бы изменить."),
-		_base_move("date_verdict__take_initiative", "Взять инициативу", "dominance", "Сразу назначить следующую встречу."),
-		_base_move("date_verdict__show_off", "Показать себя", "status", "Сказать, что для первого раза она справилась неплохо."),
-		_base_move("date_verdict__support", "Поддержать", "care", "Сказать, что главное — понравился ли вечер ей самой."),
+		_base_move("appearance_question__better_live", "Уверенно улыбнуться: «Главное, что вживую лучше.»", "flattery", "Уверенно улыбнуться: «Главное, что вживую лучше.»"),
+		_base_move("appearance_question__more_surprises", "«Дай минуту — стану ещё неожиданнее.»", "audacity", "«Дай минуту — стану ещё неожиданнее.»"),
+		_base_move("appearance_question__better_or_worse", "Спросить прямо: «Лучше или хуже?»", "directness", "Спросить прямо: «Лучше или хуже?»"),
+		_base_move("appearance_question__get_used_to_it", "Спокойно ответить: «Ничего, привыкнешь.»", "composure", "Спокойно ответить: «Ничего, привыкнешь.»"),
+		_base_move("appearance_question__scale", "«Фотографии плохо передают масштаб.»", "status", "«Фотографии плохо передают масштаб.»"),
+		_base_move("appearance_question__update_image", "«Тогда обнови представление.»", "dominance", "«Тогда обнови представление.»"),
+		_base_move("awkward_silence__minute_of_silence", "«Предлагаю считать это минутой молчания по нашей неловкости.»", "humor", "«Предлагаю считать это минутой молчания по нашей неловкости.»"),
+		_base_move("awkward_silence__beautiful_pause", "«Я просто ждал, когда ты первой нарушишь красивую паузу.»", "flattery", "«Я просто ждал, когда ты первой нарушишь красивую паузу.»"),
+		_base_move("awkward_silence__how_arrived", "«Ну что, как добралась?»", "politeness", "«Ну что, как добралась?»"),
+		_base_move("awkward_silence__pleasant_start", "«Хочешь, я организую нам что-нибудь приятное для разгона?»", "generosity", "«Хочешь, я организую нам что-нибудь приятное для разгона?»"),
+		_base_move("awkward_silence__professional_silence", "«Ну что, будем молчать профессионально или уже знакомиться?»", "audacity", "«Ну что, будем молчать профессионально или уже знакомиться?»"),
+		_base_move("awkward_silence__awkward_question", "«Могу начать сразу с самого неловкого вопроса.»", "risk", "«Могу начать сразу с самого неловкого вопроса.»"),
+		_base_move("why_me__most_interesting", "«Потому что ты показалась самой интересной.»", "flattery", "«Потому что ты показалась самой интересной.»"),
+		_base_move("why_me__liked_invited", "«Понравилась. Позвал.»", "directness", "«Понравилась. Позвал.»"),
+		_base_move("why_me__same_level", "«Показалась человеком моего уровня. Решил проверить.»", "status", "«Показалась человеком моего уровня. Решил проверить.»"),
+		_base_move("why_me__rare_quest", "«Мне выпал редкий квест. Решил не отказываться.»", "humor", "«Мне выпал редкий квест. Решил не отказываться.»"),
+		_base_move("why_me__theory", "«Хотел проверить одну теорию о тебе.»", "cunning", "«Хотел проверить одну теорию о тебе.»"),
+		_base_move("why_me__good_evening", "«Хотел сделать тебе хороший вечер.»", "generosity", "«Хотел сделать тебе хороший вечер.»"),
+		_base_move("first_compliment__simple_thanks", "«Спасибо. Правда приятно.»", "politeness", "«Спасибо. Правда приятно.»"),
+		_base_move("first_compliment__i_know", "«Знаю. Но от тебя звучит особенно убедительно.»", "audacity", "«Знаю. Но от тебя звучит особенно убедительно.»"),
+		_base_move("first_compliment__because_of_you", "«После тебя трудно выглядеть плохо.»", "flattery", "«После тебя трудно выглядеть плохо.»"),
+		_base_move("first_compliment__official_review", "«Запишем это как официальный положительный отзыв.»", "humor", "«Запишем это как официальный положительный отзыв.»"),
+		_base_move("first_compliment__independent_expertise", "«Наконец-то независимая экспертиза подтвердила.»", "status", "«Наконец-то независимая экспертиза подтвердила.»"),
+		_base_move("first_compliment__surprise", "«Спасибо. За такое с меня приятный сюрприз сегодня.»", "generosity", "«Спасибо. За такое с меня приятный сюрприз сегодня.»"),
+		_base_move("phone_reminder__technology_script", "«Отлично. Техника уже пишет мне сценарий свидания.»", "humor", "«Отлично. Техника уже пишет мне сценарий свидания.»"),
+		_base_move("phone_reminder__other_person", "«Это напоминание вообще для другого человека.»", "cunning", "«Это напоминание вообще для другого человека.»"),
+		_base_move("phone_reminder__already_broke", "«Да. И я уже нарушил инструкцию.»", "audacity", "«Да. И я уже нарушил инструкцию.»"),
+		_base_move("phone_reminder__ignore_evidence", "«Игнорируем улику и продолжаем.»", "composure", "«Игнорируем улику и продолжаем.»"),
+		_base_move("phone_reminder__organized_failures", "«У меня даже провалы организованы заранее.»", "status", "«У меня даже провалы организованы заранее.»"),
+		_base_move("phone_reminder__do_exactly_that", "«Раз всё вскрылось, начну именно с рассказа о себе.»", "risk", "«Раз всё вскрылось, начну именно с рассказа о себе.»"),
+		_base_move("takes_control__take_one_decision", "«Стоп. Одно решение теперь моё.»", "dominance", "«Стоп. Одно решение теперь моё.»"),
+		_base_move("takes_control__official_tour", "«Отлично, я официально на экскурсии. Веди.»", "humor", "«Отлично, я официально на экскурсии. Веди.»"),
+		_base_move("takes_control__your_route", "«Ладно, сегодня твой маршрут.»", "composure", "«Ладно, сегодня твой маршрут.»"),
+		_base_move("takes_control__if_convenient", "«Если тебе так удобнее — я не против.»", "politeness", "«Если тебе так удобнее — я не против.»"),
+		_base_move("takes_control__split_decisions", "«Договоримся: половину выбираешь ты, половину — я.»", "cunning", "«Договоримся: половину выбираешь ты, половину — я.»"),
+		_base_move("takes_control__decide_everything", "«Сегодня вообще всё решай ты. Проверим, куда попадём.»", "risk", "«Сегодня вообще всё решай ты. Проверим, куда попадём.»"),
+		_base_move("money_request__pay_all", "«Я оплачу всё.»", "generosity", "«Я оплачу всё.»"),
+		_base_move("money_request__bill_is_mine", "«Счёт мой. Даже обсуждать нечего.»", "status", "«Счёт мой. Даже обсуждать нечего.»"),
+		_base_move("money_request__next_expense_yours", "«Сейчас плачу я, следующий расход — на тебе.»", "cunning", "«Сейчас плачу я, следующий расход — на тебе.»"),
+		_base_move("money_request__split_half", "«Пополам.»", "directness", "«Пополам.»"),
+		_base_move("money_request__your_preference", "«Как тебе удобнее разделить?»", "politeness", "«Как тебе удобнее разделить?»"),
+		_base_move("money_request__i_decided", "«Сегодня плачу я. Решено.»", "dominance", "«Сегодня плачу я. Решено.»"),
+		_base_move("spontaneous_bet__accept_blind", "Согласиться, даже не уточняя условия.", "risk", "Согласиться, даже не уточняя условия."),
+		_base_move("spontaneous_bet__raise_stakes", "Сразу поднять ставку.", "audacity", "Сразу поднять ставку."),
+		_base_move("spontaneous_bet__negotiate_terms", "Сначала выторговать условия в свою пользу.", "cunning", "Сначала выторговать условия в свою пользу."),
+		_base_move("spontaneous_bet__set_prize", "Самому назначить, что получает победитель.", "dominance", "Самому назначить, что получает победитель."),
+		_base_move("spontaneous_bet__greatest_person", "«Проигравший официально признаёт победителя величайшим человеком вечера.»", "humor", "«Проигравший официально признаёт победителя величайшим человеком вечера.»"),
+		_base_move("spontaneous_bet__loser_gets_prize", "«Если проиграешь, всё равно получишь приз.»", "generosity", "«Если проиграешь, всё равно получишь приз.»"),
+		_base_move("rival_provocation__put_in_place", "Жёстко поставить его на место.", "dominance", "Жёстко поставить его на место."),
+		_base_move("rival_provocation__no_reaction", "Вообще не дать ему реакции.", "composure", "Вообще не дать ему реакции."),
+		_base_move("rival_provocation__repeat_it", "Подойти ближе: «Повтори.»", "audacity", "Подойти ближе: «Повтори.»"),
+		_base_move("rival_provocation__you_are_interrupting", "Сказать прямо: «Ты мешаешь. Иди дальше.»", "directness", "Сказать прямо: «Ты мешаешь. Иди дальше.»"),
+		_base_move("rival_provocation__brave_attempt", "Похвалить его за очень смелую попытку испортить вечер.", "humor", "Похвалить его за очень смелую попытку испортить вечер."),
+		_base_move("rival_provocation__opinion_has_no_weight", "Дать понять, что его мнение здесь ничего не весит.", "status", "Дать понять, что его мнение здесь ничего не весит."),
+		_base_move("terrible_joke__worse_punchline", "Договорить панчлайн ещё хуже.", "humor", "Договорить панчлайн ещё хуже."),
+		_base_move("terrible_joke__that_was_awful", "Честно сказать: «Это было ужасно.»", "directness", "Честно сказать: «Это было ужасно.»"),
+		_base_move("terrible_joke__laugh_with_her", "Засмеяться просто потому, что ей самой смешно.", "care", "Засмеяться просто потому, что ей самой смешно."),
+		_base_move("terrible_joke__delivery_saved_it", "«Твоя подача спасла эту шутку.»", "flattery", "«Твоя подача спасла эту шутку.»"),
+		_base_move("terrible_joke__repeat_for_record", "«Повтори. Хочу убедиться, что услышал правильно.»", "audacity", "«Повтори. Хочу убедиться, что услышал правильно.»"),
+		_base_move("terrible_joke__even_worse_joke", "Ответить ещё более плохой шуткой.", "risk", "Ответить ещё более плохой шуткой."),
+		_base_move("embarrassing_hobby__ask_without_mockery", "Расспросить о хобби без стёба.", "care", "Расспросить о хобби без стёба."),
+		_base_move("embarrassing_hobby__hobby_suits_you", "«Тебе даже такое хобби идёт.»", "flattery", "«Тебе даже такое хобби идёт.»"),
+		_base_move("embarrassing_hobby__strange_but_interesting", "«Звучит странно. Но интересно.»", "directness", "«Звучит странно. Но интересно.»"),
+		_base_move("embarrassing_hobby__thanks_for_telling", "Поблагодарить, что она рассказала.", "politeness", "Поблагодарить, что она рассказала."),
+		_base_move("embarrassing_hobby__elite_hobby", "Объявить её хобби неожиданно элитарным занятием.", "status", "Объявить её хобби неожиданно элитарным занятием."),
+		_base_move("embarrassing_hobby__help_with_hobby", "Предложить как-нибудь достать что-нибудь полезное для её хобби.", "generosity", "Предложить как-нибудь достать что-нибудь полезное для её хобби."),
+		_base_move("stranger_flirts__she_is_with_me", "Вклиниться: «Она сейчас со мной.»", "dominance", "Вклиниться: «Она сейчас со мной.»"),
+		_base_move("stranger_flirts__take_a_number", "Предложить незнакомцу взять номерок.", "humor", "Предложить незнакомцу взять номерок."),
+		_base_move("stranger_flirts__let_her_handle", "Спокойно дать девушке самой разобраться.", "composure", "Спокойно дать девушке самой разобраться."),
+		_base_move("stranger_flirts__rate_pickup", "Поставить незнакомцу оценку за подкат.", "audacity", "Поставить незнакомцу оценку за подкат."),
+		_base_move("stranger_flirts__you_are_interrupting", "Сказать прямо: «Ты мешаешь нашему свиданию.»", "directness", "Сказать прямо: «Ты мешаешь нашему свиданию.»"),
+		_base_move("stranger_flirts__if_she_wants", "Отойти на шаг: «Если ей интересно — продолжайте.»", "risk", "Отойти на шаг: «Если ей интересно — продолжайте.»"),
+		_base_move("small_rule__agree_immediately", "Согласиться сразу.", "risk", "Согласиться сразу."),
+		_base_move("small_rule__follow_rule", "Предложить всё-таки соблюдать правило.", "politeness", "Предложить всё-таки соблюдать правило."),
+		_base_move("small_rule__legal_loophole", "Найти обход, который формально разрешён.", "cunning", "Найти обход, который формально разрешён."),
+		_base_move("small_rule__charm_staff", "Предложить сначала обаятельно договориться с тем, кто следит за правилом.", "flattery", "Предложить сначала обаятельно договориться с тем, кто следит за правилом."),
+		_base_move("small_rule__check_problem", "Спокойно проверить, действительно ли правило сейчас кому-то мешает.", "composure", "Спокойно проверить, действительно ли правило сейчас кому-то мешает."),
+		_base_move("small_rule__pay_normal_option", "Оплатить нормальный вариант, который решает вопрос без нарушения.", "generosity", "Оплатить нормальный вариант, который решает вопрос без нарушения."),
+		_base_move("small_lie__why_lied", "Спросить прямо, зачем она соврала.", "directness", "Спросить прямо, зачем она соврала."),
+		_base_move("small_lie__great_betrayal", "Объявить это крупнейшим предательством вечера.", "humor", "Объявить это крупнейшим предательством вечера."),
+		_base_move("small_lie__no_more_tricks", "Сказать, что дальше лучше без таких фокусов.", "dominance", "Сказать, что дальше лучше без таких фокусов."),
+		_base_move("small_lie__move_on", "Спокойно принять признание и двигаться дальше.", "composure", "Спокойно принять признание и двигаться дальше."),
+		_base_move("small_lie__value_confession", "Сказать, что ценишь, что она призналась.", "politeness", "Сказать, что ценишь, что она призналась."),
+		_base_move("small_lie__press_service", "«У меня тоже есть пресс-служба, которая иногда улучшает факты.»", "status", "«У меня тоже есть пресс-служба, которая иногда улучшает факты.»"),
+		_base_move("friends_dilemma__can_understand", "«Если она действительно пыталась защитить человека, я могу понять.»", "care", "«Если она действительно пыталась защитить человека, я могу понять.»"),
+		_base_move("friends_dilemma__lie_is_lie", "«Ложь остаётся ложью.»", "directness", "«Ложь остаётся ложью.»"),
+		_base_move("friends_dilemma__ask_the_person", "«Сначала спросил бы самого человека, чего он хочет.»", "politeness", "«Сначала спросил бы самого человека, чего он хочет.»"),
+		_base_move("friends_dilemma__useful_lie", "«Иногда правильная ложь полезнее неправильной правды.»", "cunning", "«Иногда правильная ложь полезнее неправильной правды.»"),
+		_base_move("friends_dilemma__truth_and_responsibility", "«Надо было сказать правду и взять ответственность за последствия.»", "dominance", "«Надо было сказать правду и взять ответственность за последствия.»"),
+		_base_move("friends_dilemma__fix_consequences", "«Если уж соврала ради него — потом помоги исправить последствия.»", "generosity", "«Если уж соврала ради него — потом помоги исправить последствия.»"),
+		_base_move("staff_conflict__explain_problem", "Спокойно объяснить сотруднику, в чём проблема.", "politeness", "Спокойно объяснить сотруднику, в чём проблема."),
+		_base_move("staff_conflict__demand_fix", "Поддержать её и потребовать исправить ситуацию.", "dominance", "Поддержать её и потребовать исправить ситуацию."),
+		_base_move("staff_conflict__lower_temperature", "Снизить градус и дождаться нормального решения.", "composure", "Снизить градус и дождаться нормального решения."),
+		_base_move("staff_conflict__what_would_satisfy", "Спросить девушку, какой исход её реально устроит.", "care", "Спросить девушку, какой исход её реально устроит."),
+		_base_move("staff_conflict__call_manager", "Попросить менеджера и закрыть вопрос без долгой сцены.", "status", "Попросить менеджера и закрыть вопрос без долгой сцены."),
+		_base_move("staff_conflict__cover_difference", "Предложить самому покрыть мелкую разницу и продолжить вечер.", "generosity", "Предложить самому покрыть мелкую разницу и продолжить вечер."),
+		_base_move("compatibility_test__annoy_on_purpose", "«Я начну бесить специально, чтобы не тянуть.»", "humor", "«Я начну бесить специально, чтобы не тянуть.»"),
+		_base_move("compatibility_test__you_annoy_me", "«Скорее всего ты меня.»", "directness", "«Скорее всего ты меня.»"),
+		_base_move("compatibility_test__annoyance_schedule", "«Составлю график раздражения, чтобы мы не пересекались.»", "cunning", "«Составлю график раздражения, чтобы мы не пересекались.»"),
+		_base_move("compatibility_test__test_it", "«Предлагаю однажды проверить экспериментально.»", "risk", "«Предлагаю однажды проверить экспериментально.»"),
+		_base_move("compatibility_test__two_hours", "«Ты первые два часа точно не успеешь мне надоесть.»", "flattery", "«Ты первые два часа точно не успеешь мне надоесть.»"),
+		_base_move("compatibility_test__elevator_rules", "«Через десять минут я введу правила поведения в лифте.»", "dominance", "«Через десять минут я введу правила поведения в лифте.»"),
+		_base_move("lost_in_hand__search_together", "Начать искать вместе, старательно не замечая предмет в её руке.", "humor", "Начать искать вместе, старательно не замечая предмет в её руке."),
+		_base_move("lost_in_hand__point_softly", "Мягко показать на предмет: «Кажется, он уже нашёлся.»", "care", "Мягко показать на предмет: «Кажется, он уже нашёлся.»"),
+		_base_move("lost_in_hand__what_in_hand", "Спросить: «А что у тебя сейчас в руке?»", "cunning", "Спросить: «А что у тебя сейчас в руке?»"),
+		_base_move("lost_in_hand__wait_for_notice", "Подождать пару секунд, пока она сама заметит.", "composure", "Подождать пару секунд, пока она сама заметит."),
+		_base_move("lost_in_hand__international_search", "Предложить объявить предмет в международный розыск.", "audacity", "Предложить объявить предмет в международный розыск."),
+		_base_move("lost_in_hand__gone_forever", "С серьёзным лицом сказать, что вещь, похоже, ушла навсегда.", "risk", "С серьёзным лицом сказать, что вещь, похоже, ушла навсегда."),
+		_base_move("mistaken_married__eleven_hard_years", "Подыграть: «Одиннадцать тяжёлых лет.»", "humor", "Подыграть: «Одиннадцать тяжёлых лет.»"),
+		_base_move("mistaken_married__still_tolerates", "Кивнуть: «И всё ещё терпит меня.»", "audacity", "Кивнуть: «И всё ещё терпит меня.»"),
+		_base_move("mistaken_married__with_her_possible", "«С такой — можно и поверить.»", "flattery", "«С такой — можно и поверить.»"),
+		_base_move("mistaken_married__clarify_first_date", "Вежливо уточнить, что вы пока только на свидании.", "politeness", "Вежливо уточнить, что вы пока только на свидании."),
+		_base_move("mistaken_married__what_gave_us_away", "Спросить незнакомца, что именно вас выдало.", "cunning", "Спросить незнакомца, что именно вас выдало."),
+		_base_move("mistaken_married__under_control", "Уверенно кивнуть: «Да. И у нас всё под контролем.»", "dominance", "Уверенно кивнуть: «Да. И у нас всё под контролем.»"),
+		_base_move("take_photo__good_with_you", "«С тобой кадр и так получится удачным.»", "flattery", "«С тобой кадр и так получится удачным.»"),
+		_base_move("take_photo__confident_pose", "Принять максимально самоуверенную позу.", "audacity", "Принять максимально самоуверенную позу."),
+		_base_move("take_photo__how_you_want", "Сначала спросить, как ей самой хочется выглядеть на фото.", "care", "Сначала спросить, как ей самой хочется выглядеть на фото."),
+		_base_move("take_photo__luxury_frame", "Сделать максимально пафосный совместный кадр.", "status", "Сделать максимально пафосный совместный кадр."),
+		_base_move("take_photo__normal_photo", "Спокойно согласиться на обычное фото.", "politeness", "Спокойно согласиться на обычное фото."),
+		_base_move("take_photo__stupid_photo", "Предложить сделать нарочно максимально дурацкий кадр.", "risk", "Предложить сделать нарочно максимально дурацкий кадр."),
+		_base_move("big_money__give_to_close_people", "«Часть сразу отдам близким.»", "generosity", "«Часть сразу отдам близким.»"),
+		_base_move("big_money__visible_from_space", "«Куплю что-нибудь, что видно из космоса.»", "status", "«Куплю что-нибудь, что видно из космоса.»"),
+		_base_move("big_money__x10_project", "«Вложу в проект, который может сделать x10 или исчезнуть.»", "risk", "«Вложу в проект, который может сделать x10 или исчезнуть.»"),
+		_base_move("big_money__secure_people", "«Сначала обеспечу тех, за кого отвечаю.»", "care", "«Сначала обеспечу тех, за кого отвечаю.»"),
+		_base_move("big_money__money_makes_money", "«Сначала заставлю деньги заработать ещё денег.»", "cunning", "«Сначала заставлю деньги заработать ещё денег.»"),
+		_base_move("big_money__invest_in_evening", "«Прямо сейчас вложил бы часть в хороший вечер с тобой.»", "flattery", "«Прямо сейчас вложил бы часть в хороший вечер с тобой.»"),
+		_base_move("choose_for_me__choose_immediately", "Выбрать сразу, без голосования.", "dominance", "Выбрать сразу, без голосования."),
+		_base_move("choose_for_me__suspicious_destiny", "Выбрать самый подозрительный вариант и объявить это знаком судьбы.", "humor", "Выбрать самый подозрительный вариант и объявить это знаком судьбы."),
+		_base_move("choose_for_me__two_questions", "Задать ей два вопроса и вычислить, чего она на самом деле хочет.", "cunning", "Задать ей два вопроса и вычислить, чего она на самом деле хочет."),
+		_base_move("choose_for_me__choose_and_explain", "Выбрать и сразу объяснить почему.", "directness", "Выбрать и сразу объяснить почему."),
+		_base_move("choose_for_me__choose_without_arguing", "Спокойно выбрать и не спорить, если она потом передумает.", "composure", "Спокойно выбрать и не спорить, если она потом передумает."),
+		_base_move("choose_for_me__better_for_her", "Выбрать вариант, который лучше для неё, даже если тебе менее удобно.", "generosity", "Выбрать вариант, который лучше для неё, даже если тебе менее удобно."),
+		_base_move("friend_call__introduce", "Вежливо представиться.", "politeness", "Вежливо представиться."),
+		_base_move("friend_call__board_interview", "Говорить так, будто проходишь собеседование в совет директоров.", "status", "Говорить так, будто проходишь собеседование в совет директоров."),
+		_base_move("friend_call__ask_weaknesses", "Сразу спросить подругу, какие у девушки слабые места.", "audacity", "Сразу спросить подругу, какие у девушки слабые места."),
+		_base_move("friend_call__she_is_fine", "Сказать, что у её подруги всё хорошо и можно не переживать.", "care", "Сказать, что у её подруги всё хорошо и можно не переживать."),
+		_base_move("friend_call__looks_great", "Сообщить, что её подруга сегодня выглядит великолепно.", "flattery", "Сообщить, что её подруга сегодня выглядит великолепно."),
+		_base_move("friend_call__interview_passed", "Закончить: «Всё, собеседование прошёл. Возвращаю телефон.»", "dominance", "Закончить: «Всё, собеседование прошёл. Возвращаю телефон.»"),
+		_base_move("lights_out__romance_mode", "Объявить, что вечер официально перешёл в режим романтики.", "humor", "Объявить, что вечер официально перешёл в режим романтики."),
+		_base_move("lights_out__are_you_okay", "Сразу спросить, всё ли у неё нормально.", "care", "Сразу спросить, всё ли у неё нормально."),
+		_base_move("lights_out__continue_in_dark", "Предложить продолжить свидание в полной темноте.", "risk", "Предложить продолжить свидание в полной темноте."),
+		_base_move("lights_out__take_charge", "Взять на себя поиск света или выхода.", "dominance", "Взять на себя поиск света или выхода."),
+		_base_move("lights_out__practical_solution", "Быстро найти практическое решение: щиток, фонарь или персонал.", "cunning", "Быстро найти практическое решение: щиток, фонарь или персонал."),
+		_base_move("lights_out__give_light", "Уступить ей единственный источник света, самому остаться в темноте.", "generosity", "Уступить ей единственный источник света, самому остаться в темноте."),
+		_base_move("date_verdict__liked_it", "«Мне понравилось.»", "directness", "«Мне понравилось.»"),
+		_base_move("date_verdict__best_part_you", "«Лучшей частью вечера была ты.»", "flattery", "«Лучшей частью вечера была ты.»"),
+		_base_move("date_verdict__were_you_comfortable", "«А тебе было комфортно?»", "care", "«А тебе было комфортно?»"),
+		_base_move("date_verdict__good_no_analysis", "«Хорошо. Без лишнего анализа.»", "composure", "«Хорошо. Без лишнего анализа.»"),
+		_base_move("date_verdict__premium_event", "«Мероприятие уверенно держит премиальный уровень.»", "status", "«Мероприятие уверенно держит премиальный уровень.»"),
+		_base_move("date_verdict__glad_spent_time", "«Рад, что потратил этот вечер именно на тебя.»", "generosity", "«Рад, что потратил этот вечер именно на тебя.»"),
+		_base_move("see_again__yes_again", "«Да. Хочу увидеться ещё.»", "directness", "«Да. Хочу увидеться ещё.»"),
+		_base_move("see_again__after_company", "«После такой компании — обязательно.»", "flattery", "«После такой компании — обязательно.»"),
+		_base_move("see_again__if_you_want", "«Если тебе тоже хочется — да.»", "care", "«Если тебе тоже хочется — да.»"),
+		_base_move("see_again__tomorrow_free", "«Завтра свободна?»", "audacity", "«Завтра свободна?»"),
+		_base_move("see_again__repeat", "Кивнуть: «Повторим.»", "composure", "Кивнуть: «Повторим.»"),
+		_base_move("see_again__something_different", "Предложить в следующий раз сделать что-нибудь совсем непривычное.", "risk", "Предложить в следующий раз сделать что-нибудь совсем непривычное."),
+		_base_move("honest_question__sometimes_yes", "«Да. Иногда.»", "directness", "«Да. Иногда.»"),
+		_base_move("honest_question__why_important", "«Почему тебе это показалось важным?»", "care", "«Почему тебе это показалось важным?»"),
+		_base_move("honest_question__confidence_skill", "«Уверенность тоже навык. Иногда её просто включаешь.»", "composure", "«Уверенность тоже навык. Иногда её просто включаешь.»"),
+		_base_move("honest_question__when_useful", "«Только когда это полезно.»", "cunning", "«Только когда это полезно.»"),
+		_base_move("honest_question__honest_thanks", "Честно ответить и поблагодарить за прямой вопрос.", "politeness", "Честно ответить и поблагодарить за прямой вопрос."),
+		_base_move("honest_question__expensive_trim", "«Я не притворяюсь. Это дорогая комплектация.»", "status", "«Я не притворяюсь. Это дорогая комплектация.»"),
+		_base_move("lost_wallet__give_to_staff", "Отнести кошелёк сотруднику заведения.", "politeness", "Отнести кошелёк сотруднику заведения."),
+		_base_move("lost_wallet__find_owner", "Самому попытаться найти владельца по данным внутри.", "care", "Самому попытаться найти владельца по данным внутри."),
+		_base_move("lost_wallet__call_business_card", "Позвонить по визитке внутри и быстро проверить, чей кошелёк.", "cunning", "Позвонить по визитке внутри и быстро проверить, чей кошелёк."),
+		_base_move("lost_wallet__pay_delivery", "Оплатить доставку кошелька владельцу за свой счёт.", "generosity", "Оплатить доставку кошелька владельцу за свой счёт."),
+		_base_move("lost_wallet__return_it", "Сказать: «Чужое. Возвращаем.»", "directness", "Сказать: «Чужое. Возвращаем.»"),
+		_base_move("lost_wallet__i_will_handle", "Забрать организацию на себя: «Я разберусь и верну.»", "dominance", "Забрать организацию на себя: «Я разберусь и верну.»"),
+		_base_move("simple_goodbye__good_evening", "Улыбнуться: «Пока. Хорошего вечера.»", "politeness", "Улыбнуться: «Пока. Хорошего вечера.»"),
+		_base_move("simple_goodbye__write_when_home", "«Напиши, когда доберёшься.»", "care", "«Напиши, когда доберёшься.»"),
+		_base_move("simple_goodbye__final_compliment", "Оставить напоследок короткий красивый комплимент.", "flattery", "Оставить напоследок короткий красивый комплимент."),
+		_base_move("simple_goodbye__dont_miss_me", "Подмигнуть: «Старайся не скучать.»", "audacity", "Подмигнуть: «Старайся не скучать.»"),
+		_base_move("simple_goodbye__see_you", "Спокойно кивнуть: «До встречи.»", "composure", "Спокойно кивнуть: «До встречи.»"),
+		_base_move("simple_goodbye__theatrical_bow", "Сделать торжественный поклон, будто закрываешь спектакль.", "risk", "Сделать торжественный поклон, будто закрываешь спектакль."),
+		_base_move("sudden_rain__give_umbrella", "Отдать ей зонт, самому остаться под дождём.", "care", "Отдать ей зонт, самому остаться под дождём."),
+		_base_move("sudden_rain__call_taxi", "Предложить вызвать ей такси за свой счёт.", "generosity", "Предложить вызвать ей такси за свой счёт."),
+		_base_move("sudden_rain__wait_it_out", "Предложить спокойно переждать.", "composure", "Предложить спокойно переждать."),
+		_base_move("sudden_rain__walk_in_rain", "Пойти под дождём так, будто всё было запланировано.", "audacity", "Пойти под дождём так, будто всё было запланировано."),
+		_base_move("sudden_rain__car_to_door", "Вызвать машину прямо к выходу и не мокнуть вообще.", "status", "Вызвать машину прямо к выходу и не мокнуть вообще."),
+		_base_move("sudden_rain__run_for_cover", "Предложить добежать до ближайшего укрытия.", "risk", "Предложить добежать до ближайшего укрытия."),
 		_characteristic_move("char_say_plain", "Сказать по-простому", "directness", "Сказать всё прямо, без лишних конструкций.", "Прямолинейность без обёртки ей зашла.", "Сказал слишком прямо — ей это режет.", "muscle", 1),
 		_characteristic_move("char_stress_test", "Проверить на прочность", "risk", "Предложить немедленно проверить идею на практике, даже если это выглядит сомнительно.", "Готовность сразу проверить идею ей зашла.", "Предложил проверить идею на практике — ей это слишком рискованно.", "muscle", 3),
 		_characteristic_move("char_force_argument", "Силовой аргумент", "dominance", "Продемонстрировать физическое превосходство как окончательный аргумент.", "Силовой аргумент закрыл тему — ей это зашло.", "Показал физическое превосходство — ей это слишком грубо.", "muscle", 5),

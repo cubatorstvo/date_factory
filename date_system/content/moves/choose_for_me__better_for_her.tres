@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"choose_for_me__better_for_her"
+display_name = "Выбрать вариант, который лучше для неё, даже если тебе менее удобно."
+description = "Выбрать вариант, который лучше для неё, даже если тебе менее удобно."
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"generosity"
+fixed_option_text = "Выбрать вариант, который лучше для неё, даже если тебе менее удобно."
+fixed_positive_result_text = "Щедрый жест ей нравится."
+fixed_negative_result_text = "Она воспринимает щедрость как лишнее давление."

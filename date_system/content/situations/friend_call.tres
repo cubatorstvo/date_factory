@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"friend_call"
+display_name = "Звонит её подруга"
+description = "Звонит её подруга"
+situation_text = "Девушке звонит подруга, понимает, что та на свидании, и просит: «А ну дай его сюда на секунду.» Тебе передают разговор."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"friend_call__introduce", &"friend_call__board_interview", &"friend_call__ask_weaknesses", &"friend_call__she_is_fine", &"friend_call__looks_great", &"friend_call__interview_passed"])

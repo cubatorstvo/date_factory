@@ -26,6 +26,7 @@ Design-content хранится в `res://`. Runtime-прогресс — в `us
 - BASE использует ту же fixed-presentation модель, что Characteristic / Outfit / Local: `fixed_tag_id`, `fixed_option_text`, `fixed_positive_result_text`, `fixed_negative_result_text`.
 - Шесть BASE одной Situation имеют шесть различных Tags.
 - Канонический ID: `<situation_id>__<action_id>`. Новый Situation — локальный authored-content unit: Situation + 6 BASE, без правки существующих ходов.
+- Первый baseline pool: 30 Situations / 180 BASE, шесть различных Tags на Situation, 15 BASE на каждый из 12 Tags.
 - Применимость BASE определяется ownership: ход принадлежит ровно одной Situation.
 - Одна Situation используется максимум один раз за текущее свидание, поэтому конкретный BASE встречается максимум в одном эпизоде Date.
 
@@ -1752,72 +1753,73 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 
 ## Seed Situations
 
-Основной content target: `6 OPENING / 18 CORE / 6 CLOSING` = 30 Situations = 180 situation-owned BASE. Текущий prototype — пять Situations, мигрированных 1:1 по существующим текстам и Tags:
+Первый canonical baseline Date Content:
 
-| id | phase | BASE |
-|---|---|---|
-| `appearance_question` | OPENING | 6 |
-| `money_request` | CORE | 6 |
-| `rival_provocation` | CORE | 6 |
-| `spontaneous_bet` | CORE | 6 |
-| `date_verdict` | CLOSING | 6 |
+```text
+30 baseline Situations
+180 BASE Moves
+6 BASE на Situation
+6 distinct Tags на Situation
+15 BASE occurrences каждого Tag во всём baseline pool
+```
 
-Все пять: `allowed_venue_ids = []`, `allowed_girl_ids = []`, `weight = 1.0`. Prototype продолжает собирать `1 Opening + 3 Core + 1 Closing`.
+Формула пула: `6 OPENING / 18 CORE / 6 CLOSING`. Свидание собирает `1 Opening + 3 Core + 1 Closing`. Все Situations: `enabled = true`, `weight = 1.0`, `allowed_girl_ids = []`. Public-only (`allowed_venue_ids = cafe, restaurant`): `stranger_flirts`, `small_rule`, `staff_conflict`, `mistaken_married`, `lost_wallet`. Остальные — любой DateVenue.
 
-1. `appearance_question` OPENING — Оценка внешности. «Ну что, как я выгляжу?»
-2. `money_request` CORE — Просьба о деньгах. Незнакомец просит денег.
-3. `rival_provocation` CORE — Провокация самца.
-4. `spontaneous_bet` CORE — Пари.
-5. `date_verdict` CLOSING — Оценка свидания. «Ну и как тебе сегодняшний вечер?»
+| id | phase | display_name | venue |
+|---|---|---|---|
+| `appearance_question` | OPENING | Ты не такой, как я представляла | любой |
+| `awkward_silence` | OPENING | Пауза затянулась | любой |
+| `why_me` | OPENING | Почему именно я? | любой |
+| `first_compliment` | OPENING | Она делает первый комплимент | любой |
+| `phone_reminder` | OPENING | Телефон сдаёт тебя с потрохами | любой |
+| `takes_control` | OPENING | Она берёт всё на себя | любой |
+| `money_request` | CORE | Кто платит? | любой |
+| `spontaneous_bet` | CORE | Спонтанное пари | любой |
+| `rival_provocation` | CORE | Провокация соперника | любой |
+| `terrible_joke` | CORE | Ужасная шутка | любой |
+| `embarrassing_hobby` | CORE | Стыдное увлечение | любой |
+| `stranger_flirts` | CORE | К ней подкатывает другой | cafe, restaurant |
+| `small_rule` | CORE | Маленькое нарушение | cafe, restaurant |
+| `small_lie` | CORE | Маленькая ложь | любой |
+| `friends_dilemma` | CORE | Чужая проблема | любой |
+| `staff_conflict` | CORE | Она спорит с персоналом | cafe, restaurant |
+| `compatibility_test` | CORE | Тест на совместимость | любой |
+| `lost_in_hand` | CORE | Потерянная вещь | любой |
+| `mistaken_married` | CORE | Вас приняли за супругов | cafe, restaurant |
+| `take_photo` | CORE | Сфоткаемся? | любой |
+| `big_money` | CORE | Большие деньги | любой |
+| `choose_for_me` | CORE | Выбери за меня | любой |
+| `friend_call` | CORE | Звонит её подруга | любой |
+| `lights_out` | CORE | Выключается свет | любой |
+| `date_verdict` | CLOSING | Ну и как тебе вечер? | любой |
+| `see_again` | CLOSING | Увидимся ещё? | любой |
+| `honest_question` | CLOSING | Один честный вопрос | любой |
+| `lost_wallet` | CLOSING | Чужой кошелёк | cafe, restaurant |
+| `simple_goodbye` | CLOSING | Просто «пока» | любой |
+| `sudden_rain` | CLOSING | Начинается дождь | любой |
 
-Три authored-слоя через фильтры: general (`[]` / `[]`), venue-specific, girl-specific. Все слои используют один Date Engine.
+Три authored-слоя через фильтры: general (`[]` / `[]`), venue-specific, girl-specific. Все слои используют один Date Engine. Option texts и Situation texts живут в `DateSituation` / `DateMove` resources.
 
 ## Seed BASE Moves
 
-Каждый BASE принадлежит одной Situation. ID: `<situation_id>__<action_id>`. Display name / description взяты из исходного global BASE. Duplicate Tag внутри Situation свёрнут до одного mapping; extra unique Tags сверх шести не вошли в prototype six-move set.
+Каждый BASE принадлежит одной Situation. ID: `<situation_id>__<action_id>`. Display name совпадает с `fixed_option_text`. Positive/negative result texts задаются каноническим шаблоном Tag:
 
-| Situation | Move ID | Tag | option_text |
-|---|---|---|---|
-| appearance_question | appearance_question__compliment | politeness | Сказать, что она отлично выглядит. |
-| appearance_question | appearance_question__tease | humor | Сказать, что ожидал увидеть что-то хуже. |
-| appearance_question | appearance_question__say_directly | directness | Сказать, что именно в её образе нравится и что вызывает вопросы. |
-| appearance_question | appearance_question__show_off | status | Перевести разговор на собственный образ и сравнить его с её образом. |
-| appearance_question | appearance_question__support | care | Спросить, нравится ли образ ей самой, и поддержать её выбор. |
-| appearance_question | appearance_question__smooth | flattery | Сказать, что к её образу невозможно придраться. |
-| money_request | money_request__pay | generosity | Оплатить всю заявленную сумму. |
-| money_request | money_request__refuse | composure | Спокойно отказать и закончить разговор. |
-| money_request | money_request__say_directly | directness | Спросить, на что конкретно нужны деньги. |
-| money_request | money_request__take_initiative | dominance | Самому определить сумму и закончить разговор. |
-| money_request | money_request__show_off | status | Дать крупную сумму так, чтобы это заметили окружающие. |
-| money_request | money_request__tease | cunning | Попросить сначала доказать историю, а потом вернуться к вопросу денег. |
-| rival_provocation | rival_provocation__tease | humor | Высмеять его претензию. |
-| rival_provocation | rival_provocation__refuse | cunning | Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис. |
-| rival_provocation | rival_provocation__say_directly | directness | Сказать самцу, что он мешает свиданию и должен уйти. |
-| rival_provocation | rival_provocation__show_off | status | Назвать свой рейтинг и предложить сравнить показатели. |
-| rival_provocation | rival_provocation__accept_challenge | risk | Принять предложенное соревнование. |
-| rival_provocation | rival_provocation__smooth | composure | Спокойно предложить завершить конфликт и разойтись. |
-| spontaneous_bet | spontaneous_bet__tease | audacity | Добавить унизительное условие для проигравшего. |
-| spontaneous_bet | spontaneous_bet__pay | status | Сделать денежную ставку существенно выше предложенной. |
-| spontaneous_bet | spontaneous_bet__refuse | composure | Спокойно отказаться от пари. |
-| spontaneous_bet | spontaneous_bet__say_directly | directness | Сразу сказать своё мнение об идее пари. |
-| spontaneous_bet | spontaneous_bet__take_initiative | dominance | Самому переписать условия пари. |
-| spontaneous_bet | spontaneous_bet__accept_challenge | risk | Согласиться на исходные условия пари. |
-| date_verdict | date_verdict__compliment | flattery | Сказать, что это было идеальное свидание. |
-| date_verdict | date_verdict__tease | humor | Сказать, что бывало и хуже. |
-| date_verdict | date_verdict__say_directly | directness | Сказать, что именно в вечере понравилось и что хотелось бы изменить. |
-| date_verdict | date_verdict__take_initiative | dominance | Сразу назначить следующую встречу. |
-| date_verdict | date_verdict__show_off | status | Сказать, что для первого раза она справилась неплохо. |
-| date_verdict | date_verdict__support | care | Сказать, что главное — понравился ли вечер ей самой. |
-
-Шесть distinct BASE Tags на Situation:
-
-| Situation | distinct BASE Tags | число |
+| Tag | Positive result | Negative result |
 |---|---|---|
-| appearance_question | politeness, humor, directness, status, care, flattery | 6 |
-| money_request | generosity, composure, directness, dominance, status, cunning | 6 |
-| rival_provocation | humor, cunning, directness, status, risk, composure | 6 |
-| spontaneous_bet | audacity, status, composure, directness, dominance, risk | 6 |
-| date_verdict | flattery, humor, directness, dominance, status, care | 6 |
+| `politeness` | Ей нравится твоя корректность. | Ей кажется, что ты слишком церемонишься. |
+| `directness` | Прямота ей нравится. | Прямота кажется ей грубой. |
+| `care` | Она ценит заботу. | Забота кажется ей лишней. |
+| `generosity` | Щедрый жест ей нравится. | Она воспринимает щедрость как лишнее давление. |
+| `composure` | Спокойствие ей нравится. | Спокойствие кажется ей безразличием. |
+| `humor` | Она смеётся — шутка попала в её вкус. | Шутка ей не заходит. |
+| `audacity` | Наглость её цепляет. | Наглость её раздражает. |
+| `dominance` | Уверенный контроль ей нравится. | Ей не нравится, что ты командуешь. |
+| `risk` | Ей нравится готовность рискнуть. | Она считает риск лишним. |
+| `cunning` | Она оценивает находчивость. | Хитрость ей не нравится. |
+| `flattery` | Лесть попадает в цель. | Лесть кажется ей натянутой. |
+| `status` | Демонстрация статуса производит впечатление. | Пафос её раздражает. |
+
+Каждый из 12 Tags встречается в BASE-пуле ровно 15 раз. Шесть distinct BASE Tags на каждую Situation — инвариант validator.
 
 ## Seed Characteristic Moves
 
@@ -1881,7 +1883,7 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 
 «БАЛАНС»: по каждой девушке Girl, Difficulty, Positive Tags / 12, Relationship Max, Trait, Initial Known Tags, Theoretical positive availability. Кнопка «СИМУЛИРОВАТЬ BASE» (10000 seeds, stats на минимуме, CHARACTERISTIC unavailable): по Situation и aggregate — доля эпизодов с хотя бы одним positive BASE, доля all-negative, средний positive BASE count. Фактические проценты считаются по situation-owned BASE (`base_move_ids`).
 
-Экран СВИДАНИЕ позволяет выбрать Situation override, girl, DateVenue, увидеть eligible pool, `last_date_situation_ids`, six BASE и seeded split `3 shown + 3 reroll`, нажать Vika reroll.
+Экран СВИДАНИЕ позволяет выбрать любую из 30 Situations по ID, girl, DateVenue, увидеть eligible pool, `last_date_situation_ids`, six authored BASE (Move ID, Tag, Option, Positive/Negative Result) и seeded split `3 shown + 3 reroll`, нажать Vika reroll. Public-only Situation запускается production Date Engine с подходящим DateVenue.
 
 После save новый DateSession берёт новые данные. Запущенная сессия работает на snapshot.
 
@@ -1902,6 +1904,9 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 20. enabled preset: `1 <= positive_tag_count < enabled_tags.size()` иначе ERROR `INVALID_DIFFICULTY_POSITIVE_COUNT`
 21. активный DateTag без BASE/CHARACTERISTIC/OUTFIT/LOCAL Move с этим Tag → WARNING `TAG_WITHOUT_MOVE_MAPPING`
 22. distinct BASE Tags ситуации ≠ 6 → ERROR six-tag invariant
+23. enabled Situations = 30 с фазами `6 OPENING / 18 CORE / 6 CLOSING` → иначе ERROR
+24. situation-owned BASE count ≠ 180 → ERROR
+25. каждый enabled DateTag встречается в BASE-пуле не ровно 15 раз → ERROR
 
 Экран: severity, code, resource_type, resource_id, field, message. Кнопка «ПРОВЕРИТЬ ВЕСЬ КОНТЕНТ». ERROR блокирует сохранение; WARNING только показывает проблему.
 

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"first_compliment"
+display_name = "Она делает первый комплимент"
+description = "Она делает первый комплимент"
+situation_text = "Девушка неожиданно говорит: «Кстати, сегодня ты хорошо выглядишь.»"
+enabled = true
+allowed_phases = Array[int]([0])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"first_compliment__simple_thanks", &"first_compliment__i_know", &"first_compliment__because_of_you", &"first_compliment__official_review", &"first_compliment__independent_expertise", &"first_compliment__surprise"])

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"embarrassing_hobby"
+display_name = "Стыдное увлечение"
+description = "Стыдное увлечение"
+situation_text = "Девушка признаётся: «Ладно, только не смейся…» — и рассказывает про немного странное хобби."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"embarrassing_hobby__ask_without_mockery", &"embarrassing_hobby__hobby_suits_you", &"embarrassing_hobby__strange_but_interesting", &"embarrassing_hobby__thanks_for_telling", &"embarrassing_hobby__elite_hobby", &"embarrassing_hobby__help_with_hobby"])

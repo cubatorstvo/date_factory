@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"take_photo__luxury_frame"
+display_name = "Сделать максимально пафосный совместный кадр."
+description = "Сделать максимально пафосный совместный кадр."
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"status"
+fixed_option_text = "Сделать максимально пафосный совместный кадр."
+fixed_positive_result_text = "Демонстрация статуса производит впечатление."
+fixed_negative_result_text = "Пафос её раздражает."

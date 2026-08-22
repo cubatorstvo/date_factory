@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_script")
 id = &"money_request"
-display_name = "Просьба о деньгах"
-description = "Просьба о деньгах"
-situation_text = "К вам подходит незнакомец и просит денег на срочную проблему."
+display_name = "Кто платит?"
+description = "Кто платит?"
+situation_text = "Возникает вопрос расходов. Девушка смотрит на тебя: «Ну и как делим?»"
 enabled = true
 allowed_phases = Array[int]([1])
 allowed_venue_ids = Array[StringName]([])
 allowed_girl_ids = Array[StringName]([])
 weight = 1.0
-base_move_ids = Array[StringName]([&"money_request__pay", &"money_request__refuse", &"money_request__say_directly", &"money_request__take_initiative", &"money_request__show_off", &"money_request__tease"])
+base_move_ids = Array[StringName]([&"money_request__pay_all", &"money_request__bill_is_mine", &"money_request__next_expense_yours", &"money_request__split_half", &"money_request__your_preference", &"money_request__i_decided"])

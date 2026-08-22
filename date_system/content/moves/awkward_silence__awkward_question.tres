@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"awkward_silence__awkward_question"
+display_name = "«Могу начать сразу с самого неловкого вопроса.»"
+description = "«Могу начать сразу с самого неловкого вопроса.»"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"risk"
+fixed_option_text = "«Могу начать сразу с самого неловкого вопроса.»"
+fixed_positive_result_text = "Ей нравится готовность рискнуть."
+fixed_negative_result_text = "Она считает риск лишним."

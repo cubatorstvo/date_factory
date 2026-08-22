@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"first_compliment__because_of_you"
+display_name = "«После тебя трудно выглядеть плохо.»"
+description = "«После тебя трудно выглядеть плохо.»"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"flattery"
+fixed_option_text = "«После тебя трудно выглядеть плохо.»"
+fixed_positive_result_text = "Лесть попадает в цель."
+fixed_negative_result_text = "Лесть кажется ей натянутой."

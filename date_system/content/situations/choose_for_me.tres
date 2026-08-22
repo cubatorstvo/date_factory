@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"choose_for_me"
+display_name = "Выбери за меня"
+description = "Выбери за меня"
+situation_text = "Девушка просит тебя принять за неё небольшое решение."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"choose_for_me__choose_immediately", &"choose_for_me__suspicious_destiny", &"choose_for_me__two_questions", &"choose_for_me__choose_and_explain", &"choose_for_me__choose_without_arguing", &"choose_for_me__better_for_her"])

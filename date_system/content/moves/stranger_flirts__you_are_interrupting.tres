@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"stranger_flirts__you_are_interrupting"
+display_name = "Сказать прямо: «Ты мешаешь нашему свиданию.»"
+description = "Сказать прямо: «Ты мешаешь нашему свиданию.»"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"directness"
+fixed_option_text = "Сказать прямо: «Ты мешаешь нашему свиданию.»"
+fixed_positive_result_text = "Прямота ей нравится."
+fixed_negative_result_text = "Прямота кажется ей грубой."

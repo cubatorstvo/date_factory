@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"simple_goodbye"
+display_name = "Просто «пока»"
+description = "Просто «пока»"
+situation_text = "Встреча закончилась. Девушка совершенно обычно говорит: «Ладно. Пока.»"
+enabled = true
+allowed_phases = Array[int]([2])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"simple_goodbye__good_evening", &"simple_goodbye__write_when_home", &"simple_goodbye__final_compliment", &"simple_goodbye__dont_miss_me", &"simple_goodbye__see_you", &"simple_goodbye__theatrical_bow"])

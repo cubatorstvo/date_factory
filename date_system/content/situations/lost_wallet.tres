@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"lost_wallet"
+display_name = "Чужой кошелёк"
+description = "Чужой кошелёк"
+situation_text = "На выходе вы находите чужой кошелёк. Внутри есть деньги и данные владельца."
+enabled = true
+allowed_phases = Array[int]([2])
+allowed_venue_ids = Array[StringName]([&"cafe", &"restaurant"])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"lost_wallet__give_to_staff", &"lost_wallet__find_owner", &"lost_wallet__call_business_card", &"lost_wallet__pay_delivery", &"lost_wallet__return_it", &"lost_wallet__i_will_handle"])

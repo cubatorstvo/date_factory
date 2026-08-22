@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"staff_conflict"
+display_name = "Она спорит с персоналом"
+description = "Она спорит с персоналом"
+situation_text = "Возникает небольшая проблема с обслуживанием, и девушка начинает разбираться с сотрудником заведения."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([&"cafe", &"restaurant"])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"staff_conflict__explain_problem", &"staff_conflict__demand_fix", &"staff_conflict__lower_temperature", &"staff_conflict__what_would_satisfy", &"staff_conflict__call_manager", &"staff_conflict__cover_difference"])

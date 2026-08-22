@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_script")
 id = &"appearance_question"
-display_name = "Оценка внешности"
-description = "Оценка внешности"
-situation_text = "В начале встречи девушка спрашивает:\n«Ну что, как я выгляжу?»"
+display_name = "Ты не такой, как я представляла"
+description = "Ты не такой, как я представляла"
+situation_text = "Девушка пару секунд рассматривает тебя. «Хм. Я тебя почему-то вообще другим представляла.»"
 enabled = true
 allowed_phases = Array[int]([0])
 allowed_venue_ids = Array[StringName]([])
 allowed_girl_ids = Array[StringName]([])
 weight = 1.0
-base_move_ids = Array[StringName]([&"appearance_question__compliment", &"appearance_question__tease", &"appearance_question__say_directly", &"appearance_question__show_off", &"appearance_question__support", &"appearance_question__smooth"])
+base_move_ids = Array[StringName]([&"appearance_question__better_live", &"appearance_question__more_surprises", &"appearance_question__better_or_worse", &"appearance_question__get_used_to_it", &"appearance_question__scale", &"appearance_question__update_image"])

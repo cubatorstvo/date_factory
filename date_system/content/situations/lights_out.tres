@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"lights_out"
+display_name = "Выключается свет"
+description = "Выключается свет"
+situation_text = "Свет внезапно гаснет. На несколько секунд место свидания оказывается в темноте."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"lights_out__romance_mode", &"lights_out__are_you_okay", &"lights_out__continue_in_dark", &"lights_out__take_charge", &"lights_out__practical_solution", &"lights_out__give_light"])

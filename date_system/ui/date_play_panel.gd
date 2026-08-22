@@ -484,6 +484,10 @@ func _replay() -> void:
 
 
 func _begin_session(seed: int, is_replay: bool) -> void:
+	var session_venue: StringName = _venue_id
+	var forced_sit: DateSituation = _catalog().find_situation(_forced_situation_id)
+	if forced_sit != null and not forced_sit.allows_venue(session_venue) and not forced_sit.allowed_venue_ids.is_empty():
+		session_venue = forced_sit.allowed_venue_ids[0]
 	var girl: GirlProfile = _catalog().find_girl(_girl_id)
 	var progress: GirlProgress = progress_store.get_girl_progress(_girl_id, girl)
 	var local_object_ids: Array[StringName] = []
@@ -491,11 +495,11 @@ func _begin_session(seed: int, is_replay: bool) -> void:
 		local_object_ids = progress_store.last_replay.local_object_ids.duplicate()
 	else:
 		local_object_ids = _lab_local_object_ids()
-		progress_store.capture_replay(seed, _girl_id, _venue_id, _outfit_id, progress, local_object_ids)
+		progress_store.capture_replay(seed, _girl_id, session_venue, _outfit_id, progress, local_object_ids)
 	var config := DateSessionConfig.new()
 	config.seed = seed
 	config.girl_id = _girl_id
-	config.venue_id = _venue_id
+	config.venue_id = session_venue
 	config.outfit_id = _outfit_id
 	config.local_object_ids = local_object_ids
 	config.catalog = _catalog()
@@ -1065,6 +1069,17 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 	var situation_id: StringName = &""
 	if view != null and view.situation != null:
 		situation_id = view.situation.id
+	var venue_filter := "(any)"
+	var situation_text := ""
+	if view != null and view.situation != null:
+		situation_text = view.situation.situation_text
+		if view.situation.allowed_venue_ids.is_empty():
+			venue_filter = "(any)"
+		else:
+			var names: PackedStringArray = PackedStringArray()
+			for venue_id in view.situation.allowed_venue_ids:
+				names.append(String(venue_id))
+			venue_filter = ", ".join(names)
 	var lines := PackedStringArray([
 		"seed: %d" % session.seed,
 		"session_id: %s" % session.session_id,
@@ -1074,6 +1089,8 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 		"phase: %s" % DateTypes.phase_name(session.current_phase),
 		"episode_index: %d" % session.current_episode_index,
 		"situation_id: %s" % String(situation_id),
+		"venue_filter: %s" % venue_filter,
+		"situation_text: %s" % situation_text,
 		"candidate_base_move_ids: %s" % str(session.current_candidate_base_move_ids),
 		"selected_base_move_ids: %s" % str(session.current_selected_base_move_ids),
 		"selected_move_id: %s" % String(session.current_selected_move_id),
@@ -1093,7 +1110,7 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 			lines.append("source %s used=%s state=%s" % [DateTypes.source_name(source_view.source), str(source_view.used), DateTypes.source_state_name(source_view.state)])
 			for option in source_view.options:
 				lines.append("  move_id=%s tag_id=%s state=%s" % [String(option.move_id), String(option.tag_id), DateTypes.availability_name(option.availability)])
-	lines.append_array(_debug_move_block("six_base_moves", session.current_candidate_base_move_ids, situation_id, session, false))
+	lines.append_array(_debug_move_block("six_base_moves", session.current_candidate_base_move_ids, situation_id, session, true))
 	lines.append_array(_debug_move_block("selected_base_moves", session.current_selected_base_move_ids, situation_id, session, false))
 	lines.append_array(_debug_move_block("reroll_base_moves", session.current_reroll_base_move_ids, situation_id, session, false))
 	lines.append("selected_base_tags")
@@ -1106,7 +1123,7 @@ func _debug_move_block(
 	move_ids: Array[StringName],
 	situation_id: StringName,
 	_session: DateSession,
-	_unused: bool
+	with_texts: bool
 ) -> PackedStringArray:
 	var lines: PackedStringArray = PackedStringArray([title])
 	if move_ids.is_empty():
@@ -1119,8 +1136,11 @@ func _debug_move_block(
 		var state: String = DateTypes.availability_name(DateTypes.MoveAvailability.AVAILABLE)
 		if move != null:
 			tag_id = String(move.resolved_tag_id(situation_id))
-		
 		lines.append("  move_id=%s tag_id=%s state=%s" % [String(move_id), tag_id, state])
+		if with_texts and move != null:
+			lines.append("    option: %s" % move.fixed_option_text)
+			lines.append("    positive: %s" % move.fixed_positive_result_text)
+			lines.append("    negative: %s" % move.fixed_negative_result_text)
 	return lines
 
 

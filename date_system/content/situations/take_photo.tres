@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"take_photo"
+display_name = "Сфоткаемся?"
+description = "Сфоткаемся?"
+situation_text = "Девушка предлагает сделать совместную фотографию."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"take_photo__good_with_you", &"take_photo__confident_pose", &"take_photo__how_you_want", &"take_photo__luxury_frame", &"take_photo__normal_photo", &"take_photo__stupid_photo"])

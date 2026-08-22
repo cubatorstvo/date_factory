@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"sudden_rain"
+display_name = "Начинается дождь"
+description = "Начинается дождь"
+situation_text = "Вы уже собираетесь расходиться, когда внезапно начинается сильный дождь."
+enabled = true
+allowed_phases = Array[int]([2])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"sudden_rain__give_umbrella", &"sudden_rain__call_taxi", &"sudden_rain__wait_it_out", &"sudden_rain__walk_in_rain", &"sudden_rain__car_to_door", &"sudden_rain__run_for_cover"])

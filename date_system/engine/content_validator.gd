@@ -510,7 +510,35 @@ func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentVal
 
 
 func _check_base_tag_diversity(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
-	pass
+	if catalog.enabled_situations().size() < 30:
+		return
+	var opening: int = 0
+	var core: int = 0
+	var closing: int = 0
+	var tag_counts: Dictionary = {}
+	var base_count: int = 0
+	for situation in catalog.enabled_situations():
+		if situation.allows_phase(DateTypes.DatePhase.OPENING):
+			opening += 1
+		if situation.allows_phase(DateTypes.DatePhase.CORE):
+			core += 1
+		if situation.allows_phase(DateTypes.DatePhase.CLOSING):
+			closing += 1
+		for move_id in situation.base_move_ids:
+			var move: DateMove = catalog.find_move(move_id)
+			if move == null or not move.enabled or move.kind != DateTypes.DateMoveKind.BASE:
+				continue
+			base_count += 1
+			var key: String = String(move.fixed_tag_id)
+			tag_counts[key] = int(tag_counts.get(key, 0)) + 1
+	if opening != 6 or core != 18 or closing != 6:
+		issues.append(_issue("DateContentCatalog", "catalog", "situations", "Baseline pool must be 6 OPENING / 18 CORE / 6 CLOSING, сейчас %d / %d / %d." % [opening, core, closing]))
+	if base_count != 180:
+		issues.append(_issue("DateContentCatalog", "catalog", "moves", "Baseline pool must contain 180 situation-owned BASE, сейчас %d." % base_count))
+	for tag in catalog.enabled_tags():
+		var count: int = int(tag_counts.get(String(tag.id), 0))
+		if count != 15:
+			issues.append(_issue("DateTag", String(tag.id), "fixed_tag_id", "Canonical Tag %s must appear on 15 BASE Moves, сейчас %d." % [String(tag.id), count]))
 
 
 func _check_duplicate_characteristic_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:

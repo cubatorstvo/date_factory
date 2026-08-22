@@ -187,7 +187,7 @@ func _player() -> DatePlayerSnapshot:
 	return DatePlayerSnapshot.new()
 
 
-func _start(catalog: DateContentCatalog, girl_id: StringName, venue_id: StringName, outfit_id: StringName, seed: int, progress: GirlProgress, player: DatePlayerSnapshot) -> DateEngine:
+func _start(catalog: DateContentCatalog, girl_id: StringName, venue_id: StringName, outfit_id: StringName, seed: int, progress: GirlProgress, player: DatePlayerSnapshot, forced_situation_id: StringName = &"") -> DateEngine:
 	var engine := DateEngine.new()
 	var config := DateSessionConfig.new()
 	config.catalog = catalog
@@ -198,6 +198,7 @@ func _start(catalog: DateContentCatalog, girl_id: StringName, venue_id: StringNa
 	config.girl_progress = progress
 	config.player_snapshot = player
 	config.relationship_max = GirlCatalog.seed_relationship_max(girl_id)
+	config.forced_situation_id = forced_situation_id
 	var venue: DateVenue = catalog.find_venue(venue_id)
 	if venue != null:
 		config.local_object_ids = venue.local_object_ids.duplicate()
@@ -419,19 +420,75 @@ func _test_situation_owned_architecture() -> void:
 	var catalog: DateContentCatalog = _catalog()
 	var validator := ContentValidator.new()
 	_ok("owned seed has no errors", not _has_error(validator.validate(catalog)))
+	var disk: DateContentCatalog = load("res://date_system/content/catalog/date_content_catalog.tres") as DateContentCatalog
+	_ok("disk catalog thirty situations", disk != null and disk.enabled_situations().size() == 30)
+	_ok("disk catalog no errors", disk != null and not _has_error(validator.validate(disk)))
 	var expected_ids: Array[StringName] = [
 		&"appearance_question",
+		&"awkward_silence",
+		&"why_me",
+		&"first_compliment",
+		&"phone_reminder",
+		&"takes_control",
 		&"money_request",
-		&"rival_provocation",
 		&"spontaneous_bet",
+		&"rival_provocation",
+		&"terrible_joke",
+		&"embarrassing_hobby",
+		&"stranger_flirts",
+		&"small_rule",
+		&"small_lie",
+		&"friends_dilemma",
+		&"staff_conflict",
+		&"compatibility_test",
+		&"lost_in_hand",
+		&"mistaken_married",
+		&"take_photo",
+		&"big_money",
+		&"choose_for_me",
+		&"friend_call",
+		&"lights_out",
 		&"date_verdict",
+		&"see_again",
+		&"honest_question",
+		&"lost_wallet",
+		&"simple_goodbye",
+		&"sudden_rain",
 	]
-	_ok("owned five prototype situations", catalog.enabled_situations().size() == 5)
+	var public_only: Array[StringName] = [
+		&"stranger_flirts",
+		&"small_rule",
+		&"staff_conflict",
+		&"mistaken_married",
+		&"lost_wallet",
+	]
+	_ok("owned thirty baseline situations", catalog.enabled_situations().size() == 30)
+	var opening: int = 0
+	var core: int = 0
+	var closing: int = 0
+	var tag_counts: Dictionary = {}
 	for situation in catalog.enabled_situations():
+		if situation.allows_phase(DateTypes.DatePhase.OPENING):
+			opening += 1
+		if situation.allows_phase(DateTypes.DatePhase.CORE):
+			core += 1
+		if situation.allows_phase(DateTypes.DatePhase.CLOSING):
+			closing += 1
 		_ok("owned six moves %s" % String(situation.id), situation.base_move_ids.size() == 6)
 		_ok("owned six tags %s" % String(situation.id), _distinct_base_tags(catalog, situation.id) == 6)
 		_ok("owned api %s" % String(situation.id), catalog.base_moves_for_situation(situation.id).size() == 6)
-		_ok("owned general filters %s" % String(situation.id), situation.allowed_venue_ids.is_empty() and situation.allowed_girl_ids.is_empty())
+		_ok("owned girl filter empty %s" % String(situation.id), situation.allowed_girl_ids.is_empty())
+		for move in catalog.base_moves_for_situation(situation.id):
+			_ok("owned texts %s" % String(move.id), not move.fixed_option_text.strip_edges().is_empty() and not move.fixed_positive_result_text.strip_edges().is_empty() and not move.fixed_negative_result_text.strip_edges().is_empty())
+			var tag_key: String = String(move.fixed_tag_id)
+			tag_counts[tag_key] = int(tag_counts.get(tag_key, 0)) + 1
+		if public_only.has(situation.id):
+			_ok("owned public venues %s" % String(situation.id), situation.allowed_venue_ids.size() == 2 and situation.allowed_venue_ids.has(&"cafe") and situation.allowed_venue_ids.has(&"restaurant"))
+		else:
+			_ok("owned general venue %s" % String(situation.id), situation.allowed_venue_ids.is_empty())
+	_ok("owned phase counts 6/18/6", opening == 6 and core == 18 and closing == 6)
+	for tag in catalog.enabled_tags():
+		_ok("owned tag count 15 %s" % String(tag.id), int(tag_counts.get(String(tag.id), 0)) == 15)
 	_ok("owned opening id", catalog.find_situation(&"appearance_question") != null and catalog.find_situation(&"appearance_question").allows_phase(DateTypes.DatePhase.OPENING))
 	_ok("owned closing id", catalog.find_situation(&"date_verdict") != null and catalog.find_situation(&"date_verdict").allows_phase(DateTypes.DatePhase.CLOSING))
 	for expected_id in expected_ids:
@@ -452,10 +509,32 @@ func _test_situation_owned_architecture() -> void:
 	_ok("vika keeps sources", engine.get_session_state().characteristic_source_used == sources_before[0] and engine.get_session_state().outfit_source_used == sources_before[1] and engine.get_session_state().venue_source_used == sources_before[2])
 	_ok("vika used state", engine.reroll_base_moves() == "Пересборка уже использована на этом свидании.")
 	_ok("vika shown changed", engine.get_session_state().current_selected_base_move_ids != shown)
+	_ok("owned politeness result", catalog.find_move(&"awkward_silence__how_arrived") != null and catalog.find_move(&"awkward_silence__how_arrived").fixed_positive_result_text == "Ей нравится твоя корректность.")
+	for row in [
+		[&"appearance_question", DateTypes.DatePhase.OPENING],
+		[&"stranger_flirts", DateTypes.DatePhase.CORE],
+		[&"date_verdict", DateTypes.DatePhase.CLOSING],
+	]:
+		var sit_id: StringName = row[0]
+		var phase: DateTypes.DatePhase = row[1]
+		var any_catalog: DateContentCatalog = _catalog()
+		any_catalog.date_rules.opening_episode_count = 1 if phase == DateTypes.DatePhase.OPENING else 0
+		any_catalog.date_rules.core_episode_count = 1 if phase == DateTypes.DatePhase.CORE else 0
+		any_catalog.date_rules.closing_episode_count = 1 if phase == DateTypes.DatePhase.CLOSING else 0
+		var any_engine: DateEngine = _start(any_catalog, &"alina", &"cafe", &"casual", 21, _fresh_progress(any_catalog, &"alina"), _player(), sit_id)
+		any_engine.get_session_state().vika_reroll_available = true
+		var any_hidden: Array[StringName] = any_engine.get_session_state().current_reroll_base_move_ids.duplicate()
+		_ok("vika any %s" % String(sit_id), any_engine.get_session_state().selected_situation_ids[0] == sit_id and any_engine.reroll_base_moves().is_empty() and any_engine.get_session_state().current_selected_base_move_ids == any_hidden)
 
 	var filter_catalog: DateContentCatalog = _catalog()
 	_ok("filter general cafe", _eligible_has(filter_catalog, DateTypes.DatePhase.OPENING, &"cafe", &"alina", &"appearance_question"))
 	_ok("filter general restaurant", _eligible_has(filter_catalog, DateTypes.DatePhase.OPENING, &"restaurant", &"vika", &"appearance_question"))
+	_ok("filter general apartment", _eligible_has(filter_catalog, DateTypes.DatePhase.OPENING, &"apartment", &"alina", &"appearance_question"))
+	_ok("public-only cafe", _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"cafe", &"alina", &"stranger_flirts"))
+	_ok("public-only restaurant", _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"restaurant", &"alina", &"stranger_flirts"))
+	_ok("public-only apartment out", not _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"apartment", &"alina", &"stranger_flirts"))
+	_ok("public-only closing apartment out", not _eligible_has(filter_catalog, DateTypes.DatePhase.CLOSING, &"apartment", &"alina", &"lost_wallet"))
+	_ok("public-only closing cafe", _eligible_has(filter_catalog, DateTypes.DatePhase.CLOSING, &"cafe", &"alina", &"lost_wallet"))
 	filter_catalog.find_situation(&"money_request").allowed_venue_ids = [&"restaurant"] as Array[StringName]
 	_ok("filter venue in", _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"restaurant", &"alina", &"money_request"))
 	_ok("filter venue out", not _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"cafe", &"alina", &"money_request"))
@@ -470,26 +549,23 @@ func _test_situation_owned_architecture() -> void:
 	var progress: GirlProgress = _fresh_progress(catalog, &"alina")
 	var first: DateEngine = _play_full_date(catalog, progress, 44)
 	_ok("anti-repeat stores five", first.girl_progress().last_date_situation_ids.size() == 5)
-	var extra_catalog: DateContentCatalog = _catalog()
-	var extra: DateSituation = DateSituation.new()
-	extra.id = &"appearance_alt"
-	extra.display_name = "Alt"
-	extra.enabled = true
-	extra.allowed_phases = [int(DateTypes.DatePhase.OPENING)]
-	extra.weight = 1.0
-	extra.base_move_ids = extra_catalog.find_situation(&"appearance_question").base_move_ids.duplicate()
-	extra_catalog.situations.append(extra)
-	var second_progress: GirlProgress = GirlProgress.new()
-	second_progress.reset_to_profile(extra_catalog.find_girl(&"alina"))
-	second_progress.last_date_situation_ids = [&"appearance_question"] as Array[StringName]
-	var second: DateEngine = _start(extra_catalog, &"alina", &"cafe", &"casual", 8, second_progress, _player())
-	_ok("anti-repeat prefers unused opening", second.get_session_state().selected_situation_ids[0] == &"appearance_alt")
+	var first_ids: Array[StringName] = first.girl_progress().last_date_situation_ids.duplicate()
+	_ok("five-episode opening", catalog.find_situation(first_ids[0]) != null and catalog.find_situation(first_ids[0]).allows_phase(DateTypes.DatePhase.OPENING))
+	_ok("five-episode core 1", catalog.find_situation(first_ids[1]) != null and catalog.find_situation(first_ids[1]).allows_phase(DateTypes.DatePhase.CORE))
+	_ok("five-episode core 2", catalog.find_situation(first_ids[2]) != null and catalog.find_situation(first_ids[2]).allows_phase(DateTypes.DatePhase.CORE))
+	_ok("five-episode core 3", catalog.find_situation(first_ids[3]) != null and catalog.find_situation(first_ids[3]).allows_phase(DateTypes.DatePhase.CORE))
+	_ok("five-episode closing", catalog.find_situation(first_ids[4]) != null and catalog.find_situation(first_ids[4]).allows_phase(DateTypes.DatePhase.CLOSING))
+	var second: DateEngine = _play_full_date(catalog, first.girl_progress(), 45)
+	_ok("anti-repeat prefers unused opening", second.get_session_state().selected_situation_ids[0] != first_ids[0])
+	var opening_ids: Array[StringName] = []
+	for situation in catalog.enabled_situations():
+		if situation.allows_phase(DateTypes.DatePhase.OPENING):
+			opening_ids.append(situation.id)
 	var reuse_progress: GirlProgress = GirlProgress.new()
-	reuse_progress.reset_to_profile(extra_catalog.find_girl(&"alina"))
-	reuse_progress.last_date_situation_ids = [&"appearance_question", &"appearance_alt"] as Array[StringName]
-	var reuse: DateEngine = _start(extra_catalog, &"alina", &"cafe", &"casual", 9, reuse_progress, _player())
-	var reused_id: StringName = reuse.get_session_state().selected_situation_ids[0]
-	_ok("anti-repeat reuses when preferred empty", reused_id == &"appearance_question" or reused_id == &"appearance_alt")
+	reuse_progress.reset_to_profile(catalog.find_girl(&"alina"))
+	reuse_progress.last_date_situation_ids = opening_ids.duplicate()
+	var reuse: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 9, reuse_progress, _player())
+	_ok("anti-repeat reuses when preferred empty", opening_ids.has(reuse.get_session_state().selected_situation_ids[0]))
 
 
 func _eligible_has(catalog: DateContentCatalog, phase: DateTypes.DatePhase, venue_id: StringName, girl_id: StringName, situation_id: StringName) -> bool:
@@ -610,10 +686,10 @@ func _test_character_build_sources() -> void:
 
 func _test_mapping_tags_differ_by_situation() -> void:
 	var catalog: DateContentCatalog = _catalog()
-	var appearance: DateMove = catalog.find_move(&"appearance_question__compliment")
-	var verdict: DateMove = catalog.find_move(&"date_verdict__compliment")
-	_ok("16. situation-owned compliment IDs exist", appearance != null and verdict != null)
-	_ok("16. situation-owned BASE have different Tags", appearance != null and verdict != null and appearance.fixed_tag_id != verdict.fixed_tag_id)
+	var appearance: DateMove = catalog.find_move(&"appearance_question__better_live")
+	var verdict: DateMove = catalog.find_move(&"date_verdict__best_part_you")
+	_ok("16. situation-owned flattery IDs exist", appearance != null and verdict != null)
+	_ok("16. same Tag keeps situation-local option text", appearance != null and verdict != null and appearance.fixed_tag_id == &"flattery" and verdict.fixed_tag_id == &"flattery" and appearance.fixed_option_text != verdict.fixed_option_text)
 
 
 func _test_combo_rules() -> void:
@@ -1210,16 +1286,16 @@ func _test_twelve_tag_rebalance() -> void:
 		var distinct: int = _distinct_base_tags(catalog, situation.id)
 		print("BASE diversity %s = %d" % [String(situation.id), distinct])
 		_ok("22.7 BASE diversity %s" % String(situation.id), distinct == 6)
-	_ok("22.8 support appearance care", _mapping_tag(&"appearance_question__support", &"appearance_question") == &"care")
-	_ok("22.8 support verdict care", _mapping_tag(&"date_verdict__support", &"date_verdict") == &"care")
-	_ok("22.9 tease appearance humor", _mapping_tag(&"appearance_question__tease", &"appearance_question") == &"humor")
-	_ok("22.9 tease rival humor", _mapping_tag(&"rival_provocation__tease", &"rival_provocation") == &"humor")
-	_ok("22.9 tease verdict humor", _mapping_tag(&"date_verdict__tease", &"date_verdict") == &"humor")
-	_ok("22.10 tease money cunning", _mapping_tag(&"money_request__tease", &"money_request") == &"cunning")
-	_ok("22.10 refuse rival cunning", _mapping_tag(&"rival_provocation__refuse", &"rival_provocation") == &"cunning")
-	_ok("22.11 smooth rival composure", _mapping_tag(&"rival_provocation__smooth", &"rival_provocation") == &"composure")
-	_ok("22.11 refuse money composure", _mapping_tag(&"money_request__refuse", &"money_request") == &"composure")
-	_ok("22.11 refuse bet composure", _mapping_tag(&"spontaneous_bet__refuse", &"spontaneous_bet") == &"composure")
+	_ok("22.8 hobby care", _mapping_tag(&"embarrassing_hobby__ask_without_mockery", &"embarrassing_hobby") == &"care")
+	_ok("22.8 verdict care", _mapping_tag(&"date_verdict__were_you_comfortable", &"date_verdict") == &"care")
+	_ok("22.9 silence humor", _mapping_tag(&"awkward_silence__minute_of_silence", &"awkward_silence") == &"humor")
+	_ok("22.9 rival humor", _mapping_tag(&"rival_provocation__brave_attempt", &"rival_provocation") == &"humor")
+	_ok("22.9 joke humor", _mapping_tag(&"terrible_joke__worse_punchline", &"terrible_joke") == &"humor")
+	_ok("22.10 money cunning", _mapping_tag(&"money_request__next_expense_yours", &"money_request") == &"cunning")
+	_ok("22.10 rule cunning", _mapping_tag(&"small_rule__legal_loophole", &"small_rule") == &"cunning")
+	_ok("22.11 appearance composure", _mapping_tag(&"appearance_question__get_used_to_it", &"appearance_question") == &"composure")
+	_ok("22.11 rival composure", _mapping_tag(&"rival_provocation__no_reaction", &"rival_provocation") == &"composure")
+	_ok("22.11 verdict composure", _mapping_tag(&"date_verdict__good_no_analysis", &"date_verdict") == &"composure")
 	_ok("22.11 hold pause composure", _catalog().find_move(&"char_hold_pause").fixed_tag_id == &"composure")
 	var reset_progress: GirlProgress = _fresh_progress(catalog, &"alina")
 	for tag_id in [&"care", &"humor", &"composure", &"cunning"]:

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"lost_in_hand"
+display_name = "Потерянная вещь"
+description = "Потерянная вещь"
+situation_text = "Девушка начинает искать небольшую вещь. Через несколько секунд становится очевидно, что она всё это время держит её в руке."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"lost_in_hand__search_together", &"lost_in_hand__point_softly", &"lost_in_hand__what_in_hand", &"lost_in_hand__wait_for_notice", &"lost_in_hand__international_search", &"lost_in_hand__gone_forever"])

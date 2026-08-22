@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"lights_out__are_you_okay"
+display_name = "Сразу спросить, всё ли у неё нормально."
+description = "Сразу спросить, всё ли у неё нормально."
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"care"
+fixed_option_text = "Сразу спросить, всё ли у неё нормально."
+fixed_positive_result_text = "Она ценит заботу."
+fixed_negative_result_text = "Забота кажется ей лишней."

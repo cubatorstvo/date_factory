@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_script")
 id = &"date_verdict"
-display_name = "Оценка свидания"
-description = "Оценка свидания"
-situation_text = "Перед расставанием девушка спрашивает:\n«Ну и как тебе сегодняшний вечер?»"
+display_name = "Ну и как тебе вечер?"
+description = "Ну и как тебе вечер?"
+situation_text = "Перед расставанием девушка спрашивает: «Ну и как тебе сегодняшний вечер?»"
 enabled = true
 allowed_phases = Array[int]([2])
 allowed_venue_ids = Array[StringName]([])
 allowed_girl_ids = Array[StringName]([])
 weight = 1.0
-base_move_ids = Array[StringName]([&"date_verdict__compliment", &"date_verdict__tease", &"date_verdict__say_directly", &"date_verdict__take_initiative", &"date_verdict__show_off", &"date_verdict__support"])
+base_move_ids = Array[StringName]([&"date_verdict__liked_it", &"date_verdict__best_part_you", &"date_verdict__were_you_comfortable", &"date_verdict__good_no_analysis", &"date_verdict__premium_event", &"date_verdict__glad_spent_time"])

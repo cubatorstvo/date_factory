@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"spontaneous_bet__negotiate_terms"
+display_name = "Сначала выторговать условия в свою пользу."
+description = "Сначала выторговать условия в свою пользу."
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"cunning"
+fixed_option_text = "Сначала выторговать условия в свою пользу."
+fixed_positive_result_text = "Она оценивает находчивость."
+fixed_negative_result_text = "Хитрость ей не нравится."

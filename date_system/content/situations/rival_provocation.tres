@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_script")
 id = &"rival_provocation"
-display_name = "Провокация самца"
-description = "Провокация самца"
-situation_text = "К вам подходит другой самец, заявляет, что рейтинг героя выглядит подозрительно, и начинает провоцировать."
+display_name = "Провокация соперника"
+description = "Провокация соперника"
+situation_text = "Другой мужчина вклинивается в разговор и явно пытается задеть тебя при девушке."
 enabled = true
 allowed_phases = Array[int]([1])
 allowed_venue_ids = Array[StringName]([])
 allowed_girl_ids = Array[StringName]([])
 weight = 1.0
-base_move_ids = Array[StringName]([&"rival_provocation__tease", &"rival_provocation__refuse", &"rival_provocation__say_directly", &"rival_provocation__show_off", &"rival_provocation__accept_challenge", &"rival_provocation__smooth"])
+base_move_ids = Array[StringName]([&"rival_provocation__put_in_place", &"rival_provocation__no_reaction", &"rival_provocation__repeat_it", &"rival_provocation__you_are_interrupting", &"rival_provocation__brave_attempt", &"rival_provocation__opinion_has_no_weight"])

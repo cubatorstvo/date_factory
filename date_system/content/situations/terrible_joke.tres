@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"terrible_joke"
+display_name = "Ужасная шутка"
+description = "Ужасная шутка"
+situation_text = "Девушка рассказывает откровенно плохую шутку. Пауза после панчлайна становится отдельным событием."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"terrible_joke__worse_punchline", &"terrible_joke__that_was_awful", &"terrible_joke__laugh_with_her", &"terrible_joke__delivery_saved_it", &"terrible_joke__repeat_for_record", &"terrible_joke__even_worse_joke"])

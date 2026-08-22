@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"small_rule"
+display_name = "Маленькое нарушение"
+description = "Маленькое нарушение"
+situation_text = "Девушка замечает формальное ограничение и предлагает слегка его обойти ради удобства или интереса."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([&"cafe", &"restaurant"])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"small_rule__agree_immediately", &"small_rule__follow_rule", &"small_rule__legal_loophole", &"small_rule__charm_staff", &"small_rule__check_problem", &"small_rule__pay_normal_option"])

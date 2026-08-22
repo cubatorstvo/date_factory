@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"big_money"
+display_name = "Большие деньги"
+description = "Большие деньги"
+situation_text = "Девушка спрашивает: «Представь, завтра у тебя появляется очень большая сумма денег. Что делаешь первым?»"
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"big_money__give_to_close_people", &"big_money__visible_from_space", &"big_money__x10_project", &"big_money__secure_people", &"big_money__money_makes_money", &"big_money__invest_in_evening"])

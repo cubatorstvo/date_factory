@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"awkward_silence"
+display_name = "Пауза затянулась"
+description = "Пауза затянулась"
+situation_text = "Вы уже встретились, но первые десять секунд оба молчите. Пауза начинает жить собственной жизнью."
+enabled = true
+allowed_phases = Array[int]([0])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"awkward_silence__minute_of_silence", &"awkward_silence__beautiful_pause", &"awkward_silence__how_arrived", &"awkward_silence__pleasant_start", &"awkward_silence__professional_silence", &"awkward_silence__awkward_question"])

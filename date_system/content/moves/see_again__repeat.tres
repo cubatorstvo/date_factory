@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"see_again__repeat"
+display_name = "Кивнуть: «Повторим.»"
+description = "Кивнуть: «Повторим.»"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"composure"
+fixed_option_text = "Кивнуть: «Повторим.»"
+fixed_positive_result_text = "Спокойствие ей нравится."
+fixed_negative_result_text = "Спокойствие кажется ей безразличием."

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"appearance_question__get_used_to_it"
+display_name = "Спокойно ответить: «Ничего, привыкнешь.»"
+description = "Спокойно ответить: «Ничего, привыкнешь.»"
+kind = 0
+enabled = true
+max_uses_per_date = 0
+situation_mappings = []
+fixed_tag_id = &"composure"
+fixed_option_text = "Спокойно ответить: «Ничего, привыкнешь.»"
+fixed_positive_result_text = "Спокойствие ей нравится."
+fixed_negative_result_text = "Спокойствие кажется ей безразличием."

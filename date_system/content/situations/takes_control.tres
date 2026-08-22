@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"takes_control"
+display_name = "Она берёт всё на себя"
+description = "Она берёт всё на себя"
+situation_text = "С первых минут девушка начинает решать за двоих: что выбрать, куда двигаться и о чём говорить дальше."
+enabled = true
+allowed_phases = Array[int]([0])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"takes_control__take_one_decision", &"takes_control__official_tour", &"takes_control__your_route", &"takes_control__if_convenient", &"takes_control__split_decisions", &"takes_control__decide_everything"])

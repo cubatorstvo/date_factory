@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"small_lie"
+display_name = "Маленькая ложь"
+description = "Маленькая ложь"
+situation_text = "Девушка признаётся, что немного приукрасила один факт о себе при знакомстве."
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"small_lie__why_lied", &"small_lie__great_betrayal", &"small_lie__no_more_tricks", &"small_lie__move_on", &"small_lie__value_confession", &"small_lie__press_service"])

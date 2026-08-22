@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DateSituation" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_situation.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"mistaken_married"
+display_name = "Вас приняли за супругов"
+description = "Вас приняли за супругов"
+situation_text = "Незнакомец уверенно замечает: «Сразу видно — вы уже лет десять вместе.»"
+enabled = true
+allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([&"cafe", &"restaurant"])
+allowed_girl_ids = Array[StringName]([])
+weight = 1.0
+base_move_ids = Array[StringName]([&"mistaken_married__eleven_hard_years", &"mistaken_married__still_tolerates", &"mistaken_married__with_her_possible", &"mistaken_married__clarify_first_date", &"mistaken_married__what_gave_us_away", &"mistaken_married__under_control"])
