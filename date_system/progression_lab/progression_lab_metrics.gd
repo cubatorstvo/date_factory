@@ -23,6 +23,8 @@ var rating_start: int = 0
 var rating_end: int = 0
 var money_blocked_decision_points: int = 0
 var daily_gate_blocked_decision_points: int = 0
+var money_blocked_days: int = 0
+var max_consecutive_money_blocked_days: int = 0
 var progress_beats: int = 0
 var dead_progress_days: int = 0
 var max_consecutive_dead_progress_days: int = 0
@@ -47,6 +49,7 @@ var _consecutive_work: int = 0
 var _last_primary: String = ""
 var _day_categories: Dictionary = {}
 var _day_beats: Dictionary = {}
+var _money_blocked_days: Dictionary = {}
 
 
 func ensure_goal(goal_id: String) -> Dictionary:
@@ -65,12 +68,14 @@ func ensure_goal(goal_id: String) -> Dictionary:
 	return entry
 
 
-func record_blocking_decision_point(money_blocked_goal_ids: Array, daily_gate_blocked_goal_ids: Array) -> void:
+func record_blocking_decision_point(money_blocked_goal_ids: Array, daily_gate_blocked_goal_ids: Array, day_index: int = -1) -> void:
 	if not money_blocked_goal_ids.is_empty():
 		money_blocked_decision_points += 1
 		for goal_id in money_blocked_goal_ids:
 			var money_entry: Dictionary = ensure_goal(str(goal_id))
 			money_entry["blocked_by_money_count"] = int(money_entry["blocked_by_money_count"]) + 1
+		if day_index >= 0:
+			_money_blocked_days[str(day_index)] = true
 	if not daily_gate_blocked_goal_ids.is_empty():
 		daily_gate_blocked_decision_points += 1
 		for goal_id in daily_gate_blocked_goal_ids:
@@ -186,6 +191,9 @@ func finalize_days(last_day_index: int, money: int, rating: int) -> void:
 	rating_end = rating
 	_consecutive_dead = 0
 	_consecutive_work_only = 0
+	var consecutive_money_blocked: int = 0
+	money_blocked_days = 0
+	max_consecutive_money_blocked_days = 0
 	for day_index in range(calendar_days):
 		var day_key: String = str(day_index)
 		var beats: int = int(_day_beats.get(day_key, 0))
@@ -195,6 +203,12 @@ func finalize_days(last_day_index: int, money: int, rating: int) -> void:
 			max_consecutive_dead_progress_days = maxi(max_consecutive_dead_progress_days, _consecutive_dead)
 		else:
 			_consecutive_dead = 0
+		if _money_blocked_days.has(day_key):
+			money_blocked_days += 1
+			consecutive_money_blocked += 1
+			max_consecutive_money_blocked_days = maxi(max_consecutive_money_blocked_days, consecutive_money_blocked)
+		else:
+			consecutive_money_blocked = 0
 		var categories: PackedStringArray = PackedStringArray()
 		if _day_categories.has(day_key):
 			categories = _day_categories[day_key]
@@ -277,6 +291,8 @@ func to_dict() -> Dictionary:
 		"rating_end": rating_end,
 		"money_blocked_decision_points": money_blocked_decision_points,
 		"daily_gate_blocked_decision_points": daily_gate_blocked_decision_points,
+		"money_blocked_days": money_blocked_days,
+		"max_consecutive_money_blocked_days": max_consecutive_money_blocked_days,
 		"progress_beats": progress_beats,
 		"dead_progress_days": dead_progress_days,
 		"max_consecutive_dead_progress_days": max_consecutive_dead_progress_days,
@@ -321,6 +337,8 @@ static func from_dict(data: Dictionary) -> ProgressionLabMetrics:
 	metrics.rating_end = int(data.get("rating_end", 0))
 	metrics.money_blocked_decision_points = int(data.get("money_blocked_decision_points", 0))
 	metrics.daily_gate_blocked_decision_points = int(data.get("daily_gate_blocked_decision_points", 0))
+	metrics.money_blocked_days = int(data.get("money_blocked_days", 0))
+	metrics.max_consecutive_money_blocked_days = int(data.get("max_consecutive_money_blocked_days", 0))
 	metrics.progress_beats = int(data.get("progress_beats", 0))
 	metrics.dead_progress_days = int(data.get("dead_progress_days", 0))
 	metrics.max_consecutive_dead_progress_days = int(data.get("max_consecutive_dead_progress_days", 0))

@@ -17,6 +17,7 @@ const ISOLATION_FULL: StringName = &"FULL_STAGE_CONTENT"
 @export var default_base_seed_start: int = 1
 @export var batch_size: int = 100
 @export var max_calendar_days: int = 400
+@export var max_consecutive_stalled_days: int = 8
 @export var trait_jitter: float = 0.15
 
 @export var weight_efficient: float = 0.15
@@ -178,6 +179,7 @@ func to_dict() -> Dictionary:
 		"default_base_seed_start": default_base_seed_start,
 		"batch_size": batch_size,
 		"max_calendar_days": max_calendar_days,
+		"max_consecutive_stalled_days": max_consecutive_stalled_days,
 		"trait_jitter": trait_jitter,
 		"population_weights": population_weights(),
 		"trait_centers": {

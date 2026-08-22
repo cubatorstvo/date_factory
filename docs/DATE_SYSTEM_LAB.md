@@ -868,7 +868,7 @@ stage_changed(previous_stage, current_stage)
 finale_reached()
 ```
 
-`stage_progress_changed` испускается после данных, влияющих на текущий `StageRequirement`. Сейчас источник — `GirlsService.girl_relationship_changed`. Затем `StageService.try_complete_current_stage()`. Изменение отношений другой девушки главу не завершает.
+`stage_progress_changed` испускается после данных, влияющих на текущий `StageRequirement`. Сейчас источник — `GirlsService.girl_relationship_changed`. Затем `StageService.try_complete_current_stage()`, если `auto_complete_enabled` (по умолчанию `true`). Isolated Monte Carlo выключает флаг, чтобы глава не завершалась до StagePlan barrier; явный `try_complete_current_stage()` из executor остаётся доступен. `get_catalog()` может заново подписать сигналы, поэтому флаг, а не только disconnect, удерживает isolation. Изменение отношений другой девушки главу не завершает.
 
 Gameplay-ворота остаются в своих системах и не являются `StageRequirement`:
 

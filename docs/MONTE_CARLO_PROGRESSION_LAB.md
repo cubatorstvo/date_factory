@@ -909,6 +909,77 @@ The next Stage generates a fresh immutable StagePlan using that Stage's dedicate
 
 Campaign-level profile/interests remain unchanged.
 
+Story Girl relationship is gated by the immutable StagePlan barrier. While the barrier is incomplete, Story Girl Date candidates stop at `production_MAX - 1`. After the barrier is complete, the next Story Girl Date may reach MAX and production Stage transition runs.
+
+Isolated runs set `StageService.auto_complete_enabled = false` and disconnect production Stage auto-complete (`girl_relationship_changed` and `expansion_changed`). `get_catalog()` can resubscribe those signals, so the flag is the isolation that actually holds. A Stage then advances only when the executor calls `try_complete_current_stage()` after the StagePlan barrier is complete and Story Girl is at MAX. The transition assertion uses barrier/MAX status captured immediately after the successful action, before that production complete call.
+
+If Story Stage advances, the barrier was complete immediately before the transition and Story Girl is at MAX as a result of the production action.
+
+---
+
+# 23.1 Date loadout and eligibility
+
+Date candidate construction selects the planned Outfit and Venue before the final production eligibility check.
+
+```text
+owned Outfit candidates
+→ Outfit score
+→ planned Outfit
+→ Venue candidates
+→ planned Venue
+→ temporary loadout context
+→ production Date eligibility
+→ Date candidate
+```
+
+OutfitAboveCasual is evaluated against the selected Outfit, not the currently equipped casual Outfit. Execution equips the same planned Outfit/Venue before starting the production Date.
+
+---
+
+# 23.2 Failed candidates and stall detection
+
+Candidate existence does not count as progress. A decision cycle succeeds only when the selected action actually executes.
+
+`_execute_candidate()` returns:
+
+```text
+success
+failure_code
+failure_reason
+```
+
+Failed candidates are retried from a rebuilt snapshot with the failed identity excluded. Repeated failed or empty cycles skip the calendar day.
+
+```text
+max_consecutive_stalled_days = 8
+```
+
+reaches `NO_USEFUL_ACTIONS_STAGE_<n>` with a diagnostic snapshot instead of looping until `max_calendar_days`. Safety cap remains the last-resort limit.
+
+Detailed replay records `FAILED CANDIDATE` blocks and stall-day unmet goals. Seeds `7, 22, 24, 31, 47, 84, 90` are the deterministic regression set from the N=100 deadlock run.
+
+---
+
+# 23.3 Per-stage economy consistency
+
+Successful WORK and spending actions update both campaign and current-stage:
+
+```text
+money_earned
+money_spent
+minimum_money
+```
+
+from actual production money deltas. Goal Friction completion is written to both campaign and stage metrics. After a full campaign:
+
+```text
+sum(stage.money_earned) == campaign.money_earned
+sum(stage.money_spent) == campaign.money_spent
+sum(stage.total_actions) == campaign.total_actions
+```
+
+`money_blocked_days` and `max_consecutive_money_blocked_days` are extra diagnostics. The hard warning still uses `money_blocked_decision_points`.
+
 ---
 
 # 24. Date simulation
@@ -1147,7 +1218,11 @@ Score:
 
 Choose highest score.
 
+If the girl requires OutfitAboveCasual, casual-tier Outfit are excluded from this ranking.
+
 Nika Backup Outfit uses the two highest-scoring distinct owned Outfit when reward is active.
+
+This planned Outfit is stored on the Date candidate and used for both eligibility evaluation and execution.
 
 ---
 

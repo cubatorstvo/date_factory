@@ -88,7 +88,7 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 	lines.append("## Aggregate P10 / P50 / P90 / P95")
 	lines.append("")
 	var overall: Dictionary = result.statistics.get("overall", {})
-	for key in ["calendar_days", "work_actions", "dates", "economy_support_share", "dead_progress_days", "max_goal_friction_ratio", "novelty_density"]:
+	for key in ["calendar_days", "work_actions", "dates", "economy_support_share", "dead_progress_days", "money_blocked_decision_points", "money_blocked_days", "max_goal_friction_ratio", "novelty_density"]:
 		if overall.has(key):
 			var stats: Dictionary = overall[key]
 			lines.append("- %s: P10=%.3f P50=%.3f P90=%.3f P95=%.3f" % [
@@ -116,13 +116,21 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 	lines.append("")
 	lines.append("## Top bad seeds")
 	for row in result.bad_seeds:
-		lines.append("- seed %s [%s] badness=%s warning=%s days=%s" % [
+		lines.append("- seed %s [%s] badness=%s warning=%s days=%s stop=%s" % [
 			str(row.get("seed", 0)),
 			str(row.get("archetype", "")),
 			str(row.get("badness_score", 0)),
 			str(row.get("primary_warning", "")),
 			str(row.get("campaign_days", 0)),
+			str(row.get("stop_reason", "")),
 		])
+		var snapshot: Variant = row.get("diagnostic_snapshot", {})
+		if snapshot is Dictionary and not (snapshot as Dictionary).is_empty():
+			lines.append("  unmet=%s money=$%s equipped=%s" % [
+				str(snapshot.get("unmet_goals", [])),
+				str(snapshot.get("money", 0)),
+				str(snapshot.get("equipped_outfit", "")),
+			])
 	lines.append("")
 	lines.append("## Representative seeds")
 	lines.append(JSON.stringify(result.representative_seeds, "\t"))
@@ -166,6 +174,12 @@ func specific_seed_markdown(record: ProgressionLabRunRecord, result: Progression
 	lines.append("Archetype: %s" % String(record.archetype))
 	lines.append("Badness: %d" % record.badness_score)
 	lines.append("Warnings: %s" % ", ".join(record.hard_warnings))
+	if not record.stop_reason.is_empty():
+		lines.append("Stop reason: %s" % record.stop_reason)
+	if not record.diagnostic_snapshot.is_empty():
+		lines.append("")
+		lines.append("## Diagnostic snapshot")
+		lines.append(JSON.stringify(record.diagnostic_snapshot, "\t"))
 	lines.append("")
 	lines.append("## Profile")
 	lines.append(JSON.stringify(record.profile, "\t"))
@@ -208,6 +222,8 @@ func specific_seed_json(record: ProgressionLabRunRecord, result: ProgressionLabP
 		"metrics": record.campaign_metrics,
 		"stage_metrics": record.stage_metrics,
 		"warnings": Array(record.hard_warnings),
+		"stop_reason": record.stop_reason,
+		"diagnostic_snapshot": record.diagnostic_snapshot.duplicate(true),
 		"timeline_markdown": record.timeline_markdown,
 		"daily_log": record.daily_log,
 		"date_summaries": record.date_summaries,

@@ -603,6 +603,11 @@ func _show_run_progress(completed: int, total: int, runs_per_second: float, elap
 	if runs_per_second > 0.0:
 		mean_ms = 1000.0 / runs_per_second
 	var line: String = "Прогон %d / %d" % [completed, total]
+	if _runner != null and bool(_runner.get("regression_mode")):
+		var seed_value: int = 0
+		if _runner.has_method("current_seed"):
+			seed_value = int(_runner.current_seed())
+		line = "Regression seed %d · %d / %d" % [seed_value, completed, total]
 	if total > 0:
 		line += " · %.1f%%" % (100.0 * float(completed) / float(total))
 	if completed > 0:

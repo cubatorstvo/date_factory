@@ -9,6 +9,7 @@ var _previous_save_path: String = ""
 var _previous_real_time: bool = false
 var _active: bool = false
 var isolated_save_path: String = ""
+var _stage_auto_complete_disconnected: bool = false
 
 
 func begin(save_name: String = DEFAULT_SAVE_NAME) -> void:
@@ -34,6 +35,7 @@ func begin(save_name: String = DEFAULT_SAVE_NAME) -> void:
 	if stages != null:
 		stages.reconcile_stage_entry_state()
 	_reset_service_runtime()
+	_set_stage_relationship_auto_complete(false)
 	_active = true
 
 
@@ -49,6 +51,7 @@ func end() -> void:
 	var clock_end: Variant = _root_node("TimeService")
 	if clock_end != null:
 		clock_end.real_time_progression_enabled = _previous_real_time
+	_set_stage_relationship_auto_complete(true)
 	var stages: Variant = _stage_service()
 	if stages != null:
 		stages.reconcile_stage_entry_state()
@@ -56,6 +59,7 @@ func end() -> void:
 	_snapshot = {}
 	_previous_save_path = ""
 	_active = false
+	_stage_auto_complete_disconnected = false
 
 
 func run(work: Callable) -> Variant:
@@ -95,3 +99,27 @@ func _reset_service_runtime() -> void:
 	var competitions: Variant = _root_node("CompetitionService")
 	if competitions != null and competitions.has_method("set_forced_won"):
 		competitions.set_forced_won(null)
+
+
+func _set_stage_relationship_auto_complete(enabled: bool) -> void:
+	var stages: Variant = _stage_service()
+	if stages == null:
+		return
+	stages.auto_complete_enabled = enabled
+	_toggle_auto_complete_callback(_root_node("GirlsService"), "girl_relationship_changed", stages, "_on_girl_relationship_changed", enabled)
+	_toggle_auto_complete_callback(_root_node("AutomationService"), "expansion_changed", stages, "_on_expansion_changed", enabled)
+	_stage_auto_complete_disconnected = not enabled
+
+
+func _toggle_auto_complete_callback(source: Variant, signal_name: StringName, target: Variant, method_name: StringName, enabled: bool) -> void:
+	if source == null or target == null:
+		return
+	if not source.has_signal(signal_name):
+		return
+	var callback: Callable = Callable(target, method_name)
+	var connected: bool = source.is_connected(signal_name, callback)
+	if enabled:
+		if not connected:
+			source.connect(signal_name, callback)
+	elif connected:
+		source.disconnect(signal_name, callback)

@@ -17,6 +17,8 @@ var date_summaries: Array = []
 var item_utility: Dictionary = {}
 var aborted: bool = false
 var end_story_stage: int = 4
+var stop_reason: String = ""
+var diagnostic_snapshot: Dictionary = {}
 
 
 func to_dict() -> Dictionary:
@@ -37,6 +39,8 @@ func to_dict() -> Dictionary:
 		"item_utility": item_utility.duplicate(true),
 		"aborted": aborted,
 		"end_story_stage": end_story_stage,
+		"stop_reason": stop_reason,
+		"diagnostic_snapshot": diagnostic_snapshot.duplicate(true),
 	}
 
 
@@ -52,4 +56,6 @@ func summary_dict() -> Dictionary:
 		"badness_score": badness_score,
 		"aborted": aborted,
 		"end_story_stage": end_story_stage,
+		"stop_reason": stop_reason,
+		"diagnostic_snapshot": diagnostic_snapshot.duplicate(true),
 	}

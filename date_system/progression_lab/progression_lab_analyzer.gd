@@ -21,6 +21,8 @@ const METRIC_KEYS: PackedStringArray = [
 	"rating_end",
 	"money_blocked_decision_points",
 	"daily_gate_blocked_decision_points",
+	"money_blocked_days",
+	"max_consecutive_money_blocked_days",
 	"progress_beats",
 	"dead_progress_days",
 	"max_consecutive_dead_progress_days",
@@ -301,6 +303,8 @@ func _seed_row(record: ProgressionLabRunRecord) -> Dictionary:
 		"novelty_density": float(metrics.get("novelty_density", 0.0)),
 		"stage_plan_summary": plan_line,
 		"primary_warning": String(record.hard_warnings[0]) if record.hard_warnings.size() > 0 else "",
+		"stop_reason": record.stop_reason,
+		"diagnostic_snapshot": record.diagnostic_snapshot.duplicate(true),
 	}
 
 

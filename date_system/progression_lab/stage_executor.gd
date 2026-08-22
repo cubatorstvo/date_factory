@@ -27,6 +27,12 @@ class Candidate:
 	var is_novel: bool = false
 
 
+class ExecutionResult:
+	var success: bool = false
+	var failure_code: String = ""
+	var failure_reason: String = ""
+
+
 var config: ProgressionLabConfig
 var profile: PlayerProfile
 var interests: CampaignInterests
@@ -56,6 +62,16 @@ var _date_policy: DateDecisionPolicy
 var _stage_plans: Array = []
 var _run_base_seed: int = 0
 var _run_stage: int = 1
+var _consecutive_stalled_decisions: int = 0
+var _consecutive_stalled_days: int = 0
+var _day_had_successful_action: bool = false
+var _stall_day_index: int = -1
+var _last_failed_candidates: Array = []
+var _last_candidate_count: int = 0
+var _stop_reason: String = ""
+var _diagnostic_snapshot: Dictionary = {}
+var _active_plan: StagePlan
+var _last_action_failure: String = ""
 
 
 func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecord:
@@ -77,6 +93,15 @@ func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecor
 	_hard_warnings.clear()
 	_aborted = false
 	_run_base_seed = base_seed
+	_consecutive_stalled_decisions = 0
+	_consecutive_stalled_days = 0
+	_day_had_successful_action = false
+	_stall_day_index = -1
+	_last_failed_candidates.clear()
+	_last_candidate_count = 0
+	_stop_reason = ""
+	_diagnostic_snapshot.clear()
+	_active_plan = null
 	seed(ProgressionRng.derive_seed(base_seed, "GLOBAL"))
 	var competitions_reset: Variant = _competition_service()
 	if competitions_reset != null:
@@ -119,6 +144,8 @@ func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecor
 	record.date_summaries = _date_summaries.duplicate(true)
 	record.item_utility = _item_utility.duplicate(true)
 	record.aborted = _aborted
+	record.stop_reason = _stop_reason
+	record.diagnostic_snapshot = _diagnostic_snapshot.duplicate(true)
 	return record
 
 
@@ -135,85 +162,60 @@ func _execute_stage(stage: int, base_seed: int, target_stage: int) -> void:
 	var plan_rng: RandomNumberGenerator = ProgressionRng.make(base_seed, ProgressionRng.stage_plan_stream(stage))
 	var plan: StagePlan = generator.generate(stage, plan_rng)
 	_date_policy.plan = plan
+	_active_plan = plan
 	_plan_hashes[stage] = plan.generation_hash
 	_stage_plans.append(plan.to_dict())
 	_current_stage_metrics = ProgressionLabMetrics.new()
 	_stage_metrics[stage] = _current_stage_metrics
 	var rating: Variant = _rating_service()
+	var economy_start: Variant = _economy_service()
 	_current_stage_metrics.rating_start = int(rating.get_rating()) if rating != null else 0
+	_current_stage_metrics.minimum_money = int(economy_start.get_money()) if economy_start != null else 0
 	if detailed:
 		_timeline.append(_format_stage_plan(plan))
-	var idle_skips: int = 0
-	var stall: int = 0
-	var blocked: Dictionary = {}
 	while _current_story_stage() == stage and not _aborted:
 		var clock: Variant = _time_service()
 		var day_index: int = int(clock.get_calendar_day_index()) if clock != null else 0
 		if day_index >= config.max_calendar_days:
-			_hard_warnings.append("SAFETY_CAP_DAYS")
-			_aborted = true
+			_abort_run(plan, "SAFETY_CAP_DAYS")
 			break
 		if _action_sequence.size() >= MAX_ACTIONS_PER_RUN:
-			_hard_warnings.append("SAFETY_CAP_ACTIONS")
-			_aborted = true
+			_abort_run(plan, "SAFETY_CAP_ACTIONS")
 			break
 		_ensure_day(day_index)
-		if _barrier_complete(plan) and _story_girl_max(plan):
-			var stages: Variant = _stage_service()
-			if stages != null:
-				stages.try_complete_current_stage()
-			if _current_story_stage() != stage:
+		if _try_complete_stage(plan, stage):
+			break
+		var excluded: Dictionary = {}
+		var attempts: int = 0
+		var initial_count: int = -1
+		var progressed: bool = false
+		while not _aborted and _current_story_stage() == stage:
+			var candidates: Array = _collect_scored_candidates(plan, excluded)
+			if initial_count < 0:
+				initial_count = candidates.size()
+				_last_candidate_count = initial_count
+			if candidates.is_empty():
+				_finish_stalled_decision_cycle(plan, stage, initial_count)
 				break
-		_date_policy.consume_rng = false
-		var candidates: Array = []
-		for raw in _collect_candidates(plan):
-			if raw == null:
-				continue
-			var candidate: Candidate = raw
-			var block_key: String = "%s:%s" % [candidate.kind, candidate.content_id]
-			if blocked.has(block_key):
-				continue
-			candidates.append(candidate)
-		_date_policy.consume_rng = true
-		candidates.sort_custom(func(a: Candidate, b: Candidate) -> bool:
-			return a.content_id < b.content_id
-		)
-		if candidates.is_empty():
-			_skip_day()
-			blocked.clear()
-			stall = 0
-			idle_skips += 1
-			if idle_skips >= 8:
-				_hard_warnings.append("NO_USEFUL_ACTIONS_STAGE_%d" % stage)
-				_aborted = true
+			var chosen: Candidate = pick_scored_candidate(candidates)
+			_log_selected_candidate(chosen, plan)
+			var executed: ExecutionResult = _execute_candidate(chosen, plan)
+			attempts += 1
+			if executed.success:
+				_consecutive_stalled_decisions = 0
+				_consecutive_stalled_days = 0
+				_day_had_successful_action = true
+				_last_failed_candidates.clear()
+				progressed = true
 				break
+			_record_failed_candidate(chosen, executed, plan)
+			excluded[_candidate_identity(chosen)] = true
+			_consecutive_stalled_decisions += 1
+			if attempts >= maxi(initial_count, 1):
+				_finish_stalled_decision_cycle(plan, stage, initial_count)
+				break
+		if progressed:
 			continue
-		idle_skips = 0
-		apply_execution_scores(
-			candidates,
-			_campaign.last_primary_category() if _campaign != null else "",
-			_campaign.consecutive_same_count() if _campaign != null else 0,
-			_execution_rng,
-			profile.planning_skill if profile != null else 1.0
-		)
-		var chosen: Candidate = pick_scored_candidate(candidates)
-		var executed: bool = _execute_candidate(chosen, plan)
-		if not executed:
-			if chosen != null:
-				blocked["%s:%s" % [chosen.kind, chosen.content_id]] = true
-			stall += 1
-			if stall >= 12:
-				_skip_day()
-				blocked.clear()
-				stall = 0
-				idle_skips += 1
-				if idle_skips >= 8:
-					_hard_warnings.append("NO_USEFUL_ACTIONS_STAGE_%d" % stage)
-					_aborted = true
-					break
-			continue
-		stall = 0
-		blocked.clear()
 	if plan.content_hash() != str(_plan_hashes.get(stage, "")):
 		_hard_warnings.append("STAGE_PLAN_MUTATED_%d" % stage)
 	var economy: Variant = _economy_service()
@@ -305,10 +307,11 @@ func collect_blocking_snapshot(plan: StagePlan) -> Dictionary:
 func apply_blocking_snapshot(snapshot: Dictionary) -> void:
 	var money_ids: Array = snapshot.get("money", PackedStringArray())
 	var daily_ids: Array = snapshot.get("daily_gate", PackedStringArray())
+	var day_index: int = _day_index()
 	if _campaign != null:
-		_campaign.record_blocking_decision_point(money_ids, daily_ids)
+		_campaign.record_blocking_decision_point(money_ids, daily_ids, day_index)
 	if _current_stage_metrics != null:
-		_current_stage_metrics.record_blocking_decision_point(money_ids, daily_ids)
+		_current_stage_metrics.record_blocking_decision_point(money_ids, daily_ids, day_index)
 	if detailed and (not money_ids.is_empty() or not daily_ids.is_empty()):
 		_log_line("Money-blocked goals:")
 		for goal_id in money_ids:
@@ -352,33 +355,22 @@ func _add_girl_candidates(candidates: Array, plan: StagePlan, girl_id: StringNam
 	var dating: Variant = _dating_service()
 	if dating == null:
 		return
-	var urgent_taxi: bool = false
-	if not bool(dating.can_start_date(girl_id)):
-		if bool(girls.has_filler_reward(FillerRewardCatalog.ID_RITA_URGENT_TAXI)) and str(dating.get_start_date_failure_reason(girl_id)).find("Сегодня") >= 0:
-			urgent_taxi = true
-		else:
-			return
-	if not urgent_taxi and not bool(dating.can_start_date(girl_id)):
+	if _story_date_blocked_by_barrier(plan, girl_id, category):
 		return
+	var urgent_taxi: bool = false
+	var cooldown_reason: String = str(dating.get_start_date_failure_reason(girl_id))
+	if not cooldown_reason.is_empty() and str(cooldown_reason).find("Сегодня") >= 0 and bool(girls.has_filler_reward(FillerRewardCatalog.ID_RITA_URGENT_TAXI)):
+		urgent_taxi = true
 	if plan.stage >= 2 and not _owns_dressed_outfit() and _girl_requires_dressed(girl_id):
 		return
-	var venue_id: StringName = _date_policy.choose_venue(girl_id)
-	var outfits: Dictionary = _date_policy.choose_outfits(girl_id, venue_id)
+	var outfits: Dictionary = _date_policy.choose_outfits(girl_id, &"", _girl_requires_dressed(girl_id))
 	var outfit_id: StringName = outfits["outfit_id"]
 	var backup_id: StringName = outfits["backup_outfit_id"]
+	var venue_id: StringName = _date_policy.choose_venue(girl_id)
+	var eligibility: Dictionary = evaluate_date_candidate(girl_id, outfit_id, venue_id, urgent_taxi)
+	if not bool(eligibility.get("eligible", false)):
+		return
 	var express: bool = bool(girls.has_filler_reward(FillerRewardCatalog.ID_KIRA_EXPRESS_STYLING))
-	var action: GameAction = dating.create_start_date_action(girl_id, venue_id, outfit_id, {
-		"backup_outfit_id": backup_id,
-		"express_styling": express,
-		"urgent_taxi": urgent_taxi,
-	})
-	var actions: Variant = _action_service()
-	if actions == null or not bool(actions.can_execute(action)):
-		var reason: String = str(actions.get_failure_reason(action)) if actions != null else ""
-		if reason.find("денег") >= 0 or reason.find("денег") >= 0:
-			return
-		if not bool(actions.can_execute(action)):
-			return
 	if venue_id == &"apartment":
 		var apartment: Variant = _apartment_service()
 		if apartment != null and not bool(apartment.is_prepared()):
@@ -402,7 +394,7 @@ func _add_girl_candidates(candidates: Array, plan: StagePlan, girl_id: StringNam
 	date.express_styling = express
 	date.urgent_taxi = urgent_taxi
 	date.goal_id = _girl_goal(girl_id)
-	date.content_id = "date:%s:%s" % [String(girl_id), String(venue_id)]
+	date.content_id = "date:%s:%s:%s" % [String(girl_id), String(venue_id), String(outfit_id)]
 	date.uses_daily_gate = not urgent_taxi
 	date.is_novel = not _seen.has("girl:%s" % String(girl_id)) or not _visited_venues.has(String(venue_id))
 	date.score = _score(priority, date.uses_daily_gate, false, date.is_novel, date.content_id)
@@ -743,15 +735,20 @@ func _score(priority: float, daily_gate: bool, unblock: bool, novel: bool, conte
 	return score
 
 
-func _execute_candidate(candidate: Candidate, plan: StagePlan) -> bool:
+func _execute_candidate(candidate: Candidate, plan: StagePlan) -> ExecutionResult:
+	var result := ExecutionResult.new()
 	if candidate == null:
-		return false
+		result.failure_code = "UNKNOWN"
+		result.failure_reason = "missing candidate"
+		return result
+	var stage_before: int = _current_story_stage()
 	if candidate.location_id != &"":
 		var world: Variant = _world_service()
 		if world != null and world.get_current_location_id() != candidate.location_id:
 			world.enter_location(candidate.location_id)
 	var before: Dictionary = _capture_world()
 	var day_index: int = _day_index()
+	_last_action_failure = ""
 	var ok: bool = false
 	match candidate.kind:
 		"meet":
@@ -777,7 +774,8 @@ func _execute_candidate(candidate: Candidate, plan: StagePlan) -> bool:
 		_:
 			ok = false
 	if not ok:
-		return false
+		return _classify_execution_failure(candidate, plan)
+	_record_money_delta(int(before.get("money", 0)))
 	var beats: int = _apply_world_diff(before, candidate)
 	_campaign.record_primary(candidate.category, day_index, beats)
 	_current_stage_metrics.record_primary(candidate.category, day_index, beats)
@@ -785,7 +783,12 @@ func _execute_candidate(candidate: Candidate, plan: StagePlan) -> bool:
 	_current_stage_metrics.record_goal_action(candidate.goal_id, candidate.is_support, day_index)
 	_action_sequence.append("%s|%s|%s" % [candidate.category, candidate.kind, candidate.content_id])
 	_update_goal_completion(plan, day_index)
-	return true
+	var barrier_at_transition: bool = plan != null and _barrier_complete(plan)
+	var story_max_at_transition: bool = plan != null and _story_girl_max(plan)
+	_try_complete_stage(plan, stage_before)
+	_assert_stage_transition(stage_before, barrier_at_transition, story_max_at_transition)
+	result.success = true
+	return result
 
 
 func _exec_meet(candidate: Candidate) -> bool:
@@ -832,6 +835,19 @@ func _exec_date(candidate: Candidate, plan: StagePlan) -> bool:
 	var actions: Variant = _action_service()
 	if dating == null or actions == null:
 		return false
+	if _story_date_blocked_by_barrier(plan, candidate.girl_id, candidate.category):
+		_last_action_failure = "Story Girl held below MAX until StagePlan barrier complete"
+		return false
+	var equipment: Variant = _equipment_service()
+	if candidate.outfit_id != &"" and equipment != null:
+		if not bool(equipment.owns_outfit(candidate.outfit_id)):
+			_last_action_failure = "Outfit unavailable"
+			return false
+		equipment.equip_outfit(candidate.outfit_id)
+	var eligibility: Dictionary = evaluate_date_candidate(candidate.girl_id, candidate.outfit_id, candidate.venue_id, candidate.urgent_taxi)
+	if not bool(eligibility.get("eligible", false)):
+		_last_action_failure = str(eligibility.get("reason", "Date eligibility changed"))
+		return false
 	var options: Dictionary = {
 		"backup_outfit_id": candidate.backup_outfit_id,
 		"express_styling": candidate.express_styling,
@@ -843,6 +859,7 @@ func _exec_date(candidate: Candidate, plan: StagePlan) -> bool:
 	var result: ActionResult = actions.execute(action)
 	if result == null or not result.success:
 		dating.pending_date_seed = -1
+		_last_action_failure = str(result.failure_reason) if result != null else "start date rejected"
 		return false
 	if not bool(dating.has_active_date()):
 		dating.start_date(candidate.girl_id, candidate.venue_id, candidate.outfit_id, options)
@@ -906,7 +923,7 @@ func _exec_date(candidate: Candidate, plan: StagePlan) -> bool:
 		_log_line("Relationship: %d → %d" % [rel_before, rel_after])
 		_log_line("Date score: %+d" % date_result.relationship_delta)
 	if plan != null and plan.venue_visit_goals.has(candidate.venue_id):
-		_campaign.complete_goal(_venue_goal(candidate.venue_id), _day_index())
+		_complete_goal_both(_venue_goal(candidate.venue_id), _day_index())
 	return true
 
 
@@ -923,7 +940,6 @@ func _exec_train(candidate: Candidate) -> bool:
 	_current_stage_metrics.training_actions += 1
 	_campaign.characteristic_upgrades += 1
 	_current_stage_metrics.characteristic_upgrades += 1
-	_campaign.money_spent += action.money_cost
 	_log_line("### TRAINING %s" % String(candidate.upgrade_id))
 	return true
 
@@ -942,7 +958,6 @@ func _exec_buy_outfit(candidate: Candidate) -> bool:
 	_current_stage_metrics.purchases += 1
 	_campaign.outfits_acquired += 1
 	_current_stage_metrics.outfits_acquired += 1
-	_campaign.money_spent += action.money_cost
 	_seen["outfit:%s" % String(candidate.outfit_id)] = true
 	_ensure_item(String(candidate.outfit_id))["acquired"] = true
 	_campaign.set_flag("used_production_purchase")
@@ -967,7 +982,6 @@ func _exec_buy_apartment(candidate: Candidate) -> bool:
 	_current_stage_metrics.purchases += 1
 	_campaign.apartment_objects_acquired += 1
 	_current_stage_metrics.apartment_objects_acquired += 1
-	_campaign.money_spent += action.money_cost
 	_seen["apt:%s" % String(candidate.object_id)] = true
 	_ensure_item(String(candidate.object_id))["acquired"] = true
 	_campaign.set_flag("apartment_purchase")
@@ -1066,7 +1080,6 @@ func _exec_work(candidate: Candidate) -> bool:
 	var money_after: int = int(_economy_service().get_money())
 	_campaign.work_actions += 1
 	_current_stage_metrics.work_actions += 1
-	_campaign.money_earned += maxi(0, money_after - money_before)
 	_campaign.set_flag("used_production_work")
 	_log_line("### WORK")
 	_log_line("Goal support: %s" % candidate.goal_id)
@@ -1086,6 +1099,368 @@ func _skip_day() -> void:
 			clock.advance_time(int(clock.minutes_until_next_morning(clock.get_game_time_minutes())))
 	_action_sequence.append("OTHER|skip|skip_to_08_00")
 	_log_line("### SKIP to 08:00")
+
+
+func evaluate_date_candidate(girl_id: StringName, selected_outfit_id: StringName, selected_venue_id: StringName, urgent_taxi: bool = false) -> Dictionary:
+	var result: Dictionary = {
+		"eligible": false,
+		"reason": "",
+		"failure_code": "UNKNOWN",
+	}
+	var dating: Variant = _dating_service()
+	var equipment: Variant = _equipment_service()
+	if dating == null:
+		result["reason"] = "DatingService missing"
+		return result
+	if selected_outfit_id == &"" or equipment == null or not bool(equipment.owns_outfit(selected_outfit_id)):
+		result["failure_code"] = "OUTFIT_UNAVAILABLE"
+		result["reason"] = "Selected outfit is not owned"
+		return result
+	if selected_venue_id == &"" or not bool(dating.is_date_venue_available(girl_id, selected_venue_id)):
+		result["failure_code"] = "VENUE_UNAVAILABLE"
+		result["reason"] = "Selected venue is not available"
+		return result
+	var previous_outfit: StringName = equipment.get_current_outfit_id()
+	equipment.equip_outfit(selected_outfit_id)
+	var reason: String = str(dating.get_start_date_failure_reason(girl_id, urgent_taxi))
+	if reason.is_empty():
+		var action: GameAction = dating.create_start_date_action(girl_id, selected_venue_id, selected_outfit_id, {"urgent_taxi": urgent_taxi})
+		var actions: Variant = _action_service()
+		if actions != null and not bool(actions.can_execute(action)):
+			reason = str(actions.get_failure_reason(action))
+	if previous_outfit != &"" and bool(equipment.owns_outfit(previous_outfit)):
+		equipment.equip_outfit(previous_outfit)
+	if reason.is_empty():
+		result["eligible"] = true
+		result["failure_code"] = ""
+		return result
+	result["reason"] = reason
+	result["failure_code"] = _failure_code_from_reason(reason)
+	return result
+
+
+func _collect_scored_candidates(plan: StagePlan, excluded: Dictionary) -> Array:
+	_date_policy.consume_rng = false
+	var candidates: Array = []
+	for raw in _collect_candidates(plan):
+		if raw == null:
+			continue
+		var candidate: Candidate = raw
+		if excluded.has(_candidate_identity(candidate)):
+			continue
+		candidates.append(candidate)
+	_date_policy.consume_rng = true
+	candidates.sort_custom(func(a: Candidate, b: Candidate) -> bool:
+		return a.content_id < b.content_id
+	)
+	apply_execution_scores(
+		candidates,
+		_campaign.last_primary_category() if _campaign != null else "",
+		_campaign.consecutive_same_count() if _campaign != null else 0,
+		_execution_rng,
+		profile.planning_skill if profile != null else 1.0
+	)
+	return candidates
+
+
+func _candidate_identity(candidate: Candidate) -> String:
+	if candidate == null:
+		return ""
+	return "%s|%s|%s|%s|%s" % [candidate.kind, candidate.content_id, String(candidate.girl_id), String(candidate.outfit_id), String(candidate.venue_id)]
+
+
+func _try_complete_stage(plan: StagePlan, stage: int) -> bool:
+	if plan == null or not _barrier_complete(plan) or not _story_girl_max(plan):
+		return false
+	var stages: Variant = _stage_service()
+	if stages != null:
+		stages.try_complete_current_stage()
+	return _current_story_stage() != stage
+
+
+func _assert_stage_transition(stage_before: int, barrier_before: bool, story_girl_max_before: bool) -> void:
+	var stage_after: int = _current_story_stage()
+	if stage_after <= stage_before:
+		return
+	if barrier_before and story_girl_max_before:
+		return
+	_hard_warnings.append("STAGE_TRANSITION_INVARIANT")
+
+
+func _story_date_blocked_by_barrier(plan: StagePlan, girl_id: StringName, category: String) -> bool:
+	if plan == null or girl_id == &"" or plan.story_girl_id != girl_id:
+		return false
+	if category != "STORY" and category != "DATE":
+		return false
+	if _barrier_complete(plan):
+		return false
+	var girls: Variant = _girls_service()
+	if girls == null:
+		return false
+	var rel_max: int = int(girls.get_relationship_max(girl_id))
+	var rel: int = int(girls.get_relationship(girl_id))
+	return rel_max > 0 and rel >= rel_max - 1
+
+
+func _finish_stalled_decision_cycle(plan: StagePlan, stage: int, initial_count: int) -> void:
+	if initial_count <= 0:
+		_consecutive_stalled_decisions += 1
+	_log_stall_day(plan, initial_count)
+	if not _day_had_successful_action:
+		_consecutive_stalled_days += 1
+	_skip_day()
+	_day_had_successful_action = false
+	var max_stalled: int = 8
+	if config != null:
+		max_stalled = config.max_consecutive_stalled_days
+	if _consecutive_stalled_days >= max_stalled:
+		_abort_run(plan, "NO_USEFUL_ACTIONS_STAGE_%d" % stage)
+
+
+func _abort_run(plan: StagePlan, reason: String) -> void:
+	_stop_reason = reason
+	_hard_warnings.append(reason)
+	_diagnostic_snapshot = _build_diagnostic_snapshot(plan)
+	_aborted = true
+
+
+func _record_failed_candidate(candidate: Candidate, executed: ExecutionResult, plan: StagePlan) -> void:
+	var entry: Dictionary = {
+		"kind": candidate.kind if candidate != null else "",
+		"category": candidate.category if candidate != null else "",
+		"goal_id": candidate.goal_id if candidate != null else "",
+		"girl_id": String(candidate.girl_id) if candidate != null else "",
+		"outfit_id": String(candidate.outfit_id) if candidate != null else "",
+		"venue_id": String(candidate.venue_id) if candidate != null else "",
+		"failure_code": executed.failure_code,
+		"failure_reason": executed.failure_reason,
+	}
+	_last_failed_candidates.append(entry)
+	if not detailed or candidate == null:
+		return
+	var economy: Variant = _economy_service()
+	_log_line("### FAILED CANDIDATE")
+	_log_line("Primary activity: %s" % candidate.category)
+	_log_line("Goal: %s" % candidate.goal_id)
+	if candidate.girl_id != &"":
+		_log_line("Girl: %s" % _girl_name(candidate.girl_id))
+	if candidate.outfit_id != &"":
+		_log_line("Planned Outfit: %s" % String(candidate.outfit_id))
+	if candidate.venue_id != &"":
+		_log_line("Planned Venue: %s" % String(candidate.venue_id))
+	_log_line("Failure code: %s" % executed.failure_code)
+	_log_line("Failure reason: %s" % executed.failure_reason)
+	_log_line("Money: $%d" % (int(economy.get_money()) if economy != null else 0))
+	_log_line("Story Stage: %d" % _current_story_stage())
+	_log_line("Barrier complete: %s" % str(_barrier_complete(plan) if plan != null else false))
+
+
+func _log_selected_candidate(candidate: Candidate, plan: StagePlan) -> void:
+	if not detailed or candidate == null:
+		return
+	_log_line("### SELECTED CANDIDATE")
+	_log_line("Primary activity: %s" % candidate.category)
+	_log_line("Goal: %s" % candidate.goal_id)
+	if candidate.kind == "date":
+		_log_line("Girl: %s" % _girl_name(candidate.girl_id))
+		_log_line("Planned Outfit: %s" % String(candidate.outfit_id))
+		_log_line("Planned Venue: %s" % String(candidate.venue_id))
+		_log_line("Barrier complete: %s" % str(_barrier_complete(plan) if plan != null else false))
+
+
+func _log_stall_day(plan: StagePlan, initial_count: int) -> void:
+	if not detailed:
+		return
+	_log_line("Available candidates before execution: %d" % initial_count)
+	_log_line("Failed candidates: %d" % _last_failed_candidates.size())
+	_log_line("Remaining unmet goals:")
+	for goal_id in _unmet_goals(plan):
+		_log_line("- %s" % goal_id)
+
+
+func _classify_execution_failure(candidate: Candidate, plan: StagePlan) -> ExecutionResult:
+	var result := ExecutionResult.new()
+	var reason: String = _last_action_failure
+	if candidate != null and candidate.kind == "date":
+		var eligibility: Dictionary = evaluate_date_candidate(candidate.girl_id, candidate.outfit_id, candidate.venue_id, candidate.urgent_taxi)
+		if not bool(eligibility.get("eligible", false)):
+			reason = str(eligibility.get("reason", reason))
+			result.failure_code = str(eligibility.get("failure_code", "DATE_ELIGIBILITY_CHANGED"))
+			result.failure_reason = reason
+			return result
+	if reason.is_empty():
+		reason = "production action rejected"
+	result.failure_reason = reason
+	result.failure_code = _failure_code_from_reason(reason)
+	if candidate != null and _goal_already_complete(candidate, plan):
+		result.failure_code = "GOAL_ALREADY_COMPLETE"
+	return result
+
+
+func _failure_code_from_reason(reason: String) -> String:
+	var text: String = reason.to_lower()
+	if text.find("outfit") >= 0 or text.find("образ") >= 0 or text.find("casual") >= 0 or text.find("повседнев") >= 0:
+		return "OUTFIT_UNAVAILABLE" if text.find("owned") >= 0 or text.find("не влад") >= 0 else "DATE_ELIGIBILITY_CHANGED"
+	if text.find("venue") >= 0 or text.find("локац") >= 0:
+		return "VENUE_UNAVAILABLE"
+	if text.find("денег") >= 0 or text.find("money") >= 0:
+		return "INSUFFICIENT_MONEY"
+	if text.find("сегодня") >= 0 or text.find("daily") >= 0:
+		return "DAILY_GATE"
+	if text.find("apart") >= 0 or text.find("квартир") >= 0 or text.find("clean") >= 0:
+		return "APARTMENT_PREPARATION_FAILED"
+	if text.find("changed") >= 0 or text.find("state") >= 0:
+		return "STATE_CHANGED"
+	if text.find("barrier") >= 0 or text.find("complete") >= 0:
+		return "GOAL_ALREADY_COMPLETE"
+	if reason.is_empty():
+		return "UNKNOWN"
+	return "PRODUCTION_ACTION_REJECTED"
+
+
+func _goal_already_complete(candidate: Candidate, plan: StagePlan) -> bool:
+	if candidate == null:
+		return false
+	if candidate.girl_id != &"" and _girl_maxed(candidate.girl_id):
+		return true
+	if candidate.kind == "buy_outfit":
+		var equipment: Variant = _equipment_service()
+		return equipment != null and bool(equipment.owns_outfit(candidate.outfit_id))
+	if candidate.kind == "buy_apartment":
+		var apartment: Variant = _apartment_service()
+		return apartment != null and bool(apartment.is_object_owned(candidate.object_id))
+	if plan != null and candidate.kind == "date" and candidate.girl_id == plan.story_girl_id and _story_date_blocked_by_barrier(plan, candidate.girl_id, candidate.category):
+		return true
+	return false
+
+
+func _record_money_delta(money_before: int) -> void:
+	var economy: Variant = _economy_service()
+	var money_after: int = int(economy.get_money()) if economy != null else money_before
+	var earned: int = maxi(0, money_after - money_before)
+	var spent: int = maxi(0, money_before - money_after)
+	if _campaign != null:
+		_campaign.money_earned += earned
+		_campaign.money_spent += spent
+		_campaign.minimum_money = mini(_campaign.minimum_money, money_after) if _campaign.total_actions > 0 else money_after
+	if _current_stage_metrics != null:
+		_current_stage_metrics.money_earned += earned
+		_current_stage_metrics.money_spent += spent
+		_current_stage_metrics.minimum_money = mini(_current_stage_metrics.minimum_money, money_after) if _current_stage_metrics.total_actions > 0 else money_after
+
+
+func _complete_goal_both(goal_id: String, day_index: int) -> void:
+	if _campaign != null:
+		_campaign.complete_goal(goal_id, day_index)
+	if _current_stage_metrics != null:
+		_current_stage_metrics.complete_goal(goal_id, day_index)
+
+
+func _unmet_goals(plan: StagePlan) -> PackedStringArray:
+	var unmet: PackedStringArray = PackedStringArray()
+	if plan == null:
+		return unmet
+	if plan.stage >= 2 and not _owns_dressed_outfit():
+		unmet.append("outfit:dressup")
+	for girl_id in plan.target_filler_girl_ids:
+		if not _girl_maxed(girl_id):
+			unmet.append(_girl_goal(girl_id))
+	for rival_id in plan.target_ordinary_rival_ids:
+		if _rivals_service() != null and not bool(_rivals_service().is_defeated(rival_id)):
+			unmet.append(_rival_goal(rival_id))
+	var characteristics: Variant = _characteristic_service()
+	for key in plan.characteristic_targets.keys():
+		if characteristics == null or int(characteristics.get_value(StringName(str(key)))) < int(plan.characteristic_targets[key]):
+			unmet.append(_char_goal(StringName(str(key)), int(plan.characteristic_targets[key])))
+	var equipment: Variant = _equipment_service()
+	var owned_outfits: int = 0
+	for outfit_id in plan.target_outfit_ids:
+		if equipment != null and bool(equipment.owns_outfit(outfit_id)):
+			owned_outfits += 1
+		elif equipment != null:
+			unmet.append(_outfit_goal(outfit_id))
+	if owned_outfits < plan.target_outfit_count:
+		unmet.append("outfit:count")
+	var apartment: Variant = _apartment_service()
+	var owned_objects: int = 0
+	for object_id in plan.target_apartment_object_ids:
+		if apartment != null and bool(apartment.is_object_owned(object_id)):
+			owned_objects += 1
+		elif apartment != null:
+			unmet.append(_apartment_goal(object_id))
+	if owned_objects < plan.target_apartment_object_count:
+		unmet.append("apartment:count")
+	for venue_id in plan.venue_visit_goals:
+		if not _visited_venues.has(String(venue_id)):
+			unmet.append(_venue_goal(venue_id))
+	if plan.story_girl_id != &"" and not _girl_maxed(plan.story_girl_id):
+		unmet.append(_girl_goal(plan.story_girl_id))
+	return unmet
+
+
+func _build_diagnostic_snapshot(plan: StagePlan) -> Dictionary:
+	var girls: Variant = _girls_service()
+	var equipment: Variant = _equipment_service()
+	var apartment: Variant = _apartment_service()
+	var economy: Variant = _economy_service()
+	var characteristics: Variant = _characteristic_service()
+	var blocking: Dictionary = collect_blocking_snapshot(plan) if plan != null else {"money": PackedStringArray(), "daily_gate": PackedStringArray()}
+	var owned_outfits: PackedStringArray = PackedStringArray()
+	if equipment != null:
+		for outfit in equipment.get_owned_outfits():
+			if outfit != null:
+				owned_outfits.append(String(outfit.id))
+	var owned_objects: PackedStringArray = PackedStringArray()
+	if apartment != null:
+		for object_id in apartment.get_owned_object_ids():
+			owned_objects.append(String(object_id))
+	var rels: Dictionary = {}
+	var availability: Dictionary = {}
+	if girls != null:
+		for definition in girls.get_catalog().get_all_girls():
+			if definition == null:
+				continue
+			rels[String(definition.id)] = int(girls.get_relationship(definition.id))
+			availability[String(definition.id)] = {
+				"discovered": bool(girls.is_discovered(definition.id)),
+				"can_meet": bool(girls.can_meet_girl(definition.id)),
+				"completed": bool(girls.is_relationship_completed(definition.id)),
+			}
+	var chars: Dictionary = {}
+	if characteristics != null:
+		for characteristic_id in CharacteristicIds.all_ids():
+			chars[String(characteristic_id)] = int(characteristics.get_value(characteristic_id))
+	var dating: Variant = _dating_service()
+	var rival_availability: Dictionary = {}
+	var rivals: Variant = _rivals_service()
+	if rivals != null and plan != null:
+		for rival_id in plan.target_ordinary_rival_ids:
+			rival_availability[String(rival_id)] = {
+				"discovered": bool(rivals.is_discovered(rival_id)),
+				"defeated": bool(rivals.is_defeated(rival_id)),
+				"can_challenge": bool(rivals.can_challenge_now(rival_id)),
+			}
+	return {
+		"unmet_goals": Array(_unmet_goals(plan)),
+		"money": int(economy.get_money()) if economy != null else 0,
+		"owned_outfits": Array(owned_outfits),
+		"equipped_outfit": String(equipment.get_current_outfit_id()) if equipment != null else "",
+		"owned_apartment_objects": Array(owned_objects),
+		"characteristics": chars,
+		"girl_relationships": rels,
+		"girl_availability": availability,
+		"rival_availability": rival_availability,
+		"story_stage": _current_story_stage(),
+		"city_stage": int(_world_service().get_city_stage()) if _world_service() != null else 0,
+		"cash_blocked_goals": Array(blocking.get("money", PackedStringArray())),
+		"daily_gate_blocked_goals": Array(blocking.get("daily_gate", PackedStringArray())),
+		"candidate_count": _last_candidate_count,
+		"last_failed_candidates": _last_failed_candidates.duplicate(true),
+		"consecutive_stalled_decisions": _consecutive_stalled_decisions,
+		"consecutive_stalled_days": _consecutive_stalled_days,
+		"barrier_complete": _barrier_complete(plan) if plan != null else false,
+		"has_dating_service": dating != null,
+	}
 
 
 func _barrier_complete(plan: StagePlan) -> bool:
@@ -1134,28 +1509,28 @@ func _story_girl_max(plan: StagePlan) -> bool:
 func _update_goal_completion(plan: StagePlan, day_index: int) -> void:
 	for girl_id in plan.target_filler_girl_ids:
 		if _girl_maxed(girl_id):
-			_campaign.complete_goal(_girl_goal(girl_id), day_index)
+			_complete_goal_both(_girl_goal(girl_id), day_index)
 	if plan.story_girl_id != &"" and _girl_maxed(plan.story_girl_id):
-		_campaign.complete_goal(_girl_goal(plan.story_girl_id), day_index)
+		_complete_goal_both(_girl_goal(plan.story_girl_id), day_index)
 	for rival_id in plan.target_ordinary_rival_ids:
 		if _rivals_service() != null and bool(_rivals_service().is_defeated(rival_id)):
-			_campaign.complete_goal(_rival_goal(rival_id), day_index)
+			_complete_goal_both(_rival_goal(rival_id), day_index)
 	if plan.story_rival_id != &"" and _rivals_service() != null and bool(_rivals_service().is_defeated(plan.story_rival_id)):
-		_campaign.complete_goal(_rival_goal(plan.story_rival_id), day_index)
+		_complete_goal_both(_rival_goal(plan.story_rival_id), day_index)
 	var characteristics: Variant = _characteristic_service()
 	for key in plan.characteristic_targets.keys():
 		if characteristics != null and int(characteristics.get_value(StringName(str(key)))) >= int(plan.characteristic_targets[key]):
-			_campaign.complete_goal(_char_goal(StringName(str(key)), int(plan.characteristic_targets[key])), day_index)
+			_complete_goal_both(_char_goal(StringName(str(key)), int(plan.characteristic_targets[key])), day_index)
 	var equipment: Variant = _equipment_service()
 	for outfit_id in plan.target_outfit_ids:
 		if equipment != null and bool(equipment.owns_outfit(outfit_id)):
-			_campaign.complete_goal(_outfit_goal(outfit_id), day_index)
+			_complete_goal_both(_outfit_goal(outfit_id), day_index)
 	if plan.stage >= 2 and _owns_dressed_outfit():
-		_campaign.complete_goal("outfit:dressup", day_index)
+		_complete_goal_both("outfit:dressup", day_index)
 	var apartment: Variant = _apartment_service()
 	for object_id in plan.target_apartment_object_ids:
 		if apartment != null and bool(apartment.is_object_owned(object_id)):
-			_campaign.complete_goal(_apartment_goal(object_id), day_index)
+			_complete_goal_both(_apartment_goal(object_id), day_index)
 
 
 func _capture_world() -> Dictionary:
@@ -1265,8 +1640,6 @@ func _apply_world_diff(before: Dictionary, candidate: Candidate) -> int:
 			beats += 1
 	if (after["rewards"] as PackedStringArray).size() > (before["rewards"] as PackedStringArray).size():
 		beats += 1
-	var money_after: int = int(after["money"])
-	_campaign.minimum_money = mini(_campaign.minimum_money, money_after) if _campaign.total_actions > 0 else money_after
 	if candidate != null:
 		pass
 	return beats
@@ -1449,6 +1822,7 @@ func _ensure_day(day_index: int) -> void:
 		return
 	_flush_day()
 	_current_day = day_index
+	_day_had_successful_action = false
 	_day_lines = PackedStringArray()
 	if detailed:
 		_day_lines.append("## Day %d" % (day_index + 1))

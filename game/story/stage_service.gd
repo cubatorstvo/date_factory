@@ -9,6 +9,7 @@ const FIRST_STAGE: int = 1
 const LAST_STAGE: int = 6
 
 var _catalog: StageCatalog
+var auto_complete_enabled: bool = true
 
 
 func _ready() -> void:
@@ -258,6 +259,8 @@ func _ensure_girls_subscription() -> void:
 
 func _on_girl_relationship_changed(_girl_id: StringName, _previous_value: int, _current_value: int, _delta: int) -> void:
 	stage_progress_changed.emit(get_current_stage())
+	if not auto_complete_enabled:
+		return
 	try_complete_current_stage()
 
 func _ensure_automation_subscription() -> void:
@@ -272,6 +275,8 @@ func _ensure_automation_subscription() -> void:
 
 func _on_expansion_changed() -> void:
 	stage_progress_changed.emit(get_current_stage())
+	if not auto_complete_enabled:
+		return
 	try_complete_current_stage()
 
 

@@ -29,7 +29,7 @@ func choose_venue(girl_id: StringName) -> StringName:
 	return best_id
 
 
-func choose_outfits(girl_id: StringName, venue_id: StringName) -> Dictionary:
+func choose_outfits(girl_id: StringName, venue_id: StringName, require_dressed: bool = false) -> Dictionary:
 	var equipment: Variant = _equipment_service()
 	var owned: Array = []
 	if equipment != null:
@@ -37,6 +37,8 @@ func choose_outfits(girl_id: StringName, venue_id: StringName) -> Dictionary:
 	var scored: Array = []
 	for outfit in owned:
 		if outfit == null:
+			continue
+		if require_dressed and int(outfit.tier) < 1:
 			continue
 		scored.append({"id": outfit.id, "score": _outfit_score(girl_id, venue_id, outfit)})
 	scored.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:

@@ -17,6 +17,9 @@ var _session: PlaythroughSession
 var _analyzer: ProgressionLabAnalyzer
 var _exporter: ProgressionLabExporter
 var _configured: bool = false
+var _seed_list: PackedInt32Array = PackedInt32Array()
+var _current_seed: int = 0
+var regression_mode: bool = false
 
 
 func configure(p_config: ProgressionLabConfig, p_n: int, p_base_seed_start: int, p_end_story_stage: int, p_archetype_mode: StringName) -> void:
@@ -28,6 +31,9 @@ func configure(p_config: ProgressionLabConfig, p_n: int, p_base_seed_start: int,
 	_cancelled = false
 	_completed = 0
 	_started_usec = Time.get_ticks_usec()
+	_seed_list = PackedInt32Array()
+	_current_seed = p_base_seed_start
+	regression_mode = false
 	_result = ProgressionLabPopulationResult.new()
 	_result.schema_version = config.schema_version
 	_result.simulation_version = simulation_version()
@@ -54,6 +60,9 @@ func process_batch() -> bool:
 		if _cancelled:
 			break
 		var seed: int = base_seed_start + _completed
+		if _completed < _seed_list.size():
+			seed = _seed_list[_completed]
+		_current_seed = seed
 		var record: ProgressionLabRunRecord = _run_seed(seed, false)
 		_result.records.append(record)
 		_completed += 1
@@ -62,6 +71,20 @@ func process_batch() -> bool:
 		_finish_if_needed()
 		return true
 	return false
+
+
+func current_seed() -> int:
+	return _current_seed
+
+
+func configure_seed_list(p_config: ProgressionLabConfig, seeds: PackedInt32Array, p_end_story_stage: int, p_archetype_mode: StringName) -> void:
+	var start: int = seeds[0] if seeds.size() > 0 else 1
+	configure(p_config, maxi(seeds.size(), 1), start, p_end_story_stage, p_archetype_mode)
+	_seed_list = seeds.duplicate()
+	regression_mode = true
+	n = maxi(_seed_list.size(), 1)
+	_result.n = n
+	_current_seed = start
 
 
 func cancel() -> void:

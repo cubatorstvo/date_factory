@@ -23,6 +23,11 @@ func run_all() -> PackedStringArray:
 	_test_production_integration()
 	_test_goal_isolation()
 	_test_exports()
+	_test_date_loadout_before_eligibility()
+	_test_date_missing_dressed_outfit()
+	_test_story_barrier_and_stall()
+	_test_stage_money_consistency()
+	_test_failed_seed_regression_set()
 	return _failures
 
 
@@ -312,6 +317,157 @@ func _test_exports() -> void:
 	_ok("detailed log money-blocked goal", block_log.find("- goal_a") >= 0)
 	_ok("detailed log daily-gate header", block_log.find("Daily-gate-blocked goals:") >= 0)
 	_ok("detailed log daily-gate goal", block_log.find("- goal_b") >= 0)
+
+
+func _test_date_loadout_before_eligibility() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		return _probe_date_loadout(true)
+	))
+	_ok("date probe ran", not captured.is_empty(), JSON.stringify(captured))
+	_ok("owned dressed exists", bool(captured.get("owned_dressed", false)))
+	_ok("equipped casual", str(captured.get("equipped", "")) == String(OutfitCatalog.START_OUTFIT_ID), str(captured.get("equipped", "")))
+	_ok("eligibility with selected dressed", bool(captured.get("eligible", false)), str(captured.get("reason", "")))
+	_ok("date candidate exists", bool(captured.get("has_date", false)), str(captured.get("kinds", [])))
+	_ok("selected outfit is dressed", bool(captured.get("selected_dressed", false)), str(captured.get("outfit_id", "")))
+	_ok("date execution succeeded", bool(captured.get("executed", false)), str(captured.get("failure", "")))
+	_ok("relationship changed", int(captured.get("rel_after", -1)) == int(captured.get("expected_rel", -2)), "%s -> %s delta=%s expected=%s" % [str(captured.get("rel_before", 0)), str(captured.get("rel_after", 0)), str(captured.get("date_delta", 0)), str(captured.get("expected_rel", -1))])
+
+
+func _test_date_missing_dressed_outfit() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		return _probe_date_loadout(false)
+	))
+	_ok("no-dressed probe ran", not captured.is_empty())
+	_ok("date candidate absent without dressed", not bool(captured.get("has_date", true)), str(captured.get("kinds", [])))
+	_ok("support or purchase remains", bool(captured.get("has_support", false)), str(captured.get("kinds", [])))
+
+
+func _test_story_barrier_and_stall() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		_advance_to_stage(2)
+		var executor: StageExecutor = _fresh_executor()
+		var plan := StagePlan.new()
+		plan.stage = 2
+		plan.story_girl_id = GirlCatalog.ID_VIKA
+		plan.characteristic_targets = {String(CharacteristicIds.APPEARANCE): 3}
+		var girls: Variant = _root("GirlsService")
+		if girls != null:
+			girls.discover_girl(plan.story_girl_id)
+			girls.give_contact(plan.story_girl_id)
+			var rel_max: int = int(girls.get_relationship_max(plan.story_girl_id))
+			girls.change_relationship(plan.story_girl_id, maxi(rel_max - 1 - int(girls.get_relationship(plan.story_girl_id)), 0))
+			payload["rel"] = int(girls.get_relationship(plan.story_girl_id))
+			payload["rel_max"] = rel_max
+		var before_stage: int = _current_stage()
+		var candidates: Array = executor._collect_candidates(plan)
+		payload["has_story_date"] = _has_kind(candidates, "date", plan.story_girl_id)
+		payload["has_train"] = _has_kind(candidates, "train")
+		payload["has_work"] = _has_kind(candidates, "work") or _has_kind(candidates, "buy_outfit")
+		payload["stage_before"] = before_stage
+		payload["stage_after_collect"] = _current_stage()
+		executor.detailed = true
+		executor._campaign = ProgressionLabMetrics.new()
+		executor._current_stage_metrics = ProgressionLabMetrics.new()
+		var failed := StageExecutor.ExecutionResult.new()
+		failed.failure_code = "DATE_ELIGIBILITY_CHANGED"
+		failed.failure_reason = "test failure"
+		var dummy := StageExecutor.Candidate.new()
+		dummy.category = "DATE"
+		dummy.kind = "date"
+		dummy.goal_id = "filler:olya:max"
+		dummy.girl_id = GirlCatalog.ID_OLYA
+		dummy.outfit_id = &"wrestling"
+		dummy.venue_id = &"cafe"
+		executor._record_failed_candidate(dummy, failed, plan)
+		payload["failed_log"] = "\n".join(executor._day_lines)
+		payload["stall_before"] = executor._consecutive_stalled_days
+		executor._day_had_successful_action = false
+		for _i in range(8):
+			executor._finish_stalled_decision_cycle(plan, 2, 0)
+		payload["aborted"] = executor._aborted
+		payload["stop"] = executor._stop_reason
+		payload["snapshot"] = executor._diagnostic_snapshot.duplicate(true)
+		payload["stall_not_reset_by_candidate"] = executor._consecutive_stalled_decisions > 0
+		return payload
+	))
+	_ok("story date blocked at MAX-1", not bool(captured.get("has_story_date", true)), JSON.stringify(captured))
+	_ok("optional goals remain", bool(captured.get("has_train", false)) or bool(captured.get("has_work", false)), JSON.stringify(captured))
+	_ok("stage unchanged while barrier incomplete", int(captured.get("stage_before", -1)) == int(captured.get("stage_after_collect", -2)))
+	_ok("failed candidate exports reason", str(captured.get("failed_log", "")).find("FAILED CANDIDATE") >= 0, str(captured.get("failed_log", "")))
+	_ok("failed candidate code", str(captured.get("failed_log", "")).find("DATE_ELIGIBILITY_CHANGED") >= 0)
+	_ok("NO_USEFUL after stalled-day threshold", bool(captured.get("aborted", false)) and str(captured.get("stop", "")).begins_with("NO_USEFUL_ACTIONS_STAGE_"), str(captured.get("stop", "")))
+	_ok("NO_USEFUL has diagnostic snapshot", not _as_dict(captured.get("snapshot", {})).is_empty())
+	_ok("candidate existence does not reset stall", bool(captured.get("stall_not_reset_by_candidate", false)))
+
+
+func _test_stage_money_consistency() -> void:
+	var config := ProgressionLabConfig.new()
+	config.max_calendar_days = 80
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, 1, 1, ProgressionLabConfig.ARCHETYPE_TYPICAL)
+	while not runner.process_batch():
+		pass
+	_ok("money consistency campaign ran", runner.get_result().records.size() == 1)
+	if runner.get_result().records.is_empty():
+		return
+	var record: ProgressionLabRunRecord = runner.get_result().records[0]
+	var campaign: Dictionary = record.campaign_metrics
+	var earned_sum: int = 0
+	var spent_sum: int = 0
+	var action_sum: int = 0
+	for key in record.stage_metrics.keys():
+		var stage_metrics: Dictionary = record.stage_metrics[key]
+		earned_sum += int(stage_metrics.get("money_earned", 0))
+		spent_sum += int(stage_metrics.get("money_spent", 0))
+		action_sum += int(stage_metrics.get("total_actions", 0))
+	_ok("stage money_earned sum equals campaign", earned_sum == int(campaign.get("money_earned", -1)), "%d vs %d" % [earned_sum, int(campaign.get("money_earned", 0))])
+	_ok("stage money_spent sum equals campaign", spent_sum == int(campaign.get("money_spent", -1)), "%d vs %d" % [spent_sum, int(campaign.get("money_spent", 0))])
+	_ok("stage total_actions sum equals campaign", action_sum == int(campaign.get("total_actions", -1)), "%d vs %d" % [action_sum, int(campaign.get("total_actions", 0))])
+	var friction: Dictionary = _as_dict(campaign.get("goal_friction", {}))
+	var stage_friction_ok: bool = true
+	for key in record.stage_metrics.keys():
+		var stage_entry: Dictionary = record.stage_metrics[key]
+		var stage_friction: Dictionary = _as_dict(stage_entry.get("goal_friction", {}))
+		for goal_id in stage_friction.keys():
+			var stage_goal: Dictionary = _as_dict(stage_friction[goal_id])
+			var campaign_goal: Dictionary = _as_dict(friction.get(str(goal_id), {}))
+			if int(stage_goal.get("completed_day", -2)) >= 0 and int(campaign_goal.get("completed_day", -3)) < 0:
+				stage_friction_ok = false
+	_ok("stage Goal Friction completion matches campaign", stage_friction_ok)
+
+
+func _test_failed_seed_regression_set() -> void:
+	var seeds: PackedInt32Array = PackedInt32Array([7, 22, 24, 31, 47, 84, 90])
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure_seed_list(config, seeds, 4, ProgressionLabConfig.MODE_POPULATION)
+	while not runner.process_batch():
+		pass
+	var result: ProgressionLabPopulationResult = runner.get_result()
+	_ok("regression seed count", result.records.size() == seeds.size(), str(result.records.size()))
+	var seed_22: ProgressionLabRunRecord = null
+	for record in result.records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var run: ProgressionLabRunRecord = record
+		var days: int = int(run.campaign_metrics.get("calendar_days", 0))
+		var warnings: PackedStringArray = run.hard_warnings
+		_ok("seed %d no SAFETY_CAP_DAYS" % run.base_seed, warnings.find("SAFETY_CAP_DAYS") < 0, ",".join(warnings))
+		_ok("seed %d finished before 400-day deadlock" % run.base_seed, days < 400 or run.stop_reason.begins_with("NO_USEFUL_ACTIONS_STAGE_"), "days=%d stop=%s" % [days, run.stop_reason])
+		_ok("seed %d no stage invariant break" % run.base_seed, warnings.find("STAGE_TRANSITION_INVARIANT") < 0, ",".join(warnings))
+		if run.stop_reason.begins_with("NO_USEFUL_ACTIONS_STAGE_"):
+			_ok("seed %d NO_USEFUL snapshot" % run.base_seed, not run.diagnostic_snapshot.is_empty())
+		if run.base_seed == 22:
+			seed_22 = run
+	_ok("seed 22 present", seed_22 != null)
+	if seed_22 != null:
+		var dead: int = int(seed_22.campaign_metrics.get("max_consecutive_dead_progress_days", 0))
+		_ok("seed 22 avoids hundreds of consecutive dead days", dead < 80, str(dead))
+		_ok("seed 22 ran dates or aborted with snapshot", int(seed_22.campaign_metrics.get("dates", 0)) > 0 or not seed_22.diagnostic_snapshot.is_empty())
 
 
 func _test_canonical_seed_fixtures() -> void:
@@ -736,3 +892,151 @@ func _string_array_equal(actual_raw: Variant, expected_raw: Variant) -> bool:
 		if str(actual[i]) != str(expected[i]):
 			return false
 	return true
+
+
+func _root(node_name: String) -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null(node_name)
+
+
+func _current_stage() -> int:
+	var stages: Variant = _root("StageService")
+	if stages == null:
+		return 0
+	return int(stages.get_current_stage())
+
+
+func _advance_to_stage(target: int) -> void:
+	var stages: Variant = _root("StageService")
+	if stages == null:
+		return
+	while int(stages.get_current_stage()) < target:
+		if not bool(stages.force_complete_current_stage_for_dev()):
+			break
+
+
+func _first_dressed_id() -> StringName:
+	var equipment: Variant = _root("EquipmentService")
+	if equipment == null:
+		return &""
+	var catalog: Variant = equipment.get_catalog()
+	if catalog == null:
+		return &""
+	for outfit in catalog.get_all_outfits():
+		if outfit != null and int(outfit.tier) >= 1:
+			return outfit.id
+	return &""
+
+
+func _fresh_executor() -> StageExecutor:
+	var executor := StageExecutor.new()
+	executor.config = ProgressionLabConfig.new()
+	executor.profile = PlayerProfile.generate(executor.config, ProgressionRng.make(1, ProgressionRng.STREAM_PROFILE), ProgressionLabConfig.ARCHETYPE_TYPICAL, 0.0)
+	executor.interests = CampaignInterests.generate(ProgressionRng.make(1, ProgressionRng.STREAM_CAMPAIGN_INTEREST))
+	executor._campaign = ProgressionLabMetrics.new()
+	executor._current_stage_metrics = ProgressionLabMetrics.new()
+	executor._execution_rng = RandomNumberGenerator.new()
+	executor._execution_rng.seed = 1
+	executor._date_rng = RandomNumberGenerator.new()
+	executor._date_rng.seed = 1
+	executor._run_base_seed = 1
+	executor._date_policy = DateDecisionPolicy.new()
+	executor._date_policy.config = executor.config
+	executor._date_policy.profile = executor.profile
+	executor._date_policy.interests = executor.interests
+	executor._date_policy.rng = executor._date_rng
+	executor._date_policy.consume_rng = false
+	executor.detailed = true
+	return executor
+
+
+func _has_kind(candidates: Array, kind: String, girl_id: StringName = &"") -> bool:
+	for raw in candidates:
+		if raw == null:
+			continue
+		var candidate: StageExecutor.Candidate = raw
+		if candidate.kind != kind:
+			continue
+		if girl_id != &"" and candidate.girl_id != girl_id:
+			continue
+		return true
+	return false
+
+
+func _probe_date_loadout(grant_dressed: bool) -> Dictionary:
+	_advance_to_stage(2)
+	var dressed_id: StringName = _first_dressed_id()
+	var equipment: Variant = _root("EquipmentService")
+	if grant_dressed and equipment != null and dressed_id != &"":
+		equipment.add_owned_outfit(dressed_id)
+	if equipment != null:
+		equipment.equip_outfit(OutfitCatalog.START_OUTFIT_ID)
+	var equipped_before: String = String(equipment.get_current_outfit_id()) if equipment != null else ""
+	var economy: Variant = _root("EconomyService")
+	if economy != null:
+		economy.add_money(500)
+	var world: Variant = _root("WorldService")
+	if world != null:
+		world.unlock_date_venue(&"apartment")
+		world.unlock_date_venue(&"cafe")
+	var girl_id: StringName = GirlCatalog.ID_KATYA
+	var girls: Variant = _root("GirlsService")
+	if girls != null:
+		girls.discover_girl(girl_id)
+		girls.give_contact(girl_id)
+	var executor: StageExecutor = _fresh_executor()
+	var plan := StagePlan.new()
+	plan.stage = 2
+	plan.target_filler_girl_ids.append(girl_id)
+	if not grant_dressed:
+		plan.target_outfit_count = 1
+		if dressed_id != &"":
+			plan.target_outfit_ids.append(dressed_id)
+	var eval_outfit: StringName = dressed_id if grant_dressed else OutfitCatalog.START_OUTFIT_ID
+	var eligibility: Dictionary = executor.evaluate_date_candidate(girl_id, eval_outfit, &"cafe")
+	var candidates: Array = executor._collect_candidates(plan)
+	var kinds: PackedStringArray = PackedStringArray()
+	var date_candidate: StageExecutor.Candidate = null
+	for raw in candidates:
+		if raw == null:
+			continue
+		var candidate: StageExecutor.Candidate = raw
+		kinds.append(candidate.kind)
+		if candidate.kind == "date" and candidate.girl_id == girl_id:
+			date_candidate = candidate
+	var executed: bool = false
+	var failure: String = ""
+	var rel_before: int = int(girls.get_relationship(girl_id)) if girls != null else 0
+	var rel_after: int = rel_before
+	var date_delta: int = 0
+	var rel_max: int = int(girls.get_relationship_max(girl_id)) if girls != null else 0
+	if date_candidate != null:
+		var result: StageExecutor.ExecutionResult = executor._execute_candidate(date_candidate, plan)
+		executed = result.success
+		failure = result.failure_reason
+		rel_after = int(girls.get_relationship(girl_id)) if girls != null else rel_before
+		if not executor._date_summaries.is_empty() and executor._date_summaries[0] is Dictionary:
+			date_delta = int(executor._date_summaries[0].get("score", 0))
+	var selected_dressed: bool = false
+	if date_candidate != null and equipment != null:
+		selected_dressed = int(equipment.get_outfit_tier(equipment.get_catalog().get_outfit(date_candidate.outfit_id))) >= 1
+	return {
+		"owned_dressed": grant_dressed and dressed_id != &"",
+		"equipped": equipped_before,
+		"eligible": bool(eligibility.get("eligible", false)),
+		"reason": str(eligibility.get("reason", "")),
+		"has_date": date_candidate != null,
+		"selected_dressed": selected_dressed,
+		"outfit_id": String(date_candidate.outfit_id) if date_candidate != null else "",
+		"executed": executed,
+		"failure": failure,
+		"rel_before": rel_before,
+		"rel_after": rel_after,
+		"rel_changed": rel_after != rel_before,
+		"date_delta": date_delta,
+		"expected_rel": mini(rel_before + date_delta, rel_max) if rel_max > 0 else rel_before + date_delta,
+		"kinds": Array(kinds),
+		"has_support": _has_kind(candidates, "work") or _has_kind(candidates, "buy_outfit"),
+	}
