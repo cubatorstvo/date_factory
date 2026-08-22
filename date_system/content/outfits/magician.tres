@@ -11,5 +11,6 @@ enabled = true
 price = 700
 stat_id = &"appearance"
 stat_bonus = 1
-min_story_stage = 2
+min_story_stage = 3
+tier = 1
 outfit_move_id = &"outfit_card_trick"

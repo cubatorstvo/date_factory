@@ -329,12 +329,13 @@ func _check_local_objects(catalog: DateContentCatalog, issues: Array[ContentVali
 		if location.id == &"apartment" and not location.local_object_ids.is_empty():
 			issues.append(_issue("DateVenue", "apartment", "local_object_ids", "Квартира не должна содержать Local Objects в DateVenue; покрытие идёт только от купленных Apartment Objects."))
 	var apartment_catalog: ApartmentCatalog = ApartmentCatalog.create_seed()
-	for upgrade in apartment_catalog.get_all_upgrades():
-		if upgrade == null:
+	for item in apartment_catalog.enabled_objects():
+		if item == null:
 			continue
-		for object_id in upgrade.granted_local_object_ids:
-			if catalog.find_local_object(object_id) == null:
-				issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "granted_local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
+		var object_id: StringName = item.local_object_id()
+		if catalog.find_local_object(object_id) == null:
+			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "granted_local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
+	_check_local_move_ownership(catalog, issues)
 
 func _check_venue_local_catalog(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	var expected_venues: Array[StringName] = [&"apartment", &"cafe", &"leisure_center", &"restaurant"]
@@ -475,27 +476,27 @@ func _check_restaurant_characteristic_gates(catalog: DateContentCatalog, issues:
 
 func _check_apartment_local_catalog(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	var apartment_catalog: ApartmentCatalog = ApartmentCatalog.create_seed()
-	var upgrades: Array[ApartmentUpgradeDefinition] = apartment_catalog.get_all_upgrades()
-	if upgrades.size() != 12:
-		issues.append(_issue("ApartmentUpgradeDefinition", "", "upgrades", "Apartment catalog должен содержать 12 purchasable objects."))
+	var items: Array[ApartmentObjectDefinition] = apartment_catalog.enabled_objects()
+	if items.size() != 12:
+		issues.append(_issue("ApartmentObjectDefinition", "", "objects", "Apartment catalog должен содержать 12 purchasable objects."))
 	var tags: Dictionary = {}
 	var object_ids: Dictionary = {}
 	var stage_counts: Dictionary = {2: 0, 3: 0, 4: 0}
-	for upgrade in upgrades:
-		if upgrade == null:
+	for item in items:
+		if item == null:
 			continue
-		if upgrade.granted_local_object_ids.size() != 1:
-			issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "granted_local_object_ids", "Каждый Apartment Object даёт ровно один Local Object."))
+		var object_id: StringName = item.local_object_id()
+		if object_id == &"":
+			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "granted_local_object_ids", "Каждый Apartment Object даёт ровно один Local Object."))
 			continue
-		var object_id: StringName = upgrade.granted_local_object_ids[0]
 		if object_ids.has(String(object_id)):
-			issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "granted_local_object_ids", "Local Object %s повторяется." % String(object_id)))
+			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "granted_local_object_ids", "Local Object %s повторяется." % String(object_id)))
 		else:
 			object_ids[String(object_id)] = true
-		if upgrade.min_story_stage == 2 or upgrade.min_story_stage == 3 or upgrade.min_story_stage == 4:
-			stage_counts[upgrade.min_story_stage] = int(stage_counts[upgrade.min_story_stage]) + 1
+		if item.min_story_stage == 2 or item.min_story_stage == 3 or item.min_story_stage == 4:
+			stage_counts[item.min_story_stage] = int(stage_counts[item.min_story_stage]) + 1
 		else:
-			issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "min_story_stage", "Apartment Object открывается на Stage 2, 3 или 4."))
+			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "min_story_stage", "Apartment Object открывается на Stage 2, 3 или 4."))
 		var local_object: DateLocalObject = catalog.find_local_object(object_id)
 		if local_object == null:
 			continue
@@ -514,15 +515,69 @@ func _check_apartment_local_catalog(catalog: DateContentCatalog, issues: Array[C
 		else:
 			tags[tag_key] = true
 	if int(stage_counts[2]) != 4 or int(stage_counts[3]) != 4 or int(stage_counts[4]) != 4:
-		issues.append(_issue("ApartmentUpgradeDefinition", "", "min_story_stage", "Apartment Objects должны распределяться 4 / 4 / 4 по Stage 2 / 3 / 4."))
+		issues.append(_issue("ApartmentObjectDefinition", "", "min_story_stage", "Apartment Objects должны распределяться 4 / 4 / 4 по Stage 2 / 3 / 4."))
 	if tags.size() != 12:
-		issues.append(_issue("ApartmentUpgradeDefinition", "", "fixed_tag_id", "Apartment должен покрывать 12 уникальных Tags."))
+		issues.append(_issue("ApartmentObjectDefinition", "", "fixed_tag_id", "Apartment должен покрывать 12 уникальных Tags."))
 	for tag in catalog.enabled_tags():
 		if tag == null:
 			continue
 		if tags.has(String(tag.id)):
 			continue
 		issues.append(_issue("DateTag", String(tag.id), "apartment", "Канонический Tag не покрыт Apartment Object."))
+
+
+func _check_local_move_ownership(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var current_object_ids: Dictionary = {}
+	for location in catalog.date_venues:
+		if location == null or not location.enabled:
+			continue
+		for object_id in location.local_object_ids:
+			var key: String = String(object_id)
+			if key.is_empty():
+				continue
+			if current_object_ids.has(key):
+				issues.append(_issue("DateLocalObject", key, "venue", "Local Object принадлежит более чем одному Venue."))
+			else:
+				current_object_ids[key] = String(location.id)
+	var apartment_catalog: ApartmentCatalog = ApartmentCatalog.create_seed()
+	for item in apartment_catalog.enabled_objects():
+		if item == null:
+			continue
+		var object_id: StringName = item.local_object_id()
+		var key: String = String(object_id)
+		if key.is_empty():
+			continue
+		if current_object_ids.has(key):
+			issues.append(_issue("DateLocalObject", key, "venue", "Local Object принадлежит более чем одному Venue."))
+		else:
+			current_object_ids[key] = "apartment"
+	for local_object in catalog.local_objects:
+		if local_object == null or not local_object.enabled:
+			continue
+		var key: String = String(local_object.id)
+		if not current_object_ids.has(key):
+			issues.append(_issue("DateLocalObject", key, "venue", "Local Object не принадлежит текущему Venue."))
+	var move_owners: Dictionary = {}
+	for local_object in catalog.local_objects:
+		if local_object == null or not local_object.enabled:
+			continue
+		if not current_object_ids.has(String(local_object.id)):
+			continue
+		for move_id in local_object.move_ids:
+			var move_key: String = String(move_id)
+			if move_key.is_empty():
+				continue
+			if move_owners.has(move_key):
+				issues.append(_issue("DateMove", move_key, "local_object", "LOCAL Move ссылается более чем из одного Local Object."))
+			else:
+				move_owners[move_key] = String(local_object.id)
+	for move in catalog.moves:
+		if move == null or not move.enabled or not move.is_local():
+			continue
+		var move_key: String = String(move.id)
+		if not move_owners.has(move_key):
+			issues.append(_issue("DateMove", move_key, "local_object", "Enabled LOCAL Move должен принадлежать ровно одному текущему Local Object."))
+
 
 func _check_combo_rules(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	var rules: DateRules = catalog.date_rules

@@ -1,14 +1,14 @@
-class_name ApartmentUpgradeNotPurchasedRequirement
+class_name ApartmentObjectNotOwnedRequirement
 extends ActionRequirement
 
-@export var upgrade_id: StringName = &""
+@export var object_id: StringName = &""
 
 
 func is_met() -> bool:
 	var apartment: Variant = _apartment_service()
 	if apartment == null:
 		return false
-	return not bool(apartment.is_upgrade_purchased(upgrade_id))
+	return not bool(apartment.is_object_owned(object_id))
 
 
 func get_failure_reason() -> String:

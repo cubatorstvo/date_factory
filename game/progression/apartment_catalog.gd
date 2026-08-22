@@ -1,32 +1,62 @@
 class_name ApartmentCatalog
 extends Resource
 
-const ID_UPGRADE_1: StringName = &"apartment__tv"
-const ID_EMPEROR_CHAIR: StringName = &"apartment_emperor_chair"
-
-@export var upgrades: Array[ApartmentUpgradeDefinition] = []
+@export var objects: Array[ApartmentObjectDefinition] = []
 
 
-func get_upgrade(upgrade_id: StringName) -> ApartmentUpgradeDefinition:
-	if upgrade_id == &"":
+func get_object(object_id: StringName) -> ApartmentObjectDefinition:
+	if object_id == &"":
 		return null
-	for upgrade in upgrades:
-		if upgrade != null and upgrade.id == upgrade_id:
-			return upgrade
+	for item in objects:
+		if item != null and item.id == object_id:
+			return item
 	return null
 
 
-func get_all_upgrades() -> Array[ApartmentUpgradeDefinition]:
-	var result: Array[ApartmentUpgradeDefinition] = []
-	for upgrade in upgrades:
-		if upgrade != null:
-			result.append(upgrade)
+func all_objects() -> Array[ApartmentObjectDefinition]:
+	var result: Array[ApartmentObjectDefinition] = []
+	for item in objects:
+		if item != null:
+			result.append(item)
+	return result
+
+
+func enabled_objects() -> Array[ApartmentObjectDefinition]:
+	var result: Array[ApartmentObjectDefinition] = []
+	for item in objects:
+		if item != null and item.enabled:
+			result.append(item)
+	return result
+
+
+func available_objects(story_stage: int) -> Array[ApartmentObjectDefinition]:
+	var indexed: Array = []
+	var order: int = 0
+	for item in objects:
+		if item == null or not item.enabled:
+			continue
+		if item.min_story_stage > story_stage:
+			continue
+		indexed.append({"item": item, "order": order})
+		order += 1
+	indexed.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var left: ApartmentObjectDefinition = a["item"]
+		var right: ApartmentObjectDefinition = b["item"]
+		if left.min_story_stage != right.min_story_stage:
+			return left.min_story_stage < right.min_story_stage
+		if left.price != right.price:
+			return left.price < right.price
+		return int(a["order"]) < int(b["order"])
+	)
+	var result: Array[ApartmentObjectDefinition] = []
+	for entry in indexed:
+		result.append(entry["item"])
 	return result
 
 
 static func create_seed() -> ApartmentCatalog:
 	var catalog := ApartmentCatalog.new()
-	catalog.upgrades = [
+	catalog.objects = [
 		_make(&"apartment__plaid", "Плед", 150, 2),
 		_make(&"apartment__tv", "Телевизор", 200, 2),
 		_make(&"apartment__record_player", "Проигрыватель", 250, 2),
@@ -48,15 +78,16 @@ static func _make(
 	display_name: String,
 	price: int,
 	min_story_stage: int
-) -> ApartmentUpgradeDefinition:
-	var upgrade := ApartmentUpgradeDefinition.new()
-	upgrade.id = id
-	upgrade.display_name = display_name
-	upgrade.description = display_name
-	upgrade.price = price
-	upgrade.level_granted = min_story_stage
-	upgrade.min_story_stage = min_story_stage
+) -> ApartmentObjectDefinition:
+	var item := ApartmentObjectDefinition.new()
+	item.id = id
+	item.display_name = display_name
+	item.description = display_name
+	item.price = price
+	item.level_granted = min_story_stage
+	item.min_story_stage = min_story_stage
+	item.enabled = true
 	var granted: Array[StringName] = [id]
-	upgrade.granted_local_object_ids = granted
-	upgrade.required_filler_reward_id = &""
-	return upgrade
+	item.granted_local_object_ids = granted
+	item.required_filler_reward_id = &""
+	return item

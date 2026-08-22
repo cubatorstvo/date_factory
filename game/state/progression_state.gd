@@ -115,17 +115,8 @@ func from_dict(data: Dictionary) -> void:
 	if apartment_raw is Dictionary:
 		apartment.from_dict(apartment_raw)
 	unlocked_filler_reward_ids = _strings_to_ids(data.get("unlocked_filler_reward_ids", []))
-	_migrate_katya_interior_accent()
 	marina_free_outfit_pending = bool(data.get("marina_free_outfit_pending", false))
 
-
-func _migrate_katya_interior_accent() -> void:
-	var old_id: StringName = FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR
-	var new_id: StringName = FillerRewardCatalog.ID_KATYA_INTERIOR_ACCENT
-	if not has_filler_reward(old_id):
-		return
-	remove_filler_reward(old_id)
-	add_filler_reward(new_id)
 
 
 func _ids_to_strings(ids: Array[StringName]) -> Array:

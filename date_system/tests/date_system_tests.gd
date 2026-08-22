@@ -43,6 +43,7 @@ func run_all() -> PackedStringArray:
 	_test_girl_access_requirements()
 	_test_date_venue_choice()
 	_test_venues_and_local_objects()
+	_test_progression_integration()
 	_test_rivals()
 	_test_home_city_catalog_consistency()
 	_test_rating_meet_gates()
@@ -1024,20 +1025,21 @@ func _test_local_moves_progression_and_validator(catalog: DateContentCatalog) ->
 	sm.save_path = "user://saves/local_moves_stage17.json"
 	sm.delete_save()
 	sm.new_game()
+	gs.story.stage = 2
 	gs.player.money = 150
-	var buy: ActionResult = actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
-	_ok("19. apartment__plaid открывает local object", buy.success and apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
+	var buy: ActionResult = actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
+	_ok("19. apartment__plaid открывает local object", buy.success and apartment.get_owned_local_object_ids().has(&"apartment__plaid") and gs.progression.apartment.owned_local_object_ids.has(&"apartment__plaid"))
 	sm.save_game()
 	sm.new_game()
-	_ok("20. reset без plaid", not apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
+	_ok("20. reset без plaid", not apartment.get_owned_local_object_ids().has(&"apartment__plaid"))
 	_ok("20. load", sm.load_game())
-	_ok("20. после load plaid доступен", apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
+	_ok("20. после load plaid доступен", apartment.get_owned_local_object_ids().has(&"apartment__plaid"))
 	_write_v12_apartment_save(sm, false, [])
 	_ok("21. load v12", sm.load_game())
-	_ok("21. миграция prepared=true", bool(gs.progression.apartment.prepared))
+	_ok("21. prepared=true", bool(gs.progression.apartment.prepared))
 	_write_v12_apartment_save(sm, false, ["apartment__plaid"])
-	_ok("22. load old upgrade", sm.load_game())
-	_ok("22. купленный upgrade даёт plaid", apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
+	_ok("22. load owned objects", sm.load_game())
+	_ok("22. owned_local_object_ids has plaid", gs.progression.apartment.owned_local_object_ids.has(&"apartment__plaid"))
 	var replay_progress := _fresh_progress(catalog, &"alina")
 	var store := DateProgressStore.new()
 	store.player_snapshot = _player()
@@ -4292,7 +4294,11 @@ func _test_venues_and_local_objects() -> void:
 	var alina_id: StringName = GirlCatalog.ID_ALINA
 	girls.give_contact(alina_id)
 	_ok("1. Stage 1 only apartment", dating.is_date_venue_available(alina_id, &"apartment") and not dating.is_date_venue_available(alina_id, &"cafe") and not dating.is_date_venue_available(alina_id, &"leisure_center") and not dating.is_date_venue_available(alina_id, &"restaurant"))
-	_ok("1b. park excluded", dating.is_date_venue_available(alina_id, &"park") == false)
+	var production_ids: Array[StringName] = []
+	for venue in dating.get_available_date_venues(alina_id):
+		if venue != null:
+			production_ids.append(venue.id)
+	_ok("1b. canonical 4 venues", production_ids.size() == 4 and production_ids.has(&"apartment") and production_ids.has(&"cafe") and production_ids.has(&"leisure_center") and production_ids.has(&"restaurant"))
 	_ok("2. Stage 1 apartment 0 local objects", dating.resolve_date_local_object_ids(&"apartment").is_empty())
 	_ok("2b. Stage 1 furniture hidden", _visible_upgrade_ids(apartment).is_empty())
 	gs.story.stage = 2
@@ -4366,15 +4372,15 @@ func _test_venues_and_local_objects() -> void:
 	sm.new_game()
 	gs.story.stage = 2
 	gs.player.money = 150
-	var buy_plaid: ActionResult = actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
-	_ok("15. buy plaid", buy_plaid.success)
+	var buy_plaid: ActionResult = actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
+	_ok("15. buy plaid", buy_plaid.success and gs.progression.apartment.owned_local_object_ids.has(&"apartment__plaid"))
 	_ok("15. apartment source has plaid", dating.resolve_date_local_object_ids(&"apartment").has(&"apartment__plaid"))
 	sm.new_game()
 	girls.grant_filler_reward_for_girl(GirlCatalog.ID_KATYA)
 	_ok("16. pending accent before furniture", bool(apartment.is_first_accent_assignment()) and apartment.get_accent_object_id() == &"")
 	_ok("16. first accent price 0", int(apartment.get_accent_reassignment_price()) == 0)
 	gs.player.money = 150
-	actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
+	actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
 	var first_accent: GameAction = apartment.create_assign_accent_action(&"apartment__plaid")
 	_ok("16. first assign costs 0", first_accent.money_cost == 0)
 	var assign_ok: ActionResult = actions.execute(first_accent)
@@ -4395,7 +4401,7 @@ func _test_venues_and_local_objects() -> void:
 			if move == null or girl == null:
 				continue
 			var preference: int = girl.prefers_tag(move.resolved_tag_id())
-			var flags: Dictionary = {"accent_local_object_id": local_object.id, "local_object_ids": [local_object.id]}
+			var flags: Dictionary = {"accent_object_id": local_object.id, "local_object_ids": [local_object.id]}
 			var accent_engine: DateEngine = _engine_with_flags(catalog, &"alina", &"cafe", &"casual", 17, _fresh_progress(catalog, &"alina"), _player(), flags)
 			accent_engine.choose_move(move_id)
 			var delta: int = int(accent_engine.get_session_state().current_score_delta)
@@ -4421,9 +4427,132 @@ func _test_venues_and_local_objects() -> void:
 	if cafe_venue != null:
 		var start_cafe: GameAction = dating.create_start_date_action(alina_id, &"cafe")
 		_ok("venue cafe price included", start_cafe.money_cost == cafe_venue.price)
-	gs.progression.add_filler_reward(FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR)
-	gs.progression._migrate_katya_interior_accent()
-	_ok("migrate katya accent id", bool(girls.has_filler_reward(FillerRewardCatalog.ID_KATYA_INTERIOR_ACCENT)) and not bool(girls.has_filler_reward(FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR)))
+	var katya_reward: FillerRewardDefinition = FillerRewardCatalog.create_seed().get_reward_for_girl(GirlCatalog.ID_KATYA)
+	_ok("katya reward is interior accent", katya_reward != null and katya_reward.id == FillerRewardCatalog.ID_KATYA_INTERIOR_ACCENT)
+	_ok("no emperor chair reward", FillerRewardCatalog.create_seed().get_reward(&"katya_emperor_chair") == null)
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_progression_integration() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var world: Variant = _world_service()
+	var girls: Variant = _girls_service()
+	var dating: Variant = _dating_service()
+	var equipment: Variant = _equipment_service()
+	var apartment: Variant = _apartment_service()
+	var actions: Variant = _action_service()
+	var objectives: Variant = _objective_service()
+	_ok("progression integration services", gs != null and sm != null and world != null and girls != null and dating != null and equipment != null and apartment != null and actions != null)
+	if gs == null or sm == null or world == null or girls == null or dating == null or equipment == null or apartment == null or actions == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/progression_integration.json"
+	sm.delete_save()
+	sm.new_game()
+	_ok("marina closed stage 1", girls.can_meet_girl(GirlCatalog.ID_MARINA) == false)
+	world.set_city_stage(2)
+	gs.story.stage = 2
+	world.unlock_location(LocationCatalog.ID_CLOTHING_STORE)
+	world.enter_location(LocationCatalog.ID_CLOTHING_STORE)
+	_ok("marina open stage 2", girls.can_meet_girl(GirlCatalog.ID_MARINA))
+	girls.give_contact(GirlCatalog.ID_MARINA)
+	_ok("marina casual date ok", dating.can_start_date(GirlCatalog.ID_MARINA))
+	girls.give_contact(GirlCatalog.ID_LERA)
+	_ok("stage 2 filler casual blocked", dating.can_start_date(GirlCatalog.ID_LERA) == false)
+	_ok("stage 2 filler fail reason", dating.get_start_date_failure_reason(GirlCatalog.ID_LERA) == "Для этого свидания нужен образ интереснее повседневного.")
+	girls.give_contact(GirlCatalog.ID_MINE_BOSS)
+	_ok("stage 2 story casual blocked", dating.can_start_date(GirlCatalog.ID_MINE_BOSS) == false)
+	gs.player.money = 250
+	_ok("buy dressed", actions.execute(equipment.create_buy_outfit_action(&"sport")).success)
+	_ok("owns dressed", bool(equipment.owns_dressed_outfit()) and int(equipment.get_current_outfit_tier()) >= 1)
+	_ok("stage 2 filler dressed ok", dating.can_start_date(GirlCatalog.ID_LERA))
+	_ok("stage 2 story dressed ok", dating.can_start_date(GirlCatalog.ID_MINE_BOSS) or dating.get_start_date_failure_reason(GirlCatalog.ID_MINE_BOSS) != "Для этого свидания нужен образ интереснее повседневного.")
+	sm.new_game()
+	girls.give_contact(GirlCatalog.ID_ALINA)
+	girls.give_contact(GirlCatalog.ID_VIKA)
+	girls.give_contact(GirlCatalog.ID_DASHA)
+	_ok("stage 1 alina casual ok", dating.can_start_date(GirlCatalog.ID_ALINA))
+	_ok("stage 1 vika casual ok", dating.can_start_date(GirlCatalog.ID_VIKA))
+	_ok("stage 1 dasha casual ok", dating.can_start_date(GirlCatalog.ID_DASHA))
+	var casual: Outfit = catalog.find_outfit(&"casual")
+	_ok("casual stage 1 tier 0", casual != null and casual.min_story_stage == 1 and casual.tier == 0 and not casual.has_outfit_move())
+	for outfit_id in [&"sport", &"stylish", &"business", &"minimal_black"]:
+		var outfit: Outfit = catalog.find_outfit(outfit_id)
+		_ok("%s stage 2 tier 1 no move" % String(outfit_id), outfit != null and outfit.min_story_stage == 2 and outfit.tier == 1 and not outfit.has_outfit_move())
+	for outfit_id in [&"wrestling", &"magician", &"luxury", &"leather_jacket"]:
+		var thematic: Outfit = catalog.find_outfit(outfit_id)
+		_ok("%s stage 3 tier 1 move" % String(outfit_id), thematic != null and thematic.min_story_stage == 3 and thematic.tier == 1 and thematic.has_outfit_move())
+	for outfit_id in [&"stunt", &"model", &"philanthropist", &"black_turtleneck"]:
+		var late: Outfit = catalog.find_outfit(outfit_id)
+		_ok("%s stage 4 tier 1 move" % String(outfit_id), late != null and late.min_story_stage == 4 and late.tier == 1 and late.has_outfit_move())
+	var restaurant_objects: Array[DateLocalObject] = _local_objects_with_prefix(catalog, "restaurant__")
+	var rest_ids: Array = []
+	for local_object in restaurant_objects:
+		rest_ids.append(local_object.id)
+	var rest_flags: Dictionary = {}
+	if not rest_ids.is_empty():
+		rest_flags["local_object_ids"] = rest_ids
+	var locked_player: DatePlayerSnapshot = _player()
+	var wrestling_player: DatePlayerSnapshot = _player()
+	wrestling_player.muscle = 0
+	var locked_engine: DateEngine = _engine_with_flags(catalog, &"alina", &"restaurant", &"casual", 4, _fresh_progress(catalog, &"alina"), locked_player, rest_flags)
+	var wrestling_engine: DateEngine = _engine_with_flags(catalog, &"alina", &"restaurant", &"wrestling", 4, _fresh_progress(catalog, &"alina"), wrestling_player, rest_flags)
+	var locked_option: DateMoveOption = null
+	for option in _source_options(locked_engine.get_current_episode(), DateTypes.DateMoveSource.VENUE):
+		if option != null and option.availability == DateTypes.MoveAvailability.LOCKED and option.requirement_stat_id == &"muscle" and option.requirement_level == 1:
+			locked_option = option
+			break
+	var opened_option: DateMoveOption = _episode_option(wrestling_engine.get_current_episode(), locked_option.move_id) if locked_option != null else null
+	_ok("stage 3 outfit unlocks restaurant move", locked_option != null and opened_option != null and opened_option.availability == DateTypes.MoveAvailability.AVAILABLE)
+	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
+	var items: Array[ApartmentObjectDefinition] = apartment_catalog.all_objects()
+	var object_ids: Dictionary = {}
+	var move_ids: Dictionary = {}
+	var tags: Dictionary = {}
+	for item in items:
+		if item == null:
+			continue
+		object_ids[String(item.id)] = true
+		var local_object: DateLocalObject = catalog.find_local_object(item.local_object_id())
+		if local_object == null:
+			continue
+		for move_id in local_object.move_ids:
+			move_ids[String(move_id)] = true
+			var move: DateMove = catalog.find_move(move_id)
+			if move != null:
+				tags[String(move.fixed_tag_id)] = true
+	_ok("apartment 12 objects", items.size() == 12 and object_ids.size() == 12)
+	_ok("apartment 12 unique moves", move_ids.size() == 12)
+	_ok("apartment 12 unique tags", tags.size() == 12)
+	sm.new_game()
+	_ok("new owned empty", gs.progression.apartment.owned_local_object_ids.is_empty())
+	_ok("stage 1 furniture 0", apartment_catalog.available_objects(1).is_empty() and _visible_upgrade_ids(apartment).is_empty())
+	_ok("stage 2 furniture 4", apartment_catalog.available_objects(2).size() == 4)
+	_ok("stage 3 furniture 8", apartment_catalog.available_objects(3).size() == 8)
+	_ok("stage 4 furniture 12", apartment_catalog.available_objects(4).size() == 12)
+	gs.story.stage = 2
+	gs.player.money = 150
+	var buy_plaid: ActionResult = actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
+	_ok("buy owned id", buy_plaid.success and gs.progression.apartment.owned_local_object_ids.has(&"apartment__plaid"))
+	_ok("buy local source", dating.resolve_date_local_object_ids(&"apartment").has(&"apartment__plaid"))
+	sm.new_game()
+	gs.story.stage = 2
+	if objectives != null:
+		var view: ObjectiveView = _rebuild_objective()
+		var dress_up: ObjectiveSubgoalView = _subgoal_by_id(view, &"dress_up")
+		_ok("dress up title", dress_up != null and dress_up.label == "Приоденься")
+		_ok("dress up description", dress_up != null and dress_up.progress_text.contains("Купи любой образ выше «Повседневного» в магазине одежды."))
+		_ok("dress up hint", dress_up != null and dress_up.progress_text.contains("Марина работает в магазине одежды"))
+		_ok("dress up incomplete", dress_up != null and dress_up.completed == false)
+		gs.player.money = 250
+		actions.execute(equipment.create_buy_outfit_action(&"sport"))
+		view = _rebuild_objective()
+		dress_up = _subgoal_by_id(view, &"dress_up")
+		_ok("dress up complete on own", dress_up != null and dress_up.completed)
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -4757,6 +4886,7 @@ func _test_character_progression() -> void:
 	_ok("upgrade muscle at max fail", buy_muscle_again.success == false)
 	_ok("start outfit owned", bool(equipment.owns_outfit(OutfitCatalog.START_OUTFIT_ID)))
 	_ok("new player casual", equipment.get_current_outfit_id() == OutfitCatalog.START_OUTFIT_ID)
+	gs.story.stage = 2
 	gs.player.money = 250
 	var buy_business: ActionResult = actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS))
 	_ok("buy 250 business", buy_business.success)
@@ -4776,14 +4906,15 @@ func _test_character_progression() -> void:
 	date_result.duration_minutes = 120
 	dating.complete_date(date_result)
 	sm.new_game()
+	gs.story.stage = 2
 	gs.player.money = 150
 	_ok("apartment start 1", int(apartment.get_level()) == 1)
-	var buy_apt: ActionResult = actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
+	var buy_apt: ActionResult = actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
 	_ok("apartment buy success", buy_apt.success)
 	_ok("apartment money 0", gs.player.money == 0)
 	_ok("apartment level 2", int(apartment.get_level()) == 2)
-	_ok("apartment upgrade stored", bool(apartment.is_upgrade_purchased(&"apartment__plaid")))
-	_ok("apartment grants plaid", apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
+	_ok("apartment object stored", bool(apartment.is_object_owned(&"apartment__plaid")))
+	_ok("apartment grants plaid", apartment.get_owned_local_object_ids().has(&"apartment__plaid"))
 	girls.give_contact(GirlCatalog.ID_ALINA)
 	_ok("apartment date start", dating.start_date(GirlCatalog.ID_ALINA, &"apartment"))
 	var engine: DateEngine = dating.get_date_engine()
@@ -4806,13 +4937,14 @@ func _test_character_progression() -> void:
 	_ok("chance clamp 1", is_equal_approx(float(competitions.get_win_chance(competition_id)), 1.0))
 	definition.base_win_chance = previous_chance
 	sm.new_game()
+	gs.story.stage = 2
 	gs.player.money = 1000
 	gs.player.muscle = 1
 	gs.player.appearance = 2
 	gs.player.capital = 1
 	gs.player.aura = 3
 	actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS))
-	actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
+	actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
 	gs.player.money = 1000
 	sm.save_game()
 	sm.new_game()
@@ -4903,7 +5035,7 @@ func _test_character_progression() -> void:
 		_ok("sim clothing buy", clothing_text.contains("Купить"))
 		sim.show_section("apartment")
 		var apartment_text: String = sim.get_city_body_text()
-		_ok("sim apartment level", apartment_text.contains("Уровень квартиры: 1"))
+		_ok("sim apartment objects", apartment_text.contains("Предметы") or apartment_text.contains("Нет купленных объектов") or apartment_text.contains("0 / 12") or apartment_text.contains("0/12"))
 		_ok("sim apartment store link", apartment_text.contains("МАГАЗИН МЕБЕЛИ") or apartment_text.contains("Нет купленных объектов"))
 		sim.queue_free()
 	sm.delete_save()
@@ -4935,7 +5067,7 @@ func _engine_with_flags(catalog: DateContentCatalog, girl_id: StringName, venue_
 	config.nika_swap_available = bool(flags.get("nika_swap_available", false))
 	config.backup_outfit_id = StringName(str(flags.get("backup_outfit_id", "")))
 	config.express_styling_bonus = int(flags.get("express_styling_bonus", 0))
-	config.accent_local_object_id = StringName(str(flags.get("accent_local_object_id", "")))
+	config.accent_object_id = StringName(str(flags.get("accent_object_id", "")))
 	var venue: DateVenue = catalog.find_venue(venue_id)
 	if venue != null:
 		config.local_object_ids = venue.local_object_ids.duplicate()
@@ -5139,7 +5271,7 @@ func _test_city_density_progression() -> void:
 	_ok("10. date free city 1", dating.is_free_date_available_today(GirlCatalog.ID_ALINA))
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	_ok("14. alina open", girls.can_meet_girl(GirlCatalog.ID_ALINA))
-	_ok("14. marina open", girls.can_meet_girl(GirlCatalog.ID_MARINA))
+	_ok("14. marina closed city 1", girls.can_meet_girl(GirlCatalog.ID_MARINA) == false)
 	_ok("16. katya closed city 1", girls.can_meet_girl(GirlCatalog.ID_KATYA) == false)
 	world.enter_location(LocationCatalog.ID_CAFE)
 	_ok("14. vika open", girls.can_meet_girl(GirlCatalog.ID_VIKA))
@@ -5171,6 +5303,9 @@ func _test_city_density_progression() -> void:
 	world.set_city_stage(2)
 	_ok("7. city 2 from service", int(world.get_city_stage()) == 2)
 	_ok("13. girl remaining stays until next day", int(dating.get_date_cooldown_remaining_minutes(GirlCatalog.ID_ALINA)) > 0)
+	world.unlock_location(LocationCatalog.ID_CLOTHING_STORE)
+	world.enter_location(LocationCatalog.ID_CLOTHING_STORE)
+	_ok("14. marina open city 2", girls.can_meet_girl(GirlCatalog.ID_MARINA))
 	world.unlock_location(LocationCatalog.ID_FURNITURE_STORE)
 	world.enter_location(LocationCatalog.ID_FURNITURE_STORE)
 	_ok("16. katya open city 2", girls.can_meet_girl(GirlCatalog.ID_KATYA))
@@ -5591,7 +5726,7 @@ func _home_city_girl_ids() -> Array[StringName]:
 func _meet_rating_table() -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	rows.append({"girl_id": GirlCatalog.ID_ALINA, "rating": 0, "stage": 1, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_MARINA, "rating": 0, "stage": 1, "city_stage": 1})
+	rows.append({"girl_id": GirlCatalog.ID_MARINA, "rating": 0, "stage": 1, "city_stage": 2})
 	rows.append({"girl_id": GirlCatalog.ID_VIKA, "rating": 0, "stage": 1, "city_stage": 1})
 	rows.append({"girl_id": GirlCatalog.ID_DASHA, "rating": 0, "stage": 1, "city_stage": 1})
 	rows.append({"girl_id": GirlCatalog.ID_ACTRESS, "rating": 2, "stage": 1, "city_stage": 1})
@@ -5686,6 +5821,8 @@ func _enter_girl_world(world: Variant, girls: Variant, girl_id: StringName) -> v
 		world.unlock_location(LocationCatalog.ID_FURNITURE_STORE)
 	elif definition.location_id == LocationCatalog.ID_LEISURE_CENTER:
 		world.unlock_location(LocationCatalog.ID_LEISURE_CENTER)
+	elif definition.location_id == LocationCatalog.ID_CLOTHING_STORE:
+		world.unlock_location(LocationCatalog.ID_CLOTHING_STORE)
 	world.enter_location(definition.location_id)
 
 
@@ -5734,8 +5871,8 @@ func _visible_upgrade_ids(apartment: Variant) -> Array[StringName]:
 	var ids: Array[StringName] = []
 	if apartment == null:
 		return ids
-	for upgrade in apartment.get_catalog().get_all_upgrades():
-		if upgrade != null and bool(apartment.is_upgrade_visible(upgrade)):
+	for upgrade in apartment.get_catalog().all_objects():
+		if upgrade != null and bool(apartment.is_object_visible(upgrade)):
 			ids.append(upgrade.id)
 	return ids
 
@@ -6021,6 +6158,11 @@ func _test_dates_for_home_city_girls() -> void:
 	gs.story.stage = 5
 	world.set_city_stage(3)
 	world.unlock_location(LocationCatalog.ID_RESTAURANT)
+	world.unlock_location(LocationCatalog.ID_CLOTHING_STORE)
+	var equipment: Variant = _equipment_service()
+	if equipment != null:
+		gs.player.money = 250
+		actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS))
 	var alina_played: bool = false
 	for girl_id in _home_city_girl_ids():
 		_enter_girl_world(world, girls, girl_id)
@@ -6037,10 +6179,10 @@ func _test_dates_for_home_city_girls() -> void:
 		var before_rel: int = int(girls.get_relationship(girl_id))
 		var completed: bool = false
 		if girl_id == GirlCatalog.ID_ALINA:
-			completed = _play_real_date_session(dating, girl_id, date_venue_id, &"casual")
+			completed = _play_real_date_session(dating, girl_id, date_venue_id, OutfitCatalog.ID_BUSINESS)
 			alina_played = completed
 		else:
-			completed = _complete_simple_date(dating, girl_id, date_venue_id, &"casual", 1)
+			completed = _complete_simple_date(dating, girl_id, date_venue_id, OutfitCatalog.ID_BUSINESS, 1)
 		_ok("date %s" % String(girl_id), completed)
 		_ok("date applied %s" % String(girl_id), int(girls.get_relationship(girl_id)) != before_rel or before_rel == int(girls.get_relationship_max(girl_id)))
 	_ok("alina real session", alina_played)
@@ -6072,11 +6214,11 @@ func _advance_manual_path_to_scientist(
 	_max_girl(girls, GirlCatalog.ID_ALINA)
 	_ok("manual alina rating 1", int(rating.get_rating()) == 1)
 	_ok("manual alina keeps stage 1", int(stages.get_current_stage()) == 1)
-	world.enter_location(LocationCatalog.ID_CITY_CENTER)
-	var meet_marina: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_MARINA))
-	_ok("manual meet marina", meet_marina.success)
-	_max_girl(girls, GirlCatalog.ID_MARINA)
-	_ok("manual marina rating 2", int(rating.get_rating()) == 2)
+	world.enter_location(LocationCatalog.ID_CAFE)
+	var meet_vika: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_VIKA))
+	_ok("manual meet vika", meet_vika.success)
+	_max_girl(girls, GirlCatalog.ID_VIKA)
+	_ok("manual vika rating 2", int(rating.get_rating()) == 2)
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	var meet_actress: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_ACTRESS))
 	_ok("manual meet actress", meet_actress.success)
@@ -6088,6 +6230,11 @@ func _advance_manual_path_to_scientist(
 	_ok("manual stage 2", int(stages.get_current_stage()) == 2)
 	_ok("manual city 2", int(world.get_city_stage()) == 2)
 	_ok("manual restaurant", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+	world.unlock_location(LocationCatalog.ID_CLOTHING_STORE)
+	world.enter_location(LocationCatalog.ID_CLOTHING_STORE)
+	_ok("manual marina open stage 2", girls.can_meet_girl(GirlCatalog.ID_MARINA))
+	var meet_marina: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_MARINA))
+	_ok("manual meet marina", meet_marina.success)
 	world.unlock_location(LocationCatalog.ID_FURNITURE_STORE)
 	world.enter_location(LocationCatalog.ID_FURNITURE_STORE)
 	var meet_katya: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_KATYA))
@@ -6284,7 +6431,7 @@ func _write_v10_automation_save(sm: Variant, stage: int) -> void:
 	file.store_string(JSON.stringify(payload, "\t"))
 	file.close()
 
-func _write_v12_apartment_save(sm: Variant, include_prepared: bool, purchased_upgrade_ids: Array) -> void:
+func _write_v12_apartment_save(sm: Variant, include_prepared: bool, owned_local_object_ids: Array) -> void:
 	sm.delete_save()
 	var folder: String = sm.save_path.get_base_dir()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
@@ -6292,7 +6439,7 @@ func _write_v12_apartment_save(sm: Variant, include_prepared: bool, purchased_up
 	if file == null:
 		return
 	var apartment: Dictionary = {
-		"purchased_upgrade_ids": purchased_upgrade_ids.duplicate(),
+		"owned_local_object_ids": owned_local_object_ids.duplicate(),
 	}
 	if include_prepared:
 		apartment["prepared"] = true
@@ -6444,6 +6591,7 @@ func _test_playtest_daily_activity() -> void:
 	gs.player.money = 300
 	_ok("train next day", actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1)).success)
 	sm.new_game()
+	gs.story.stage = 2
 	girls.grant_filler_reward_for_girl(GirlCatalog.ID_MARINA)
 	_ok("marina pending", girls.is_marina_free_outfit_pending())
 	var gift: GameAction = equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS)

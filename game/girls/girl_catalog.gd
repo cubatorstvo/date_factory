@@ -68,22 +68,22 @@ static func seed_relationship_max(girl_id: StringName) -> int:
 static func create_seed() -> GirlCatalog:
 	var catalog: GirlCatalog = GirlCatalog.new()
 	catalog.girls.append(_make(ID_ALINA, "Алина", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_ALINA), _city_stage_meet_requirements(1)))
-	catalog.girls.append(_make(ID_MARINA, "Марина", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_MARINA), _city_stage_meet_requirements(1)))
+	catalog.girls.append(_make(ID_MARINA, "Марина", LocationCatalog.ID_CLOTHING_STORE, 0, 0, seed_relationship_max(ID_MARINA), _city_stage_meet_requirements(2)))
 	catalog.girls.append(_make(ID_VIKA, "Вика", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_VIKA), _city_stage_meet_requirements(1)))
 	catalog.girls.append(_make(ID_DASHA, "Даша", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_DASHA), _city_stage_meet_requirements(1)))
 	catalog.girls.append(_make(ID_ACTRESS, "Актриса", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_ACTRESS), _stage_and_rating_meet_requirements(1, 2), _rival_defeated_date_requirements(RivalCatalog.ID_BORIS)))
-	catalog.girls.append(_make(ID_KATYA, "Катя", LocationCatalog.ID_FURNITURE_STORE, 0, 0, seed_relationship_max(ID_KATYA), _city_stage_meet_requirements(2)))
-	catalog.girls.append(_make(ID_LERA, "Лера", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_LERA), _city_stage_meet_requirements(2)))
-	catalog.girls.append(_make(ID_KIRA, "Кира", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_KIRA), _city_stage_meet_requirements(2)))
-	catalog.girls.append(_make(ID_OLYA, "Оля", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_OLYA), _city_stage_meet_requirements(2)))
-	catalog.girls.append(_make(ID_MINE_BOSS, "Начальница шахты", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_MINE_BOSS), _stage_and_rating_meet_requirements(2, 5), _rival_defeated_date_requirements(RivalCatalog.ID_FOREMAN)))
-	catalog.girls.append(_make(ID_MAGAZINE_EDITOR, "Редактор журнала", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_MAGAZINE_EDITOR), _stage_and_rating_meet_requirements(3, 7), _rival_defeated_date_requirements(RivalCatalog.ID_COLUMNIST)))
-	catalog.girls.append(_make(ID_SONYA, "Соня", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_SONYA), _city_stage_meet_requirements(3)))
-	catalog.girls.append(_make(ID_NIKA, "Ника", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_NIKA), _city_stage_meet_requirements(3)))
-	catalog.girls.append(_make(ID_RITA, "Рита", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_RITA), _city_stage_meet_requirements(3)))
-	catalog.girls.append(_make(ID_EVA, "Ева", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_EVA), _city_stage_meet_requirements(3)))
-	catalog.girls.append(_make(ID_SCIENTIST, "Учёная", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_SCIENTIST), _stage_and_rating_meet_requirements(4, 10), _rival_defeated_date_requirements(RivalCatalog.ID_ACADEMIC)))
-	catalog.girls.append(_make(ID_PRESIDENT, "Президент", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_PRESIDENT), _stage_and_rating_meet_requirements(5, 12), _rival_defeated_date_requirements(RivalCatalog.ID_MINISTER)))
+	catalog.girls.append(_make(ID_KATYA, "Катя", LocationCatalog.ID_FURNITURE_STORE, 0, 0, seed_relationship_max(ID_KATYA), _city_stage_meet_requirements(2), _outfit_above_casual_date_requirements()))
+	catalog.girls.append(_make(ID_LERA, "Лера", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_LERA), _city_stage_meet_requirements(2), _outfit_above_casual_date_requirements()))
+	catalog.girls.append(_make(ID_KIRA, "Кира", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_KIRA), _city_stage_meet_requirements(2), _outfit_above_casual_date_requirements()))
+	catalog.girls.append(_make(ID_OLYA, "Оля", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_OLYA), _city_stage_meet_requirements(2), _outfit_above_casual_date_requirements()))
+	catalog.girls.append(_make(ID_MINE_BOSS, "Начальница шахты", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_MINE_BOSS), _stage_and_rating_meet_requirements(2, 5), _outfit_above_casual_date_requirements(_rival_defeated_date_requirements(RivalCatalog.ID_FOREMAN))))
+	catalog.girls.append(_make(ID_MAGAZINE_EDITOR, "Редактор журнала", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_MAGAZINE_EDITOR), _stage_and_rating_meet_requirements(3, 7), _outfit_above_casual_date_requirements(_rival_defeated_date_requirements(RivalCatalog.ID_COLUMNIST))))
+	catalog.girls.append(_make(ID_SONYA, "Соня", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_SONYA), _city_stage_meet_requirements(3), _outfit_above_casual_date_requirements()))
+	catalog.girls.append(_make(ID_NIKA, "Ника", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_NIKA), _city_stage_meet_requirements(3), _outfit_above_casual_date_requirements()))
+	catalog.girls.append(_make(ID_RITA, "Рита", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_RITA), _city_stage_meet_requirements(3), _outfit_above_casual_date_requirements()))
+	catalog.girls.append(_make(ID_EVA, "Ева", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_EVA), _city_stage_meet_requirements(3), _outfit_above_casual_date_requirements()))
+	catalog.girls.append(_make(ID_SCIENTIST, "Учёная", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_SCIENTIST), _stage_and_rating_meet_requirements(4, 10), _outfit_above_casual_date_requirements(_rival_defeated_date_requirements(RivalCatalog.ID_ACADEMIC))))
+	catalog.girls.append(_make(ID_PRESIDENT, "Президент", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_PRESIDENT), _stage_and_rating_meet_requirements(5, 12), _outfit_above_casual_date_requirements(_rival_defeated_date_requirements(RivalCatalog.ID_MINISTER))))
 	return catalog
 
 
@@ -123,6 +123,16 @@ static func _rival_defeated_date_requirements(rival_id: StringName) -> Array[Gir
 	var requirement: RivalDefeatedGirlRequirement = RivalDefeatedGirlRequirement.new()
 	requirement.rival_id = rival_id
 	requirements.append(requirement)
+	return requirements
+
+
+static func _outfit_above_casual_date_requirements(base: Array[GirlAccessRequirement] = []) -> Array[GirlAccessRequirement]:
+	var requirements: Array[GirlAccessRequirement] = []
+	for requirement in base:
+		if requirement != null:
+			requirements.append(requirement)
+	var outfit_requirement: GirlAccessRequirement = (preload("res://game/girls/outfit_above_casual_girl_requirement.gd") as GDScript).new()
+	requirements.append(outfit_requirement)
 	return requirements
 
 

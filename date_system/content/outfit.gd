@@ -9,6 +9,7 @@ extends Resource
 @export var stat_id: StringName = &""
 @export var stat_bonus: int = 0
 @export var min_story_stage: int = 1
+@export var tier: int = 0
 @export var outfit_move_id: StringName = &""
 @export var future_visual_resource: Resource
 

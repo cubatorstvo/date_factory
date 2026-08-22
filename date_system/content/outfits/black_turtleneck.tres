@@ -12,4 +12,5 @@ price = 1200
 stat_id = &"aura"
 stat_bonus = 1
 min_story_stage = 4
+tier = 1
 outfit_move_id = &"outfit_silent_hold"

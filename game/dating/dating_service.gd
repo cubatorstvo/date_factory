@@ -17,6 +17,7 @@ const REASON_NO_CONTACT: String = "У вас нет контакта этой д
 const REASON_COOLDOWN: String = "Сегодня уже встречались. Следующая встреча: завтра."
 const REASON_COMPLETED: String = "Отношения с этой девушкой уже достигли максимума"
 const REASON_ACTIVE: String = "Свидание уже идёт"
+const REASON_OUTFIT_CASUAL: String = "Для этого свидания нужен образ интереснее повседневного."
 
 var _catalog_service: DateCatalogService
 var _engine: DateEngine
@@ -63,6 +64,8 @@ func get_start_date_failure_reason(girl_id: StringName, bypass_cooldown: bool = 
 			if requirement == null:
 				continue
 			if not requirement.is_met(girl_id):
+				if requirement is OutfitAboveCasualGirlRequirement:
+					return REASON_OUTFIT_CASUAL
 				return "%s: %s" % [requirement.get_description(girl_id), requirement.get_progress_text(girl_id)]
 	return ""
 
@@ -119,7 +122,7 @@ func resolve_date_local_object_ids(date_venue_id: StringName) -> Array[StringNam
 	if location.uses_apartment_preparation:
 		var apartment: Variant = _apartment_service()
 		if apartment != null:
-			for object_id in apartment.get_granted_local_object_ids():
+			for object_id in apartment.get_owned_local_object_ids():
 				if object_id != &"" and not result.has(object_id):
 					result.append(object_id)
 		return result
@@ -282,7 +285,7 @@ func get_active_venue_id() -> StringName:
 	var dating: DatingState = _dating()
 	if dating == null:
 		return &""
-	var venue_text: String = str(dating.active_date.get("venue_id", dating.active_date.get("location_id", "")))
+	var venue_text: String = str(dating.active_date.get("venue_id", ""))
 	return StringName(venue_text)
 
 
@@ -386,7 +389,7 @@ func _create_engine(girl_id: StringName, date_venue_id: StringName, outfit_id: S
 	config.local_object_ids = resolve_date_local_object_ids(date_venue_id)
 	var apartment: Variant = _apartment_service()
 	if apartment != null:
-		config.accent_local_object_id = apartment.get_accent_object_id()
+		config.accent_object_id = apartment.get_accent_object_id()
 	config.player_snapshot = _make_player_snapshot(catalog.find_venue(date_venue_id), express_styling)
 	if girls != null:
 		config.relationship_max = int(girls.get_relationship_max(girl_id))

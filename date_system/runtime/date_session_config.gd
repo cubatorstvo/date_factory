@@ -17,4 +17,4 @@ var nika_swap_available: bool = false
 var backup_outfit_id: StringName = &""
 var express_styling_bonus: int = 0
 var forced_situation_id: StringName = &""
-var accent_local_object_id: StringName = &""
+var accent_object_id: StringName = &""

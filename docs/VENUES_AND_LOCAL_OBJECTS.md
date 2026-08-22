@@ -1198,7 +1198,7 @@ Validator проверяет точное распределение:
 
 # 9. Apartment canonical model
 
-Apartment Local Objects являются purchasable interactive interior upgrades.
+Apartment Local Objects являются purchasable Apartment Objects.
 
 Базовая мебель квартиры существует отдельно от Local Object progression.
 

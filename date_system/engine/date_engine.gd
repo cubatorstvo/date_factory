@@ -73,7 +73,7 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.outfit_swap_used = false
 	_session.express_styling_bonus = config.express_styling_bonus
 	_session.used_local_move_ids = []
-	_session.accent_local_object_id = config.accent_local_object_id
+	_session.accent_object_id = config.accent_object_id
 	_forced_situation_id = config.forced_situation_id
 	_rng.seed = config.seed
 	_session.current_episode_index = 0
@@ -131,8 +131,8 @@ func choose_move(move_id: StringName) -> void:
 	var score: int = _score_for_phase(_session.current_phase, preference)
 	if (
 		move.is_local()
-		and _session.accent_local_object_id != &""
-		and object_id == _session.accent_local_object_id
+		and _session.accent_object_id != &""
+		and object_id == _session.accent_object_id
 		and preference > 0
 	):
 		score = 2

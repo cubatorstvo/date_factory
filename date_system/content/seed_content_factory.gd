@@ -170,7 +170,7 @@ func _venues() -> Array[DateVenue]:
 		], 60),
 	]
 
-func _outfit(id: String, name: String, price: int, stat_id: String = "", min_story_stage: int = 1, outfit_move_id: String = "") -> Outfit:
+func _outfit(id: String, name: String, price: int, stat_id: String = "", min_story_stage: int = 1, outfit_move_id: String = "", tier: int = 0) -> Outfit:
 	var outfit := Outfit.new()
 	outfit.id = StringName(id)
 	outfit.display_name = name
@@ -180,27 +180,26 @@ func _outfit(id: String, name: String, price: int, stat_id: String = "", min_sto
 	outfit.stat_id = StringName(stat_id)
 	outfit.stat_bonus = 1 if not stat_id.is_empty() else 0
 	outfit.min_story_stage = min_story_stage
+	outfit.tier = tier
 	outfit.outfit_move_id = StringName(outfit_move_id)
 	return outfit
 
-
 func _outfits() -> Array[Outfit]:
 	return [
-		_outfit("casual", "Повседневная", 0),
-		_outfit("sport", "Спортивный комплект", 250, "muscle", 1),
-		_outfit("stylish", "Стильный комплект", 250, "appearance", 1),
-		_outfit("business", "Деловой костюм", 250, "capital", 1),
-		_outfit("minimal_black", "Минималистичный чёрный образ", 250, "aura", 1),
-		_outfit("wrestling", "Борцовка", 700, "muscle", 2, "outfit_flex_bicep"),
-		_outfit("magician", "Костюм фокусника", 700, "appearance", 2, "outfit_card_trick"),
-		_outfit("luxury", "Роскошный костюм", 700, "capital", 2, "outfit_premium_card"),
-		_outfit("leather_jacket", "Кожаная куртка", 700, "aura", 2, "outfit_dramatic_entrance"),
-		_outfit("stunt", "Костюм каскадёра", 1200, "muscle", 4, "outfit_dangerous_idea"),
-		_outfit("model", "Модельный образ", 1200, "appearance", 4, "outfit_beautiful_couple"),
-		_outfit("philanthropist", "Образ филантропа", 1200, "capital", 4, "outfit_pay_extra"),
-		_outfit("black_turtleneck", "Чёрная водолазка", 1200, "aura", 4, "outfit_silent_hold"),
+		_outfit("casual", "Повседневная", 0, "", 1, "", 0),
+		_outfit("sport", "Спортивный комплект", 250, "muscle", 2, "", 1),
+		_outfit("stylish", "Стильный комплект", 250, "appearance", 2, "", 1),
+		_outfit("business", "Деловой костюм", 250, "capital", 2, "", 1),
+		_outfit("minimal_black", "Минималистичный чёрный образ", 250, "aura", 2, "", 1),
+		_outfit("wrestling", "Борцовка", 700, "muscle", 3, "outfit_flex_bicep", 1),
+		_outfit("magician", "Костюм фокусника", 700, "appearance", 3, "outfit_card_trick", 1),
+		_outfit("luxury", "Роскошный костюм", 700, "capital", 3, "outfit_premium_card", 1),
+		_outfit("leather_jacket", "Кожаная куртка", 700, "aura", 3, "outfit_dramatic_entrance", 1),
+		_outfit("stunt", "Костюм каскадёра", 1200, "muscle", 4, "outfit_dangerous_idea", 1),
+		_outfit("model", "Модельный образ", 1200, "appearance", 4, "outfit_beautiful_couple", 1),
+		_outfit("philanthropist", "Образ филантропа", 1200, "capital", 4, "outfit_pay_extra", 1),
+		_outfit("black_turtleneck", "Чёрная водолазка", 1200, "aura", 4, "outfit_silent_hold", 1),
 	]
-
 
 func _situation(id: String, name: String, text: String, phase: DateTypes.DatePhase, base_move_ids: Array = [], venue_ids: Array = []) -> DateSituation:
 	var situation := DateSituation.new()

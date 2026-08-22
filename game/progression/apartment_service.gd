@@ -36,17 +36,17 @@ func set_prepared(value: bool) -> void:
 	apartment.prepared = value
 
 
-func is_upgrade_visible(upgrade: ApartmentUpgradeDefinition) -> bool:
-	if upgrade == null:
+func is_object_visible(item: ApartmentObjectDefinition) -> bool:
+	if item == null or not item.enabled:
 		return false
-	if upgrade.min_story_stage > _story_stage():
+	if item.min_story_stage > _story_stage():
 		return false
-	if upgrade.required_filler_reward_id == &"":
+	if item.required_filler_reward_id == &"":
 		return true
 	var girls: Variant = get_node_or_null("/root/GirlsService")
 	if girls == null:
 		return false
-	return bool(girls.has_filler_reward(upgrade.required_filler_reward_id))
+	return bool(girls.has_filler_reward(item.required_filler_reward_id))
 
 
 func create_clean_action() -> GameAction:
@@ -63,7 +63,7 @@ func get_accent_object_id() -> StringName:
 	var apartment: ApartmentState = _apartment()
 	if apartment == null:
 		return &""
-	return apartment.accent_local_object_id
+	return apartment.accent_object_id
 
 
 func has_interior_accent_reward() -> bool:
@@ -98,7 +98,7 @@ func assign_accent(object_id: StringName) -> bool:
 		return false
 	if not get_granted_local_object_ids().has(object_id):
 		return false
-	apartment.accent_local_object_id = object_id
+	apartment.accent_object_id = object_id
 	return true
 
 
@@ -119,53 +119,75 @@ func create_assign_accent_action(object_id: StringName) -> GameAction:
 	return action
 
 
-func get_granted_local_object_ids() -> Array[StringName]:
+func get_owned_local_object_ids() -> Array[StringName]:
 	var result: Array[StringName] = []
 	var apartment: ApartmentState = _apartment()
 	if apartment == null:
 		return result
-	for upgrade in get_catalog().get_all_upgrades():
-		if upgrade == null or not apartment.has(upgrade.id):
+	for object_id in apartment.owned_local_object_ids:
+		if object_id == &"":
 			continue
-		for object_id in upgrade.granted_local_object_ids:
-			if object_id != &"" and not result.has(object_id):
+		var item: ApartmentObjectDefinition = get_catalog().get_object(object_id)
+		if item == null:
+			if not result.has(object_id):
 				result.append(object_id)
+			continue
+		if item.granted_local_object_ids.is_empty():
+			if not result.has(item.id):
+				result.append(item.id)
+			continue
+		for granted_id in item.granted_local_object_ids:
+			if granted_id != &"" and not result.has(granted_id):
+				result.append(granted_id)
 	return result
 
 
-func is_upgrade_purchased(upgrade_id: StringName) -> bool:
+func get_granted_local_object_ids() -> Array[StringName]:
+	return get_owned_local_object_ids()
+
+
+func is_object_owned(object_id: StringName) -> bool:
 	var apartment: ApartmentState = _apartment()
 	if apartment == null:
 		return false
-	return apartment.has(upgrade_id)
+	return apartment.has(object_id)
 
 
-func apply_upgrade(upgrade_id: StringName, target_level: int) -> void:
+func own_object(object_id: StringName, target_level: int = 0) -> void:
 	var apartment: ApartmentState = _apartment()
 	if apartment == null:
 		return
-	apartment.level = maxi(apartment.level, target_level)
-	apartment.add(upgrade_id)
+	var level: int = target_level
+	if level <= 0:
+		var item: ApartmentObjectDefinition = get_catalog().get_object(object_id)
+		if item != null:
+			level = item.level_granted
+	if level > 0:
+		apartment.level = maxi(apartment.level, level)
+	apartment.add(object_id)
 
 
-func create_upgrade_action(upgrade_id: StringName) -> GameAction:
+func create_buy_apartment_object_action(object_id: StringName) -> GameAction:
 	var action := GameAction.new()
-	var definition: ApartmentUpgradeDefinition = get_catalog().get_upgrade(upgrade_id)
-	if definition == null:
+	var item: ApartmentObjectDefinition = get_catalog().get_object(object_id)
+	if item == null or not item.enabled:
 		return action
-	action.id = StringName("%s%s" % [BUY_ACTION_PREFIX, String(definition.id)])
-	action.money_cost = definition.price
+	action.id = StringName("%s%s" % [BUY_ACTION_PREFIX, String(item.id)])
+	action.money_cost = item.price
 	action.time_cost_minutes = 0
-	var requirement := ApartmentUpgradeNotPurchasedRequirement.new()
-	requirement.upgrade_id = definition.id
-	action.requirements.append(requirement)
-	if definition.required_filler_reward_id != &"":
+	var not_owned := ApartmentObjectNotOwnedRequirement.new()
+	not_owned.object_id = item.id
+	action.requirements.append(not_owned)
+	var stage := MinStoryStageRequirement.new()
+	stage.min_stage = item.min_story_stage
+	action.requirements.append(stage)
+	if item.required_filler_reward_id != &"":
 		var reward_req := FillerRewardUnlockedRequirement.new()
-		reward_req.reward_id = definition.required_filler_reward_id
+		reward_req.reward_id = item.required_filler_reward_id
 		action.requirements.append(reward_req)
-	var effect := ApartmentUpgradeEffect.new()
-	effect.upgrade_id = definition.id
-	effect.target_level = definition.level_granted
+	var effect := ApartmentOwnObjectEffect.new()
+	effect.object_id = item.id
+	effect.target_level = item.level_granted
 	action.effects.append(effect)
 	return action
 

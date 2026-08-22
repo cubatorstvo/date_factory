@@ -285,6 +285,19 @@ func _build_launch() -> void:
 		rebuild()
 	)
 	_host.add_child(LabUi.labeled_row("Одежда", outfit_sel))
+	var selected_outfit: Outfit = _catalog().find_outfit(_outfit_id)
+	var outfit_preview := Label.new()
+	outfit_preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	outfit_preview.text = LabUi.outfit_preview_text(_catalog(), selected_outfit)
+	_host.add_child(outfit_preview)
+	var girls_service: Variant = get_node_or_null("/root/GirlsService")
+	var girl_definition: GirlDefinition = girls_service.get_definition(_girl_id) if girls_service != null else null
+	var required_tier: int = LabUi.required_outfit_tier(girl_definition)
+	var current_tier: int = selected_outfit.tier if selected_outfit != null else LabUi.OUTFIT_TIER_CASUAL
+	var eligibility := Label.new()
+	eligibility.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	eligibility.text = LabUi.outfit_eligibility_text(required_tier, current_tier)
+	_host.add_child(eligibility)
 	var sit_sel := OptionButton.new()
 	sit_sel.add_item("(авто)")
 	sit_sel.set_item_metadata(0, &"")
@@ -389,6 +402,10 @@ func _lab_prep_preview() -> Control:
 	var outfit: Outfit = catalog.find_outfit(_outfit_id) if catalog != null else null
 	if catalog == null or player == null:
 		return box
+	var preview := Label.new()
+	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	preview.text = LabUi.outfit_preview_text(catalog, outfit)
+	box.add_child(preview)
 	for stat in catalog.characteristics:
 		if stat == null:
 			continue
@@ -428,17 +445,7 @@ func _lab_prep_preview() -> Control:
 			var new_line := Label.new()
 			new_line.text = line_text
 			box.add_child(new_line)
-	if outfit != null and outfit.has_outfit_move():
-		var outfit_move: DateMove = catalog.find_move(outfit.outfit_move_id)
-		if outfit_move != null:
-			box.add_child(LabUi.heading("Outfit Move"))
-			var tag: DateTag = catalog.find_tag(outfit_move.fixed_tag_id)
-			var tag_name: String = tag.display_name if tag != null else String(outfit_move.fixed_tag_id)
-			var move_line := Label.new()
-			move_line.text = "[%s] %s" % [tag_name, outfit_move.display_name]
-			box.add_child(move_line)
 	return box
-
 
 func _girl_card() -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -515,8 +522,7 @@ func _begin_session(seed: int, is_replay: bool) -> void:
 	if girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE)) and session_venue == &"restaurant":
 		config.venue_source_limit = 2
 	var accent_id: StringName = _accent_object_id()
-	if accent_id != &"" and "accent_local_object_id" in config:
-		config.accent_local_object_id = accent_id
+	config.accent_object_id = accent_id
 	_engine = DateEngine.new()
 	_engine.create_date_session(config)
 	status_message.emit("Свидание запущено. Seed %d" % seed)
@@ -553,7 +559,7 @@ func _lab_venue_preview() -> Control:
 	var apartment: Variant = _apartment_service()
 	var owned_count: int = -1
 	if apartment != null:
-		owned_count = apartment.get_granted_local_object_ids().size()
+		owned_count = apartment.get_owned_local_object_ids().size()
 	var girls: Variant = get_node_or_null("/root/GirlsService")
 	var sonya_bonus: bool = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE))
 	var source_uses: int = 2 if sonya_bonus and location.id == &"restaurant" else 1
@@ -573,7 +579,6 @@ func _lab_venue_preview() -> Control:
 	), LabUi.MUTED, knowledge))
 	return box
 
-
 func _lab_owned_object_controls() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
@@ -585,16 +590,15 @@ func _lab_owned_object_controls() -> Control:
 		box.add_child(missing)
 		return box
 	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
-	for upgrade in apartment_catalog.get_all_upgrades():
-		if upgrade == null:
+	for object_def in apartment_catalog.all_objects():
+		if object_def == null:
 			continue
 		var check := CheckBox.new()
-		check.text = "%s · Stage %d" % [upgrade.display_name, maxi(upgrade.min_story_stage, upgrade.level_granted)]
-		check.button_pressed = bool(apartment.is_upgrade_purchased(upgrade.id))
-		var upgrade_id: StringName = upgrade.id
-		var level_granted: int = upgrade.level_granted
+		check.text = "%s · Stage %d" % [object_def.display_name, object_def.min_story_stage]
+		check.button_pressed = bool(apartment.is_object_owned(object_def.id))
+		var object_id: StringName = object_def.id
 		check.toggled.connect(func(pressed: bool) -> void:
-			_set_lab_upgrade_owned(upgrade_id, level_granted, pressed)
+			_set_lab_object_owned(object_id, pressed)
 			rebuild()
 		)
 		box.add_child(check)
@@ -603,11 +607,11 @@ func _lab_owned_object_controls() -> Control:
 	accent_row.set_item_metadata(0, &"")
 	var accent_index: int = 0
 	var current_accent: StringName = _accent_object_id()
-	for upgrade in apartment_catalog.get_all_upgrades():
-		if upgrade == null or not bool(apartment.is_upgrade_purchased(upgrade.id)):
+	for object_def in apartment_catalog.all_objects():
+		if object_def == null or not bool(apartment.is_object_owned(object_def.id)):
 			continue
-		var object_id: StringName = _upgrade_object_id(upgrade)
-		accent_row.add_item(upgrade.display_name)
+		var object_id: StringName = _apartment_object_id(object_def)
+		accent_row.add_item(object_def.display_name)
 		var item_index: int = accent_row.item_count - 1
 		accent_row.set_item_metadata(item_index, object_id)
 		if object_id == current_accent:
@@ -620,45 +624,36 @@ func _lab_owned_object_controls() -> Control:
 	box.add_child(LabUi.labeled_row("Акцент интерьера", accent_row))
 	return box
 
-
-func _upgrade_object_id(upgrade: ApartmentUpgradeDefinition) -> StringName:
-	if upgrade == null:
+func _apartment_object_id(object_def: ApartmentObjectDefinition) -> StringName:
+	if object_def == null:
 		return &""
-	if not upgrade.granted_local_object_ids.is_empty():
-		return upgrade.granted_local_object_ids[0]
-	return upgrade.id
+	return object_def.local_object_id()
+func _set_lab_upgrade_owned(object_id: StringName, _level_granted: int, owned: bool) -> void:
+	_set_lab_object_owned(object_id, owned)
 
-
-func _set_lab_upgrade_owned(upgrade_id: StringName, level_granted: int, owned: bool) -> void:
+func _set_lab_object_owned(object_id: StringName, owned: bool) -> void:
 	var apartment: Variant = _apartment_service()
 	if apartment == null:
 		return
 	if owned:
-		apartment.apply_upgrade(upgrade_id, level_granted)
+		apartment.own_object(object_id)
 		return
 	var gs: Variant = _game_state()
 	if gs == null or gs.progression == null or gs.progression.apartment == null:
 		return
-	gs.progression.apartment.purchased_upgrade_ids.erase(upgrade_id)
-
+	gs.progression.apartment.owned_local_object_ids.erase(object_id)
 
 func _set_lab_accent(object_id: StringName) -> void:
 	var apartment: Variant = _apartment_service()
 	if apartment == null:
 		return
 	if object_id == &"":
-		if apartment.has_method("create_assign_accent_action"):
-			pass
-		var gs: Variant = _game_state()
-		if gs != null and gs.progression != null and gs.progression.apartment != null and "accent_local_object_id" in gs.progression.apartment:
-			gs.progression.apartment.accent_local_object_id = &""
+		apartment.assign_accent(&"")
 		return
-	if apartment.has_method("create_assign_accent_action"):
-		var action: GameAction = apartment.create_assign_accent_action(object_id)
-		var actions: Variant = get_node_or_null("/root/ActionService")
-		if actions != null and action != null:
-			actions.execute(action)
-
+	var action: GameAction = apartment.create_assign_accent_action(object_id)
+	var actions: Variant = get_node_or_null("/root/ActionService")
+	if actions != null and action != null:
+		actions.execute(action)
 func _reset_girl() -> void:
 	progress_store.reset_girl(_catalog().find_girl(_girl_id))
 	status_message.emit("Прогресс девушки сброшен.")
@@ -865,14 +860,12 @@ func _is_accent_local_option(option: DateMoveOption) -> bool:
 
 func _accent_object_id() -> StringName:
 	var apartment: Variant = get_node_or_null("/root/ApartmentService")
-	if apartment != null and apartment.has_method("get_accent_object_id"):
+	if apartment != null:
 		return apartment.get_accent_object_id()
 	var session: DateSession = _engine.get_session_state() if _engine != null else null
-	if session != null and "accent_local_object_id" in session:
-		return session.accent_local_object_id
+	if session != null:
+		return session.accent_object_id
 	return &""
-
-
 func _apartment_service() -> Variant:
 	var node: Node = get_node_or_null("/root/ApartmentService")
 	if not is_instance_valid(node):

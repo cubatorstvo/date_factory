@@ -56,6 +56,9 @@ func _connect_sources() -> void:
 	var clock: Variant = _time_service()
 	if clock != null:
 		_connect_signal(clock, "time_advanced", _on_source_changed)
+	var equipment: Variant = _equipment_service()
+	if equipment != null:
+		_connect_signal(equipment, "outfit_equipped", _on_source_changed)
 
 
 func _connect_signal(host: Variant, signal_name: String, callback: Callable) -> void:
@@ -87,6 +90,7 @@ func _build_view() -> ObjectiveView:
 		_fill_story_girl(view, requirement as GirlRelationshipRequirement)
 	elif requirement is WorldReachRequirement:
 		_fill_factory(view)
+	_append_dress_up_subgoal(view)
 	_mark_current(view)
 	return view
 
@@ -161,6 +165,22 @@ func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirem
 	relationship_subgoal.target_id = girl_id
 	view.subgoals.append(relationship_subgoal)
 	view.progress_text = relationship_subgoal.progress_text
+
+func _append_dress_up_subgoal(view: ObjectiveView) -> void:
+	if view.stage < 2:
+		return
+	var equipment: Variant = _equipment_service()
+	var owns_dressed: bool = equipment != null and bool(equipment.owns_dressed_outfit())
+	if view.stage > 2 and owns_dressed:
+		return
+	var subgoal: ObjectiveSubgoalView = ObjectiveSubgoalView.new()
+	subgoal.id = &"dress_up"
+	subgoal.label = "Приоденься"
+	subgoal.progress_text = "Купи любой образ выше «Повседневного» в магазине одежды."
+	if not owns_dressed:
+		subgoal.progress_text += " Марина работает в магазине одежды. Хорошие отношения с ней могут оказаться полезны."
+	subgoal.completed = owns_dressed
+	view.subgoals.append(subgoal)
 
 
 func _fill_factory(view: ObjectiveView) -> void:
@@ -324,6 +344,9 @@ func _time_service() -> Variant:
 
 func _dating_service() -> Variant:
 	return _tree_node("DatingService")
+
+func _equipment_service() -> Variant:
+	return _tree_node("EquipmentService")
 
 
 func _tree_node(node_name: String) -> Variant:

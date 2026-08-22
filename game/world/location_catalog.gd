@@ -7,6 +7,7 @@ const ID_CAFE: StringName = &"cafe"
 const ID_LEISURE_CENTER: StringName = &"leisure_center"
 const ID_RESTAURANT: StringName = &"restaurant"
 const ID_FURNITURE_STORE: StringName = &"furniture_store"
+const ID_CLOTHING_STORE: StringName = &"clothing_store"
 const START_LOCATION_ID: StringName = ID_CITY_CENTER
 const SPAWN_DEFAULT: StringName = &"default"
 const SPAWN_ENTRANCE: StringName = &"entrance"
@@ -15,12 +16,14 @@ const SPAWN_CAFE_DOOR: StringName = &"cafe_door"
 const SPAWN_LEISURE_CENTER_DOOR: StringName = &"leisure_center_door"
 const SPAWN_RESTAURANT_DOOR: StringName = &"restaurant_door"
 const SPAWN_FURNITURE_STORE_DOOR: StringName = &"furniture_store_door"
+const SPAWN_CLOTHING_STORE_DOOR: StringName = &"clothing_store_door"
 const SCENE_CITY_CENTER: String = "res://game/world/locations/city_center.tscn"
 const SCENE_APARTMENT: String = "res://game/world/locations/apartment.tscn"
 const SCENE_CAFE: String = "res://game/world/locations/cafe.tscn"
 const SCENE_LEISURE_CENTER: String = "res://game/world/locations/leisure_center.tscn"
 const SCENE_RESTAURANT: String = "res://game/world/locations/restaurant.tscn"
 const SCENE_FURNITURE_STORE: String = "res://game/world/locations/furniture_store.tscn"
+const SCENE_CLOTHING_STORE: String = "res://game/world/locations/clothing_store.tscn"
 
 const START_UNLOCKED_LOCATION_IDS: Array[StringName] = [
 	ID_CITY_CENTER,
@@ -78,6 +81,7 @@ static func create_seed() -> LocationCatalog:
 	catalog.locations.append(_make_interior(ID_LEISURE_CENTER, "Центр досуга", SCENE_LEISURE_CENTER, ID_CITY_CENTER))
 	catalog.locations.append(_make_interior(ID_RESTAURANT, "Ресторан", SCENE_RESTAURANT, ID_CITY_CENTER))
 	catalog.locations.append(_make_interior(ID_FURNITURE_STORE, "Мебельный магазин", SCENE_FURNITURE_STORE, ID_CITY_CENTER))
+	catalog.locations.append(_make_interior(ID_CLOTHING_STORE, "Магазин одежды", SCENE_CLOTHING_STORE, ID_CITY_CENTER))
 	return catalog
 
 

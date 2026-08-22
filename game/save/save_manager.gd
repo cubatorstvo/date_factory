@@ -291,7 +291,8 @@ func _migrate_v9_progression(state_data: Dictionary) -> Dictionary:
 	if not progression.has("apartment"):
 		progression["apartment"] = {
 			"level": 1,
-			"purchased_upgrade_ids": [],
+			"owned_local_object_ids": [],
+			"accent_object_id": "",
 		}
 	migrated["progression"] = progression
 	var dating_value: Variant = migrated.get("dating", {})

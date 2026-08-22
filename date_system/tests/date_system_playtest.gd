@@ -26,6 +26,11 @@ func _init() -> void:
 	if has_error:
 		quit(1)
 		return
+	var venue_ids: Array[StringName] = []
+	for venue in catalog.date_venues:
+		if venue != null:
+			venue_ids.append(venue.id)
+	_ok("canonical 4 venues", venue_ids.size() == 4 and venue_ids.has(&"apartment") and venue_ids.has(&"cafe") and venue_ids.has(&"leisure_center") and venue_ids.has(&"restaurant"))
 	var store := DateProgressStore.new()
 	store.reset_all(catalog)
 	_play_girl(catalog, store, &"alina", "Алина 1")

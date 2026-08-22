@@ -66,8 +66,17 @@
 - DateVenue unlock — persistent `WorldState.unlocked_date_venue_ids`, старт `[apartment]`. `UnlockDateVenueStageEffect` рядом с `UnlockLocationStageEffect`. Stage 2: `cafe` + `leisure_center`; Stage 3: `restaurant`. `DatingService.get_available_date_venues` фильтрует по этому списку
 - World `leisure_center` и `furniture_store` — `LocationDefinition` (не DateVenue). Stage 2 unlocks both world locations. Katya `location_id = furniture_store`
 - Furniture Store UI читает `ApartmentService`, не `PurchaseService`
-- Accent: `ApartmentState.accent_local_object_id`; награда `katya_interior_accent` (миграция с `katya_emperor_chair`). Первое назначение `$0`; смена по Story Stage `$300 / $600 / $1000`
-- Accent +2 идёт через текущий Date Engine score path (`DateSessionConfig.accent_local_object_id`), не отдельный scorer
+- Accent: `ApartmentState.accent_object_id`; награда только `katya_interior_accent`. Без Emperor Chair constants и без миграции `katya_emperor_chair`. Первое назначение `$0`; смена по Story Stage `$300 / $600 / $1000`
+
+## Progression integration
+
+- Spec `min_city_stage` 1–4 для Outfit и Apartment Objects = **Story Stage**. `WorldState.city_stage` остаётся 1–3 для filler packs. Поля в коде: `Outfit.min_story_stage`, `ApartmentObjectDefinition.min_story_stage`, плюс `Outfit.tier` (`0` Casual / `1` Dressed)
+- Stage 2+ Date gate: `OutfitAboveCasualGirlRequirement` проверяет `equipped Outfit.tier >= 1`, не price и не id-имя. Марина: `date_requirements = []`. Stage 1 girls без этого requirement
+- Марина: `MinCityStageGirlRequirement(2)`, `location_id = clothing_store`. Clothing Store — `LocationDefinition` по образцу `furniture_store`, unlock на Stage 2. Симуляторная секция одежды остаётся player-facing магазином
+- Apartment domain: `ApartmentObjectDefinition`, `owned_local_object_ids`, `accent_object_id`, `create_buy_apartment_object_action`. Player-facing `Предметы: N / 12`. `ApartmentState.level` не является progression UI. Automation `purchased_upgrade_ids` не трогать
+- Dating runtime читает только `venue_id`. Save-compatibility не требуется: старые ключи `location_id` / `purchased_upgrade_ids` / `katya_emperor_chair` не мигрируем
+- Objective «Приоденься»: secondary Stage 2, completion = владение любым Outfit `tier >= 1`, не экипировка
+- Accent +2 идёт через текущий Date Engine score path (`DateSessionConfig.accent_object_id`), не отдельный scorer
 - Sonya `venue_source_limit = 2` остаётся в `DatingService._create_engine`. Два разных Local Move; sibling move того же объекта разрешён
 - Source label: `ЛОКАЦИЯ`. Option format: `[ТЕГ] Объект: действие` через `GameTermFormatter`
 - Developer Room venue playground вызывает production `DatingService` / `DateEngine`, не второй lab engine

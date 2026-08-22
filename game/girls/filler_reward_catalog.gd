@@ -6,7 +6,6 @@ const ID_MARINA_FREE_OUTFIT: StringName = &"marina_free_outfit"
 const ID_VIKA_BASE_REROLL: StringName = &"vika_base_reroll"
 const ID_DASHA_SOFTEN_NEGATIVE: StringName = &"dasha_soften_negative"
 const ID_KATYA_INTERIOR_ACCENT: StringName = &"katya_interior_accent"
-const ID_KATYA_EMPEROR_CHAIR: StringName = &"katya_emperor_chair"
 const ID_LERA_APARTMENT_CLEANING: StringName = &"lera_apartment_cleaning"
 const ID_KIRA_EXPRESS_STYLING: StringName = &"kira_express_styling"
 const ID_OLYA_OVERTIME: StringName = &"olya_overtime"
@@ -24,8 +23,6 @@ const ALINA_GYM_IMPROVED_PRICE: int = 35
 const ALINA_GYM_MINUTES: int = 60
 const OLYA_OVERTIME_PAY_PERCENT: int = 50
 const APARTMENT_CLEAN_MINUTES: int = 30
-const EMPEROR_CHAIR_PRICE: int = 800
-const EMPEROR_CHAIR_OBJECT_ID: StringName = &"emperor_chair"
 
 @export var rewards: Array[FillerRewardDefinition] = []
 

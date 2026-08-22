@@ -12,4 +12,5 @@ price = 0
 stat_id = &""
 stat_bonus = 0
 min_story_stage = 1
+tier = 0
 outfit_move_id = &""

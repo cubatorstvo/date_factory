@@ -48,6 +48,9 @@ static func make_stage_2_enter_effects() -> Array[StageEnterEffect]:
 	var unlock_furniture: UnlockLocationStageEffect = UnlockLocationStageEffect.new()
 	unlock_furniture.location_id = LocationCatalog.ID_FURNITURE_STORE
 	effects.append(unlock_furniture)
+	var unlock_clothing: UnlockLocationStageEffect = UnlockLocationStageEffect.new()
+	unlock_clothing.location_id = LocationCatalog.ID_CLOTHING_STORE
+	effects.append(unlock_clothing)
 	var unlock_cafe_venue: UnlockDateVenueStageEffect = UnlockDateVenueStageEffect.new()
 	unlock_cafe_venue.date_venue_id = &"cafe"
 	effects.append(unlock_cafe_venue)

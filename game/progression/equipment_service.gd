@@ -53,6 +53,22 @@ func get_owned_outfits() -> Array:
 func get_equipped_outfit_id() -> StringName:
 	return get_current_outfit_id()
 
+func owns_dressed_outfit() -> bool:
+	for outfit in get_owned_outfits():
+		if outfit != null and int(outfit.get("tier")) >= 1:
+			return true
+	return false
+
+
+func get_current_outfit_tier() -> int:
+	return get_outfit_tier(get_current_outfit())
+
+
+func get_outfit_tier(outfit: Outfit) -> int:
+	if outfit == null:
+		return 0
+	return int(outfit.get("tier"))
+
 
 func get_shop_outfits() -> Array[Outfit]:
 	var stage: int = 1

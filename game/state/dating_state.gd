@@ -35,7 +35,7 @@ func from_dict(data: Dictionary) -> void:
 	var outfit_text: String = str(entry.get("outfit_id", ""))
 	if outfit_text.is_empty():
 		outfit_text = String(OutfitCatalog.START_OUTFIT_ID)
-	var venue_text: String = str(entry.get("venue_id", entry.get("location_id", "")))
+	var venue_text: String = str(entry.get("venue_id", ""))
 	active_date = {
 		"girl_id": StringName(girl_text),
 		"venue_id": StringName(venue_text),

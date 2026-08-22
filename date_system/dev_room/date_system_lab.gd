@@ -543,14 +543,10 @@ func _build_test_state() -> Control:
 	)
 	root.add_child(LabUi.labeled_row("Outfit", outfit_sel))
 	var outfit: Outfit = catalog_service.catalog.find_outfit(current_outfit_id)
-	var bonus_line := Label.new()
-	if outfit != null and outfit.stat_bonus > 0:
-		var bonus_stat: CharacteristicDefinition = catalog_service.catalog.find_characteristic(outfit.stat_id)
-		var bonus_name: String = bonus_stat.display_name if bonus_stat != null else String(outfit.stat_id)
-		bonus_line.text = "Outfit bonus: %s +%d" % [bonus_name, outfit.stat_bonus]
-	else:
-		bonus_line.text = "Outfit bonus: нет"
-	root.add_child(bonus_line)
+	var outfit_preview := Label.new()
+	outfit_preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	outfit_preview.text = LabUi.outfit_preview_text(catalog_service.catalog, outfit)
+	root.add_child(outfit_preview)
 	root.add_child(LabUi.heading("EffectiveStat"))
 	for stat in catalog_service.catalog.characteristics:
 		var base_value: int = player.get_stat(stat.id)
@@ -655,6 +651,19 @@ func _build_venue_playground() -> Control:
 		_show_section("venue_playground")
 	)
 	root.add_child(LabUi.labeled_row("Outfit", outfit_sel))
+	var selected_outfit: Outfit = catalog_service.catalog.find_outfit(_playground_outfit_id)
+	var equipped := Label.new()
+	equipped.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	equipped.text = LabUi.outfit_preview_text(catalog_service.catalog, selected_outfit)
+	root.add_child(equipped)
+	var girls_for_outfit: Variant = get_node_or_null("/root/GirlsService")
+	var girl_definition: GirlDefinition = girls_for_outfit.get_definition(_playground_girl_id) if girls_for_outfit != null else null
+	var required_tier: int = LabUi.required_outfit_tier(girl_definition)
+	var current_tier: int = selected_outfit.tier if selected_outfit != null else LabUi.OUTFIT_TIER_CASUAL
+	var eligibility := Label.new()
+	eligibility.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	eligibility.text = LabUi.outfit_eligibility_text(required_tier, current_tier)
+	root.add_child(eligibility)
 	var player: DatePlayerSnapshot = progress_store.player_snapshot
 	for stat in catalog_service.catalog.characteristics:
 		var spin := SpinBox.new()
@@ -672,7 +681,8 @@ func _build_venue_playground() -> Control:
 	var girls: Variant = get_node_or_null("/root/GirlsService")
 	var katya := CheckBox.new()
 	katya.text = "Katya reward — Акцент интерьера"
-	katya.button_pressed = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR))
+	var apartment_for_katya: Variant = get_node_or_null("/root/ApartmentService")
+	katya.button_pressed = apartment_for_katya != null and bool(apartment_for_katya.has_interior_accent_reward())
 	katya.toggled.connect(func(pressed: bool) -> void:
 		_toggle_playground_reward(GirlCatalog.ID_KATYA, pressed)
 		_show_section("venue_playground")
@@ -690,7 +700,7 @@ func _build_venue_playground() -> Control:
 	var actions := HFlowContainer.new()
 	actions.add_theme_constant_override("h_separation", 8)
 	actions.add_theme_constant_override("v_separation", 6)
-	for pair in [[2, "Stage 2 objects"], [3, "Stage 3 objects"], [4, "Stage 4 objects"]]:
+	for pair in [[2, "Own Stage 2"], [3, "Own through 3"]]:
 		var stage: int = int(pair[0])
 		var btn: Button = LabUi.button(str(pair[1]))
 		btn.pressed.connect(func() -> void:
@@ -723,10 +733,9 @@ func _build_venue_playground() -> Control:
 	accent_sel.set_item_metadata(0, &"")
 	var accent_index: int = 0
 	var current_accent: StringName = &""
-	if apartment != null and apartment.has_method("get_accent_object_id"):
-		current_accent = apartment.get_accent_object_id()
 	if apartment != null:
-		for object_id in apartment.get_granted_local_object_ids():
+		current_accent = apartment.get_accent_object_id()
+		for object_id in apartment.get_owned_local_object_ids():
 			var local_object: DateLocalObject = catalog_service.catalog.find_local_object(object_id)
 			var object_name: String = local_object.display_name if local_object != null else String(object_id)
 			accent_sel.add_item(object_name)
@@ -770,13 +779,12 @@ func _build_venue_playground_preview() -> Control:
 	var progress: GirlProgress = progress_store.get_girl_progress(_playground_girl_id, girl)
 	var player: DatePlayerSnapshot = progress_store.player_snapshot
 	var apartment: Variant = get_node_or_null("/root/ApartmentService")
-	var owned_count: int = apartment.get_granted_local_object_ids().size() if apartment != null else 0
+	var owned_ids: Array[StringName] = apartment.get_owned_local_object_ids() if apartment != null else []
+	var owned_count: int = owned_ids.size()
 	var girls: Variant = get_node_or_null("/root/GirlsService")
 	var sonya_bonus: bool = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE))
 	var source_uses: int = 2 if sonya_bonus and location.id == &"restaurant" else 1
-	var accent_id: StringName = &""
-	if apartment != null and apartment.has_method("get_accent_object_id"):
-		accent_id = apartment.get_accent_object_id()
+	var accent_id: StringName = apartment.get_accent_object_id() if apartment != null else &""
 	var knowledge: Dictionary = LabUi.tag_knowledge_map(progress, girl)
 	box.add_child(LabUi.bbcode_block(LabUi.venue_card_bbcode(
 		catalog,
@@ -791,6 +799,14 @@ func _build_venue_playground_preview() -> Control:
 		accent_id,
 		sonya_bonus
 	), LabUi.MUTED, knowledge))
+	var owned_line := Label.new()
+	owned_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var owned_names := PackedStringArray()
+	for object_id in owned_ids:
+		var local_owned: DateLocalObject = catalog.find_local_object(object_id)
+		owned_names.append(local_owned.display_name if local_owned != null else String(object_id))
+	owned_line.text = "Owned Apartment objects: %s" % (", ".join(owned_names) if not owned_names.is_empty() else "—")
+	box.add_child(owned_line)
 	var ids_line := Label.new()
 	ids_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var move_ids := PackedStringArray()
@@ -806,6 +822,19 @@ func _build_venue_playground_preview() -> Control:
 	]
 	box.add_child(ids_line)
 	var outfit: Outfit = catalog.find_outfit(_playground_outfit_id)
+	box.add_child(LabUi.heading("Outfit preview"))
+	var outfit_preview := Label.new()
+	outfit_preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	outfit_preview.text = LabUi.outfit_preview_text(catalog, outfit)
+	box.add_child(outfit_preview)
+	var girl_definition: GirlDefinition = girls.get_definition(_playground_girl_id) if girls != null else null
+	var eligibility := Label.new()
+	eligibility.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	eligibility.text = LabUi.outfit_eligibility_text(
+		LabUi.required_outfit_tier(girl_definition),
+		outfit.tier if outfit != null else LabUi.OUTFIT_TIER_CASUAL
+	)
+	box.add_child(eligibility)
 	box.add_child(LabUi.heading("Effective Characteristics"))
 	for stat in catalog.characteristics:
 		if stat == null:
@@ -816,7 +845,6 @@ func _build_venue_playground_preview() -> Control:
 		line.text = "%s: %d" % [stat.display_name, effective]
 		box.add_child(line)
 	return box
-
 
 func _ids_to_strings(ids: Array[StringName]) -> PackedStringArray:
 	var result := PackedStringArray()
@@ -863,39 +891,30 @@ func _own_playground_stage_objects(max_stage: int) -> void:
 	var apartment: Variant = get_node_or_null("/root/ApartmentService")
 	if apartment == null:
 		return
-	for upgrade in apartment.get_catalog().get_all_upgrades():
-		if upgrade == null:
+	for object_def in apartment.get_catalog().all_objects():
+		if object_def == null:
 			continue
-		var required_stage: int = upgrade.min_story_stage if upgrade.min_story_stage > 0 else upgrade.level_granted
-		if required_stage <= max_stage:
-			apartment.apply_upgrade(upgrade.id, upgrade.level_granted)
-
+		if object_def.min_story_stage <= max_stage:
+			apartment.own_object(object_def.id)
 
 func _clear_playground_objects() -> void:
 	var gs: Variant = _game_state()
 	if gs == null or gs.progression == null or gs.progression.apartment == null:
 		return
-	gs.progression.apartment.purchased_upgrade_ids.clear()
-	gs.progression.apartment.level = 1
-	if "accent_local_object_id" in gs.progression.apartment:
-		gs.progression.apartment.accent_local_object_id = &""
-
+	gs.progression.apartment.owned_local_object_ids.clear()
+	gs.progression.apartment.accent_object_id = &""
 
 func _set_playground_accent(object_id: StringName) -> void:
 	var apartment: Variant = get_node_or_null("/root/ApartmentService")
-	var gs: Variant = _game_state()
-	if object_id == &"":
-		if gs != null and gs.progression != null and gs.progression.apartment != null and "accent_local_object_id" in gs.progression.apartment:
-			gs.progression.apartment.accent_local_object_id = &""
+	if apartment == null:
 		return
-	if apartment != null and apartment.has_method("create_assign_accent_action"):
-		var action: GameAction = apartment.create_assign_accent_action(object_id)
-		var actions: Variant = _action_service()
-		if actions != null and action != null:
-			actions.execute(action)
-	elif gs != null and gs.progression != null and gs.progression.apartment != null and "accent_local_object_id" in gs.progression.apartment:
-		gs.progression.apartment.accent_local_object_id = object_id
-
+	if object_id == &"":
+		apartment.assign_accent(&"")
+		return
+	var action: GameAction = apartment.create_assign_accent_action(object_id)
+	var actions: Variant = _action_service()
+	if actions != null and action != null:
+		actions.execute(action)
 
 func _launch_venue_playground() -> void:
 	if _play_panel != null:

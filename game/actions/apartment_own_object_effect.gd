@@ -1,7 +1,7 @@
-class_name ApartmentUpgradeEffect
+class_name ApartmentOwnObjectEffect
 extends ActionEffect
 
-@export var upgrade_id: StringName = &""
+@export var object_id: StringName = &""
 @export var target_level: int = 1
 
 
@@ -9,11 +9,11 @@ func apply() -> void:
 	var apartment: Variant = _apartment_service()
 	if apartment == null:
 		return
-	apartment.apply_upgrade(upgrade_id, target_level)
+	apartment.own_object(object_id, target_level)
 
 
 func get_description() -> String:
-	return "Квартира: уровень %d" % target_level
+	return "Предмет квартиры"
 
 
 func _apartment_service() -> Variant:

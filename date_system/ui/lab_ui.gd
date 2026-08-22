@@ -13,6 +13,9 @@ const LOCKED := Color("6a5a4a")
 const VENUE_SOURCE_LABEL := "ЛОКАЦИЯ"
 const CANONICAL_DATE_VENUE_IDS: Array[StringName] = [&"apartment", &"cafe", &"leisure_center", &"restaurant"]
 const APARTMENT_OBJECT_MAX := 12
+const OUTFIT_TIER_CASUAL := 0
+const CASUAL_DATE_OUTFIT_MESSAGE := "Для этого свидания нужен образ интереснее повседневного."
+const CASUAL_DATE_OUTFIT_REQUIREMENT := "Одежда: выше «Повседневной»"
 
 
 static func apply_theme(root: Control) -> void:
@@ -259,6 +262,56 @@ static func local_move_option_text(option: DateMoveOption) -> String:
 	if object_name.is_empty():
 		return "[%s] %s" % [tag_name, action_text]
 	return "[%s] %s: %s" % [tag_name, object_name, action_text]
+
+static func outfit_tier_label(tier: int) -> String:
+	return "Повседневная" if tier <= OUTFIT_TIER_CASUAL else "Одетый"
+
+
+static func required_outfit_tier(definition: GirlDefinition) -> int:
+	if definition == null:
+		return OUTFIT_TIER_CASUAL
+	var min_tier: int = OUTFIT_TIER_CASUAL
+	for requirement in definition.date_requirements:
+		if requirement is OutfitAboveCasualGirlRequirement:
+			min_tier = maxi(min_tier, 1)
+	return min_tier
+
+
+static func outfit_preview_text(catalog: DateContentCatalog, outfit: Outfit) -> String:
+	if outfit == null:
+		return "Outfit: —"
+	var lines := PackedStringArray()
+	lines.append(outfit.display_name)
+	lines.append("Story Stage: %d" % outfit.min_story_stage)
+	lines.append("Outfit tier: %d · %s" % [outfit.tier, outfit_tier_label(outfit.tier)])
+	if outfit.stat_id != &"" and catalog != null:
+		var stat: CharacteristicDefinition = catalog.find_characteristic(outfit.stat_id)
+		var stat_name: String = stat.display_name if stat != null else String(outfit.stat_id)
+		lines.append("%s +1" % stat_name)
+	elif outfit.stat_id != &"":
+		lines.append("%s +1" % String(outfit.stat_id))
+	if outfit.has_outfit_move() and catalog != null:
+		var outfit_move: DateMove = catalog.find_move(outfit.outfit_move_id)
+		if outfit_move != null:
+			var tag: DateTag = catalog.find_tag(outfit_move.fixed_tag_id)
+			var tag_name: String = tag.display_name if tag != null else String(outfit_move.fixed_tag_id)
+			lines.append("Outfit Move: [%s] %s" % [tag_name, outfit_move.display_name])
+		else:
+			lines.append("Outfit Move: —")
+	else:
+		lines.append("Outfit Move: —")
+	return "\n".join(lines)
+
+
+static func outfit_eligibility_text(required_tier: int, current_tier: int) -> String:
+	var satisfied: bool = current_tier >= required_tier
+	return "Минимум Outfit tier: %d (%s)\nТекущий tier: %d (%s)\n%s" % [
+		required_tier,
+		outfit_tier_label(required_tier),
+		current_tier,
+		outfit_tier_label(current_tier),
+		"подходит" if satisfied else "не подходит",
+	]
 
 
 static func venue_card_bbcode(
