@@ -278,6 +278,7 @@ func reveal_random_unknown_tags(girl_id: StringName, count: int, rng: RandomNumb
 		else:
 			state.revealed_negative_tag_ids.append(tag_id)
 		revealed += 1
+	_normalize_girl_knowledge(girl_id)
 	return revealed
 
 
@@ -349,10 +350,13 @@ func get_last_date_completed_at(girl_id: StringName) -> int:
 
 
 func is_date_cooldown_finished(girl_id: StringName) -> bool:
-	var clock: Variant = _time_service()
-	if clock == null:
-		return false
-	return int(clock.get_game_time_minutes()) >= get_next_date_available_at(girl_id)
+	var dating: Variant = get_node_or_null("/root/DatingService")
+	if dating != null and dating.has_method("is_free_date_available_today"):
+		return bool(dating.is_free_date_available_today(girl_id))
+	var daily: Variant = get_node_or_null("/root/DailyActivityService")
+	if daily == null:
+		return true
+	return bool(daily.is_available(daily.date_key(girl_id), 1))
 
 
 func set_date_cooldown(girl_id: StringName, _duration_minutes: int = 0) -> void:
@@ -388,6 +392,7 @@ func apply_date_knowledge(girl_id: StringName, progress: GirlProgress) -> void:
 	state.revealed_positive_tag_ids = _copy_tag_ids(progress.revealed_positive_tag_ids)
 	state.revealed_negative_tag_ids = _copy_tag_ids(progress.revealed_negative_tag_ids)
 	state.completed_dates = maxi(0, progress.completed_dates)
+	_normalize_girl_knowledge(girl_id)
 
 
 func _copy_tag_ids(ids: Array[StringName]) -> Array[StringName]:
@@ -395,6 +400,20 @@ func _copy_tag_ids(ids: Array[StringName]) -> Array[StringName]:
 	for tag_id in ids:
 		copy.append(tag_id)
 	return copy
+
+
+func _normalize_girl_knowledge(girl_id: StringName) -> void:
+	var state: GirlState = peek_state(girl_id)
+	var profile: GirlProfile = _date_girl(girl_id)
+	var catalog: DateContentCatalog = _date_catalog()
+	if state == null or profile == null or catalog == null:
+		return
+	var progress := GirlProgress.new()
+	progress.revealed_positive_tag_ids = _copy_tag_ids(state.revealed_positive_tag_ids)
+	progress.revealed_negative_tag_ids = _copy_tag_ids(state.revealed_negative_tag_ids)
+	progress.normalize_deduced_knowledge(profile, catalog)
+	state.revealed_positive_tag_ids = _copy_tag_ids(progress.revealed_positive_tag_ids)
+	state.revealed_negative_tag_ids = _copy_tag_ids(progress.revealed_negative_tag_ids)
 
 
 func get_girls_at_current_location() -> Array[GirlDefinition]:

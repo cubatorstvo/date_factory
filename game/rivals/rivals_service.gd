@@ -126,9 +126,12 @@ func is_repeatable_rival(rival_id: StringName) -> bool:
 func can_challenge_now(rival_id: StringName) -> bool:
 	if not is_discovered(rival_id):
 		return false
-	if is_story_rival(rival_id):
-		return not is_defeated(rival_id)
-	return is_challenge_cooldown_finished(rival_id)
+	if is_story_rival(rival_id) and is_defeated(rival_id):
+		return false
+	var daily: Variant = get_node_or_null("/root/DailyActivityService")
+	if daily == null:
+		return false
+	return bool(daily.is_available(daily.rival_key(rival_id), 1))
 
 
 func get_challenge_available_at(rival_id: StringName) -> int:
@@ -163,12 +166,16 @@ func is_challenge_cooldown_finished(rival_id: StringName) -> bool:
 
 
 func get_challenge_cooldown_remaining_minutes(rival_id: StringName) -> int:
-	if is_story_rival(rival_id):
+	if can_challenge_now(rival_id):
+		return 0
+	if is_story_rival(rival_id) and is_defeated(rival_id):
 		return 0
 	var clock: Variant = _time_service()
 	if clock == null:
 		return 0
-	return maxi(0, get_next_challenge_available_at(rival_id) - int(clock.get_game_time_minutes()))
+	var minutes: int = int(clock.get_game_time_minutes())
+	var next_day_start: int = (int(minutes / 1440) + 1) * 1440
+	return maxi(0, next_day_start - minutes)
 
 
 func mark_challenge_completed(rival_id: StringName, completed_at: int = -1) -> void:
@@ -182,6 +189,9 @@ func mark_challenge_completed(rival_id: StringName, completed_at: int = -1) -> v
 		if clock != null:
 			recorded_at = int(clock.get_game_time_minutes())
 	state.last_challenge_completed_at = maxi(1, recorded_at)
+	var daily: Variant = get_node_or_null("/root/DailyActivityService")
+	if daily != null:
+		daily.register_usage(daily.rival_key(rival_id), 1)
 
 
 func create_meet_rival_action(rival_id: StringName) -> GameAction:

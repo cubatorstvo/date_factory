@@ -1,16 +1,19 @@
-class_name RecordWorkDayEffect
+class_name RecordDailyActivityEffect
 extends ActionEffect
+
+@export var activity_key: String = ""
+@export var amount: int = 1
 
 
 func apply() -> void:
 	var daily: Variant = _daily()
 	if daily == null:
 		return
-	daily.register_usage(daily.KEY_WORK, 1)
+	daily.register_usage(activity_key, amount)
 
 
 func get_description() -> String:
-	return "Работа засчитана на сегодня"
+	return "Дневное использование засчитано"
 
 
 func _daily() -> Variant:

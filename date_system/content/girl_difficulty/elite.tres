@@ -9,4 +9,4 @@ display_name = "Элитная"
 description = "Очень узкий набор положительных реакций. Рассчитана на сильно развитого героя и полноценную подготовку."
 enabled = true
 positive_tag_count = 2
-sort_order = 4
+sort_order = 6

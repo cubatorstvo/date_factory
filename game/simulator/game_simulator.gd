@@ -254,7 +254,7 @@ func start_selected_date() -> ActionResult:
 		_on_action_resolved(result)
 		return result
 	var girls: Variant = _girls_service()
-	var on_cooldown: bool = dating != null and int(dating.get_date_cooldown_remaining_minutes(_invite_girl_id)) > 0
+	var on_cooldown: bool = dating != null and not bool(dating.is_free_date_available_today(_invite_girl_id))
 	var urgent_taxi: bool = on_cooldown and girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_RITA_URGENT_TAXI))
 	var action: GameAction = dating.create_start_date_action(_invite_girl_id, _selected_date_venue_id, _selected_outfit_id, {
 		"backup_outfit_id": _selected_backup_outfit_id,
@@ -622,10 +622,10 @@ func _build_work() -> Control:
 		_add_action_button(box, overtime_action, "Выйти на подработку — 1 ч — +%d" % overtime_work.income, false, false)
 	else:
 		var done := Label.new()
-		done.text = "Работа на сегодня выполнена"
+		done.text = "Сегодня уже работали."
 		box.add_child(done)
 		var again := Label.new()
-		again.text = "Снова доступно завтра"
+		again.text = "Следующая смена: завтра."
 		box.add_child(again)
 	return box
 
@@ -836,6 +836,12 @@ func _build_progression() -> Control:
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("ПРОКАЧКА"))
 	box.add_child(LabUi.heading("ХАРАКТЕРИСТИКИ"))
+	var daily: Variant = _daily_activity()
+	if daily != null and not bool(daily.is_available(daily.KEY_CHARACTERISTIC_TRAINING, 1)):
+		var used := Label.new()
+		used.text = "Сегодня уже тренировались.\nСледующая тренировка: завтра."
+		used.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(used)
 	var characteristics: Variant = _characteristic_service()
 	if characteristics == null:
 		return box
@@ -955,11 +961,10 @@ func _build_discovered_girl_card(definition: GirlDefinition, girls: Variant) -> 
 		available.text = "Свидание доступно"
 		box.add_child(available)
 	elif dating != null:
-		var remaining: int = int(dating.get_date_cooldown_remaining_minutes(definition.id))
-		if remaining > 0:
-			var wait := Label.new()
-			wait.text = "Следующее свидание через %s" % _format_cooldown(remaining)
-			box.add_child(wait)
+		var wait := Label.new()
+		wait.text = "Сегодня уже встречались.\nСледующая встреча: завтра."
+		wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(wait)
 	return box
 
 
@@ -1033,19 +1038,16 @@ func _build_rival_competition_row(
 		var chance: float = float(competitions.get_win_chance(competition.id))
 		chance_label.text = "Шанс победы: %d%%" % int(round(chance * 100.0))
 		box.add_child(chance_label)
-	var remaining: int = 0
-	if rivals != null:
-		remaining = int(rivals.get_challenge_cooldown_remaining(competition.rival_id))
 	if rivals != null and bool(rivals.is_story_rival(competition.rival_id)) and defeated:
 		var done: Label = Label.new()
 		done.text = "Побеждён"
 		box.add_child(done)
 		return box
 	if rivals != null and not bool(rivals.can_challenge_now(competition.rival_id)):
-		if remaining > 0:
-			var wait: Label = Label.new()
-			wait.text = "Доступно через %s" % _format_cooldown(remaining)
-			box.add_child(wait)
+		var wait: Label = Label.new()
+		wait.text = "Сегодня уже была попытка.\nСледующая попытка: завтра."
+		wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(wait)
 		return box
 	if competitions != null:
 		var guidance: Variant = _guidance_service()
@@ -1137,14 +1139,15 @@ func _build_date_girl_card(definition: GirlDefinition, girls: Variant, dating: V
 		invite_btn.pressed.connect(invite_girl.bind(definition.id))
 	box.add_child(invite_btn)
 	if not can_start:
-		var remaining: int = 0
-		if dating != null:
-			remaining = int(dating.get_date_cooldown_remaining_minutes(definition.id))
-		if remaining > 0:
-			var wait := Label.new()
-			wait.text = "Следующее свидание через %s" % _format_cooldown(remaining)
-			wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			box.add_child(wait)
+		var wait := Label.new()
+		wait.text = "Сегодня уже встречались.\nСледующая встреча: завтра."
+		wait.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(wait)
+		if can_taxi:
+			var taxi := Label.new()
+			taxi.text = "Срочное такси — $75\nВстретиться ещё раз сегодня."
+			taxi.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			box.add_child(taxi)
 	return box
 
 
@@ -1225,31 +1228,16 @@ func _build_clothing() -> Control:
 		var wear_btn: Button = LabUi.button("Надеть: %s" % owned.display_name)
 		wear_btn.pressed.connect(wear_owned_outfit.bind(owned.id))
 		box.add_child(wear_btn)
-	var gift_outfits: Array[Outfit] = equipment.get_marina_gift_outfits()
-	if not gift_outfits.is_empty():
-		var gift_heading := Label.new()
-		gift_heading.text = "Подарок Марины — выбрать бесплатно"
-		box.add_child(gift_heading)
-		for gift_item in gift_outfits:
-			var gift_outfit: Outfit = gift_item as Outfit
-			if gift_outfit == null:
-				continue
-			var gift_action: GameAction = equipment.create_claim_marina_gift_action(gift_outfit.id)
-			_add_action_button(box, gift_action, "Забрать %s — $0" % gift_outfit.display_name, false, false)
-	elif equipment != null:
-		var girls: Variant = _girls_service()
-		if girls != null and bool(girls.is_marina_free_outfit_pending()):
-			var waiting := Label.new()
-			waiting.text = "Подарок Марины сохранён. Когда появится новый доступный комплект, его можно забрать бесплатно."
-			waiting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			box.add_child(waiting)
 	for shop_item in equipment.get_shop_outfits():
 		var shop_outfit: Outfit = shop_item as Outfit
 		if shop_outfit == null or bool(equipment.owns_outfit(shop_outfit.id)):
 			continue
 		var action: GameAction = equipment.create_buy_outfit_action(shop_outfit.id)
 		var bonus_text: String = _outfit_bonus_label(shop_outfit)
-		var label: String = "Купить %s — %d" % [shop_outfit.display_name, shop_outfit.price]
+		var price: int = int(equipment.get_effective_outfit_price(shop_outfit.id))
+		var label: String = "Купить %s — $%d" % [shop_outfit.display_name, price]
+		if price == 0 and bool(equipment.is_marina_gift_price(shop_outfit.id)):
+			label = "Купить %s — $0 · Подарок Марины" % shop_outfit.display_name
 		if not bonus_text.is_empty():
 			label += " (%s)" % bonus_text
 		_add_action_button(box, action, label, false, false)
@@ -1436,7 +1424,7 @@ func _build_date_prep(girls: Variant, dating: Variant) -> Control:
 	var remaining: int = int(dating.get_date_cooldown_remaining_minutes(_invite_girl_id)) if dating != null else 0
 	if remaining > 0 and girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_RITA_URGENT_TAXI)):
 		var taxi := Label.new()
-		taxi.text = "Срочное такси — $75\nОплата идёт сервису такси. Свидание можно начать прямо сейчас."
+		taxi.text = "Срочное такси — $75\nВстретиться ещё раз сегодня."
 		taxi.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		box.add_child(taxi)
 	var confirm := LabUi.button("НАЧАТЬ СВИДАНИЕ")
@@ -1807,6 +1795,94 @@ func _build_filler_rewards_dev() -> Control:
 		buttons.add_child(cd_btn)
 		row.add_child(buttons)
 		box.add_child(row)
+	box.add_child(_build_daily_activity_dev())
+	return box
+
+
+func _build_daily_activity_dev() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.add_child(LabUi.heading("DAILY ACTIVITY DEV"))
+	var daily: Variant = _daily_activity()
+	var clock: Variant = _time_service()
+	var girls: Variant = _girls_service()
+	if daily == null:
+		return box
+	var status := Label.new()
+	status.text = "day_index=%d  work=%d/%d  train=%d  usages=%s" % [
+		int(daily.current_day_index()),
+		int(daily.usage_today(daily.KEY_WORK)),
+		int(daily.work_daily_limit()),
+		int(daily.usage_today(daily.KEY_CHARACTERISTIC_TRAINING)),
+		str(daily.get_all_usage_today()),
+	]
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(status)
+	var row := HBoxContainer.new()
+	for count in [0, 1, 2]:
+		var btn: Button = LabUi.button("work %d" % count)
+		btn.modulate = Color(0.75, 0.7, 0.6)
+		btn.pressed.connect(func() -> void:
+			daily.set_usage_today(daily.KEY_WORK, count)
+			refresh()
+		)
+		row.add_child(btn)
+	box.add_child(row)
+	var train_row := HBoxContainer.new()
+	var train_off: Button = LabUi.button("train 0")
+	train_off.modulate = Color(0.75, 0.7, 0.6)
+	train_off.pressed.connect(func() -> void:
+		daily.set_usage_today(daily.KEY_CHARACTERISTIC_TRAINING, 0)
+		refresh()
+	)
+	var train_on: Button = LabUi.button("train 1")
+	train_on.modulate = Color(0.75, 0.7, 0.6)
+	train_on.pressed.connect(func() -> void:
+		daily.set_usage_today(daily.KEY_CHARACTERISTIC_TRAINING, 1)
+		refresh()
+	)
+	train_row.add_child(train_off)
+	train_row.add_child(train_on)
+	box.add_child(train_row)
+	var date_row := HBoxContainer.new()
+	var date_off: Button = LabUi.button("date alina 0")
+	date_off.modulate = Color(0.75, 0.7, 0.6)
+	date_off.pressed.connect(func() -> void:
+		daily.set_usage_today(daily.date_key(GirlCatalog.ID_ALINA), 0)
+		refresh()
+	)
+	var date_on: Button = LabUi.button("date alina 1")
+	date_on.modulate = Color(0.75, 0.7, 0.6)
+	date_on.pressed.connect(func() -> void:
+		daily.set_usage_today(daily.date_key(GirlCatalog.ID_ALINA), 1)
+		refresh()
+	)
+	date_row.add_child(date_off)
+	date_row.add_child(date_on)
+	box.add_child(date_row)
+	var next_day: Button = LabUi.button("+1 DAY")
+	next_day.modulate = Color(0.75, 0.7, 0.6)
+	next_day.pressed.connect(func() -> void:
+		if clock != null:
+			clock.advance_time(1440)
+		refresh()
+	)
+	box.add_child(next_day)
+	if girls != null:
+		var marina_btn: Button = LabUi.button("marina gift pending")
+		marina_btn.modulate = Color(0.75, 0.7, 0.6)
+		marina_btn.pressed.connect(func() -> void:
+			girls.force_complete_filler_for_dev(GirlCatalog.ID_MARINA)
+			refresh()
+		)
+		box.add_child(marina_btn)
+		var rita_btn: Button = LabUi.button("rita taxi")
+		rita_btn.modulate = Color(0.75, 0.7, 0.6)
+		rita_btn.pressed.connect(func() -> void:
+			girls.force_complete_filler_for_dev(GirlCatalog.ID_RITA)
+			refresh()
+		)
+		box.add_child(rita_btn)
 	return box
 
 
@@ -2290,12 +2366,12 @@ func _on_stage_completed(stage: int) -> void:
 	var lines: PackedStringArray = PackedStringArray(["Stage завершён."])
 	if stage == 1:
 		lines.append("Город: этап 2/3")
-		lines.append("Новые девушки и соперники. Cooldown: 2 дня.")
+		lines.append("Новые девушки и соперники. Повторные встречи — на следующий календарный день.")
 	elif stage == 2:
 		lines.append("Новая должность: оплата за работу увеличена до 200/ч")
 	elif stage == 3:
 		lines.append("Город: этап 3/3")
-		lines.append("Новые девушки и соперники. Cooldown: 1 день.")
+		lines.append("Новые девушки и соперники. Повторные встречи — на следующий календарный день.")
 	_last_result_text = "\n".join(lines)
 
 func _on_finale_reached() -> void:
@@ -2338,9 +2414,7 @@ func _format_hud_text() -> String:
 	var world: Variant = _world_service()
 	if world != null:
 		city_stage = int(world.get_city_stage())
-	var cooldown_days: int = CityProgressionService.get_social_cooldown_days()
 	stage_text += "\nЭтап города: %d/3" % city_stage
-	stage_text += "\nCooldown: %d д." % cooldown_days
 	var characteristics: Variant = _characteristic_service()
 	var muscle: int = 0
 	var appearance: int = 0
@@ -2377,7 +2451,6 @@ func _format_home_summary() -> String:
 		"",
 		"Stage %d" % stage,
 		"Город: этап %d/3" % CityProgressionService.get_city_stage(),
-		"Cooldown: %d д." % CityProgressionService.get_social_cooldown_days(),
 		"",
 		"Деньги: %d" % money,
 		"Rating: %d" % rating,
@@ -2519,6 +2592,10 @@ func _girls_service() -> Variant:
 	if not is_instance_valid(node):
 		return null
 	return node
+
+
+func _daily_activity() -> Variant:
+	return get_node_or_null("/root/DailyActivityService")
 
 
 func _rating_service() -> Variant:

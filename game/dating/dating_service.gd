@@ -8,7 +8,7 @@ const DATE_DURATION_MINUTES: int = 120
 const DEFAULT_OUTFIT_ID: StringName = OutfitCatalog.START_OUTFIT_ID
 const REASON_NOT_DISCOVERED: String = "Вы ещё не знакомы"
 const REASON_NO_CONTACT: String = "У вас нет контакта этой девушки"
-const REASON_COOLDOWN: String = "До следующего свидания нужно подождать"
+const REASON_COOLDOWN: String = "Сегодня уже встречались. Следующая встреча: завтра."
 const REASON_COMPLETED: String = "Отношения с этой девушкой уже достигли максимума"
 const REASON_ACTIVE: String = "Свидание уже идёт"
 
@@ -45,7 +45,7 @@ func get_start_date_failure_reason(girl_id: StringName, bypass_cooldown: bool = 
 		return REASON_NOT_DISCOVERED
 	if not bool(girls.has_contact(girl_id)):
 		return REASON_NO_CONTACT
-	if not bypass_cooldown and not bool(girls.is_date_cooldown_finished(girl_id)):
+	if not bypass_cooldown and not is_free_date_available_today(girl_id):
 		return REASON_COOLDOWN
 	if bool(girls.is_relationship_completed(girl_id)):
 		return REASON_COMPLETED
@@ -199,6 +199,8 @@ func start_date(
 		return false
 	if not _create_engine(girl_id, date_venue_id, resolved_outfit_id, backup_outfit_id, express_styling):
 		return false
+	if not urgent_taxi:
+		_register_free_date_usage(girl_id)
 	dating.active_date = {
 		"girl_id": girl_id,
 		"venue_id": date_venue_id,
@@ -277,13 +279,33 @@ func get_active_outfit_id() -> StringName:
 	return StringName(outfit_text)
 
 
+func is_free_date_available_today(girl_id: StringName) -> bool:
+	var daily: Variant = _daily_activity()
+	if daily == null:
+		return false
+	return bool(daily.is_available(daily.date_key(girl_id), 1))
+
+
 func get_date_cooldown_remaining_minutes(girl_id: StringName) -> int:
-	var girls: Variant = _girls_service()
-	var clock: Variant = _time_service()
-	if girls == null or clock == null:
+	if is_free_date_available_today(girl_id):
 		return 0
-	var remaining: int = int(girls.get_next_date_available_at(girl_id)) - int(clock.get_game_time_minutes())
-	return maxi(0, remaining)
+	var clock: Variant = _time_service()
+	if clock == null:
+		return 0
+	var minutes: int = int(clock.get_game_time_minutes())
+	var next_day_start: int = (int(minutes / 1440) + 1) * 1440
+	return maxi(0, next_day_start - minutes)
+
+
+func _register_free_date_usage(girl_id: StringName) -> void:
+	var daily: Variant = _daily_activity()
+	if daily == null:
+		return
+	daily.register_usage(daily.date_key(girl_id), 1)
+
+
+func _daily_activity() -> Variant:
+	return get_node_or_null("/root/DailyActivityService")
 
 
 func restore_active_date() -> bool:

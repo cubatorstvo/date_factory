@@ -129,7 +129,7 @@ func create_buy_outfit_action(outfit_id: StringName) -> GameAction:
 	if outfit == null:
 		return action
 	action.id = StringName("%s%s" % [BUY_ACTION_PREFIX, String(outfit_id)])
-	action.money_cost = outfit.price
+	action.money_cost = get_effective_outfit_price(outfit_id)
 	action.time_cost_minutes = 0
 	var owned := OutfitNotOwnedRequirement.new()
 	owned.outfit_id = outfit_id
@@ -140,7 +140,31 @@ func create_buy_outfit_action(outfit_id: StringName) -> GameAction:
 	var effect := OwnOutfitEffect.new()
 	effect.outfit_id = outfit_id
 	action.effects.append(effect)
+	if is_marina_gift_price(outfit_id):
+		var clear := ClearMarinaGiftEffect.new()
+		action.effects.append(clear)
 	return action
+
+
+func get_effective_outfit_price(outfit_id: StringName) -> int:
+	var outfit: Outfit = get_catalog().get_outfit(outfit_id)
+	if outfit == null:
+		return 0
+	if is_marina_gift_price(outfit_id):
+		return 0
+	return outfit.price
+
+
+func is_marina_gift_price(outfit_id: StringName) -> bool:
+	if owns_outfit(outfit_id):
+		return false
+	var girls: Variant = get_node_or_null("/root/GirlsService")
+	if girls == null or not bool(girls.is_marina_free_outfit_pending()):
+		return false
+	for outfit in get_shop_outfits():
+		if outfit != null and outfit.id == outfit_id:
+			return true
+	return false
 
 
 func _progression() -> ProgressionState:

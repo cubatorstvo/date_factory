@@ -508,6 +508,8 @@ func _build_runner() -> void:
 	_host.add_child(LabUi.heading("Свидание"))
 	_host.add_child(_date_start_relationship_block(session))
 	_host.add_child(LabUi.trait_block(_engine.catalog(), girl))
+	var progress: GirlProgress = _engine.girl_progress() if _engine != null else null
+	_host.add_child(LabUi.known_preference_block(_engine.catalog(), progress, girl))
 	_host.add_child(_combo_status_label(session))
 	var meta := Label.new()
 	meta.text = "Фаза: %s    Эпизод: %d    Seed: %d" % [DateTypes.phase_name(session.current_phase), session.current_episode_index + 1, session.seed]
@@ -621,6 +623,8 @@ func _build_source_list(view: DateEpisodeView) -> Control:
 		var empty := Label.new()
 		empty.text = "Нет ходов в этом источнике."
 		box.add_child(empty)
+	elif source_view.source == DateTypes.DateMoveSource.CHARACTERISTIC:
+		_add_characteristic_groups(box, source_view)
 	else:
 		for option in source_view.options:
 			box.add_child(_move_button(option))
@@ -694,6 +698,61 @@ func _combo_compact_text(session: DateSession) -> String:
 	return "КОМБО: %s %d / %d" % [" ".join(parts), count, required]
 
 
+func _add_characteristic_groups(box: VBoxContainer, source_view: DateMoveSourceView) -> void:
+	var girl: GirlProfile = null
+	if _engine != null:
+		girl = _engine.catalog().find_girl(_engine.get_session_state().girl_id)
+	var girl_trait: GirlTrait = null
+	if girl != null:
+		girl_trait = _engine.catalog().find_trait(girl.trait_id)
+	for stat_id in DateTypes.CHARACTERISTIC_STAT_ORDER:
+		var group: Array[DateMoveOption] = []
+		for option in source_view.options:
+			if option.requirement_stat_id == stat_id:
+				group.append(option)
+		if group.is_empty():
+			continue
+		_sort_characteristic_group(group)
+		var sample: DateMoveOption = group[0]
+		box.add_child(_characteristic_group_header(stat_id, sample, girl_trait))
+		for option in group:
+			box.add_child(_move_button(option))
+
+
+func _sort_characteristic_group(group: Array[DateMoveOption]) -> void:
+	group.sort_custom(_characteristic_option_less)
+
+
+func _characteristic_option_less(a: DateMoveOption, b: DateMoveOption) -> bool:
+	return a.requirement_level < b.requirement_level
+
+
+func _characteristic_group_header(stat_id: StringName, sample: DateMoveOption, girl_trait: GirlTrait) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	var stat: CharacteristicDefinition = _catalog().find_characteristic(stat_id)
+	var stat_name: String = stat.display_name.to_upper() if stat != null else String(stat_id).to_upper()
+	var effective: int = mini(5, sample.current_stat_level)
+	var header: String = "%s — ур. %d" % [stat_name, effective]
+	var parts: PackedStringArray = []
+	if sample.outfit_stat_bonus > 0 or sample.current_stat_level != sample.current_base_stat_level:
+		parts.append(str(sample.current_base_stat_level))
+		if sample.outfit_stat_bonus > 0:
+			parts.append("%d одежда" % sample.outfit_stat_bonus)
+		var extra: int = sample.current_stat_level - sample.current_base_stat_level - sample.outfit_stat_bonus
+		if extra > 0:
+			parts.append("%d стайлинг" % extra)
+	if not parts.is_empty():
+		header = "%s — ур. %d (%s)" % [stat_name, effective, " + ".join(parts)]
+	box.add_child(LabUi.heading(header))
+	if girl_trait != null and girl_trait.kind == GirlTrait.Kind.CHARACTERISTIC and girl_trait.characteristic_id == stat_id:
+		var trait_line := Label.new()
+		var nice: String = stat.display_name if stat != null else String(stat_id)
+		trait_line.text = "Особенность девушки: +1 к результату ходов %s" % nice
+		box.add_child(trait_line)
+	return box
+
+
 func _requirement_reason(option: DateMoveOption) -> String:
 	var stat: CharacteristicDefinition = _catalog().find_characteristic(option.requirement_stat_id)
 	var stat_name: String = stat.display_name if stat != null else String(option.requirement_stat_id)
@@ -711,11 +770,16 @@ func _move_button(option: DateMoveOption) -> Button:
 	btn.disabled = unavailable
 	var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN if unavailable else option.tag_knowledge
 	var header: String = "[%s] %s" % [option.tag_display_name, option.display_name]
+	if option.kind == DateTypes.DateMoveKind.CHARACTERISTIC:
+		if option.availability == DateTypes.MoveAvailability.LOCKED:
+			header = "🔒 [%s] %s · требуется ур. %d" % [option.tag_display_name, option.display_name, option.requirement_level]
+		else:
+			header = "[%s] %s · ур. %d" % [option.tag_display_name, option.display_name, option.requirement_level]
 	if unavailable:
 		btn.modulate = _unavailable_modulate()
 	var lines := PackedStringArray([header])
 	lines.append(option.option_text)
-	if unavailable:
+	if unavailable and option.kind != DateTypes.DateMoveKind.CHARACTERISTIC:
 		if option.availability == DateTypes.MoveAvailability.LOCKED:
 			lines.append(_requirement_reason(option))
 		else:

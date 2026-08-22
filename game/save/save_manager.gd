@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 17
+const SAVE_VERSION: int = 18
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -133,6 +133,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v15_guidance(migrated)
 	if from_version < 17:
 		migrated = _migrate_v16_filler_rewards(migrated)
+	if from_version < 18:
+		migrated = _migrate_v17_daily_activity(migrated)
 	return migrated
 
 
@@ -477,4 +479,36 @@ func _migrate_v16_filler_rewards(state_data: Dictionary) -> Dictionary:
 	if not progression.has("marina_free_outfit_pending"):
 		progression["marina_free_outfit_pending"] = false
 	migrated["progression"] = progression
+	return migrated
+
+
+func _migrate_v17_daily_activity(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var daily_value: Variant = migrated.get("daily_activity", {})
+	var daily: Dictionary = {}
+	if daily_value is Dictionary:
+		daily = daily_value
+	var usages: Dictionary = {}
+	var packed: Variant = daily.get("usages", {})
+	if packed is Dictionary:
+		usages = packed
+	var flow_value: Variant = migrated.get("flow", {})
+	var minutes: int = 0
+	if flow_value is Dictionary:
+		minutes = int(flow_value.get("game_time_minutes", 0))
+	var current_day: int = int(minutes / MINUTES_PER_DAY)
+	var player_value: Variant = migrated.get("player", {})
+	var work_usage: int = 0
+	if player_value is Dictionary:
+		if int(player_value.get("last_work_day_index", -1)) == current_day:
+			work_usage = 1
+		if int(player_value.get("last_overtime_day_index", -1)) == current_day:
+			work_usage = 2
+	if work_usage > 0:
+		usages["work"] = {
+			"last_used_day_index": current_day,
+			"usage_count_on_that_day": work_usage,
+		}
+	daily["usages"] = usages
+	migrated["daily_activity"] = daily
 	return migrated

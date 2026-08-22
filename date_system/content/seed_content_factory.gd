@@ -400,13 +400,14 @@ func _difficulty(id: String, name: String, description: String, positive_count: 
 
 func _difficulties() -> Array[GirlDifficultyPreset]:
 	return [
-		_difficulty("starter", "Стартовая", "Высокая совместимость с базовым арсеналом героя. Подходит для первых девушек игры.", 6, 0),
-		_difficulty("early", "Ранняя", "Небольшая вероятность получить полностью неподходящий набор базовых ходов.", 5, 1),
-		_difficulty("mid", "Средняя", "Прокачка героя и подготовка к свиданию начинают заметно влиять на стабильность результата.", 4, 2),
-		_difficulty("late", "Поздняя", "Базовый набор регулярно оставляет игрока без положительного тега. Развитый арсенал становится важной частью свидания.", 3, 3),
-		_difficulty("elite", "Элитная", "Очень узкий набор положительных реакций. Рассчитана на сильно развитого героя и полноценную подготовку.", 2, 4),
+		_difficulty("wide", "Широкая", "Онбординг Dating Core: почти всегда есть положительный тег в базовом наборе.", 8, 0),
+		_difficulty("easy", "Лёгкая", "Ранний City Stage: очень дружелюбный набор положительных реакций.", 7, 1),
+		_difficulty("starter", "Стартовая", "Высокая совместимость с базовым арсеналом героя. Подходит для первых девушек игры.", 6, 2),
+		_difficulty("early", "Ранняя", "Небольшая вероятность получить полностью неподходящий набор базовых ходов.", 5, 3),
+		_difficulty("mid", "Средняя", "Прокачка героя и подготовка к свиданию начинают заметно влиять на стабильность результата.", 4, 4),
+		_difficulty("late", "Поздняя", "Базовый набор регулярно оставляет игрока без положительного тега. Развитый арсенал становится важной частью свидания.", 3, 5),
+		_difficulty("elite", "Элитная", "Очень узкий набор положительных реакций. Рассчитана на сильно развитого героя и полноценную подготовку.", 2, 6),
 	]
-
 
 func _trait(id: String, name: String, description: String, kind: GirlTrait.Kind, characteristic_id: String = "", location_id: String = "") -> GirlTrait:
 	var girl_trait := GirlTrait.new()
@@ -451,17 +452,20 @@ func _girl(
 	for item in positives:
 		pos.append(StringName(str(item)))
 	girl.positive_tag_ids = pos
-	girl.initial_known_tag_count = FillerRewardCatalog.initial_known_tag_count_for(girl.id)
+	if GirlCatalog.is_story_girl_id(girl.id):
+		girl.initial_known_tag_count = 0
+	else:
+		girl.initial_known_tag_count = 2
 	return girl
 
 
 func _girls() -> Array[GirlProfile]:
 	return [
-		_girl("alina", "Алина", "starter", ["politeness", "directness", "care", "generosity", "composure", "humor"], "homebody", "Тренер городского спортзала. Считает, что почти любую жизненную проблему можно решить ещё одним подходом."),
-		_girl("marina", "Марина", "mid", ["care", "composure", "directness", "humor"], "senses_aura", "Продавец магазина одежды. Знает ассортимент лучше владельца и всегда знает, что можно провести как «служебную необходимость»."),
+		_girl("alina", "Алина", "wide", ["politeness", "directness", "care", "generosity", "composure", "humor", "risk", "dominance"], "homebody", "Тренер городского спортзала. Считает, что почти любую жизненную проблему можно решить ещё одним подходом."),
+		_girl("marina", "Марина", "easy", ["care", "composure", "directness", "humor", "politeness", "flattery", "status"], "senses_aura", "Продавец магазина одежды. Знает ассортимент лучше владельца и всегда знает, что можно провести как «служебную необходимость»."),
 		_girl("girl_actress", "Актриса", "early", ["flattery", "audacity", "generosity", "status", "humor"], "values_appearance", "любит внимание, эффектность, уверенность и человека, который умеет поддерживать ощущение шоу"),
-		_girl("vika", "Вика", "early", ["audacity", "dominance", "risk", "humor", "cunning"], "values_appearance", "Бариста Café. Видела достаточно неудачных свиданий, чтобы научиться быстро перезапускать разговор."),
-		_girl("dasha", "Даша", "mid", ["audacity", "risk", "humor", "dominance"], "loves_strong", "Менеджер клиентского сервиса. Профессионально умеет превращать катастрофический разговор в просто неловкий."),
+		_girl("vika", "Вика", "easy", ["audacity", "dominance", "risk", "humor", "cunning", "directness", "care"], "values_appearance", "Бариста Café. Видела достаточно неудачных свиданий, чтобы научиться быстро перезапускать разговор."),
+		_girl("dasha", "Даша", "starter", ["audacity", "risk", "humor", "dominance", "politeness", "composure"], "loves_strong", "Менеджер клиентского сервиса. Профессионально умеет превращать катастрофический разговор в просто неловкий."),
 		_girl("girl_mine_boss", "Начальница шахты", "mid", ["directness", "dominance", "generosity", "composure"], "loves_restaurants", "ценит конкретику, контроль ситуации и людей, которые не начинают суетиться под давлением"),
 		_girl("katya", "Катя", "mid", ["directness", "risk", "humor", "cunning"], "loves_cafe", "Продавец мебельного магазина. Имеет доступ к закрытому каталогу вещей, которые нормальному человеку в квартире не нужны."),
 		_girl("girl_magazine_editor", "Редактор журнала", "mid", ["directness", "status", "composure", "cunning"], "senses_aura", "профессионально оценивает людей и любит, когда собеседник умеет держать позицию и выбирать слова"),

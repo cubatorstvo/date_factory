@@ -59,6 +59,7 @@ func run_all() -> PackedStringArray:
 	_test_guidance()
 	_test_objective_markers()
 	_test_semantic_cleanup()
+	_test_playtest_daily_activity()
 	return _failures
 
 
@@ -1369,7 +1370,9 @@ func _test_mapping(tag_id: String) -> DateMoveSituationMapping:
 func _test_girl_difficulty() -> void:
 	var catalog: DateContentCatalog = _catalog()
 	var presets: Array[GirlDifficultyPreset] = catalog.enabled_girl_difficulty_presets()
-	_ok("5 enabled difficulty presets", presets.size() == 5)
+	_ok("7 enabled difficulty presets", presets.size() == 7)
+	_ok("WIDE positive_tag_count == 8", catalog.find_girl_difficulty(&"wide").positive_tag_count == 8)
+	_ok("EASY positive_tag_count == 7", catalog.find_girl_difficulty(&"easy").positive_tag_count == 7)
 	_ok("STARTER positive_tag_count == 6", catalog.find_girl_difficulty(&"starter").positive_tag_count == 6)
 	_ok("EARLY positive_tag_count == 5", catalog.find_girl_difficulty(&"early").positive_tag_count == 5)
 	_ok("MID positive_tag_count == 4", catalog.find_girl_difficulty(&"mid").positive_tag_count == 4)
@@ -1411,10 +1414,10 @@ func _test_girl_difficulty() -> void:
 	_ok("reload mid girl", loaded != null and loaded.positive_tag_ids.size() == 4 and _computed_negative_count(loaded, catalog) == 8)
 	_ok("reload mid coverage", loaded != null and _girl_covers_enabled_tags(loaded, catalog.enabled_tags()))
 	var starter_girl: GirlProfile = catalog.find_girl(&"alina").duplicate(true) as GirlProfile
-	_ok("starter current 6", starter_girl.positive_tag_ids.size() == 6)
+	_ok("alina current 8", starter_girl.positive_tag_ids.size() == 8)
 	starter_girl.difficulty_preset_id = &"mid"
 	var required: int = catalog.find_girl_difficulty(&"mid").positive_tag_count
-	_ok("editor shows 6 / 4", starter_girl.positive_tag_ids.size() == 6 and required == 4)
+	_ok("editor shows 8 / 4", starter_girl.positive_tag_ids.size() == 8 and required == 4)
 	starter_girl.positive_tag_ids = [&"care", &"generosity", &"composure", &"humor"] as Array[StringName]
 	_ok("after MID save 4/8", starter_girl.difficulty_preset_id == &"mid" and starter_girl.positive_tag_ids.size() == 4 and _computed_negative_count(starter_girl, catalog) == 8)
 	var progress := GirlProgress.new()
@@ -1463,9 +1466,10 @@ func _test_dating_core_model() -> void:
 	for girl_id in world_ids:
 		_ok("1. date profile %s" % String(girl_id), catalog.find_girl(girl_id) != null)
 	_ok("2. ordinary MAX 10", GirlCatalog.seed_relationship_max(&"alina") == 10)
-	_ok("2. story MAX 15", GirlCatalog.seed_relationship_max(GirlCatalog.ID_ACTRESS) == 15)
+	_ok("2. actress MAX 10", GirlCatalog.seed_relationship_max(GirlCatalog.ID_ACTRESS) == 10)
+	_ok("2. scientist MAX 15", GirlCatalog.seed_relationship_max(GirlCatalog.ID_SCIENTIST) == 15)
 	var actress_req: GirlRelationshipRequirement = StageCatalog.make_girl_relationship_requirement(GirlCatalog.create_seed().get_girl(GirlCatalog.ID_ACTRESS))
-	_ok("3. story requirement reads MAX 15", actress_req != null and actress_req.target_relationship == 15)
+	_ok("3. story requirement reads MAX 10", actress_req != null and actress_req.target_relationship == 10)
 	var alina: GirlProfile = catalog.find_girl(&"alina")
 	var actress: GirlProfile = catalog.find_girl(GirlCatalog.ID_ACTRESS)
 	var fresh: GirlProgress = _fresh_progress(catalog, &"alina")
@@ -1849,6 +1853,13 @@ func _dating_service() -> Variant:
 	return node
 
 
+func _daily_activity() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("DailyActivityService")
+
+
 func _rivals_service() -> Variant:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
 	if tree == null or tree.root == null:
@@ -2000,10 +2011,13 @@ func _test_objectives() -> void:
 	_ok("next is invite", rel_goal != null and rel_goal.is_current and view.next_step_text.contains("Пригласить Актрису на свидание"))
 	_ok("dating target", view.target_type == ObjectiveView.TARGET_DATING and view.target_id == GirlCatalog.ID_ACTRESS)
 	girls.mark_date_completed(GirlCatalog.ID_ACTRESS)
+	var daily_obj: Variant = _daily_activity()
+	if daily_obj != null:
+		daily_obj.register_usage(daily_obj.date_key(GirlCatalog.ID_ACTRESS), 1)
 	view = _rebuild_objective()
-	_ok("cooldown next step", view.next_step_text.contains("Следующее свидание с Актрисой через"))
+	_ok("cooldown next step", view.next_step_text.contains("Сегодня уже встречались"))
 	if clock != null:
-		clock.advance_time(CityProgressionService.get_social_cooldown_minutes())
+		clock.advance_time(1440)
 	view = _rebuild_objective()
 	_ok("after cooldown invite again", view.next_step_text.contains("Пригласить Актрису на свидание"))
 	girls.change_relationship(GirlCatalog.ID_ACTRESS, int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS)))
@@ -2220,7 +2234,7 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 17", int(root.get("save_version", 0)) == 17)
+	_ok("save_version == 18", int(root.get("save_version", 0)) == 18)
 	_ok("SAVE_VERSION constant 17", int(sm.SAVE_VERSION) == 17)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
@@ -2847,17 +2861,18 @@ func _test_game_actions() -> void:
 	_ok("work unavailable same day", WorkService.is_work_available_today() == false)
 	var same_day: ActionResult = actions.execute(WorkService.create_work_action(WorkService.make_work_basic()))
 	_ok("work same day fail", same_day.success == false)
-	_ok("work same day reason", same_day.failure_reason == "Работа на сегодня выполнена")
+	_ok("work same day reason", same_day.failure_reason == "Сегодня уже работали.")
 	clock.advance_time(1440)
 	_ok("work available after midnight", WorkService.is_work_available_today())
 	var next_day: ActionResult = actions.execute(WorkService.create_work_action(WorkService.make_work_basic()))
 	_ok("work next day success", next_day.success)
-	var worked_day: int = int(gs.player.last_work_day_index)
+	var daily: Variant = _daily_activity()
+	_ok("work usage 1 after shift", daily != null and int(daily.usage_today("work")) == 1)
 	sm.save_game()
 	sm.new_game()
-	_ok("work day reset new game", int(gs.player.last_work_day_index) == -1)
+	_ok("work usage reset new game", daily != null and int(daily.usage_today("work")) == 0)
 	_ok("load work day save", sm.load_game())
-	_ok("loaded last_work_day_index", int(gs.player.last_work_day_index) == worked_day)
+	_ok("loaded work usage", daily != null and int(daily.usage_today("work")) == 1)
 	sm.delete_save()
 	_ok("deleted action test save", not sm.has_save())
 	sm.save_path = original_path
@@ -3551,9 +3566,11 @@ func _test_dating_and_rating() -> void:
 	sm.new_game()
 	girls.give_contact(alina_id)
 	clock.advance_time(60)
-	girls.mark_date_completed(alina_id)
+	var daily_alina: Variant = _daily_activity()
+	if daily_alina != null:
+		daily_alina.register_usage(daily_alina.date_key(alina_id), 1)
 	_ok("start during cooldown", dating.can_start_date(alina_id) == false)
-	_ok("start cooldown reason", dating.get_start_date_failure_reason(alina_id) == "До следующего свидания нужно подождать")
+	_ok("start cooldown reason", dating.get_start_date_failure_reason(alina_id) == "Сегодня уже встречались. Следующая встреча: завтра.")
 	sm.new_game()
 	girls.give_contact(alina_id)
 	girls.get_state(alina_id).relationship = int(girls.get_relationship_max(alina_id))
@@ -4229,8 +4246,7 @@ func _test_rivals() -> void:
 	var filler_win: ActionResult = actions.execute(competitions.create_competition_action(CompetitionCatalog.ID_HORIZONTAL_BAR))
 	_ok("filler win success", filler_win.success)
 	_ok("filler win cooldown", rivals.can_challenge_now(RivalCatalog.ID_GLEB) == false)
-	_ok("cooldown days city 1", CityProgressionService.get_social_cooldown_days() == 3)
-	clock.advance_time(CityProgressionService.get_social_cooldown_minutes())
+	clock.advance_time(1440)
 	gs.player.money = 100
 	_ok("filler after cooldown", rivals.can_challenge_now(RivalCatalog.ID_GLEB))
 	competitions.set_forced_won(null)
@@ -4243,7 +4259,7 @@ func _test_rivals() -> void:
 	var filler_loss: ActionResult = actions.execute(competitions.create_competition_action(CompetitionCatalog.ID_HORIZONTAL_BAR))
 	_ok("filler loss success", filler_loss.success)
 	_ok("filler loss cooldown", rivals.can_challenge_now(RivalCatalog.ID_GLEB) == false)
-	clock.advance_time(CityProgressionService.get_social_cooldown_minutes())
+	clock.advance_time(1440)
 	_ok("filler loss after cooldown", rivals.can_challenge_now(RivalCatalog.ID_GLEB))
 	competitions.set_forced_won(null)
 	world.set_city_stage(2)
@@ -4346,6 +4362,7 @@ func _test_character_progression() -> void:
 	var dating: Variant = _dating_service()
 	var girls: Variant = _girls_service()
 	var competitions: Variant = _competition_service()
+	var clock: Variant = _time_service()
 	_ok("progress GameState", gs != null)
 	_ok("progress SaveManager", sm != null)
 	_ok("progress ActionService", actions != null)
@@ -4356,7 +4373,7 @@ func _test_character_progression() -> void:
 	_ok("progress DatingService", dating != null)
 	_ok("progress GirlsService", girls != null)
 	_ok("progress CompetitionService", competitions != null)
-	if gs == null or sm == null or actions == null or economy == null or characteristics == null or equipment == null or apartment == null or dating == null or girls == null or competitions == null:
+	if gs == null or sm == null or actions == null or economy == null or characteristics == null or equipment == null or apartment == null or dating == null or girls == null or competitions == null or clock == null:
 		return
 	var original_path: String = sm.save_path
 	sm.save_path = "user://saves/character_progression.json"
@@ -4389,6 +4406,7 @@ func _test_character_progression() -> void:
 	_ok("upgrade muscle max 5", int(characteristics.get_max_level(CharacteristicIds.MUSCLE)) == 5)
 	gs.player.money = FillerRewardCatalog.ALINA_GYM_BASE_PRICE * 4
 	for _level in range(4):
+		clock.advance_time(1440)
 		actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1))
 	_ok("upgrade muscle sequential 5", gs.player.muscle == 5)
 	_ok("upgrade muscle spent to 5", gs.player.money == 0)
@@ -4696,7 +4714,9 @@ func _test_filler_girl_rewards() -> void:
 	girls.grant_filler_reward_for_girl(GirlCatalog.ID_RITA)
 	girls.give_contact(GirlCatalog.ID_RITA)
 	clock.advance_time(60)
-	girls.mark_date_completed(GirlCatalog.ID_RITA)
+	var daily_rita: Variant = _daily_activity()
+	if daily_rita != null:
+		daily_rita.register_usage(daily_rita.date_key(GirlCatalog.ID_RITA), 1)
 	_ok("rita cooldown blocks", dating.can_start_date(GirlCatalog.ID_RITA) == false)
 	gs.player.money = FillerRewardCatalog.RITA_TAXI_COST
 	var taxi: ActionResult = actions.execute(dating.create_start_date_action(GirlCatalog.ID_RITA, &"cafe", OutfitCatalog.START_OUTFIT_ID, {"urgent_taxi": true}))
@@ -4735,7 +4755,10 @@ func _test_city_density_progression() -> void:
 	gs.player.money = 300
 	_ok("1. buy muscle 1", actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1)).success and gs.player.muscle == 1 and gs.player.money == 0)
 	gs.player.money = 1200
+	var daily_train_density: Variant = _daily_activity()
 	while gs.player.muscle < 5:
+		if daily_train_density != null:
+			daily_train_density.set_usage_today(daily_train_density.KEY_CHARACTERISTIC_TRAINING, 0)
 		actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1))
 	_ok("2. sequential to 5", gs.player.muscle == 5)
 	_ok("3. max level 5", int(characteristics.get_max_level(CharacteristicIds.MUSCLE)) == 5)
@@ -4776,11 +4799,10 @@ func _test_city_density_progression() -> void:
 	date_result.duration_minutes = 120
 	_ok("complete date density", dating.complete_date(date_result))
 	var girl_remaining: int = int(dating.get_date_cooldown_remaining_minutes(GirlCatalog.ID_ALINA))
-	_ok("10. girl cooldown city 1", girl_remaining == 4320)
+	_ok("10. girl daily remaining", girl_remaining > 0)
 	world.set_city_stage(2)
 	_ok("7. city 2 from service", int(world.get_city_stage()) == 2)
-	_ok("11. cooldown 2880", CityProgressionService.get_social_cooldown_minutes() == 2880)
-	_ok("13. girl cooldown shrinks", int(dating.get_date_cooldown_remaining_minutes(GirlCatalog.ID_ALINA)) == 2880)
+	_ok("13. girl remaining stays until next day", int(dating.get_date_cooldown_remaining_minutes(GirlCatalog.ID_ALINA)) > 0)
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	_ok("16. katya open city 2", girls.can_meet_girl(GirlCatalog.ID_KATYA))
 	world.enter_location(LocationCatalog.ID_CAFE)
@@ -4837,16 +4859,13 @@ func _test_city_density_progression() -> void:
 	_ok("28. net +100", gs.player.money == 200)
 	_ok("31. defeated", rivals.is_defeated(RivalCatalog.ID_GLEB))
 	_ok("33. last challenge after win", int(rivals.get_last_challenge_completed_at(RivalCatalog.ID_GLEB)) == 60)
-	_ok("35. rival cooldown 3 days", rivals.get_challenge_cooldown_remaining_minutes(RivalCatalog.ID_GLEB) == 4320)
+	_ok("35. rival daily remaining", rivals.get_challenge_cooldown_remaining_minutes(RivalCatalog.ID_GLEB) > 0)
 	_ok("32. rematch blocked", competitions.can_start_competition(CompetitionCatalog.ID_HORIZONTAL_BAR) == false)
 	world.set_city_stage(2)
-	_ok("36. rival cooldown 2 days", rivals.get_challenge_cooldown_remaining_minutes(RivalCatalog.ID_GLEB) == 2880)
-	_ok("38. rival cooldown shrinks", rivals.get_challenge_cooldown_remaining_minutes(RivalCatalog.ID_GLEB) < 4320)
-	world.set_city_stage(3)
-	_ok("37. rival cooldown 1 day", rivals.get_challenge_cooldown_remaining_minutes(RivalCatalog.ID_GLEB) == 1440)
-	clock.advance_time(rivals.get_challenge_cooldown_remaining_minutes(RivalCatalog.ID_GLEB))
+	_ok("36. remaining independent of city", rivals.get_challenge_cooldown_remaining_minutes(RivalCatalog.ID_GLEB) > 0)
+	clock.advance_time(1440)
 	gs.player.money = 100
-	_ok("32. rematch after cooldown", competitions.can_start_competition(CompetitionCatalog.ID_HORIZONTAL_BAR))
+	_ok("32. rematch after next day", competitions.can_start_competition(CompetitionCatalog.ID_HORIZONTAL_BAR))
 	sm.new_game()
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	actions.execute(rivals.create_meet_rival_action(RivalCatalog.ID_GLEB))
@@ -4900,7 +4919,7 @@ func _test_city_density_progression() -> void:
 		tree.root.add_child(sim)
 		sim.start_new_game()
 		_ok("hud city stage", sim.get_hud_text().contains("Этап города: 1/3"))
-		_ok("hud cooldown 3", sim.get_hud_text().contains("Cooldown: 3 д."))
+		_ok("hud has no global cooldown", not sim.get_hud_text().contains("Cooldown:"))
 		sim.show_section("work")
 		_ok("work button 100", sim.get_city_body_text().contains("Работать — 1 ч — +100"))
 		sim.queue_free()
@@ -5944,3 +5963,71 @@ func _test_availability_ui() -> void:
 				break
 	_ok("used text Использовано", used_ok)
 	panel.free()
+
+
+func _test_playtest_daily_activity() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var clock: Variant = _time_service()
+	var daily: Variant = _daily_activity()
+	var dating: Variant = _dating_service()
+	var girls: Variant = _girls_service()
+	var characteristics: Variant = _characteristic_service()
+	var equipment: Variant = _equipment_service()
+	var actions: Variant = _action_service()
+	var catalog: DateContentCatalog = _catalog()
+	_ok("daily autoload", daily != null and gs != null and sm != null and clock != null)
+	if daily == null or gs == null or sm == null or clock == null or dating == null or girls == null or characteristics == null or equipment == null or actions == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/playtest_daily_activity.json"
+	sm.delete_save()
+	clock.real_time_progression_enabled = false
+	sm.new_game()
+	_ok("alina wide 8", catalog.find_girl(&"alina").positive_tag_ids.size() == 8)
+	_ok("marina easy 7", catalog.find_girl(&"marina").positive_tag_ids.size() == 7)
+	_ok("vika easy 7", catalog.find_girl(&"vika").positive_tag_ids.size() == 7)
+	_ok("dasha starter 6", catalog.find_girl(&"dasha").positive_tag_ids.size() == 6)
+	_ok("actress max 10", GirlCatalog.seed_relationship_max(GirlCatalog.ID_ACTRESS) == 10)
+	_ok("mine boss max 10", GirlCatalog.seed_relationship_max(GirlCatalog.ID_MINE_BOSS) == 10)
+	_ok("editor max 10", GirlCatalog.seed_relationship_max(GirlCatalog.ID_MAGAZINE_EDITOR) == 10)
+	_ok("scientist max 15", GirlCatalog.seed_relationship_max(GirlCatalog.ID_SCIENTIST) == 15)
+	_ok("president max 15", GirlCatalog.seed_relationship_max(GirlCatalog.ID_PRESIDENT) == 15)
+	girls.give_contact(GirlCatalog.ID_ALINA)
+	girls.give_contact(GirlCatalog.ID_MARINA)
+	_ok("date available first", dating.can_start_date(GirlCatalog.ID_ALINA))
+	_ok("start date registers", dating.start_date(GirlCatalog.ID_ALINA, &"cafe"))
+	_ok("same girl blocked", dating.can_start_date(GirlCatalog.ID_ALINA) == false)
+	_ok("other girl free", dating.can_start_date(GirlCatalog.ID_MARINA))
+	var date_result := DateResult.new()
+	date_result.girl_id = GirlCatalog.ID_ALINA
+	date_result.relationship_delta = 0
+	date_result.duration_minutes = 120
+	dating.complete_date(date_result)
+	clock.advance_time(1440)
+	_ok("next day date free", dating.can_start_date(GirlCatalog.ID_ALINA))
+	sm.new_game()
+	gs.player.money = 300
+	_ok("train 1 ok", actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1)).success)
+	_ok("train 2 blocked", actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1)).success == false)
+	clock.advance_time(1440)
+	gs.player.money = 300
+	_ok("train next day", actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1)).success)
+	sm.new_game()
+	girls.grant_filler_reward_for_girl(GirlCatalog.ID_MARINA)
+	_ok("marina pending", girls.is_marina_free_outfit_pending())
+	var gift: GameAction = equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS)
+	_ok("marina shop price 0", gift.money_cost == 0)
+	gs.player.money = 0
+	_ok("marina buy 0", actions.execute(gift).success)
+	_ok("marina pending cleared", girls.is_marina_free_outfit_pending() == false)
+	var progress := GirlProgress.new()
+	var alina: GirlProfile = catalog.find_girl(&"alina")
+	progress.reset_to_profile(alina)
+	for tag_id in alina.positive_tag_ids:
+		progress.reveal_tag(tag_id, true, alina, catalog)
+	_ok("deduce negatives", progress.unknown_tag_count(alina, catalog) == 0)
+	_ok("all remaining negative", progress.unknown_negative_tag_count(alina, catalog) == 0)
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()

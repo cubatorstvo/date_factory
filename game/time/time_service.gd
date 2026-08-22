@@ -50,8 +50,12 @@ func get_game_time_minutes() -> int:
 	return flow.game_time_minutes
 
 
+func get_calendar_day_index() -> int:
+	return int(get_game_time_minutes() / MINUTES_PER_DAY)
+
+
 func get_day() -> int:
-	return int(get_game_time_minutes() / MINUTES_PER_DAY) + 1
+	return get_calendar_day_index() + 1
 
 
 func get_hour() -> int:

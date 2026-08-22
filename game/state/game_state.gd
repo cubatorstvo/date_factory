@@ -1,5 +1,7 @@
 extends Node
 
+const _DailyActivityState := preload("res://game/state/daily_activity_state.gd")
+
 var flow: FlowState
 var story: StoryState
 var player: PlayerState
@@ -10,6 +12,7 @@ var dating: DatingState
 var rivals: RivalsState
 var automation: AutomationState
 var guidance: GuidanceState
+var daily_activity
 
 
 func _ready() -> void:
@@ -27,6 +30,7 @@ func apply_new_game() -> void:
 	rivals = RivalsState.new()
 	automation = AutomationState.new()
 	guidance = GuidanceState.new()
+	daily_activity = _DailyActivityState.new()
 
 
 func to_dict() -> Dictionary:
@@ -41,6 +45,7 @@ func to_dict() -> Dictionary:
 		"rivals": rivals.to_dict(),
 		"automation": automation.to_dict(),
 		"guidance": guidance.to_dict(),
+		"daily_activity": daily_activity.to_dict(),
 	}
 
 
@@ -56,6 +61,7 @@ func from_dict(data: Dictionary) -> void:
 	rivals.from_dict(_section(data, "rivals"))
 	automation.from_dict(_section(data, "automation"))
 	guidance.from_dict(_section(data, "guidance"))
+	daily_activity.from_dict(_section(data, "daily_activity"))
 
 
 func _section(data: Dictionary, key: String) -> Dictionary:

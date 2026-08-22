@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DateContentCatalog" load_steps=129 format=3]
+[gd_resource type="Resource" script_class="DateContentCatalog" load_steps=131 format=3]
 
 [ext_resource type="Script" path="res://date_system/content/date_content_catalog.gd" id="1_script"]
 [ext_resource type="Resource" path="res://date_system/content/tags/politeness.tres" id="res_2"]
@@ -82,6 +82,8 @@
 [ext_resource type="Resource" path="res://date_system/content/girls/rita.tres" id="res_77"]
 [ext_resource type="Resource" path="res://date_system/content/girls/eva.tres" id="res_78"]
 [ext_resource type="Resource" path="res://date_system/content/girls/girl_president.tres" id="res_79"]
+[ext_resource type="Resource" path="res://date_system/content/girl_difficulty/wide.tres" id="res_129"]
+[ext_resource type="Resource" path="res://date_system/content/girl_difficulty/easy.tres" id="res_130"]
 [ext_resource type="Resource" path="res://date_system/content/girl_difficulty/starter.tres" id="res_80"]
 [ext_resource type="Resource" path="res://date_system/content/girl_difficulty/early.tres" id="res_81"]
 [ext_resource type="Resource" path="res://date_system/content/girl_difficulty/mid.tres" id="res_82"]
@@ -135,7 +137,7 @@ tags = [ExtResource("res_2"), ExtResource("res_3"), ExtResource("res_4"), ExtRes
 moves = [ExtResource("res_14"), ExtResource("res_15"), ExtResource("res_16"), ExtResource("res_17"), ExtResource("res_18"), ExtResource("res_19"), ExtResource("res_20"), ExtResource("res_21"), ExtResource("res_22"), ExtResource("res_23"), ExtResource("res_24"), ExtResource("res_25"), ExtResource("res_26"), ExtResource("res_27"), ExtResource("res_28"), ExtResource("res_29"), ExtResource("res_30"), ExtResource("res_31"), ExtResource("res_32"), ExtResource("res_33"), ExtResource("res_34"), ExtResource("res_35"), ExtResource("res_36"), ExtResource("res_37"), ExtResource("res_38"), ExtResource("res_39"), ExtResource("res_40"), ExtResource("res_41"), ExtResource("res_42"), ExtResource("res_43"), ExtResource("res_44"), ExtResource("res_45"), ExtResource("res_46"), ExtResource("res_47"), ExtResource("res_48"), ExtResource("res_49"), ExtResource("res_50"), ExtResource("res_51"), ExtResource("res_52"), ExtResource("res_53"), ExtResource("res_54"), ExtResource("res_55"), ExtResource("res_56"), ExtResource("res_57"), ExtResource("res_125"), ExtResource("res_126"), ExtResource("res_127")]
 situations = [ExtResource("res_58"), ExtResource("res_59"), ExtResource("res_60"), ExtResource("res_61"), ExtResource("res_62")]
 girls = [ExtResource("res_63"), ExtResource("res_64"), ExtResource("res_65"), ExtResource("res_66"), ExtResource("res_67"), ExtResource("res_68"), ExtResource("res_69"), ExtResource("res_70"), ExtResource("res_71"), ExtResource("res_72"), ExtResource("res_73"), ExtResource("res_74"), ExtResource("res_75"), ExtResource("res_76"), ExtResource("res_77"), ExtResource("res_78"), ExtResource("res_79")]
-girl_difficulty_presets = [ExtResource("res_80"), ExtResource("res_81"), ExtResource("res_82"), ExtResource("res_83"), ExtResource("res_84")]
+girl_difficulty_presets = [ExtResource("res_129"), ExtResource("res_130"), ExtResource("res_80"), ExtResource("res_81"), ExtResource("res_82"), ExtResource("res_83"), ExtResource("res_84")]
 local_objects = [ExtResource("res_85"), ExtResource("res_86"), ExtResource("res_87"), ExtResource("res_88"), ExtResource("res_89"), ExtResource("res_90"), ExtResource("res_91"), ExtResource("res_128")]
 date_venues = [ExtResource("res_92"), ExtResource("res_93"), ExtResource("res_94"), ExtResource("res_95"), ExtResource("res_96"), ExtResource("res_97"), ExtResource("res_98"), ExtResource("res_99")]
 outfits = [ExtResource("res_100"), ExtResource("res_101"), ExtResource("res_102"), ExtResource("res_103"), ExtResource("res_104"), ExtResource("res_105"), ExtResource("res_106"), ExtResource("res_107"), ExtResource("res_108"), ExtResource("res_109"), ExtResource("res_110"), ExtResource("res_111"), ExtResource("res_112")]

@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_script")
-id = &"early"
-display_name = "Ранняя"
-description = "Небольшая вероятность получить полностью неподходящий набор базовых ходов."
+id = &"easy"
+display_name = "Лёгкая"
+description = "Ранний City Stage. Дружелюбный набор предпочтений."
 enabled = true
-positive_tag_count = 5
-sort_order = 3
+positive_tag_count = 7
+sort_order = 1

@@ -126,7 +126,7 @@ Trait места (`homebody` / квартира, `loves_cafe` / кафе, `loves
 
 ## GameState
 
-Autoload `GameState` — текущее прохождение. Секции: `flow`, `story`, `player`, `progression`, `world`, `girls`, `dating`, `rivals`, `automation`. Каждая секция — отдельный typed-класс с `to_dict()` / `from_dict()`.
+Autoload `GameState` — текущее прохождение. Секции: `flow`, `story`, `player`, `progression`, `world`, `girls`, `dating`, `rivals`, `automation`, `daily_activity`. Каждая секция — отдельный typed-класс с `to_dict()` / `from_dict()`.
 
 `GameState` хранит только изменяемое состояние конкретного прохождения. Статические определения игрового контента — параметры девушек, предметов, локаций, Stage, цены, базовые характеристики и прочие definitions — хранятся отдельно от `GameState`. `GameState` хранит только ссылки/ID и изменяемый прогресс относительно этих definitions.
 
@@ -142,8 +142,7 @@ player.muscle = 0
 player.appearance = 0
 player.capital = 0
 player.aura = 0
-player.last_work_day_index = -1
-player.last_overtime_day_index = -1
+daily_activity.usages = {}
 progression.purchased_ids = []
 progression.unlocked_filler_reward_ids = []
 progression.marina_free_outfit_pending = false
@@ -233,7 +232,7 @@ minutes_until_next_morning(game_time_minutes: int) -> int
 
 `minutes_until_next_morning` считает минуты до ближайших будущих 08:00 от переданного `game_time_minutes`. Если текущая минута дня меньше 08:00 — до 08:00 этого дня; если сейчас 08:00 или позже — до 08:00 следующего дня. Примеры: 03:20 → 280; 07:59 → 1; 08:00 → 1440; 23:30 → 510. Игровое действие и будущая кровать в 3D берут этот интервал и проводят его через `ActionService` → `TimeService.advance_time`.
 
-Пример: `next_date_available_at = current + days_to_minutes(3)`, проверка `current >= next_date_available_at`.
+Календарный `day_index` для Daily Activity Gate: `floor(game_time_minutes / 1440)`. Он совпадает с `TimeService.get_calendar_day_index()` и не равен player-facing `get_day()` (`floor / 1440 + 1`).
 
 Real-time progression — управляемый режим того же часов:
 
@@ -243,6 +242,33 @@ game_minutes_per_real_second
 ```
 
 Накопитель дробной части переводит реальное время в целые игровые минуты и вызывает тот же `advance_time()`. Для текущей 2D-игры `real_time_progression_enabled = false`: время двигают действия. Будущий 3D free roam включает режим (`1` реальная секунда = `1` игровая минута при стартовом коэффициенте `1.0`); фиксированные действия по-прежнему идут через `advance_time(action.time_cost_minutes)`.
+
+## Daily Activity Gate
+
+Autoload `DailyActivityService` — единственная production-точка проверки и регистрации дневных использований значимых повторяемых progression-активностей. Календарный день: `TimeService.get_calendar_day_index()` = `floor(game_time_minutes / 1440)`.
+
+`GameState.daily_activity` хранит по каждому activity key:
+
+```text
+last_used_day_index
+usage_count_on_that_day
+```
+
+Если `last_used_day_index != current_day_index`, `usage_count_today = 0`. Новый календарный день возвращает дневные возможности без отдельного reset.
+
+Канонические keys и базовые limits:
+
+```text
+work                    = 1
+characteristic_training = 1
+date:<girl_id>          = 1
+rival:<rival_id>        = 1
+story_event:<event_id>  = 1
+```
+
+Limit применяется к успешному запуску activity. Просмотр UI и подготовка слот не тратят. Player-facing состояние показывается рядом с действием.
+
+Повторяемых story events в текущем Game Core ещё нет: сервис принимает `story_event:<event_id>` как зарезервированный namespace. Новую event-систему не создавать.
 
 ## Game Actions
 
@@ -364,7 +390,11 @@ time_cost_minutes: int
 
 `WorkService.create_work_action(work)` собирает `GameAction`: `id` и `time_cost_minutes` из definition, `money_cost = 0`, эффект `MoneyEffect(+income)`.
 
-Seed: `work_basic` — «Работать», 60 минут. Ставка из `WorkService.get_current_hourly_pay()`: 100 до Story Stage 3, 200 после MAX Начальницы шахты. Tiers описаны `WorkTierDefinition` (`min_story_stage`, `income`, `time_cost_minutes`). GameSimulator: `Работать — 1 ч — +100` / `+200`. После MAX Оли доступна одна подработка в тот же календарный день: 50% текущей часовой ставки за 60 минут (`player.last_overtime_day_index`). Чекбокс на первой смене собирает оба шага в одно действие (`$150 / 120 мин` на ставке $100).
+Seed: `work_basic` — «Работать», 60 минут. Ставка из `WorkService.get_current_hourly_pay()`: 100 до Story Stage 3, 200 после MAX Начальницы шахты. Tiers описаны `WorkTierDefinition` (`min_story_stage`, `income`, `time_cost_minutes`). GameSimulator: `Работать — 1 ч — +100` / `+200`.
+
+Работа идёт через `DailyActivityService` с `activity_key = work`. Базовый daily limit = 1. После MAX Оли `olya_overtime` эффективный limit = 2.
+
+Первая смена без checkbox: usage 0→1, выплата 100%, 1 смена; затем доступно «Выйти на подработку». Дополнительная смена: usage 1→2, выплата 50%, 1 смена. Первая смена с checkbox: usage 0→2, выплата 150%, 2 смены. Оба UI-пути дают `usage_count = 2` за календарный день. Player-facing после обычной смены: «Сегодня уже работали.» После Оли и одной смены — кнопка подработки.
 
 ## Purchases
 
@@ -549,7 +579,7 @@ required_filler_reward_id
 | `upgrade_capital_1` | Развитие капитала | capital | 300 | 0 | — |
 | `upgrade_aura_1` | Развитие ауры | aura | 300 | 0 | — |
 
-Тренажёр 2 виден только после MAX Алины; Тренажёр 1 остаётся доступен. Pipeline: `CharacteristicService.create_upgrade_action` → `ActionService` → `EconomyService` + `CharacteristicBelowMaxRequirement` + `CharacteristicEffect`. UI: `Мышца: 2/5`, `Прокачать до 3 — 50` / `35`, на 5/5 — «Максимум».
+Тренажёр 2 виден только после MAX Алины; Тренажёр 1 остаётся доступен. Pipeline: `CharacteristicService.create_upgrade_action` → `ActionService` → `EconomyService` + `CharacteristicBelowMaxRequirement` + `DailyActivityAvailableRequirement(characteristic_training)` + `CharacteristicEffect` + регистрация usage. Все четыре постоянные прокачки делят один `activity_key = characteristic_training`, daily limit = 1. Экспресс-стайлинг Киры не расходует этот key. Player-facing: «Сегодня уже тренировались. Следующая тренировка: завтра.» UI: `Мышца: 2/5`, `Прокачать до 3 — 50` / `35`, на 5/5 — «Максимум».
 
 ## Equipment
 
@@ -581,7 +611,7 @@ equip_outfit(outfit_id) -> bool
 signal outfit_equipped(previous_outfit_id, current_outfit_id)
 ```
 
-Покупка — разовая, через `create_buy_outfit_action`: `money_cost = price`, `OutfitNotOwnedRequirement`, `MinStoryStageRequirement`, `OwnOutfitEffect`. Покупка добавляет Outfit во владение и делает его текущим. Перед свиданием можно бесплатно экипировать любой уже купленный Outfit. Один Outfit даёт максимум `+1` к одной характеристике; тематический наряд дополнительно даёт Outfit Move. Универсального бонуса к итогу свидания нет.
+Покупка — разовая, через `create_buy_outfit_action`: обычный `money_cost = price`, `OutfitNotOwnedRequirement`, `MinStoryStageRequirement`, `OwnOutfitEffect`. Если `marina_free_outfit_pending` и Outfit открыт текущим progression, ещё не owned и присутствует в обычном магазине, effective price = `$0`, player-facing `$0 · Подарок Марины`, та же кнопка покупки. Первая успешная покупка выдаёт выбранный Outfit, ставит `marina_free_outfit_pending = false`; остальные сразу снова по обычной цене. Если выбрать нечего, pending сохраняется. Отдельного gift-списка и `create_claim_marina_gift_action` в player-facing магазине нет. Покупка добавляет Outfit во владение и делает его текущим. Перед свиданием можно бесплатно экипировать любой уже купленный Outfit. Один Outfit даёт максимум `+1` к одной характеристике; тематический наряд дополнительно даёт Outfit Move. Универсального бонуса к итогу свидания нет.
 
 `EffectiveStat = min(BaseStat + OutfitStatBonus, 5)`.
 
@@ -1093,17 +1123,17 @@ Story Girl MAX расширяет игру и двигает крупный prog
 | Девушка | Reward ID | Эффект |
 |---|---|---|
 | Алина | `alina_improved_gym` | В прокачке рядом с «Тренажёр 1» ($50 / 60 мин, Мышца +1) появляется «Тренажёр 2» ($35 / 60 мин). Оба видны. |
-| Марина | `marina_free_outfit` | Один бесплатный уже доступный незакупленный Outfit в магазине. Право сохраняется, пока выбрать нечего. |
+| Марина | `marina_free_outfit` | Один бесплатный уже доступный незакупленный Outfit через обычный Outfit Store: `$0 · Подарок Марины`. Право в `marina_free_outfit_pending` сохраняется, пока выбрать нечего. |
 | Вика | `vika_base_reroll` | Один раз за свидание за $25 заменить 3 текущих BASE; Situation и источники не меняются. |
 | Даша | `dasha_soften_negative` | Первая отрицательная реакция свидания: `-1 → 0`; тег всё равно раскрывается как отрицательный, combo сбрасывается. |
 | Катя | `katya_emperor_chair` | Apartment upgrade $800, Local Object `emperor_chair` (care / status / humor). |
 | Лера | `lera_apartment_cleaning` | После квартирного свидания `prepared = false`; уборка $0 / 30 мин; с наградой квартира автоматически готовится перед домашним свиданием. |
-| Кира | `kira_express_styling` | Чекбокс подготовки $40: временная Внешность +1 на это свидание, cap 5. |
-| Оля | `olya_overtime` | Вторая смена 50% текущей часовой ставки / 60 мин; чекбокс на первой смене даёт суммарно $150 / 120 мин на seed-ставке $100. |
+| Кира | `kira_express_styling` | Чекбокс подготовки $40: временная Внешность +1 на это свидание, cap 5. Не расходует `characteristic_training`. |
+| Оля | `olya_overtime` | Daily limit `work` становится 2. Вторая смена 50% ставки / 60 мин; чекбокс на первой смене даёт суммарно $150 / 120 мин на seed-ставке $100. |
 | Соня | `sonya_restaurant_second_venue` | Venue Source в Restaurant: 1 → 2 использования; каждый Local Move по-прежнему один раз. |
 | Ника | `nika_backup_outfit` | Запасной owned Outfit; чекбокс смены после эпизода (не CLOSING); состояние Outfit Source сохраняется. |
-| Рита | `rita_urgent_taxi` | $75 обходит только cooldown свидания; новый cooldown ставится как обычно. |
-| Ева | `eva_read_people` | `initial_known_tag_count + 1`; ретро +1 неизвестный Tag уже знакомым незавершённым девушкам. |
+| Рита | `rita_urgent_taxi` | $75 за каждую дополнительную same-day встречу с девушкой, чей бесплатный `date:<girl_id>` уже использован. |
+| Ева | `eva_read_people` | `effective_initial_known_tag_count = GirlProfile.initial_known_tag_count + 1`; ретро +1 неизвестный Tag уже знакомым незавершённым девушкам, затем общая нормализация знания. |
 
 Player-facing роли и описания девушек — в Seed Girls. Game Simulator показывает награду на карточке, результат MAX и DEV-панель: MAX/сброс каждой награды, деньги, четыре характеристики, cooldown, `Apartment.prepared`.
 
@@ -1141,16 +1171,17 @@ get_active_girl_id() -> StringName
 get_active_venue_id() -> StringName
 get_active_outfit_id() -> StringName
 get_date_cooldown_remaining_minutes(girl_id) -> int
+is_date_available_today(girl_id) -> bool
 signal date_started(girl_id)
 signal date_completed(girl_id, relationship_delta, current_relationship)
 ```
 
-Свидание доступно, когда одновременно: `discovered`, `has_contact`, cooldown закончен, линия не завершена, активного свидания нет, и каждый `GirlDefinition.date_requirements.is_met(girl_id)`. Первая причина отказа:
+Свидание доступно, когда одновременно: `discovered`, `has_contact`, бесплатный daily slot `date:<girl_id>` свободен или доступен платный override Риты, линия не завершена, активного свидания нет, и каждый `GirlDefinition.date_requirements.is_met(girl_id)`. Первая причина отказа:
 
 ```text
 "Вы ещё не знакомы"
 "У вас нет контакта этой девушки"
-"До следующего свидания нужно подождать"
+"Сегодня уже встречались. Следующая встреча: завтра."
 "Отношения с этой девушкой уже достигли максимума"
 "Свидание уже идёт"
 "<description>: <progress_text>"   # первый невыполненный date_requirement
@@ -1162,7 +1193,7 @@ signal date_completed(girl_id, relationship_delta, current_relationship)
 
 Venue — это toolkit. Место не даёт общего quality/preference score. Наряд остаётся выбранной частью подготовки без универсального `Outfit.score_bonus`.
 
-`create_start_date_action`: `id = start_date_<girl_id>`, `money_cost` 0 плюс опции Express Styling $40 и urgent taxi $75, `time_cost_minutes = 0`, `DateAvailableRequirement(girl_id)` (`bypass_cooldown` при taxi), `DateVenueAvailableRequirement`, `OutfitOwnedRequirement`, `StartDateEffect` с backup outfit / styling / taxi. Если `outfit_id` пустой, берётся `EquipmentService.get_current_outfit_id()`. Время свидания не входит в action: оно проводится после завершения.
+`create_start_date_action`: `id = start_date_<girl_id>`, `money_cost` 0 плюс опции Express Styling $40 и urgent taxi $75, `time_cost_minutes = 0`, `DateAvailableRequirement(girl_id)` (`bypass_daily_limit` при taxi), `DateVenueAvailableRequirement`, `OutfitOwnedRequirement`, `StartDateEffect` с backup outfit / styling / taxi. Если `outfit_id` пустой, берётся `EquipmentService.get_current_outfit_id()`. Время свидания не входит в action: оно проводится после завершения. Успешный бесплатный старт регистрирует `date:<girl_id>`. Taxi не возвращает бесплатный слот: каждая дополнительная встреча в тот же день стоит отдельные `$75`.
 
 `start_date(girl_id, date_venue_id, outfit_id)` записывает `active_date` (`girl_id`, выбранный `venue_id`, выбранный `outfit_id`, текущее игровое время), передаёт их в `DateSessionConfig` вместе с resolved Local Object IDs места, собирает `DatePlayerSnapshot` из `CharacteristicService` и `ApartmentState.prepared` для свидания в квартире, запускает Date Engine и испускает `date_started`. Date System получает snapshot `GirlProgress` через `GirlsService.fill_date_progress`: `relationship` и уже раскрытые теги предыдущих свиданий. LOCAL ходы оцениваются той же tag-логикой, что BASE и CHARACTERISTIC. При `DateVenue.uses_apartment_preparation` подготовка берётся из `ApartmentState.prepared`.
 
@@ -1175,17 +1206,16 @@ Venue — это toolkit. Место не даёт общего quality/preferen
 2. GirlsService.change_relationship(relationship_delta)
 3. GirlsService.apply_date_knowledge из GirlProgress сессии (revealed tags, completed_dates)
 4. TimeService.advance_time(duration_minutes)
-5. set_date_cooldown(days_to_minutes City Stage)
-6. Если место использует подготовку квартиры — Apartment.prepared = false
-7. Очистить active_date
-8. Испустить date_completed
+5. Если место использует подготовку квартиры — Apartment.prepared = false
+6. Очистить active_date
+7. Испустить date_completed
 ```
 
-Cooldown свидания считается от `last_date_completed_at` через `CityProgressionService.get_social_cooldown_minutes()` (3/2/1 дня на City Stage 1/2/3). Date Engine не пишет `GirlState` и не начисляет Rating: знание тегов проходит через `GirlsService.apply_date_knowledge`.
+Пауза между обычными свиданиями с конкретной девушкой — Daily Activity Gate `date:<girl_id>`, limit 1, регистрация на успешном старте. На следующем календарном дне снова доступен один бесплатный слот. Date Engine не пишет `GirlState` и не начисляет Rating: знание тегов проходит через `GirlsService.apply_date_knowledge`.
 
 ## Rivals / Competitions
 
-Соперники — статический контент плюс runtime-факт знакомства, победы и времени последнего вызова. Вызов — денежная ставка: `entry_fee` 100 списывается при старте, победа выплачивает 200, поражение оставляет взнос. Story rival (`linked_girl_id != ""`) до первой победы допускает повтор сразу; после победы `defeated = true`, линия вызова завершена, requirement сюжетной девушки выполнен. Filler rival (`linked_girl_id == ""`) после любой попытки получает City Stage cooldown и остаётся repeatable; `defeated = true` фиксирует первую победу, но не закрывает реванши. Доступность считает только `RivalsService`.
+Соперники — статический контент плюс runtime-факт знакомства, победы и дневной попытки. Вызов — денежная ставка: `entry_fee` 100 списывается при старте, победа выплачивает 200, поражение оставляет взнос. Story rival (`linked_girl_id != ""`) после победы `defeated = true`, линия вызова завершена, requirement сюжетной девушки выполнен. Filler rival остаётся repeatable после любой попытки; `defeated = true` фиксирует первую победу, но не закрывает реванши. Любая повторяемая попытка (story до первой победы и filler всегда) использует `rival:<rival_id>` с daily limit 1. Неудачная попытка расходует текущий дневной слот. Player-facing: «Сегодня уже была попытка. Следующая попытка: завтра.» Доступность считает только `RivalsService` через Daily Activity Gate.
 
 `RivalDefinition` — статическое game data:
 
@@ -1384,12 +1414,12 @@ GameState
 GameSimulator.refresh()
 ```
 
-Autoload `StageService`, `ActionService`, `EconomyService`, `AutomationService`, `PurchaseService`, `CharacteristicService`, `WorldService`, `GirlsService`, `RatingService`, `DatingService`, `EquipmentService`, `ApartmentService`, `RivalsService`, `CompetitionService`, `SceneTransitionService`, `ObjectiveService` и `GuidanceService` регистрируются в `project.godot` как `/root/StageService`, `/root/ActionService`, `/root/EconomyService`, `/root/AutomationService`, `/root/PurchaseService`, `/root/CharacteristicService`, `/root/WorldService`, `/root/GirlsService`, `/root/RatingService`, `/root/DatingService`, `/root/EquipmentService`, `/root/ApartmentService`, `/root/RivalsService`, `/root/CompetitionService`, `/root/SceneTransitionService`, `/root/ObjectiveService` и `/root/GuidanceService`.
+Autoload `StageService`, `ActionService`, `EconomyService`, `AutomationService`, `PurchaseService`, `CharacteristicService`, `DailyActivityService`, `WorldService`, `GirlsService`, `RatingService`, `DatingService`, `EquipmentService`, `ApartmentService`, `RivalsService`, `CompetitionService`, `SceneTransitionService`, `ObjectiveService` и `GuidanceService` регистрируются в `project.godot`.
 
 Интерфейс — 2D Control, контейнеры и anchors, читаемый в 1280×720 и 1920×1080:
 
 ```text
-HUD: Day / Time | Money | Rating | Stage | City Stage | Cooldown | Finale | compact characteristics X/5
+HUD: Day / Time | Money | Rating | Stage | City Stage | Finale | compact characteristics X/5
 HUD Objective Panel: текущая сюжетная цель, подцели, следующий шаг
 Navigation | Current Section
 Action Result / Event Log
@@ -1406,7 +1436,7 @@ StageService.is_finale_reached()
 CharacteristicService.get_value(muscle / appearance / capital / aura)
 ```
 
-Пример: `День 3`, `14:30`, `Деньги: 650`, `Rating: 0`, `Stage: 2`, `Город: этап 2/3`, `Cooldown: 2 д.`, `Мышца: 1/5`. После Finale: `Stage: 6` и `Finale`, плюс presentation-факт `FINALE REACHED`. Навигация и системы остаются доступны.
+Пример: `День 3`, `14:30`, `Деньги: 650`, `Rating: 0`, `Stage: 2`, `Город: этап 2/3`, `Мышца: 1/5`. После Finale: `Stage: 6` и `Finale`, плюс presentation-факт `FINALE REACHED`. Навигация и системы остаются доступны.
 
 Разделы навигации: Главная, Работа, Фабрика, Город, Девушки, Соперники, Свидания, Квартира, Одежда, Прокачка. Раздел Фабрика виден только при `AutomationState.unlocked == true`; до Stage 5 его нет в основной навигации. Смена раздела — только presentation: не меняет `GameState`, не двигает время, не является `GameAction`. Распределение клонов на экране Фабрики сразу пишет `work_allocation_percent` через `AutomationService`.
 
@@ -1427,7 +1457,7 @@ Stage 1–5 строят подцели из meet/date requirements сюжетн
 
 После `stage_completed` Action Result / Event Log: «Stage завершён.» После `stage_changed`: «Начат Stage N.» и новая цель. `refresh()` после `stage_changed` / `objective_changed` / закрытия guidance обновляет World / Girls / Rivals / Dating / Progression / Factory — новый unlock из `on_enter_effects` уже виден. После входа в Stage 5 появляется раздел Фабрика: фабрика в другом городе, клоны, один slider Work ↔ Dating, hourly Money и Rating из `AutomationService`, текущий Expansion progress и % / час, кнопка расширения при 100% текущего масштаба, три upgrades и dev «+1 ИГРОВОЙ ЧАС» через `TimeService.advance_time(60)`.
 
-Работа показывает текущую ставку на кнопке: `Работать — 1 ч — +100`, после Mine Boss `+200`. После MAX Оли доступны чекбокс подработки на первой смене и отдельная вторая смена 50% ставки. После успешной работы в этом календарном дне: `Работа на сегодня выполнена` и рядом `Снова доступно завтра`. Календарный день: `day_index = game_time_minutes / 1440`. Доступность — typed `WorkAvailableTodayRequirement`; запись дня — effect через `WorkService`. Пока игрок работает, клоны продолжают производство за те же игровые минуты. Город отображает `WorldState`: текущая локация (`LocationDefinition.display_name`); если это `CITY_ZONE` — связанные `INTERIOR` через `parent_location_id` как кликабельные строки; клик по открытой строке входит в место. Если `INTERIOR` — кнопка «ВЫЙТИ» в родительскую зону. Вход и выход вызывают `WorldService.enter_location` и `refresh()`, без загрузки 3D-сцены и без сдвига времени. Закрытая локация: «Название 🔒», строка `disabled`. В текущей локации блок «ЛЮДИ» показывает `GirlsService.get_girls_at_current_location()` и `RivalsService.get_rivals_at_current_location()`. Незнакомая девушка видна всегда, даже при невыполненном Rating: имя; если `meet_requirements` непустые — блок «Требования для знакомства:» со статусами `✓` / `✗`, description и progress_text; кнопка «ПОЗНАКОМИТЬСЯ» → `create_meet_girl_action` → `ActionService.execute`, `disabled` при `can_meet_girl() == false`. Связанный соперник в «ЛЮДИ» появляется только после знакомства с его `linked_girl_id`. Неоткрытый соперник: имя, кнопка «ВСТРЕТИТЬ» → `create_meet_rival_action` → `ActionService.execute`. После знакомства девушка отображается как знакомая. После встречи соперник отображается как открытый. Успешное знакомство в Action Result: «Вы познакомились с <Имя>.», «Получен контакт.», «Прошло времени: 30 минут.» Dev-блок `WORLD DEV` / «UNLOCK LOCATION» открывает существующую закрытую локацию через `WorldService.unlock_location`. Работа идёт только через `ActionService.execute(action)`. UI деньги, время и локацию не меняет напрямую.
+Работа показывает текущую ставку на кнопке: `Работать — 1 ч — +100`, после Mine Boss `+200`. После MAX Оли доступны чекбокс подработки на первой смене и отдельная вторая смена 50% ставки. После успешной работы в этом календарном дне: `Сегодня уже работали.` Календарный день: `day_index = floor(game_time_minutes / 1440)`. Доступность и регистрация — `DailyActivityService` key `work`. Город отображает `WorldState`: текущая локация (`LocationDefinition.display_name`); если это `CITY_ZONE` — связанные `INTERIOR` через `parent_location_id` как кликабельные строки; клик по открытой строке входит в место. Если `INTERIOR` — кнопка «ВЫЙТИ» в родительскую зону. Вход и выход вызывают `WorldService.enter_location` и `refresh()`, без загрузки 3D-сцены и без сдвига времени. Закрытая локация: «Название 🔒», строка `disabled`. В текущей локации блок «ЛЮДИ» показывает `GirlsService.get_girls_at_current_location()` и `RivalsService.get_rivals_at_current_location()`. Незнакомая девушка видна всегда, даже при невыполненном Rating: имя; если `meet_requirements` непустые — блок «Требования для знакомства:» со статусами `✓` / `✗`, description и progress_text; кнопка «ПОЗНАКОМИТЬСЯ» → `create_meet_girl_action` → `ActionService.execute`, `disabled` при `can_meet_girl() == false`. Связанный соперник в «ЛЮДИ» появляется только после знакомства с его `linked_girl_id`. Неоткрытый соперник: имя, кнопка «ВСТРЕТИТЬ» → `create_meet_rival_action` → `ActionService.execute`. После знакомства девушка отображается как знакомая. После встречи соперник отображается как открытый. Успешное знакомство в Action Result: «Вы познакомились с <Имя>.», «Получен контакт.», «Прошло времени: 30 минут.» Dev-блок `WORLD DEV` / «UNLOCK LOCATION» открывает существующую закрытую локацию через `WorldService.unlock_location`. Работа идёт только через `ActionService.execute(action)`. UI деньги, время и локацию не меняет напрямую.
 
 Прокачка показывает четыре характеристики 0–5. Мышца: «Тренажёр 1 — $50 / 60 мин»; после MAX Алины рядом «Тренажёр 2 — $35 / 60 мин». Внешность / Капитал / Аура по-прежнему `$300` мгновенно. На 5/5 — «Максимум». Повышение идёт через `CharacteristicService.create_upgrade_action` → `ActionService.execute` и не зависит от `purchased_ids`.
 
@@ -1435,9 +1465,9 @@ Stage 1–5 строят подцели из meet/date requirements сюжетн
 
 Раздел Квартира показывает уровень квартиры, текущие доступные Local Objects и карточки upgrades. Seed: «Купить телевизор», цена 500, открывает `tv` (ЮМОР / ХИТРОСТЬ); кнопка «КУПИТЬ» через `ApartmentService.create_upgrade_action`. После покупки уровень становится 2, в toolkit квартиры появляется телевизор. Там же игровое действие `skip_to_08_00`: кнопка «Пропустить до 08:00» → `GameActionCatalog.make_skip_to_08_00()` → `ActionService.execute` (`time_cost_minutes` из `TimeService.minutes_until_next_morning`, 0 денег).
 
-Раздел Девушки показывает `GirlsService.get_discovered_girls()`: имя, «Отношения: N / MAX», «Контакт: Да / Нет». Если есть `date_requirements` — блок «Требования для свидания:» со статусами. При максимуме: «Отношения: 10 / 10 — МАКСИМУМ» для обычных и «Отношения: 15 / 15 — МАКСИМУМ» для сюжетных. Незнакомые девушки в этот список не входят — они появляются в мире через локацию.
+Раздел Девушки показывает `GirlsService.get_discovered_girls()`: имя, «Отношения: N / MAX», «Контакт: Да / Нет». Если есть `date_requirements` — блок «Требования для свидания:» со статусами. При максимуме: «Отношения: 10 / 10 — МАКСИМУМ» для обычных и ранних сюжетных; «Отношения: 15 / 15 — МАКСИМУМ» для Учёной и Президента. Незнакомые девушки в этот список не входят — они появляются в мире через локацию.
 
-Раздел Соперники показывает `RivalsService.get_discovered_rivals()`: имя, локация, «Статус: Не побеждён» / «Статус: Побеждён». Неоткрытые соперники в этот список не входят. Блок «СОРЕВНОВАНИЯ» показывает каждую `CompetitionDefinition`: название, время, характеристику, «Шанс победы: N%», `Взнос 100 -> Победа 200`. Story rival до первой победы: кнопка `Вызвать` сразу после поражения. После победы: `Побеждён`, линия завершена. Filler rival: `Вызвать` / `Реванш`, либо `Доступно через ...` во время City Stage cooldown; после первой победы остаётся repeatable. UI читает доступность только через `RivalsService.can_challenge_now` / `get_challenge_cooldown_remaining`. Победа в Action Result: «Победа.», «Соперник <Имя> побеждён.», выплата 200. Поражение: «Поражение.»; у filler — «<Имя> остаётся доступен для реванша.» Поражение — успешное игровое действие: `ActionResult.success = true`.
+Раздел Соперники показывает `RivalsService.get_discovered_rivals()`: имя, локация, «Статус: Не побеждён» / «Статус: Побеждён». Неоткрытые соперники в этот список не входят. Блок «СОРЕВНОВАНИЯ» показывает каждую `CompetitionDefinition`: название, время, характеристику, «Шанс победы: N%», `Взнос 100 -> Победа 200`. Story rival до первой победы: кнопка `Вызвать`, если дневной `rival:<id>` свободен; иначе «Сегодня уже была попытка. Следующая попытка: завтра.» После победы: `Побеждён`, линия завершена. Filler rival: `Вызвать` / `Реванш` с тем же дневным лимитом. UI читает доступность только через `RivalsService.can_challenge_now`. Победа в Action Result: «Победа.», «Соперник <Имя> побеждён.», выплата 200. Поражение: «Поражение.»; у filler — «<Имя> остаётся доступен для реванша.» Поражение — успешное игровое действие: `ActionResult.success = true`.
 
 Раздел Свидания показывает `GirlsService.get_contacted_girls()`. Доступная девушка: имя, отношения `X / MAX`, Trait (название и механическое описание), статусы `date_requirements` (`✓` если все выполнены; иначе заголовок «Требования:» и `✗` с progress), кнопка «ПРИГЛАСИТЬ» (`disabled`, пока `can_start_date() == false`). Приглашение не запускает свидание: оно открывает подготовку. Игрок выбирает Venue и любой купленный Outfit. Экран показывает девушку, отношения, Trait, известные Tags и число неизвестных, Venue, Outfit и четыре итоговые характеристики с уже применённым бонусом одежды (`Внешность: 3 (2 + 1 от одежды)`). Карточка Outfit показывает бонус, открываемый Characteristic Move и Outfit Move. Одежда DatingService больше не берётся молча из текущего слота: `create_start_date_action(girl_id, date_venue_id, outfit_id)` передаёт выбранный наряд, `start_date` экипирует его. Сразу под именем выбранной девушки — Trait и уже открытые предпочтения: «Любит:» известные положительные теги зелёным, «Не любит:» известные отрицательные красным; неизвестные теги не показываются. У каждой строки свой счётчик оставшихся неизвестных этой полярности: «Любит: [теги] (Неизвестно X)», «Не любит: [теги] (Неизвестно Y)». Отдельной строки «Неизвестно N» нет. Для обычной девушки до первого свидания видны два начально известных Tag. Ряд `LabUi.tag_knowledge_row` прижимает теги влево, без растягивания по ширине. Карточка места показывает Trait девушки и toolkit: Local Objects и теги Local Moves через `DatingService.resolve_date_local_object_ids`. Каждый тег окрашивается знанием этой девушки тем же `GameTermFormatter`, что чипы «Любит» / «Не любит» и варианты ходов (весь `[ИМЯ]`); название объекта нейтрально; замок и требование неразлучны: невыполненное даёт `🔒` и `Требуется: <имя> <нужно> (сейчас <есть>)`, выполненное не показывает ни замок, ни текст (значения уже в HUD). Игрок сам сравнивает известные предпочтения с наборами Local Moves: без score, рейтинга, процента совместимости и рекомендации места. Карточка наряда не показывает бонус к свиданию. Обычное открытое место — стандартное оформление. Архитектура UI поддерживает закрытое место: «Название 🔒», кнопка disabled; сейчас список строится только из открытых мест сервиса. Выбор сохраняет presentation-состояние `selected_date_venue_id` и `selected_outfit_id`. После выбора: «Девушка: <имя>», «Место: <название>», «Одежда: <название>», кнопка «НАЧАТЬ СВИДАНИЕ» → `DatingService.create_start_date_action(girl_id, selected_date_venue_id, selected_outfit_id)` → `ActionService.execute`. «НАЗАД» возвращает к списку девушек. После успеха открывается существующий текстовый DatePlayPanel для активной девушки; Dev UI показывает `Active girl`, `Location` и `Outfit`. После итога Date System вызывает `DatingService.complete_date` и возвращает игрока в раздел Свидания. Cooldown: кнопка disabled, «Следующее свидание через N д. N ч.». Завершённая линия: «Линия завершена», без приглашения. При первом достижении максимума Action Result: «ОТНОШЕНИЯ MAX», «Rating +1» и блок персональной filler-награды. До MAX карточка filler-девушки показывает «Награда за MAX»; после получения — «Награда получена». Подготовка свидания может включать Express Styling Киры, urgent taxi Риты и backup Outfit Ники.
 
@@ -1559,9 +1589,13 @@ Combo + Unprepared Apartment
 
 UNKNOWN / POSITIVE / NEGATIVE. UI: жирный `[ТЕГ]` без символа замка; известный положительный — зелёный, известный отрицательный — красный, неизвестный — нейтральный. Единый helper — `LabUi` плюс глобальный Game Terms renderer. Первое использование +1 → POSITIVE, -1 → NEGATIVE. Знание хранится в GirlProgress.
 
-LOCKED и USED ходы имеют один disabled-стиль; причина текстом внутри блока. Символ `🔒` в player-facing ходах отсутствует.
+После каждого изменения revealed knowledge выполняется одна нормализация. Если `revealed_positive_count == positive_tag_ids.size()`, все оставшиеся unknown становятся revealed negative. Если `revealed_negative_count == active_tag_count - positive_count`, все оставшиеся unknown становятся revealed positive. Путь один: знакомство, ход свидания, ретро-награда Евы и любое другое production-раскрытие. Результат пишется в обычные `revealed_positive_tag_ids` / `revealed_negative_tag_ids`.
 
-Во время свидания сверху фиксировано: `Отношения на начало свидания: N / MAX` и `До максимума: K`. Компактный Combo: `КОМБО: 0 / 3`, затем теги chain, затем `КОМБО: ПОЛУЧЕНО +1`.
+LOCKED и USED ходы имеют один disabled-стиль; причина текстом внутри блока. Символ `🔒` в player-facing BASE-ходах отсутствует; в Characteristic Source locked-строка использует `🔒` и `требуется ур. N`.
+
+Базовое стартовое количество известных Tags хранится только в `GirlProfile.initial_known_tag_count` (filler 2, story 0). Ева добавляет `eva_initial_known_tag_bonus = 1`.
+
+Во время свидания сверху фиксировано: `Отношения на начало свидания: N / MAX`, `До максимума: K`, Trait, затем постоянный preference-блок `LabUi.known_preference_block` (`Любит:` / `Не любит:` и `(Неизвестно X)` / `(Неизвестно Y)`). Блок виден во всех пяти эпизодах и обновляется сразу после раскрытия Tag. Компактный Combo: `КОМБО: 0 / 3`, затем теги chain, затем `КОМБО: ПОЛУЧЕНО +1`.
 
 Player-facing текст проходит через глобальный `GameTerm` renderer: жирное выделение, tooltip из `GameTermRegistry` (DateTag, CharacteristicDefinition, DateLocalObject и системные термины вроде Рейтинг / Отношения / Комбо / Этап города / Одежда). Текстовые aliases — `display_name` и явно заданные `aliases`; внутренний `id` только идентифицирует GameTerm и в тексте не ищется. Совпадение принимается только на границах слова: символы слева и справа отсутствуют либо не буква, не цифра и не `_` (Unicode/кириллица). Тег в квадратных скобках `[ИМЯ]` выделяется целиком. Если aliases пересекаются, побеждает самый длинный. Недоступные ходы не используют символ замка.
 
@@ -1647,6 +1681,8 @@ Seed presets при 12 активных Tags и `base_moves_per_episode = 3`. Т
 
 | id | имя | positive | negative | теоретическая доступность |
 |---|---|---|---|---|
+| wide | Широкая | 8 | 4 | 98.2% |
+| easy | Лёгкая | 7 | 5 | 95.5% |
 | starter | Стартовая | 6 | 6 | 90.9% |
 | early | Ранняя | 5 | 7 | 84.1% |
 | mid | Средняя | 4 | 8 | 74.5% |
@@ -1658,6 +1694,8 @@ Seed presets при 12 активных Tags и `base_moves_per_episode = 3`. Т
 Балансировочный принцип:
 
 ```text
+WIDE     8  онбординг Dating Core, почти всегда есть +1 в BASE
+EASY     7  ранний City Stage, всё ещё очень дружелюбный набор
 STARTER  6  герой почти без прокачки
 EARLY    5  первые Открываемые ходы
 MID      4  заметная роль билда, места и одежды
@@ -1665,7 +1703,7 @@ LATE     3  развитый набор Открываемых ходов
 ELITE    2  поздняя прокачка + сильная подготовка
 ```
 
-Authored-набор использует канонические максимумы отношений: обычные `0..10`, сюжетные `0..15`. Сложность задаётся только числом положительных Tags.
+Authored-набор использует канонические максимумы отношений: обычные `0..10`; Actress / Mine Boss / Magazine Editor `0..10`; Scientist / President `0..15`. Сложность задаётся только числом положительных Tags.
 
 AVAILABLE CHARACTERISTIC по-прежнему резервируют Tag и расширяют покрытие: для STARTER BASE почти всегда даёт хороший вариант; для LATE/ELITE арсенал становится основным способом стабильно находить +1.
 
@@ -1673,13 +1711,13 @@ AVAILABLE CHARACTERISTIC по-прежнему резервируют Tag и р�
 
 Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профилей, `GirlProfile.id == GirlDefinition.id`, старт отношений `0`. У каждого профиля есть difficulty preset, positive tags, ровно один Trait и `initial_known_tag_count` (2 у обычных, 0 у сюжетных). Negative Tags — вычисляемое дополнение. Предпочтений места и наряда кроме Trait нет.
 
-Алина `alina`: filler City Stage 1, `city_center`. Difficulty starter. Trait Домоседка. Positive: politeness, directness, care, generosity, composure, humor. Тренер городского спортзала. Награда MAX: `alina_improved_gym`. Первая полноценная девушка: 6/6.
+Алина `alina`: filler City Stage 1, `city_center`. Difficulty `wide`. Trait Домоседка. Positive: politeness, directness, care, generosity, composure, humor, risk, dominance. Тренер городского спортзала. Награда MAX: `alina_improved_gym`. Первая полноценная девушка: 8/12.
 
-Марина `marina`: filler City Stage 1, `city_center`. Trait Чувствует ауру. Positive: care, composure, directness, humor. Продавец магазина одежды. Награда MAX: `marina_free_outfit`.
+Марина `marina`: filler City Stage 1, `city_center`. Difficulty `easy`. Trait Чувствует ауру. Positive: care, composure, directness, humor, politeness, flattery, status. Продавец магазина одежды. Награда MAX: `marina_free_outfit`.
 
-Вика `vika`: filler City Stage 1, `cafe`. Trait Ценит внешность. Бариста Café. Награда MAX: `vika_base_reroll`.
+Вика `vika`: filler City Stage 1, `cafe`. Difficulty `easy`. Trait Ценит внешность. Positive: audacity, dominance, risk, humor, cunning, directness, care. Бариста Café. Награда MAX: `vika_base_reroll`.
 
-Даша `dasha`: filler City Stage 1, `cafe`. Trait Любит сильных. Positive: audacity, risk, humor, dominance. Менеджер клиентского сервиса. Награда MAX: `dasha_soften_negative`.
+Даша `dasha`: filler City Stage 1, `cafe`. Difficulty `starter`. Trait Любит сильных. Positive: audacity, risk, humor, dominance, politeness, composure. Менеджер клиентского сервиса. Награда MAX: `dasha_soften_negative`.
 
 Катя `katya`: filler City Stage 2, `city_center`. Trait Любит кафе. Продавец мебельного магазина. Награда MAX: `katya_emperor_chair`.
 
@@ -1697,15 +1735,15 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 
 Ева `eva`: filler City Stage 3, `restaurant`. Trait Любит рестораны. Рекрутер / интервьюер. Награда MAX: `eva_read_people`.
 
-Актриса `girl_actress`: `city_center`, Stage 1 + Rating 2, соперник `rival_boris`. Trait Ценит внешность. Начально известных Tags нет. City Stage 2 после MAX.
+Актриса `girl_actress`: `city_center`, Stage 1 + Rating 2, соперник `rival_boris`. Trait Ценит внешность. `relationship_max = 10`. Начально известных Tags нет. City Stage 2 после MAX.
 
-Начальница шахты `girl_mine_boss`: `restaurant`, Stage 2 + Rating 5, соперник `rival_foreman`. Trait Любит рестораны. Начально известных Tags нет. После MAX работа 200/ч.
+Начальница шахты `girl_mine_boss`: `restaurant`, Stage 2 + Rating 5, соперник `rival_foreman`. Trait Любит рестораны. `relationship_max = 10`. Начально известных Tags нет. После MAX работа 200/ч.
 
-Редактор журнала `girl_magazine_editor`: `cafe`, Stage 3 + Rating 7, соперник `rival_columnist`. Trait Чувствует ауру. Начально известных Tags нет. City Stage 3 после MAX.
+Редактор журнала `girl_magazine_editor`: `cafe`, Stage 3 + Rating 7, соперник `rival_columnist`. Trait Чувствует ауру. `relationship_max = 10`. Начально известных Tags нет. City Stage 3 после MAX.
 
-Учёная `girl_scientist`: `city_center`, Stage 4 + Rating 10, соперник `rival_academic`. Trait Любит кафе. Начально известных Tags нет. Factory открывается на Stage 5 после её MAX.
+Учёная `girl_scientist`: `city_center`, Stage 4 + Rating 10, соперник `rival_academic`. Trait Любит кафе. `relationship_max = 15`. Начально известных Tags нет. Factory открывается на Stage 5 после её MAX.
 
-Президент `girl_president`: `restaurant`, Stage 5 + Rating 12, соперник `rival_minister`. Trait Любит обеспеченных. Начально известных Tags нет.
+Президент `girl_president`: `restaurant`, Stage 5 + Rating 12, соперник `rival_minister`. Trait Любит обеспеченных. `relationship_max = 15`. Начально известных Tags нет.
 
 Ручная прогрессия без DEV: New Game Rating 0, City Stage 1 → две filler City Stage 1 → Actress MAX (Stage 2, City Stage 2, restaurant) → две filler City Stage 2 → MineBoss MAX (Stage 3, работа 200) → оставшаяся filler City Stage 2 → Editor MAX (Stage 4, City Stage 3) → две filler City Stage 3 → Scientist MAX (Stage 5, Factory) → оставшаяся filler или Factory Rating → President MAX (Stage 6). Filler не завершают Stage. Factory не закрывает охват родного города.
 
@@ -1764,6 +1802,8 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 | char_support_mode | aura | 1 | care | Включить поддержку |
 | char_joke_relief | aura | 3 | humor | Разрядить шуткой |
 | char_hold_pause | aura | 5 | composure | Выдержать паузу |
+
+Окно Characteristic Source показывает эти 12 ходов четырьмя группами в порядке Мышца / Внешность / Капитал / Аура; внутри группы ур. 1, 3, 5. Заголовок: `МЫШЦА — ур. N` с breakdown modifiers и cap 5. Trait-бонус характеристики — одна строка в соответствующей группе: `Особенность девушки: +1 к результату ходов <Характеристики>`. Доступный ход: `[ЛЕСТЬ] Красиво подать комплимент · ур. 3`. Locked: `🔒 [НАГЛОСТЬ] Сыграть внешностью · требуется ур. 5`. Цвета known-positive / unknown / known-negative сохраняются.
 
 ## Seed LOCAL Moves
 
@@ -1828,7 +1868,7 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 
 Запуск: девушка, место, наряд, квартира (если location uses apartment), тестовые статы, seed. Кнопки: НАЧАТЬ НОВОЕ СВИДАНИЕ, ПОВТОРИТЬ ПОСЛЕДНИЙ SEED, СБРОСИТЬ ПРОГРЕСС ДЕВУШКИ, СБРОСИТЬ ВЕСЬ ТЕСТОВЫЙ ПРОГРЕСС.
 
-Эпизод: фаза, номер, Situation, BASE×3 и кнопки источников `[ХАРАКТЕРИСТИКА] [ОДЕЖДА] [ЛОКАЦИЯ]`. Цвет источника — зелёный / серый / красный по известным Tags девушки; заблокированный неиспользованный источник нейтральный; использованный погашен, tooltip `Уже использовано на этом свидании.` Внутри списка видны и доступные, и закрытые ходы с `Требуется` / `Сейчас`. После выбора: ход, tag, реакция, score, новое знание, ПРОДОЛЖИТЬ.
+Эпизод: фаза, номер, Situation, BASE×3 и кнопки источников `[ХАРАКТЕРИСТИКА] [ОДЕЖДА] [ЛОКАЦИЯ]`. В верхней информационной части постоянно видны Relationship, Trait и `LabUi.known_preference_block`; блок обновляется после раскрытия Tags. Цвет источника — зелёный / серый / красный по известным Tags девушки; заблокированный неиспользованный источник нейтральный; использованный погашен, tooltip `Уже использовано на этом свидании.` Characteristic Source сгруппирован по Мышца / Внешность / Капитал / Аура. Внутри списка видны и доступные, и закрытые ходы. После выбора: ход, tag, реакция, score, новое знание, ПРОДОЛЖИТЬ.
 
 Debug-панель эпизода дополнительно показывает source-used флаги, preferred/fallback BASE candidates, selected_base_moves и selected_base_tags.
 
@@ -1846,4 +1886,4 @@ UI: контейнеры, anchors, scroll, split, навигация, 1280×720 
 
 ## Автотесты
 
-Кейсы Dating Core: 17 девушек в `GirlCatalog` и Date Content, обычные MAX 10 / сюжетные MAX 15, старт отношений 0, Gain = max(raw, 0), начально известные Tags обычных и полностью UNKNOWN сюжетных, Trait характеристики и места, Combo, квартира 0/−1, `raise_stakes` при Капитал 5, полный цикл пяти эпизодов без `outfit_score`. Плюс резервирование CHARACTERISTIC Tags, 12 Tags, Girl Difficulty presets (STARTER..ELITE), Алина STARTER 6/6, 17 authored-профилей с preset/positives/Trait и без leftover tags, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` / `purchased_ids` / `current_location_id` / `unlocked_location_ids` / `girls_by_id` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, миграция без `progression.purchased_ids` → `[]`, миграция без world-полей → стартовый `WorldState`, миграция без `girls.girls_by_id` → `{}`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, `GirlRelationshipRequirement` (relationship 3/5 → `is_met == false`; 5/5 → `true`), автоматический переход Stage при MAX сюжетной девушки и отсутствие перехода при MAX другой девушки, `UnlockLocationStageEffect` при входе в следующий Stage, порядок `stage_completed` → on_enter_effects → `stage_changed`, `reconcile_stage_entry_state()` для уже достигнутых Stage и повторная идемпотентность, save/load прогресса текущего `StageRequirement` из `GirlState.relationship`, Stage 6 с `WorldReachRequirement` (без WORLD 100% — `can_complete` / `try_complete` = false; WORLD 100% на Stage 6 → Finale; WORLD 100% до MAX Президента остаётся Stage 5, затем переход 5→6 сразу даёт Finale), успешное `try_complete` на LAST_STAGE с выполненным test requirement → `stage == 6` / `finale_reached` / сигналы `stage_completed(6)` и `finale_reached()` без Stage 7, `StageCatalog` берёт `GirlRelationshipRequirement.target_relationship` из `GirlDefinition.relationship_max`, Finale через `force_complete_current_stage_for_dev()`, полный проход Stage 1–5 → 6 через MAX сюжетных девушек, высокий Rating не завершает Stage пока relationship сюжетной девушки < MAX, `GirlAccessRequirement` (`RatingGirlRequirement` 3/5 → unmet, 5/5 → met; `RivalDefeatedGirlRequirement` до/после `defeat_rival`; `MinStageGirlRequirement` stage 2/3/4), несколько `meet_requirements` (Stage выполнен / Rating нет → `can_meet_girl` false, затем true), атомарность Meet Girl при невыполненном requirement, `DatingService.can_start_date` с `RivalDefeatedGirlRequirement`, save_version не растёт — requirements не сериализуются и после load считаются из GameState, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), `EconomyService` (`add_money` / `spend_money` success/fail / `money_changed`), `work_basic` (100 денег / 60 минут, повтор), покупка `basic_upgrade` (нехватка денег / успех / повтор «Уже куплено»), save/load денег и `purchased_ids`, presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`; dev Stage через `force_complete_current_stage_for_dev`; Город: текущая локация, вход/выход интерьера без сдвига времени, закрытая локация, dev unlock, люди текущей локации, знакомство), `WorldService` (New Game start location и unlock'и, первый/повторный unlock, `enter_location`, отказ в закрытую, `location_changed` / `location_unlocked`, время не двигается), `LocationRequirement`, save/load локации и unlock'ов, `GirlsService` (default `GirlState`, однократный `discover_girl` / `give_contact` / `change_relationship`, девушки текущей локации), `MEET_GIRL` (успех 30 минут, повтор «Вы уже знакомы», другая локация), `GirlContactRequirement`, `RelationshipRequirement`, `RatingService` (старт 0, +1 при первом максимуме, большой delta даёт +1, повтор не начисляет), `DatingService` (start date success/fail без контакта/cooldown/максимума, выбранный `date_venue_id` пишется в `active_date` и `DateSessionConfig` независимо от `GirlDefinition.location_id`, resolved Local Object IDs preview и сессии совпадают, недоступное место проваливает `DateVenueAvailableRequirement` без активного свидания, complete_date применяет relationship/time/cooldown, раскрытые теги переходят на следующее свидание, полный цикл до Rating), GameSimulator двухшаговый выбор места по toolkit Local Objects и одежды без score bonus, save/load Rating / cooldown / знание тегов / завершённой девушки / active_date включая `venue_id`, миграция без `player.rating` → `0`, `RivalsService` (default `RivalState`, однократный `discover_rival` / `defeat_rival`, соперники текущей локации), `MEET_RIVAL`, `CompetitionService` (детерминированный win/loss через action, отказ в другой локации / до discovery / после победы), save/load `rivals_by_id`, миграция без `rivals.rivals_by_id` → `{}`, GameSimulator: встреча соперника, раздел Соперники, бросить вызов, шанс победы из `get_win_chance()`, характеристики / одежда / квартира, выбор outfit перед свиданием, `CharacteristicService` / `EquipmentService` / `ApartmentService` save/load и миграция `save_version` 9 → 10, Automation: Stage 4 MAX Учёной → Stage 5 unlock + 10 клонов, повторный reconcile не добавляет клонов, load v10 Stage 5/6 restore через reconcile, work 10 клонов 40% / 60 мин → 400, dating 100% / 60 мин → +1 Rating, дробный dating progress 1 клон / 1 час → 0.1 Rating fraction, 10 часов → +1 Rating, upgrades +10 клонов / ×1.5 work / ×1.5 dating, CITY 100% → Country за 10 000 с клонами ×10, Country 100% → World за 1 000 000 с клонами ×10, capped expansion при продолжающемся Rating, `advance_time(60)` vs `60 × advance_time(1)`, save_version 11 → 12, миграция 12 → 13 (`apartment.prepared = true`), Local Moves toolkit / OPENING ±1 / USED объекта / upgrade tv / replay, save_version 12 → 13 (`apartment.prepared = true`), Local Moves (toolkit места, OPENING ±1, USED на весь объект, upgrade `tv`, replay snapshot), миграция `completed_auto_dates` в Rating и CITY progress, GameSimulator раздел Фабрика после unlock показывает Rating/hour и экспансию, Home показывает охват родного города 0/17 … 17/17, каталог 17 девушек (`GirlDefinition` ↔ `GirlProfile`, filler по City Stage, сюжетные Rating 2/5/7/10/12), filler-rivals в местах вместе с девушками, реванш после cooldown, restaurant unlock на Stage 2 и City Stage 2/3 через Stage Effects, свидания всех 17, ручная прогрессия Alina/Marina→President без DEV (ветка оставшихся filler и ветка Factory `add_rating(1)`), filler не завершают Stage, `skip_to_08_00` 03:20→08:00 / 07:59→08:00 / 08:00→08:00 следующего дня / 23:30→08:00 следующего дня / `test_wait` +120, label «Пропустить до 08:00», характеристики 0–5, save_version 17, filler rewards: первое знакомство 2/0 Tags и 3/1 после Евы, retro +1, Dasha 0 затем -1, Vika $25 один раз, Olya $150/120, Sonya два Venue только в Restaurant, Nika swap с сохранением Outfit Source, Rita taxi $75, MAX reward + Rating один раз.
+Кейсы Dating Core: 17 девушек в `GirlCatalog` и Date Content, обычные MAX 10 / Actress-MineBoss-Editor MAX 10 / Scientist-President MAX 15, старт отношений 0, Gain = max(raw, 0), начально известные Tags обычных и полностью UNKNOWN сюжетных, Trait характеристики и места, Combo, квартира 0/−1, `raise_stakes` при Капитал 5, полный цикл пяти эпизодов без `outfit_score`. Плюс резервирование CHARACTERISTIC Tags, 12 Tags, Girl Difficulty presets (WIDE/EASY/STARTER..ELITE), Алина WIDE 8, Марина/Вика EASY 7, Даша STARTER 6, 17 authored-профилей с preset/positives/Trait и без leftover tags, теоретическая вероятность без Monte Carlo, persist/reload GirlProfile, смена difficulty, runtime-нормализация знания и дедукция оставшихся Tags, 10000-seed баланс равномерного пула для 6/5/4/3/2 positive, round-trip `GameState` save/load (`game_time_minutes` / `stage` / `finale_reached` / `money` / `purchased_ids` / `current_location_id` / `unlocked_location_ids` / `girls_by_id` и наличие всех секций), миграция `save_version` 1 `flow.day` → `game_time_minutes`, миграция `save_version` 2 без `finale_reached` → `false`, миграция без `progression.purchased_ids` → `[]`, миграция без world-полей → стартовый `WorldState`, миграция без `girls.girls_by_id` → `{}`, старт/внутри дня/переход суток/`advance_time` больших интервалов, save/load абсолютного времени и событие `time_advanced`, New Game Stage 1, `GirlRelationshipRequirement` (relationship 3/5 → `is_met == false`; 5/5 → `true`), автоматический переход Stage при MAX сюжетной девушки и отсутствие перехода при MAX другой девушки, `UnlockLocationStageEffect` при входе в следующий Stage, порядок `stage_completed` → on_enter_effects → `stage_changed`, `reconcile_stage_entry_state()` для уже достигнутых Stage и повторная идемпотентность, save/load прогресса текущего `StageRequirement` из `GirlState.relationship`, Stage 6 с `WorldReachRequirement` (без WORLD 100% — `can_complete` / `try_complete` = false; WORLD 100% на Stage 6 → Finale; WORLD 100% до MAX Президента остаётся Stage 5, затем переход 5→6 сразу даёт Finale), успешное `try_complete` на LAST_STAGE с выполненным test requirement → `stage == 6` / `finale_reached` / сигналы `stage_completed(6)` и `finale_reached()` без Stage 7, `StageCatalog` берёт `GirlRelationshipRequirement.target_relationship` из `GirlDefinition.relationship_max`, Finale через `force_complete_current_stage_for_dev()`, полный проход Stage 1–5 → 6 через MAX сюжетных девушек, высокий Rating не завершает Stage пока relationship сюжетной девушки < MAX, `GirlAccessRequirement` (`RatingGirlRequirement` 3/5 → unmet, 5/5 → met; `RivalDefeatedGirlRequirement` до/после `defeat_rival`; `MinStageGirlRequirement` stage 2/3/4), несколько `meet_requirements` (Stage выполнен / Rating нет → `can_meet_girl` false, затем true), атомарность Meet Girl при невыполненном requirement, `DatingService.can_start_date` с `RivalDefeatedGirlRequirement`, save_version не растёт — requirements не сериализуются и после load считаются из GameState, pipeline `ActionService` (`test_wait` / `test_earn_money` / `test_spend_money` / `MoneyRequirement` / полный cost+effect+time / атомарность отказа / `action_executed` только при успехе), `EconomyService` (`add_money` / `spend_money` success/fail / `money_changed`), `work_basic` (100 денег / 60 минут, повтор), покупка `basic_upgrade` (нехватка денег / успех / повтор «Уже куплено»), save/load денег и `purchased_ids`, presentation `GameSimulator` (New Game: money 0 / stage 1 / day 1; работа через Simulator → money 100 / 60 мин; навигация не меняет `GameState`; save/load состояния, изменённого через Simulator; Stage через `StageService`; dev Stage через `force_complete_current_stage_for_dev`; Город: текущая локация, вход/выход интерьера без сдвига времени, закрытая локация, dev unlock, люди текущей локации, знакомство), `WorldService` (New Game start location и unlock'и, первый/повторный unlock, `enter_location`, отказ в закрытую, `location_changed` / `location_unlocked`, время не двигается), `LocationRequirement`, save/load локации и unlock'ов, `GirlsService` (default `GirlState`, однократный `discover_girl` / `give_contact` / `change_relationship`, девушки текущей локации), `MEET_GIRL` (успех 30 минут, повтор «Вы уже знакомы», другая локация), `GirlContactRequirement`, `RelationshipRequirement`, `RatingService` (старт 0, +1 при первом максимуме, большой delta даёт +1, повтор не начисляет), `DatingService` (start date success/fail без контакта/daily gate/максимума, выбранный `date_venue_id` пишется в `active_date` и `DateSessionConfig` независимо от `GirlDefinition.location_id`, resolved Local Object IDs preview и сессии совпадают, недоступное место проваливает `DateVenueAvailableRequirement` без активного свидания, complete_date применяет relationship/time, раскрытые теги переходят на следующее свидание, полный цикл до Rating), GameSimulator двухшаговый выбор места по toolkit Local Objects и одежды без score bonus, save/load Rating / daily_activity / знание тегов / завершённой девушки / active_date включая `venue_id`, миграция без `player.rating` → `0`, `RivalsService` (default `RivalState`, однократный `discover_rival` / `defeat_rival`, соперники текущей локации), `MEET_RIVAL`, `CompetitionService` (детерминированный win/loss через action, отказ в другой локации / до discovery / после победы), save/load `rivals_by_id`, миграция без `rivals.rivals_by_id` → `{}`, GameSimulator: встреча соперника, раздел Соперники, бросить вызов, шанс победы из `get_win_chance()`, характеристики / одежда / квартира, выбор outfit перед свиданием, `CharacteristicService` / `EquipmentService` / `ApartmentService` save/load и миграция `save_version` 9 → 10, Automation: Stage 4 MAX Учёной → Stage 5 unlock + 10 клонов, повторный reconcile не добавляет клонов, load v10 Stage 5/6 restore через reconcile, work 10 клонов 40% / 60 мин → 400, dating 100% / 60 мин → +1 Rating, дробный dating progress 1 клон / 1 час → 0.1 Rating fraction, 10 часов → +1 Rating, upgrades +10 клонов / ×1.5 work / ×1.5 dating, CITY 100% → Country за 10 000 с клонами ×10, Country 100% → World за 1 000 000 с клонами ×10, capped expansion при продолжающемся Rating, `advance_time(60)` vs `60 × advance_time(1)`, save_version 11 → 12, миграция 12 → 13 (`apartment.prepared = true`), Local Moves toolkit / OPENING ±1 / USED объекта / upgrade tv / replay, save_version 12 → 13 (`apartment.prepared = true`), Local Moves (toolkit места, OPENING ±1, USED на весь объект, upgrade `tv`, replay snapshot), миграция `completed_auto_dates` в Rating и CITY progress, GameSimulator раздел Фабрика после unlock показывает Rating/hour и экспансию, Home показывает охват родного города 0/17 … 17/17, каталог 17 девушек (`GirlDefinition` ↔ `GirlProfile`, filler по City Stage, сюжетные Rating 2/5/7/10/12), filler-rivals в местах вместе с девушками, реванш на следующий календарный день, restaurant unlock на Stage 2 и City Stage 2/3 через Stage Effects, свидания всех 17, ручная прогрессия Alina/Marina→President без DEV (ветка оставшихся filler и ветка Factory `add_rating(1)`), filler не завершают Stage, `skip_to_08_00` 03:20→08:00 / 07:59→08:00 / 08:00→08:00 следующего дня / 23:30→08:00 следующего дня / `test_wait` +120, label «Пропустить до 08:00», характеристики 0–5, save_version 18, Daily Activity Gate, filler rewards: первое знакомство 2/0 Tags и 3/1 после Евы, retro +1, Dasha 0 затем -1, Vika $25 один раз, Olya $150/120, Sonya два Venue только в Restaurant, Nika swap с сохранением Outfit Source, Rita taxi $75, MAX reward + Rating один раз.

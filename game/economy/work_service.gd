@@ -60,24 +60,27 @@ static func create_work_action(work: WorkDefinition) -> GameAction:
 
 
 static func get_calendar_day_index() -> int:
-	var minutes: int = 0
+	var clock: Variant = _time_service_node()
+	if clock != null and clock.has_method("get_calendar_day_index"):
+		return int(clock.get_calendar_day_index())
+	var gs: Variant = _game_state()
+	if gs != null and gs.flow != null:
+		return int(int(gs.flow.game_time_minutes) / 1440)
+	return 0
+
+
+static func _time_service_node() -> Variant:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	if tree != null and tree.root != null:
-		var clock: Node = tree.root.get_node_or_null("TimeService")
-		if is_instance_valid(clock):
-			minutes = int(clock.get_game_time_minutes())
-		else:
-			var gs: Variant = _game_state()
-			if gs != null and gs.flow != null:
-				minutes = int(gs.flow.game_time_minutes)
-	return int(minutes / 1440)
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("TimeService")
 
 
 static func is_work_available_today() -> bool:
-	var gs: Variant = _game_state()
-	if gs == null or gs.player == null:
+	var daily: Variant = _daily_activity()
+	if daily == null:
 		return false
-	return int(gs.player.last_work_day_index) != get_calendar_day_index()
+	return int(daily.usage_today(daily.KEY_WORK)) == 0
 
 
 static func has_olya_overtime() -> bool:
@@ -94,11 +97,10 @@ static func get_overtime_pay() -> int:
 static func is_overtime_available_today() -> bool:
 	if not has_olya_overtime():
 		return false
-	var gs: Variant = _game_state()
-	if gs == null or gs.player == null:
+	var daily: Variant = _daily_activity()
+	if daily == null:
 		return false
-	var day_index: int = get_calendar_day_index()
-	return int(gs.player.last_work_day_index) == day_index and int(gs.player.last_overtime_day_index) != day_index
+	return int(daily.usage_today(daily.KEY_WORK)) == 1 and int(daily.work_daily_limit()) >= 2
 
 
 static func make_overtime_work() -> WorkDefinition:
@@ -184,3 +186,10 @@ static func _game_state() -> Variant:
 	if not is_instance_valid(node):
 		return null
 	return node
+
+
+static func _daily_activity() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("DailyActivityService")

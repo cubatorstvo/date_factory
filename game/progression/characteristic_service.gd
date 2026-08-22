@@ -1,5 +1,8 @@
 extends Node
 
+const _DailyActivityAvailableRequirement := preload("res://game/actions/daily_activity_available_requirement.gd")
+const _RecordDailyActivityEffect := preload("res://game/actions/record_daily_activity_effect.gd")
+
 signal characteristic_changed(
 	characteristic_id: StringName,
 	previous_value: int,
@@ -124,6 +127,11 @@ func create_upgrade_action(upgrade_id: StringName) -> GameAction:
 	var below_max := CharacteristicBelowMaxRequirement.new()
 	below_max.characteristic_id = upgrade.characteristic_id
 	action.requirements.append(below_max)
+	var daily = _DailyActivityAvailableRequirement.new()
+	daily.activity_key = "characteristic_training"
+	daily.daily_limit = 1
+	daily.failure_reason = "Сегодня уже тренировались. Следующая тренировка: завтра."
+	action.requirements.append(daily)
 	if upgrade.required_filler_reward_id != &"":
 		var reward_req := FillerRewardUnlockedRequirement.new()
 		reward_req.reward_id = upgrade.required_filler_reward_id
@@ -132,6 +140,10 @@ func create_upgrade_action(upgrade_id: StringName) -> GameAction:
 	effect.characteristic_id = upgrade.characteristic_id
 	effect.amount = upgrade.amount
 	action.effects.append(effect)
+	var record = _RecordDailyActivityEffect.new()
+	record.activity_key = "characteristic_training"
+	record.amount = 1
+	action.effects.append(record)
 	return action
 
 

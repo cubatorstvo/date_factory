@@ -128,7 +128,7 @@ func choose_move(move_id: StringName) -> void:
 		_session.dasha_soften_used = true
 	var revealed: bool = false
 	if _catalog.date_rules.reveal_tag_after_use:
-		revealed = _girl_progress.reveal_tag(tag_id, preference > 0, _girl)
+		revealed = _girl_progress.reveal_tag(tag_id, preference > 0, _girl, _catalog)
 		if revealed:
 			_session.revealed_tags_during_session.append(tag_id)
 			var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.POSITIVE if preference > 0 else DateTypes.TagKnowledge.NEGATIVE

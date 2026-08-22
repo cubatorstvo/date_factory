@@ -19,7 +19,9 @@ const ID_RITA: StringName = &"rita"
 const ID_KIRA: StringName = &"kira"
 const ID_EVA: StringName = &"eva"
 const RELATIONSHIP_MAX_ORDINARY: int = 10
-const RELATIONSHIP_MAX_STORY: int = 15
+const RELATIONSHIP_MAX_STORY_EARLY: int = 10
+const RELATIONSHIP_MAX_STORY_LATE: int = 15
+const RELATIONSHIP_MAX_STORY: int = RELATIONSHIP_MAX_STORY_LATE
 
 @export var girls: Array[GirlDefinition] = []
 
@@ -56,7 +58,11 @@ static func is_story_girl_id(girl_id: StringName) -> bool:
 
 
 static func seed_relationship_max(girl_id: StringName) -> int:
-	return RELATIONSHIP_MAX_STORY if is_story_girl_id(girl_id) else RELATIONSHIP_MAX_ORDINARY
+	if girl_id == ID_SCIENTIST or girl_id == ID_PRESIDENT:
+		return RELATIONSHIP_MAX_STORY_LATE
+	if girl_id == ID_ACTRESS or girl_id == ID_MINE_BOSS or girl_id == ID_MAGAZINE_EDITOR:
+		return RELATIONSHIP_MAX_STORY_EARLY
+	return RELATIONSHIP_MAX_ORDINARY
 
 
 static func create_seed() -> GirlCatalog:

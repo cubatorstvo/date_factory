@@ -56,8 +56,7 @@ func get_failure_reason(competition_id: StringName) -> String:
 	if not bool(rivals.can_challenge_now(definition.rival_id)):
 		if bool(rivals.is_story_rival(definition.rival_id)) and bool(rivals.is_defeated(definition.rival_id)):
 			return REASON_DEFEATED
-		var remaining: int = int(rivals.get_challenge_cooldown_remaining(definition.rival_id))
-		return "%s (%d мин.)" % [REASON_COOLDOWN, remaining]
+		return "Сегодня уже была попытка. Следующая попытка: завтра."
 	return ""
 
 
@@ -136,8 +135,7 @@ func complete_competition(result: CompetitionResult) -> bool:
 		completed_at = int(clock.get_game_time_minutes())
 	if definition != null:
 		completed_at += definition.time_cost_minutes
-	if bool(rivals.is_repeatable_rival(result.rival_id)):
-		rivals.mark_challenge_completed(result.rival_id, completed_at)
+	rivals.mark_challenge_completed(result.rival_id, completed_at)
 	if result.won:
 		rivals.defeat_rival(result.rival_id)
 		var payout: int = 0

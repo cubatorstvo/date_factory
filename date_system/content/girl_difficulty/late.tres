@@ -9,4 +9,4 @@ display_name = "Поздняя"
 description = "Базовый набор регулярно оставляет игрока без положительного тега. Развитый арсенал становится важной частью свидания."
 enabled = true
 positive_tag_count = 3
-sort_order = 3
+sort_order = 5

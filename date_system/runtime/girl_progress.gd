@@ -16,13 +16,14 @@ func tag_knowledge(tag_id: StringName, girl: GirlProfile = null) -> DateTypes.Ta
 	return DateTypes.TagKnowledge.UNKNOWN
 
 
-func reveal_tag(tag_id: StringName, positive: bool, girl: GirlProfile = null) -> bool:
+func reveal_tag(tag_id: StringName, positive: bool, girl: GirlProfile = null, catalog: DateContentCatalog = null) -> bool:
 	if tag_knowledge(tag_id, girl) != DateTypes.TagKnowledge.UNKNOWN:
 		return false
 	if positive:
 		revealed_positive_tag_ids.append(tag_id)
 	else:
 		revealed_negative_tag_ids.append(tag_id)
+	normalize_deduced_knowledge(girl, catalog)
 	return true
 
 
@@ -36,6 +37,37 @@ func unknown_positive_tag_count(girl: GirlProfile, catalog: DateContentCatalog =
 
 func unknown_negative_tag_count(girl: GirlProfile, catalog: DateContentCatalog = null) -> int:
 	return _unknown_tag_count_for(girl, catalog, false)
+
+
+func normalize_deduced_knowledge(girl: GirlProfile, catalog: DateContentCatalog = null) -> void:
+	if girl == null or catalog == null:
+		return
+	var enabled: Array[DateTag] = catalog.enabled_tags()
+	var total_positive: int = girl.positive_tag_ids.size()
+	var total_negative: int = maxi(0, enabled.size() - total_positive)
+	var revealed_positive: int = 0
+	var revealed_negative: int = 0
+	for tag in enabled:
+		if tag == null:
+			continue
+		match tag_knowledge(tag.id, girl):
+			DateTypes.TagKnowledge.POSITIVE:
+				revealed_positive += 1
+			DateTypes.TagKnowledge.NEGATIVE:
+				revealed_negative += 1
+	var deduce_negative: bool = revealed_positive == total_positive and unknown_tag_count(girl, catalog) > 0
+	var deduce_positive: bool = revealed_negative == total_negative and unknown_tag_count(girl, catalog) > 0
+	if not deduce_negative and not deduce_positive:
+		return
+	for tag in enabled:
+		if tag == null:
+			continue
+		if tag_knowledge(tag.id, girl) != DateTypes.TagKnowledge.UNKNOWN:
+			continue
+		if deduce_negative:
+			revealed_negative_tag_ids.append(tag.id)
+		elif deduce_positive:
+			revealed_positive_tag_ids.append(tag.id)
 
 
 func _unknown_tag_count_for(girl: GirlProfile, catalog: DateContentCatalog, positive: bool) -> int:
@@ -99,6 +131,7 @@ func realign_revealed_to_profile(girl: GirlProfile, catalog: DateContentCatalog)
 			revealed_positive_tag_ids.append(tag.id)
 		else:
 			revealed_negative_tag_ids.append(tag.id)
+	normalize_deduced_knowledge(girl, catalog)
 
 
 func to_dictionary() -> Dictionary:

@@ -268,11 +268,7 @@ func _relationship_next_step(subgoal: ObjectiveSubgoalView) -> String:
 	if dating != null:
 		remaining = int(dating.get_date_cooldown_remaining_minutes(girl_id))
 	if remaining > 0:
-		var clock: Variant = _time_service()
-		var wait_text: String = "%d ч." % maxi(1, int((remaining + 59) / 60))
-		if clock != null and clock.has_method("format_duration"):
-			wait_text = str(clock.format_duration(remaining))
-		return "Следующее свидание с %s через %s" % [girl_name, wait_text]
+		return "Сегодня уже встречались. Следующая встреча: завтра."
 	return "Следующий шаг: Пригласить %s на свидание" % _accusative_name(girl_name)
 
 

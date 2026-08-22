@@ -9,4 +9,4 @@ display_name = "Средняя"
 description = "Прокачка героя и подготовка к свиданию начинают заметно влиять на стабильность результата."
 enabled = true
 positive_tag_count = 4
-sort_order = 2
+sort_order = 4

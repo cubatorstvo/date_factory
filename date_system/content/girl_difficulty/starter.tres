@@ -9,4 +9,4 @@ display_name = "Стартовая"
 description = "Высокая совместимость с базовым арсеналом героя. Подходит для первых девушек игры."
 enabled = true
 positive_tag_count = 6
-sort_order = 0
+sort_order = 2
