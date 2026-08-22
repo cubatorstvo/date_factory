@@ -20,6 +20,7 @@ var _player: DatePlayerSnapshot
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _last_result: DateRunResult
 var _relationship_max_emitted: bool = false
+var _forced_situation_id: StringName = &""
 
 
 func create_date_session(config: DateSessionConfig) -> DateSession:
@@ -72,6 +73,7 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.outfit_swap_used = false
 	_session.express_styling_bonus = config.express_styling_bonus
 	_session.used_local_move_ids = []
+	_forced_situation_id = config.forced_situation_id
 	_rng.seed = config.seed
 	_session.current_episode_index = 0
 	_begin_episode()
@@ -198,26 +200,21 @@ func can_queue_outfit_swap() -> bool:
 func reroll_base_moves() -> String:
 	if _session == null or _session.stage != DateSession.Stage.AWAITING_MOVE:
 		return "Других вариантов сейчас нет."
-	if not _session.vika_reroll_available or _session.vika_reroll_used:
+	if not _session.vika_reroll_available:
+		return "Других вариантов сейчас нет."
+	if _session.vika_reroll_used:
+		return "Пересборка уже использована на этом свидании."
+	var needed: int = _catalog.date_rules.base_moves_per_episode
+	if _session.current_reroll_base_move_ids.size() < needed:
 		return "Других вариантов сейчас нет."
 	var situation_id: StringName = _current_situation_id()
-	var pool: Array[DateMove] = _catalog.applicable_moves(situation_id, DateTypes.DateMoveKind.BASE)
-	var alternatives: Array[DateMove] = []
-	for move in pool:
-		if move == null:
-			continue
-		if _session.used_base_move_ids.has(move.id):
-			continue
-		if _session.current_selected_base_move_ids.has(move.id):
-			continue
-		alternatives.append(move)
-	if alternatives.size() < _catalog.date_rules.base_moves_per_episode:
-		return "Других вариантов сейчас нет."
-	var empty_fallback: Array[DateMove] = []
-	var selected: Array[DateMove] = _pick_base_moves(alternatives, empty_fallback, _catalog.date_rules.base_moves_per_episode, situation_id)
-	if selected.size() < _catalog.date_rules.base_moves_per_episode:
-		return "Других вариантов сейчас нет."
-	_session.current_selected_base_move_ids = _ids_of(selected)
+	var selected_ids: Array[StringName] = _session.current_reroll_base_move_ids.duplicate()
+	_session.current_selected_base_move_ids = selected_ids
+	var selected: Array[DateMove] = []
+	for move_id in selected_ids:
+		var move: DateMove = _catalog.find_move(move_id)
+		if move != null:
+			selected.append(move)
 	_session.current_selected_base_tag_ids = _tags_of(selected, situation_id)
 	_session.vika_reroll_used = true
 	return ""
@@ -268,19 +265,19 @@ func _begin_episode() -> void:
 	_session.current_phase = rules.phase_for_episode_index(_session.current_episode_index)
 	var situation: DateSituation = _pick_situation(_session.current_phase)
 	_session.selected_situation_ids.append(situation.id)
-	var base_pool: Array[DateMove] = _catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE)
-	_session.current_candidate_base_move_ids = _ids_of(base_pool)
-	var preferred: Array[DateMove] = []
-	var fallback: Array[DateMove] = []
-	for move in base_pool:
-		if _session.used_base_move_ids.has(move.id):
-			fallback.append(move)
+	var six: Array[DateMove] = _catalog.base_moves_for_situation(situation.id)
+	_session.current_candidate_base_move_ids = _ids_of(six)
+	var shuffled: Array[DateMove] = _shuffled_moves(six)
+	var shown_count: int = mini(rules.base_moves_per_episode, shuffled.size())
+	var selected: Array[DateMove] = []
+	var reroll: Array[DateMove] = []
+	for i in shuffled.size():
+		if i < shown_count:
+			selected.append(shuffled[i])
 		else:
-			preferred.append(move)
-	_session.current_preferred_base_move_ids = _ids_of(preferred)
-	_session.current_fallback_base_move_ids = _ids_of(fallback)
-	var selected: Array[DateMove] = _pick_base_moves(preferred, fallback, rules.base_moves_per_episode, situation.id)
+			reroll.append(shuffled[i])
 	_session.current_selected_base_move_ids = _ids_of(selected)
+	_session.current_reroll_base_move_ids = _ids_of(reroll)
 	_session.current_selected_base_tag_ids = _tags_of(selected, situation.id)
 	_session.current_selected_move_id = &""
 	_session.current_resolved_tag_id = &""
@@ -290,54 +287,45 @@ func _begin_episode() -> void:
 	_session.stage = DateSession.Stage.AWAITING_MOVE
 	episode_started.emit()
 
+
 func _pick_situation(phase: DateTypes.DatePhase) -> DateSituation:
-	var pool: Array[DateSituation] = []
-	var weights: Array[float] = []
-	for situation in _catalog.enabled_situations():
-		if not situation.allows_phase(phase):
-			continue
-		if not _catalog.date_rules.allow_situation_repeats and _session.selected_situation_ids.has(situation.id):
-			continue
-		pool.append(situation)
-		weights.append(situation.weight)
+	if _forced_situation_id != &"":
+		var forced: DateSituation = _catalog.find_situation(_forced_situation_id)
+		if (
+			forced != null
+			and forced.is_eligible(phase, _session.venue_id, _session.girl_id)
+			and not _session.selected_situation_ids.has(forced.id)
+		):
+			_forced_situation_id = &""
+			return forced
+	var eligible: Array[DateSituation] = _catalog.eligible_situations(phase, _session.venue_id, _session.girl_id)
+	var unused: Array[DateSituation] = []
+	for situation in eligible:
+		if _catalog.date_rules.allow_situation_repeats or not _session.selected_situation_ids.has(situation.id):
+			unused.append(situation)
+	var preferred: Array[DateSituation] = []
+	var last_ids: Array[StringName] = []
+	if _girl_progress != null:
+		last_ids = _girl_progress.last_date_situation_ids
+	for situation in unused:
+		if not last_ids.has(situation.id):
+			preferred.append(situation)
+	var pool: Array[DateSituation] = preferred if not preferred.is_empty() else unused
 	assert(not pool.is_empty())
+	var weights: Array[float] = []
+	for situation in pool:
+		weights.append(situation.weight)
 	return pool[_weighted_index(weights)]
 
 
-func _pick_base_moves(preferred: Array[DateMove], fallback: Array[DateMove], count: int, situation_id: StringName) -> Array[DateMove]:
-	var selected: Array[DateMove] = []
-	var preferred_copy: Array[DateMove] = preferred.duplicate()
-	var fallback_copy: Array[DateMove] = fallback.duplicate()
-	_take_unique_then_rest(selected, preferred_copy, count, situation_id)
-	_take_unique_then_rest(selected, fallback_copy, count, situation_id)
-	return selected
-
-
-func _take_unique_then_rest(selected: Array[DateMove], pool: Array[DateMove], count: int, situation_id: StringName) -> void:
-	_take_from_pool(selected, pool, count, situation_id, true)
-	_take_from_pool(selected, pool, count, situation_id, false)
-
-
-func _take_from_pool(selected: Array[DateMove], pool: Array[DateMove], count: int, situation_id: StringName, unique_only: bool) -> void:
-	while selected.size() < count:
-		var candidates: Array[DateMove] = []
-		var selected_tags: Dictionary = _selected_tag_set(selected, situation_id)
-		for move in pool:
-			if unique_only and selected_tags.has(_move_tag(move, situation_id)):
-				continue
-			candidates.append(move)
-		if candidates.is_empty():
-			break
-		var picked: DateMove = candidates[_rng.randi_range(0, candidates.size() - 1)]
-		selected.append(picked)
-		pool.erase(picked)
-
-
-func _selected_tag_set(selected: Array[DateMove], situation_id: StringName) -> Dictionary:
-	var tags: Dictionary = {}
-	for move in selected:
-		tags[_move_tag(move, situation_id)] = true
-	return tags
+func _shuffled_moves(moves: Array[DateMove]) -> Array[DateMove]:
+	var copy: Array[DateMove] = moves.duplicate()
+	for i in range(copy.size() - 1, 0, -1):
+		var j: int = _rng.randi_range(0, i)
+		var tmp: DateMove = copy[i]
+		copy[i] = copy[j]
+		copy[j] = tmp
+	return copy
 
 
 func _move_tag(move: DateMove, situation_id: StringName) -> StringName:
@@ -664,6 +652,7 @@ func _finish_date() -> void:
 	_girl_progress.relationship = next_rel
 	relationship_changed.emit(_girl.id, next_rel)
 	_girl_progress.completed_dates += 1
+	_girl_progress.last_date_situation_ids = _session.selected_situation_ids.duplicate()
 
 	var max_reached: bool = rel_max > 0 and next_rel >= rel_max and _session.relationship_before < rel_max
 	if max_reached:

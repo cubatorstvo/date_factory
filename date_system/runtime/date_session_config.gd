@@ -16,3 +16,4 @@ var dasha_soften_available: bool = false
 var nika_swap_available: bool = false
 var backup_outfit_id: StringName = &""
 var express_styling_bonus: int = 0
+var forced_situation_id: StringName = &""

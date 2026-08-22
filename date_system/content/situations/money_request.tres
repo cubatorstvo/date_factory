@@ -10,4 +10,7 @@ description = "Просьба о деньгах"
 situation_text = "К вам подходит незнакомец и просит денег на срочную проблему."
 enabled = true
 allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
 weight = 1.0
+base_move_ids = Array[StringName]([&"money_request__pay", &"money_request__refuse", &"money_request__say_directly", &"money_request__take_initiative", &"money_request__show_off", &"money_request__tease"])

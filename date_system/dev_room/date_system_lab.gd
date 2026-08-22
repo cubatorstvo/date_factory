@@ -763,8 +763,10 @@ func _rebuild_form() -> void:
 			_add_common_identity(_draft)
 			_add_text(_draft, "situation_text", "situation_text")
 			_add_phases()
+			_add_situation_id_checks("allowed_venue_ids", "Allowed Venue IDs", catalog_service.catalog.date_venues)
+			_add_situation_id_checks("allowed_girl_ids", "Allowed Girl IDs", catalog_service.catalog.girls)
 			_add_float(_draft, "weight", "weight")
-			_add_situation_move_lists()
+			_add_situation_base_editor()
 		"girls":
 			_add_girl_form()
 		"girl_difficulty":
@@ -897,22 +899,77 @@ func _add_phases() -> void:
 	_form_host.add_child(LabUi.labeled_row("allowed_phases", row))
 
 
-func _add_situation_move_lists() -> void:
+func _add_situation_id_checks(property: String, title: String, items: Array) -> void:
 	var situation: DateSituation = _draft as DateSituation
-	var base_names: PackedStringArray = PackedStringArray()
-	var unlock_names: PackedStringArray = PackedStringArray()
-	for move in catalog_service.catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE):
-		base_names.append(move.display_name)
-	for move in catalog_service.catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.CHARACTERISTIC):
-		unlock_names.append(move.display_name)
-	var base := Label.new()
-	base.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	base.text = "Applicable BASE Moves: %s" % ", ".join(base_names)
-	var unlock := Label.new()
-	unlock.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	unlock.text = "Applicable CHARACTERISTIC Moves: %s" % ", ".join(unlock_names)
-	_form_host.add_child(base)
-	_form_host.add_child(unlock)
+	_form_host.add_child(LabUi.heading(title))
+	var current: Array = situation.get(property)
+	for item in items:
+		if item == null:
+			continue
+		var box := CheckBox.new()
+		box.text = "%s [%s]" % [item.display_name, String(item.id)]
+		box.button_pressed = current.has(item.id)
+		var item_id: StringName = item.id
+		box.toggled.connect(func(pressed: bool) -> void:
+			var ids: Array = situation.get(property)
+			if pressed and not ids.has(item_id):
+				ids.append(item_id)
+			elif not pressed:
+				ids.erase(item_id)
+			situation.set(property, ids)
+			_dirty = true
+		)
+		_form_host.add_child(box)
+
+
+func _add_situation_base_editor() -> void:
+	var situation: DateSituation = _draft as DateSituation
+	while situation.base_move_ids.size() < 6:
+		situation.base_move_ids.append(&"")
+	if situation.base_move_ids.size() > 6:
+		situation.base_move_ids.resize(6)
+	_form_host.add_child(LabUi.heading("BASE Moves: 6"))
+	var base_moves: Array = _moves_of(DateTypes.DateMoveKind.BASE)
+	for slot in 6:
+		var move_id: StringName = situation.base_move_ids[slot]
+		var move: DateMove = catalog_service.catalog.find_move(move_id)
+		_form_host.add_child(LabUi.heading("BASE %d" % (slot + 1)))
+		var selector := OptionButton.new()
+		selector.add_item("(не выбран)")
+		selector.set_item_metadata(0, &"")
+		var selected_index: int = 0
+		for i in base_moves.size():
+			var candidate: DateMove = base_moves[i]
+			if candidate == null:
+				continue
+			selector.add_item("%s [%s]" % [candidate.display_name, String(candidate.id)])
+			var item_index: int = selector.item_count - 1
+			selector.set_item_metadata(item_index, candidate.id)
+			if candidate.id == move_id:
+				selected_index = item_index
+		selector.select(selected_index)
+		var slot_index: int = slot
+		selector.item_selected.connect(func(index: int) -> void:
+			situation.base_move_ids[slot_index] = selector.get_item_metadata(index)
+			_dirty = true
+			_rebuild_form()
+		)
+		_form_host.add_child(LabUi.labeled_row("Move ID", selector))
+		if move == null:
+			var missing := Label.new()
+			missing.text = "Move не найден."
+			_form_host.add_child(missing)
+			continue
+		var tag_label := Label.new()
+		tag_label.text = "Tag: %s" % String(move.fixed_tag_id)
+		_form_host.add_child(tag_label)
+		_add_text(move, "fixed_option_text", "Option Text")
+		_add_text(move, "fixed_positive_result_text", "Positive Result Text")
+		_add_text(move, "fixed_negative_result_text", "Negative Result Text")
+
+
+func _add_situation_move_lists() -> void:
+	_add_situation_base_editor()
 
 
 
@@ -1054,8 +1111,8 @@ func _set_girl_liked_tag(girl: GirlProfile, tag_id: StringName, liked: bool) -> 
 func _add_move_form() -> void:
 	var move: DateMove = _draft as DateMove
 	_add_common_identity(move)
-	if move.kind == DateTypes.DateMoveKind.LOCAL or move.kind == DateTypes.DateMoveKind.OUTFIT or move.kind == DateTypes.DateMoveKind.CHARACTERISTIC:
-		_add_id_selector(move, "fixed_tag_id", "local tag", catalog_service.catalog.tags)
+	if move.kind == DateTypes.DateMoveKind.LOCAL or move.kind == DateTypes.DateMoveKind.OUTFIT or move.kind == DateTypes.DateMoveKind.CHARACTERISTIC or move.kind == DateTypes.DateMoveKind.BASE:
+		_add_id_selector(move, "fixed_tag_id", "tag", catalog_service.catalog.tags)
 		_add_text(move, "fixed_option_text", "fixed_option_text")
 		_add_text(move, "fixed_positive_result_text", "fixed_positive_result_text")
 		_add_text(move, "fixed_negative_result_text", "fixed_negative_result_text")

@@ -117,27 +117,28 @@ func find_dependents(resource_id: StringName, kind: String) -> Array[Dictionary]
 		return result
 	if kind == "DateTag":
 		for move in catalog.moves:
-			for mapping in move.situation_mappings:
-				if mapping.tag_id == resource_id:
-					result.append({"type": "DateMove", "id": String(move.id), "field": "situation_mappings.tag_id"})
 			if move.fixed_tag_id == resource_id:
 				result.append({"type": "DateMove", "id": String(move.id), "field": "fixed_tag_id"})
 		for girl in catalog.girls:
 			if girl.positive_tag_ids.has(resource_id):
 				result.append({"type": "GirlProfile", "id": String(girl.id), "field": "tags"})
 	elif kind == "DateSituation":
-		for move in catalog.moves:
-			for mapping in move.situation_mappings:
-				if mapping.situation_id == resource_id:
-					result.append({"type": "DateMove", "id": String(move.id), "field": "situation_mappings.situation_id"})
+		for situation in catalog.situations:
+			if situation == null or situation.id != resource_id:
+				continue
+			for move_id in situation.base_move_ids:
+				result.append({"type": "DateMove", "id": String(move_id), "field": "base_move_ids"})
+	elif kind == "DateMove":
+		for situation in catalog.situations:
+			if situation != null and situation.base_move_ids.has(resource_id):
+				result.append({"type": "DateSituation", "id": String(situation.id), "field": "base_move_ids"})
+		for local_object in catalog.local_objects:
+			if local_object != null and local_object.move_ids.has(resource_id):
+				result.append({"type": "DateLocalObject", "id": String(local_object.id), "field": "move_ids"})
 	elif kind == "DateLocalObject":
 		for location in catalog.date_venues:
 			if location.local_object_ids.has(resource_id):
 				result.append({"type": "DateVenue", "id": String(location.id), "field": "local_object_ids"})
-	elif kind == "DateMove":
-		for local_object in catalog.local_objects:
-			if local_object != null and local_object.move_ids.has(resource_id):
-				result.append({"type": "DateLocalObject", "id": String(local_object.id), "field": "move_ids"})
 	elif kind == "CharacteristicDefinition":
 		for move in catalog.moves:
 			if move.unlock_requirement != null and move.unlock_requirement.stat_id == resource_id:

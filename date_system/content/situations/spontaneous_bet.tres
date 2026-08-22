@@ -10,4 +10,7 @@ description = "Пари"
 situation_text = "Девушка предлагает пари: проигравший выполняет условие победителя."
 enabled = true
 allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
 weight = 1.0
+base_move_ids = Array[StringName]([&"spontaneous_bet__tease", &"spontaneous_bet__pay", &"spontaneous_bet__refuse", &"spontaneous_bet__say_directly", &"spontaneous_bet__take_initiative", &"spontaneous_bet__accept_challenge"])

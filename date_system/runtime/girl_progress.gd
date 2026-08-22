@@ -6,6 +6,7 @@ extends Resource
 @export var revealed_positive_tag_ids: Array[StringName] = []
 @export var revealed_negative_tag_ids: Array[StringName] = []
 @export var completed_dates: int = 0
+@export var last_date_situation_ids: Array[StringName] = []
 
 
 func tag_knowledge(tag_id: StringName, girl: GirlProfile = null) -> DateTypes.TagKnowledge:
@@ -110,6 +111,7 @@ func reset_to_profile(girl: GirlProfile) -> void:
 	revealed_positive_tag_ids.clear()
 	revealed_negative_tag_ids.clear()
 	completed_dates = 0
+	last_date_situation_ids.clear()
 
 
 func realign_revealed_to_profile(girl: GirlProfile, catalog: DateContentCatalog) -> void:
@@ -141,12 +143,16 @@ func to_dictionary() -> Dictionary:
 	var negatives: Array = []
 	for tag_id in revealed_negative_tag_ids:
 		negatives.append(String(tag_id))
+	var last_situations: Array = []
+	for situation_id in last_date_situation_ids:
+		last_situations.append(String(situation_id))
 	return {
 		"girl_id": String(girl_id),
 		"relationship": relationship,
 		"revealed_positive_tag_ids": positives,
 		"revealed_negative_tag_ids": negatives,
 		"completed_dates": completed_dates,
+		"last_date_situation_ids": last_situations,
 	}
 
 
@@ -161,4 +167,9 @@ static func from_dictionary(data: Dictionary) -> GirlProgress:
 	var negatives: Array = data.get("revealed_negative_tag_ids", [])
 	for item in negatives:
 		progress.revealed_negative_tag_ids.append(StringName(str(item)))
+	var last_situations: Array = data.get("last_date_situation_ids", [])
+	for item in last_situations:
+		var situation_id: StringName = StringName(str(item))
+		if situation_id != &"" and not progress.last_date_situation_ids.has(situation_id):
+			progress.last_date_situation_ids.append(situation_id)
 	return progress

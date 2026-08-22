@@ -10,4 +10,7 @@ description = "Оценка свидания"
 situation_text = "Перед расставанием девушка спрашивает:\n«Ну и как тебе сегодняшний вечер?»"
 enabled = true
 allowed_phases = Array[int]([2])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
 weight = 1.0
+base_move_ids = Array[StringName]([&"date_verdict__compliment", &"date_verdict__tease", &"date_verdict__say_directly", &"date_verdict__take_initiative", &"date_verdict__show_off", &"date_verdict__support"])

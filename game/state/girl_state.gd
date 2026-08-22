@@ -9,6 +9,7 @@ var next_date_available_at: int = 0
 var revealed_positive_tag_ids: Array[StringName] = []
 var revealed_negative_tag_ids: Array[StringName] = []
 var completed_dates: int = 0
+var last_date_situation_ids: Array[StringName] = []
 
 
 func to_dict() -> Dictionary:
@@ -21,6 +22,7 @@ func to_dict() -> Dictionary:
 		"revealed_positive_tag_ids": _ids_to_strings(revealed_positive_tag_ids),
 		"revealed_negative_tag_ids": _ids_to_strings(revealed_negative_tag_ids),
 		"completed_dates": completed_dates,
+		"last_date_situation_ids": _ids_to_strings(last_date_situation_ids),
 	}
 
 
@@ -38,6 +40,7 @@ func from_dict(data: Dictionary) -> void:
 	revealed_positive_tag_ids = _strings_to_ids(data.get("revealed_positive_tag_ids", []))
 	revealed_negative_tag_ids = _strings_to_ids(data.get("revealed_negative_tag_ids", []))
 	completed_dates = int(data.get("completed_dates", 0))
+	last_date_situation_ids = _strings_to_ids(data.get("last_date_situation_ids", []))
 
 
 func _ids_to_strings(ids: Array[StringName]) -> Array:

@@ -376,6 +376,10 @@ def write_local_move(move_id: str, name: str, tag: str, option: str, pos: str, n
 
 
 def main() -> None:
+    raise SystemExit(
+        "Stale generator: BASE moves are situation-owned. "
+        "Use SeedContentFactory instead of this script."
+    )
     for tag_id, name, desc in TAGS:
         write(
             CONTENT / "tags" / f"{tag_id}.tres",

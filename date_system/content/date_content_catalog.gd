@@ -136,17 +136,36 @@ func enabled_situations() -> Array[DateSituation]:
 	return result
 
 
+func base_moves_for_situation(situation_id: StringName) -> Array[DateMove]:
+	var result: Array[DateMove] = []
+	var situation: DateSituation = find_situation(situation_id)
+	if situation == null:
+		return result
+	for move_id in situation.base_move_ids:
+		var move: DateMove = find_move(move_id)
+		if move != null:
+			result.append(move)
+	return result
+
+
+func eligible_situations(phase: DateTypes.DatePhase, venue_id: StringName, girl_id: StringName) -> Array[DateSituation]:
+	var result: Array[DateSituation] = []
+	for situation in enabled_situations():
+		if situation.is_eligible(phase, venue_id, girl_id):
+			result.append(situation)
+	return result
+
+
 func applicable_moves(situation_id: StringName, kind: DateTypes.DateMoveKind) -> Array[DateMove]:
 	var result: Array[DateMove] = []
+	if kind == DateTypes.DateMoveKind.BASE:
+		return base_moves_for_situation(situation_id)
 	for move in enabled_moves():
 		if move.kind != kind:
 			continue
 		if kind == DateTypes.DateMoveKind.LOCAL:
 			continue
 		if kind == DateTypes.DateMoveKind.CHARACTERISTIC or kind == DateTypes.DateMoveKind.OUTFIT:
-			result.append(move)
-			continue
-		if move.mapping_for(situation_id) != null:
 			result.append(move)
 	return result
 

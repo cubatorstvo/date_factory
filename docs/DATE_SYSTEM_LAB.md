@@ -22,12 +22,12 @@ Design-content хранится в `res://`. Runtime-прогресс — в `us
 ### BASE
 
 - Есть у героя с начала игры.
-- Применимость задаётся mapping к Ситуации.
-- Базовые ходы дают случайный набор тегов. При одинаковом теге два Хода механически эквивалентны: результат идёт через `Tag → preference девушки → +1/-1`.
-- Уже выбранный на этом свидании BASE не предлагается повторно. Неиспользованный BASE может снова попасть в другой эпизод.
-- Если после исключения использованных BASE пул ситуации меньше трёх, недостающие места заполняются уже использованными BASE, чтобы эпизод всегда получил три ответа.
-- Characteristic Tags не резервируются из BASE pool.
-- Несколько BASE одного Tag для одной Situation допустимы: это текстовые варианты одного механического направления.
+- Каждая `DateSituation` владеет ровно шестью собственными BASE Moves через `base_move_ids`.
+- BASE использует ту же fixed-presentation модель, что Characteristic / Outfit / Local: `fixed_tag_id`, `fixed_option_text`, `fixed_positive_result_text`, `fixed_negative_result_text`.
+- Шесть BASE одной Situation имеют шесть различных Tags.
+- Канонический ID: `<situation_id>__<action_id>`. Новый Situation — локальный authored-content unit: Situation + 6 BASE, без правки существующих ходов.
+- Применимость BASE определяется ownership: ход принадлежит ровно одной Situation.
+- Одна Situation используется максимум один раз за текущее свидание, поэтому конкретный BASE встречается максимум в одном эпизоде Date.
 
 ### Characteristic Move (`CHARACTERISTIC`)
 
@@ -52,32 +52,32 @@ Design-content хранится в `res://`. Runtime-прогресс — в `us
 Каждый эпизод предлагает три Base Moves и три дополнительных источника:
 
 ```text
-3 Base Moves
+DateSituation
+    ↓
+6 собственных контекстных BASE Moves
+    ↓
+RNG показывает 3 из 6
+    +
 [ХАРАКТЕРИСТИКА] [ОДЕЖДА] [МЕСТО СВИДАНИЯ]
+    ↓
+игрок выбирает один Move
 ```
 
-RNG выбирает Situation и три BASE. RNG не определяет доступность уже открытого Characteristic Move или Outfit Move.
+RNG выбирает Situation, перемешивает её six-move set и показывает первые три. Оставшиеся три хранятся как `current_reroll_base_move_ids`. RNG не определяет доступность уже открытого Characteristic Move или Outfit Move.
 
-BASE candidate pool:
-
-```text
-preferred_base_candidates  — ещё не использованные на этом свидании
-fallback_base_candidates   — уже использованные BASE, если preferred не хватает до трёх
-```
-
-Число выбранных BASE: `DateRules.base_moves_per_episode` (seed = 3).
+Число выбранных BASE: `DateRules.base_moves_per_episode` (seed = 3). Reward Вики `vika_base_reroll` за `$25` один раз за свидание заменяет shown-тройку на точные оставшиеся три той же Situation. Characteristic / Outfit / Venue Source и Combo не меняются.
 
 Источник расходуется только после фактического выбора хода. Открытие списка и «Назад» источник не тратят. Использованная кнопка остаётся видимой, disabled, tooltip `Уже использовано на этом свидании.`
 
 ## Формула эпизода
 
 ```text
-СИТУАЦИЯ → 3 BASE + источники Характеристика / Одежда / Место свидания → ВЫБОР ОДНОГО ХОДА
+СИТУАЦИЯ → 3 из 6 BASE + источники Характеристика / Одежда / Место свидания → ВЫБОР ОДНОГО ХОДА
 → ТЕГ
 → ПРЕДПОЧТЕНИЕ ДЕВУШКИ → +1 / -1
 ```
 
-Тег варианта показывается до выбора. BASE берёт Tag из situation mapping. Characteristic, Outfit и LOCAL имеют фиксированный Tag, независимо от Situation.
+Тег варианта показывается до выбора. BASE, Characteristic, Outfit и LOCAL читают Tag из `DateMove.fixed_tag_id`.
 
 Opening, Core и Closing используют одну source-модель. `+1` / `-1` по предпочтению.
 
@@ -1494,16 +1494,15 @@ signal move_selected(move_id)
 signal episode_presentation_finished
 ```
 
-`DateMove`: `custom_action_scene`, `custom_action_script` для будущих анимаций, mini-game и scripted sequence. BASE/CHARACTERISTIC берут Tag из situation mapping; LOCAL — из фиксированных local-полей объекта места.
+`DateMove`: `custom_action_scene`, `custom_action_script` для будущих анимаций, mini-game и scripted sequence. BASE/CHARACTERISTIC/OUTFIT/LOCAL берут Tag из `fixed_tag_id`.
 
 ## Resources
 
 Поля сущностей:
 
 - `DateTag`: id, display_name, description, enabled
-- `DateMove`: id, display_name, description, kind, enabled, unlock_requirement, max_uses_per_date, situation_mappings, fixed_tag_id, fixed_option_text, fixed_positive_result_text, fixed_negative_result_text, custom_action_scene, custom_action_script
-- `DateMoveSituationMapping`: situation_id, tag_id, option_text, positive_result_text, negative_result_text
-- `DateSituation`: id, display_name, description, situation_text, enabled, allowed_phases, weight, custom_episode_scene, custom_logic_script
+- `DateMove`: id, display_name, description, kind, enabled, unlock_requirement, max_uses_per_date, fixed_tag_id, fixed_option_text, fixed_positive_result_text, fixed_negative_result_text, custom_action_scene, custom_action_script
+- `DateSituation`: id, display_name, description, situation_text, enabled, allowed_phases, allowed_venue_ids, allowed_girl_ids, weight, base_move_ids, custom_episode_scene, custom_logic_script
 - `GirlDifficultyPreset`: id, display_name, description, enabled, positive_tag_count, sort_order. Seed: starter 6, early 5, mid 4, late 3, elite 2.
 - `GirlProfile`: id, display_name, description, enabled, difficulty_preset_id, trait_id, positive_tag_ids, initial_known_tag_count, portrait, future_character_scene. Редактор выбирает Difficulty, положительные Tags, Trait и число начально известных Tags. Отрицательные предпочтения — вычисляемое дополнение к активным Tags. Требуемое число positive = `GirlDifficultyPreset.positive_tag_count`. Seed: 17 профилей с id как у `GirlCatalog`; обычные MAX 10, сюжетные MAX 15.
 - `GirlTrait`: id, display_name, description, enabled, kind (CHARACTERISTIC / VENUE), characteristic_id, date_venue_id
@@ -1521,7 +1520,9 @@ Enums:
 - `DateMoveSource`: CHARACTERISTIC, OUTFIT, VENUE
 - `DatePhase`: OPENING, CORE, CLOSING
 
-Characteristic, Outfit и Local Move с фиксированным presentation читают `fixed_tag_id`, `fixed_option_text`, `fixed_positive_result_text`, `fixed_negative_result_text`. Место не имеет quality/preference score.
+Characteristic, Outfit, Local и BASE читают `fixed_tag_id`, `fixed_option_text`, `fixed_positive_result_text`, `fixed_negative_result_text`. Место не имеет quality/preference score.
+
+`DateContentCatalog` канонические операции: `find_situation`, `find_move`, `enabled_situations()`, `base_moves_for_situation(situation_id)`, `eligible_situations(phase, venue_id, girl_id)`. `base_moves_for_situation` возвращает шесть `DateMove` в authored order до RNG shuffle. `eligible_situations` применяет `enabled`, `allowed_phases`, `allowed_venue_ids` (`[]` = любое место), `allowed_girl_ids` (`[]` = любая девушка). Snapshot — manual shallow-copy Resource containers.
 
 ## DateRules seed
 
@@ -1547,13 +1548,13 @@ min_distinct_base_tags_per_situation = 6
 
 ## Runtime
 
-`GirlProgress`: girl_id, relationship, revealed_positive_tag_ids, revealed_negative_tag_ids, completed_dates.
+`GirlProgress`: girl_id, relationship, revealed_positive_tag_ids, revealed_negative_tag_ids, completed_dates, last_date_situation_ids.
 
 После reload Content Catalog runtime progress нормализуется: известные `tag_id` из обоих revealed-списков оставляются только если Tag активен, затем заново раскладываются по актуальному GirlProfile. Новые Tags (`care`, `humor`, `composure`, `cunning` при расширении набора) начинаются как `UNKNOWN`.
 
 `DatePlayerSnapshot`: muscle, appearance, capital, aura, apartment_prepared.
 
-`DateSession`: session_id, seed, girl_id, venue_id, outfit_id, local_object_ids, used_local_object_ids, used_base_move_ids, characteristic_source_used, outfit_source_used, venue_source_used, relationship_before, selected_situation_ids, current_phase, current_episode_index, current_candidate_base_move_ids, current_selected_base_move_ids, current_selected_base_tag_ids, current_preferred_base_move_ids, current_fallback_base_move_ids, episode_history, revealed_tags_during_session, combo_distinct_success_tag_ids, combo_achieved, combo_rewards_earned, score_breakdown, relationship_after, completed.
+`DateSession`: session_id, seed, girl_id, venue_id, outfit_id, local_object_ids, used_local_object_ids, used_base_move_ids, characteristic_source_used, outfit_source_used, venue_source_used, relationship_before, selected_situation_ids, current_phase, current_episode_index, current_candidate_base_move_ids, current_selected_base_move_ids, current_reroll_base_move_ids, current_selected_base_tag_ids, episode_history, revealed_tags_during_session, combo_distinct_success_tag_ids, combo_achieved, combo_rewards_earned, score_breakdown, relationship_after, completed.
 
 Каждая DateSession создаёт deterministic RNG из seed. При одинаковых seed, GirlProgress snapshot, DatePlayerSnapshot и DateContent snapshot воспроизводятся Situations, BASE Moves и порядок BASE Moves.
 
@@ -1576,7 +1577,9 @@ abort()
 
 OPENING 1 → CORE 3 → CLOSING 1 → RESULT.
 
-Situations выбираются по `allowed_phases`, `weight`, DateRules и seed. В каждом эпизоде: три BASE и источники Характеристика / Одежда / Локация. OPENING, CORE и CLOSING дают `+1` / `-1` по предпочтению девушки. После Closing:
+Situations выбираются по `enabled`, `allowed_phases`, `allowed_venue_ids`, `allowed_girl_ids`, `weight` и seed. Сначала preferred pool — eligible Situations текущей фазы, которых ещё нет в `selected_situation_ids` и нет в `GirlProgress.last_date_situation_ids`. Если preferred пуст, используется reuse pool остальных eligible этой фазы. Внутри текущего Date Situation уникальна. После завершения Date `last_date_situation_ids` записывает пять `selected_situation_ids`.
+
+В каждом эпизоде six-move set делится на `3 shown + 3 reroll`. OPENING, CORE и CLOSING дают `+1` / `-1` по предпочтению девушки. После Closing:
 
 ```text
 Combo + Unprepared Apartment
@@ -1749,40 +1752,72 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 
 ## Seed Situations
 
+Основной content target: `6 OPENING / 18 CORE / 6 CLOSING` = 30 Situations = 180 situation-owned BASE. Текущий prototype — пять Situations, мигрированных 1:1 по существующим текстам и Tags:
+
+| id | phase | BASE |
+|---|---|---|
+| `appearance_question` | OPENING | 6 |
+| `money_request` | CORE | 6 |
+| `rival_provocation` | CORE | 6 |
+| `spontaneous_bet` | CORE | 6 |
+| `date_verdict` | CLOSING | 6 |
+
+Все пять: `allowed_venue_ids = []`, `allowed_girl_ids = []`, `weight = 1.0`. Prototype продолжает собирать `1 Opening + 3 Core + 1 Closing`.
+
 1. `appearance_question` OPENING — Оценка внешности. «Ну что, как я выгляжу?»
 2. `money_request` CORE — Просьба о деньгах. Незнакомец просит денег.
 3. `rival_provocation` CORE — Провокация самца.
 4. `spontaneous_bet` CORE — Пари.
 5. `date_verdict` CLOSING — Оценка свидания. «Ну и как тебе сегодняшний вечер?»
 
+Три authored-слоя через фильтры: general (`[]` / `[]`), venue-specific, girl-specific. Все слои используют один Date Engine.
+
 ## Seed BASE Moves
 
-`say_directly`, `compliment`, `support`, `smooth`, `tease`, `take_initiative`, `refuse`, `accept_challenge`, `pay`, `show_off`.
+Каждый BASE принадлежит одной Situation. ID: `<situation_id>__<action_id>`. Display name / description взяты из исходного global BASE. Duplicate Tag внутри Situation свёрнут до одного mapping; extra unique Tags сверх шести не вошли в prototype six-move set.
 
-Изменённые mappings:
-
-| Move | Situation | Tag | option_text |
+| Situation | Move ID | Tag | option_text |
 |---|---|---|---|
-| support | appearance_question | care | Спросить, нравится ли образ ей самой, и поддержать её выбор. |
-| support | date_verdict | care | Сказать, что главное — понравился ли вечер ей самой. |
-| tease | appearance_question | humor | Сказать, что ожидал увидеть что-то хуже. |
-| tease | money_request | cunning | Попросить сначала доказать историю, а потом вернуться к вопросу денег. |
-| tease | rival_provocation | humor | Высмеять его претензию. |
-| tease | date_verdict | humor | Сказать, что бывало и хуже. |
-| smooth | rival_provocation | composure | Спокойно предложить завершить конфликт и разойтись. |
-| refuse | money_request | composure | Спокойно отказать и закончить разговор. |
-| refuse | rival_provocation | cunning | Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис. |
-| refuse | spontaneous_bet | composure | Спокойно отказаться от пари. |
+| appearance_question | appearance_question__compliment | politeness | Сказать, что она отлично выглядит. |
+| appearance_question | appearance_question__tease | humor | Сказать, что ожидал увидеть что-то хуже. |
+| appearance_question | appearance_question__say_directly | directness | Сказать, что именно в её образе нравится и что вызывает вопросы. |
+| appearance_question | appearance_question__show_off | status | Перевести разговор на собственный образ и сравнить его с её образом. |
+| appearance_question | appearance_question__support | care | Спросить, нравится ли образ ей самой, и поддержать её выбор. |
+| appearance_question | appearance_question__smooth | flattery | Сказать, что к её образу невозможно придраться. |
+| money_request | money_request__pay | generosity | Оплатить всю заявленную сумму. |
+| money_request | money_request__refuse | composure | Спокойно отказать и закончить разговор. |
+| money_request | money_request__say_directly | directness | Спросить, на что конкретно нужны деньги. |
+| money_request | money_request__take_initiative | dominance | Самому определить сумму и закончить разговор. |
+| money_request | money_request__show_off | status | Дать крупную сумму так, чтобы это заметили окружающие. |
+| money_request | money_request__tease | cunning | Попросить сначала доказать историю, а потом вернуться к вопросу денег. |
+| rival_provocation | rival_provocation__tease | humor | Высмеять его претензию. |
+| rival_provocation | rival_provocation__refuse | cunning | Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис. |
+| rival_provocation | rival_provocation__say_directly | directness | Сказать самцу, что он мешает свиданию и должен уйти. |
+| rival_provocation | rival_provocation__show_off | status | Назвать свой рейтинг и предложить сравнить показатели. |
+| rival_provocation | rival_provocation__accept_challenge | risk | Принять предложенное соревнование. |
+| rival_provocation | rival_provocation__smooth | composure | Спокойно предложить завершить конфликт и разойтись. |
+| spontaneous_bet | spontaneous_bet__tease | audacity | Добавить унизительное условие для проигравшего. |
+| spontaneous_bet | spontaneous_bet__pay | status | Сделать денежную ставку существенно выше предложенной. |
+| spontaneous_bet | spontaneous_bet__refuse | composure | Спокойно отказаться от пари. |
+| spontaneous_bet | spontaneous_bet__say_directly | directness | Сразу сказать своё мнение об идее пари. |
+| spontaneous_bet | spontaneous_bet__take_initiative | dominance | Самому переписать условия пари. |
+| spontaneous_bet | spontaneous_bet__accept_challenge | risk | Согласиться на исходные условия пари. |
+| date_verdict | date_verdict__compliment | flattery | Сказать, что это было идеальное свидание. |
+| date_verdict | date_verdict__tease | humor | Сказать, что бывало и хуже. |
+| date_verdict | date_verdict__say_directly | directness | Сказать, что именно в вечере понравилось и что хотелось бы изменить. |
+| date_verdict | date_verdict__take_initiative | dominance | Сразу назначить следующую встречу. |
+| date_verdict | date_verdict__show_off | status | Сказать, что для первого раза она справилась неплохо. |
+| date_verdict | date_verdict__support | care | Сказать, что главное — понравился ли вечер ей самой. |
 
-Разные BASE Tags по Situation (минимум `min_distinct_base_tags_per_situation` = 6):
+Шесть distinct BASE Tags на Situation:
 
 | Situation | distinct BASE Tags | число |
 |---|---|---|
-| appearance_question | directness, politeness, care, flattery, humor, status | 6 |
-| money_request | directness, generosity, politeness, cunning, dominance, composure, status | 7 |
-| rival_provocation | directness, composure, humor, dominance, cunning, risk, status | ≥7 |
-| spontaneous_bet | directness, flattery, politeness, audacity, dominance, composure, risk, status | 8 |
-| date_verdict | directness, flattery, care, humor, dominance, status | 6 |
+| appearance_question | politeness, humor, directness, status, care, flattery | 6 |
+| money_request | generosity, composure, directness, dominance, status, cunning | 6 |
+| rival_provocation | humor, cunning, directness, status, risk, composure | 6 |
+| spontaneous_bet | audacity, status, composure, directness, dominance, risk | 6 |
+| date_verdict | flattery, humor, directness, dominance, status, care | 6 |
 
 ## Seed Characteristic Moves
 
@@ -1842,7 +1877,11 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 
 «МЕСТА»: `local_object_ids` выбранной DateVenue. Enabled seed: apartment, cafe, restaurant. Остальные DateVenue `enabled = false`.
 
-«БАЛАНС»: по каждой девушке Girl, Difficulty, Positive Tags / 12, Relationship Max, Trait, Initial Known Tags, Theoretical positive availability. Кнопка «СИМУЛИРОВАТЬ BASE» (10000 seeds, stats на минимуме, CHARACTERISTIC unavailable): по Situation и aggregate — доля эпизодов с хотя бы одним positive BASE, доля all-negative, средний positive BASE count. Фактические проценты считаются по реальным mappings Situations.
+«СИТУАЦИИ»: ID, Display Name, Situation Text, Enabled, Allowed Phases, Allowed Venue IDs, Allowed Girl IDs, Weight, шесть BASE (Move ID, Tag, Option, Positive/Negative Result).
+
+«БАЛАНС»: по каждой девушке Girl, Difficulty, Positive Tags / 12, Relationship Max, Trait, Initial Known Tags, Theoretical positive availability. Кнопка «СИМУЛИРОВАТЬ BASE» (10000 seeds, stats на минимуме, CHARACTERISTIC unavailable): по Situation и aggregate — доля эпизодов с хотя бы одним positive BASE, доля all-negative, средний positive BASE count. Фактические проценты считаются по situation-owned BASE (`base_move_ids`).
+
+Экран СВИДАНИЕ позволяет выбрать Situation override, girl, DateVenue, увидеть eligible pool, `last_date_situation_ids`, six BASE и seeded split `3 shown + 3 reroll`, нажать Vika reroll.
 
 После save новый DateSession берёт новые данные. Запущенная сессия работает на snapshot.
 
@@ -1851,16 +1890,18 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 1. уникальные IDs  
 2. references существуют  
 3. у GirlProfile authored-предпочтения только `positive_tag_ids`; остальные активные Tags автоматически negative  
-4. mapping → существующая Situation  
-5. mapping → существующий Tag  
-6. Characteristic Move имеет UnlockRequirement на 1/3/5, постоянный Tag и не использует situation mappings; ровно 12 ходов покрывают 12 Tags  
+4. enabled Situation: `base_move_ids.size() == 6`, IDs уникальны, все Moves существуют / enabled / kind BASE  
+5. шесть `fixed_tag_id` заполнены, существуют в Tag catalog и различны; option/positive/negative texts заполнены  
+6. каждый BASE Move authored catalog referenced ровно одной DateSituation  
+7. `allowed_venue_ids` / `allowed_girl_ids` ссылаются на существующие DateVenue / GirlProfile  
+8. Characteristic Move имеет UnlockRequirement на 1/3/5, постоянный Tag и не использует situation mappings; ровно 12 ходов покрывают 12 Tags  
 16. два Characteristic Move с одним Tag → ERROR `CHARACTERISTIC_TAG_DUPLICATE`
 17. `GirlProfile.difficulty_preset_id` не резолвится в enabled preset → ERROR `INVALID_GIRL_DIFFICULTY_REFERENCE`
 18. `girl.positive_tag_ids.size() != difficulty.positive_tag_count` → ERROR `INVALID_POSITIVE_TAG_COUNT`
 19. повторы или неизвестные id в `positive_tag_ids` → ERROR `INCOMPLETE_GIRL_TAG_COVERAGE`
 20. enabled preset: `1 <= positive_tag_count < enabled_tags.size()` иначе ERROR `INVALID_DIFFICULTY_POSITIVE_COUNT`
-21. активный DateTag без DateMoveSituationMapping → WARNING `TAG_WITHOUT_MOVE_MAPPING` (в seed = 0)
-22. distinct BASE Tags ситуации < `min_distinct_base_tags_per_situation` → WARNING `LOW_BASE_TAG_DIVERSITY`
+21. активный DateTag без BASE/CHARACTERISTIC/OUTFIT/LOCAL Move с этим Tag → WARNING `TAG_WITHOUT_MOVE_MAPPING`
+22. distinct BASE Tags ситуации ≠ 6 → ERROR six-tag invariant
 
 Экран: severity, code, resource_type, resource_id, field, message. Кнопка «ПРОВЕРИТЬ ВЕСЬ КОНТЕНТ». ERROR блокирует сохранение; WARNING только показывает проблему.
 
@@ -1870,7 +1911,7 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 
 Эпизод: фаза, номер, Situation, BASE×3 и кнопки источников `[ХАРАКТЕРИСТИКА] [ОДЕЖДА] [ЛОКАЦИЯ]`. В верхней информационной части постоянно видны Relationship, Trait и `LabUi.known_preference_block`; блок обновляется после раскрытия Tags. Цвет источника — зелёный / серый / красный по известным Tags девушки; заблокированный неиспользованный источник нейтральный; использованный погашен, tooltip `Уже использовано на этом свидании.` Characteristic Source сгруппирован по Мышца / Внешность / Капитал / Аура. Внутри списка видны и доступные, и закрытые ходы. После выбора: ход, tag, реакция, score, новое знание, ПРОДОЛЖИТЬ.
 
-Debug-панель эпизода дополнительно показывает source-used флаги, preferred/fallback BASE candidates, selected_base_moves и selected_base_tags.
+Debug-панель эпизода дополнительно показывает source-used флаги, six BASE, selected_base_moves, reroll_base_moves и selected_base_tags.
 
 Result: построчный итог, строки появляются быстро одна за другой. Сначала `[ТЕГ] +1` / `[ТЕГ] -1` по эпизодам, включая OPENING. Затем Combo, особенность девушки, при неподготовленной квартире строка `Неподготовленная квартира  -1`. Далее `Итог свидания: N` (сырой итог), `Прогресс отношений: +N` (`max(raw, 0)`), `Отношения: X / MAX`. Без эпизодной статистики и без debug-панели.
 

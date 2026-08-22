@@ -183,7 +183,7 @@ func _outfits() -> Array[Outfit]:
 	]
 
 
-func _situation(id: String, name: String, text: String, phase: DateTypes.DatePhase) -> DateSituation:
+func _situation(id: String, name: String, text: String, phase: DateTypes.DatePhase, base_move_ids: Array = []) -> DateSituation:
 	var situation := DateSituation.new()
 	situation.id = StringName(id)
 	situation.display_name = name
@@ -192,31 +192,59 @@ func _situation(id: String, name: String, text: String, phase: DateTypes.DatePha
 	situation.enabled = true
 	situation.allowed_phases = [int(phase)]
 	situation.weight = 1.0
+	var typed: Array[StringName] = []
+	for move_id in base_move_ids:
+		typed.append(StringName(str(move_id)))
+	situation.base_move_ids = typed
 	return situation
 
 
 func _situations() -> Array[DateSituation]:
 	return [
-		_situation("appearance_question", "Оценка внешности", "В начале встречи девушка спрашивает:\n«Ну что, как я выгляжу?»", DateTypes.DatePhase.OPENING),
-		_situation("money_request", "Просьба о деньгах", "К вам подходит незнакомец и просит денег на срочную проблему.", DateTypes.DatePhase.CORE),
-		_situation("rival_provocation", "Провокация самца", "К вам подходит другой самец, заявляет, что рейтинг героя выглядит подозрительно, и начинает провоцировать.", DateTypes.DatePhase.CORE),
-		_situation("spontaneous_bet", "Пари", "Девушка предлагает пари: проигравший выполняет условие победителя.", DateTypes.DatePhase.CORE),
-		_situation("date_verdict", "Оценка свидания", "Перед расставанием девушка спрашивает:\n«Ну и как тебе сегодняшний вечер?»", DateTypes.DatePhase.CLOSING),
+		_situation("appearance_question", "Оценка внешности", "В начале встречи девушка спрашивает:\n«Ну что, как я выгляжу?»", DateTypes.DatePhase.OPENING, [
+			"appearance_question__compliment",
+			"appearance_question__tease",
+			"appearance_question__say_directly",
+			"appearance_question__show_off",
+			"appearance_question__support",
+			"appearance_question__smooth",
+		]),
+		_situation("money_request", "Просьба о деньгах", "К вам подходит незнакомец и просит денег на срочную проблему.", DateTypes.DatePhase.CORE, [
+			"money_request__pay",
+			"money_request__refuse",
+			"money_request__say_directly",
+			"money_request__take_initiative",
+			"money_request__show_off",
+			"money_request__tease",
+		]),
+		_situation("rival_provocation", "Провокация самца", "К вам подходит другой самец, заявляет, что рейтинг героя выглядит подозрительно, и начинает провоцировать.", DateTypes.DatePhase.CORE, [
+			"rival_provocation__tease",
+			"rival_provocation__refuse",
+			"rival_provocation__say_directly",
+			"rival_provocation__show_off",
+			"rival_provocation__accept_challenge",
+			"rival_provocation__smooth",
+		]),
+		_situation("spontaneous_bet", "Пари", "Девушка предлагает пари: проигравший выполняет условие победителя.", DateTypes.DatePhase.CORE, [
+			"spontaneous_bet__tease",
+			"spontaneous_bet__pay",
+			"spontaneous_bet__refuse",
+			"spontaneous_bet__say_directly",
+			"spontaneous_bet__take_initiative",
+			"spontaneous_bet__accept_challenge",
+		]),
+		_situation("date_verdict", "Оценка свидания", "Перед расставанием девушка спрашивает:\n«Ну и как тебе сегодняшний вечер?»", DateTypes.DatePhase.CLOSING, [
+			"date_verdict__compliment",
+			"date_verdict__tease",
+			"date_verdict__say_directly",
+			"date_verdict__take_initiative",
+			"date_verdict__show_off",
+			"date_verdict__support",
+		]),
 	]
 
 
-func _mapping(situation_id: String, tag_id: String, option_text: String) -> DateMoveSituationMapping:
-	var mapping := DateMoveSituationMapping.new()
-	mapping.situation_id = StringName(situation_id)
-	mapping.tag_id = StringName(tag_id)
-	mapping.option_text = option_text
-	var tag_name: String = tag_id
-	mapping.positive_result_text = "Ей это откликается. Тег «%s» работает в её пользу." % tag_name
-	mapping.negative_result_text = "Ей это режет. Тег «%s» играет против вас." % tag_name
-	return mapping
-
-
-func _base_move(id: String, name: String, mappings: Array) -> DateMove:
+func _base_move(id: String, name: String, tag_id: String, option_text: String) -> DateMove:
 	var move := DateMove.new()
 	move.id = StringName(id)
 	move.display_name = name
@@ -224,10 +252,10 @@ func _base_move(id: String, name: String, mappings: Array) -> DateMove:
 	move.kind = DateTypes.DateMoveKind.BASE
 	move.enabled = true
 	move.max_uses_per_date = 0
-	var typed: Array[DateMoveSituationMapping] = []
-	for mapping in mappings:
-		typed.append(mapping)
-	move.situation_mappings = typed
+	move.fixed_tag_id = StringName(tag_id)
+	move.fixed_option_text = option_text
+	move.fixed_positive_result_text = "Ей это откликается. Тег «%s» работает в её пользу." % tag_id
+	move.fixed_negative_result_text = "Ей это режет. Тег «%s» играет против вас." % tag_id
 	return move
 
 
@@ -290,63 +318,36 @@ func _local_move(
 
 func _moves() -> Array[DateMove]:
 	return [
-		_base_move("say_directly", "Сказать прямо", [
-			_mapping("appearance_question", "directness", "Сказать, что именно в её образе нравится и что вызывает вопросы."),
-			_mapping("money_request", "directness", "Спросить, на что конкретно нужны деньги."),
-			_mapping("rival_provocation", "directness", "Сказать самцу, что он мешает свиданию и должен уйти."),
-			_mapping("spontaneous_bet", "directness", "Сразу сказать своё мнение об идее пари."),
-			_mapping("date_verdict", "directness", "Сказать, что именно в вечере понравилось и что хотелось бы изменить."),
-		]),
-		_base_move("compliment", "Сделать комплимент", [
-			_mapping("appearance_question", "politeness", "Сказать, что она отлично выглядит."),
-			_mapping("spontaneous_bet", "flattery", "Сказать, что она наверняка победит."),
-			_mapping("date_verdict", "flattery", "Сказать, что это было идеальное свидание."),
-		]),
-		_base_move("support", "Поддержать", [
-			_mapping("appearance_question", "care", "Спросить, нравится ли образ ей самой, и поддержать её выбор."),
-			_mapping("money_request", "generosity", "Дать незнакомцу небольшую сумму."),
-			_mapping("spontaneous_bet", "politeness", "Согласиться на предложенные девушкой правила."),
-			_mapping("date_verdict", "care", "Сказать, что главное — понравился ли вечер ей самой."),
-		]),
-		_base_move("smooth", "Сгладить ситуацию", [
-			_mapping("appearance_question", "flattery", "Сказать, что к её образу невозможно придраться."),
-			_mapping("money_request", "politeness", "Вежливо отказать и пожелать удачи."),
-			_mapping("rival_provocation", "composure", "Спокойно предложить завершить конфликт и разойтись."),
-		]),
-		_base_move("tease", "Подколоть", [
-			_mapping("appearance_question", "humor", "Сказать, что ожидал увидеть что-то хуже."),
-			_mapping("money_request", "cunning", "Попросить сначала доказать историю, а потом вернуться к вопросу денег."),
-			_mapping("rival_provocation", "humor", "Высмеять его претензию."),
-			_mapping("spontaneous_bet", "audacity", "Добавить унизительное условие для проигравшего."),
-			_mapping("date_verdict", "humor", "Сказать, что бывало и хуже."),
-		]),
-		_base_move("take_initiative", "Взять инициативу", [
-			_mapping("money_request", "dominance", "Самому определить сумму и закончить разговор."),
-			_mapping("rival_provocation", "dominance", "Самому назначить способ выяснить, кто прав."),
-			_mapping("spontaneous_bet", "dominance", "Самому переписать условия пари."),
-			_mapping("date_verdict", "dominance", "Сразу назначить следующую встречу."),
-		]),
-		_base_move("refuse", "Отказаться", [
-			_mapping("money_request", "composure", "Спокойно отказать и закончить разговор."),
-			_mapping("rival_provocation", "cunning", "Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис."),
-			_mapping("spontaneous_bet", "composure", "Спокойно отказаться от пари."),
-		]),
-		_base_move("accept_challenge", "Принять вызов", [
-			_mapping("rival_provocation", "risk", "Принять предложенное соревнование."),
-			_mapping("spontaneous_bet", "risk", "Согласиться на исходные условия пари."),
-		]),
-		_base_move("pay", "Заплатить", [
-			_mapping("money_request", "generosity", "Оплатить всю заявленную сумму."),
-			_mapping("rival_provocation", "status", "Предложить самцу деньги за завершение конфликта."),
-			_mapping("spontaneous_bet", "status", "Сделать денежную ставку существенно выше предложенной."),
-		]),
-		_base_move("show_off", "Показать себя", [
-			_mapping("appearance_question", "status", "Перевести разговор на собственный образ и сравнить его с её образом."),
-			_mapping("money_request", "status", "Дать крупную сумму так, чтобы это заметили окружающие."),
-			_mapping("rival_provocation", "status", "Назвать свой рейтинг и предложить сравнить показатели."),
-			_mapping("spontaneous_bet", "status", "Сказать, что предложенная ставка слишком мала."),
-			_mapping("date_verdict", "status", "Сказать, что для первого раза она справилась неплохо."),
-		]),
+		_base_move("appearance_question__compliment", "Сделать комплимент", "politeness", "Сказать, что она отлично выглядит."),
+		_base_move("appearance_question__tease", "Подколоть", "humor", "Сказать, что ожидал увидеть что-то хуже."),
+		_base_move("appearance_question__say_directly", "Сказать прямо", "directness", "Сказать, что именно в её образе нравится и что вызывает вопросы."),
+		_base_move("appearance_question__show_off", "Показать себя", "status", "Перевести разговор на собственный образ и сравнить его с её образом."),
+		_base_move("appearance_question__support", "Поддержать", "care", "Спросить, нравится ли образ ей самой, и поддержать её выбор."),
+		_base_move("appearance_question__smooth", "Сгладить ситуацию", "flattery", "Сказать, что к её образу невозможно придраться."),
+		_base_move("money_request__pay", "Заплатить", "generosity", "Оплатить всю заявленную сумму."),
+		_base_move("money_request__refuse", "Отказаться", "composure", "Спокойно отказать и закончить разговор."),
+		_base_move("money_request__say_directly", "Сказать прямо", "directness", "Спросить, на что конкретно нужны деньги."),
+		_base_move("money_request__take_initiative", "Взять инициативу", "dominance", "Самому определить сумму и закончить разговор."),
+		_base_move("money_request__show_off", "Показать себя", "status", "Дать крупную сумму так, чтобы это заметили окружающие."),
+		_base_move("money_request__tease", "Подколоть", "cunning", "Попросить сначала доказать историю, а потом вернуться к вопросу денег."),
+		_base_move("rival_provocation__tease", "Подколоть", "humor", "Высмеять его претензию."),
+		_base_move("rival_provocation__refuse", "Отказаться", "cunning", "Отказаться участвовать в провокации и предложить проверить рейтинг через официальный сервис."),
+		_base_move("rival_provocation__say_directly", "Сказать прямо", "directness", "Сказать самцу, что он мешает свиданию и должен уйти."),
+		_base_move("rival_provocation__show_off", "Показать себя", "status", "Назвать свой рейтинг и предложить сравнить показатели."),
+		_base_move("rival_provocation__accept_challenge", "Принять вызов", "risk", "Принять предложенное соревнование."),
+		_base_move("rival_provocation__smooth", "Сгладить ситуацию", "composure", "Спокойно предложить завершить конфликт и разойтись."),
+		_base_move("spontaneous_bet__tease", "Подколоть", "audacity", "Добавить унизительное условие для проигравшего."),
+		_base_move("spontaneous_bet__pay", "Заплатить", "status", "Сделать денежную ставку существенно выше предложенной."),
+		_base_move("spontaneous_bet__refuse", "Отказаться", "composure", "Спокойно отказаться от пари."),
+		_base_move("spontaneous_bet__say_directly", "Сказать прямо", "directness", "Сразу сказать своё мнение об идее пари."),
+		_base_move("spontaneous_bet__take_initiative", "Взять инициативу", "dominance", "Самому переписать условия пари."),
+		_base_move("spontaneous_bet__accept_challenge", "Принять вызов", "risk", "Согласиться на исходные условия пари."),
+		_base_move("date_verdict__compliment", "Сделать комплимент", "flattery", "Сказать, что это было идеальное свидание."),
+		_base_move("date_verdict__tease", "Подколоть", "humor", "Сказать, что бывало и хуже."),
+		_base_move("date_verdict__say_directly", "Сказать прямо", "directness", "Сказать, что именно в вечере понравилось и что хотелось бы изменить."),
+		_base_move("date_verdict__take_initiative", "Взять инициативу", "dominance", "Сразу назначить следующую встречу."),
+		_base_move("date_verdict__show_off", "Показать себя", "status", "Сказать, что для первого раза она справилась неплохо."),
+		_base_move("date_verdict__support", "Поддержать", "care", "Сказать, что главное — понравился ли вечер ей самой."),
 		_characteristic_move("char_say_plain", "Сказать по-простому", "directness", "Сказать всё прямо, без лишних конструкций.", "Прямолинейность без обёртки ей зашла.", "Сказал слишком прямо — ей это режет.", "muscle", 1),
 		_characteristic_move("char_stress_test", "Проверить на прочность", "risk", "Предложить немедленно проверить идею на практике, даже если это выглядит сомнительно.", "Готовность сразу проверить идею ей зашла.", "Предложил проверить идею на практике — ей это слишком рискованно.", "muscle", 3),
 		_characteristic_move("char_force_argument", "Силовой аргумент", "dominance", "Продемонстрировать физическое превосходство как окончательный аргумент.", "Силовой аргумент закрыл тему — ей это зашло.", "Показал физическое превосходство — ей это слишком грубо.", "muscle", 5),

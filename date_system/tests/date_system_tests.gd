@@ -13,6 +13,7 @@ func run_all() -> PackedStringArray:
 	_test_opening_reveals_and_zero()
 	_test_core_and_closing_scores()
 	_test_base_pool_and_rng()
+	_test_situation_owned_architecture()
 	_test_characteristic_moves()
 	_test_character_build_sources()
 	_test_mapping_tags_differ_by_situation()
@@ -406,11 +407,109 @@ func _test_base_pool_and_rng() -> void:
 	var engine := _start(catalog, &"alina", &"cafe", &"casual", 41, _fresh_progress(catalog, &"alina"), _player())
 	var situation_id: StringName = engine.get_session_state().selected_situation_ids[0]
 	var pool: Array[DateMove] = catalog.applicable_moves(situation_id, DateTypes.DateMoveKind.BASE)
-	_ok("9. BASE pool собирается по mappings", pool.size() >= 3)
+	_ok("9. BASE pool equals situation six-move set", pool.size() == 6)
 	_ok("10. RNG выбирает 3 BASE", engine.get_session_state().current_selected_base_move_ids.size() == 3)
+	_ok("10b. reroll хранит оставшиеся 3", engine.get_session_state().current_reroll_base_move_ids.size() == 3)
 	var engine_a := _start(_catalog(), &"alina", &"cafe", &"casual", 77, _fresh_progress(_catalog(), &"alina"), _player())
 	var engine_b := _start(_catalog(), &"alina", &"cafe", &"casual", 77, _fresh_progress(_catalog(), &"alina"), _player())
 	_ok("11. одинаковый seed воспроизводит BASE selection", engine_a.get_session_state().current_selected_base_move_ids == engine_b.get_session_state().current_selected_base_move_ids)
+
+
+func _test_situation_owned_architecture() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var validator := ContentValidator.new()
+	_ok("owned seed has no errors", not _has_error(validator.validate(catalog)))
+	var expected_ids: Array[StringName] = [
+		&"appearance_question",
+		&"money_request",
+		&"rival_provocation",
+		&"spontaneous_bet",
+		&"date_verdict",
+	]
+	_ok("owned five prototype situations", catalog.enabled_situations().size() == 5)
+	for situation in catalog.enabled_situations():
+		_ok("owned six moves %s" % String(situation.id), situation.base_move_ids.size() == 6)
+		_ok("owned six tags %s" % String(situation.id), _distinct_base_tags(catalog, situation.id) == 6)
+		_ok("owned api %s" % String(situation.id), catalog.base_moves_for_situation(situation.id).size() == 6)
+		_ok("owned general filters %s" % String(situation.id), situation.allowed_venue_ids.is_empty() and situation.allowed_girl_ids.is_empty())
+	_ok("owned opening id", catalog.find_situation(&"appearance_question") != null and catalog.find_situation(&"appearance_question").allows_phase(DateTypes.DatePhase.OPENING))
+	_ok("owned closing id", catalog.find_situation(&"date_verdict") != null and catalog.find_situation(&"date_verdict").allows_phase(DateTypes.DatePhase.CLOSING))
+	for expected_id in expected_ids:
+		_ok("owned situation present %s" % String(expected_id), catalog.find_situation(expected_id) != null)
+
+	var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 21, _fresh_progress(catalog, &"alina"), _player())
+	engine.get_session_state().vika_reroll_available = true
+	var shown: Array[StringName] = engine.get_session_state().current_selected_base_move_ids.duplicate()
+	var hidden: Array[StringName] = engine.get_session_state().current_reroll_base_move_ids.duplicate()
+	var situation_id: StringName = engine.get_session_state().selected_situation_ids[0]
+	var sources_before: Array = [
+		engine.get_session_state().characteristic_source_used,
+		engine.get_session_state().outfit_source_used,
+		engine.get_session_state().venue_source_used,
+	]
+	_ok("vika swap exact remaining", engine.reroll_base_moves().is_empty() and engine.get_session_state().current_selected_base_move_ids == hidden)
+	_ok("vika keeps situation", engine.get_session_state().selected_situation_ids[0] == situation_id)
+	_ok("vika keeps sources", engine.get_session_state().characteristic_source_used == sources_before[0] and engine.get_session_state().outfit_source_used == sources_before[1] and engine.get_session_state().venue_source_used == sources_before[2])
+	_ok("vika used state", engine.reroll_base_moves() == "Пересборка уже использована на этом свидании.")
+	_ok("vika shown changed", engine.get_session_state().current_selected_base_move_ids != shown)
+
+	var filter_catalog: DateContentCatalog = _catalog()
+	_ok("filter general cafe", _eligible_has(filter_catalog, DateTypes.DatePhase.OPENING, &"cafe", &"alina", &"appearance_question"))
+	_ok("filter general restaurant", _eligible_has(filter_catalog, DateTypes.DatePhase.OPENING, &"restaurant", &"vika", &"appearance_question"))
+	filter_catalog.find_situation(&"money_request").allowed_venue_ids = [&"restaurant"] as Array[StringName]
+	_ok("filter venue in", _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"restaurant", &"alina", &"money_request"))
+	_ok("filter venue out", not _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"cafe", &"alina", &"money_request"))
+	filter_catalog.find_situation(&"money_request").allowed_girl_ids = [&"alina"] as Array[StringName]
+	_ok("filter girl+venue match", _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"restaurant", &"alina", &"money_request"))
+	_ok("filter girl+venue miss", not _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"restaurant", &"vika", &"money_request"))
+	var girl_only: DateContentCatalog = _catalog()
+	girl_only.find_situation(&"date_verdict").allowed_girl_ids = [&"vika"] as Array[StringName]
+	_ok("filter girl-specific in", _eligible_has(girl_only, DateTypes.DatePhase.CLOSING, &"cafe", &"vika", &"date_verdict"))
+	_ok("filter girl-specific out", not _eligible_has(girl_only, DateTypes.DatePhase.CLOSING, &"cafe", &"alina", &"date_verdict"))
+
+	var progress: GirlProgress = _fresh_progress(catalog, &"alina")
+	var first: DateEngine = _play_full_date(catalog, progress, 44)
+	_ok("anti-repeat stores five", first.girl_progress().last_date_situation_ids.size() == 5)
+	var extra_catalog: DateContentCatalog = _catalog()
+	var extra: DateSituation = DateSituation.new()
+	extra.id = &"appearance_alt"
+	extra.display_name = "Alt"
+	extra.enabled = true
+	extra.allowed_phases = [int(DateTypes.DatePhase.OPENING)]
+	extra.weight = 1.0
+	extra.base_move_ids = extra_catalog.find_situation(&"appearance_question").base_move_ids.duplicate()
+	extra_catalog.situations.append(extra)
+	var second_progress: GirlProgress = GirlProgress.new()
+	second_progress.reset_to_profile(extra_catalog.find_girl(&"alina"))
+	second_progress.last_date_situation_ids = [&"appearance_question"] as Array[StringName]
+	var second: DateEngine = _start(extra_catalog, &"alina", &"cafe", &"casual", 8, second_progress, _player())
+	_ok("anti-repeat prefers unused opening", second.get_session_state().selected_situation_ids[0] == &"appearance_alt")
+	var reuse_progress: GirlProgress = GirlProgress.new()
+	reuse_progress.reset_to_profile(extra_catalog.find_girl(&"alina"))
+	reuse_progress.last_date_situation_ids = [&"appearance_question", &"appearance_alt"] as Array[StringName]
+	var reuse: DateEngine = _start(extra_catalog, &"alina", &"cafe", &"casual", 9, reuse_progress, _player())
+	var reused_id: StringName = reuse.get_session_state().selected_situation_ids[0]
+	_ok("anti-repeat reuses when preferred empty", reused_id == &"appearance_question" or reused_id == &"appearance_alt")
+
+
+func _eligible_has(catalog: DateContentCatalog, phase: DateTypes.DatePhase, venue_id: StringName, girl_id: StringName, situation_id: StringName) -> bool:
+	for situation in catalog.eligible_situations(phase, venue_id, girl_id):
+		if situation != null and situation.id == situation_id:
+			return true
+	return false
+
+
+func _play_full_date(catalog: DateContentCatalog, progress: GirlProgress, seed: int) -> DateEngine:
+	var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", seed, progress, _player())
+	var guard: int = 0
+	while engine.get_session_state().stage != DateSession.Stage.SHOWING_DATE_RESULT and engine.get_session_state().stage != DateSession.Stage.COMPLETED and guard < 20:
+		guard += 1
+		if engine.get_session_state().stage == DateSession.Stage.SHOWING_EPISODE_RESULT:
+			engine.advance()
+			continue
+		if engine.get_session_state().stage == DateSession.Stage.AWAITING_MOVE:
+			_choose(engine, _first_available(engine))
+	return engine
 
 
 func _test_characteristic_moves() -> void:
@@ -510,10 +609,11 @@ func _test_character_build_sources() -> void:
 	_ok("build closing present", seen_phases.has("CLOSING"))
 
 func _test_mapping_tags_differ_by_situation() -> void:
-	var move: DateMove = _catalog().find_move(&"compliment")
-	var appearance: DateMoveSituationMapping = move.mapping_for(&"appearance_question")
-	var bet: DateMoveSituationMapping = move.mapping_for(&"spontaneous_bet")
-	_ok("16. один Move получает разные Tags в разных Situations", appearance.tag_id != bet.tag_id)
+	var catalog: DateContentCatalog = _catalog()
+	var appearance: DateMove = catalog.find_move(&"appearance_question__compliment")
+	var verdict: DateMove = catalog.find_move(&"date_verdict__compliment")
+	_ok("16. situation-owned compliment IDs exist", appearance != null and verdict != null)
+	_ok("16. situation-owned BASE have different Tags", appearance != null and verdict != null and appearance.fixed_tag_id != verdict.fixed_tag_id)
 
 
 func _test_combo_rules() -> void:
@@ -1000,17 +1100,12 @@ func _test_validator() -> void:
 	dup_catalog.tags.append(clone)
 	_ok("32. Validator ловит duplicate IDs", _has_issue(validator.validate(dup_catalog), "Дублирующийся"))
 	var broken := _catalog()
-	broken.moves[0].situation_mappings[0].situation_id = &"missing_sit"
-	_ok("33. Validator ловит broken references", _has_issue(validator.validate(broken), "Неизвестная Situation"))
+	broken.find_situation(&"appearance_question").base_move_ids[0] = &"missing_sit_move"
+	_ok("33. Validator ловит broken references", _has_issue(validator.validate(broken), "отсутствующий Move"))
 	var thin := _catalog()
 	var situation: DateSituation = thin.find_situation(&"appearance_question")
-	for move in thin.moves:
-		var keep: Array[DateMoveSituationMapping] = []
-		for mapping in move.situation_mappings:
-			if mapping.situation_id != situation.id:
-				keep.append(mapping)
-		move.situation_mappings = keep
-	_ok("34. Validator ловит Situation с недостаточным BASE pool", _has_issue(validator.validate(thin), "Недостаточно BASE"))
+	situation.base_move_ids = [situation.base_move_ids[0], situation.base_move_ids[1]] as Array[StringName]
+	_ok("34. Validator ловит Situation с недостаточным BASE pool", _has_issue(validator.validate(thin), "ровно 6 BASE"))
 	var combo_low := _catalog()
 	combo_low.date_rules.combo_required_distinct_success_tags = 1
 	_ok("35. Validator проверяет combo required_distinct", _has_issue(validator.validate(combo_low), "combo_required_distinct_success_tags"))
@@ -1057,31 +1152,27 @@ func _find_code(issues: Array[ContentValidationIssue], code: String) -> ContentV
 
 
 func _test_characteristic_tag_reservation() -> void:
-	var four_base: Array = [["base_risk", "risk"], ["base_directness", "directness"], ["base_status", "status"], ["base_dominance", "dominance"]]
-	var available_catalog: DateContentCatalog = _diversity_catalog(four_base, [["unlock_risk", "risk", 3, 1]])
-	var available_player: DatePlayerSnapshot = _player()
-	available_player.capital = 6
-	var available_engine: DateEngine = _start(available_catalog, &"alina", &"cafe", &"casual", 3, _fresh_progress(available_catalog, &"alina"), available_player)
-	var available_session: DateSession = available_engine.get_session_state()
-	_ok("1. Characteristic не резервирует BASE Tag", available_session.current_preferred_base_move_ids.has(&"base_risk"))
-	_ok("1. risk BASE остаётся в preferred", not available_session.current_fallback_base_move_ids.has(&"base_risk"))
-
-	var unique_catalog: DateContentCatalog = _diversity_catalog(four_base, [])
-	var unique_engine: DateEngine = _start(unique_catalog, &"alina", &"cafe", &"casual", 17, _fresh_progress(unique_catalog, &"alina"), _player())
-	_ok("4. three BASE have three Tags", unique_engine.get_session_state().current_selected_base_move_ids.size() == 3 and _unique_count(unique_engine.get_session_state().current_selected_base_tag_ids) == 3)
-
-	var fallback_catalog: DateContentCatalog = _diversity_catalog(
-		[["base_a", "risk"], ["base_b", "risk"], ["base_c", "directness"], ["base_d", "directness"], ["base_e", "risk"]],
-		[]
-	)
-	var fallback_engine: DateEngine = _start(fallback_catalog, &"alina", &"cafe", &"casual", 19, _fresh_progress(fallback_catalog, &"alina"), _player())
-	var fallback_session: DateSession = fallback_engine.get_session_state()
-	_ok("5. three BASE with only two Tags", fallback_session.current_selected_base_move_ids.size() == 3 and _unique_count(fallback_session.current_selected_base_tag_ids) == 2)
-
-	var det_catalog_a: DateContentCatalog = _diversity_catalog(four_base, [])
-	var det_catalog_b: DateContentCatalog = _diversity_catalog(four_base, [])
-	var det_a: DateEngine = _start(det_catalog_a, &"alina", &"cafe", &"casual", 91, _fresh_progress(det_catalog_a, &"alina"), _player())
-	var det_b: DateEngine = _start(det_catalog_b, &"alina", &"cafe", &"casual", 91, _fresh_progress(det_catalog_b, &"alina"), _player())
+	var catalog: DateContentCatalog = _catalog()
+	var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 17, _fresh_progress(catalog, &"alina"), _player())
+	var session: DateSession = engine.get_session_state()
+	var selected: Array[StringName] = session.current_selected_base_move_ids
+	var reroll: Array[StringName] = session.current_reroll_base_move_ids
+	var situation: DateSituation = catalog.find_situation(session.selected_situation_ids[0])
+	_ok("1. shown triple size", selected.size() == 3)
+	_ok("1. reroll triple size", reroll.size() == 3)
+	var overlap: bool = false
+	for move_id in selected:
+		if reroll.has(move_id):
+			overlap = true
+	_ok("1. selected and reroll disjoint", not overlap)
+	var union_ok: bool = selected.size() + reroll.size() == 6
+	for move_id in situation.base_move_ids:
+		if not selected.has(move_id) and not reroll.has(move_id):
+			union_ok = false
+	_ok("1. selected union reroll is six-move set", union_ok)
+	_ok("4. three BASE have three Tags", _unique_count(session.current_selected_base_tag_ids) == 3)
+	var det_a: DateEngine = _start(_catalog(), &"alina", &"cafe", &"casual", 91, _fresh_progress(_catalog(), &"alina"), _player())
+	var det_b: DateEngine = _start(_catalog(), &"alina", &"cafe", &"casual", 91, _fresh_progress(_catalog(), &"alina"), _player())
 	_ok("7. same seed same BASE ids and order", det_a.get_session_state().current_selected_base_move_ids == det_b.get_session_state().current_selected_base_move_ids)
 
 func _test_twelve_tag_rebalance() -> void:
@@ -1089,9 +1180,9 @@ func _test_twelve_tag_rebalance() -> void:
 	var enabled: Array[DateTag] = catalog.enabled_tags()
 	_ok("22.1 seed contains 12 Tags", enabled.size() == 12)
 	var alina: GirlProfile = catalog.find_girl(&"alina")
-	_ok("22.2 Alina difficulty starter", alina.difficulty_preset_id == &"starter")
-	_ok("22.2 Alina positives", _same_tag_set(alina.positive_tag_ids, ["politeness", "directness", "care", "generosity", "composure", "humor"]))
-	_ok("22.2 Alina sizes", alina.positive_tag_ids.size() == 6 and _computed_negative_count(alina, catalog) == 6)
+	_ok("22.2 Alina difficulty wide", alina.difficulty_preset_id == &"wide")
+	_ok("22.2 Alina positives", _same_tag_set(alina.positive_tag_ids, ["politeness", "directness", "care", "generosity", "composure", "humor", "risk", "dominance"]))
+	_ok("22.2 Alina sizes", alina.positive_tag_ids.size() == 8 and _computed_negative_count(alina, catalog) == 4)
 	_ok("22.2 Alina range", GirlCatalog.seed_relationship_max(&"alina") == 10)
 	var vika: GirlProfile = catalog.find_girl(&"vika")
 	_ok("22.3 Vika difficulty preset", catalog.find_girl_difficulty(vika.difficulty_preset_id) != null)
@@ -1118,17 +1209,17 @@ func _test_twelve_tag_rebalance() -> void:
 			continue
 		var distinct: int = _distinct_base_tags(catalog, situation.id)
 		print("BASE diversity %s = %d" % [String(situation.id), distinct])
-		_ok("22.7 BASE diversity %s" % String(situation.id), distinct >= 6)
-	_ok("22.8 support appearance care", _mapping_tag(&"support", &"appearance_question") == &"care")
-	_ok("22.8 support verdict care", _mapping_tag(&"support", &"date_verdict") == &"care")
-	_ok("22.9 tease appearance humor", _mapping_tag(&"tease", &"appearance_question") == &"humor")
-	_ok("22.9 tease rival humor", _mapping_tag(&"tease", &"rival_provocation") == &"humor")
-	_ok("22.9 tease verdict humor", _mapping_tag(&"tease", &"date_verdict") == &"humor")
-	_ok("22.10 tease money cunning", _mapping_tag(&"tease", &"money_request") == &"cunning")
-	_ok("22.10 refuse rival cunning", _mapping_tag(&"refuse", &"rival_provocation") == &"cunning")
-	_ok("22.11 smooth rival composure", _mapping_tag(&"smooth", &"rival_provocation") == &"composure")
-	_ok("22.11 refuse money composure", _mapping_tag(&"refuse", &"money_request") == &"composure")
-	_ok("22.11 refuse bet composure", _mapping_tag(&"refuse", &"spontaneous_bet") == &"composure")
+		_ok("22.7 BASE diversity %s" % String(situation.id), distinct == 6)
+	_ok("22.8 support appearance care", _mapping_tag(&"appearance_question__support", &"appearance_question") == &"care")
+	_ok("22.8 support verdict care", _mapping_tag(&"date_verdict__support", &"date_verdict") == &"care")
+	_ok("22.9 tease appearance humor", _mapping_tag(&"appearance_question__tease", &"appearance_question") == &"humor")
+	_ok("22.9 tease rival humor", _mapping_tag(&"rival_provocation__tease", &"rival_provocation") == &"humor")
+	_ok("22.9 tease verdict humor", _mapping_tag(&"date_verdict__tease", &"date_verdict") == &"humor")
+	_ok("22.10 tease money cunning", _mapping_tag(&"money_request__tease", &"money_request") == &"cunning")
+	_ok("22.10 refuse rival cunning", _mapping_tag(&"rival_provocation__refuse", &"rival_provocation") == &"cunning")
+	_ok("22.11 smooth rival composure", _mapping_tag(&"rival_provocation__smooth", &"rival_provocation") == &"composure")
+	_ok("22.11 refuse money composure", _mapping_tag(&"money_request__refuse", &"money_request") == &"composure")
+	_ok("22.11 refuse bet composure", _mapping_tag(&"spontaneous_bet__refuse", &"spontaneous_bet") == &"composure")
 	_ok("22.11 hold pause composure", _catalog().find_move(&"char_hold_pause").fixed_tag_id == &"composure")
 	var reset_progress: GirlProgress = _fresh_progress(catalog, &"alina")
 	for tag_id in [&"care", &"humor", &"composure", &"cunning"]:
@@ -1186,11 +1277,10 @@ func _computed_negative_count(girl: GirlProfile, catalog: DateContentCatalog) ->
 
 func _distinct_base_tags(catalog: DateContentCatalog, situation_id: StringName) -> int:
 	var tags: Dictionary = {}
-	for move in catalog.applicable_moves(situation_id, DateTypes.DateMoveKind.BASE):
-		var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
-		if mapping == null:
+	for move in catalog.base_moves_for_situation(situation_id):
+		if move == null or move.fixed_tag_id == &"":
 			continue
-		tags[String(mapping.tag_id)] = true
+		tags[String(move.fixed_tag_id)] = true
 	return tags.size()
 
 
@@ -1198,10 +1288,7 @@ func _mapping_tag(move_id: StringName, situation_id: StringName) -> StringName:
 	var move: DateMove = _catalog().find_move(move_id)
 	if move == null:
 		return &""
-	var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
-	if mapping == null:
-		return &""
-	return mapping.tag_id
+	return move.fixed_tag_id
 
 
 func _count_code(issues: Array[ContentValidationIssue], code: String) -> int:
@@ -1248,7 +1335,7 @@ func _test_twelve_tag_reservation_regression() -> void:
 	player.capital = 6
 	var engine: DateEngine = _start(catalog, &"alina", &"cafe", &"casual", 11, _fresh_progress(catalog, &"alina"), player)
 	var session: DateSession = engine.get_session_state()
-	_ok("22.14 care stays preferred", session.current_preferred_base_move_ids.has(&"base_care"))
+	_ok("22.14 six-move candidate pool", session.current_candidate_base_move_ids.size() == specs.size())
 	_ok("22.14 three BASE selected", session.current_selected_base_move_ids.size() == 3)
 
 func _test_twelve_tag_balance_simulation() -> void:
@@ -1316,6 +1403,10 @@ func _diversity_catalog(base_specs: Array, unlock_specs: Array, opening_count: i
 		moves.append(_test_base_move(String(spec[0]), String(spec[1])))
 	for spec in unlock_specs:
 		moves.append(_test_unlock_move(String(spec[0]), String(spec[1]), int(spec[2]), int(spec[3])))
+	var base_ids: Array[StringName] = []
+	for spec in base_specs:
+		base_ids.append(StringName(String(spec[0])))
+	situation.base_move_ids = base_ids
 	catalog.moves = moves
 	catalog.date_rules.opening_episode_count = opening_count
 	catalog.date_rules.core_episode_count = core_count
@@ -1333,9 +1424,10 @@ func _test_base_move(move_id: String, tag_id: String) -> DateMove:
 	move.kind = DateTypes.DateMoveKind.BASE
 	move.enabled = true
 	move.max_uses_per_date = 0
-	var mappings: Array[DateMoveSituationMapping] = []
-	mappings.append(_test_mapping(tag_id))
-	move.situation_mappings = mappings
+	move.fixed_tag_id = StringName(tag_id)
+	move.fixed_option_text = "option"
+	move.fixed_positive_result_text = "positive"
+	move.fixed_negative_result_text = "negative"
 	return move
 
 

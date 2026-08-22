@@ -10,4 +10,7 @@ description = "Провокация самца"
 situation_text = "К вам подходит другой самец, заявляет, что рейтинг героя выглядит подозрительно, и начинает провоцировать."
 enabled = true
 allowed_phases = Array[int]([1])
+allowed_venue_ids = Array[StringName]([])
+allowed_girl_ids = Array[StringName]([])
 weight = 1.0
+base_move_ids = Array[StringName]([&"rival_provocation__tease", &"rival_provocation__refuse", &"rival_provocation__say_directly", &"rival_provocation__show_off", &"rival_provocation__accept_challenge", &"rival_provocation__smooth"])

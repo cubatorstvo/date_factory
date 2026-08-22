@@ -45,7 +45,7 @@ func is_outfit() -> bool:
 
 
 func has_fixed_presentation() -> bool:
-	return is_local() or is_characteristic() or is_outfit()
+	return is_base() or is_local() or is_characteristic() or is_outfit()
 
 
 func resolved_tag_id(situation_id: StringName) -> StringName:

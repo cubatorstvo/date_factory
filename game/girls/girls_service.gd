@@ -383,6 +383,7 @@ func fill_date_progress(girl_id: StringName, progress: GirlProgress) -> void:
 	progress.revealed_positive_tag_ids = _copy_tag_ids(state.revealed_positive_tag_ids)
 	progress.revealed_negative_tag_ids = _copy_tag_ids(state.revealed_negative_tag_ids)
 	progress.completed_dates = state.completed_dates
+	progress.last_date_situation_ids = _copy_tag_ids(state.last_date_situation_ids)
 
 
 func apply_date_knowledge(girl_id: StringName, progress: GirlProgress) -> void:
@@ -392,6 +393,7 @@ func apply_date_knowledge(girl_id: StringName, progress: GirlProgress) -> void:
 	state.revealed_positive_tag_ids = _copy_tag_ids(progress.revealed_positive_tag_ids)
 	state.revealed_negative_tag_ids = _copy_tag_ids(progress.revealed_negative_tag_ids)
 	state.completed_dates = maxi(0, progress.completed_dates)
+	state.last_date_situation_ids = _copy_tag_ids(progress.last_date_situation_ids)
 	_normalize_girl_knowledge(girl_id)
 
 

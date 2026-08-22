@@ -263,15 +263,62 @@ func _check_base_usage(catalog: DateContentCatalog, issues: Array[ContentValidat
 
 
 func _check_situation_base_pool(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
-	var needed: int = 3
-	if catalog.date_rules != null:
-		needed = catalog.date_rules.base_moves_per_episode
+	var owners: Dictionary = {}
 	for situation in catalog.situations:
 		if situation == null or not situation.enabled:
 			continue
-		var pool: Array[DateMove] = catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE)
-		if pool.size() < needed:
-			issues.append(_issue("DateSituation", String(situation.id), "base_pool", "Недостаточно BASE-ходов: %d из %d." % [pool.size(), needed]))
+		if situation.allowed_phases.is_empty():
+			issues.append(_issue("DateSituation", String(situation.id), "allowed_phases", "Situation %s должна иметь хотя бы одну фазу." % String(situation.id)))
+		if situation.weight < 0.0:
+			issues.append(_issue("DateSituation", String(situation.id), "weight", "Situation %s имеет отрицательный weight." % String(situation.id)))
+		for venue_id in situation.allowed_venue_ids:
+			if catalog.find_venue(venue_id) == null:
+				issues.append(_issue("DateSituation", String(situation.id), "allowed_venue_ids", "Situation %s ссылается на неизвестный DateVenue %s." % [String(situation.id), String(venue_id)]))
+		for girl_id in situation.allowed_girl_ids:
+			if catalog.find_girl(girl_id) == null:
+				issues.append(_issue("DateSituation", String(situation.id), "allowed_girl_ids", "Situation %s ссылается на неизвестный GirlProfile %s." % [String(situation.id), String(girl_id)]))
+		var seen_ids: Dictionary = {}
+		var seen_tags: Dictionary = {}
+		if situation.base_move_ids.size() != 6:
+			issues.append(_issue("DateSituation", String(situation.id), "base_move_ids", "Situation %s должна иметь ровно 6 BASE Moves, сейчас %d." % [String(situation.id), situation.base_move_ids.size()]))
+		for move_id in situation.base_move_ids:
+			var key: String = String(move_id)
+			if seen_ids.has(key):
+				issues.append(_issue("DateSituation", String(situation.id), "base_move_ids", "Situation %s содержит повтор BASE %s." % [String(situation.id), key]))
+			seen_ids[key] = true
+			if owners.has(key) and String(owners[key]) != String(situation.id):
+				issues.append(_issue("DateMove", key, "base_move_ids", "BASE %s принадлежит нескольким Situations: %s и %s." % [key, String(owners[key]), String(situation.id)]))
+			else:
+				owners[key] = situation.id
+			var move: DateMove = catalog.find_move(move_id)
+			if move == null:
+				issues.append(_issue("DateSituation", String(situation.id), "base_move_ids", "Situation %s ссылается на отсутствующий Move %s." % [String(situation.id), key]))
+				continue
+			if not move.enabled:
+				issues.append(_issue("DateMove", key, "enabled", "BASE %s Situation %s должен быть enabled." % [key, String(situation.id)]))
+			if move.kind != DateTypes.DateMoveKind.BASE:
+				issues.append(_issue("DateMove", key, "kind", "Move %s Situation %s должен иметь kind BASE." % [key, String(situation.id)]))
+			if move.fixed_tag_id == &"":
+				issues.append(_issue("DateMove", key, "fixed_tag_id", "BASE %s Situation %s должен иметь fixed_tag_id." % [key, String(situation.id)]))
+			elif catalog.find_tag(move.fixed_tag_id) == null:
+				issues.append(_issue("DateMove", key, "fixed_tag_id", "BASE %s Situation %s ссылается на неизвестный Tag %s." % [key, String(situation.id), String(move.fixed_tag_id)]))
+			if seen_tags.has(String(move.fixed_tag_id)):
+				issues.append(_issue("DateSituation", String(situation.id), "fixed_tag_id", "Situation %s имеет повторный Tag %s среди BASE." % [String(situation.id), String(move.fixed_tag_id)]))
+			elif move.fixed_tag_id != &"":
+				seen_tags[String(move.fixed_tag_id)] = true
+			if move.fixed_option_text.strip_edges().is_empty():
+				issues.append(_issue("DateMove", key, "fixed_option_text", "BASE %s Situation %s должен иметь option text." % [key, String(situation.id)]))
+			if move.fixed_positive_result_text.strip_edges().is_empty():
+				issues.append(_issue("DateMove", key, "fixed_positive_result_text", "BASE %s Situation %s должен иметь positive result text." % [key, String(situation.id)]))
+			if move.fixed_negative_result_text.strip_edges().is_empty():
+				issues.append(_issue("DateMove", key, "fixed_negative_result_text", "BASE %s Situation %s должен иметь negative result text." % [key, String(situation.id)]))
+		if situation.base_move_ids.size() == 6 and seen_tags.size() != 6:
+			issues.append(_issue("DateSituation", String(situation.id), "fixed_tag_id", "Situation %s должна иметь 6 различных BASE Tags, сейчас %d." % [String(situation.id), seen_tags.size()]))
+	for move in catalog.moves:
+		if move == null or not move.enabled or move.kind != DateTypes.DateMoveKind.BASE:
+			continue
+		if not owners.has(String(move.id)):
+			issues.append(_issue("DateMove", String(move.id), "base_move_ids", "BASE %s не принадлежит ни одной DateSituation." % String(move.id)))
 
 
 func _check_local_objects(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -445,10 +492,6 @@ func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentVal
 	for move in catalog.moves:
 		if move == null:
 			continue
-		for mapping in move.situation_mappings:
-			if mapping == null:
-				continue
-			used[String(mapping.tag_id)] = true
 		if move.has_fixed_presentation() and move.fixed_tag_id != &"":
 			used[String(move.fixed_tag_id)] = true
 	for tag in catalog.enabled_tags():
@@ -459,35 +502,15 @@ func _check_tag_move_usage(catalog: DateContentCatalog, issues: Array[ContentVal
 		issues.append(_issue(
 			"DateTag",
 			String(tag.id),
-			"situation_mappings",
-			"Активный тег \"%s\" не используется ни в одном DateMoveSituationMapping." % String(tag.id),
+			"fixed_tag_id",
+			"Активный тег \"%s\" не используется ни в одном DateMove." % String(tag.id),
 			DateTypes.ValidationSeverity.WARNING,
 			"TAG_WITHOUT_MOVE_MAPPING"
 		))
 
+
 func _check_base_tag_diversity(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
-	var min_distinct: int = 6
-	if catalog.date_rules != null:
-		min_distinct = catalog.date_rules.min_distinct_base_tags_per_situation
-	for situation in catalog.situations:
-		if situation == null or not situation.enabled:
-			continue
-		var tags: Dictionary = {}
-		for move in catalog.applicable_moves(situation.id, DateTypes.DateMoveKind.BASE):
-			var mapping: DateMoveSituationMapping = move.mapping_for(situation.id)
-			if mapping == null:
-				continue
-			tags[String(mapping.tag_id)] = true
-		if tags.size() >= min_distinct:
-			continue
-		issues.append(_issue(
-			"DateSituation",
-			String(situation.id),
-			"base_tags",
-			"Ситуация \"%s\" имеет только %d разных BASE Tags, минимум %d." % [String(situation.id), tags.size(), min_distinct],
-			DateTypes.ValidationSeverity.WARNING,
-			"LOW_BASE_TAG_DIVERSITY"
-		))
+	pass
 
 
 func _check_duplicate_characteristic_tags(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:

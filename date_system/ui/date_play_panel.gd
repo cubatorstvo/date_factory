@@ -12,6 +12,7 @@ var _engine: DateEngine
 var _girl_id: StringName = &"alina"
 var _venue_id: StringName = &"cafe"
 var _outfit_id: StringName = &"casual"
+var _forced_situation_id: StringName = &""
 var _seed: int = 1
 var _grant_tv: bool = false
 
@@ -275,6 +276,44 @@ func _build_launch() -> void:
 		rebuild()
 	)
 	_host.add_child(LabUi.labeled_row("Одежда", outfit_sel))
+	var sit_sel := OptionButton.new()
+	sit_sel.add_item("(авто)")
+	sit_sel.set_item_metadata(0, &"")
+	var sit_index: int = 0
+	for situation in _catalog().situations:
+		if situation == null:
+			continue
+		sit_sel.add_item("%s [%s]" % [situation.display_name, String(situation.id)])
+		var item_index: int = sit_sel.item_count - 1
+		sit_sel.set_item_metadata(item_index, situation.id)
+		if situation.id == _forced_situation_id:
+			sit_index = item_index
+	sit_sel.select(sit_index)
+	sit_sel.item_selected.connect(func(index: int) -> void:
+		_forced_situation_id = sit_sel.get_item_metadata(index)
+		rebuild()
+	)
+	_host.add_child(LabUi.labeled_row("Situation override", sit_sel))
+	var eligible_names: PackedStringArray = PackedStringArray()
+	var preview_phase: DateTypes.DatePhase = DateTypes.DatePhase.OPENING
+	var forced_sit: DateSituation = _catalog().find_situation(_forced_situation_id)
+	if forced_sit != null and not forced_sit.allowed_phases.is_empty():
+		preview_phase = forced_sit.allowed_phases[0] as DateTypes.DatePhase
+	for situation in _catalog().eligible_situations(preview_phase, _venue_id, _girl_id):
+		eligible_names.append(String(situation.id))
+	var eligible_label := Label.new()
+	eligible_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	eligible_label.text = "Eligible %s: %s" % [DateTypes.phase_name(preview_phase), ", ".join(eligible_names)]
+	_host.add_child(eligible_label)
+	var girl_progress: GirlProgress = progress_store.get_girl_progress(_girl_id, _catalog().find_girl(_girl_id)) if progress_store != null else null
+	var last_ids: PackedStringArray = PackedStringArray()
+	if girl_progress != null:
+		for situation_id in girl_progress.last_date_situation_ids:
+			last_ids.append(String(situation_id))
+	var last_label := Label.new()
+	last_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	last_label.text = "last_date_situation_ids: %s" % (", ".join(last_ids) if not last_ids.is_empty() else "(пусто)")
+	_host.add_child(last_label)
 
 	var location: DateVenue = _catalog().find_venue(_venue_id)
 	if location != null and location.uses_apartment_preparation:
@@ -463,6 +502,7 @@ func _begin_session(seed: int, is_replay: bool) -> void:
 	config.girl_progress = progress
 	config.player_snapshot = progress_store.player_snapshot
 	config.relationship_max = GirlCatalog.seed_relationship_max(_girl_id)
+	config.forced_situation_id = _forced_situation_id
 	_engine = DateEngine.new()
 	_engine.create_date_session(config)
 	status_message.emit("Свидание запущено. Seed %d" % seed)
@@ -558,9 +598,18 @@ func _unavailable_modulate() -> Color:
 
 
 func _build_vika_reroll_button(session: DateSession) -> Control:
-	if session == null or not session.vika_reroll_available or session.vika_reroll_used:
+	if session == null or not session.vika_reroll_available:
 		return null
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
 	var btn: Button = LabUi.button("$25 — Пересобрать ответы")
+	if session.vika_reroll_used:
+		btn.disabled = true
+		box.add_child(btn)
+		var used := Label.new()
+		used.text = "Пересборка уже использована на этом свидании."
+		box.add_child(used)
+		return box
 	btn.pressed.connect(func() -> void:
 		var error_text := ""
 		if _playthrough:
@@ -573,9 +622,14 @@ func _build_vika_reroll_button(session: DateSession) -> Control:
 			error_text = _engine.reroll_base_moves()
 		if not error_text.is_empty():
 			status_message.emit(error_text)
+			if error_text == "Недостаточно денег.":
+				var money := Label.new()
+				money.text = "Недостаточно денег."
+				box.add_child(money)
 		rebuild()
 	)
-	return btn
+	box.add_child(btn)
+	return box
 
 
 func _build_nika_swap_checkbox(session: DateSession) -> Control:
@@ -1039,9 +1093,9 @@ func _debug_text(session: DateSession, view: DateEpisodeView) -> String:
 			lines.append("source %s used=%s state=%s" % [DateTypes.source_name(source_view.source), str(source_view.used), DateTypes.source_state_name(source_view.state)])
 			for option in source_view.options:
 				lines.append("  move_id=%s tag_id=%s state=%s" % [String(option.move_id), String(option.tag_id), DateTypes.availability_name(option.availability)])
-	lines.append_array(_debug_move_block("preferred_base_candidates", session.current_preferred_base_move_ids, situation_id, session, false))
-	lines.append_array(_debug_move_block("fallback_base_candidates", session.current_fallback_base_move_ids, situation_id, session, false))
+	lines.append_array(_debug_move_block("six_base_moves", session.current_candidate_base_move_ids, situation_id, session, false))
 	lines.append_array(_debug_move_block("selected_base_moves", session.current_selected_base_move_ids, situation_id, session, false))
+	lines.append_array(_debug_move_block("reroll_base_moves", session.current_reroll_base_move_ids, situation_id, session, false))
 	lines.append("selected_base_tags")
 	lines.append_array(_debug_id_lines(session.current_selected_base_tag_ids))
 	return "\n".join(lines)
@@ -1064,9 +1118,7 @@ func _debug_move_block(
 		var tag_id: String = ""
 		var state: String = DateTypes.availability_name(DateTypes.MoveAvailability.AVAILABLE)
 		if move != null:
-			var mapping: DateMoveSituationMapping = move.mapping_for(situation_id)
-			if mapping != null:
-				tag_id = String(mapping.tag_id)
+			tag_id = String(move.resolved_tag_id(situation_id))
 		
 		lines.append("  move_id=%s tag_id=%s state=%s" % [String(move_id), tag_id, state])
 	return lines
