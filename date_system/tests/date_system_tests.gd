@@ -4047,17 +4047,23 @@ func _test_girl_access_requirements() -> void:
 	_ok("31 rival description", rival_req.get_description(alina_id).contains("Борис"))
 	_ok("31 rival stuntman", rival_req.get_description(alina_id).contains("каскадёр"))
 	sm.new_game()
-	var min_req: MinStageGirlRequirement = MinStageGirlRequirement.new()
-	min_req.minimum_stage = 3
+	var min_req: MinStoryStageGirlRequirement = MinStoryStageGirlRequirement.new()
+	min_req.minimum_story_stage = 1
+	gs.story.stage = 1
+	_ok("32 marina catalog blocks", min_req.is_met(GirlCatalog.ID_MARINA) == false)
 	gs.story.stage = 2
-	_ok("32 stage 2 unmet", min_req.is_met(alina_id) == false)
+	_ok("32 marina catalog allows", min_req.is_met(GirlCatalog.ID_MARINA))
+	var orphan_id: StringName = &"orphan_girl_not_in_roster"
+	min_req.minimum_story_stage = 3
+	gs.story.stage = 2
+	_ok("32 stage 2 unmet", min_req.is_met(orphan_id) == false)
 	gs.story.stage = 3
-	_ok("32 stage 3 met", min_req.is_met(alina_id))
+	_ok("32 stage 3 met", min_req.is_met(orphan_id))
 	gs.story.stage = 4
-	_ok("32 stage 4 met", min_req.is_met(alina_id))
+	_ok("32 stage 4 met", min_req.is_met(orphan_id))
 	sm.new_game()
-	var meet_min: MinStageGirlRequirement = MinStageGirlRequirement.new()
-	meet_min.minimum_stage = 2
+	var meet_min: MinStoryStageGirlRequirement = MinStoryStageGirlRequirement.new()
+	meet_min.minimum_story_stage = 2
 	var meet_rating: RatingGirlRequirement = RatingGirlRequirement.new()
 	meet_rating.required_rating = 5
 	var several_meet: Array[GirlAccessRequirement] = []
@@ -6205,6 +6211,12 @@ func _test_story_stage_rosters() -> void:
 		_ok("roster %d rival" % stage_number, definition.story_rival_id == row["rival"])
 		_ok("roster %d rating" % stage_number, definition.story_girl_required_rating == int(row["rating"]))
 		_ok("roster %d two of three" % stage_number, definition.required_filler_max_count == 2)
+		_ok("roster %d find story girl" % stage_number, catalog.find_stage_for_girl(definition.story_girl_id) == definition)
+		_ok("roster %d find story rival" % stage_number, catalog.find_stage_for_rival(definition.story_rival_id) == definition)
+		for girl_id in definition.filler_girl_ids:
+			_ok("roster %d find filler %s" % [stage_number, String(girl_id)], catalog.find_stage_for_girl(girl_id) == definition)
+		for rival_id in definition.ordinary_rival_ids:
+			_ok("roster %d find ordinary %s" % [stage_number, String(rival_id)], catalog.find_stage_for_rival(rival_id) == definition)
 
 
 func _test_story_girl_access_two_of_three() -> void:
@@ -6251,6 +6263,28 @@ func _test_story_girl_access_two_of_three() -> void:
 			_max_stage_fillers(girls, stage_number, 1)
 			gs.player.rating = definition.story_girl_required_rating
 			_ok("case d previous surplus %d" % stage_number, girls.can_meet_girl(girl_id) == false)
+	sm.new_game()
+	gs.story.stage = 1
+	stages.reconcile_stage_entry_state()
+	_enter_girl_world(world, girls, GirlCatalog.ID_ACTRESS)
+	_max_stage_fillers(girls, 1, 2)
+	var roster_catalog: StageCatalog = stages.get_catalog() as StageCatalog
+	var stage1: StageDefinition = null
+	if roster_catalog != null:
+		stage1 = roster_catalog.get_stage(1)
+	_ok("catalog stage 1", stage1 != null)
+	if stage1 != null:
+		var original_count: int = stage1.required_filler_max_count
+		var original_rating_gate: int = stage1.story_girl_required_rating
+		gs.player.rating = original_rating_gate
+		stage1.required_filler_max_count = 3
+		_ok("catalog filler count live", girls.can_meet_girl(GirlCatalog.ID_ACTRESS) == false)
+		stage1.required_filler_max_count = original_count
+		_ok("catalog filler count restored", girls.can_meet_girl(GirlCatalog.ID_ACTRESS))
+		stage1.story_girl_required_rating = original_rating_gate + 1
+		_ok("catalog rating live", girls.can_meet_girl(GirlCatalog.ID_ACTRESS) == false)
+		stage1.story_girl_required_rating = original_rating_gate
+		_ok("catalog rating restored", girls.can_meet_girl(GirlCatalog.ID_ACTRESS))
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()

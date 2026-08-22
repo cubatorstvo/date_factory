@@ -21,6 +21,7 @@ const REASON_OUTFIT_CASUAL: String = "Для этого свидания нуж�
 
 var _catalog_service: DateCatalogService
 var _engine: DateEngine
+var pending_date_seed: int = -1
 
 
 func _ready() -> void:
@@ -218,7 +219,13 @@ func start_date(
 	var clock: Variant = _time_service()
 	if dating == null or clock == null:
 		return false
-	if not _create_engine(girl_id, date_venue_id, resolved_outfit_id, backup_outfit_id, express_styling):
+	var date_seed: int = -1
+	if options.has("date_seed"):
+		date_seed = int(options["date_seed"])
+	elif pending_date_seed >= 0:
+		date_seed = pending_date_seed
+	pending_date_seed = -1
+	if not _create_engine(girl_id, date_venue_id, resolved_outfit_id, backup_outfit_id, express_styling, date_seed):
 		return false
 	if not urgent_taxi:
 		_register_free_date_usage(girl_id)
@@ -272,6 +279,11 @@ func has_active_date() -> bool:
 	if dating == null:
 		return false
 	return not String(dating.active_date.get("girl_id", "")).is_empty()
+
+
+func reset_isolated_runtime() -> void:
+	pending_date_seed = -1
+	_engine = null
 
 
 func get_active_girl_id() -> StringName:
@@ -361,7 +373,7 @@ func _economy_service() -> Variant:
 	return get_node_or_null("/root/EconomyService")
 
 
-func _create_engine(girl_id: StringName, date_venue_id: StringName, outfit_id: StringName, backup_outfit_id: StringName = &"", express_styling: bool = false) -> bool:
+func _create_engine(girl_id: StringName, date_venue_id: StringName, outfit_id: StringName, backup_outfit_id: StringName = &"", express_styling: bool = false, date_seed: int = -1) -> bool:
 	var catalog_service: DateCatalogService = get_catalog_service()
 	if catalog_service == null or catalog_service.catalog == null:
 		return false
@@ -380,7 +392,10 @@ func _create_engine(girl_id: StringName, date_venue_id: StringName, outfit_id: S
 		girls.fill_date_progress(girl_id, progress)
 	progress.realign_revealed_to_profile(girl, catalog)
 	var config := DateSessionConfig.new()
-	config.seed = randi()
+	if date_seed >= 0:
+		config.seed = date_seed
+	else:
+		config.seed = randi()
 	config.girl_id = girl_id
 	config.venue_id = date_venue_id
 	config.outfit_id = outfit_id

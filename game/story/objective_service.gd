@@ -111,7 +111,7 @@ func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirem
 	var rating_met: bool = true
 	var has_filler_gate: bool = false
 	for meet_requirement in girl.meet_requirements:
-		if meet_requirement is MinStageGirlRequirement:
+		if meet_requirement is MinStoryStageGirlRequirement:
 			continue
 		if meet_requirement is MinCityStageGirlRequirement:
 			continue

@@ -72,7 +72,7 @@
 
 - Spec `min_city_stage` 1–4 для Outfit и Apartment Objects = **Story Stage**. `WorldState.city_stage` остаётся 1–3 для физического города. Filler girls и rivals читают Story Stage, не City Stage. Поля в коде: `Outfit.min_story_stage`, `ApartmentObjectDefinition.min_story_stage`, `RivalDefinition.minimum_story_stage`, плюс `Outfit.tier` (`0` Casual / `1` Dressed)
 - Stage 2+ Date gate: `OutfitAboveCasualGirlRequirement` проверяет `equipped Outfit.tier >= 1`, не price и не id-имя. Марина: `date_requirements = []`. Stage 1 girls без этого requirement
-- Марина: `MinStageGirlRequirement(2)`, `location_id = clothing_store`. Clothing Store — `LocationDefinition` по образцу `furniture_store`, unlock на Stage 2. Симуляторная секция одежды остаётся player-facing магазином
+- Марина: `MinStoryStageGirlRequirement` (Story Stage 2 из `StageDefinition`), `location_id = clothing_store`. Clothing Store — `LocationDefinition` по образцу `furniture_store`, unlock на Stage 2. Симуляторная секция одежды остаётся player-facing магазином
 - Apartment domain: `ApartmentObjectDefinition`, `owned_local_object_ids`, `accent_object_id`, `create_buy_apartment_object_action`. Player-facing `Предметы: N / 12`. Apartment **не хранит level**. `min_story_stage` (1–4) остаётся Story Stage; spec `min_city_stage` не мапится на `WorldState.city_stage`. `local_object_id` = definition id. Automation `purchased_upgrade_ids` не трогать
 - Dating runtime читает только `venue_id`. Save-compatibility не требуется: старые ключи `location_id` / `purchased_upgrade_ids` / `katya_emperor_chair` не мигрируем
 - Objective «Приоденься»: на Stage 2 это **текущая** цель, пока нет Dressed Outfit; после покупки ObjectiveService сразу показывает сюжетную цель Stage 2. Completion = владение, не экипировка
@@ -88,3 +88,10 @@
 - Game Terms: глобальные жирные термины с tooltip во всех player-facing экранах
 - Save version 18: секция `daily_activity`; миграция 17→18 переносит `last_work_day_index` / `last_overtime_day_index` в `work`
 - `ObjectiveService` считает текущую сюжетную цель из Stage / Girls / Rivals / Automation; `GuidanceService` показывает first-use tutorial и milestone, не храня игровой прогресс
+
+## Monte Carlo Progression Lab
+
+- Канон: [`MONTE_CARLO_PROGRESSION_LAB.md`](MONTE_CARLO_PROGRESSION_LAB.md). Panel живёт в Developer Room, не в `GameSimulator`.
+- Production services читают только autoload `GameState`. Isolated Run = snapshot `GameState.to_dict()` → redirect `SaveManager.save_path` away from `user://saves/game.json` → `new_game()` → execute → restore snapshot. User save и открытый Simulator state не должны портиться.
+- `DatingService.start_date` принимает optional `options.date_seed` для детерминированного `DateSessionConfig.seed`. Без ключа сохраняется `randi()` для живой игры.
+- Seed streams: SHA-256 `"<base_seed>:<stream_name>"`, первые 8 байт как uint64 → `RandomNumberGenerator.seed`.

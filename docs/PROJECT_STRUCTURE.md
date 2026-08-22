@@ -38,6 +38,7 @@ res://
         ui/
         dev_room/
         tests/
+        progression_lab/
     main/
     addons/godotiq/
 ```

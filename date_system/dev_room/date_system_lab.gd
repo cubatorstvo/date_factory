@@ -17,6 +17,7 @@ const SECTIONS: Array[Array] = [
 	["characteristics", "ХАРАКТЕРИСТИКИ"],
 	["rules", "ПРАВИЛА СВИДАНИЯ"],
 	["balance", "БАЛАНС"],
+	["progression_lab", "MONTE CARLO LAB"],
 	["test_state", "ТЕСТОВОЕ СОСТОЯНИЕ"],
 	["venue_playground", "VENUE PLAYGROUND"],
 	["validation", "ВАЛИДАЦИЯ"],
@@ -183,6 +184,12 @@ func _show_section(section: String) -> void:
 			_content_host.add_child(_build_validation())
 		"balance":
 			_content_host.add_child(_build_balance())
+		"progression_lab":
+			var lab_panel: ProgressionLabPanel = ProgressionLabPanel.new()
+			lab_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+			_content_host.add_child(lab_panel)
+			lab_panel.setup()
+			lab_panel.status_message.connect(_set_status)
 		"test_state":
 			_content_host.add_child(_build_test_state())
 		"venue_playground":

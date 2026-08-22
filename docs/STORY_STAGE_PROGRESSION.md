@@ -273,3 +273,20 @@ Filler phase:
 Затем: `Познакомься с <Story Girl>.` → `Победи <Story Rival>.` → `Отношения с <Story Girl>: X / MAX`.
 
 Stage 2 сохраняет «Приоденься» как текущую цель, пока нет Dressed Outfit.
+
+---
+
+## 10. Access requirements читают StageDefinition
+
+Girl availability пересчитывается по Story Stage progression events. Canonical class names:
+
+```text
+MinStoryStageGirlRequirement
+minimum_story_stage
+```
+
+`MinStoryStageGirlRequirement`, `CurrentStageFillerMaxGirlRequirement` и сюжетный `RatingGirlRequirement` берут assigned stage, `required_filler_max_count` и `story_girl_required_rating` из `StageDefinition`, а не из независимых копий чисел в `GirlCatalog`.
+
+Rival availability (ordinary и story) резолвит assigned Story Stage из `ordinary_rival_ids` / `story_rival_id` текущего `StageCatalog`. `RivalDefinition.minimum_story_stage` может оставаться seed-подсказкой, но runtime access сверяется с roster.
+
+City Stage продолжает обслуживать только physical world expansion.

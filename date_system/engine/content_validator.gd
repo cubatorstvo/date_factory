@@ -753,18 +753,40 @@ func _check_story_stage_rosters(issues: Array[ContentValidationIssue]) -> void:
 			if seen_fillers.has(girl_id):
 				issues.append(_issue("StageCatalog", String(girl_id), "filler_girl_ids", "Filler принадлежит больше чем одному Stage 1–4."))
 			seen_fillers[girl_id] = stage_number
+			if stages.find_stage_for_girl(girl_id) != definition:
+				issues.append(_issue("StageCatalog", String(girl_id), "filler_girl_ids", "Filler не находится через StageCatalog.find_stage_for_girl.", DateTypes.ValidationSeverity.WARNING))
+			var filler_girl: GirlDefinition = girls.get_girl(girl_id)
+			if filler_girl != null:
+				var filler_has_min: bool = false
+				for meet_requirement in filler_girl.meet_requirements:
+					if meet_requirement is MinStoryStageGirlRequirement:
+						filler_has_min = true
+						break
+				if not filler_has_min:
+					issues.append(_issue("GirlCatalog", String(girl_id), "meet_requirements", "Filler должна требовать MinStoryStageGirlRequirement."))
 		var story_girl: GirlDefinition = girls.get_girl(definition.story_girl_id)
+		if stages.find_stage_for_girl(definition.story_girl_id) != definition:
+			issues.append(_issue("StageCatalog", String(definition.story_girl_id), "story_girl_id", "Story Girl не находится через StageCatalog.find_stage_for_girl.", DateTypes.ValidationSeverity.WARNING))
+		if definition.story_rival_id != &"" and stages.find_stage_for_rival(definition.story_rival_id) != definition:
+			issues.append(_issue("StageCatalog", String(definition.story_rival_id), "story_rival_id", "Story Rival не находится через StageCatalog.find_stage_for_rival.", DateTypes.ValidationSeverity.WARNING))
+		for ordinary_id in definition.ordinary_rival_ids:
+			if stages.find_stage_for_rival(ordinary_id) != definition:
+				issues.append(_issue("StageCatalog", String(ordinary_id), "ordinary_rival_ids", "Ordinary rival не находится через StageCatalog.find_stage_for_rival.", DateTypes.ValidationSeverity.WARNING))
 		if story_girl == null:
 			issues.append(_issue("GirlCatalog", String(definition.story_girl_id), "story_girl_id", "Story Girl отсутствует в GirlCatalog."))
 		else:
 			var has_filler_gate: bool = false
 			var has_rating_gate: bool = false
+			var has_min_story: bool = false
 			for meet_requirement in story_girl.meet_requirements:
-				if _is_current_stage_filler_requirement(meet_requirement):
-					has_filler_gate = int(meet_requirement.get("story_stage")) == stage_number and int(meet_requirement.get("required_count")) == 2
+				if meet_requirement is MinStoryStageGirlRequirement:
+					has_min_story = true
+				elif _is_current_stage_filler_requirement(meet_requirement):
+					has_filler_gate = true
 				elif meet_requirement is RatingGirlRequirement:
-					var rating_requirement: RatingGirlRequirement = meet_requirement as RatingGirlRequirement
-					has_rating_gate = rating_requirement.required_rating == int(expected_rating[stage_number])
+					has_rating_gate = true
+			if not has_min_story:
+				issues.append(_issue("GirlCatalog", String(definition.story_girl_id), "meet_requirements", "Story Girl должна требовать MinStoryStageGirlRequirement."))
 			if not has_filler_gate:
 				issues.append(_issue("GirlCatalog", String(definition.story_girl_id), "meet_requirements", "Story Girl должна требовать 2 of 3 filler своего Stage."))
 			if not has_rating_gate:

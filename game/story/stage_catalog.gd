@@ -19,6 +19,32 @@ func get_all_stages() -> Array[StageDefinition]:
 	return result
 
 
+func find_stage_for_girl(girl_id: StringName) -> StageDefinition:
+	if girl_id == &"":
+		return null
+	for definition in stages:
+		if definition == null:
+			continue
+		if definition.story_girl_id == girl_id:
+			return definition
+		if definition.filler_girl_ids.has(girl_id):
+			return definition
+	return null
+
+
+func find_stage_for_rival(rival_id: StringName) -> StageDefinition:
+	if rival_id == &"":
+		return null
+	for definition in stages:
+		if definition == null:
+			continue
+		if definition.story_rival_id == rival_id:
+			return definition
+		if definition.ordinary_rival_ids.has(rival_id):
+			return definition
+	return null
+
+
 static func create_seed(girl_catalog: GirlCatalog = null) -> StageCatalog:
 	var girls: GirlCatalog = girl_catalog
 	if girls == null:
