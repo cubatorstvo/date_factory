@@ -13,7 +13,13 @@ func run_all() -> PackedStringArray:
 	_test_stage_plan_immutability()
 	_test_population_weights()
 	_test_fixed_goal_generation()
+	_test_canonical_seed_fixtures()
 	_test_full_campaign_determinism()
+	_test_execution_rng_coverage()
+	_test_repetition_penalty()
+	_test_blocking_metrics()
+	_test_badness_warnings()
+	_test_integration_helper()
 	_test_production_integration()
 	_test_goal_isolation()
 	_test_exports()
@@ -148,53 +154,95 @@ func _test_full_campaign_determinism() -> void:
 		var rec_a: ProgressionLabRunRecord = result_a.records[0]
 		var rec_b: ProgressionLabRunRecord = result_b.records[0]
 		_ok("campaign profile equal", JSON.stringify(rec_a.profile) == JSON.stringify(rec_b.profile))
+		_ok("campaign interests equal", JSON.stringify(rec_a.interests) == JSON.stringify(rec_b.interests))
 		_ok("campaign stage plans equal", JSON.stringify(rec_a.stage_plans) == JSON.stringify(rec_b.stage_plans))
 		_ok("campaign compact actions equal", "|".join(rec_a.action_sequence) == "|".join(rec_b.action_sequence), _seq_diff(rec_a.action_sequence, rec_b.action_sequence))
 		_ok("campaign summary metrics equal", _core_metrics_equal(rec_a.campaign_metrics, rec_b.campaign_metrics), _metric_diff(rec_a.campaign_metrics, rec_b.campaign_metrics))
+		_ok("campaign stage metrics equal", JSON.stringify(rec_a.stage_metrics) == JSON.stringify(rec_b.stage_metrics))
 		var detailed_a: ProgressionLabRunRecord = runner_a.replay_seed(3, true)
 		var detailed_b: ProgressionLabRunRecord = runner_b.replay_seed(3, true)
 		_ok("detailed action sequence equal", "|".join(detailed_a.action_sequence) == "|".join(detailed_b.action_sequence), _seq_diff(detailed_a.action_sequence, detailed_b.action_sequence))
 		_ok("immutability hash survives campaign", _plans_keep_hash(rec_a))
 
 
+func _test_integration_helper() -> void:
+	_require_integration_flag("helper true", {"flag": true}, "flag", true)
+	var failed_before: int = _failures.size()
+	_require_integration_flag("helper false", {"flag": false}, "flag", true)
+	_ok("helper false becomes FAIL", _failures.size() == failed_before + 1)
+	if _failures.size() > failed_before:
+		_failures.remove_at(_failures.size() - 1)
+	failed_before = _failures.size()
+	_require_integration_flag("helper missing", {}, "flag", false)
+	_ok("helper missing content FAIL", _failures.size() == failed_before + 1)
+	if _failures.size() > failed_before:
+		var last: String = _failures[_failures.size() - 1]
+		_ok("helper missing reason", last.find("content missing") >= 0, last)
+		_failures.remove_at(_failures.size() - 1)
+
+
 func _test_production_integration() -> void:
+	var flags: Dictionary = {}
+	var records: Array = []
 	var config := ProgressionLabConfig.new()
-	config.max_calendar_days = 120
+	config.max_calendar_days = 180
 	var runner := ProgressionLabRunner.new()
-	runner.configure(config, 1, 5, 2, ProgressionLabConfig.ARCHETYPE_TYPICAL)
+	runner.configure(config, 1, 3, 4, ProgressionLabConfig.ARCHETYPE_EXPLORER)
 	while not runner.process_batch():
 		pass
-	_ok("production campaign ran", runner.get_result().records.size() == 1)
-	if runner.get_result().records.is_empty():
-		return
-	var record: ProgressionLabRunRecord = runner.get_result().records[0]
-	var flags: Dictionary = {}
-	var flags_raw: Variant = record.campaign_metrics.get("production_flags", {})
-	if flags_raw is Dictionary:
-		flags = flags_raw
+	_ok("production explorer campaign ran", runner.get_result().records.size() == 1)
+	if not runner.get_result().records.is_empty():
+		records.append(runner.get_result().records[0])
+		_merge_flags(flags, runner.get_result().records[0])
 	if not bool(flags.get("used_production_work", false)):
 		var iso_runner := ProgressionLabRunner.new()
 		var iso_result: ProgressionLabPopulationResult = iso_runner.run_goal_isolation(CharacteristicIds.APPEARANCE, 1, ProgressionLabConfig.ISOLATION_MINIMAL, 1, 5, 1)
 		if not iso_result.records.is_empty():
-			var iso_record: ProgressionLabRunRecord = iso_result.records[0]
-			var iso_flags_raw: Variant = iso_record.campaign_metrics.get("production_flags", {})
-			if iso_flags_raw is Dictionary and bool(iso_flags_raw.get("used_production_work", false)):
-				flags["used_production_work"] = true
-	_ok("used production work", bool(flags.get("used_production_work", false)), "aborted=%s days=%s warnings=%s flags=%s" % [str(record.aborted), str(record.campaign_metrics.get("calendar_days", 0)), ",".join(record.hard_warnings), JSON.stringify(flags)])
+			records.append(iso_result.records[0])
+			_merge_flags(flags, iso_result.records[0])
+	_ok("used production work", bool(flags.get("used_production_work", false)), JSON.stringify(flags))
 	_ok("used production date", bool(flags.get("used_production_date", false)), "executor should call DatingService")
-	var dress: bool = bool(flags.get("stage2_dress_up", false)) or int(record.campaign_metrics.get("outfits_acquired", 0)) > 0 or record.aborted
-	_ok("stage 2 dress-up path reachable or recorded", dress, "outfit/dress flag missing")
-	_flag_or_skip("marina free outfit", flags, "marina_free_outfit", _girl_exists(GirlCatalog.ID_MARINA))
-	_flag_or_skip("apartment purchase", flags, "apartment_purchase", _apartment_catalog_has_objects())
-	_flag_or_skip("restaurant characteristic unlock", flags, "restaurant_characteristic_unlock", _venue_exists(&"restaurant"))
-	_flag_or_skip("sonya venue x2", flags, "sonya_venue_x2", _girl_exists(GirlCatalog.ID_SONYA))
-	_flag_or_skip("katya accent", flags, "katya_accent", _girl_exists(GirlCatalog.ID_KATYA))
-	_flag_or_skip("rita taxi", flags, "rita_taxi", _girl_exists(GirlCatalog.ID_RITA))
-	_flag_or_skip("nika backup", flags, "nika_backup", _girl_exists(GirlCatalog.ID_NIKA))
-	_flag_or_skip("eva knowledge", flags, "eva_knowledge", _girl_exists(GirlCatalog.ID_EVA))
+	var dress_record: ProgressionLabRunRecord = _record_with_flag(records, "stage2_dress_up")
+	if dress_record == null and not records.is_empty():
+		dress_record = records[0]
+	var has_dress_goal: bool = _plan_has_stage2_dress(dress_record)
+	_require_integration_flag("stage 2 dress-up gate", flags, "stage2_dress_up", has_dress_goal or _girl_exists(GirlCatalog.ID_MARINA))
+	if dress_record != null:
+		_ok("dress-up gate in stage 2 plan", has_dress_goal or int(dress_record.campaign_metrics.get("outfits_acquired", 0)) > 0)
+	_require_integration_flag("marina free outfit", flags, "marina_free_outfit", _girl_exists(GirlCatalog.ID_MARINA))
+	if bool(flags.get("marina_free_outfit", false)):
+		var marina_record: ProgressionLabRunRecord = _record_with_flag(records, "marina_free_outfit")
+		_ok("marina outfit acquisition recorded", marina_record != null and int(marina_record.campaign_metrics.get("outfits_acquired", 0)) > 0)
+	_require_integration_flag("apartment purchase", flags, "apartment_purchase", _apartment_catalog_has_objects())
+	if bool(flags.get("apartment_purchase", false)):
+		var apt_record: ProgressionLabRunRecord = _record_with_flag(records, "apartment_purchase")
+		_ok("apartment object owned after purchase", apt_record != null and int(apt_record.campaign_metrics.get("apartment_objects_acquired", 0)) > 0)
+	_require_integration_flag("restaurant characteristic unlock", flags, "restaurant_characteristic_unlock", _venue_exists(&"restaurant"))
+	_require_integration_flag("sonya venue x2", flags, "sonya_venue_x2", _girl_exists(GirlCatalog.ID_SONYA))
+	_require_integration_flag("katya accent", flags, "katya_accent", _girl_exists(GirlCatalog.ID_KATYA))
+	_require_integration_flag("rita taxi", flags, "rita_taxi", _girl_exists(GirlCatalog.ID_RITA))
+	_require_integration_flag("nika backup", flags, "nika_backup", _girl_exists(GirlCatalog.ID_NIKA))
+	_require_integration_flag("eva knowledge", flags, "eva_knowledge", _girl_exists(GirlCatalog.ID_EVA))
 
 
 func _test_goal_isolation() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		return {
+			"minimal_1": _capture_isolation_plan(1, ProgressionLabConfig.ISOLATION_MINIMAL),
+			"minimal_2": _capture_isolation_plan(2, ProgressionLabConfig.ISOLATION_MINIMAL),
+			"full_1": _capture_isolation_plan(1, ProgressionLabConfig.ISOLATION_FULL),
+			"full_2": _capture_isolation_plan(2, ProgressionLabConfig.ISOLATION_FULL),
+		}
+	))
+	var minimal_1: Dictionary = _as_dict(captured.get("minimal_1", {}))
+	var minimal_2: Dictionary = _as_dict(captured.get("minimal_2", {}))
+	var full_1: Dictionary = _as_dict(captured.get("full_1", {}))
+	var full_2: Dictionary = _as_dict(captured.get("full_2", {}))
+	_assert_isolation_plan("MINIMAL stage 1", minimal_1, 2, 0, 0, 0, true)
+	_assert_isolation_plan("MINIMAL stage 2", minimal_2, 2, 0, 1, 0, true)
+	_assert_isolation_plan("FULL stage 1", full_1, 3, 2, 0, 0, true)
+	_assert_isolation_plan("FULL stage 2", full_2, 3, 2, 2, 2, true)
 	var runner := ProgressionLabRunner.new()
 	runner.configure(ProgressionLabConfig.new(), 1, 8, 1, ProgressionLabConfig.ARCHETYPE_TYPICAL)
 	var result: ProgressionLabPopulationResult = runner.run_goal_isolation(CharacteristicIds.APPEARANCE, 1, ProgressionLabConfig.ISOLATION_MINIMAL, 1, 8, 1)
@@ -203,13 +251,6 @@ func _test_goal_isolation() -> void:
 		return
 	var record: ProgressionLabRunRecord = result.records[0]
 	_ok("goal isolation typical", str(record.profile.get("archetype", "")) == "TYPICAL")
-	if record.stage_plans.size() >= 1 and record.stage_plans[0] is Dictionary:
-		var plan: Dictionary = record.stage_plans[0]
-		var fillers: Array = plan.get("target_filler_girl_ids", [])
-		_ok("isolation minimal two fillers", fillers.size() == 2, "count=%d" % fillers.size())
-		_ok("isolation minimal no extra outfits", int(plan.get("target_outfit_count", -1)) == 0)
-		var chars: Variant = plan.get("characteristic_targets", {})
-		_ok("isolation has appearance target", chars is Dictionary and chars.has("appearance"))
 	var iso_flags: Dictionary = {}
 	var iso_flags_raw: Variant = record.campaign_metrics.get("production_flags", {})
 	if iso_flags_raw is Dictionary:
@@ -258,14 +299,180 @@ func _test_exports() -> void:
 		_ok("markdown Summary", md_text.find("Summary") >= 0)
 	var share_candidates: PackedStringArray = _find_files(export_dir, "share_bundle.json")
 	_ok("share_bundle json written", share_candidates.size() > 0)
+	var executor := StageExecutor.new()
+	executor.detailed = true
+	executor._campaign = ProgressionLabMetrics.new()
+	executor._current_stage_metrics = ProgressionLabMetrics.new()
+	executor.apply_blocking_snapshot({
+		"money": PackedStringArray(["goal_a"]),
+		"daily_gate": PackedStringArray(["goal_b"]),
+	})
+	var block_log: String = "\n".join(executor._day_lines)
+	_ok("detailed log money-blocked header", block_log.find("Money-blocked goals:") >= 0)
+	_ok("detailed log money-blocked goal", block_log.find("- goal_a") >= 0)
+	_ok("detailed log daily-gate header", block_log.find("Daily-gate-blocked goals:") >= 0)
+	_ok("detailed log daily-gate goal", block_log.find("- goal_b") >= 0)
 
 
-func _flag_or_skip(label: String, flags: Dictionary, key: String, content_exists: bool) -> void:
-	if bool(flags.get(key, false)):
-		_ok(label, true)
-		return
+func _test_canonical_seed_fixtures() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		return {
+			"typical": _capture_profile_and_plans(1, ProgressionLabConfig.ARCHETYPE_TYPICAL),
+			"efficient": _capture_profile_and_plans(2, ProgressionLabConfig.ARCHETYPE_EFFICIENT),
+			"explorer": _capture_profile_and_plans(3, ProgressionLabConfig.ARCHETYPE_EXPLORER),
+			"chaotic": _capture_profile_and_plans(4, ProgressionLabConfig.ARCHETYPE_CHAOTIC),
+		}
+	))
+	_assert_seed_fixture("typical seed 1", captured.get("typical", {}), "TYPICAL", {
+		"completionism": 0.477053336799145,
+		"exploration": 0.548339056968689,
+		"build_ambition": 0.522703230381012,
+		"spending_impulsiveness": 0.486762772500515,
+		"planning_skill": 0.631466922536492,
+		"dating_skill": 0.632435251027346,
+		"whimsy": 0.233299788832665,
+	}, {
+		"fillers": ["alina", "dasha"],
+		"rivals": ["rival_gleb", "rival_max"],
+		"chars": {"appearance": 3, "aura": 3, "muscle": 1},
+		"outfits": [],
+		"outfit_count": 0,
+		"apt": [],
+		"apt_count": 0,
+		"venues": [],
+		"story_girl": "girl_actress",
+		"story_rival": "rival_boris",
+	})
+	_assert_seed_fixture("efficient seed 2", captured.get("efficient", {}), "EFFICIENT", {
+		"completionism": 0.0671527615748346,
+		"exploration": 0.229339477419853,
+		"build_ambition": 0.548971846699715,
+		"spending_impulsiveness": 0.282259020209312,
+		"planning_skill": 1.0,
+		"dating_skill": 0.804645703732967,
+		"whimsy": 0.089643856883049,
+	}, {
+		"fillers": ["alina", "dasha"],
+		"rivals": [],
+		"chars": {"muscle": 1},
+		"outfits": [],
+		"outfit_count": 0,
+		"apt": [],
+		"apt_count": 0,
+		"venues": [],
+		"story_girl": "girl_actress",
+		"story_rival": "rival_boris",
+	})
+	_assert_seed_fixture("explorer seed 3", captured.get("explorer", {}), "EXPLORER", {
+		"completionism": 0.912647953629494,
+		"exploration": 0.929766923934221,
+		"build_ambition": 0.734400787949562,
+		"spending_impulsiveness": 0.62637415677309,
+		"planning_skill": 0.516020886600018,
+		"dating_skill": 0.610465469956398,
+		"whimsy": 0.35526502430439,
+	}, {
+		"fillers": ["dasha", "vika", "alina"],
+		"rivals": ["rival_gleb", "rival_max"],
+		"chars": {"aura": 3, "capital": 3, "muscle": 3},
+		"outfits": [],
+		"outfit_count": 0,
+		"apt": [],
+		"apt_count": 0,
+		"venues": [],
+		"story_girl": "girl_actress",
+		"story_rival": "rival_boris",
+	})
+	_assert_seed_fixture("chaotic seed 4", captured.get("chaotic", {}), "CHAOTIC", {
+		"completionism": 0.629015864431858,
+		"exploration": 0.764255978912115,
+		"build_ambition": 0.790964678302407,
+		"spending_impulsiveness": 0.967686635255814,
+		"planning_skill": 0.189347852300853,
+		"dating_skill": 0.390007506031543,
+		"whimsy": 0.678536637127399,
+	}, {
+		"fillers": ["dasha", "vika", "alina"],
+		"rivals": ["rival_gleb", "rival_max"],
+		"chars": {"aura": 1},
+		"outfits": [],
+		"outfit_count": 0,
+		"apt": [],
+		"apt_count": 0,
+		"venues": [],
+		"story_girl": "girl_actress",
+		"story_rival": "rival_boris",
+	})
+
+
+func _test_execution_rng_coverage() -> void:
+	var executor := StageExecutor.new()
+	executor.config = ProgressionLabConfig.new()
+	var first: String = _pick_with_execution_seed(executor, 1, 0.4)
+	var second: String = _pick_with_execution_seed(executor, 2, 0.4)
+	_ok("execution seed 1 picks date", first == "date:alina:apartment", first)
+	_ok("execution seed 2 picks work", second == "work", second)
+	_ok("execution seeds diverge", first != second, "%s vs %s" % [first, second])
+
+
+func _test_repetition_penalty() -> void:
+	var executor := StageExecutor.new()
+	executor.config = ProgressionLabConfig.new()
+	_ok("WORK consecutive 3 penalty 24", is_equal_approx(executor.repetition_penalty_for("WORK", "WORK", 3), 24.0))
+	_ok("DATE consecutive 3 penalty 0", is_equal_approx(executor.repetition_penalty_for("DATE", "WORK", 3), 0.0))
+	_ok("TRAINING consecutive 3 penalty 0", is_equal_approx(executor.repetition_penalty_for("TRAINING", "WORK", 3), 0.0))
+	var work := StageExecutor.Candidate.new()
+	work.category = "WORK"
+	work.content_id = "work"
+	work.score = 100.0
+	var date := StageExecutor.Candidate.new()
+	date.category = "DATE"
+	date.content_id = "date:alina:apartment"
+	date.score = 100.0
+	executor.apply_execution_scores([work, date], "WORK", 3, null, 1.0)
+	_ok("WORK score uses repetition penalty", is_equal_approx(work.score, 76.0), str(work.score))
+	_ok("DATE score keeps base", is_equal_approx(date.score, 100.0), str(date.score))
+	_ok("DATE beats WORK after penalty", date.score > work.score)
+
+
+func _test_blocking_metrics() -> void:
+	var metrics := ProgressionLabMetrics.new()
+	var money_ids: Array = ["goal_m1", "goal_m2", "goal_m3"]
+	var daily_ids: Array = ["goal_d1", "goal_d2"]
+	metrics.record_blocking_decision_point(money_ids, daily_ids)
+	_ok("one decision money count", metrics.money_blocked_decision_points == 1)
+	_ok("one decision daily count", metrics.daily_gate_blocked_decision_points == 1)
+	_ok("per-goal money 1", int(metrics.ensure_goal("goal_m1")["blocked_by_money_count"]) == 1)
+	_ok("per-goal money 1 b", int(metrics.ensure_goal("goal_m2")["blocked_by_money_count"]) == 1)
+	_ok("per-goal money 1 c", int(metrics.ensure_goal("goal_m3")["blocked_by_money_count"]) == 1)
+	_ok("per-goal daily 1", int(metrics.ensure_goal("goal_d1")["blocked_by_daily_gate_count"]) == 1)
+	_ok("per-goal daily 1 b", int(metrics.ensure_goal("goal_d2")["blocked_by_daily_gate_count"]) == 1)
+	metrics.record_blocking_decision_point(money_ids, daily_ids)
+	_ok("two decision money count", metrics.money_blocked_decision_points == 2)
+	_ok("two decision daily count", metrics.daily_gate_blocked_decision_points == 2)
+	_ok("per-goal money 2", int(metrics.ensure_goal("goal_m1")["blocked_by_money_count"]) == 2)
+	_ok("per-goal daily 2", int(metrics.ensure_goal("goal_d1")["blocked_by_daily_gate_count"]) == 2)
+
+
+func _test_badness_warnings() -> void:
+	var analyzer := ProgressionLabAnalyzer.new()
+	var config := ProgressionLabConfig.new()
+	var record := ProgressionLabRunRecord.new()
+	record.campaign_metrics = {"money_blocked_decision_points": 4}
+	var warnings: PackedStringArray = analyzer.hard_warnings_for(record, config)
+	_ok("money 4 no hard warning", warnings.find("MONEY_BLOCKED") < 0, ",".join(warnings))
+	record.campaign_metrics["money_blocked_decision_points"] = 5
+	warnings = analyzer.hard_warnings_for(record, config)
+	_ok("money 5 hard warning", warnings.find("MONEY_BLOCKED") >= 0, ",".join(warnings))
+	_ok("canonical money threshold 5", config.hard_money_blocked == 5)
+
+
+func _require_integration_flag(label: String, flags: Dictionary, key: String, content_exists: bool) -> void:
 	if not content_exists:
 		_ok(label, false, "content missing")
+		return
+	_ok(label, bool(flags.get(key, false)), "expected production result absent")
 
 
 func _plans_keep_hash(record: ProgressionLabRunRecord) -> bool:
@@ -326,6 +533,7 @@ func _core_metrics_equal(left: Dictionary, right: Dictionary) -> bool:
 	var keys: PackedStringArray = PackedStringArray([
 		"calendar_days", "total_actions", "work_actions", "dates", "rival_attempts", "rival_wins",
 		"money_end", "dates_by_girl", "dates_to_max_by_girl", "production_flags",
+		"money_blocked_decision_points", "daily_gate_blocked_decision_points",
 	])
 	for key in keys:
 		if JSON.stringify(left.get(key)) != JSON.stringify(right.get(key)):
@@ -399,3 +607,132 @@ func _save_manager() -> Variant:
 	if tree == null or tree.root == null:
 		return null
 	return tree.root.get_node_or_null("SaveManager")
+
+
+func _assert_seed_fixture(label: String, captured_raw: Variant, archetype: String, traits: Dictionary, plan_expected: Dictionary) -> void:
+	var captured: Dictionary = _as_dict(captured_raw)
+	var profile: Dictionary = _as_dict(captured.get("profile", {}))
+	_ok("%s archetype" % label, str(profile.get("archetype", "")) == archetype, str(profile.get("archetype", "")))
+	for trait_name in traits.keys():
+		var actual: float = float(profile.get(str(trait_name), -1.0))
+		var expected: float = float(traits[trait_name])
+		_ok("%s trait %s" % [label, str(trait_name)], absf(actual - expected) <= 0.000001, "actual=%s expected=%s" % [str(actual), str(expected)])
+	var plans_raw: Variant = captured.get("plans", [])
+	var plan: Dictionary = {}
+	if plans_raw is Array and not (plans_raw as Array).is_empty() and (plans_raw as Array)[0] is Dictionary:
+		plan = (plans_raw as Array)[0]
+	_ok("%s fillers" % label, _string_array_equal(plan.get("target_filler_girl_ids", []), plan_expected["fillers"]), str(plan.get("target_filler_girl_ids", [])))
+	_ok("%s rivals" % label, _string_array_equal(plan.get("target_ordinary_rival_ids", []), plan_expected["rivals"]), str(plan.get("target_ordinary_rival_ids", [])))
+	_ok("%s characteristics" % label, _char_targets_equal(plan.get("characteristic_targets", {}), plan_expected["chars"]), str(plan.get("characteristic_targets", {})))
+	_ok("%s outfits" % label, _string_array_equal(plan.get("target_outfit_ids", []), plan_expected["outfits"]))
+	_ok("%s outfit count" % label, int(plan.get("target_outfit_count", -1)) == int(plan_expected["outfit_count"]))
+	_ok("%s apartment ids" % label, _string_array_equal(plan.get("target_apartment_object_ids", []), plan_expected["apt"]))
+	_ok("%s apartment count" % label, int(plan.get("target_apartment_object_count", -1)) == int(plan_expected["apt_count"]))
+	_ok("%s venues" % label, _string_array_equal(plan.get("venue_visit_goals", []), plan_expected["venues"]), str(plan.get("venue_visit_goals", [])))
+	_ok("%s story girl" % label, str(plan.get("story_girl_id", "")) == str(plan_expected["story_girl"]))
+	_ok("%s story rival" % label, str(plan.get("story_rival_id", "")) == str(plan_expected["story_rival"]))
+
+
+func _pick_with_execution_seed(executor: StageExecutor, base_seed: int, planning_skill: float) -> String:
+	var rng: RandomNumberGenerator = ProgressionRng.make(base_seed, ProgressionRng.STREAM_EXECUTION_1)
+	var work := StageExecutor.Candidate.new()
+	work.category = "WORK"
+	work.content_id = "work"
+	work.score = 100.0
+	var date := StageExecutor.Candidate.new()
+	date.category = "DATE"
+	date.content_id = "date:alina:apartment"
+	date.score = 100.0
+	var candidates: Array = [date, work]
+	candidates.sort_custom(func(a: StageExecutor.Candidate, b: StageExecutor.Candidate) -> bool:
+		return a.content_id < b.content_id
+	)
+	executor.apply_execution_scores(candidates, "OTHER", 0, rng, planning_skill)
+	var chosen: StageExecutor.Candidate = executor.pick_scored_candidate(candidates)
+	return chosen.content_id if chosen != null else ""
+
+
+func _capture_isolation_plan(stage: int, isolation_mode: StringName) -> Dictionary:
+	var config := ProgressionLabConfig.new()
+	var profile: PlayerProfile = PlayerProfile.generate(config, ProgressionRng.make(1, ProgressionRng.STREAM_PROFILE), ProgressionLabConfig.ARCHETYPE_TYPICAL, 0.0)
+	var interests: CampaignInterests = CampaignInterests.generate(ProgressionRng.make(1, ProgressionRng.STREAM_CAMPAIGN_INTEREST))
+	var generator := StagePlanGenerator.new()
+	generator.config = config
+	generator.profile = profile
+	generator.interests = interests
+	generator.isolation_mode = isolation_mode
+	generator.isolation_characteristic_id = CharacteristicIds.APPEARANCE
+	generator.isolation_milestone = 1
+	return generator.generate(stage, ProgressionRng.make(1, ProgressionRng.stage_plan_stream(stage))).to_dict()
+
+
+func _assert_isolation_plan(label: String, plan: Dictionary, fillers: int, rivals: int, outfits: int, apt: int, has_appearance: bool) -> void:
+	var filler_ids: Variant = plan.get("target_filler_girl_ids", [])
+	var rival_ids: Variant = plan.get("target_ordinary_rival_ids", [])
+	var venues: Variant = plan.get("venue_visit_goals", [])
+	var chars: Variant = plan.get("characteristic_targets", {})
+	_ok("%s filler count" % label, filler_ids is Array and (filler_ids as Array).size() == fillers, str(filler_ids))
+	_ok("%s rival count" % label, rival_ids is Array and (rival_ids as Array).size() == rivals, str(rival_ids))
+	_ok("%s outfit count" % label, int(plan.get("target_outfit_count", -1)) == outfits)
+	_ok("%s apartment count" % label, int(plan.get("target_apartment_object_count", -1)) == apt)
+	_ok("%s appearance target" % label, (not has_appearance) or (chars is Dictionary and chars.has("appearance")))
+	_ok("%s story girl" % label, not str(plan.get("story_girl_id", "")).is_empty())
+	_ok("%s story rival" % label, not str(plan.get("story_rival_id", "")).is_empty())
+	_ok("%s no venue exploration" % label, venues is Array and (venues as Array).is_empty(), str(venues))
+
+
+func _merge_flags(flags: Dictionary, record: ProgressionLabRunRecord) -> void:
+	var raw: Variant = record.campaign_metrics.get("production_flags", {})
+	if not (raw is Dictionary):
+		return
+	for key in raw.keys():
+		if bool(raw[key]):
+			flags[str(key)] = true
+
+
+func _record_with_flag(records: Array, flag_name: String) -> ProgressionLabRunRecord:
+	for item in records:
+		if not (item is ProgressionLabRunRecord):
+			continue
+		var record: ProgressionLabRunRecord = item
+		var raw: Variant = record.campaign_metrics.get("production_flags", {})
+		if raw is Dictionary and bool(raw.get(flag_name, false)):
+			return record
+	return null
+
+
+func _plan_has_stage2_dress(record: ProgressionLabRunRecord) -> bool:
+	if record == null:
+		return false
+	for plan_raw in record.stage_plans:
+		if not (plan_raw is Dictionary):
+			continue
+		var plan: Dictionary = plan_raw
+		if int(plan.get("stage", 0)) == 2 and int(plan.get("target_outfit_count", 0)) >= 1:
+			return true
+	return false
+
+
+func _char_targets_equal(actual_raw: Variant, expected_raw: Variant) -> bool:
+	var actual: Dictionary = actual_raw if actual_raw is Dictionary else {}
+	var expected: Dictionary = expected_raw if expected_raw is Dictionary else {}
+	if actual.size() != expected.size():
+		return false
+	for key in expected.keys():
+		if int(actual.get(str(key), -999)) != int(expected[key]):
+			return false
+	for key in actual.keys():
+		if not expected.has(str(key)):
+			return false
+	return true
+
+
+func _string_array_equal(actual_raw: Variant, expected_raw: Variant) -> bool:
+	var actual: Array = actual_raw if actual_raw is Array else []
+	var expected: Array = expected_raw if expected_raw is Array else []
+	if actual.size() != expected.size():
+		return false
+	for i in range(actual.size()):
+		if str(actual[i]) != str(expected[i]):
+			return false
+	return true

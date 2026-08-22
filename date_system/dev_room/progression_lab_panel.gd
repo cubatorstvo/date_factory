@@ -72,6 +72,7 @@ var _selected_record: Variant = null
 var _specific_record: Variant = null
 var _selected_seed: int = -1
 var _running: bool = false
+var _isolation_running: bool = false
 var _completed: int = 0
 var _total: int = 0
 var _export_dest_dir: String = ""
@@ -526,7 +527,16 @@ func _prepare_config() -> Variant:
 	_set_prop(_config, "end_story_stage", int(_end_stage_spin.value))
 	_set_prop(_config, "base_seed_start", int(_seed_start_spin.value))
 	_set_prop(_config, "archetype_mode", _current_archetype_mode())
+	_set_prop(_config, "batch_size", 1)
 	return _config
+
+
+func _force_ui_batch_size() -> void:
+	_set_prop(_config, "batch_size", 1)
+	if _runner == null:
+		return
+	var runner_config: Variant = _get_prop(_runner, "config")
+	_set_prop(runner_config, "batch_size", 1)
 
 
 func _on_run_pressed() -> void:
@@ -544,9 +554,10 @@ func _on_run_pressed() -> void:
 	_total = int(_n_spin.value)
 	_running = true
 	_set_running_ui(true)
-	_progress_label.text = "Starting 0 / %d" % _total
-	_emit_status("Monte Carlo run started")
+	_show_run_progress(0, _total, 0.0, 0.0, 0.0)
+	_emit_status("Monte Carlo: прогон 0 / %d" % _total)
 	_runner.configure(config, int(_n_spin.value), int(_seed_start_spin.value), int(_end_stage_spin.value), _current_archetype_mode())
+	_force_ui_batch_size()
 	await _pump_batches()
 	if _runner != null and _runner.has_method("get_result"):
 		_result = _runner.get_result()
@@ -561,12 +572,15 @@ func _on_cancel_pressed() -> void:
 
 func _cancel_run() -> void:
 	_running = false
+	_isolation_running = false
 	if _runner != null and _runner.has_method("cancel"):
 		_runner.cancel()
 	_set_running_ui(false)
 
 
 func _pump_batches() -> void:
+	_show_run_progress(_completed, _total, 0.0, 0.0, 0.0)
+	await get_tree().process_frame
 	while _running:
 		var finished: bool = true
 		if _runner != null and _runner.has_method("process_batch"):
@@ -579,20 +593,34 @@ func _pump_batches() -> void:
 
 
 func _on_batch_progress(completed: Variant, total: Variant, runs_per_second: Variant, elapsed_sec: Variant, remaining_sec: Variant) -> void:
-	_completed = int(completed)
-	_total = int(total)
+	_show_run_progress(int(completed), int(total), float(runs_per_second), float(elapsed_sec), float(remaining_sec))
+
+
+func _show_run_progress(completed: int, total: int, runs_per_second: float, elapsed_sec: float, remaining_sec: float) -> void:
+	_completed = completed
+	_total = total
 	var mean_ms: float = 0.0
-	var rps: float = float(runs_per_second)
-	if rps > 0.0:
-		mean_ms = 1000.0 / rps
-	_progress_label.text = "Progress: %d / %d · %.2f runs/s · mean %.1f ms/run · elapsed %s · ETA %s" % [
-		_completed,
-		_total,
-		rps,
-		mean_ms,
-		_format_seconds(float(elapsed_sec)),
-		_format_seconds(float(remaining_sec)),
-	]
+	if runs_per_second > 0.0:
+		mean_ms = 1000.0 / runs_per_second
+	var line: String = "Прогон %d / %d" % [completed, total]
+	if total > 0:
+		line += " · %.1f%%" % (100.0 * float(completed) / float(total))
+	if completed > 0:
+		line += " · %.2f/s · mean %.0f ms · elapsed %s · ETA %s" % [
+			runs_per_second,
+			mean_ms,
+			_format_seconds(elapsed_sec),
+			_format_seconds(remaining_sec),
+		]
+	if _progress_label != null:
+		_progress_label.text = line
+	if _isolation_running and _isolation_status != null:
+		_isolation_status.text = "Goal Isolation: прогон %d / %d · ETA %s" % [
+			completed,
+			total,
+			_format_seconds(remaining_sec),
+		]
+	_emit_status(line)
 
 
 func _set_running_ui(is_running: bool) -> void:
@@ -683,6 +711,7 @@ func _on_goal_isolation_pressed() -> void:
 		level = int(meta_dict.get("level", level))
 	var content_mode: String = str(_isolation_mode.get_item_metadata(_isolation_mode.selected))
 	_running = true
+	_isolation_running = true
 	_set_running_ui(true)
 	_isolation_status.text = "Running Goal Isolation (%s %d, %s, TYPICAL, N=1000)..." % [
 		CharacteristicIds.display_name(stat_id),
@@ -691,9 +720,12 @@ func _on_goal_isolation_pressed() -> void:
 	]
 	_emit_status("Goal Isolation started")
 	var previous: Variant = _result
+	_completed = 0
+	_total = 1000
 	_prepare_config()
 	if _runner.has_method("begin_goal_isolation"):
 		_runner.begin_goal_isolation(stat_id, level, content_mode, 1000, int(_seed_start_spin.value), int(_end_stage_spin.value))
+		_force_ui_batch_size()
 		await _pump_batches()
 		if _runner.has_method("get_result"):
 			_isolation_result = _runner.get_result()
@@ -706,6 +738,7 @@ func _on_goal_isolation_pressed() -> void:
 		_running = false
 		_set_running_ui(false)
 	_result = previous
+	_isolation_running = false
 	_isolation_status.text = "Goal Isolation finished. Compare work actions, work-only streak, days, Goal Friction, dead days."
 	_apply_overview()
 	_emit_status("Goal Isolation finished")

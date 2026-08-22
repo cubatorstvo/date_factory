@@ -210,6 +210,10 @@ func _rank(sorted_values: PackedFloat64Array, value: float) -> float:
 	return clampf((float(less) + 0.5 * float(equal)) / float(count), 0.0, 1.0)
 
 
+func hard_warnings_for(record: ProgressionLabRunRecord, config: ProgressionLabConfig) -> PackedStringArray:
+	return _hard_warnings_for(record, config)
+
+
 func _hard_warnings_for(record: ProgressionLabRunRecord, config: ProgressionLabConfig) -> PackedStringArray:
 	var warnings: PackedStringArray = record.hard_warnings.duplicate()
 	var metrics: Dictionary = record.campaign_metrics

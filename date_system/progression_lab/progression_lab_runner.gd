@@ -40,6 +40,7 @@ func configure(p_config: ProgressionLabConfig, p_n: int, p_base_seed_start: int,
 	_analyzer = ProgressionLabAnalyzer.new()
 	_exporter = ProgressionLabExporter.new()
 	_configured = true
+	_emit_progress()
 
 
 func process_batch() -> bool:

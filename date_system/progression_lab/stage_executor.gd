@@ -189,7 +189,14 @@ func _execute_stage(stage: int, base_seed: int, target_stage: int) -> void:
 				break
 			continue
 		idle_skips = 0
-		var chosen: Candidate = _pick_candidate(candidates)
+		apply_execution_scores(
+			candidates,
+			_campaign.last_primary_category() if _campaign != null else "",
+			_campaign.consecutive_same_count() if _campaign != null else 0,
+			_execution_rng,
+			profile.planning_skill if profile != null else 1.0
+		)
+		var chosen: Candidate = pick_scored_candidate(candidates)
 		var executed: bool = _execute_candidate(chosen, plan)
 		if not executed:
 			if chosen != null:
@@ -223,7 +230,8 @@ func _execute_stage(stage: int, base_seed: int, target_stage: int) -> void:
 func _collect_candidates(plan: StagePlan) -> Array:
 	var candidates: Array = []
 	var barrier_done: bool = _barrier_complete(plan)
-	_count_blocks(plan)
+	var snapshot: Dictionary = collect_blocking_snapshot(plan)
+	apply_blocking_snapshot(snapshot)
 	if plan.stage >= 2 and not _owns_dressed_outfit():
 		_add_outfit_candidates(candidates, plan, true)
 	for girl_id in plan.target_filler_girl_ids:
@@ -243,36 +251,71 @@ func _collect_candidates(plan: StagePlan) -> Array:
 	return candidates
 
 
-func _count_blocks(plan: StagePlan) -> void:
+func collect_blocking_snapshot(plan: StagePlan) -> Dictionary:
+	var money_ids: PackedStringArray = PackedStringArray()
+	var daily_ids: PackedStringArray = PackedStringArray()
 	var daily: Variant = _daily_activity()
 	var economy: Variant = _economy_service()
 	var money: int = int(economy.get_money()) if economy != null else 0
-	for girl_id in plan.target_filler_girl_ids:
+	var girl_ids: Array[StringName] = plan.target_filler_girl_ids.duplicate()
+	if plan.story_girl_id != &"" and not girl_ids.has(plan.story_girl_id):
+		girl_ids.append(plan.story_girl_id)
+	for girl_id in girl_ids:
 		if _girl_maxed(girl_id):
 			continue
+		var girl_goal: String = _girl_goal(girl_id)
 		if daily != null and not bool(daily.is_available(daily.date_key(girl_id), 1)):
-			_campaign.daily_gate_blocked_decision_points += 1
-			_current_stage_metrics.daily_gate_blocked_decision_points += 1
-			var friction: Dictionary = _campaign.ensure_goal(_girl_goal(girl_id))
-			friction["blocked_by_daily_gate_count"] = int(friction["blocked_by_daily_gate_count"]) + 1
-		var date_cost: int = _estimated_date_cost(girl_id)
-		if date_cost > money:
-			_campaign.money_blocked_decision_points += 1
-			_current_stage_metrics.money_blocked_decision_points += 1
-			var money_friction: Dictionary = _campaign.ensure_goal(_girl_goal(girl_id))
-			money_friction["blocked_by_money_count"] = int(money_friction["blocked_by_money_count"]) + 1
+			daily_ids.append(girl_goal)
+		if _estimated_date_cost(girl_id) > money:
+			money_ids.append(girl_goal)
+	var rival_ids: Array[StringName] = plan.target_ordinary_rival_ids.duplicate()
+	if plan.story_rival_id != &"" and not rival_ids.has(plan.story_rival_id):
+		rival_ids.append(plan.story_rival_id)
+	var rivals: Variant = _rivals_service()
+	for rival_id in rival_ids:
+		if rivals == null:
+			continue
+		if bool(rivals.is_defeated(rival_id)) and not bool(rivals.is_repeatable_rival(rival_id)):
+			continue
+		if bool(rivals.is_discovered(rival_id)) and not bool(rivals.can_challenge_now(rival_id)):
+			daily_ids.append(_rival_goal(rival_id))
 	for characteristic_id in plan.characteristic_targets.keys():
 		var upgrade: CharacteristicUpgradeDefinition = _upgrade_for(StringName(str(characteristic_id)))
 		if upgrade == null:
 			continue
+		var characteristics: Variant = _characteristic_service()
+		if characteristics != null and int(characteristics.get_value(StringName(str(characteristic_id)))) >= int(plan.characteristic_targets[characteristic_id]):
+			continue
+		var char_goal: String = _char_goal(StringName(str(characteristic_id)), int(plan.characteristic_targets[characteristic_id]))
 		if daily != null and not bool(daily.is_available("characteristic_training", 1)):
-			_campaign.daily_gate_blocked_decision_points += 1
-			_current_stage_metrics.daily_gate_blocked_decision_points += 1
+			daily_ids.append(char_goal)
 		if upgrade.price > money:
-			_campaign.money_blocked_decision_points += 1
-			_current_stage_metrics.money_blocked_decision_points += 1
-			var char_friction: Dictionary = _campaign.ensure_goal(_char_goal(StringName(str(characteristic_id)), int(plan.characteristic_targets[characteristic_id])))
-			char_friction["blocked_by_money_count"] = int(char_friction["blocked_by_money_count"]) + 1
+			money_ids.append(char_goal)
+	for blocked in _cash_blocked_goals(plan, []):
+		var cash_goal: String = str(blocked.get("goal_id", ""))
+		if cash_goal.is_empty() or money_ids.has(cash_goal):
+			continue
+		money_ids.append(cash_goal)
+	return {
+		"money": money_ids,
+		"daily_gate": daily_ids,
+	}
+
+
+func apply_blocking_snapshot(snapshot: Dictionary) -> void:
+	var money_ids: Array = snapshot.get("money", PackedStringArray())
+	var daily_ids: Array = snapshot.get("daily_gate", PackedStringArray())
+	if _campaign != null:
+		_campaign.record_blocking_decision_point(money_ids, daily_ids)
+	if _current_stage_metrics != null:
+		_current_stage_metrics.record_blocking_decision_point(money_ids, daily_ids)
+	if detailed and (not money_ids.is_empty() or not daily_ids.is_empty()):
+		_log_line("Money-blocked goals:")
+		for goal_id in money_ids:
+			_log_line("- %s" % str(goal_id))
+		_log_line("Daily-gate-blocked goals:")
+		for goal_id in daily_ids:
+			_log_line("- %s" % str(goal_id))
 
 
 func _add_girl_candidates(candidates: Array, plan: StagePlan, girl_id: StringName, priority: float, category: String) -> void:
@@ -400,8 +443,6 @@ func _add_rival_candidates(candidates: Array, _plan: StagePlan, rival_id: String
 		candidates.append(meet)
 		return
 	if not bool(rivals.can_challenge_now(rival_id)):
-		_campaign.daily_gate_blocked_decision_points += 1
-		_current_stage_metrics.daily_gate_blocked_decision_points += 1
 		return
 	var list: Array = competitions.get_competitions_for_rival(rival_id)
 	if list.is_empty():
@@ -631,7 +672,7 @@ func _cash_blocked_goals(plan: StagePlan, existing: Array) -> Array:
 	return blocked
 
 
-func _pick_candidate(candidates: Array) -> Candidate:
+func pick_scored_candidate(candidates: Array) -> Candidate:
 	var best: Candidate = null
 	for candidate in candidates:
 		if candidate == null:
@@ -644,16 +685,59 @@ func _pick_candidate(candidates: Array) -> Candidate:
 	return best
 
 
-func _score(priority: float, daily_gate: bool, unblock: bool, novel: bool, content_id: String) -> float:
+func decision_noise_amplitude(planning_skill: float) -> float:
+	var noise_max: float = config.decision_noise_max if config != null else 15.0
+	return noise_max * (1.0 - planning_skill)
+
+
+func repetition_penalty_for(candidate_primary_activity: String, previous_primary_activity: String, consecutive_count: int) -> float:
+	if candidate_primary_activity.is_empty() or candidate_primary_activity != previous_primary_activity:
+		return 0.0
+	var step: float = config.repetition_penalty_per_step if config != null else 8.0
+	return step * float(consecutive_count)
+
+
+func base_candidate_score(priority: float, daily_gate: bool, unblock: bool, novel: bool) -> float:
 	var score: float = priority
-	if daily_gate:
+	if daily_gate and config != null:
 		score += config.daily_gate_bonus
-	if unblock:
+	elif daily_gate:
+		score += 20.0
+	if unblock and config != null:
 		score += config.unblock_bonus
-	if novel:
+	elif unblock:
+		score += 25.0
+	if novel and config != null:
 		score += config.novelty_bonus
-	var consecutive: int = _campaign.consecutive_same_count()
-	score -= config.repetition_penalty_per_step * float(consecutive)
+	elif novel:
+		score += 10.0
+	return score
+
+
+func apply_execution_scores(
+	candidates: Array,
+	previous_primary: String,
+	consecutive_count: int,
+	rng: RandomNumberGenerator,
+	planning_skill: float
+) -> void:
+	var amplitude: float = decision_noise_amplitude(planning_skill)
+	for candidate in candidates:
+		if candidate == null:
+			continue
+		var decision_noise: float = 0.0
+		if rng != null:
+			decision_noise = rng.randf_range(-amplitude, amplitude)
+		var penalty: float = repetition_penalty_for(candidate.category, previous_primary, consecutive_count)
+		candidate.score = candidate.score + decision_noise - penalty
+
+
+func _pick_candidate(candidates: Array) -> Candidate:
+	return pick_scored_candidate(candidates)
+
+
+func _score(priority: float, daily_gate: bool, unblock: bool, novel: bool, content_id: String) -> float:
+	var score: float = base_candidate_score(priority, daily_gate, unblock, novel)
 	if content_id.is_empty():
 		pass
 	return score
@@ -739,6 +823,8 @@ func _reseed_girl_tags(girl_id: StringName) -> void:
 		state.revealed_negative_tag_ids.clear()
 	var tag_rng: RandomNumberGenerator = ProgressionRng.make(_run_base_seed, "TAGS:%s" % String(girl_id))
 	girls.apply_initial_known_tags(girl_id, tag_rng)
+	if girl_id == GirlCatalog.ID_EVA or bool(girls.has_filler_reward(FillerRewardCatalog.ID_EVA_READ_PEOPLE)):
+		_campaign.set_flag("eva_knowledge")
 
 
 func _exec_date(candidate: Candidate, plan: StagePlan) -> bool:
@@ -783,7 +869,7 @@ func _exec_date(candidate: Candidate, plan: StagePlan) -> bool:
 	_campaign.note_venue(candidate.venue_id)
 	if candidate.urgent_taxi:
 		_campaign.set_flag("rita_taxi")
-	if candidate.backup_outfit_id != &"":
+	if candidate.backup_outfit_id != &"" and candidate.backup_outfit_id != candidate.outfit_id:
 		_campaign.set_flag("nika_backup")
 	if candidate.venue_id == &"restaurant":
 		_campaign.set_flag("restaurant_date")
@@ -791,6 +877,8 @@ func _exec_date(candidate: Candidate, plan: StagePlan) -> bool:
 			_campaign.set_flag("sonya_venue_x2")
 		if engine != null and engine.get_session_state() != null and engine.get_session_state().characteristic_source_used:
 			_campaign.set_flag("restaurant_characteristic_unlock")
+	if engine != null and engine.get_session_state() != null and engine.get_session_state().accent_object_id != &"":
+		_campaign.set_flag("katya_accent")
 	var moves: PackedStringArray = PackedStringArray()
 	var situations: PackedStringArray = PackedStringArray()
 	if play.has("moves"):
@@ -1282,7 +1370,13 @@ func _estimated_date_cost(girl_id: StringName) -> int:
 		if not found or price < cheapest:
 			cheapest = price
 			found = true
-	return cheapest
+	var taxi_cost: int = 0
+	var girls: Variant = _girls_service()
+	var daily: Variant = _daily_activity()
+	if girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_RITA_URGENT_TAXI)):
+		if daily != null and not bool(daily.is_available(daily.date_key(girl_id), 1)):
+			taxi_cost = FillerRewardCatalog.RITA_TAXI_COST
+	return cheapest + taxi_cost
 
 
 func _upgrade_for(characteristic_id: StringName) -> CharacteristicUpgradeDefinition:

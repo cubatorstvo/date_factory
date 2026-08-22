@@ -33,7 +33,7 @@ func _generate_fillers(plan: StagePlan, definition: StageDefinition, rng: Random
 		fillers = definition.filler_girl_ids.duplicate()
 	var target_count: int = config.filler_base_count
 	if isolation_mode == ProgressionLabConfig.ISOLATION_FULL:
-		target_count = fillers.size()
+		target_count = mini(3, fillers.size())
 	elif isolation_mode == ProgressionLabConfig.ISOLATION_MINIMAL:
 		target_count = mini(config.filler_base_count, fillers.size())
 	elif rng.randf() < profile.completionism:
@@ -252,9 +252,7 @@ func _generate_venues(plan: StagePlan, rng: RandomNumberGenerator) -> void:
 		venue_ids.append(&"restaurant")
 	for venue_id in venue_ids:
 		var visit: bool = false
-		if isolation_mode == ProgressionLabConfig.ISOLATION_FULL:
-			visit = true
-		elif isolation_mode == ProgressionLabConfig.ISOLATION_MINIMAL:
+		if isolation_mode != &"":
 			visit = false
 		else:
 			visit = rng.randf() < profile.exploration

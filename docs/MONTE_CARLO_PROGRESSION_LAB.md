@@ -783,24 +783,29 @@ new Outfit
 new Apartment Object
 ```
 
-Repetition:
+Repetition applies only to a candidate that continues the current primary activity:
 
 ```text
-repetition_penalty =
-    8 * current_consecutive_same_primary_action_count
+if candidate_primary_activity == previous_primary_activity:
+    repetition_penalty =
+        8 * current_consecutive_same_primary_action_count
+else:
+    repetition_penalty = 0
 ```
 
-Decision noise:
+Example after three consecutive WORK actions: WORK penalty = 24, DATE penalty = 0, TRAINING penalty = 0.
+
+Decision noise uses the per-stage `EXECUTION_n` stream (`_execution_rng`):
 
 ```text
 noise_amplitude =
     15.0 * (1.0 - planning_skill)
 
 decision_noise =
-    rng.randf_range(-noise_amplitude, +noise_amplitude)
+    _execution_rng.randf_range(-noise_amplitude, +noise_amplitude)
 ```
 
-Choose highest final score.
+Score every candidate with noise first, then choose highest final score.
 
 Tie break:
 
@@ -1233,6 +1238,28 @@ rating_end
 money_blocked_decision_points
 daily_gate_blocked_decision_points
 
+These campaign/stage metrics count **decision points**, not blocked goals.
+
+At one decision point:
+
+```text
+0 blocked goals → +0
+1 blocked goal  → +1
+5 blocked goals → +1
+```
+
+If at least one unmet planned goal is money-blocked, `money_blocked_decision_points += 1`. If at least one is daily-gate-blocked, `daily_gate_blocked_decision_points += 1`. Each type is counted at most once per decision point.
+
+Detailed seed logs include the blocked goal lists for that decision point:
+
+```text
+Money-blocked goals:
+- <goal_id>
+
+Daily-gate-blocked goals:
+- <goal_id>
+```
+
 progress_beats
 dead_progress_days
 max_consecutive_dead_progress_days
@@ -1285,6 +1312,11 @@ support_actions
 calendar_days_from_first_attempt_to_completion
 blocked_by_money_count
 blocked_by_daily_gate_count
+```
+
+Per-goal blocking counts increment for **each blocked goal** at the decision point, independently of the campaign decision-point counters.
+
+Example: three money-blocked goals at one decision point give `money_blocked_decision_points += 1` and `blocked_by_money_count += 1` on each of those three goals.
 ```
 
 Friction ratio:
@@ -2169,10 +2201,11 @@ Plan:
 ```text
 exactly 2 required filler
 0 optional ordinary rivals
-0 optional Outfit beyond mandatory gate
+0 optional Outfit beyond mandatory Stage 2 dress-up gate
 0 optional Apartment Objects
 selected Characteristic target
 mandatory Story progression
+0 Venue exploration goals
 ```
 
 ## FULL_STAGE_CONTENT
@@ -2186,7 +2219,10 @@ all ordinary rivals
 2 current-stage Apartment Objects
 selected Characteristic target
 mandatory Story progression
+0 Venue exploration goals
 ```
+
+Goal Isolation uses these fixed diagnostic plans. Venue exploration goals are created only in the ordinary Monte Carlo StagePlan flow. A production Date may still visit a Venue while executing another diagnostic goal; that visit is an execution action, not a long-term Venue exploration goal.
 
 Run:
 
@@ -2307,6 +2343,16 @@ Nika Backup Outfit
 Eva initial knowledge
 ```
 
+Each case ends with exactly one explicit result: PASS or FAIL.
+
+```text
+expected production content exists + flag/result observed → PASS
+expected production content exists + flag/result absent → FAIL
+required canonical production content cannot be resolved → FAIL with "content missing"
+```
+
+Canonical seed fixtures freeze exact archetype, trait values (tolerance 1e-6) and StagePlan fields. Same content/config/base_seed must reproduce identical PlayerProfile, interests, StagePlans, summary metrics and detailed action sequence. Different EXECUTION seeds with `planning_skill < 1` can select different valid actions.
+
 Verify simulation uses production results and records them in metrics/logs.
 
 ---
@@ -2424,6 +2470,13 @@ Update relevant Developer Room documentation.
 - production integration tests проходят;
 - export tests проходят;
 - documentation синхронизирована.
+- execution RNG участвует в candidate scoring;
+- repetition penalty применяется только к continuing primary activity;
+- blocking campaign metrics считаются per decision point;
+- Goal Friction blocking counts считаются per goal;
+- Goal Isolation FULL_STAGE_CONTENT имеет fixed diagnostic plan без Venue exploration goals;
+- integration tests имеют explicit PASS/FAIL semantics;
+- canonical seed fixtures проверяют exact StagePlans.
 
 После завершения сделай отдельный commit:
 

@@ -65,6 +65,19 @@ func ensure_goal(goal_id: String) -> Dictionary:
 	return entry
 
 
+func record_blocking_decision_point(money_blocked_goal_ids: Array, daily_gate_blocked_goal_ids: Array) -> void:
+	if not money_blocked_goal_ids.is_empty():
+		money_blocked_decision_points += 1
+		for goal_id in money_blocked_goal_ids:
+			var money_entry: Dictionary = ensure_goal(str(goal_id))
+			money_entry["blocked_by_money_count"] = int(money_entry["blocked_by_money_count"]) + 1
+	if not daily_gate_blocked_goal_ids.is_empty():
+		daily_gate_blocked_decision_points += 1
+		for goal_id in daily_gate_blocked_goal_ids:
+			var daily_entry: Dictionary = ensure_goal(str(goal_id))
+			daily_entry["blocked_by_daily_gate_count"] = int(daily_entry["blocked_by_daily_gate_count"]) + 1
+
+
 func record_goal_action(goal_id: String, is_support: bool, day_index: int) -> void:
 	if goal_id.is_empty():
 		return
