@@ -44,7 +44,8 @@
 ## City density
 
 - Характеристики героя 0–5, repeatable upgrade за 300 от текущего `PlayerState`
-- `WorldState.city_stage` 1–3 открывает пачки filler-девушек и filler-rivals; сюжетные цели — Stage + Rating
+- `WorldState.city_stage` 1–3 открывает пачки filler-девушек и filler-rivals; сюжетные цели — Stage + Rating. Stage 1 filler: Алина / Вика / Даша. Марина — Stage 2. High-level Stage 1–4: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md)
+- Apartment Local coverage: Stage 1 `0/12`, Stage 2 `4/12`, Stage 3 `8/12`, Stage 4 `12/12`; 1 object = 1 Tag = 1 Local Move
 - Повторяемые progression-активности идут через autoload `DailyActivityService` и календарный `day_index = floor(game_time_minutes / 1440)`
 - Канонические keys: `work`, `characteristic_training`, `date:<girl_id>`, `rival:<rival_id>`, `story_event:<event_id>`; базовый daily limit = 1
 - Работа 100/ч, затем 200/ч после Story Stage 3; после MAX Оли limit `work` = 2 (обычная смена + подработка / checkbox)
@@ -52,10 +53,11 @@
 - Обычная встреча с конкретной девушкой — один бесплатный `date:<girl_id>` в календарный день; разные девушки независимы
 - Reward Риты `rita_urgent_taxi` — платная same-day встреча `$75`, не обход паузы; бесплатный слот остаётся использованным
 - Повторная попытка Rival — `rival:<rival_id>` раз в календарный день, включая story rival до первой победы
-- Одежда — набор купленных Outfit, экипировка перед свиданием, максимум `+1` к одной характеристике; тематический наряд даёт Outfit Move
-- Подарок Марины `marina_free_outfit_pending` делает следующую обычную покупку доступного Outfit в магазине `$0`; отдельного gift-списка нет
+- Одежда — набор купленных Outfit, экипировка перед свиданием, максимум `+1` к одной характеристике; Outfit как build-layer — Stage 2, Outfit Move — Stage 3
+- Подарок Марины `marina_free_outfit_pending` делает следующую обычную покупку доступного Outfit в магазине `$0`; отдельного gift-списка нет; Марина — Stage 2 Casual exception
+- Катя даёт `Акцент интерьера`: выбранный Apartment Local Move positive `+2`
 - Обычные девушки `0..10`; Actress / Mine Boss / Magazine Editor `0..10`; Scientist / President `0..15`
-- Stage 1 filler positives: Alina 8, Marina 7, Vika 7, Dasha 6; для 8 и 7 добавлены difficulty presets `wide` и `easy`
+- Stage 1 filler positives: Alina 8, Vika 7, Dasha 6; для 8 и 7 добавлены difficulty presets `wide` и `easy`
 - `GirlProfile.initial_known_tag_count` — базовый source of truth (filler 2, story 0); Ева добавляет `+1`
 - После полного revealed positive/negative set оставшиеся unknown Tags автоматически раскрываются
 - Combo: три последовательных успешных разных тега, максимум +1 за свидание

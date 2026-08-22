@@ -1,6 +1,6 @@
 # TECH PLAN — Date System Lab
 
-Поверхность реализации текущей `main`. Канон правил: [`MASTER_GDD.md`](MASTER_GDD.md), [`DATE_SYSTEM_LAB.md`](DATE_SYSTEM_LAB.md).
+Поверхность реализации текущей `main`. Канон правил: [`MASTER_GDD.md`](MASTER_GDD.md), [`DATE_SYSTEM_LAB.md`](DATE_SYSTEM_LAB.md), [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
 
 ## Порядок слоёв
 

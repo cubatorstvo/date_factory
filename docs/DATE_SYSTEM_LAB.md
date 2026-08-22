@@ -2,6 +2,15 @@
 
 Каноническая спецификация текущей `main`. Код должен совпадать с этим документом.
 
+High-level Stage 1–4 progression — [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md):
+
+```text
+Stage 1 = Apartment / fundamentals
+Stage 2 = Apartment + Café + Leisure / Local + basic Outfit
+Stage 3 = + Restaurant / Outfit Moves / synergy
+Stage 4 = mastery / 12-Tag Apartment
+```
+
 ## Назначение
 
 Date System Lab — канон ядра свиданий и комната разработчика.
@@ -40,13 +49,15 @@ Design-content хранится в `res://`. Runtime-прогресс — в `us
 ### Outfit Move (`OUTFIT`)
 
 - Постоянный Tag и текст. Есть только у тематической одежды.
+- Outfit Moves / Outfit Source появляются на Stage 3. До этого Outfit даёт только `+1` к одной характеристике.
 - Источник «Одежда» показывается, если экипированный Outfit имеет Outfit Move.
 - Расходуется один раз за свидание.
 
 ### Local Move (`LOCAL`)
 
 - Ходы объектов выбранного Date Venue. Недоступные ходы видны с требованием.
-- После одного выбранного Local Move весь источник «Место свидания» израсходован до конца свидания.
+- Venue / Local Source появляется на Stage 2. Apartment на Stage 1 имеет 0 Local Moves.
+- После одного выбранного Local Move весь источник «Место свидания» израсходован до конца свидания. Обычный positive result = `+1`; после MAX Кати акцентный Apartment Local Move даёт positive `+2`. Negative result всегда `-1`.
 
 ### Формирование вариантов эпизода
 
@@ -110,7 +121,7 @@ Trait места (`homebody` / квартира, `loves_cafe` / кафе, `loves
 
 Распределение Trait: Алина и Соня — Домоседка; Марина, Ника, Редактор журнала — Чувствует ауру; Вика и Актриса — Ценит внешность; Даша и Кира — Любит сильных; Катя и Учёная — Любит кафе; Лера, Ева и Начальница шахты — Любит рестораны; Оля, Рита и Президент — Любит обеспеченных.
 
-Активные места: квартира, кафе, ресторан. Подготовленная квартира `0`, неподготовленная `-1`. Наряд хранится в сессии как часть подготовки; универсального `Outfit.score_bonus` нет.
+Активные DateVenues по Stage: квартира (Stage 1); квартира + кафе + Leisure Center (Stage 2); плюс ресторан (Stage 3). Подготовленная квартира `0`, неподготовленная `-1`. Наряд хранится в сессии как часть подготовки; универсального `Outfit.score_bonus` нет. High-level unlock и обучающая роль — [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
 
 Характеристики героя `0..5`. `raise_stakes` требует `Капитал >= 5`. Trait характеристики читает формальное requirement хода.
 
@@ -150,6 +161,7 @@ progression.marina_free_outfit_pending = false
 progression.current_outfit_id = casual
 progression.apartment.level = 1
 progression.apartment.purchased_upgrade_ids = []
+progression.apartment.accent_local_object_id = ""
 world.current_location_id = city_center
 world.unlocked_location_ids = [city_center, apartment, cafe]
 girls.girls_by_id = {}
@@ -185,7 +197,7 @@ delete_save()
 ```text
 {
   "save_version": 15,
-  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0, "rating": 0, "muscle": 0, "appearance": 0, "capital": 0, "aura": 0, "last_work_day_index": -1 }, "progression": { "purchased_ids": [], "current_outfit_id": "casual", "apartment": { "level": 1, "purchased_upgrade_ids": [], "prepared": true } }, "world": { "current_location_id": "city_center", "unlocked_location_ids": ["city_center", "apartment", "cafe"], "city_stage": 1 }, "girls": { "girls_by_id": {} }, "dating": { "active_date": {} }, "rivals": { "rivals_by_id": {} }, "automation": { "unlocked": false, "initial_clones_granted": false, "total_clones": 0, "work_allocation_percent": 50, "work_income_fraction": 0, "dating_progress_fraction": 0, "current_expansion_scope": "city", "expansion_progress": 0, "purchased_upgrade_ids": [] } } }
+  "game_state": { "flow": { "game_time_minutes": 0 }, "story": { "stage": 1, "finale_reached": false }, "player": { "money": 0, "rating": 0, "muscle": 0, "appearance": 0, "capital": 0, "aura": 0, "last_work_day_index": -1 }, "progression": { "purchased_ids": [], "current_outfit_id": "casual", "apartment": { "level": 1, "purchased_upgrade_ids": [], "prepared": true, "accent_local_object_id": "" } }, "world": { "current_location_id": "city_center", "unlocked_location_ids": ["city_center", "apartment", "cafe"], "city_stage": 1 }, "girls": { "girls_by_id": {} }, "dating": { "active_date": {} }, "rivals": { "rivals_by_id": {} }, "automation": { "unlocked": false, "initial_clones_granted": false, "total_clones": 0, "work_allocation_percent": 50, "work_income_fraction": 0, "dating_progress_fraction": 0, "current_expansion_scope": "city", "expansion_progress": 0, "purchased_upgrade_ids": [] } } }
 }
 ```
 
@@ -612,7 +624,9 @@ equip_outfit(outfit_id) -> bool
 signal outfit_equipped(previous_outfit_id, current_outfit_id)
 ```
 
-Покупка — разовая, через `create_buy_outfit_action`: обычный `money_cost = price`, `OutfitNotOwnedRequirement`, `MinStoryStageRequirement`, `OwnOutfitEffect`. Если `marina_free_outfit_pending` и Outfit открыт текущим progression, ещё не owned и присутствует в обычном магазине, effective price = `$0`, player-facing `$0 · Подарок Марины`, та же кнопка покупки. Первая успешная покупка выдаёт выбранный Outfit, ставит `marina_free_outfit_pending = false`; остальные сразу снова по обычной цене. Если выбрать нечего, pending сохраняется. Отдельного gift-списка в player-facing магазине нет. Покупка добавляет Outfit во владение и делает его текущим. Перед свиданием можно бесплатно экипировать любой уже купленный Outfit. Один Outfit даёт максимум `+1` к одной характеристике; тематический наряд дополнительно даёт Outfit Move. Универсального бонуса к итогу свидания нет.
+Покупка — разовая, через `create_buy_outfit_action`: обычный `money_cost = price`, `OutfitNotOwnedRequirement`, `MinStoryStageRequirement`, `OwnOutfitEffect`. Если `marina_free_outfit_pending` и Outfit открыт текущим progression, ещё не owned и присутствует в обычном магазине, effective price = `$0`, player-facing `$0 · Подарок Марины`, та же кнопка покупки. Первая успешная покупка выдаёт выбранный Outfit, ставит `marina_free_outfit_pending = false`; остальные сразу снова по обычной цене. Если выбрать нечего, pending сохраняется. Отдельного gift-списка в player-facing магазине нет. Покупка добавляет Outfit во владение и делает его текущим. Перед свиданием можно бесплатно экипировать любой уже купленный Outfit.
+
+Outfit progression: Stage 1 — только `casual`; Stage 2 — Clothing Store и stat-only Outfit (`+1` к одной характеристике); Stage 3 — Outfit Move / Outfit Source. Универсального бонуса к итогу свидания нет. Марина — Stage 2 optional path к первому Outfit за `$0`. Девушки, доступные с Stage 2, кроме Марины, требуют для свидания Outfit выше Casual; отказ по смыслу: «Для этого свидания нужен образ интереснее повседневного.»
 
 `EffectiveStat = min(BaseStat + OutfitStatBonus, 5)`.
 
@@ -626,17 +640,33 @@ signal outfit_equipped(previous_outfit_id, current_outfit_id)
 level: int = 1
 purchased_upgrade_ids
 prepared: bool = true
+accent_local_object_id: StringName = ""
+```
+
+Apartment — единственный DateVenue, Local coverage которого строит сам игрок. Канон покрытия: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
+
+```text
+12 purchasable Apartment Local Objects
+12 canonical Tags
+1 Object = 1 unique Tag
+1 Object = 1 Local Move
+Stage 1: 0 / 12
+Stage 2: up to 4 / 12
+Stage 3: up to 8 / 12
+Stage 4: up to 12 / 12
 ```
 
 `ApartmentUpgradeDefinition`:
 
 ```text
-id, display_name, description, price, level_granted, granted_local_object_ids, required_filler_reward_id
+id, display_name, description, price, level_granted, granted_local_object_ids, min_story_stage, required_filler_reward_id
 ```
 
-Seed: `apartment_upgrade_1` — «Купить телевизор», цена 500, `level_granted = 2`, `granted_local_object_ids = [tv]`. После MAX Кати видна покупка `emperor_chair` — «Массажное кресло «Император»», $800, Local Moves care / status / humor.
+Точный список 12 объектов, Tags, цены и тексты Local Moves задаёт design block `Venues & Local Objects`. Текущий Date Lab seed (`tv`, `emperor_chair` и базовые `window` / `sofa` на квартире) не является финальным Apartment set.
 
 `ApartmentState.prepared` стартует `true`. После свидания в квартире квартира становится грязной (`prepared = false`). Уборка — игровое действие `$0 / 30 мин`. Награда Леры автоматически готовит квартиру перед каждым домашним свиданием.
+
+После MAX Кати открывается `Акцент интерьера`: игрок назначает один уже купленный Apartment Local Object. Accent Local Move: positive `+2`, negative `-1`. Обычный Apartment Local Move: `+1` / `-1`. Первое назначение входит в reward; последующая смена — через Катю / Furniture Store за заметную денежную стоимость (точную цену задаёт economy balancing).
 
 Autoload `ApartmentService`:
 
@@ -645,15 +675,26 @@ get_level() -> int
 is_prepared() -> bool
 is_upgrade_purchased(upgrade_id) -> bool
 create_upgrade_action(upgrade_id) -> GameAction
+get_accent_local_object_id() -> StringName
 ```
 
-`level` — UI/будущий визуальный tier, не score. Date System использует только `prepared`: подготовленная квартира `0`, неподготовленная `-1`. Итоговые Local Objects квартиры = базовые `DateVenue.local_object_ids` + объекты купленных upgrades.
+`level` — UI/будущий визуальный tier, не score. Date System использует `prepared` и resolved Local Objects: подготовленная квартира `0`, неподготовленная `-1`. Итоговые Local Objects квартиры = купленные Apartment Objects текущего прохождения. Stage 1 coverage = 0.
 
-Pipeline: `ApartmentUpgradeDefinition` → `ApartmentService.create_upgrade_action` → `ActionService` → `EconomyService` → `ApartmentUpgradeEffect` → `ApartmentState`. Повтор блокируется проверкой `is_upgrade_purchased`.
+Pipeline: `ApartmentUpgradeDefinition` → `ApartmentService.create_upgrade_action` → `ActionService` → `EconomyService` → `ApartmentUpgradeEffect` → `ApartmentState`. Повтор блокируется проверкой `is_upgrade_purchased`. Покупка уважает Stage cap покрытия (`0 / 4 / 8 / 12`).
 
 ## Story / Stages
 
 Кампания — последовательность сюжетных глав. Stage фиксирует итог главы; путь к итогу строят Rating, Rival, Economy, характеристики, одежда и квартира.
+
+Обучающая роль Stage 1–4 и порядок систем — [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md):
+
+```text
+Stage 1 — Foundations: Apartment-only, BASE + Characteristic, Casual, 0 Local Moves
+Stage 2 — Choice: Café + Leisure Center, Local Source, stat-only Outfit, Marina
+Stage 3 — Synergy: Restaurant, Outfit Moves, multi-system combinations
+Stage 4 — Mastery: полный ручной toolkit, 12-Tag Apartment
+Stage 5 — Factory Introduction
+```
 
 ```text
 Пролог (отдельный onboarding)
@@ -746,9 +787,11 @@ Production: `stage = 6`, `completion_requirement = WorldReachRequirement`. Requi
 
 Базовый typed-класс: `apply() -> void`. Реализации: `UnlockLocationStageEffect(location_id)` вызывает `WorldService.unlock_location(location_id)`; `SetCityStageStageEffect(city_stage)` вызывает `WorldService.set_city_stage` (idempotent max); `UnlockAutomationStageEffect` открывает фабрику; `GrantInitialClonesStageEffect` один раз выдаёт 10 стартовых клонов.
 
-Будущие типы (`UnlockGirlStageEffect`, `UnlockRivalStageEffect`, `UnlockPurchaseStageEffect`, `UnlockDateVenueStageEffect`, `UnlockSystemStageEffect`) добавляются вместе с persistent unlock соответствующей системы.
+Будущие типы (`UnlockGirlStageEffect`, `UnlockRivalStageEffect`, `UnlockPurchaseStageEffect`, `UnlockDateVenueStageEffect`, `UnlockSystemStageEffect`) добавляются вместе с persistent unlock соответствующей системы. `UnlockDateVenueStageEffect(date_venue_id)` открывает DateVenue для свиданий; это отдельно от `UnlockLocationStageEffect`.
 
-Канонические `on_enter_effects` заполняются только уже определёнными в текущем проекте persistent unlock'ами этой главы. Stage 1, 3 и Stage 6: `on_enter_effects = []`. Stage 2: `UnlockLocationStageEffect(restaurant)`, `SetCityStageStageEffect(2)`. Stage 4: `SetCityStageStageEffect(3)`. Stage 5: `UnlockAutomationStageEffect`, затем `GrantInitialClonesStageEffect`. `reconcile_stage_entry_state()` восстанавливает `restaurant` и достигнутый City Stage для сохранений Stage 2+. Новых мировых локаций нет.
+Канонические `on_enter_effects` заполняются persistent unlock'ами главы. Stage 1 и Stage 6: `on_enter_effects = []`. Stage 2: `SetCityStageStageEffect(2)`, `UnlockLocationStageEffect(leisure_center)`, `UnlockLocationStageEffect(clothing_store)`, `UnlockLocationStageEffect(restaurant)`, `UnlockDateVenueStageEffect(cafe)`, `UnlockDateVenueStageEffect(leisure_center)`. Stage 3: `UnlockDateVenueStageEffect(restaurant)`. Stage 4: `SetCityStageStageEffect(3)`. Stage 5: `UnlockAutomationStageEffect`, затем `GrantInitialClonesStageEffect`. `reconcile_stage_entry_state()` восстанавливает DateVenues, мировые локации и достигнутый City Stage для сохранений Stage 2+.
+
+Stage 2 также включает secondary objective «Приоденься»: купить любой образ выше Повседневного. Hint: Марина работает в магазине одежды. `ObjectiveService` показывает её рядом с главной сюжетной целью, пока условие не выполнено.
 
 `on_enter_effects` принадлежат **новому** активному Stage: завершение Stage 1 ставит `stage = 2` и применяет эффекты Stage 2.
 
@@ -865,10 +908,12 @@ Seed каталога текущего дизайна:
 |---|---|---|---|---|
 | `city_center` | Центральная часть города | CITY_ZONE | — | текущая и открыта |
 | `apartment` | Квартира | INTERIOR | `city_center` | открыта |
-| `cafe` | Кафе | INTERIOR | `city_center` | открыта |
-| `restaurant` | Ресторан | INTERIOR | `city_center` | закрыта до Stage 2 |
+| `cafe` | Кафе | INTERIOR | `city_center` | открыта как мир; DateVenue с Stage 2 |
+| `leisure_center` | Leisure Center | INTERIOR | `city_center` | закрыта до Stage 2 |
+| `clothing_store` | Магазин одежды | INTERIOR | `city_center` | закрыта до Stage 2 |
+| `restaurant` | Ресторан | INTERIOR | `city_center` | закрыта до Stage 2 как мир; DateVenue с Stage 3 |
 
-`START_LOCATION_ID = city_center`. `START_UNLOCKED_LOCATION_IDS = [city_center, apartment, cafe]`. `restaurant` закрыт на Stage 1 и открывается `UnlockLocationStageEffect` при входе в Stage 2 (после MAX Актрисы); там стоят Начальница шахты и Президент. Новых мировых локаций нет.
+`START_LOCATION_ID = city_center`. `START_UNLOCKED_LOCATION_IDS = [city_center, apartment, cafe]`. Кафе открыто на Stage 1 как место знакомства (Вика, Даша), но не как DateVenue. `leisure_center` и `clothing_store` открываются при входе в Stage 2. `restaurant` открывается как мировая локация при входе в Stage 2 (Начальница шахты, Оля, позже Президент); как DateVenue — на Stage 3. High-level DateVenue contract: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
 
 `LocationCatalog`:
 
@@ -972,6 +1017,7 @@ get_progress_text(girl_id: StringName) -> String
 | `RivalDefeatedGirlRequirement` | `rival_id` | `RivalsService.is_defeated(rival_id)` | `"Победить <RivalDefinition.display_name>"` | `"Не выполнено"` / `"Выполнено"` |
 | `MinStageGirlRequirement` | `minimum_stage` | `StageService.get_current_stage() >= minimum_stage` | `"Этап игры"` | `"Stage <current> / <required>"` |
 | `MinCityStageGirlRequirement` | `minimum_city_stage` | `CityProgressionService.get_city_stage() >= minimum_city_stage` | `"Этап города"` | `"<current> / <required>"` |
+| `OutfitAboveCasualGirlRequirement` | — | текущий Outfit не `casual` | `"Образ"` | `"Повседневный"` / `"Выше повседневного"` |
 
 Новые типы (`AuthorityGirlRequirement`, `PurchaseGirlRequirement`, `CharacteristicGirlRequirement`, `StoryFlagGirlRequirement`) добавляют тот же контракт. `GirlsService` и `DatingService` работают только с базовым интерфейсом.
 
@@ -984,24 +1030,24 @@ Authored-набор родного города (17 девушек, все `coun
 | id | имя | локация | meet_requirements | date_requirements |
 |---|---|---|---|---|
 | `alina` | Алина | `city_center` | `MinCityStageGirlRequirement(1)` | `[]` |
-| `marina` | Марина | `city_center` | `MinCityStageGirlRequirement(1)` | `[]` |
 | `vika` | Вика | `cafe` | `MinCityStageGirlRequirement(1)` | `[]` |
 | `dasha` | Даша | `cafe` | `MinCityStageGirlRequirement(1)` | `[]` |
 | `girl_actress` | Актриса | `city_center` | `MinStageGirlRequirement(1)`, `RatingGirlRequirement(2)` | `RivalDefeatedGirlRequirement(rival_boris)` |
-| `katya` | Катя | `city_center` | `MinCityStageGirlRequirement(2)` | `[]` |
-| `lera` | Лера | `cafe` | `MinCityStageGirlRequirement(2)` | `[]` |
-| `kira` | Кира | `cafe` | `MinCityStageGirlRequirement(2)` | `[]` |
-| `olya` | Оля | `restaurant` | `MinCityStageGirlRequirement(2)` | `[]` |
-| `girl_mine_boss` | Начальница шахты | `restaurant` | `MinStageGirlRequirement(2)`, `RatingGirlRequirement(5)` | `RivalDefeatedGirlRequirement(rival_foreman)` |
-| `girl_magazine_editor` | Редактор журнала | `cafe` | `MinStageGirlRequirement(3)`, `RatingGirlRequirement(7)` | `RivalDefeatedGirlRequirement(rival_columnist)` |
-| `sonya` | Соня | `city_center` | `MinCityStageGirlRequirement(3)` | `[]` |
-| `nika` | Ника | `cafe` | `MinCityStageGirlRequirement(3)` | `[]` |
-| `rita` | Рита | `restaurant` | `MinCityStageGirlRequirement(3)` | `[]` |
-| `eva` | Ева | `restaurant` | `MinCityStageGirlRequirement(3)` | `[]` |
-| `girl_scientist` | Учёная | `city_center` | `MinStageGirlRequirement(4)`, `RatingGirlRequirement(10)` | `RivalDefeatedGirlRequirement(rival_academic)` |
-| `girl_president` | Президент | `restaurant` | `MinStageGirlRequirement(5)`, `RatingGirlRequirement(12)` | `RivalDefeatedGirlRequirement(rival_minister)` |
+| `marina` | Марина | `clothing_store` | `MinCityStageGirlRequirement(2)` | `[]` |
+| `katya` | Катя | `city_center` | `MinCityStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
+| `lera` | Лера | `cafe` | `MinCityStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
+| `kira` | Кира | `cafe` | `MinCityStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
+| `olya` | Оля | `restaurant` | `MinCityStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
+| `girl_mine_boss` | Начальница шахты | `restaurant` | `MinStageGirlRequirement(2)`, `RatingGirlRequirement(5)` | `RivalDefeatedGirlRequirement(rival_foreman)`, `OutfitAboveCasualGirlRequirement` |
+| `girl_magazine_editor` | Редактор журнала | `cafe` | `MinStageGirlRequirement(3)`, `RatingGirlRequirement(7)` | `RivalDefeatedGirlRequirement(rival_columnist)`, `OutfitAboveCasualGirlRequirement` |
+| `sonya` | Соня | `city_center` | `MinCityStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
+| `nika` | Ника | `cafe` | `MinCityStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
+| `rita` | Рита | `restaurant` | `MinCityStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
+| `eva` | Ева | `restaurant` | `MinCityStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
+| `girl_scientist` | Учёная | `city_center` | `MinStageGirlRequirement(4)`, `RatingGirlRequirement(10)` | `RivalDefeatedGirlRequirement(rival_academic)`, `OutfitAboveCasualGirlRequirement` |
+| `girl_president` | Президент | `restaurant` | `MinStageGirlRequirement(5)`, `RatingGirlRequirement(12)` | `RivalDefeatedGirlRequirement(rival_minister)`, `OutfitAboveCasualGirlRequirement` |
 
-Filler доступны по City Stage без соперника. Сюжетные: знакомство → связанный Rival в той же локации → победа → свидание → MAX → следующий Stage. Каноническая связь `RivalDefinition.linked_girl_id`; сервисы не хардкодят пары. `RivalsService.get_rivals_at_current_location` показывает сюжетного соперника только если `GirlsService.is_discovered(linked_girl_id)` и filler-соперника при `minimum_city_stage <= city_stage`. City Stage 1 даёт четыре параллельных filler-линии; две завершённые открывают Actress (Rating 2). После Actress City Stage 2 и cooldown 2 дня. Две из трёх новых filler открывают Mine Boss (Rating 5); после неё работа 200/ч. Оставшаяся filler City Stage 2 открывает Editor (Rating 7). После Editor City Stage 3 и cooldown 1 день. Две из трёх последних filler открывают Scientist (Rating 10); оставшаяся или Factory Rating открывает President (Rating 12). Filler не завершают Stage.
+Filler доступны по City Stage без соперника. Сюжетные: знакомство → связанный Rival в той же локации → победа → свидание → MAX → следующий Stage. Каноническая связь `RivalDefinition.linked_girl_id`; сервисы не хардкодят пары. `RivalsService.get_rivals_at_current_location` показывает сюжетного соперника только если `GirlsService.is_discovered(linked_girl_id)` и filler-соперника при `minimum_city_stage <= city_stage`. City Stage 1 даёт три параллельных filler-линии (Алина, Вика, Даша); две завершённые открывают Actress (Rating 2). После Actress City Stage 2, Clothing Store, Café/Leisure DateVenues и cooldown 2 дня. Марина — Stage 2 Casual exception и optional path к первому Outfit. Остальные Stage 2+ girls требуют Outfit выше Casual; отказ: «Для этого свидания нужен образ интереснее повседневного.» Две из новых filler открывают Mine Boss (Rating 5); после неё работа 200/ч. Оставшаяся filler City Stage 2 открывает Editor (Rating 7). После Editor City Stage 3 и cooldown 1 день. Две из трёх последних filler открывают Scientist (Rating 10); оставшаяся или Factory Rating открывает President (Rating 12). Filler не завершают Stage.
 
 `GirlCatalog`:
 
@@ -1123,7 +1169,7 @@ Story Girl MAX расширяет игру и двигает крупный prog
 | Марина | `marina_free_outfit` | Один бесплатный уже доступный незакупленный Outfit через обычный Outfit Store: `$0 · Подарок Марины`. Право в `marina_free_outfit_pending` сохраняется, пока выбрать нечего. |
 | Вика | `vika_base_reroll` | Один раз за свидание за $25 заменить 3 текущих BASE; Situation и источники не меняются. |
 | Даша | `dasha_soften_negative` | Первая отрицательная реакция свидания: `-1 → 0`; тег всё равно раскрывается как отрицательный, combo сбрасывается. |
-| Катя | `katya_emperor_chair` | Apartment upgrade $800, Local Object `emperor_chair` (care / status / humor). |
+| Катя | `katya_interior_accent` | Назначить один уже купленный Apartment Local Object акцентным. Accent Local Move: `+2` / `-1`. Первое назначение входит в reward; смена Accent — через Катю / Furniture Store за заметную денежную стоимость. |
 | Лера | `lera_apartment_cleaning` | После квартирного свидания `prepared = false`; уборка $0 / 30 мин; с наградой квартира автоматически готовится перед домашним свиданием. |
 | Кира | `kira_express_styling` | Чекбокс подготовки $40: временная Внешность +1 на это свидание, cap 5. Не расходует `characteristic_training`. |
 | Оля | `olya_overtime` | Daily limit `work` становится 2. Вторая смена 50% ставки / 60 мин; чекбокс на первой смене даёт суммарно $150 / 120 мин на seed-ставке $100. |
@@ -1181,12 +1227,13 @@ signal date_completed(girl_id, relationship_delta, current_relationship)
 "Сегодня уже встречались. Следующая встреча: завтра."
 "Отношения с этой девушкой уже достигли максимума"
 "Свидание уже идёт"
+"Для этого свидания нужен образ интереснее повседневного."
 "<description>: <progress_text>"   # первый невыполненный date_requirement
 ```
 
 `get_date_requirements_status` — `RequirementStatus` по `date_requirements`. `DateAvailableRequirement` по-прежнему делегирует в `can_start_date` / `get_start_date_failure_reason`.
 
-`get_available_date_venues` — единая точка списка мест для Presentation. Сейчас возвращает enabled `DateVenue` текущей Date System. Карточка места показывает toolkit: Local Objects и теги их Local Moves, а не quality, не preference score и не автоматическую рекомендацию. Теги окрашиваются знанием текущей девушки тем же `GameTermFormatter`, что чипы «Любит» / «Не любит»: весь `[ИМЯ]`, не только скобки (UNKNOWN — текущий цвет текста, POSITIVE — зелёный, NEGATIVE — красный). Название Local Object остаётся нейтральным. Замок и требование — одна пара: если характеристика не выполнена, рядом с тегом `🔒` и `Требуется: <имя> <нужно> (сейчас <есть>)`, цвет знания тега сохраняется; если выполнена — ни замка, ни текста требования (текущие значения уже в HUD). `is_date_venue_available` истинно только для мест из этого списка.
+`get_available_date_venues` — единая точка списка мест для Presentation. Возвращает DateVenues, открытые текущим Story Stage по [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md): Stage 1 — Apartment; Stage 2 — Apartment, Café, Leisure Center; Stage 3+ — плюс Restaurant. Карточка места показывает toolkit: Local Objects и теги их Local Moves, а не quality, не preference score и не автоматическую рекомендацию. Теги окрашиваются знанием текущей девушки тем же `GameTermFormatter`, что чипы «Любит» / «Не любит»: весь `[ИМЯ]`, не только скобки (UNKNOWN — текущий цвет текста, POSITIVE — зелёный, NEGATIVE — красный). Название Local Object остаётся нейтральным. Замок и требование — одна пара: если характеристика не выполнена, рядом с тегом `🔒` и `Требуется: <имя> <нужно> (сейчас <есть>)`, цвет знания тега сохраняется; если выполнена — ни замка, ни текста требования (текущие значения уже в HUD). `is_date_venue_available` истинно только для мест из этого списка. Закрытое DateVenue: «Название 🔒». Stage 1 Apartment показывает пустой Local toolkit (0 Local Moves).
 
 Venue — это toolkit. Место не даёт общего quality/preference score. Наряд остаётся выбранной частью подготовки без универсального `Outfit.score_bonus`.
 
@@ -1448,7 +1495,7 @@ CharacteristicService.get_value(muscle / appearance / capital / aura)
 Следующий шаг: <next_step_text>
 ```
 
-Stage 1–5 строят подцели из meet/date requirements сюжетной девушки (Rating, знакомство, сюжетный соперник, отношения до `relationship_max`). MinStage не показывается: его закрывает сам текущий Stage. Stage 6 строит подцели из `AutomationService` (охват текущего масштаба, затем расширение). Marker `← ЦЕЛЬ` помечает локацию, девушку, соперника, свидание или Фабрику текущей подцели и не запрещает остальные активности. Game Terms внутри цели, tutorial и milestone остаются глобальными.
+Stage 1–5 строят подцели из meet/date requirements сюжетной девушки (Rating, знакомство, сюжетный соперник, отношения до `relationship_max`). MinStage не показывается: его закрывает сам текущий Stage. На Stage 2 рядом с главной целью показывается secondary objective «Приоденься», пока нет Outfit выше Casual. Stage 6 строит подцели из `AutomationService` (охват текущего масштаба, затем расширение). Marker `← ЦЕЛЬ` помечает локацию, девушку, соперника, свидание или Фабрику текущей подцели и не запрещает остальные активности. Game Terms внутри цели, tutorial и milestone остаются глобальными.
 
 `GuidanceService` показывает одно overlay-сообщение за раз: first-use tutorial (`objectives_intro`, `dating_intro`, `local_objects_intro`, `locked_moves_intro`, `rival_intro`, `factory_intro`) и milestone смены Stage. `GuidancePopup` закрывает весь экран dim-слоем и ставит карточку по центру через full-rect anchors (offsets 0); центр держится при 1280×720, 1920×1080 и смене размера окна. История показа — только `GuidanceState`, не игровой прогресс.
 
@@ -1458,9 +1505,9 @@ Stage 1–5 строят подцели из meet/date requirements сюжетн
 
 Прокачка показывает четыре характеристики 0–5. Мышца: «Тренажёр 1 — $50 / 60 мин»; после MAX Алины рядом «Тренажёр 2 — $35 / 60 мин». Внешность / Капитал / Аура по-прежнему `$300` мгновенно. На 5/5 — «Максимум». Повышение идёт через `CharacteristicService.create_upgrade_action` → `ActionService.execute` и не зависит от `purchased_ids`.
 
-Раздел Одежда показывает текущий наряд и магазин по Story Stage: Stage 1 комплекты за 250, Stage 2 тематические за 700, Stage 4 за 1200. Купленные наряды надеваются бесплатно через `EquipmentService.equip_outfit`. Покупка — `create_buy_outfit_action(outfit_id)`. Date System Lab даёт явный selector любого Outfit как dev-инструмент.
+Раздел Одежда показывает текущий наряд и магазин по Story Stage: Stage 1 — только Casual; Stage 2 stat-only комплекты за 250; Stage 3 тематические Outfit Move за 700; Stage 4 за 1200. Secondary objective Stage 2 «Приоденься» указывает на этот магазин. Купленные наряды надеваются бесплатно через `EquipmentService.equip_outfit`. Покупка — `create_buy_outfit_action(outfit_id)`. Date System Lab даёт явный selector любого Outfit как dev-инструмент.
 
-Раздел Квартира показывает уровень квартиры, текущие доступные Local Objects и карточки upgrades. Seed: «Купить телевизор», цена 500, открывает `tv` (ЮМОР / ХИТРОСТЬ); кнопка «КУПИТЬ» через `ApartmentService.create_upgrade_action`. После покупки уровень становится 2, в toolkit квартиры появляется телевизор. Там же игровое действие `skip_to_08_00`: кнопка «Пропустить до 08:00» → `GameActionCatalog.make_skip_to_08_00()` → `ActionService.execute` (`time_cost_minutes` из `TimeService.minutes_until_next_morning`, 0 денег).
+Раздел Квартира показывает купленные Apartment Local Objects, Stage cap покрытия (`0 / 4 / 8 / 12`) и карточки доступных objects. Stage 1: пустой Local toolkit. После MAX Кати — выбор `Акцент интерьера`. Там же игровое действие `skip_to_08_00`: кнопка «Пропустить до 08:00» → `GameActionCatalog.make_skip_to_08_00()` → `ActionService.execute` (`time_cost_minutes` из `TimeService.minutes_until_next_morning`, 0 денег). Точный набор 12 objects — `Venues & Local Objects` block.
 
 Раздел Девушки показывает `GirlsService.get_discovered_girls()`: имя, «Отношения: N / MAX», «Контакт: Да / Нет». Если есть `date_requirements` — блок «Требования для свидания:» со статусами. При максимуме: «Отношения: 10 / 10 — МАКСИМУМ» для обычных и ранних сюжетных; «Отношения: 15 / 15 — МАКСИМУМ» для Учёной и Президента. Незнакомые девушки в этот список не входят — они появляются в мире через локацию.
 
@@ -1504,7 +1551,7 @@ signal episode_presentation_finished
 - `GirlProfile`: id, display_name, description, enabled, difficulty_preset_id, trait_id, positive_tag_ids, initial_known_tag_count, portrait, future_character_scene. Редактор выбирает Difficulty, положительные Tags, Trait и число начально известных Tags. Отрицательные предпочтения — вычисляемое дополнение к активным Tags. Требуемое число positive = `GirlDifficultyPreset.positive_tag_count`. Seed: 17 профилей с id как у `GirlCatalog`; обычные MAX 10, сюжетные MAX 15.
 - `GirlTrait`: id, display_name, description, enabled, kind (CHARACTERISTIC / VENUE), characteristic_id, date_venue_id
 - `DateLocalObject`: id, display_name, description, enabled, move_ids (kind LOCAL), future_visual_scene
-- `DateVenue`: id, display_name, description, enabled, uses_apartment_preparation, local_object_ids, future_location_scene
+- `DateVenue`: id, display_name, description, enabled, min_story_stage, uses_apartment_preparation, local_object_ids, future_location_scene
 - `Outfit`: id, display_name, description, enabled, price, future_visual_resource
 - `CharacteristicDefinition`: id, display_name, description, min_level, max_level
 - `UnlockRequirement`: stat_id, required_level
@@ -1609,39 +1656,43 @@ Player-facing текст проходит через глобальный `GameT
 
 Один объект может входить в несколько мест. После выбора любого LOCAL-хода объект целиком USED до конца DateSession.
 
+Каноническая Apartment-модель — 12 объектов × 1 unique Tag × 1 Local Move; покрытие `0 → 4 → 8 → 12`. Точный набор Apartment / Café / Leisure Center / Restaurant Objects задаёт `Venues & Local Objects` block. Таблица ниже — текущий Date Lab seed и не заменяет этот contract.
+
 | id | имя | ходы | req |
 |---|---|---|---|
 | window | Окно | `local_window_audacity` НАГЛОСТЬ; `local_window_care` ЗАБОТА | — |
 | sofa | Диван | `local_sofa_composure` САМООБЛАДАНИЕ; `local_sofa_dominance` ДОМИНИРОВАНИЕ | aura 2 на dominance |
-| tv | Телевизор | `local_tv_humor` ЮМОР; `local_tv_cunning` ХИТРОСТЬ | upgrade `apartment_upgrade_1` |
+| tv | Телевизор | `local_tv_humor` ЮМОР; `local_tv_cunning` ХИТРОСТЬ | текущий seed upgrade; не финальный Apartment object |
 | jukebox | Музыкальный автомат | `local_jukebox_humor` ЮМОР; `local_jukebox_audacity` НАГЛОСТЬ | — |
 | barista | Бариста | `local_barista_generosity` ЩЕДРОСТЬ; `local_barista_cunning` ХИТРОСТЬ | aura 2 на cunning |
 | waiter | Официант | `local_waiter_generosity` ЩЕДРОСТЬ; `local_waiter_status` СТАТУС | capital 2 на status |
 | piano | Рояль | `local_piano_humor` ЮМОР; `local_piano_dominance` ДОМИНИРОВАНИЕ | aura 3 на dominance |
-| emperor_chair | Массажное кресло «Император» | `local_emperor_care` ЗАБОТА; `local_emperor_status` СТАТУС; `local_emperor_humor` ЮМОР | upgrade Кати $800 |
+
+`emperor_chair` больше не является reward Кати. Reward Кати — `Акцент интерьера` над уже купленным Apartment Object.
 
 ## Seed Locations
 
-Venue — toolkit. Игровая ценность места = набор Local Objects.
+Venue — toolkit. Игровая ценность места = набор Local Objects. DateVenue availability по Stage: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
 
-| id | имя | enabled | объекты | квартира |
-|---|---|---|---|---|
-| apartment | Квартира | true | window, sofa (+ tv через upgrade) | preparation |
-| cafe | Кафе | true | window, jukebox, barista | нет |
-| restaurant | Ресторан | true | window, waiter, piano | нет |
-| park | Парк | false | — | нет |
-| cinema | Кинотеатр | false | — | нет |
-| arcade | Аркада | false | — | нет |
-| museum | Музей | false | — | нет |
-| planetarium | Планетарий | false | — | нет |
+| id | имя | enabled | DateVenue Stage | объекты | квартира |
+|---|---|---|---|---|---|
+| apartment | Квартира | true | 1 | 0 на старте; растут купленными objects | preparation |
+| cafe | Кафе | true | 2 | фиксированный set; текущий seed window, jukebox, barista | нет |
+| leisure_center | Leisure Center | true | 2 | фиксированный set; точный набор — `Venues & Local Objects` | нет |
+| restaurant | Ресторан | true | 3 | фиксированный set; текущий seed window, waiter, piano | нет |
+| park | Парк | false | — | — | нет |
+| cinema | Кинотеатр | false | — | — | нет |
+| arcade | Аркада | false | — | — | нет |
+| museum | Музей | false | — | — | нет |
+| planetarium | Планетарий | false | — | — | нет |
 
 ## Seed Outfits
 
-13 Outfit. `casual` с начала, без бонуса и без Outfit Move.
+13 Outfit. `casual` с начала, без бонуса и без Outfit Move. Outfit как build-layer — Stage 2; Outfit Moves — Stage 3.
 
-Stage 1, цена 250, только `+1`: `sport` мышца, `stylish` внешность, `business` капитал, `minimal_black` аура.
+Stage 2, цена 250, только `+1`: `sport` мышца, `stylish` внешность, `business` капитал, `minimal_black` аура.
 
-Stage 2, цена 700, `+1` и Outfit Move: `wrestling`, `magician`, `luxury`, `leather_jacket`.
+Stage 3, цена 700, `+1` и Outfit Move: `wrestling`, `magician`, `luxury`, `leather_jacket`.
 
 Stage 4, цена 1200, `+1` и Outfit Move: `stunt`, `model`, `philanthropist`, `black_turtleneck`.
 
@@ -1713,39 +1764,39 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 
 Алина `alina`: filler City Stage 1, `city_center`. Difficulty `wide`. Trait Домоседка. Positive: politeness, directness, care, generosity, composure, humor, risk, dominance. Тренер городского спортзала. Награда MAX: `alina_improved_gym`. Первая полноценная девушка: 8/12.
 
-Марина `marina`: filler City Stage 1, `city_center`. Difficulty `easy`. Trait Чувствует ауру. Positive: care, composure, directness, humor, politeness, flattery, status. Продавец магазина одежды. Награда MAX: `marina_free_outfit`.
-
 Вика `vika`: filler City Stage 1, `cafe`. Difficulty `easy`. Trait Ценит внешность. Positive: audacity, dominance, risk, humor, cunning, directness, care. Бариста Café. Награда MAX: `vika_base_reroll`.
 
 Даша `dasha`: filler City Stage 1, `cafe`. Difficulty `starter`. Trait Любит сильных. Positive: audacity, risk, humor, dominance, politeness, composure. Менеджер клиентского сервиса. Награда MAX: `dasha_soften_negative`.
 
-Катя `katya`: filler City Stage 2, `city_center`. Trait Любит кафе. Продавец мебельного магазина. Награда MAX: `katya_emperor_chair`.
+Марина `marina`: filler City Stage 2 / Story Stage 2, `clothing_store`. Difficulty `easy`. Trait Чувствует ауру. Positive: care, composure, directness, humor, politeness, flattery, status. Продавец магазина одежды. Casual exception: свидания доступны в Повседневном. Награда MAX: `marina_free_outfit`. Optional soft onboarding path Outfit system.
 
-Лера `lera`: filler City Stage 2, `cafe`. Trait Любит рестораны. Клининговый сервис. Награда MAX: `lera_apartment_cleaning`.
+Катя `katya`: filler City Stage 2, `city_center`. Trait Любит кафе. Продавец мебельного магазина. Date eligibility: Outfit выше Casual. Награда MAX: `katya_interior_accent`.
 
-Оля `olya`: filler City Stage 2, `restaurant`. Trait Любит обеспеченных. Positive: generosity, status, care, politeness. Предпринимательница. Награда MAX: `olya_overtime`.
+Лера `lera`: filler City Stage 2, `cafe`. Trait Любит рестораны. Клининговый сервис. Date eligibility: Outfit выше Casual. Награда MAX: `lera_apartment_cleaning`.
 
-Кира `kira`: filler City Stage 2, `cafe`. Trait Любит сильных. Стилист. Награда MAX: `kira_express_styling`.
+Оля `olya`: filler City Stage 2, `restaurant`. Trait Любит обеспеченных. Positive: generosity, status, care, politeness. Предпринимательница. Date eligibility: Outfit выше Casual. Награда MAX: `olya_overtime`.
 
-Соня `sonya`: filler City Stage 3, `city_center`. Trait Домоседка. VIP-менеджер Restaurant. Награда MAX: `sonya_restaurant_second_venue`.
+Кира `kira`: filler City Stage 2, `cafe`. Trait Любит сильных. Стилист. Date eligibility: Outfit выше Casual. Награда MAX: `kira_express_styling`.
 
-Ника `nika`: filler City Stage 3, `cafe`. Trait Чувствует ауру. Positive: cunning, directness, audacity, composure. Директор магазина одежды. Награда MAX: `nika_backup_outfit`.
+Соня `sonya`: filler City Stage 3, `city_center`. Trait Домоседка. VIP-менеджер Restaurant. Date eligibility: Outfit выше Casual. Награда MAX: `sonya_restaurant_second_venue`.
 
-Рита `rita`: filler City Stage 3, `restaurant`. Trait Любит обеспеченных. Positive: status, dominance, generosity, risk. Организатор мероприятий. Награда MAX: `rita_urgent_taxi`.
+Ника `nika`: filler City Stage 3, `cafe`. Trait Чувствует ауру. Positive: cunning, directness, audacity, composure. Директор магазина одежды. Date eligibility: Outfit выше Casual. Награда MAX: `nika_backup_outfit`.
 
-Ева `eva`: filler City Stage 3, `restaurant`. Trait Любит рестораны. Рекрутер / интервьюер. Награда MAX: `eva_read_people`.
+Рита `rita`: filler City Stage 3, `restaurant`. Trait Любит обеспеченных. Positive: status, dominance, generosity, risk. Организатор мероприятий. Date eligibility: Outfit выше Casual. Награда MAX: `rita_urgent_taxi`.
+
+Ева `eva`: filler City Stage 3, `restaurant`. Trait Любит рестораны. Рекрутер / интервьюер. Date eligibility: Outfit выше Casual. Награда MAX: `eva_read_people`.
 
 Актриса `girl_actress`: `city_center`, Stage 1 + Rating 2, соперник `rival_boris`. Trait Ценит внешность. `relationship_max = 10`. Начально известных Tags нет. City Stage 2 после MAX.
 
-Начальница шахты `girl_mine_boss`: `restaurant`, Stage 2 + Rating 5, соперник `rival_foreman`. Trait Любит рестораны. `relationship_max = 10`. Начально известных Tags нет. После MAX работа 200/ч.
+Начальница шахты `girl_mine_boss`: `restaurant`, Stage 2 + Rating 5, соперник `rival_foreman`. Trait Любит рестораны. `relationship_max = 10`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. Мировая локация ресторана открыта с Stage 2; DateVenue Restaurant — с Stage 3. После MAX работа 200/ч.
 
-Редактор журнала `girl_magazine_editor`: `cafe`, Stage 3 + Rating 7, соперник `rival_columnist`. Trait Чувствует ауру. `relationship_max = 10`. Начально известных Tags нет. City Stage 3 после MAX.
+Редактор журнала `girl_magazine_editor`: `cafe`, Stage 3 + Rating 7, соперник `rival_columnist`. Trait Чувствует ауру. `relationship_max = 10`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. City Stage 3 после MAX.
 
-Учёная `girl_scientist`: `city_center`, Stage 4 + Rating 10, соперник `rival_academic`. Trait Любит кафе. `relationship_max = 15`. Начально известных Tags нет. Factory открывается на Stage 5 после её MAX.
+Учёная `girl_scientist`: `city_center`, Stage 4 + Rating 10, соперник `rival_academic`. Trait Любит кафе. `relationship_max = 15`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. Factory открывается на Stage 5 после её MAX.
 
-Президент `girl_president`: `restaurant`, Stage 5 + Rating 12, соперник `rival_minister`. Trait Любит обеспеченных. `relationship_max = 15`. Начально известных Tags нет.
+Президент `girl_president`: `restaurant`, Stage 5 + Rating 12, соперник `rival_minister`. Trait Любит обеспеченных. `relationship_max = 15`. Начально известных Tags нет. Date eligibility: Outfit выше Casual.
 
-Ручная прогрессия без DEV: New Game Rating 0, City Stage 1 → две filler City Stage 1 → Actress MAX (Stage 2, City Stage 2, restaurant) → две filler City Stage 2 → MineBoss MAX (Stage 3, работа 200) → оставшаяся filler City Stage 2 → Editor MAX (Stage 4, City Stage 3) → две filler City Stage 3 → Scientist MAX (Stage 5, Factory) → оставшаяся filler или Factory Rating → President MAX (Stage 6). Filler не завершают Stage. Factory не закрывает охват родного города.
+Ручная прогрессия без DEV: New Game Rating 0, City Stage 1 → две filler City Stage 1 → Actress MAX (Stage 2, City Stage 2, Café/Leisure DateVenues, Clothing Store, objective «Приоденься») → две filler City Stage 2 / Марина в Casual → MineBoss MAX (Stage 3, Restaurant DateVenue, Outfit Moves, работа 200) → оставшаяся filler City Stage 2 → Editor MAX (Stage 4, City Stage 3, 12-Tag Apartment cap) → две filler City Stage 3 → Scientist MAX (Stage 5, Factory) → оставшаяся filler или Factory Rating → President MAX (Stage 6). Filler не завершают Stage. Factory не закрывает охват родного города. High-level contract: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
 
 ## Seed Situations
 
@@ -1759,7 +1810,7 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 15 BASE occurrences каждого Tag во всём baseline pool
 ```
 
-Формула пула: `6 OPENING / 18 CORE / 6 CLOSING`. Свидание собирает `1 Opening + 3 Core + 1 Closing`. Все Situations: `enabled = true`, `weight = 1.0`, `allowed_girl_ids = []`. Public-only (`allowed_venue_ids = cafe, restaurant`): `stranger_flirts`, `small_rule`, `staff_conflict`, `mistaken_married`, `lost_wallet`. Остальные — любой DateVenue.
+Формула пула: `6 OPENING / 18 CORE / 6 CLOSING`. Свидание собирает `1 Opening + 3 Core + 1 Closing`. Все Situations: `enabled = true`, `weight = 1.0`, `allowed_girl_ids = []`. Public-only (`allowed_venue_ids = cafe, leisure_center, restaurant`): `stranger_flirts`, `small_rule`, `staff_conflict`, `mistaken_married`, `lost_wallet`. Остальные — любой DateVenue.
 
 | id | phase | display_name | venue |
 |---|---|---|---|
@@ -1873,7 +1924,7 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 
 «ДЕВУШКИ»: selector Сложность (enabled presets), Trait, число начально известных Tags, рядом `Положительных тегов требуется: N` / `Отрицательных тегов: enabled−N` и теоретическая доступность. Таблица `TAG | НРАВИТСЯ | НЕ НРАВИТСЯ`: редактируются только positive tags, столбец «не нравится» — вычисляемое дополнение. Счётчик `Положительные теги: current / required`. В списке девушек видно Trait. N ≠ required → ERROR валидации.
 
-«МЕСТА»: `local_object_ids` выбранной DateVenue. Enabled seed: apartment, cafe, restaurant. Остальные DateVenue `enabled = false`.
+«МЕСТА»: `local_object_ids` выбранной DateVenue. Canonical enabled DateVenues: apartment (Stage 1), cafe и leisure_center (Stage 2), restaurant (Stage 3). Остальные DateVenue `enabled = false`. Точные Local Objects — `Venues & Local Objects` block.
 
 «СИТУАЦИИ»: ID, Display Name, Situation Text, Enabled, Allowed Phases, Allowed Venue IDs, Allowed Girl IDs, Weight, шесть BASE (Move ID, Tag, Option, Positive/Negative Result).
 
