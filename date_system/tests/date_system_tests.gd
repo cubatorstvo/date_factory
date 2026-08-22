@@ -2201,7 +2201,7 @@ func _test_objectives() -> void:
 	_ok("after cooldown invite again", view.next_step_text.contains("Пригласить Актрису на свидание"))
 	girls.change_relationship(GirlCatalog.ID_ACTRESS, int(girls.get_relationship_max(GirlCatalog.ID_ACTRESS)))
 	view = _rebuild_objective()
-	_ok("max advances to stage 2", view != null and view.stage == 2 and view.title == "Начальница шахты")
+	_ok("max advances to dress up", view != null and view.stage == 2 and view.title == "Приоденься")
 	gs.story.stage = 3
 	view = _rebuild_objective()
 	_ok("stage 3 editor", view != null and view.title == "Редактор журнала")
@@ -2310,6 +2310,13 @@ func _test_guidance() -> void:
 	_ok("load keeps factory tutorial", gs.guidance.has_seen_tutorial(GuidanceCatalog.ID_FACTORY_INTRO))
 	_ok("load keeps stage 5 milestone", gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_5))
 	_ok("load keeps stage 6 milestone", gs.guidance.has_seen_milestone(GuidanceCatalog.ID_STAGE_6))
+	var guidance_catalog: GuidanceCatalog = guidance.get_catalog() as GuidanceCatalog
+	var dating_intro: TutorialDefinition = guidance_catalog.get_tutorial(GuidanceCatalog.ID_DATING_INTRO) if guidance_catalog != null else null
+	_ok("21. daily date rule", dating_intro != null and dating_intro.body.contains("одна обычная встреча в календарный день") and dating_intro.body.contains("Сегодня уже встречались. Следующая встреча: завтра."))
+	_ok("21. rita same-day", dating_intro != null and dating_intro.body.contains("такси $75"))
+	var stage2_milestone: MilestoneDefinition = guidance_catalog.get_milestone(GuidanceCatalog.ID_STAGE_2) if guidance_catalog != null else null
+	var stage2_body: String = "\n".join(stage2_milestone.body_lines) if stage2_milestone != null else ""
+	_ok("21. stage 2 dress-up onboarding", stage2_body.contains("Приоденься") and not stage2_body.contains("Перерыв между свиданиями"))
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -2389,7 +2396,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game start outfit owned", gs.progression.owns_outfit(OutfitCatalog.START_OUTFIT_ID))
 	_ok("new_game start outfit current", gs.progression.current_outfit_id == OutfitCatalog.START_OUTFIT_ID)
 	_ok("new_game last_work_day_index -1", int(gs.player.last_work_day_index) == -1)
-	_ok("new_game apartment level 1", gs.progression.apartment.level == 1)
+	_ok("new_game apartment owned empty", gs.progression.apartment.owned_local_object_ids.is_empty())
 	_ok("new_game start location", gs.world.current_location_id == LocationCatalog.START_LOCATION_ID)
 	_ok("new_game start unlocked city", gs.world.has_unlocked(LocationCatalog.ID_CITY_CENTER))
 	_ok("new_game start unlocked apartment", gs.world.has_unlocked(LocationCatalog.ID_APARTMENT))
@@ -4300,7 +4307,7 @@ func _test_venues_and_local_objects() -> void:
 			production_ids.append(venue.id)
 	_ok("1b. canonical 4 venues", production_ids.size() == 4 and production_ids.has(&"apartment") and production_ids.has(&"cafe") and production_ids.has(&"leisure_center") and production_ids.has(&"restaurant"))
 	_ok("2. Stage 1 apartment 0 local objects", dating.resolve_date_local_object_ids(&"apartment").is_empty())
-	_ok("2b. Stage 1 furniture hidden", _visible_upgrade_ids(apartment).is_empty())
+	_ok("2b. Stage 1 furniture hidden", _visible_object_ids(apartment).is_empty())
 	gs.story.stage = 2
 	stages.reconcile_stage_entry_state()
 	_ok("3. Stage 2 apartment cafe leisure", dating.is_date_venue_available(alina_id, &"apartment") and dating.is_date_venue_available(alina_id, &"cafe") and dating.is_date_venue_available(alina_id, &"leisure_center") and not dating.is_date_venue_available(alina_id, &"restaurant"))
@@ -4362,13 +4369,13 @@ func _test_venues_and_local_objects() -> void:
 		apartment_tags[String(move.resolved_tag_id())] = true
 	_ok("11. apartment 12 objects 12 tags", apartment_objects.size() == 12 and apartment_moves.size() == 12 and apartment_tags.size() == 12)
 	sm.new_game()
-	_ok("12a. stage 1 furniture 0", _visible_upgrade_ids(apartment).is_empty())
+	_ok("12a. stage 1 furniture 0", _visible_object_ids(apartment).is_empty())
 	gs.story.stage = 2
-	_ok("12. stage 2 furniture 4", _visible_upgrade_ids(apartment).size() == 4)
+	_ok("12. stage 2 furniture 4", _visible_object_ids(apartment).size() == 4)
 	gs.story.stage = 3
-	_ok("13. stage 3 furniture 8", _visible_upgrade_ids(apartment).size() == 8)
+	_ok("13. stage 3 furniture 8", _visible_object_ids(apartment).size() == 8)
 	gs.story.stage = 4
-	_ok("14. stage 4 furniture 12", _visible_upgrade_ids(apartment).size() == 12)
+	_ok("14. stage 4 furniture 12", _visible_object_ids(apartment).size() == 12)
 	sm.new_game()
 	gs.story.stage = 2
 	gs.player.money = 150
@@ -4525,34 +4532,63 @@ func _test_progression_integration() -> void:
 			var move: DateMove = catalog.find_move(move_id)
 			if move != null:
 				tags[String(move.fixed_tag_id)] = true
-	_ok("apartment 12 objects", items.size() == 12 and object_ids.size() == 12)
-	_ok("apartment 12 unique moves", move_ids.size() == 12)
-	_ok("apartment 12 unique tags", tags.size() == 12)
+	_ok("19.1 no apartment level", not apartment.has_method("get_level") and not gs.progression.apartment.to_dict().has("level"))
+	_ok("19.2 apartment 12 objects", items.size() == 12 and object_ids.size() == 12)
+	_ok("19.3 apartment 12 unique moves", move_ids.size() == 12)
+	_ok("19.4 apartment 12 unique tags", tags.size() == 12)
 	sm.new_game()
-	_ok("new owned empty", gs.progression.apartment.owned_local_object_ids.is_empty())
-	_ok("stage 1 furniture 0", apartment_catalog.available_objects(1).is_empty() and _visible_upgrade_ids(apartment).is_empty())
-	_ok("stage 2 furniture 4", apartment_catalog.available_objects(2).size() == 4)
-	_ok("stage 3 furniture 8", apartment_catalog.available_objects(3).size() == 8)
-	_ok("stage 4 furniture 12", apartment_catalog.available_objects(4).size() == 12)
+	_ok("19.2 new owned empty", gs.progression.apartment.owned_local_object_ids.is_empty())
+	var stage2_items: Array[ApartmentObjectDefinition] = apartment_catalog.available_objects(2)
+	_ok("19.5 stage 1 furniture 0", apartment_catalog.available_objects(1).is_empty() and _visible_object_ids(apartment).is_empty())
+	_ok("19.5 stage 2 furniture 4", stage2_items.size() == 4)
+	_ok("19.5 sort stage then authored", stage2_items.size() == 4 and stage2_items[0].id == &"apartment__plaid" and stage2_items[1].id == &"apartment__tv" and stage2_items[2].id == &"apartment__record_player" and stage2_items[3].id == &"apartment__no_filter_cards")
+	_ok("19.5 stage 3 furniture 8", apartment_catalog.available_objects(3).size() == 8)
+	_ok("19.5 stage 4 furniture 12", apartment_catalog.available_objects(4).size() == 12)
+	_ok("19.5 service available_objects", apartment.get_available_objects().is_empty())
 	gs.story.stage = 2
 	gs.player.money = 150
 	var buy_plaid: ActionResult = actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
-	_ok("buy owned id", buy_plaid.success and gs.progression.apartment.owned_local_object_ids.has(&"apartment__plaid"))
-	_ok("buy local source", dating.resolve_date_local_object_ids(&"apartment").has(&"apartment__plaid"))
+	_ok("19.6 buy owned id", buy_plaid.success and gs.progression.apartment.owned_local_object_ids.has(&"apartment__plaid"))
+	_ok("19.6 buy local source", dating.resolve_date_local_object_ids(&"apartment").has(&"apartment__plaid"))
+	_ok("19.7 is_object_owned", bool(apartment.is_object_owned(&"apartment__plaid")))
+	_ok("19.8 owned alias", apartment.get_owned_object_ids().has(&"apartment__plaid") and apartment.get_owned_local_object_ids().has(&"apartment__plaid"))
+	_ok("19.9 active local moves", apartment.get_active_local_move_ids().has(&"apartment__plaid__get_comfortable"))
+	girls.grant_filler_reward_for_girl(GirlCatalog.ID_KATYA)
+	_ok("19.10 accent rejects unowned tv", apartment.assign_accent(&"apartment__tv") == false)
+	_ok("19.10 accent accepts owned plaid", bool(apartment.assign_accent(&"apartment__plaid")))
 	sm.new_game()
 	gs.story.stage = 2
 	if objectives != null:
 		var view: ObjectiveView = _rebuild_objective()
-		var dress_up: ObjectiveSubgoalView = _subgoal_by_id(view, &"dress_up")
-		_ok("dress up title", dress_up != null and dress_up.label == "Приоденься")
-		_ok("dress up description", dress_up != null and dress_up.progress_text.contains("Купи любой образ выше «Повседневного» в магазине одежды."))
-		_ok("dress up hint", dress_up != null and dress_up.progress_text.contains("Марина работает в магазине одежды"))
-		_ok("dress up incomplete", dress_up != null and dress_up.completed == false)
+		_ok("20. current dress up title", view != null and view.title == "Приоденься")
+		_ok("20. current dress up description", view != null and view.description.contains("Купи любой образ выше «Повседневного» в магазине одежды."))
+		_ok("20. current dress up hint", view != null and (view.description.contains("Марина работает в магазине одежды") or view.next_step_text.contains("Марина работает в магазине одежды")))
+		_ok("20. current dress up location", view != null and view.target_location_id == LocationCatalog.ID_CLOTHING_STORE)
+		_ok("20. no mine boss subgoals yet", _subgoal_by_id(view, &"meet_girl") == null)
 		gs.player.money = 250
 		actions.execute(equipment.create_buy_outfit_action(&"sport"))
 		view = _rebuild_objective()
-		dress_up = _subgoal_by_id(view, &"dress_up")
-		_ok("dress up complete on own", dress_up != null and dress_up.completed)
+		_ok("20. buy advances current objective", view != null and view.title == "Начальница шахты")
+		world.set_city_stage(2)
+		equipment.equip_outfit(OutfitCatalog.START_OUTFIT_ID)
+		girls.give_contact(GirlCatalog.ID_LERA)
+		_ok("20. owned dressed casual still gated", dating.can_start_date(GirlCatalog.ID_LERA) == false)
+		equipment.equip_outfit(&"sport")
+		_ok("20. equipped dressed opens gate", dating.can_start_date(GirlCatalog.ID_LERA))
+	sm.new_game()
+	gs.story.stage = 2
+	world.set_city_stage(2)
+	world.unlock_location(LocationCatalog.ID_CLOTHING_STORE)
+	if objectives != null:
+		var gift_view: ObjectiveView = _rebuild_objective()
+		_ok("20. gift path starts dress up", gift_view != null and gift_view.title == "Приоденься")
+		girls.grant_filler_reward_for_girl(GirlCatalog.ID_MARINA)
+		var gift: GameAction = equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS)
+		_ok("20. marina gift price 0", gift.money_cost == 0)
+		gs.player.money = 0
+		_ok("20. marina gift buy", actions.execute(gift).success and bool(equipment.owns_dressed_outfit()))
+		gift_view = _rebuild_objective()
+		_ok("20. gift advances current objective", gift_view != null and gift_view.title == "Начальница шахты")
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -4908,11 +4944,10 @@ func _test_character_progression() -> void:
 	sm.new_game()
 	gs.story.stage = 2
 	gs.player.money = 150
-	_ok("apartment start 1", int(apartment.get_level()) == 1)
+	_ok("apartment start empty", apartment.get_owned_object_ids().is_empty())
 	var buy_apt: ActionResult = actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
 	_ok("apartment buy success", buy_apt.success)
 	_ok("apartment money 0", gs.player.money == 0)
-	_ok("apartment level 2", int(apartment.get_level()) == 2)
 	_ok("apartment object stored", bool(apartment.is_object_owned(&"apartment__plaid")))
 	_ok("apartment grants plaid", apartment.get_owned_local_object_ids().has(&"apartment__plaid"))
 	girls.give_contact(GirlCatalog.ID_ALINA)
@@ -4950,7 +4985,7 @@ func _test_character_progression() -> void:
 	sm.new_game()
 	_ok("progress reset muscle", gs.player.muscle == 0)
 	_ok("progress reset outfit", equipment.get_current_outfit_id() == OutfitCatalog.START_OUTFIT_ID)
-	_ok("progress reset apartment", int(apartment.get_level()) == 1)
+	_ok("progress reset apartment", apartment.get_owned_object_ids().is_empty())
 	_ok("progress load", sm.load_game())
 	_ok("loaded money 1000", gs.player.money == 1000)
 	_ok("loaded muscle 1", gs.player.muscle == 1)
@@ -4959,7 +4994,7 @@ func _test_character_progression() -> void:
 	_ok("loaded aura 3", gs.player.aura == 3)
 	_ok("loaded owns business", bool(equipment.owns_outfit(&"business")))
 	_ok("loaded current business", equipment.get_current_outfit_id() == &"business")
-	_ok("loaded apartment 2", int(apartment.get_level()) == 2)
+	_ok("loaded apartment plaid", bool(apartment.is_object_owned(&"apartment__plaid")))
 	sm.delete_save()
 	var folder: String = sm.save_path.get_base_dir()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
@@ -4989,7 +5024,7 @@ func _test_character_progression() -> void:
 	_ok("migrated appearance 0", gs.player.appearance == 0)
 	_ok("migrated start outfit", bool(equipment.owns_outfit(OutfitCatalog.START_OUTFIT_ID)))
 	_ok("migrated current start", equipment.get_current_outfit_id() == OutfitCatalog.START_OUTFIT_ID)
-	_ok("migrated apartment 1", int(apartment.get_level()) == 1)
+	_ok("migrated apartment empty", apartment.get_owned_object_ids().is_empty())
 	sm.delete_save()
 	var v14_prog: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
 	_ok("wrote v14 outfit save", v14_prog != null)
@@ -5867,7 +5902,7 @@ func _first_locked_local_option(engine: DateEngine) -> DateMoveOption:
 	return null
 
 
-func _visible_upgrade_ids(apartment: Variant) -> Array[StringName]:
+func _visible_object_ids(apartment: Variant) -> Array[StringName]:
 	var ids: Array[StringName] = []
 	if apartment == null:
 		return ids

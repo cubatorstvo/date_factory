@@ -1818,8 +1818,8 @@ Store показывает предметы текущего Stage и более
 цена
 Tag
 Local Move text
-ownership state
-required City Stage
+ownership: available object / owned object
+required Story Stage
 ```
 
 После покупки:
@@ -1845,7 +1845,7 @@ Canonical reward Кати:
 State:
 
 ```text
-GameState.apartment_accent_object_id
+ApartmentState.accent_object_id
 ```
 
 ## First selection
@@ -1902,7 +1902,7 @@ Story Stage 4+: $1000
 
 ```text
 player selects one owned Apartment Object
-apartment_accent_object_id = selected object_id
+accent_object_id = selected object_id
 ```
 
 UI Furniture Store показывает текущий Accent:

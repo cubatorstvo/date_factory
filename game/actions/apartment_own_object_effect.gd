@@ -2,14 +2,13 @@ class_name ApartmentOwnObjectEffect
 extends ActionEffect
 
 @export var object_id: StringName = &""
-@export var target_level: int = 1
 
 
 func apply() -> void:
 	var apartment: Variant = _apartment_service()
 	if apartment == null:
 		return
-	apartment.own_object(object_id, target_level)
+	apartment.own_object(object_id)
 
 
 func get_description() -> String:

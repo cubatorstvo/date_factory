@@ -1,6 +1,7 @@
 extends Node
 
 signal outfit_equipped(previous_outfit_id: StringName, current_outfit_id: StringName)
+signal outfit_owned(outfit_id: StringName)
 
 const BUY_ACTION_PREFIX: String = "buy_outfit_"
 
@@ -84,10 +85,10 @@ func add_owned_outfit(outfit_id: StringName) -> void:
 		return
 	var previous_outfit_id: StringName = get_current_outfit_id()
 	progression.add_owned_outfit(outfit_id)
+	outfit_owned.emit(outfit_id)
 	var current_id: StringName = get_current_outfit_id()
 	if current_id != previous_outfit_id:
 		outfit_equipped.emit(previous_outfit_id, current_id)
-
 
 func equip_outfit(outfit_id: StringName) -> bool:
 	if not owns_outfit(outfit_id):

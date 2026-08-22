@@ -15,11 +15,8 @@ func get_catalog() -> ApartmentCatalog:
 	return _catalog
 
 
-func get_level() -> int:
-	var apartment: ApartmentState = _apartment()
-	if apartment == null:
-		return 1
-	return apartment.level
+func get_available_objects() -> Array[ApartmentObjectDefinition]:
+	return get_catalog().available_objects(_story_stage())
 
 
 func is_prepared() -> bool:
@@ -39,15 +36,7 @@ func set_prepared(value: bool) -> void:
 func is_object_visible(item: ApartmentObjectDefinition) -> bool:
 	if item == null or not item.enabled:
 		return false
-	if item.min_story_stage > _story_stage():
-		return false
-	if item.required_filler_reward_id == &"":
-		return true
-	var girls: Variant = get_node_or_null("/root/GirlsService")
-	if girls == null:
-		return false
-	return bool(girls.has_filler_reward(item.required_filler_reward_id))
-
+	return item.min_story_stage <= _story_stage()
 
 func create_clean_action() -> GameAction:
 	var action := GameAction.new()
@@ -96,11 +85,10 @@ func assign_accent(object_id: StringName) -> bool:
 		return false
 	if not has_interior_accent_reward():
 		return false
-	if not get_granted_local_object_ids().has(object_id):
+	if not is_object_owned(object_id):
 		return false
 	apartment.accent_object_id = object_id
 	return true
-
 
 func create_assign_accent_action(object_id: StringName) -> GameAction:
 	var action := GameAction.new()
@@ -128,23 +116,32 @@ func get_owned_local_object_ids() -> Array[StringName]:
 		if object_id == &"":
 			continue
 		var item: ApartmentObjectDefinition = get_catalog().get_object(object_id)
-		if item == null:
-			if not result.has(object_id):
-				result.append(object_id)
-			continue
-		if item.granted_local_object_ids.is_empty():
-			if not result.has(item.id):
-				result.append(item.id)
-			continue
-		for granted_id in item.granted_local_object_ids:
-			if granted_id != &"" and not result.has(granted_id):
-				result.append(granted_id)
+		var local_id: StringName = object_id
+		if item != null:
+			local_id = item.local_object_id()
+			if local_id == &"":
+				local_id = item.id
+		if not result.has(local_id):
+			result.append(local_id)
 	return result
 
-
-func get_granted_local_object_ids() -> Array[StringName]:
+func get_owned_object_ids() -> Array[StringName]:
 	return get_owned_local_object_ids()
 
+
+func get_active_local_move_ids() -> Array[StringName]:
+	var result: Array[StringName] = []
+	var catalog: DateContentCatalog = _date_catalog()
+	if catalog == null:
+		return result
+	for object_id in get_owned_object_ids():
+		var local_object: DateLocalObject = catalog.find_local_object(object_id)
+		if local_object == null:
+			continue
+		for move_id in local_object.move_ids:
+			if move_id != &"" and not result.has(move_id):
+				result.append(move_id)
+	return result
 
 func is_object_owned(object_id: StringName) -> bool:
 	var apartment: ApartmentState = _apartment()
@@ -153,19 +150,11 @@ func is_object_owned(object_id: StringName) -> bool:
 	return apartment.has(object_id)
 
 
-func own_object(object_id: StringName, target_level: int = 0) -> void:
+func own_object(object_id: StringName) -> void:
 	var apartment: ApartmentState = _apartment()
 	if apartment == null:
 		return
-	var level: int = target_level
-	if level <= 0:
-		var item: ApartmentObjectDefinition = get_catalog().get_object(object_id)
-		if item != null:
-			level = item.level_granted
-	if level > 0:
-		apartment.level = maxi(apartment.level, level)
 	apartment.add(object_id)
-
 
 func create_buy_apartment_object_action(object_id: StringName) -> GameAction:
 	var action := GameAction.new()
@@ -181,16 +170,10 @@ func create_buy_apartment_object_action(object_id: StringName) -> GameAction:
 	var stage := MinStoryStageRequirement.new()
 	stage.min_stage = item.min_story_stage
 	action.requirements.append(stage)
-	if item.required_filler_reward_id != &"":
-		var reward_req := FillerRewardUnlockedRequirement.new()
-		reward_req.reward_id = item.required_filler_reward_id
-		action.requirements.append(reward_req)
 	var effect := ApartmentOwnObjectEffect.new()
 	effect.object_id = item.id
-	effect.target_level = item.level_granted
 	action.effects.append(effect)
 	return action
-
 
 func _story_stage() -> int:
 	var gs: Variant = _game_state()
@@ -215,3 +198,12 @@ func _game_state() -> Variant:
 		push_error("GameState autoload missing")
 		return null
 	return node
+
+func _date_catalog() -> DateContentCatalog:
+	var dating: Variant = get_node_or_null("/root/DatingService")
+	if dating == null or not dating.has_method("get_catalog_service"):
+		return null
+	var catalog_service: DateCatalogService = dating.get_catalog_service()
+	if catalog_service == null:
+		return null
+	return catalog_service.catalog

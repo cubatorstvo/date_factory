@@ -696,6 +696,19 @@ func _build_venue_playground() -> Control:
 		_show_section("venue_playground")
 	)
 	root.add_child(sonya)
+	var apartment_for_state: Variant = get_node_or_null("/root/ApartmentService")
+	var prepared := CheckBox.new()
+	prepared.text = "Подготовлена"
+	prepared.button_pressed = apartment_for_state != null and bool(apartment_for_state.is_prepared())
+	prepared.toggled.connect(func(pressed: bool) -> void:
+		var apartment_toggle: Variant = get_node_or_null("/root/ApartmentService")
+		if apartment_toggle != null and apartment_toggle.has_method("set_prepared"):
+			apartment_toggle.set_prepared(pressed)
+		player.apartment_prepared = pressed
+		progress_store.save_store()
+		_show_section("venue_playground")
+	)
+	root.add_child(prepared)
 	root.add_child(LabUi.heading("Quick actions"))
 	var actions := HFlowContainer.new()
 	actions.add_theme_constant_override("h_separation", 8)
@@ -735,7 +748,7 @@ func _build_venue_playground() -> Control:
 	var current_accent: StringName = &""
 	if apartment != null:
 		current_accent = apartment.get_accent_object_id()
-		for object_id in apartment.get_owned_local_object_ids():
+		for object_id in _owned_object_ids(apartment):
 			var local_object: DateLocalObject = catalog_service.catalog.find_local_object(object_id)
 			var object_name: String = local_object.display_name if local_object != null else String(object_id)
 			accent_sel.add_item(object_name)
@@ -779,12 +792,15 @@ func _build_venue_playground_preview() -> Control:
 	var progress: GirlProgress = progress_store.get_girl_progress(_playground_girl_id, girl)
 	var player: DatePlayerSnapshot = progress_store.player_snapshot
 	var apartment: Variant = get_node_or_null("/root/ApartmentService")
-	var owned_ids: Array[StringName] = apartment.get_owned_local_object_ids() if apartment != null else []
+	var owned_ids: Array[StringName] = _owned_object_ids(apartment)
 	var owned_count: int = owned_ids.size()
 	var girls: Variant = get_node_or_null("/root/GirlsService")
 	var sonya_bonus: bool = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE))
 	var source_uses: int = 2 if sonya_bonus and location.id == &"restaurant" else 1
 	var accent_id: StringName = apartment.get_accent_object_id() if apartment != null else &""
+	var prepared_state: int = -1
+	if apartment != null:
+		prepared_state = 1 if bool(apartment.is_prepared()) else 0
 	var knowledge: Dictionary = LabUi.tag_knowledge_map(progress, girl)
 	box.add_child(LabUi.bbcode_block(LabUi.venue_card_bbcode(
 		catalog,
@@ -797,25 +813,48 @@ func _build_venue_playground_preview() -> Control:
 		owned_count,
 		LabUi.APARTMENT_OBJECT_MAX,
 		accent_id,
-		sonya_bonus
+		sonya_bonus,
+		prepared_state
 	), LabUi.MUTED, knowledge))
+	var diagnostics := Label.new()
+	diagnostics.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var owned_id_text: String = ", ".join(_ids_to_strings(owned_ids)) if not owned_ids.is_empty() else "—"
+	diagnostics.text = "Предметы: %d / %d\nOwned IDs: %s" % [owned_count, LabUi.APARTMENT_OBJECT_MAX, owned_id_text]
+	box.add_child(diagnostics)
 	var owned_line := Label.new()
 	owned_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var owned_names := PackedStringArray()
 	for object_id in owned_ids:
 		var local_owned: DateLocalObject = catalog.find_local_object(object_id)
-		owned_names.append(local_owned.display_name if local_owned != null else String(object_id))
-	owned_line.text = "Owned Apartment objects: %s" % (", ".join(owned_names) if not owned_names.is_empty() else "—")
+		if local_owned != null:
+			owned_names.append(local_owned.display_name)
+		else:
+			owned_names.append(String(object_id))
+	owned_line.text = "Owned objects: %s" % (", ".join(owned_names) if not owned_names.is_empty() else "Нет")
 	box.add_child(owned_line)
+	var accent_line := Label.new()
+	accent_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var accent_name: String = ""
+	if accent_id != &"":
+		var accent_object: DateLocalObject = catalog.find_local_object(accent_id)
+		accent_name = accent_object.display_name if accent_object != null else String(accent_id)
+	accent_line.text = "Accent: %s\nPrepared: %s" % [
+		LabUi.apartment_accent_label(accent_name),
+		LabUi.apartment_yes_no(apartment != null and bool(apartment.is_prepared())),
+	]
+	box.add_child(accent_line)
 	var ids_line := Label.new()
 	ids_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var move_ids := PackedStringArray()
-	for object_id in object_ids:
-		var local_object: DateLocalObject = catalog.find_local_object(object_id)
-		if local_object == null:
-			continue
-		for move_id in local_object.move_ids:
-			move_ids.append(String(move_id))
+	if apartment != null and apartment.has_method("get_active_local_move_ids"):
+		move_ids = _ids_to_strings(apartment.get_active_local_move_ids())
+	else:
+		for object_id in object_ids:
+			var local_object: DateLocalObject = catalog.find_local_object(object_id)
+			if local_object == null:
+				continue
+			for move_id in local_object.move_ids:
+				move_ids.append(String(move_id))
 	ids_line.text = "Objects: %s\nMoves: %s" % [
 		", ".join(_ids_to_strings(object_ids)),
 		", ".join(move_ids) if not move_ids.is_empty() else "—",
@@ -845,12 +884,25 @@ func _build_venue_playground_preview() -> Control:
 		line.text = "%s: %d" % [stat.display_name, effective]
 		box.add_child(line)
 	return box
-
 func _ids_to_strings(ids: Array[StringName]) -> PackedStringArray:
 	var result := PackedStringArray()
 	for item in ids:
 		result.append(String(item))
 	return result
+
+
+func _owned_object_ids(apartment: Variant) -> Array[StringName]:
+	var empty: Array[StringName] = []
+	if apartment == null:
+		return empty
+	if apartment.has_method("get_owned_object_ids"):
+		return apartment.get_owned_object_ids()
+	if apartment.has_method("get_owned_local_object_ids"):
+		return apartment.get_owned_local_object_ids()
+	var gs: Variant = _game_state()
+	if gs != null and gs.progression != null and gs.progression.apartment != null:
+		return gs.progression.apartment.owned_local_object_ids.duplicate()
+	return empty
 
 
 func _set_playground_city_stage(target: int) -> void:

@@ -73,9 +73,9 @@
 - Spec `min_city_stage` 1–4 для Outfit и Apartment Objects = **Story Stage**. `WorldState.city_stage` остаётся 1–3 для filler packs. Поля в коде: `Outfit.min_story_stage`, `ApartmentObjectDefinition.min_story_stage`, плюс `Outfit.tier` (`0` Casual / `1` Dressed)
 - Stage 2+ Date gate: `OutfitAboveCasualGirlRequirement` проверяет `equipped Outfit.tier >= 1`, не price и не id-имя. Марина: `date_requirements = []`. Stage 1 girls без этого requirement
 - Марина: `MinCityStageGirlRequirement(2)`, `location_id = clothing_store`. Clothing Store — `LocationDefinition` по образцу `furniture_store`, unlock на Stage 2. Симуляторная секция одежды остаётся player-facing магазином
-- Apartment domain: `ApartmentObjectDefinition`, `owned_local_object_ids`, `accent_object_id`, `create_buy_apartment_object_action`. Player-facing `Предметы: N / 12`. `ApartmentState.level` не является progression UI. Automation `purchased_upgrade_ids` не трогать
+- Apartment domain: `ApartmentObjectDefinition`, `owned_local_object_ids`, `accent_object_id`, `create_buy_apartment_object_action`. Player-facing `Предметы: N / 12`. Apartment **не хранит level**. `min_story_stage` (1–4) остаётся Story Stage; spec `min_city_stage` не мапится на `WorldState.city_stage`. `local_object_id` = definition id. Automation `purchased_upgrade_ids` не трогать
 - Dating runtime читает только `venue_id`. Save-compatibility не требуется: старые ключи `location_id` / `purchased_upgrade_ids` / `katya_emperor_chair` не мигрируем
-- Objective «Приоденься»: secondary Stage 2, completion = владение любым Outfit `tier >= 1`, не экипировка
+- Objective «Приоденься»: на Stage 2 это **текущая** цель, пока нет Dressed Outfit; после покупки ObjectiveService сразу показывает сюжетную цель Stage 2. Completion = владение, не экипировка
 - Accent +2 идёт через текущий Date Engine score path (`DateSessionConfig.accent_object_id`), не отдельный scorer
 - Sonya `venue_source_limit = 2` остаётся в `DatingService._create_engine`. Два разных Local Move; sibling move того же объекта разрешён
 - Source label: `ЛОКАЦИЯ`. Option format: `[ТЕГ] Объект: действие` через `GameTermFormatter`

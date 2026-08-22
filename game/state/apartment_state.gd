@@ -1,7 +1,6 @@
 class_name ApartmentState
 extends RefCounted
 
-var level: int = 1
 var prepared: bool = true
 var owned_local_object_ids: Array[StringName] = []
 var accent_object_id: StringName = &""
@@ -22,7 +21,6 @@ func to_dict() -> Dictionary:
 	for object_id in owned_local_object_ids:
 		ids.append(String(object_id))
 	return {
-		"level": level,
 		"prepared": prepared,
 		"owned_local_object_ids": ids,
 		"accent_object_id": String(accent_object_id),
@@ -30,7 +28,6 @@ func to_dict() -> Dictionary:
 
 
 func from_dict(data: Dictionary) -> void:
-	level = maxi(1, int(data.get("level", 1)))
 	prepared = bool(data.get("prepared", true))
 	owned_local_object_ids.clear()
 	accent_object_id = StringName(str(data.get("accent_object_id", "")))

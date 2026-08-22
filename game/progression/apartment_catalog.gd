@@ -44,15 +44,12 @@ func available_objects(story_stage: int) -> Array[ApartmentObjectDefinition]:
 		var right: ApartmentObjectDefinition = b["item"]
 		if left.min_story_stage != right.min_story_stage:
 			return left.min_story_stage < right.min_story_stage
-		if left.price != right.price:
-			return left.price < right.price
 		return int(a["order"]) < int(b["order"])
 	)
 	var result: Array[ApartmentObjectDefinition] = []
 	for entry in indexed:
 		result.append(entry["item"])
 	return result
-
 
 static func create_seed() -> ApartmentCatalog:
 	var catalog := ApartmentCatalog.new()
@@ -84,10 +81,7 @@ static func _make(
 	item.display_name = display_name
 	item.description = display_name
 	item.price = price
-	item.level_granted = min_story_stage
 	item.min_story_stage = min_story_stage
 	item.enabled = true
-	var granted: Array[StringName] = [id]
-	item.granted_local_object_ids = granted
-	item.required_filler_reward_id = &""
+	item._local_object_id = id
 	return item

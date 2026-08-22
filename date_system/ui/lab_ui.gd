@@ -314,6 +314,37 @@ static func outfit_eligibility_text(required_tier: int, current_tier: int) -> St
 	]
 
 
+static func apartment_yes_no(value: bool) -> String:
+	return "Да" if value else "Нет"
+
+
+static func apartment_accent_label(accent_name: String) -> String:
+	var name: String = accent_name.strip_edges()
+	return name if not name.is_empty() else "Нет"
+
+
+static func apartment_object_local_id(object_def: ApartmentObjectDefinition) -> StringName:
+	if object_def == null:
+		return &""
+	if object_def.has_method("local_object_id"):
+		return object_def.local_object_id()
+	var value: Variant = object_def.get("local_object_id")
+	if typeof(value) == TYPE_STRING_NAME:
+		return value
+	if typeof(value) == TYPE_STRING:
+		return StringName(value)
+	return object_def.id
+
+
+static func apartment_summary_text(owned_count: int, prepared: bool, accent_name: String, owned_max: int = APARTMENT_OBJECT_MAX) -> String:
+	return "Квартира\nПредметы: %d / %d\nПодготовлена: %s\nАкцент интерьера: %s" % [
+		owned_count,
+		owned_max,
+		apartment_yes_no(prepared),
+		apartment_accent_label(accent_name),
+	]
+
+
 static func venue_card_bbcode(
 	catalog: DateContentCatalog,
 	location: DateVenue,
@@ -325,7 +356,8 @@ static func venue_card_bbcode(
 	owned_count: int = -1,
 	owned_max: int = APARTMENT_OBJECT_MAX,
 	accent_object_id: StringName = &"",
-	sonya_bonus: bool = false
+	sonya_bonus: bool = false,
+	prepared_state: int = -1
 ) -> String:
 	var lines := PackedStringArray()
 	if location == null:
@@ -338,13 +370,15 @@ static func venue_card_bbcode(
 	var is_apartment: bool = location.id == &"apartment" or location.uses_apartment_preparation
 	if is_apartment and owned_count >= 0:
 		lines.append("Предметы: %d / %d" % [owned_count, owned_max])
+	if is_apartment and prepared_state >= 0:
+		lines.append("Подготовлена: %s" % apartment_yes_no(prepared_state > 0))
 	var accent_name: String = ""
 	if accent_object_id != &"" and catalog != null:
 		var accent_object: DateLocalObject = catalog.find_local_object(accent_object_id)
 		if accent_object != null:
 			accent_name = accent_object.display_name
-	if is_apartment and not accent_name.is_empty():
-		lines.append("Акцент интерьера: %s" % accent_name)
+	if is_apartment:
+		lines.append("Акцент интерьера: %s" % apartment_accent_label(accent_name))
 	var girl_trait: GirlTrait = null
 	if catalog != null and girl != null:
 		girl_trait = catalog.find_trait(girl.trait_id)
@@ -373,7 +407,6 @@ static func venue_card_bbcode(
 	if is_apartment and not accent_name.is_empty():
 		lines.append("Положительный локальный ход: +2")
 	return "\n".join(lines)
-
 
 static func _move_tag_display_name(catalog: DateContentCatalog, move: DateMove) -> String:
 	if move == null:

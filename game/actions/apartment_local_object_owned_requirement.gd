@@ -8,9 +8,7 @@ func is_met() -> bool:
 	var apartment: Variant = _apartment_service()
 	if apartment == null:
 		return false
-	var granted: Array = apartment.get_granted_local_object_ids()
-	return granted.has(object_id)
-
+	return bool(apartment.is_object_owned(object_id))
 
 func get_failure_reason() -> String:
 	return "Сначала купите этот предмет"

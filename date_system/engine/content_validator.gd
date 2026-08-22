@@ -334,7 +334,7 @@ func _check_local_objects(catalog: DateContentCatalog, issues: Array[ContentVali
 			continue
 		var object_id: StringName = item.local_object_id()
 		if catalog.find_local_object(object_id) == null:
-			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "granted_local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
+			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "local_object_id", "Неизвестный Local Object: %s." % String(object_id)))
 	_check_local_move_ownership(catalog, issues)
 
 func _check_venue_local_catalog(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
@@ -487,10 +487,10 @@ func _check_apartment_local_catalog(catalog: DateContentCatalog, issues: Array[C
 			continue
 		var object_id: StringName = item.local_object_id()
 		if object_id == &"":
-			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "granted_local_object_ids", "Каждый Apartment Object даёт ровно один Local Object."))
+			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "local_object_id", "Каждый Apartment Object даёт ровно один Local Object."))
 			continue
 		if object_ids.has(String(object_id)):
-			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "granted_local_object_ids", "Local Object %s повторяется." % String(object_id)))
+			issues.append(_issue("ApartmentObjectDefinition", String(item.id), "local_object_id", "Local Object %s повторяется." % String(object_id)))
 		else:
 			object_ids[String(object_id)] = true
 		if item.min_story_stage == 2 or item.min_story_stage == 3 or item.min_story_stage == 4:

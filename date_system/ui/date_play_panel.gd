@@ -554,12 +554,13 @@ func _lab_venue_preview() -> Control:
 	var girl: GirlProfile = catalog.find_girl(_girl_id) if catalog != null else null
 	var progress: GirlProgress = progress_store.get_girl_progress(_girl_id, girl) if progress_store != null else null
 	var player: DatePlayerSnapshot = progress_store.player_snapshot if progress_store != null else null
-	var dating: Variant = _dating_service()
 	var object_ids: Array[StringName] = _lab_local_object_ids()
 	var apartment: Variant = _apartment_service()
 	var owned_count: int = -1
+	var prepared_state: int = -1
 	if apartment != null:
-		owned_count = apartment.get_owned_local_object_ids().size()
+		owned_count = _owned_object_ids(apartment).size()
+		prepared_state = 1 if bool(apartment.is_prepared()) else 0
 	var girls: Variant = get_node_or_null("/root/GirlsService")
 	var sonya_bonus: bool = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE))
 	var source_uses: int = 2 if sonya_bonus and location.id == &"restaurant" else 1
@@ -575,10 +576,10 @@ func _lab_venue_preview() -> Control:
 		owned_count,
 		LabUi.APARTMENT_OBJECT_MAX,
 		_accent_object_id(),
-		sonya_bonus
+		sonya_bonus,
+		prepared_state
 	), LabUi.MUTED, knowledge))
 	return box
-
 func _lab_owned_object_controls() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
@@ -589,8 +590,16 @@ func _lab_owned_object_controls() -> Control:
 		missing.text = "ApartmentService недоступен."
 		box.add_child(missing)
 		return box
-	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
-	for object_def in apartment_catalog.all_objects():
+	var owned_ids: Array[StringName] = _owned_object_ids(apartment)
+	var summary := Label.new()
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.text = LabUi.apartment_summary_text(
+		owned_ids.size(),
+		bool(apartment.is_prepared()),
+		_accent_display_name(apartment)
+	)
+	box.add_child(summary)
+	for object_def in _available_apartment_objects(apartment):
 		if object_def == null:
 			continue
 		var check := CheckBox.new()
@@ -607,14 +616,14 @@ func _lab_owned_object_controls() -> Control:
 	accent_row.set_item_metadata(0, &"")
 	var accent_index: int = 0
 	var current_accent: StringName = _accent_object_id()
-	for object_def in apartment_catalog.all_objects():
+	for object_def in _available_apartment_objects(apartment):
 		if object_def == null or not bool(apartment.is_object_owned(object_def.id)):
 			continue
 		var object_id: StringName = _apartment_object_id(object_def)
 		accent_row.add_item(object_def.display_name)
 		var item_index: int = accent_row.item_count - 1
 		accent_row.set_item_metadata(item_index, object_id)
-		if object_id == current_accent:
+		if object_id == current_accent or object_def.id == current_accent:
 			accent_index = item_index
 	accent_row.select(accent_index)
 	accent_row.item_selected.connect(func(index: int) -> void:
@@ -623,13 +632,58 @@ func _lab_owned_object_controls() -> Control:
 	)
 	box.add_child(LabUi.labeled_row("Акцент интерьера", accent_row))
 	return box
-
 func _apartment_object_id(object_def: ApartmentObjectDefinition) -> StringName:
-	if object_def == null:
-		return &""
-	return object_def.local_object_id()
-func _set_lab_upgrade_owned(object_id: StringName, _level_granted: int, owned: bool) -> void:
-	_set_lab_object_owned(object_id, owned)
+	return LabUi.apartment_object_local_id(object_def)
+
+
+func _owned_object_ids(apartment: Variant) -> Array[StringName]:
+	var empty: Array[StringName] = []
+	if apartment == null:
+		return empty
+	if apartment.has_method("get_owned_object_ids"):
+		return apartment.get_owned_object_ids()
+	if apartment.has_method("get_owned_local_object_ids"):
+		return apartment.get_owned_local_object_ids()
+	var gs: Variant = _game_state()
+	if gs != null and gs.progression != null and gs.progression.apartment != null:
+		return gs.progression.apartment.owned_local_object_ids.duplicate()
+	return empty
+
+
+func _available_apartment_objects(apartment: Variant) -> Array:
+	var empty: Array = []
+	if apartment == null:
+		return empty
+	if apartment.has_method("get_available_objects"):
+		return apartment.get_available_objects()
+	var catalog: ApartmentCatalog = apartment.get_catalog() if apartment.has_method("get_catalog") else null
+	if catalog == null:
+		return empty
+	var result: Array = []
+	for object_def in catalog.all_objects():
+		if object_def == null:
+			continue
+		result.append(object_def)
+	return result
+
+
+func _accent_display_name(apartment: Variant) -> String:
+	var object_id: StringName = _accent_object_id()
+	if object_id == &"":
+		return ""
+	var catalog: DateContentCatalog = _catalog()
+	if catalog != null:
+		var local_object: DateLocalObject = catalog.find_local_object(object_id)
+		if local_object != null:
+			return local_object.display_name
+	if apartment != null and apartment.has_method("get_catalog"):
+		var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
+		if apartment_catalog != null:
+			for object_def in apartment_catalog.all_objects():
+				if object_def != null and (object_def.id == object_id or LabUi.apartment_object_local_id(object_def) == object_id):
+					return object_def.display_name
+	return String(object_id)
+
 
 func _set_lab_object_owned(object_id: StringName, owned: bool) -> void:
 	var apartment: Variant = _apartment_service()

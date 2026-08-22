@@ -189,9 +189,9 @@ Stage 2 вводит Clothing Store и Outfit system.
 
 Outfit Moves становятся следующим уровнем системы и появляются на Stage 3.
 
-### Secondary objective — «Приоденься»
+### Текущая цель Stage 2 — «Приоденься»
 
-В начале Stage 2 появляется secondary objective:
+На Stage 2, пока нет Dressed Outfit, «Приоденься» является текущей целью — до покупки любого образа выше Повседневного ObjectiveService показывает её как текущую цель, а не как побочную подцель:
 
 ## Приоденься
 

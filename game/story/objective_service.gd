@@ -59,6 +59,7 @@ func _connect_sources() -> void:
 	var equipment: Variant = _equipment_service()
 	if equipment != null:
 		_connect_signal(equipment, "outfit_equipped", _on_source_changed)
+		_connect_signal(equipment, "outfit_owned", _on_source_changed)
 
 
 func _connect_signal(host: Variant, signal_name: String, callback: Callable) -> void:
@@ -85,15 +86,16 @@ func _build_view() -> ObjectiveView:
 		view.completed = true
 		view.progress_text = "100%"
 		return view
+	if view.stage == 2 and not _owns_dressed_outfit():
+		_fill_dress_up_current(view)
+		return view
 	var requirement: StageRequirement = stages.get_current_requirement() as StageRequirement
 	if requirement is GirlRelationshipRequirement:
 		_fill_story_girl(view, requirement as GirlRelationshipRequirement)
 	elif requirement is WorldReachRequirement:
 		_fill_factory(view)
-	_append_dress_up_subgoal(view)
 	_mark_current(view)
 	return view
-
 
 func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirement) -> void:
 	var girls: Variant = _girls_service()
@@ -166,22 +168,18 @@ func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirem
 	view.subgoals.append(relationship_subgoal)
 	view.progress_text = relationship_subgoal.progress_text
 
-func _append_dress_up_subgoal(view: ObjectiveView) -> void:
-	if view.stage < 2:
-		return
-	var equipment: Variant = _equipment_service()
-	var owns_dressed: bool = equipment != null and bool(equipment.owns_dressed_outfit())
-	if view.stage > 2 and owns_dressed:
-		return
-	var subgoal: ObjectiveSubgoalView = ObjectiveSubgoalView.new()
-	subgoal.id = &"dress_up"
-	subgoal.label = "Приоденься"
-	subgoal.progress_text = "Купи любой образ выше «Повседневного» в магазине одежды."
-	if not owns_dressed:
-		subgoal.progress_text += " Марина работает в магазине одежды. Хорошие отношения с ней могут оказаться полезны."
-	subgoal.completed = owns_dressed
-	view.subgoals.append(subgoal)
+func _fill_dress_up_current(view: ObjectiveView) -> void:
+	view.title = "Приоденься"
+	view.description = "Купи любой образ выше «Повседневного» в магазине одежды."
+	view.next_step_text = "Марина работает в магазине одежды. Хорошие отношения с ней могут оказаться полезны."
+	view.target_type = ObjectiveView.TARGET_LOCATION
+	view.target_location_id = LocationCatalog.ID_CLOTHING_STORE
+	view.completed = false
 
+
+func _owns_dressed_outfit() -> bool:
+	var equipment: Variant = _equipment_service()
+	return equipment != null and bool(equipment.owns_dressed_outfit())
 
 func _fill_factory(view: ObjectiveView) -> void:
 	var automation: Variant = _automation_service()
