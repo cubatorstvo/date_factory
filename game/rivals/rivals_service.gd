@@ -85,15 +85,16 @@ func get_rivals_at_current_location() -> Array[RivalDefinition]:
 	var world: Variant = _world_service()
 	if world != null:
 		location_id = world.get_current_location_id()
-	var city_stage: int = 1
-	if world != null:
-		city_stage = int(world.get_city_stage())
+	var story_stage: int = 1
+	var stages: Variant = _stage_service()
+	if stages != null:
+		story_stage = int(stages.get_current_stage())
 	var result: Array[RivalDefinition] = []
 	var girls: Variant = _girls_service()
 	for rival in get_catalog().get_rivals_for_location(location_id):
 		if rival == null:
 			continue
-		if rival.minimum_city_stage > city_stage:
+		if rival.minimum_story_stage > story_stage:
 			continue
 		if rival.linked_girl_id != &"":
 			if girls == null or not bool(girls.is_discovered(rival.linked_girl_id)):
@@ -251,6 +252,15 @@ func _girls_service() -> Variant:
 	if tree == null or tree.root == null:
 		return null
 	var node: Node = tree.root.get_node_or_null("GirlsService")
+	if not is_instance_valid(node):
+		return null
+	return node
+
+func _stage_service() -> Variant:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	var node: Node = tree.root.get_node_or_null("StageService")
 	if not is_instance_valid(node):
 		return null
 	return node

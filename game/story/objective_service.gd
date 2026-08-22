@@ -107,6 +107,9 @@ func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirem
 		return
 	var girl_name: String = girl.display_name
 	var discovered: bool = bool(girls.is_discovered(girl_id))
+	var filler_met: bool = true
+	var rating_met: bool = true
+	var has_filler_gate: bool = false
 	for meet_requirement in girl.meet_requirements:
 		if meet_requirement is MinStageGirlRequirement:
 			continue
@@ -120,9 +123,15 @@ func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirem
 		var status: RequirementStatus = statuses[0]
 		var subgoal: ObjectiveSubgoalView = ObjectiveSubgoalView.new()
 		subgoal.id = &"meet_%s" % String(meet_requirement.get_script().resource_path.get_file().get_basename()) if meet_requirement.get_script() != null else &"meet_requirement"
-		if meet_requirement is RatingGirlRequirement:
+		if meet_requirement != null and meet_requirement.get_script() != null and String(meet_requirement.get_script().resource_path).ends_with("current_stage_filler_max_girl_requirement.gd"):
+			subgoal.id = &"meet_filler_max"
+			subgoal.label = "Девушки этапа"
+			filler_met = status.is_met
+			has_filler_gate = true
+		elif meet_requirement is RatingGirlRequirement:
 			subgoal.id = &"meet_rating"
 			subgoal.label = "Рейтинг для знакомства"
+			rating_met = status.is_met
 		else:
 			subgoal.label = status.description
 		subgoal.progress_text = status.progress_text
@@ -136,6 +145,8 @@ func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirem
 	meet_subgoal.target_id = girl_id
 	meet_subgoal.target_location_id = girl.location_id
 	view.subgoals.append(meet_subgoal)
+	var rival_defeated: bool = true
+	var rival_display_name: String = ""
 	for date_requirement in girl.date_requirements:
 		if not (date_requirement is RivalDefeatedGirlRequirement):
 			continue
@@ -150,11 +161,13 @@ func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirem
 		rival_subgoal.completed = status.is_met
 		rival_subgoal.target_type = ObjectiveView.TARGET_RIVAL
 		rival_subgoal.target_id = rival_requirement.rival_id
+		rival_defeated = status.is_met
 		var rivals: Variant = _rivals_service()
 		if rivals != null:
 			var rival: RivalDefinition = rivals.get_definition(rival_requirement.rival_id) as RivalDefinition
 			if rival != null:
 				rival_subgoal.target_location_id = rival.location_id
+				rival_display_name = rival.display_name
 		view.subgoals.append(rival_subgoal)
 	var relationship: int = int(girls.get_relationship(girl_id))
 	var relationship_max: int = int(girls.get_relationship_max(girl_id))
@@ -167,6 +180,36 @@ func _fill_story_girl(view: ObjectiveView, requirement: GirlRelationshipRequirem
 	relationship_subgoal.target_id = girl_id
 	view.subgoals.append(relationship_subgoal)
 	view.progress_text = relationship_subgoal.progress_text
+	if has_filler_gate:
+		_apply_story_girl_phase_copy(view, girl_name, discovered, filler_met, rating_met, rival_defeated, rival_display_name, relationship, relationship_max)
+
+
+func _apply_story_girl_phase_copy(
+	view: ObjectiveView,
+	girl_name: String,
+	discovered: bool,
+	filler_met: bool,
+	rating_met: bool,
+	rival_defeated: bool,
+	rival_display_name: String,
+	relationship: int,
+	relationship_max: int
+) -> void:
+	if not filler_met or not rating_met:
+		view.title = "Повышай Рейтинг"
+		view.description = "Заверши отношения с любыми 2 из 3 девушек этого этапа."
+		return
+	if not discovered:
+		view.title = "Познакомься с %s." % girl_name
+		view.description = ""
+		return
+	if not rival_defeated:
+		var rival_name: String = rival_display_name if not rival_display_name.is_empty() else "соперника"
+		view.title = "Победи %s." % rival_name
+		view.description = ""
+		return
+	view.title = "Отношения с %s: %d / %d" % [girl_name, relationship, relationship_max]
+	view.description = "Доведи отношения с %s до MAX." % girl_name
 
 func _fill_dress_up_current(view: ObjectiveView) -> void:
 	view.title = "Приоденься"

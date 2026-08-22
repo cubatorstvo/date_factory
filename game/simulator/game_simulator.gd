@@ -35,6 +35,8 @@ var _upgrade_price_label: Label
 var _city_current_label: Label
 var _world_dev_option: OptionButton
 var _refreshing: bool = false
+var _refresh_queued: bool = false
+var _rebuilding_section: bool = false
 var _date_overlay: DatePlayPanel
 var _date_overlay_layer: CanvasLayer
 var _invite_girl_id: StringName = &""
@@ -66,7 +68,7 @@ func _ready() -> void:
 
 
 func refresh() -> void:
-	if _refreshing:
+	if not is_inside_tree() or _refreshing:
 		return
 	_refreshing = true
 	if _section == "factory" and not _is_factory_unlocked():
@@ -85,6 +87,19 @@ func refresh() -> void:
 	if _result_label != null:
 		_result_label.text = _last_result_text
 	_refreshing = false
+
+
+func _request_refresh() -> void:
+	if not is_inside_tree() or _refreshing or _refresh_queued:
+		return
+	_refresh_queued = true
+	call_deferred("_flush_refresh")
+
+
+func _flush_refresh() -> void:
+	_refresh_queued = false
+	if is_inside_tree():
+		refresh()
 
 
 func show_section(section_id: String) -> void:
@@ -346,8 +361,11 @@ func _collect_label_text(node: Node, lines: PackedStringArray) -> void:
 			lines.append(label.text)
 	elif node is RichTextLabel:
 		var rtl: RichTextLabel = node
-		if not rtl.text.is_empty():
-			lines.append(rtl.text)
+		var body: String = rtl.get_parsed_text() if rtl.bbcode_enabled else rtl.text
+		if body.is_empty():
+			body = rtl.text
+		if not body.is_empty():
+			lines.append(body)
 	elif node is Button:
 		var button: Button = node
 		if not button.text.is_empty():
@@ -534,6 +552,9 @@ func _build_nav() -> Control:
 
 
 func _rebuild_section() -> void:
+	if _rebuilding_section:
+		return
+	_rebuilding_section = true
 	_action_buttons.clear()
 	_home_summary = null
 	_home_result = null
@@ -544,6 +565,7 @@ func _rebuild_section() -> void:
 	_factory_status = null
 	_factory_slider = null
 	if _section_host == null:
+		_rebuilding_section = false
 		return
 	for child in _section_host.get_children():
 		_section_host.remove_child(child)
@@ -571,6 +593,7 @@ func _rebuild_section() -> void:
 			_section_host.add_child(_build_furniture_store())
 		"progression":
 			_section_host.add_child(_build_progression())
+	_rebuilding_section = false
 
 
 func _build_home() -> Control:
@@ -2302,6 +2325,55 @@ func _connect_core_signals() -> void:
 	if guidance != null and not guidance.message_closed.is_connected(_on_guidance_closed):
 		guidance.message_closed.connect(_on_guidance_closed)
 
+
+func _exit_tree() -> void:
+	_disconnect_core_signals()
+
+
+func _disconnect_signal(host: Variant, signal_name: String, callback: Callable) -> void:
+	if host != null and host.has_signal(signal_name) and host.is_connected(signal_name, callback):
+		host.disconnect(signal_name, callback)
+
+
+func _disconnect_core_signals() -> void:
+	_disconnect_signal(_time_service(), "time_advanced", _on_time_advanced)
+	_disconnect_signal(_stage_service(), "stage_progress_changed", _on_stage_progress_changed)
+	_disconnect_signal(_stage_service(), "stage_completed", _on_stage_completed)
+	_disconnect_signal(_stage_service(), "stage_changed", _on_stage_changed)
+	_disconnect_signal(_stage_service(), "finale_reached", _on_finale_reached)
+	_disconnect_signal(_action_service(), "action_executed", _on_action_executed)
+	_disconnect_signal(_economy_service(), "money_changed", _on_money_changed)
+	_disconnect_signal(_purchase_service(), "purchase_completed", _on_purchase_completed)
+	_disconnect_signal(_world_service(), "location_changed", _on_location_changed)
+	_disconnect_signal(_world_service(), "location_unlocked", _on_location_unlocked)
+	var world: Variant = _world_service()
+	if world != null and world.has_signal("city_stage_changed"):
+		_disconnect_signal(world, "city_stage_changed", _on_city_stage_changed)
+	_disconnect_signal(_girls_service(), "girl_discovered", _on_girl_discovered)
+	_disconnect_signal(_girls_service(), "girl_contact_received", _on_girl_contact_received)
+	_disconnect_signal(_girls_service(), "girl_relationship_changed", _on_girl_relationship_changed)
+	_disconnect_signal(_girls_service(), "girl_relationship_completed", _on_girl_relationship_completed)
+	_disconnect_signal(_girls_service(), "girl_access_changed", _on_girl_access_changed)
+	_disconnect_signal(_rating_service(), "rating_changed", _on_rating_changed)
+	_disconnect_signal(_dating_service(), "date_started", _on_date_started)
+	_disconnect_signal(_dating_service(), "date_completed", _on_date_completed)
+	_disconnect_signal(_rivals_service(), "rival_discovered", _on_rival_discovered)
+	_disconnect_signal(_rivals_service(), "rival_defeated", _on_rival_defeated)
+	_disconnect_signal(_competition_service(), "competition_completed", _on_competition_completed)
+	_disconnect_signal(_characteristic_service(), "characteristic_changed", _on_characteristic_changed)
+	_disconnect_signal(_equipment_service(), "outfit_equipped", _on_outfit_equipped)
+	_disconnect_signal(_automation_service(), "automation_unlocked", _on_automation_unlocked)
+	_disconnect_signal(_automation_service(), "clones_changed", _on_automation_clones_changed)
+	_disconnect_signal(_automation_service(), "allocation_changed", _on_automation_allocation_changed)
+	_disconnect_signal(_automation_service(), "production_changed", _on_automation_production_changed)
+	_disconnect_signal(_automation_service(), "upgrade_purchased", _on_automation_upgrade_purchased)
+	_disconnect_signal(_automation_service(), "expansion_changed", _on_automation_expansion_changed)
+	_disconnect_signal(_objective_service(), "objective_changed", _on_objective_changed)
+	_disconnect_signal(_guidance_service(), "tutorial_requested", _on_tutorial_requested)
+	_disconnect_signal(_guidance_service(), "milestone_requested", _on_milestone_requested)
+	_disconnect_signal(_guidance_service(), "message_closed", _on_guidance_closed)
+
+
 func _on_objective_changed() -> void:
 	_refresh_objective_panel()
 
@@ -2359,43 +2431,43 @@ func _on_guidance_popup_dismissed() -> void:
 
 
 func _on_guidance_closed() -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_money_changed(_previous_money: int, _current_money: int, _delta: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_purchase_completed(_purchase_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_location_changed(_previous_location_id: StringName, _current_location_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_location_unlocked(_location_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_city_stage_changed(_previous_city_stage: int, _current_city_stage: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_girl_discovered(_girl_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_girl_contact_received(_girl_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_girl_relationship_changed(_girl_id: StringName, _previous_value: int, _current_value: int, _delta: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_girl_relationship_completed(girl_id: StringName) -> void:
@@ -2411,15 +2483,15 @@ func _on_girl_relationship_completed(girl_id: StringName) -> void:
 		if reward != null:
 			text += "\n\nНовая награда:\n%s\n\n%s" % [reward.display_name, reward.granted_description]
 	_last_result_text = "Отношения с %s достигли максимума.\n\n%s" % [display_name, text]
-	refresh()
+	_request_refresh()
 
 
 func _on_girl_access_changed(_girl_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_rating_changed(_previous_rating: int, _current_rating: int, _delta: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_date_started(_girl_id: StringName) -> void:
@@ -2427,35 +2499,35 @@ func _on_date_started(_girl_id: StringName) -> void:
 
 
 func _on_date_completed(_girl_id: StringName, _relationship_delta: int, _current_relationship: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_rival_discovered(_rival_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_rival_defeated(_rival_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_competition_completed(_competition_id: StringName, _rival_id: StringName, _won: bool) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_characteristic_changed(_characteristic_id: StringName, _previous_value: int, _current_value: int, _delta: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_outfit_equipped(_previous_outfit_id: StringName, _current_outfit_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_automation_unlocked() -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_automation_clones_changed(_total_clones: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_automation_allocation_changed(_work_allocation_percent: int) -> void:
@@ -2468,10 +2540,10 @@ func _on_automation_production_changed() -> void:
 
 
 func _on_automation_upgrade_purchased(_upgrade_id: StringName) -> void:
-	refresh()
+	_request_refresh()
 
 func _on_automation_expansion_changed() -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_factory_slider_changed(value: float) -> void:
@@ -2623,10 +2695,10 @@ func _on_stage_changed(_previous_stage: int, current_stage: int) -> void:
 		_last_result_text = "%s\n%s" % [_last_result_text, started]
 	else:
 		_last_result_text = started
-	refresh()
+	_request_refresh()
 
 func _on_stage_progress_changed(_stage: int) -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_stage_completed(stage: int) -> void:
@@ -2642,7 +2714,7 @@ func _on_stage_completed(stage: int) -> void:
 	_last_result_text = "\n".join(lines)
 
 func _on_finale_reached() -> void:
-	refresh()
+	_request_refresh()
 
 
 func _on_action_executed(_action_id: StringName, result: ActionResult) -> void:
@@ -2682,6 +2754,10 @@ func _format_hud_text() -> String:
 	if world != null:
 		city_stage = int(world.get_city_stage())
 	stage_text += "\nЭтап города: %d/3" % city_stage
+	if stages != null:
+		var definition: StageDefinition = stages.get_current_definition() as StageDefinition
+		if definition != null and definition.required_filler_max_count > 0:
+			stage_text += "\nДевушки этапа: %d / %d" % [int(stages.count_stage_filler_max()), definition.required_filler_max_count]
 	var characteristics: Variant = _characteristic_service()
 	var muscle: int = 0
 	var appearance: int = 0
@@ -2718,10 +2794,17 @@ func _format_home_summary() -> String:
 		"",
 		"Stage %d" % stage,
 		"Город: этап %d/3" % CityProgressionService.get_city_stage(),
+	])
+	if stages != null:
+		var summary: String = String(stages.format_current_stage_summary())
+		if not summary.is_empty():
+			lines.append("")
+			lines.append(summary)
+	lines.append_array(PackedStringArray([
 		"",
 		"Деньги: %d" % money,
 		"Rating: %d" % rating,
-	])
+	]))
 	if girls != null:
 		var completed: int = int(girls.get_home_city_completed_count())
 		var total: int = int(girls.get_home_city_girl_count())
@@ -2732,8 +2815,12 @@ func _format_home_summary() -> String:
 		lines.append("Фабрика:")
 		lines.append("%s — %.1f%%" % [String(automation.get_scope_display_name()), float(automation.get_expansion_percent())])
 	return "\n".join(lines)
+
+
 func _format_stage_goal() -> String:
 	return get_objective_text()
+
+
 func _stage_goal_display_name(requirement: Variant) -> String:
 	var description: String = String(requirement.get_description())
 	var prefix: String = "Отношения с "

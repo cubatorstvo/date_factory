@@ -51,11 +51,11 @@ static func create_seed() -> RivalCatalog:
 	catalog.rivals.append(_make(ID_DENIS, "Денис — Криптоэксперт", LocationCatalog.ID_CAFE, [CompetitionCatalog.ID_CRYPTO], &"", 2))
 	catalog.rivals.append(_make(ID_ROMAN, "Роман — Ведущий", LocationCatalog.ID_RESTAURANT, [CompetitionCatalog.ID_TOAST], &"", 2))
 	catalog.rivals.append(_make(ID_FOREMAN, "Аркадий — главный прораб", LocationCatalog.ID_RESTAURANT, [CompetitionCatalog.ID_ARMWRESTLING], GirlCatalog.ID_MINE_BOSS, 2))
-	catalog.rivals.append(_make(ID_COLUMNIST, "Герман — звёздный колумнист", LocationCatalog.ID_CAFE, [CompetitionCatalog.ID_TASTE_DEBATE], GirlCatalog.ID_MAGAZINE_EDITOR, 2))
+	catalog.rivals.append(_make(ID_COLUMNIST, "Герман — звёздный колумнист", LocationCatalog.ID_CAFE, [CompetitionCatalog.ID_TASTE_DEBATE], GirlCatalog.ID_MAGAZINE_EDITOR, 3))
 	catalog.rivals.append(_make(ID_LEV, "Лев — Уличный атлет", LocationCatalog.ID_CITY_CENTER, [CompetitionCatalog.ID_STREET_ATHLETE], &"", 3))
 	catalog.rivals.append(_make(ID_TIMUR, "Тимур — Магнат", LocationCatalog.ID_RESTAURANT, [CompetitionCatalog.ID_MAGNATE], &"", 3))
-	catalog.rivals.append(_make(ID_ACADEMIC, "Академик Павел", LocationCatalog.ID_CITY_CENTER, [CompetitionCatalog.ID_GRANT], GirlCatalog.ID_SCIENTIST, 3))
-	catalog.rivals.append(_make(ID_MINISTER, "Министр Виктор", LocationCatalog.ID_RESTAURANT, [CompetitionCatalog.ID_PROTOCOL_DUEL], GirlCatalog.ID_PRESIDENT, 3))
+	catalog.rivals.append(_make(ID_ACADEMIC, "Академик Павел", LocationCatalog.ID_CITY_CENTER, [CompetitionCatalog.ID_GRANT], GirlCatalog.ID_SCIENTIST, 4))
+	catalog.rivals.append(_make(ID_MINISTER, "Министр Виктор", LocationCatalog.ID_RESTAURANT, [CompetitionCatalog.ID_PROTOCOL_DUEL], GirlCatalog.ID_PRESIDENT, 5))
 	return catalog
 
 
@@ -65,7 +65,7 @@ static func _make(
 	location_id: StringName,
 	competition_ids: Array[StringName],
 	linked_girl_id: StringName = &"",
-	minimum_city_stage: int = 1
+	minimum_story_stage: int = 1
 ) -> RivalDefinition:
 	var rival: RivalDefinition = RivalDefinition.new()
 	rival.id = id
@@ -73,5 +73,5 @@ static func _make(
 	rival.location_id = location_id
 	rival.competition_ids = competition_ids.duplicate()
 	rival.linked_girl_id = linked_girl_id
-	rival.minimum_city_stage = minimum_city_stage
+	rival.minimum_story_stage = minimum_story_stage
 	return rival

@@ -1,26 +1,27 @@
-class_name MinStageGirlRequirement
+class_name CurrentStageFillerMaxGirlRequirement
 extends GirlAccessRequirement
 
-@export var minimum_stage: int = 1
+@export var story_stage: int = 1
+@export var required_count: int = 2
 
 
 func is_met(_girl_id: StringName) -> bool:
-	var stage: Variant = _stage_service()
-	if stage == null:
-		return false
-	return int(stage.get_current_stage()) >= minimum_stage
+	return _count_filler_max() >= required_count
 
 
 func get_description(_girl_id: StringName) -> String:
-	return "Этап сюжета"
+	return "Девушки этапа"
 
 
 func get_progress_text(_girl_id: StringName) -> String:
-	var current_stage: int = 0
-	var stage: Variant = _stage_service()
-	if stage != null:
-		current_stage = int(stage.get_current_stage())
-	return "Stage %d / %d" % [current_stage, minimum_stage]
+	return "%d / %d" % [_count_filler_max(), required_count]
+
+
+func _count_filler_max() -> int:
+	var stages: Variant = _stage_service()
+	if stages == null:
+		return 0
+	return int(stages.count_stage_filler_max(story_stage))
 
 
 func _stage_service() -> Variant:

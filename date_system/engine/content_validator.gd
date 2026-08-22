@@ -26,6 +26,7 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_initial_known_tags(catalog, issues)
 	_check_requirement_range(catalog, issues)
 	_check_stage_relationship_max(issues)
+	_check_story_stage_rosters(issues)
 	_check_display_copy(catalog, issues)
 	_check_game_terms(catalog, issues)
 	_check_tag_move_usage(catalog, issues)
@@ -693,6 +694,100 @@ func _check_stage_relationship_max(issues: Array[ContentValidationIssue]) -> voi
 		var requirement: GirlRelationshipRequirement = StageCatalog.make_girl_relationship_requirement(definition)
 		if requirement == null or requirement.target_relationship != definition.relationship_max:
 			issues.append(_issue("StageCatalog", String(girl_id), "target_relationship", "StageCatalog должен использовать relationship_max сюжетной девушки."))
+
+func _check_story_stage_rosters(issues: Array[ContentValidationIssue]) -> void:
+	var stages: StageCatalog = StageCatalog.create_seed()
+	var girls: GirlCatalog = GirlCatalog.create_seed()
+	var rivals: RivalCatalog = RivalCatalog.create_seed()
+	var expected_fillers: Dictionary = {
+		1: [GirlCatalog.ID_ALINA, GirlCatalog.ID_VIKA, GirlCatalog.ID_DASHA],
+		2: [GirlCatalog.ID_MARINA, GirlCatalog.ID_KATYA, GirlCatalog.ID_LERA],
+		3: [GirlCatalog.ID_KIRA, GirlCatalog.ID_OLYA, GirlCatalog.ID_SONYA],
+		4: [GirlCatalog.ID_NIKA, GirlCatalog.ID_RITA, GirlCatalog.ID_EVA],
+	}
+	var expected_story: Dictionary = {
+		1: GirlCatalog.ID_ACTRESS,
+		2: GirlCatalog.ID_MINE_BOSS,
+		3: GirlCatalog.ID_MAGAZINE_EDITOR,
+		4: GirlCatalog.ID_SCIENTIST,
+	}
+	var expected_ordinary: Dictionary = {
+		1: [RivalCatalog.ID_GLEB, RivalCatalog.ID_MAX],
+		2: [RivalCatalog.ID_DENIS, RivalCatalog.ID_ROMAN],
+		3: [RivalCatalog.ID_LEV, RivalCatalog.ID_TIMUR],
+		4: [],
+	}
+	var expected_story_rival: Dictionary = {
+		1: RivalCatalog.ID_BORIS,
+		2: RivalCatalog.ID_FOREMAN,
+		3: RivalCatalog.ID_COLUMNIST,
+		4: RivalCatalog.ID_ACADEMIC,
+	}
+	var expected_rating: Dictionary = {
+		1: 2,
+		2: 5,
+		3: 8,
+		4: 11,
+	}
+	var seen_fillers: Dictionary = {}
+	for stage_number in [1, 2, 3, 4]:
+		var definition: StageDefinition = stages.get_stage(stage_number)
+		if definition == null:
+			issues.append(_issue("StageCatalog", "stage_%d" % stage_number, "roster", "StageDefinition отсутствует."))
+			continue
+		if definition.filler_girl_ids.size() != 3:
+			issues.append(_issue("StageCatalog", "stage_%d" % stage_number, "filler_girl_ids", "Stage 1–4 должен содержать ровно 3 filler."))
+		if definition.required_filler_max_count != 2:
+			issues.append(_issue("StageCatalog", "stage_%d" % stage_number, "required_filler_max_count", "required_filler_max_count должен быть 2."))
+		if definition.story_girl_id != expected_story[stage_number]:
+			issues.append(_issue("StageCatalog", "stage_%d" % stage_number, "story_girl_id", "Story Girl не совпадает с каноническим roster."))
+		if definition.story_girl_required_rating != int(expected_rating[stage_number]):
+			issues.append(_issue("StageCatalog", "stage_%d" % stage_number, "story_girl_required_rating", "Rating gate должен быть 2 / 5 / 8 / 11."))
+		if definition.story_rival_id != expected_story_rival[stage_number]:
+			issues.append(_issue("StageCatalog", "stage_%d" % stage_number, "story_rival_id", "Story Rival не совпадает с каноническим roster."))
+		if not _string_name_arrays_equal(definition.filler_girl_ids, expected_fillers[stage_number]):
+			issues.append(_issue("StageCatalog", "stage_%d" % stage_number, "filler_girl_ids", "Filler roster не совпадает с каноном."))
+		if not _string_name_arrays_equal(definition.ordinary_rival_ids, expected_ordinary[stage_number]):
+			issues.append(_issue("StageCatalog", "stage_%d" % stage_number, "ordinary_rival_ids", "Ordinary rival roster не совпадает с каноном."))
+		for girl_id in definition.filler_girl_ids:
+			if seen_fillers.has(girl_id):
+				issues.append(_issue("StageCatalog", String(girl_id), "filler_girl_ids", "Filler принадлежит больше чем одному Stage 1–4."))
+			seen_fillers[girl_id] = stage_number
+		var story_girl: GirlDefinition = girls.get_girl(definition.story_girl_id)
+		if story_girl == null:
+			issues.append(_issue("GirlCatalog", String(definition.story_girl_id), "story_girl_id", "Story Girl отсутствует в GirlCatalog."))
+		else:
+			var has_filler_gate: bool = false
+			var has_rating_gate: bool = false
+			for meet_requirement in story_girl.meet_requirements:
+				if _is_current_stage_filler_requirement(meet_requirement):
+					has_filler_gate = int(meet_requirement.get("story_stage")) == stage_number and int(meet_requirement.get("required_count")) == 2
+				elif meet_requirement is RatingGirlRequirement:
+					var rating_requirement: RatingGirlRequirement = meet_requirement as RatingGirlRequirement
+					has_rating_gate = rating_requirement.required_rating == int(expected_rating[stage_number])
+			if not has_filler_gate:
+				issues.append(_issue("GirlCatalog", String(definition.story_girl_id), "meet_requirements", "Story Girl должна требовать 2 of 3 filler своего Stage."))
+			if not has_rating_gate:
+				issues.append(_issue("GirlCatalog", String(definition.story_girl_id), "meet_requirements", "Story Girl Rating gate не совпадает с каноном."))
+		var story_rival: RivalDefinition = rivals.get_rival(definition.story_rival_id)
+		if story_rival == null or story_rival.linked_girl_id != definition.story_girl_id:
+			issues.append(_issue("RivalCatalog", String(definition.story_rival_id), "linked_girl_id", "Story Rival должен быть связан со Story Girl своего Stage."))
+	if seen_fillers.size() != 12:
+		issues.append(_issue("StageCatalog", "filler_girl_ids", "unique", "Stage 1–4 должны покрывать ровно 12 уникальных filler."))
+
+
+func _string_name_arrays_equal(actual: Array[StringName], expected: Array) -> bool:
+	if actual.size() != expected.size():
+		return false
+	for index in range(actual.size()):
+		if actual[index] != expected[index]:
+			return false
+	return true
+
+func _is_current_stage_filler_requirement(meet_requirement: GirlAccessRequirement) -> bool:
+	if meet_requirement == null or meet_requirement.get_script() == null:
+		return false
+	return String(meet_requirement.get_script().resource_path).ends_with("current_stage_filler_max_girl_requirement.gd")
 
 
 func _check_game_terms(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:

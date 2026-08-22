@@ -47,6 +47,11 @@ func run_all() -> PackedStringArray:
 	_test_rivals()
 	_test_home_city_catalog_consistency()
 	_test_rating_meet_gates()
+	_test_story_stage_rosters()
+	_test_story_girl_access_two_of_three()
+	_test_story_rival_flow()
+	_test_story_vs_city_stage()
+	_test_rating_baseline_route()
 	_test_story_rival_visibility()
 	_test_restaurant_stage_unlock()
 	_test_dates_for_home_city_girls()
@@ -2159,11 +2164,13 @@ func _test_objectives() -> void:
 	sm.delete_save()
 	sm.new_game()
 	var view: ObjectiveView = _rebuild_objective()
-	_ok("stage 1 actress title", view != null and view.title == "Актриса")
-	_ok("stage 1 description", view != null and view.description.contains("Актрисы"))
+	_ok("stage 1 filler title", view != null and view.title == "Повышай Рейтинг")
+	_ok("stage 1 filler description", view != null and view.description.contains("2 из 3"))
+	var filler_goal: ObjectiveSubgoalView = _subgoal_by_id(view, &"meet_filler_max")
+	_ok("stage 1 filler current", filler_goal != null and filler_goal.is_current and filler_goal.progress_text == "0 / 2")
 	var rating_goal: ObjectiveSubgoalView = _subgoal_by_id(view, &"meet_rating")
-	_ok("stage 1 rating current", rating_goal != null and rating_goal.is_current and rating_goal.progress_text == "0 / 2")
-	_ok("stage 1 next rating", view.next_step_text.contains("Рейтинг для знакомства") and view.next_step_text.contains("0 / 2"))
+	_ok("stage 1 rating shown", rating_goal != null and rating_goal.progress_text == "0 / 2" and not rating_goal.completed)
+	_ok("stage 1 next filler", view.next_step_text.contains("Девушки этапа") and view.next_step_text.contains("0 / 2"))
 	_ok("rating target empty", view.target_type == &"" and view.target_location_id == &"")
 	rating.add_rating(1)
 	view = _rebuild_objective()
@@ -2172,9 +2179,14 @@ func _test_objectives() -> void:
 	rating.add_rating(1)
 	view = _rebuild_objective()
 	rating_goal = _subgoal_by_id(view, &"meet_rating")
+	_ok("rating complete still gated", rating_goal != null and rating_goal.completed and rating_goal.progress_text == "2 / 2")
+	_ok("still filler phase", view != null and view.title == "Повышай Рейтинг")
+	_max_stage_fillers(girls, 1, 2)
+	view = _rebuild_objective()
+	filler_goal = _subgoal_by_id(view, &"meet_filler_max")
 	var meet_goal: ObjectiveSubgoalView = _subgoal_by_id(view, &"meet_girl")
-	_ok("rating complete", rating_goal != null and rating_goal.completed and rating_goal.progress_text == "2 / 2")
-	_ok("next is meet", meet_goal != null and meet_goal.is_current and view.next_step_text.contains("Познакомиться с Актрисой"))
+	_ok("filler complete", filler_goal != null and filler_goal.completed and filler_goal.progress_text == "2 / 2")
+	_ok("next is meet", meet_goal != null and meet_goal.is_current and view.next_step_text.contains("Познакомиться с Актриса"))
 	_ok("meet target girl", view.target_type == ObjectiveView.TARGET_GIRL and view.target_id == GirlCatalog.ID_ACTRESS)
 	_ok("meet target location", view.target_location_id == LocationCatalog.ID_CITY_CENTER)
 	girls.discover_girl(GirlCatalog.ID_ACTRESS)
@@ -2204,10 +2216,10 @@ func _test_objectives() -> void:
 	_ok("max advances to dress up", view != null and view.stage == 2 and view.title == "Приоденься")
 	gs.story.stage = 3
 	view = _rebuild_objective()
-	_ok("stage 3 editor", view != null and view.title == "Редактор журнала")
+	_ok("stage 3 filler title", view != null and view.title == "Повышай Рейтинг")
 	gs.story.stage = 4
 	view = _rebuild_objective()
-	_ok("stage 4 scientist", view != null and view.title == "Учёная")
+	_ok("stage 4 filler title", view != null and view.title == "Повышай Рейтинг")
 	gs.story.stage = 5
 	view = _rebuild_objective()
 	_ok("stage 5 president", view != null and view.title == "Президент")
@@ -2336,6 +2348,7 @@ func _test_objective_markers() -> void:
 	sm.delete_save()
 	sm.new_game()
 	rating.add_rating(2)
+	_max_stage_fillers(girls, 1, 2)
 	var view: ObjectiveView = _rebuild_objective()
 	_ok("meet marks location", objectives.marker_suffix(&"", &"", LocationCatalog.ID_CITY_CENTER) == ObjectiveView.MARKER_SUFFIX)
 	_ok("meet marks girl", objectives.marker_suffix(ObjectiveView.TARGET_GIRL, GirlCatalog.ID_ACTRESS) == ObjectiveView.MARKER_SUFFIX)
@@ -2423,7 +2436,7 @@ func _test_game_state_round_trip() -> void:
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
 	_ok("save_version == 18", int(root.get("save_version", 0)) == 18)
-	_ok("SAVE_VERSION constant 17", int(sm.SAVE_VERSION) == 17)
+	_ok("SAVE_VERSION constant 18", int(sm.SAVE_VERSION) == 18)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -3155,7 +3168,7 @@ func _test_game_simulator() -> void:
 	_ok("sim finale hud", sim.get_hud_text().contains("Finale"))
 	sim.delete_playthrough()
 	_ok("sim deleted save", not sm.has_save())
-	sim.queue_free()
+	sim.free()
 	sm.save_path = original_path
 	sm.new_game()
 
@@ -3476,7 +3489,7 @@ func _test_world() -> void:
 		var exit_door: LocationDoor = apartment_node.find_child("ExitDoor", true, false) as LocationDoor
 		_ok("apartment exit to city", exit_door != null and exit_door.target_location_id == LocationCatalog.ID_CITY_CENTER)
 		apartment_node.free()
-	sim.queue_free()
+	sim.free()
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -3660,7 +3673,7 @@ func _test_girls() -> void:
 	sim.enter_world_location(LocationCatalog.ID_CITY_CENTER)
 	var city_people: String = sim.get_city_body_text()
 	_ok("sim city alina", city_people.contains("Алина"))
-	_ok("sim city later girls", city_people.contains("Катя") and city_people.contains("Лера"))
+	_ok("sim city later girls", city_people.contains("Актриса") and not city_people.contains("Катя") and not city_people.contains("Лера"))
 	_ok("sim city rating gates", city_people.contains("Требования для знакомства:"))
 	_ok("sim city meet button", city_people.contains("ПОЗНАКОМИТЬСЯ"))
 	var sim_meet: ActionResult = sim.meet_girl(alina_id)
@@ -3677,7 +3690,7 @@ func _test_girls() -> void:
 	_ok("sim girls relationship", girls_text.contains("Отношения: 0 / %d" % int(girls.get_relationship_max(GirlCatalog.ID_ALINA))))
 	_ok("sim girls contact", girls_text.contains("Контакт: Да"))
 	_ok("sim girls no vika", girls_text.contains("ВИКА") == false)
-	sim.queue_free()
+	sim.free()
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -3960,7 +3973,7 @@ func _test_dating_and_rating() -> void:
 					overlay_open = true
 					break
 	_ok("sim date overlay", overlay_open)
-	sim.queue_free()
+	sim.free()
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -4060,7 +4073,7 @@ func _test_girl_access_requirements() -> void:
 	for status in several_status:
 		if status == null:
 			continue
-		if status.description == "Этап игры":
+		if status.description == "Этап сюжета":
 			stage_met = status.is_met
 		elif status.description == "Рейтинг":
 			rating_met = status.is_met
@@ -4170,7 +4183,7 @@ func _test_girl_access_requirements() -> void:
 	_ok("39 can meet", girls.can_meet_girl(alina_id))
 	var allowed_sim_meet: ActionResult = sim_city.meet_girl(alina_id)
 	_ok("39 meet success", allowed_sim_meet.success)
-	sim_city.queue_free()
+	sim_city.free()
 	alina_def.meet_requirements = original_meet
 	sm.new_game()
 	var sim_date_req: RivalDefeatedGirlRequirement = RivalDefeatedGirlRequirement.new()
@@ -4196,7 +4209,7 @@ func _test_girl_access_requirements() -> void:
 	var dates_after: String = sim_date.get_city_body_text()
 	_ok("40 met copy", dates_after.contains("Выполнено") or dates_after.contains("✓"))
 	_ok("40 can start", dating.can_start_date(alina_id))
-	sim_date.queue_free()
+	sim_date.free()
 	alina_def.meet_requirements = original_meet
 	alina_def.date_requirements = original_date
 	if actress_def != null:
@@ -4386,6 +4399,7 @@ func _test_venues_and_local_objects() -> void:
 	girls.grant_filler_reward_for_girl(GirlCatalog.ID_KATYA)
 	_ok("16. pending accent before furniture", bool(apartment.is_first_accent_assignment()) and apartment.get_accent_object_id() == &"")
 	_ok("16. first accent price 0", int(apartment.get_accent_reassignment_price()) == 0)
+	gs.story.stage = 2
 	gs.player.money = 150
 	actions.execute(apartment.create_buy_apartment_object_action(&"apartment__plaid"))
 	var first_accent: GameAction = apartment.create_assign_accent_action(&"apartment__plaid")
@@ -4568,7 +4582,7 @@ func _test_progression_integration() -> void:
 		gs.player.money = 250
 		actions.execute(equipment.create_buy_outfit_action(&"sport"))
 		view = _rebuild_objective()
-		_ok("20. buy advances current objective", view != null and view.title == "Начальница шахты")
+		_ok("20. buy advances current objective", view != null and view.title == "Повышай Рейтинг")
 		world.set_city_stage(2)
 		equipment.equip_outfit(OutfitCatalog.START_OUTFIT_ID)
 		girls.give_contact(GirlCatalog.ID_LERA)
@@ -4588,7 +4602,7 @@ func _test_progression_integration() -> void:
 		gs.player.money = 0
 		_ok("20. marina gift buy", actions.execute(gift).success and bool(equipment.owns_dressed_outfit()))
 		gift_view = _rebuild_objective()
-		_ok("20. gift advances current objective", gift_view != null and gift_view.title == "Начальница шахты")
+		_ok("20. gift advances current objective", gift_view != null and gift_view.title == "Повышай Рейтинг")
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -4847,7 +4861,7 @@ func _test_rivals() -> void:
 	_ok("sim win time text", sim.get_result_text().contains("Прошло времени: 60 минут."))
 	var after_win: String = sim.get_city_body_text()
 	_ok("sim rivals defeated", after_win.contains("Статус: Побеждён"))
-	sim.queue_free()
+	sim.free()
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -5063,6 +5077,8 @@ func _test_character_progression() -> void:
 		var progression_text: String = sim.get_city_body_text()
 		_ok("sim progression heading", progression_text.contains("ХАРАКТЕРИСТИКИ"))
 		_ok("sim progression upgrade", progression_text.contains("Тренажёр 1"))
+		gs.story.stage = 2
+		sim.refresh()
 		sim.show_section("clothing")
 		var clothing_text: String = sim.get_city_body_text()
 		_ok("sim clothing casual", clothing_text.contains("Повседневная"))
@@ -5072,7 +5088,7 @@ func _test_character_progression() -> void:
 		var apartment_text: String = sim.get_city_body_text()
 		_ok("sim apartment objects", apartment_text.contains("Предметы") or apartment_text.contains("Нет купленных объектов") or apartment_text.contains("0 / 12") or apartment_text.contains("0/12"))
 		_ok("sim apartment store link", apartment_text.contains("МАГАЗИН МЕБЕЛИ") or apartment_text.contains("Нет купленных объектов"))
-		sim.queue_free()
+		sim.free()
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -5248,13 +5264,18 @@ func _test_filler_girl_rewards() -> void:
 	sm.new_game()
 	girls.grant_filler_reward_for_girl(GirlCatalog.ID_RITA)
 	girls.give_contact(GirlCatalog.ID_RITA)
+	gs.story.stage = 4
+	var rita_equipment: Variant = _equipment_service()
+	if rita_equipment != null:
+		rita_equipment.add_owned_outfit(&"sport")
+		rita_equipment.equip_outfit(&"sport")
 	clock.advance_time(60)
 	var daily_rita: Variant = _daily_activity()
 	if daily_rita != null:
 		daily_rita.register_usage(daily_rita.date_key(GirlCatalog.ID_RITA), 1)
 	_ok("rita cooldown blocks", dating.can_start_date(GirlCatalog.ID_RITA) == false)
 	gs.player.money = FillerRewardCatalog.RITA_TAXI_COST
-	var taxi: ActionResult = actions.execute(dating.create_start_date_action(GirlCatalog.ID_RITA, &"apartment", OutfitCatalog.START_OUTFIT_ID, {"urgent_taxi": true}))
+	var taxi: ActionResult = actions.execute(dating.create_start_date_action(GirlCatalog.ID_RITA, &"apartment", &"sport", {"urgent_taxi": true}))
 	_ok("rita taxi starts for 75", taxi.success and gs.player.money == 0 and dating.has_active_date())
 	var taxi_result := DateResult.new()
 	taxi_result.girl_id = GirlCatalog.ID_RITA
@@ -5287,9 +5308,9 @@ func _test_city_density_progression() -> void:
 	sm.delete_save()
 	clock.real_time_progression_enabled = false
 	sm.new_game()
-	gs.player.money = 300
+	gs.player.money = FillerRewardCatalog.ALINA_GYM_BASE_PRICE
 	_ok("1. buy muscle 1", actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1)).success and gs.player.muscle == 1 and gs.player.money == 0)
-	gs.player.money = 1200
+	gs.player.money = FillerRewardCatalog.ALINA_GYM_BASE_PRICE * 4
 	var daily_train_density: Variant = _daily_activity()
 	while gs.player.muscle < 5:
 		if daily_train_density != null:
@@ -5297,7 +5318,7 @@ func _test_city_density_progression() -> void:
 		actions.execute(characteristics.create_upgrade_action(CharacteristicCatalog.ID_MUSCLE_1))
 	_ok("2. sequential to 5", gs.player.muscle == 5)
 	_ok("3. max level 5", int(characteristics.get_max_level(CharacteristicIds.MUSCLE)) == 5)
-	_ok("4. spent 1500", gs.player.money == 0)
+	_ok("4. spent remaining gym money", gs.player.money == 0)
 	sm.save_game()
 	sm.new_game()
 	_ok("5. reset then load", sm.load_game() and gs.player.muscle == 5)
@@ -5311,11 +5332,13 @@ func _test_city_density_progression() -> void:
 	world.enter_location(LocationCatalog.ID_CAFE)
 	_ok("14. vika open", girls.can_meet_girl(GirlCatalog.ID_VIKA))
 	_ok("14. dasha open", girls.can_meet_girl(GirlCatalog.ID_DASHA))
-	gs.player.rating = 1
-	world.enter_location(LocationCatalog.ID_CITY_CENTER)
-	_ok("15. actress blocked rating 1", girls.can_meet_girl(GirlCatalog.ID_ACTRESS) == false)
 	gs.player.rating = 2
-	_ok("15. actress open rating 2", girls.can_meet_girl(GirlCatalog.ID_ACTRESS))
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	_ok("15. actress blocked without fillers", girls.can_meet_girl(GirlCatalog.ID_ACTRESS) == false)
+	_max_girl(girls, GirlCatalog.ID_VIKA)
+	_max_girl(girls, GirlCatalog.ID_DASHA)
+	gs.player.rating = 2
+	_ok("15. actress open after 2 of 3", girls.can_meet_girl(GirlCatalog.ID_ACTRESS))
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	_ok("39. gleb at start", _rival_list_has(rivals.get_rivals_at_current_location(), RivalCatalog.ID_GLEB))
 	_ok("40. lev hidden city 1", _rival_list_has(rivals.get_rivals_at_current_location(), RivalCatalog.ID_LEV) == false)
@@ -5340,17 +5363,19 @@ func _test_city_density_progression() -> void:
 	_ok("13. girl remaining stays until next day", int(dating.get_date_cooldown_remaining_minutes(GirlCatalog.ID_ALINA)) > 0)
 	world.unlock_location(LocationCatalog.ID_CLOTHING_STORE)
 	world.enter_location(LocationCatalog.ID_CLOTHING_STORE)
-	_ok("14. marina open city 2", girls.can_meet_girl(GirlCatalog.ID_MARINA))
+	_ok("14. marina closed city 2 story 1", girls.can_meet_girl(GirlCatalog.ID_MARINA) == false)
+	gs.story.stage = 2
+	_ok("14. marina open story 2", girls.can_meet_girl(GirlCatalog.ID_MARINA))
 	world.unlock_location(LocationCatalog.ID_FURNITURE_STORE)
 	world.enter_location(LocationCatalog.ID_FURNITURE_STORE)
-	_ok("16. katya open city 2", girls.can_meet_girl(GirlCatalog.ID_KATYA))
+	_ok("16. katya open story 2", girls.can_meet_girl(GirlCatalog.ID_KATYA))
 	world.enter_location(LocationCatalog.ID_CAFE)
-	_ok("16. lera open city 2", girls.can_meet_girl(GirlCatalog.ID_LERA))
+	_ok("16. lera open story 2", girls.can_meet_girl(GirlCatalog.ID_LERA))
 	world.unlock_location(LocationCatalog.ID_RESTAURANT)
 	world.enter_location(LocationCatalog.ID_RESTAURANT)
-	_ok("16. olya open city 2", girls.can_meet_girl(GirlCatalog.ID_OLYA))
+	_ok("16. olya closed story 2", girls.can_meet_girl(GirlCatalog.ID_OLYA) == false)
 	world.enter_location(LocationCatalog.ID_CAFE)
-	_ok("40. denis city 2", _rival_list_has(rivals.get_rivals_at_current_location(), RivalCatalog.ID_DENIS))
+	_ok("40. denis story 2", _rival_list_has(rivals.get_rivals_at_current_location(), RivalCatalog.ID_DENIS))
 	sm.new_game()
 	_ok("advance actress city 2", stages.force_complete_current_stage_for_dev())
 	_ok("7. after actress city 2", int(world.get_city_stage()) == 2)
@@ -5361,18 +5386,19 @@ func _test_city_density_progression() -> void:
 	_ok("8. after editor city 3", int(world.get_city_stage()) == 3)
 	_ok("12. date free city 3", dating.is_free_date_available_today(GirlCatalog.ID_ALINA))
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
-	_ok("19. sonya open city 3", girls.can_meet_girl(GirlCatalog.ID_SONYA))
+	_ok("19. sonya open stage 4", girls.can_meet_girl(GirlCatalog.ID_SONYA))
 	world.enter_location(LocationCatalog.ID_CAFE)
-	_ok("19. nika open city 3", girls.can_meet_girl(GirlCatalog.ID_NIKA))
+	_ok("19. nika open stage 4", girls.can_meet_girl(GirlCatalog.ID_NIKA))
 	world.unlock_location(LocationCatalog.ID_RESTAURANT)
 	world.enter_location(LocationCatalog.ID_RESTAURANT)
-	_ok("19. rita open city 3", girls.can_meet_girl(GirlCatalog.ID_RITA))
-	gs.player.rating = 9
+	_ok("19. rita open stage 4", girls.can_meet_girl(GirlCatalog.ID_RITA))
+	gs.player.rating = 11
 	gs.story.stage = 4
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
-	_ok("20. scientist blocked 9", girls.can_meet_girl(GirlCatalog.ID_SCIENTIST) == false)
-	gs.player.rating = 10
-	_ok("20. scientist open 10", girls.can_meet_girl(GirlCatalog.ID_SCIENTIST))
+	_ok("20. scientist blocked without fillers", girls.can_meet_girl(GirlCatalog.ID_SCIENTIST) == false)
+	_max_stage_fillers(girls, 4, 2)
+	gs.player.rating = 11
+	_ok("20. scientist open 11", girls.can_meet_girl(GirlCatalog.ID_SCIENTIST))
 	gs.player.rating = 11
 	gs.story.stage = 5
 	world.unlock_location(LocationCatalog.ID_RESTAURANT)
@@ -5461,7 +5487,7 @@ func _test_city_density_progression() -> void:
 		_ok("hud has no global cooldown", not sim.get_hud_text().contains("Cooldown:"))
 		sim.show_section("work")
 		_ok("work button 100", sim.get_city_body_text().contains("Работать — 1 ч — +100"))
-		sim.queue_free()
+		sim.free()
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -5731,10 +5757,32 @@ func _test_automation() -> void:
 		var home_text: String = sim.get_city_body_text()
 		_ok("auto sim home city", home_text.contains("Родной город:"))
 		_ok("auto sim home factory", home_text.contains("Фабрика:"))
-		sim.queue_free()
+		sim.free()
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
+
+func _story_date_girl_ids() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	ids.append(GirlCatalog.ID_ALINA)
+	ids.append(GirlCatalog.ID_VIKA)
+	ids.append(GirlCatalog.ID_DASHA)
+	ids.append(GirlCatalog.ID_ACTRESS)
+	ids.append(GirlCatalog.ID_MARINA)
+	ids.append(GirlCatalog.ID_KATYA)
+	ids.append(GirlCatalog.ID_LERA)
+	ids.append(GirlCatalog.ID_MINE_BOSS)
+	ids.append(GirlCatalog.ID_KIRA)
+	ids.append(GirlCatalog.ID_OLYA)
+	ids.append(GirlCatalog.ID_SONYA)
+	ids.append(GirlCatalog.ID_MAGAZINE_EDITOR)
+	ids.append(GirlCatalog.ID_NIKA)
+	ids.append(GirlCatalog.ID_RITA)
+	ids.append(GirlCatalog.ID_EVA)
+	ids.append(GirlCatalog.ID_SCIENTIST)
+	ids.append(GirlCatalog.ID_PRESIDENT)
+	return ids
+
 
 func _home_city_girl_ids() -> Array[StringName]:
 	var ids: Array[StringName] = []
@@ -5760,23 +5808,23 @@ func _home_city_girl_ids() -> Array[StringName]:
 
 func _meet_rating_table() -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
-	rows.append({"girl_id": GirlCatalog.ID_ALINA, "rating": 0, "stage": 1, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_MARINA, "rating": 0, "stage": 1, "city_stage": 2})
-	rows.append({"girl_id": GirlCatalog.ID_VIKA, "rating": 0, "stage": 1, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_DASHA, "rating": 0, "stage": 1, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_ACTRESS, "rating": 2, "stage": 1, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_KATYA, "rating": 0, "stage": 1, "city_stage": 2})
-	rows.append({"girl_id": GirlCatalog.ID_LERA, "rating": 0, "stage": 1, "city_stage": 2})
-	rows.append({"girl_id": GirlCatalog.ID_OLYA, "rating": 0, "stage": 1, "city_stage": 2})
-	rows.append({"girl_id": GirlCatalog.ID_MINE_BOSS, "rating": 5, "stage": 2, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_MAGAZINE_EDITOR, "rating": 7, "stage": 3, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_SONYA, "rating": 0, "stage": 1, "city_stage": 3})
-	rows.append({"girl_id": GirlCatalog.ID_NIKA, "rating": 0, "stage": 1, "city_stage": 3})
-	rows.append({"girl_id": GirlCatalog.ID_RITA, "rating": 0, "stage": 1, "city_stage": 3})
-	rows.append({"girl_id": GirlCatalog.ID_SCIENTIST, "rating": 10, "stage": 4, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_PRESIDENT, "rating": 12, "stage": 5, "city_stage": 1})
-	rows.append({"girl_id": GirlCatalog.ID_KIRA, "rating": 0, "stage": 1, "city_stage": 2})
-	rows.append({"girl_id": GirlCatalog.ID_EVA, "rating": 0, "stage": 1, "city_stage": 3})
+	rows.append({"girl_id": GirlCatalog.ID_ALINA, "rating": 0, "stage": 1})
+	rows.append({"girl_id": GirlCatalog.ID_VIKA, "rating": 0, "stage": 1})
+	rows.append({"girl_id": GirlCatalog.ID_DASHA, "rating": 0, "stage": 1})
+	rows.append({"girl_id": GirlCatalog.ID_MARINA, "rating": 0, "stage": 2})
+	rows.append({"girl_id": GirlCatalog.ID_KATYA, "rating": 0, "stage": 2})
+	rows.append({"girl_id": GirlCatalog.ID_LERA, "rating": 0, "stage": 2})
+	rows.append({"girl_id": GirlCatalog.ID_KIRA, "rating": 0, "stage": 3})
+	rows.append({"girl_id": GirlCatalog.ID_OLYA, "rating": 0, "stage": 3})
+	rows.append({"girl_id": GirlCatalog.ID_SONYA, "rating": 0, "stage": 3})
+	rows.append({"girl_id": GirlCatalog.ID_NIKA, "rating": 0, "stage": 4})
+	rows.append({"girl_id": GirlCatalog.ID_RITA, "rating": 0, "stage": 4})
+	rows.append({"girl_id": GirlCatalog.ID_EVA, "rating": 0, "stage": 4})
+	rows.append({"girl_id": GirlCatalog.ID_ACTRESS, "rating": 2, "stage": 1, "filler_stage": 1})
+	rows.append({"girl_id": GirlCatalog.ID_MINE_BOSS, "rating": 5, "stage": 2, "filler_stage": 2})
+	rows.append({"girl_id": GirlCatalog.ID_MAGAZINE_EDITOR, "rating": 8, "stage": 3, "filler_stage": 3})
+	rows.append({"girl_id": GirlCatalog.ID_SCIENTIST, "rating": 11, "stage": 4, "filler_stage": 4})
+	rows.append({"girl_id": GirlCatalog.ID_PRESIDENT, "rating": 12, "stage": 5})
 	return rows
 
 
@@ -5788,6 +5836,7 @@ func _story_girl_specs() -> Array[Dictionary]:
 		"location_id": LocationCatalog.ID_CITY_CENTER,
 		"competition_id": CompetitionCatalog.ID_CASTING,
 		"city_stage": 1,
+		"story_stage": 1,
 	})
 	specs.append({
 		"girl_id": GirlCatalog.ID_MINE_BOSS,
@@ -5795,6 +5844,7 @@ func _story_girl_specs() -> Array[Dictionary]:
 		"location_id": LocationCatalog.ID_RESTAURANT,
 		"competition_id": CompetitionCatalog.ID_ARMWRESTLING,
 		"city_stage": 2,
+		"story_stage": 2,
 	})
 	specs.append({
 		"girl_id": GirlCatalog.ID_MAGAZINE_EDITOR,
@@ -5802,6 +5852,7 @@ func _story_girl_specs() -> Array[Dictionary]:
 		"location_id": LocationCatalog.ID_CAFE,
 		"competition_id": CompetitionCatalog.ID_TASTE_DEBATE,
 		"city_stage": 2,
+		"story_stage": 3,
 	})
 	specs.append({
 		"girl_id": GirlCatalog.ID_SCIENTIST,
@@ -5809,6 +5860,7 @@ func _story_girl_specs() -> Array[Dictionary]:
 		"location_id": LocationCatalog.ID_CITY_CENTER,
 		"competition_id": CompetitionCatalog.ID_GRANT,
 		"city_stage": 3,
+		"story_stage": 4,
 	})
 	specs.append({
 		"girl_id": GirlCatalog.ID_PRESIDENT,
@@ -5816,6 +5868,7 @@ func _story_girl_specs() -> Array[Dictionary]:
 		"location_id": LocationCatalog.ID_RESTAURANT,
 		"competition_id": CompetitionCatalog.ID_PROTOCOL_DUEL,
 		"city_stage": 3,
+		"story_stage": 5,
 	})
 	return specs
 
@@ -5866,6 +5919,23 @@ func _max_girl(girls: Variant, girl_id: StringName) -> void:
 	var current: int = int(girls.get_relationship(girl_id))
 	if current < max_value:
 		girls.change_relationship(girl_id, max_value - current)
+
+func _max_stage_fillers(girls: Variant, stage: int, count: int) -> void:
+	var stages: Variant = _stage_service()
+	if stages == null or girls == null:
+		return
+	var catalog: StageCatalog = stages.get_catalog() as StageCatalog
+	if catalog == null:
+		return
+	var definition: StageDefinition = catalog.get_stage(stage)
+	if definition == null:
+		return
+	var done: int = 0
+	for girl_id in definition.filler_girl_ids:
+		if done >= count:
+			break
+		_max_girl(girls, girl_id)
+		done += 1
 
 
 func _first_date_venue_id(dating: Variant, girl_id: StringName) -> StringName:
@@ -6067,18 +6137,268 @@ func _test_rating_meet_gates() -> void:
 		var girl_id: StringName = row["girl_id"]
 		var required: int = int(row["rating"])
 		var min_stage: int = int(row["stage"])
-		var min_city: int = int(row.get("city_stage", 1))
+		var filler_stage: int = int(row.get("filler_stage", 0))
 		sm.new_game()
-		gs.story.stage = min_stage
 		_enter_girl_world(world, girls, girl_id)
-		if min_city > 1:
-			_ok("%s blocked at city 1" % String(girl_id), girls.can_meet_girl(girl_id) == false)
-			world.set_city_stage(min_city)
+		if min_stage > 1:
+			_ok("%s blocked at stage 1" % String(girl_id), girls.can_meet_girl(girl_id) == false)
+		gs.story.stage = min_stage
+		if filler_stage > 0:
+			_max_stage_fillers(girls, filler_stage, 2)
 		if required > 0:
 			gs.player.rating = required - 1
 			_ok("%s blocked at %d" % [String(girl_id), required - 1], girls.can_meet_girl(girl_id) == false)
 		gs.player.rating = required
 		_ok("%s open at %d" % [String(girl_id), required], girls.can_meet_girl(girl_id))
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+func _test_story_stage_rosters() -> void:
+	var stages: Variant = _stage_service()
+	_ok("roster StageService", stages != null)
+	if stages == null:
+		return
+	var catalog: StageCatalog = stages.get_catalog() as StageCatalog
+	_ok("roster catalog", catalog != null)
+	if catalog == null:
+		return
+	var expected: Dictionary = {
+		1: {
+			"fillers": [GirlCatalog.ID_ALINA, GirlCatalog.ID_VIKA, GirlCatalog.ID_DASHA],
+			"story": GirlCatalog.ID_ACTRESS,
+			"ordinary": [RivalCatalog.ID_GLEB, RivalCatalog.ID_MAX],
+			"rival": RivalCatalog.ID_BORIS,
+			"rating": 2,
+		},
+		2: {
+			"fillers": [GirlCatalog.ID_MARINA, GirlCatalog.ID_KATYA, GirlCatalog.ID_LERA],
+			"story": GirlCatalog.ID_MINE_BOSS,
+			"ordinary": [RivalCatalog.ID_DENIS, RivalCatalog.ID_ROMAN],
+			"rival": RivalCatalog.ID_FOREMAN,
+			"rating": 5,
+		},
+		3: {
+			"fillers": [GirlCatalog.ID_KIRA, GirlCatalog.ID_OLYA, GirlCatalog.ID_SONYA],
+			"story": GirlCatalog.ID_MAGAZINE_EDITOR,
+			"ordinary": [RivalCatalog.ID_LEV, RivalCatalog.ID_TIMUR],
+			"rival": RivalCatalog.ID_COLUMNIST,
+			"rating": 8,
+		},
+		4: {
+			"fillers": [GirlCatalog.ID_NIKA, GirlCatalog.ID_RITA, GirlCatalog.ID_EVA],
+			"story": GirlCatalog.ID_SCIENTIST,
+			"ordinary": [],
+			"rival": RivalCatalog.ID_ACADEMIC,
+			"rating": 11,
+		},
+	}
+	for stage_number in [1, 2, 3, 4]:
+		var definition: StageDefinition = catalog.get_stage(stage_number)
+		var row: Dictionary = expected[stage_number]
+		_ok("roster stage %d" % stage_number, definition != null)
+		if definition == null:
+			continue
+		_ok("roster %d fillers" % stage_number, definition.filler_girl_ids == row["fillers"])
+		_ok("roster %d story" % stage_number, definition.story_girl_id == row["story"])
+		_ok("roster %d ordinary" % stage_number, definition.ordinary_rival_ids == row["ordinary"])
+		_ok("roster %d rival" % stage_number, definition.story_rival_id == row["rival"])
+		_ok("roster %d rating" % stage_number, definition.story_girl_required_rating == int(row["rating"]))
+		_ok("roster %d two of three" % stage_number, definition.required_filler_max_count == 2)
+
+
+func _test_story_girl_access_two_of_three() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var world: Variant = _world_service()
+	var girls: Variant = _girls_service()
+	var stages: Variant = _stage_service()
+	_ok("two of three services", gs != null and sm != null and world != null and girls != null and stages != null)
+	if gs == null or sm == null or world == null or girls == null or stages == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/story_girl_two_of_three.json"
+	sm.delete_save()
+	for stage_number in [1, 2, 3, 4]:
+		var definition: StageDefinition = stages.get_catalog().get_stage(stage_number)
+		_ok("two of three stage %d" % stage_number, definition != null)
+		if definition == null:
+			continue
+		var girl_id: StringName = definition.story_girl_id
+		sm.new_game()
+		gs.story.stage = stage_number
+		stages.reconcile_stage_entry_state()
+		_enter_girl_world(world, girls, girl_id)
+		_max_stage_fillers(girls, stage_number, 1)
+		gs.player.rating = definition.story_girl_required_rating
+		_ok("case a blocked one filler %d" % stage_number, girls.can_meet_girl(girl_id) == false)
+		sm.new_game()
+		gs.story.stage = stage_number
+		stages.reconcile_stage_entry_state()
+		_enter_girl_world(world, girls, girl_id)
+		_max_stage_fillers(girls, stage_number, 2)
+		gs.player.rating = definition.story_girl_required_rating - 1
+		_ok("case b blocked low rating %d" % stage_number, girls.can_meet_girl(girl_id) == false)
+		gs.player.rating = definition.story_girl_required_rating
+		_ok("case c open %d" % stage_number, girls.can_meet_girl(girl_id))
+		if stage_number > 1:
+			sm.new_game()
+			gs.story.stage = stage_number
+			stages.reconcile_stage_entry_state()
+			_enter_girl_world(world, girls, girl_id)
+			for previous in range(1, stage_number):
+				_max_stage_fillers(girls, previous, 3)
+			_max_stage_fillers(girls, stage_number, 1)
+			gs.player.rating = definition.story_girl_required_rating
+			_ok("case d previous surplus %d" % stage_number, girls.can_meet_girl(girl_id) == false)
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_story_rival_flow() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var world: Variant = _world_service()
+	var girls: Variant = _girls_service()
+	var rivals: Variant = _rivals_service()
+	var dating: Variant = _dating_service()
+	var stages: Variant = _stage_service()
+	_ok("rival flow services", gs != null and sm != null and world != null and girls != null and rivals != null and dating != null and stages != null)
+	if gs == null or sm == null or world == null or girls == null or rivals == null or dating == null or stages == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/story_rival_flow.json"
+	sm.delete_save()
+	for stage_number in [1, 2, 3, 4]:
+		var definition: StageDefinition = stages.get_catalog().get_stage(stage_number)
+		if definition == null:
+			continue
+		var girl_id: StringName = definition.story_girl_id
+		var rival_id: StringName = definition.story_rival_id
+		sm.new_game()
+		gs.story.stage = stage_number
+		stages.reconcile_stage_entry_state()
+		_max_stage_fillers(girls, stage_number, 2)
+		gs.player.rating = definition.story_girl_required_rating
+		_enter_girl_world(world, girls, girl_id)
+		var before: Array[RivalDefinition] = rivals.get_rivals_at_current_location()
+		_ok("flow hidden before %d" % stage_number, _rival_list_has(before, rival_id) == false)
+		_ok("discover %d" % stage_number, girls.discover_girl(girl_id))
+		var after: Array[RivalDefinition] = rivals.get_rivals_at_current_location()
+		_ok("flow visible after %d" % stage_number, _rival_list_has(after, rival_id))
+		girls.give_contact(girl_id)
+		var date_req := RivalDefeatedGirlRequirement.new()
+		date_req.rival_id = rival_id
+		_ok("flow date blocked %d" % stage_number, date_req.is_met(girl_id) == false)
+		_ok("defeat %d" % stage_number, rivals.defeat_rival(rival_id))
+		_ok("flow date open %d" % stage_number, date_req.is_met(girl_id))
+		_max_girl(girls, girl_id)
+		_ok("flow stage complete %d" % stage_number, int(stages.get_current_stage()) == stage_number + 1)
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_story_vs_city_stage() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var world: Variant = _world_service()
+	var girls: Variant = _girls_service()
+	var dating: Variant = _dating_service()
+	var stages: Variant = _stage_service()
+	var equipment: Variant = _equipment_service()
+	var apartment: Variant = _apartment_service()
+	var rivals: Variant = _rivals_service()
+	_ok("mapping services", gs != null and sm != null and world != null and girls != null and dating != null and stages != null)
+	if gs == null or sm == null or world == null or girls == null or dating == null or stages == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/story_vs_city_stage.json"
+	sm.delete_save()
+	sm.new_game()
+	_ok("map 1-1", int(stages.get_current_stage()) == 1 and int(world.get_city_stage()) == 1)
+	stages.force_complete_current_stage_for_dev()
+	_ok("map 2-2", int(stages.get_current_stage()) == 2 and int(world.get_city_stage()) == 2)
+	stages.force_complete_current_stage_for_dev()
+	_ok("map 3-2", int(stages.get_current_stage()) == 3 and int(world.get_city_stage()) == 2)
+	_ok("stage 3 restaurant venue", world.has_unlocked_date_venue(&"restaurant"))
+	world.enter_location(LocationCatalog.ID_CAFE)
+	_ok("stage 3 kira", girls.can_meet_girl(GirlCatalog.ID_KIRA))
+	world.unlock_location(LocationCatalog.ID_RESTAURANT)
+	world.enter_location(LocationCatalog.ID_RESTAURANT)
+	_ok("stage 3 olya", girls.can_meet_girl(GirlCatalog.ID_OLYA))
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	_ok("stage 3 sonya", girls.can_meet_girl(GirlCatalog.ID_SONYA))
+	_ok("stage 3 lev", _rival_list_has(rivals.get_rivals_at_current_location(), RivalCatalog.ID_LEV))
+	if equipment != null:
+		var outfits: Array = equipment.get_shop_outfits() if equipment.has_method("get_shop_outfits") else []
+		var has_stage3_outfit: bool = false
+		for outfit in outfits:
+			if outfit != null and int(outfit.min_story_stage) == 3:
+				has_stage3_outfit = true
+				break
+		_ok("stage 3 outfit", has_stage3_outfit)
+	if apartment != null:
+		var objects: Array = apartment.get_available_objects()
+		var has_stage3_object: bool = false
+		for object in objects:
+			if object != null and int(object.min_story_stage) == 3:
+				has_stage3_object = true
+				break
+		_ok("stage 3 apartment", has_stage3_object)
+	stages.force_complete_current_stage_for_dev()
+	_ok("map 4-3", int(stages.get_current_stage()) == 4 and int(world.get_city_stage()) == 3)
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+
+func _test_rating_baseline_route() -> void:
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var girls: Variant = _girls_service()
+	var rating: Variant = _rating_service()
+	var stages: Variant = _stage_service()
+	var rivals: Variant = _rivals_service()
+	_ok("baseline services", gs != null and sm != null and girls != null and rating != null and stages != null and rivals != null)
+	if gs == null or sm == null or girls == null or rating == null or stages == null or rivals == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/rating_baseline_route.json"
+	sm.delete_save()
+	sm.new_game()
+	_max_stage_fillers(girls, 1, 2)
+	_ok("baseline rating 2", int(rating.get_rating()) == 2)
+	rivals.defeat_rival(RivalCatalog.ID_BORIS)
+	_max_girl(girls, GirlCatalog.ID_ACTRESS)
+	_ok("baseline rating 3", int(rating.get_rating()) == 3)
+	_ok("baseline stage 2", int(stages.get_current_stage()) == 2)
+	_max_stage_fillers(girls, 2, 2)
+	_ok("baseline rating 5", int(rating.get_rating()) == 5)
+	rivals.defeat_rival(RivalCatalog.ID_FOREMAN)
+	_max_girl(girls, GirlCatalog.ID_MINE_BOSS)
+	_ok("baseline rating 6", int(rating.get_rating()) == 6)
+	_ok("baseline stage 3", int(stages.get_current_stage()) == 3)
+	_max_stage_fillers(girls, 3, 2)
+	_ok("baseline rating 8", int(rating.get_rating()) == 8)
+	rivals.defeat_rival(RivalCatalog.ID_COLUMNIST)
+	_max_girl(girls, GirlCatalog.ID_MAGAZINE_EDITOR)
+	_ok("baseline rating 9", int(rating.get_rating()) == 9)
+	_ok("baseline stage 4", int(stages.get_current_stage()) == 4)
+	_max_stage_fillers(girls, 4, 2)
+	_ok("baseline rating 11", int(rating.get_rating()) == 11)
+	rivals.defeat_rival(RivalCatalog.ID_ACADEMIC)
+	_max_girl(girls, GirlCatalog.ID_SCIENTIST)
+	_ok("baseline rating 12", int(rating.get_rating()) == 12)
+	_ok("baseline stage 5", int(stages.get_current_stage()) == 5)
+	sm.new_game()
+	_max_stage_fillers(girls, 1, 3)
+	gs.player.rating = 5
+	gs.story.stage = 2
+	stages.reconcile_stage_entry_state()
+	_max_stage_fillers(girls, 2, 1)
+	_ok("surplus still needs current two", girls.can_meet_girl(GirlCatalog.ID_MINE_BOSS) == false)
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -6107,6 +6427,7 @@ func _test_story_rival_visibility() -> void:
 		sm.new_game()
 		if location_id == LocationCatalog.ID_RESTAURANT:
 			world.unlock_location(LocationCatalog.ID_RESTAURANT)
+		gs.story.stage = int(spec.get("story_stage", 1))
 		world.set_city_stage(int(spec.get("city_stage", 1)))
 		world.enter_location(location_id)
 		var before: Array[RivalDefinition] = rivals.get_rivals_at_current_location()
@@ -6199,7 +6520,14 @@ func _test_dates_for_home_city_girls() -> void:
 		gs.player.money = 250
 		actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS))
 	var alina_played: bool = false
-	for girl_id in _home_city_girl_ids():
+	for girl_id in _story_date_girl_ids():
+		for spec in _story_girl_specs():
+			if spec["girl_id"] != girl_id:
+				continue
+			var story_stage: int = int(spec["story_stage"])
+			if story_stage >= 1 and story_stage <= 4:
+				_max_stage_fillers(girls, story_stage, 2)
+			break
 		_enter_girl_world(world, girls, girl_id)
 		var meet_result: ActionResult = actions.execute(girls.create_meet_girl_action(girl_id))
 		_ok("meet %s" % String(girl_id), meet_result.success)
@@ -6288,11 +6616,16 @@ func _advance_manual_path_to_scientist(
 	_max_girl(girls, GirlCatalog.ID_MINE_BOSS)
 	_ok("manual stage 3", int(stages.get_current_stage()) == 3)
 	_ok("manual work 200", WorkService.get_current_hourly_pay() == 200)
+	world.enter_location(LocationCatalog.ID_CAFE)
+	var meet_kira: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_KIRA))
+	_ok("manual meet kira", meet_kira.success)
+	_max_girl(girls, GirlCatalog.ID_KIRA)
+	world.unlock_location(LocationCatalog.ID_RESTAURANT)
 	world.enter_location(LocationCatalog.ID_RESTAURANT)
 	var meet_olya: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_OLYA))
 	_ok("manual meet olya", meet_olya.success)
 	_max_girl(girls, GirlCatalog.ID_OLYA)
-	_ok("manual rating 7", int(rating.get_rating()) == 7)
+	_ok("manual rating 8", int(rating.get_rating()) == 8)
 	world.enter_location(LocationCatalog.ID_CAFE)
 	var meet_editor: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_MAGAZINE_EDITOR))
 	_ok("manual meet editor", meet_editor.success)
@@ -6300,15 +6633,15 @@ func _advance_manual_path_to_scientist(
 	_max_girl(girls, GirlCatalog.ID_MAGAZINE_EDITOR)
 	_ok("manual stage 4", int(stages.get_current_stage()) == 4)
 	_ok("manual city 3", int(world.get_city_stage()) == 3)
-	world.enter_location(LocationCatalog.ID_CITY_CENTER)
-	var meet_sonya: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_SONYA))
-	_ok("manual meet sonya early", meet_sonya.success)
-	_max_girl(girls, GirlCatalog.ID_SONYA)
 	world.enter_location(LocationCatalog.ID_CAFE)
 	var meet_nika: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_NIKA))
 	_ok("manual meet nika", meet_nika.success)
 	_max_girl(girls, GirlCatalog.ID_NIKA)
-	_ok("manual rating 10", int(rating.get_rating()) == 10)
+	world.enter_location(LocationCatalog.ID_RESTAURANT)
+	var meet_rita: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_RITA))
+	_ok("manual meet rita", meet_rita.success)
+	_max_girl(girls, GirlCatalog.ID_RITA)
+	_ok("manual rating 11", int(rating.get_rating()) == 11)
 	world.enter_location(LocationCatalog.ID_CITY_CENTER)
 	var meet_scientist: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_SCIENTIST))
 	_ok("manual meet scientist", meet_scientist.success)
@@ -6316,7 +6649,7 @@ func _advance_manual_path_to_scientist(
 	_max_girl(girls, GirlCatalog.ID_SCIENTIST)
 	_ok("manual stage 5", int(stages.get_current_stage()) == 5)
 	_ok("manual factory", bool(automation.is_unlocked()))
-	_ok("manual rating 11", int(rating.get_rating()) == 11)
+	_ok("manual rating 12", int(rating.get_rating()) == 12)
 
 
 func _test_manual_progression_sonya_path() -> void:
@@ -6338,27 +6671,24 @@ func _test_manual_progression_sonya_path() -> void:
 	sm.delete_save()
 	_advance_manual_path_to_scientist(gs, sm, stages, world, girls, rivals, rating, dating, automation, actions)
 	world.enter_location(LocationCatalog.ID_CAFE)
-	var meet_vika: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_VIKA))
-	_ok("sonya path meet vika", meet_vika.success)
-	_max_girl(girls, GirlCatalog.ID_VIKA)
-	world.enter_location(LocationCatalog.ID_CAFE)
 	var meet_dasha: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_DASHA))
 	_ok("sonya path meet dasha", meet_dasha.success)
 	_max_girl(girls, GirlCatalog.ID_DASHA)
-	world.enter_location(LocationCatalog.ID_RESTAURANT)
-	var meet_rita: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_RITA))
-	_ok("sonya path meet rita", meet_rita.success)
-	_max_girl(girls, GirlCatalog.ID_RITA)
-	_ok("sonya path rating 14", int(rating.get_rating()) == 14)
+	_max_girl(girls, GirlCatalog.ID_MARINA)
+	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	var meet_sonya: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_SONYA))
+	_ok("sonya path meet sonya", meet_sonya.success)
+	_max_girl(girls, GirlCatalog.ID_SONYA)
+	_ok("sonya path rating 15", int(rating.get_rating()) == 15)
 	_ok("sonya path keeps stage 5", int(stages.get_current_stage()) == 5)
-	_assert_coverage(girls, "sonya path before president", 14, 17)
+	_assert_coverage(girls, "sonya path before president", 15, 17)
 	world.enter_location(LocationCatalog.ID_RESTAURANT)
 	var meet_president: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_PRESIDENT))
 	_ok("sonya path meet president", meet_president.success)
 	_ok("sonya path defeat minister", rivals.defeat_rival(RivalCatalog.ID_MINISTER))
 	_max_girl(girls, GirlCatalog.ID_PRESIDENT)
 	_ok("sonya path stage 6", int(stages.get_current_stage()) == 6)
-	_assert_coverage(girls, "sonya path fifteen of seventeen", 15, 17)
+	_assert_coverage(girls, "sonya path sixteen of seventeen", 16, 17)
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -6382,18 +6712,17 @@ func _test_manual_progression_factory_rating_path() -> void:
 	sm.save_path = "user://saves/manual_factory_rating_path.json"
 	sm.delete_save()
 	_advance_manual_path_to_scientist(gs, sm, stages, world, girls, rivals, rating, dating, automation, actions)
-	_assert_coverage(girls, "factory path skip remaining fillers", 11, 17)
+	_assert_coverage(girls, "factory path skip remaining fillers", 12, 17)
 	world.enter_location(LocationCatalog.ID_RESTAURANT)
-	_ok("factory path president blocked", girls.can_meet_girl(GirlCatalog.ID_PRESIDENT) == false)
-	rating.add_rating(1)
 	_ok("factory path rating 12", int(rating.get_rating()) == 12)
-	_assert_coverage(girls, "factory path still 11 of 17", 11, 17)
+	_ok("factory path president open", girls.can_meet_girl(GirlCatalog.ID_PRESIDENT))
+	_assert_coverage(girls, "factory path still 12 of 17", 12, 17)
 	var meet_president: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_PRESIDENT))
 	_ok("factory path meet president", meet_president.success)
 	_ok("factory path defeat minister", rivals.defeat_rival(RivalCatalog.ID_MINISTER))
 	_max_girl(girls, GirlCatalog.ID_PRESIDENT)
 	_ok("factory path stage 6", int(stages.get_current_stage()) == 6)
-	_assert_coverage(girls, "factory path twelve of seventeen", 12, 17)
+	_assert_coverage(girls, "factory path thirteen of seventeen", 13, 17)
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()

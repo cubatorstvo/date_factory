@@ -2,7 +2,7 @@
 
 Каноническая спецификация текущей `main`. Код должен совпадать с этим документом.
 
-High-level Stage 1–4 progression — [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md):
+High-level Stage 1–4 systems — [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md). Roster, Rating gates и Story vs City Stage — [`STORY_STAGE_PROGRESSION.md`](STORY_STAGE_PROGRESSION.md):
 
 ```text
 Stage 1 = Apartment / fundamentals
@@ -101,7 +101,7 @@ Opening, Core и Closing используют одну source-модель. `+1`
 
 Сложность девушки — число положительных Tags из 12: STARTER 6, EARLY 5, MID 4, LATE 3, ELITE 2.
 
-Отношения всегда стартуют с `0` и только растут. Максимум берётся из Game Core `GirlDefinition`: обычные `10`, сюжетные `15`. `GirlProfile` не хранит отдельную копию диапазона. `StageCatalog` и Story requirements используют тот же максимум. Первое достижение MAX завершает линию и даёт `Rating +1` один раз. У filler-девушки на том же переходе активируется её персональная постоянная награда.
+Отношения всегда стартуют с `0` и только растут. Максимум берётся из Game Core `GirlDefinition`: ordinary / filler `10`; Actress / Mine Boss / Magazine Editor `10`; Scientist / President `15`. `GirlProfile` не хранит отдельную копию диапазона. `StageCatalog` и Story requirements используют тот же максимум. Первое достижение MAX завершает линию и даёт `Rating +1` один раз. У filler-девушки на том же переходе активируется её персональная постоянная награда.
 
 Формула итога:
 
@@ -1014,8 +1014,8 @@ get_progress_text(girl_id: StringName) -> String
 |---|---|---|---|---|
 | `RatingGirlRequirement` | `required_rating` | `RatingService.get_rating() >= required_rating` | `"Рейтинг"` | `"<current> / <required>"` |
 | `RivalDefeatedGirlRequirement` | `rival_id` | `RivalsService.is_defeated(rival_id)` | `"Победить <RivalDefinition.display_name>"` | `"Не выполнено"` / `"Выполнено"` |
-| `MinStageGirlRequirement` | `minimum_stage` | `StageService.get_current_stage() >= minimum_stage` | `"Этап игры"` | `"Stage <current> / <required>"` |
-| `MinCityStageGirlRequirement` | `minimum_city_stage` | `CityProgressionService.get_city_stage() >= minimum_city_stage` | `"Этап города"` | `"<current> / <required>"` |
+| `MinStageGirlRequirement` | `minimum_stage` | `StageService.get_current_stage() >= minimum_stage` | `"Этап сюжета"` | `"Stage <current> / <required>"` |
+| `CurrentStageFillerMaxGirlRequirement` | `story_stage`, `required_count` | число filler этого Stage с relationship MAX `>= required_count` | `"Девушки этапа"` | `"<current> / <required>"` |
 | `OutfitAboveCasualGirlRequirement` | — | экипированный `Outfit.tier >= 1` | `"Одежда"` | `"Повседневный"` / `"Выше повседневного"` |
 
 Новые типы (`AuthorityGirlRequirement`, `PurchaseGirlRequirement`, `CharacteristicGirlRequirement`, `StoryFlagGirlRequirement`) добавляют тот же контракт. `GirlsService` и `DatingService` работают только с базовым интерфейсом.
@@ -1028,25 +1028,25 @@ Authored-набор родного города (17 девушек, все `coun
 
 | id | имя | локация | meet_requirements | date_requirements |
 |---|---|---|---|---|
-| `alina` | Алина | `city_center` | `MinCityStageGirlRequirement(1)` | `[]` |
-| `vika` | Вика | `cafe` | `MinCityStageGirlRequirement(1)` | `[]` |
-| `dasha` | Даша | `cafe` | `MinCityStageGirlRequirement(1)` | `[]` |
-| `girl_actress` | Актриса | `city_center` | `MinStageGirlRequirement(1)`, `RatingGirlRequirement(2)` | `RivalDefeatedGirlRequirement(rival_boris)` |
-| `marina` | Марина | `clothing_store` | `MinCityStageGirlRequirement(2)` | `[]` |
-| `katya` | Катя | `furniture_store` | `MinCityStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
-| `lera` | Лера | `cafe` | `MinCityStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
-| `kira` | Кира | `cafe` | `MinCityStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
-| `olya` | Оля | `restaurant` | `MinCityStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
-| `girl_mine_boss` | Начальница шахты | `restaurant` | `MinStageGirlRequirement(2)`, `RatingGirlRequirement(5)` | `RivalDefeatedGirlRequirement(rival_foreman)`, `OutfitAboveCasualGirlRequirement` |
-| `girl_magazine_editor` | Редактор журнала | `cafe` | `MinStageGirlRequirement(3)`, `RatingGirlRequirement(7)` | `RivalDefeatedGirlRequirement(rival_columnist)`, `OutfitAboveCasualGirlRequirement` |
-| `sonya` | Соня | `city_center` | `MinCityStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
-| `nika` | Ника | `cafe` | `MinCityStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
-| `rita` | Рита | `restaurant` | `MinCityStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
-| `eva` | Ева | `restaurant` | `MinCityStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
-| `girl_scientist` | Учёная | `city_center` | `MinStageGirlRequirement(4)`, `RatingGirlRequirement(10)` | `RivalDefeatedGirlRequirement(rival_academic)`, `OutfitAboveCasualGirlRequirement` |
+| `alina` | Алина | `city_center` | `MinStageGirlRequirement(1)` | `[]` |
+| `vika` | Вика | `cafe` | `MinStageGirlRequirement(1)` | `[]` |
+| `dasha` | Даша | `cafe` | `MinStageGirlRequirement(1)` | `[]` |
+| `girl_actress` | Актриса | `city_center` | `MinStageGirlRequirement(1)`, `CurrentStageFillerMaxGirlRequirement(1, 2)`, `RatingGirlRequirement(2)` | `RivalDefeatedGirlRequirement(rival_boris)` |
+| `marina` | Марина | `clothing_store` | `MinStageGirlRequirement(2)` | `[]` |
+| `katya` | Катя | `furniture_store` | `MinStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
+| `lera` | Лера | `cafe` | `MinStageGirlRequirement(2)` | `OutfitAboveCasualGirlRequirement` |
+| `kira` | Кира | `cafe` | `MinStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
+| `olya` | Оля | `restaurant` | `MinStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
+| `girl_mine_boss` | Начальница шахты | `restaurant` | `MinStageGirlRequirement(2)`, `CurrentStageFillerMaxGirlRequirement(2, 2)`, `RatingGirlRequirement(5)` | `RivalDefeatedGirlRequirement(rival_foreman)`, `OutfitAboveCasualGirlRequirement` |
+| `girl_magazine_editor` | Редактор журнала | `cafe` | `MinStageGirlRequirement(3)`, `CurrentStageFillerMaxGirlRequirement(3, 2)`, `RatingGirlRequirement(8)` | `RivalDefeatedGirlRequirement(rival_columnist)`, `OutfitAboveCasualGirlRequirement` |
+| `sonya` | Соня | `city_center` | `MinStageGirlRequirement(3)` | `OutfitAboveCasualGirlRequirement` |
+| `nika` | Ника | `cafe` | `MinStageGirlRequirement(4)` | `OutfitAboveCasualGirlRequirement` |
+| `rita` | Рита | `restaurant` | `MinStageGirlRequirement(4)` | `OutfitAboveCasualGirlRequirement` |
+| `eva` | Ева | `restaurant` | `MinStageGirlRequirement(4)` | `OutfitAboveCasualGirlRequirement` |
+| `girl_scientist` | Учёная | `city_center` | `MinStageGirlRequirement(4)`, `CurrentStageFillerMaxGirlRequirement(4, 2)`, `RatingGirlRequirement(11)` | `RivalDefeatedGirlRequirement(rival_academic)`, `OutfitAboveCasualGirlRequirement` |
 | `girl_president` | Президент | `restaurant` | `MinStageGirlRequirement(5)`, `RatingGirlRequirement(12)` | `RivalDefeatedGirlRequirement(rival_minister)`, `OutfitAboveCasualGirlRequirement` |
 
-Filler доступны по City Stage без соперника. Сюжетные: знакомство → связанный Rival в той же локации → победа → свидание → MAX → следующий Stage. Каноническая связь `RivalDefinition.linked_girl_id`; сервисы не хардкодят пары. `RivalsService.get_rivals_at_current_location` показывает сюжетного соперника только если `GirlsService.is_discovered(linked_girl_id)` и filler-соперника при `minimum_city_stage <= city_stage`. City Stage 1 даёт три параллельных filler-линии (Алина, Вика, Даша); две завершённые открывают Actress (Rating 2). После Actress City Stage 2, Clothing Store, Café/Leisure DateVenues и текущая цель «Приоденься». Марина — Stage 2 Casual exception и optional path к первому Outfit. Остальные Stage 2+ girls требуют Outfit выше Casual; отказ: «Для этого свидания нужен образ интереснее повседневного.» Две из новых filler открывают Mine Boss (Rating 5); после неё работа 200/ч. Оставшаяся filler City Stage 2 открывает Editor (Rating 7). После Editor City Stage 3 и 12 / 12 Apartment cap. Две из трёх последних filler открывают Scientist (Rating 10); оставшаяся или Factory Rating открывает President (Rating 12). Filler не завершают Stage.
+Filler доступны по Story Stage без соперника. Сюжетные: 2 of 3 current-stage filler MAX + Rating → знакомство → связанный Rival → победа → свидание → MAX → следующий Stage. Каноническая связь `RivalDefinition.linked_girl_id`; сервисы не хардкодят пары. `RivalsService.get_rivals_at_current_location` показывает сюжетного соперника только если `GirlsService.is_discovered(linked_girl_id)` и ordinary/story rivals при `minimum_story_stage <= Story Stage`. Stage 1 даёт три параллельных filler-линии (Алина, Вика, Даша); две завершённые открывают Actress (Rating 2). После Actress City Stage 2, Clothing Store, Café/Leisure DateVenues и текущая цель «Приоденься». Марина — Stage 2 Casual exception и optional path к первому Outfit. Остальные Stage 2+ girls требуют Outfit выше Casual; отказ: «Для этого свидания нужен образ интереснее повседневного.» Две из Stage 2 filler открывают Mine Boss (Rating 5); после неё работа 200/ч. Две из Stage 3 filler (Кира, Оля, Соня) открывают Editor (Rating 8). После Editor City Stage 3 и 12 / 12 Apartment cap. Две из Stage 4 filler (Ника, Рита, Ева) открывают Scientist (Rating 11); Scientist MAX даёт Rating 12 и открывает President. Filler не завершают Stage. Roster: [`STORY_STAGE_PROGRESSION.md`](STORY_STAGE_PROGRESSION.md).
 
 `GirlCatalog`:
 
@@ -1270,12 +1270,12 @@ display_name: String
 location_id: StringName
 linked_girl_id: StringName
 competition_ids: Array[StringName]
-minimum_city_stage: int = 1
+minimum_story_stage: int = 1
 ```
 
-`location_id` ссылается на существующую `LocationDefinition`. `linked_girl_id` — сюжетная девушка, после знакомства с которой соперник появляется в мире; у filler пустой. `minimum_city_stage` ограничивает filler-rivals. `competition_ids` — соревнования с этим соперником.
+`location_id` ссылается на существующую `LocationDefinition`. `linked_girl_id` — сюжетная девушка, после знакомства с которой соперник появляется в мире; у ordinary rivals пустой. `minimum_story_stage` ограничивает gameplay-доступ по Story Stage. `competition_ids` — соревнования с этим соперником.
 
-| id | имя | локация | linked_girl_id | city | соревнование |
+| id | имя | локация | linked_girl_id | story | соревнование |
 |---|---|---|---|---|---|
 | `rival_gleb` | Глеб — Турник | `city_center` | — | 1 | `competition_horizontal_bar` (muscle) |
 | `rival_max` | Макс — Фотомодель | `cafe` | — | 1 | `competition_photo` (appearance) |
@@ -1283,11 +1283,11 @@ minimum_city_stage: int = 1
 | `rival_denis` | Денис — Криптоэксперт | `cafe` | — | 2 | `competition_crypto` (capital) |
 | `rival_roman` | Роман — Ведущий | `restaurant` | — | 2 | `competition_toast` (aura) |
 | `rival_foreman` | Аркадий — главный прораб | `restaurant` | `girl_mine_boss` | 2 | `competition_armwrestling` (muscle) |
-| `rival_columnist` | Герман — звёздный колумнист | `cafe` | `girl_magazine_editor` | 2 | `competition_taste_debate` (aura) |
+| `rival_columnist` | Герман — звёздный колумнист | `cafe` | `girl_magazine_editor` | 3 | `competition_taste_debate` (aura) |
 | `rival_lev` | Лев — Уличный атлет | `city_center` | — | 3 | `competition_street_athlete` (muscle) |
 | `rival_timur` | Тимур — Магнат | `restaurant` | — | 3 | `competition_magnate` (capital) |
-| `rival_academic` | Академик Павел | `city_center` | `girl_scientist` | 3 | `competition_grant` (capital) |
-| `rival_minister` | Министр Виктор | `restaurant` | `girl_president` | 3 | `competition_protocol_duel` (aura) |
+| `rival_academic` | Академик Павел | `city_center` | `girl_scientist` | 4 | `competition_grant` (capital) |
+| `rival_minister` | Министр Виктор | `restaurant` | `girl_president` | 5 | `competition_protocol_duel` (aura) |
 
 `RivalCatalog`:
 
@@ -1323,7 +1323,7 @@ signal rival_discovered(rival_id)
 signal rival_defeated(rival_id)
 ```
 
-`discover_rival`: при первом открытии `discovered = true`, сигнал `rival_discovered`, `true`; повтор — состояние прежнее, `false`. `defeat_rival`: `discovered = true` и `defeated = true`; при первой победе сигнал `rival_defeated` и `true`; повтор — `false`, сигнал не повторяется. `get_rivals_at_current_location` читает `WorldService.get_current_location_id()` и `city_stage`, возвращает `RivalDefinition` с тем же `location_id` и `minimum_city_stage <= city_stage`, у которых `linked_girl_id` пустой или `GirlsService.is_discovered(linked_girl_id)`. До знакомства со связанной девушкой сюжетный соперник не попадает в список. Этот контракт общий для 2D GameSimulator и будущего 3D NPC (`rival_id` → те же `GameAction`).
+`discover_rival`: при первом открытии `discovered = true`, сигнал `rival_discovered`, `true`; повтор — состояние прежнее, `false`. `defeat_rival`: `discovered = true` и `defeated = true`; при первой победе сигнал `rival_defeated` и `true`; повтор — `false`, сигнал не повторяется. `get_rivals_at_current_location` читает `WorldService.get_current_location_id()` и текущий Story Stage, возвращает `RivalDefinition` с тем же `location_id` и `minimum_story_stage <= Story Stage`, у которых `linked_girl_id` пустой или `GirlsService.is_discovered(linked_girl_id)`. До знакомства со связанной девушкой сюжетный соперник не попадает в список. Этот контракт общий для 2D GameSimulator и будущего 3D NPC (`rival_id` → те же `GameAction`).
 
 Встреча — `GameAction` через `RivalsService.create_meet_rival_action`:
 
@@ -1496,7 +1496,7 @@ CharacteristicService.get_value(muscle / appearance / capital / aura)
 Следующий шаг: <next_step_text>
 ```
 
-Stage 1–5 строят подцели из meet/date requirements сюжетной девушки (Rating, знакомство, сюжетный соперник, отношения до `relationship_max`). MinStage не показывается: его закрывает сам текущий Stage. На Stage 2, пока нет Dressed Outfit, «Приоденься» является текущей целью, пока не куплена одежда выше Casual. Stage 6 строит подцели из `AutomationService` (охват текущего масштаба, затем расширение). Marker `← ЦЕЛЬ` помечает локацию, девушку, соперника, свидание или Фабрику текущей подцели и не запрещает остальные активности. Game Terms внутри цели, tutorial и milestone остаются глобальными.
+Stage 1–5 строят подцели из meet/date requirements сюжетной девушки (current-stage filler MAX, Rating, знакомство, сюжетный соперник, отношения до `relationship_max`). MinStage не показывается: его закрывает сам текущий Stage. На Stage 1–4, пока не выполнены `2 из 3` filler и Rating, текущая цель — «Повышай Рейтинг» / «Заверши отношения с любыми 2 из 3 девушек этого этапа.» На Stage 2, пока нет Dressed Outfit, «Приоденься» является текущей целью, пока не куплена одежда выше Casual. Stage 6 строит подцели из `AutomationService` (охват текущего масштаба, затем расширение). Marker `← ЦЕЛЬ` помечает локацию, девушку, соперника, свидание или Фабрику текущей подцели и не запрещает остальные активности. Game Terms внутри цели, tutorial и milestone остаются глобальными.
 
 `GuidanceService` показывает одно overlay-сообщение за раз: first-use tutorial (`objectives_intro`, `dating_intro`, `local_objects_intro`, `locked_moves_intro`, `rival_intro`, `factory_intro`) и milestone смены Stage. `GuidancePopup` закрывает весь экран dim-слоем и ставит карточку по центру через full-rect anchors (offsets 0); центр держится при 1280×720, 1920×1080 и смене размера окна. История показа — только `GuidanceState`, не игровой прогресс.
 
@@ -1800,13 +1800,13 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 
 Начальница шахты `girl_mine_boss`: `restaurant`, Stage 2 + Rating 5, соперник `rival_foreman`. Trait Любит рестораны. `relationship_max = 10`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. Мировая локация ресторана открыта с Stage 2; DateVenue Restaurant — с Stage 3. После MAX работа 200/ч.
 
-Редактор журнала `girl_magazine_editor`: `cafe`, Stage 3 + Rating 7, соперник `rival_columnist`. Trait Чувствует ауру. `relationship_max = 10`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. City Stage 3 после MAX.
+Редактор журнала `girl_magazine_editor`: `cafe`, Stage 3 + Rating 8 + 2 of 3 Stage 3 filler, соперник `rival_columnist`. Trait Чувствует ауру. `relationship_max = 10`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. City Stage остаётся 2 до MAX; City Stage 3 после входа в Stage 4.
 
-Учёная `girl_scientist`: `city_center`, Stage 4 + Rating 10, соперник `rival_academic`. Trait Любит кафе. `relationship_max = 15`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. Factory открывается на Stage 5 после её MAX.
+Учёная `girl_scientist`: `city_center`, Stage 4 + Rating 11 + 2 of 3 Stage 4 filler, соперник `rival_academic`. Trait Любит кафе. `relationship_max = 15`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. Factory открывается на Stage 5 после её MAX.
 
 Президент `girl_president`: `restaurant`, Stage 5 + Rating 12, соперник `rival_minister`. Trait Любит обеспеченных. `relationship_max = 15`. Начально известных Tags нет. Date eligibility: Outfit выше Casual.
 
-Ручная прогрессия без DEV: New Game Rating 0, City Stage 1 → две filler City Stage 1 → Actress MAX (Stage 2, City Stage 2, Café/Leisure DateVenues, Clothing Store, objective «Приоденься») → две filler City Stage 2 / Марина в Casual → MineBoss MAX (Stage 3, Restaurant DateVenue, Outfit Moves, работа 200) → оставшаяся filler City Stage 2 → Editor MAX (Stage 4, City Stage 3, 12-Tag Apartment cap) → две filler City Stage 3 → Scientist MAX (Stage 5, Factory) → оставшаяся filler или Factory Rating → President MAX (Stage 6). Filler не завершают Stage. Factory не закрывает охват родного города. High-level contract: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
+Ручная прогрессия без DEV: New Game Rating 0, Story Stage 1 / City Stage 1 → две filler Stage 1 → Actress MAX (Stage 2, City Stage 2, Café/Leisure DateVenues, Clothing Store, objective «Приоденься») → две filler Stage 2 / Марина в Casual → MineBoss MAX (Stage 3, City Stage 2, Restaurant DateVenue, Outfit Moves, работа 200) → две filler Stage 3 → Editor MAX (Stage 4, City Stage 3, 12-Tag Apartment cap) → две filler Stage 4 → Scientist MAX (Stage 5, Factory, Rating 12) → President MAX (Stage 6). Optional третья filler каждого Stage и Factory Rating дают surplus. Filler не завершают Stage. Factory не закрывает охват родного города. Roster: [`STORY_STAGE_PROGRESSION.md`](STORY_STAGE_PROGRESSION.md). High-level contract: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
 
 ## Seed Situations
 

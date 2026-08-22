@@ -324,6 +324,192 @@ func _complete_current_stage() -> void:
 		return
 	stages.force_complete_current_stage_for_dev()
 
+func _add_story_stage_debug(root: VBoxContainer) -> void:
+	root.add_child(LabUi.heading("Story Stage"))
+	var gs: Variant = _game_state()
+	var stages: Variant = _stage_service()
+	var girls: Variant = _girls_service()
+	var preview := Label.new()
+	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if stages != null:
+		preview.text = String(stages.format_current_stage_summary())
+	root.add_child(preview)
+	var rating_spin := SpinBox.new()
+	rating_spin.min_value = 0
+	rating_spin.max_value = 99
+	rating_spin.allow_greater = true
+	if gs != null:
+		rating_spin.value = gs.player.rating
+	rating_spin.value_changed.connect(func(value: float) -> void:
+		_game_state().player.rating = int(value)
+		_refresh_campaign_view()
+	)
+	root.add_child(LabUi.labeled_row("Rating", rating_spin))
+	var story_spin := SpinBox.new()
+	story_spin.min_value = 1
+	story_spin.max_value = 6
+	if stages != null:
+		story_spin.value = int(stages.get_current_stage())
+	story_spin.value_changed.connect(func(value: float) -> void:
+		_game_state().story.stage = int(value)
+		var stage_service: Variant = _stage_service()
+		if stage_service != null:
+			stage_service.reconcile_stage_entry_state()
+		_refresh_campaign_view()
+	)
+	root.add_child(LabUi.labeled_row("Story Stage", story_spin))
+	var city_spin := SpinBox.new()
+	city_spin.min_value = 1
+	city_spin.max_value = 3
+	var world: Variant = _world_service()
+	if world != null:
+		city_spin.value = int(world.get_city_stage())
+	city_spin.value_changed.connect(func(value: float) -> void:
+		_game_state().world.city_stage = int(value)
+		_refresh_campaign_view()
+	)
+	root.add_child(LabUi.labeled_row("City Stage", city_spin))
+	var max_two := LabUi.button("MAX FIRST TWO FILLERS")
+	max_two.pressed.connect(func() -> void:
+		_max_current_stage_fillers(2)
+		_refresh_campaign_view()
+	)
+	root.add_child(max_two)
+	var max_three := LabUi.button("MAX ALL THREE FILLERS")
+	max_three.pressed.connect(func() -> void:
+		_max_current_stage_fillers(3)
+		_refresh_campaign_view()
+	)
+	root.add_child(max_three)
+	var discover_btn := LabUi.button("DISCOVER STORY GIRL")
+	discover_btn.pressed.connect(func() -> void:
+		var definition: StageDefinition = _current_stage_definition()
+		if definition != null and girls != null and definition.story_girl_id != &"":
+			girls.discover_girl(definition.story_girl_id)
+			girls.give_contact(definition.story_girl_id)
+		_refresh_campaign_view()
+	)
+	root.add_child(discover_btn)
+	var max_story := LabUi.button("MAX STORY GIRL")
+	max_story.pressed.connect(func() -> void:
+		var definition: StageDefinition = _current_stage_definition()
+		if definition != null and girls != null and definition.story_girl_id != &"":
+			var max_value: int = int(girls.get_relationship_max(definition.story_girl_id))
+			var current: int = int(girls.get_relationship(definition.story_girl_id))
+			if current < max_value:
+				girls.change_relationship(definition.story_girl_id, max_value - current)
+		_refresh_campaign_view()
+	)
+	root.add_child(max_story)
+	var defeat_btn := LabUi.button("DEFEAT STORY RIVAL")
+	defeat_btn.pressed.connect(func() -> void:
+		var definition: StageDefinition = _current_stage_definition()
+		var rivals: Variant = _rivals_service()
+		if definition != null and rivals != null and definition.story_rival_id != &"":
+			rivals.defeat_rival(definition.story_rival_id)
+		_refresh_campaign_view()
+	)
+	root.add_child(defeat_btn)
+	root.add_child(LabUi.heading("Quick scenarios"))
+	var scenarios: Array[Dictionary] = [
+		{"id": "stage_1_start", "label": "Stage 1 start"},
+		{"id": "stage_1_ready_actress", "label": "Stage 1 ready for Actress"},
+		{"id": "stage_2_start", "label": "Stage 2 start before dress-up"},
+		{"id": "stage_2_ready_mine_boss", "label": "Stage 2 ready for Mine Boss"},
+		{"id": "stage_3_start", "label": "Stage 3 start"},
+		{"id": "stage_3_ready_editor", "label": "Stage 3 ready for Editor"},
+		{"id": "stage_4_start", "label": "Stage 4 start"},
+		{"id": "stage_4_ready_scientist", "label": "Stage 4 ready for Scientist"},
+	]
+	for scenario in scenarios:
+		var button := LabUi.button(String(scenario["label"]))
+		var scenario_id: String = String(scenario["id"])
+		button.pressed.connect(func() -> void:
+			_apply_story_scenario(scenario_id)
+		)
+		root.add_child(button)
+
+
+func _current_stage_definition() -> StageDefinition:
+	var stages: Variant = _stage_service()
+	if stages == null:
+		return null
+	return stages.get_current_definition() as StageDefinition
+
+
+func _max_current_stage_fillers(count: int) -> void:
+	var girls: Variant = _girls_service()
+	var definition: StageDefinition = _current_stage_definition()
+	if girls == null or definition == null:
+		return
+	var done: int = 0
+	for girl_id in definition.filler_girl_ids:
+		if done >= count:
+			break
+		if girls.has_method("force_complete_filler_for_dev"):
+			girls.force_complete_filler_for_dev(girl_id)
+		else:
+			var max_value: int = int(girls.get_relationship_max(girl_id))
+			var current: int = int(girls.get_relationship(girl_id))
+			if current < max_value:
+				girls.change_relationship(girl_id, max_value - current)
+		done += 1
+
+
+func _apply_story_scenario(scenario_id: String) -> void:
+	var sm: Variant = _save_manager()
+	var stages: Variant = _stage_service()
+	if sm == null or stages == null:
+		return
+	sm.new_game()
+	match scenario_id:
+		"stage_1_ready_actress":
+			_max_current_stage_fillers(2)
+		"stage_2_start":
+			stages.force_complete_current_stage_for_dev()
+		"stage_2_ready_mine_boss":
+			stages.force_complete_current_stage_for_dev()
+			_max_current_stage_fillers(2)
+		"stage_3_start":
+			stages.force_complete_current_stage_for_dev()
+			stages.force_complete_current_stage_for_dev()
+		"stage_3_ready_editor":
+			stages.force_complete_current_stage_for_dev()
+			stages.force_complete_current_stage_for_dev()
+			_max_current_stage_fillers(2)
+		"stage_4_start":
+			stages.force_complete_current_stage_for_dev()
+			stages.force_complete_current_stage_for_dev()
+			stages.force_complete_current_stage_for_dev()
+		"stage_4_ready_scientist":
+			stages.force_complete_current_stage_for_dev()
+			stages.force_complete_current_stage_for_dev()
+			stages.force_complete_current_stage_for_dev()
+			_max_current_stage_fillers(2)
+	_refresh_campaign_view()
+	_set_status("Scenario: %s" % scenario_id)
+
+
+func _girls_service() -> Variant:
+	var node: Node = get_node_or_null("/root/GirlsService")
+	if not is_instance_valid(node):
+		push_error("GirlsService autoload missing")
+	return node
+
+
+func _rivals_service() -> Variant:
+	var node: Node = get_node_or_null("/root/RivalsService")
+	if not is_instance_valid(node):
+		push_error("RivalsService autoload missing")
+	return node
+
+
+func _world_service() -> Variant:
+	var node: Node = get_node_or_null("/root/WorldService")
+	if not is_instance_valid(node):
+		push_error("WorldService autoload missing")
+	return node
+
 
 func _apply_test_action(minutes: int) -> void:
 	var clock: Variant = _time_service()
@@ -502,6 +688,7 @@ func _build_test_state() -> Control:
 	var complete_btn := LabUi.button("COMPLETE CURRENT STAGE")
 	complete_btn.pressed.connect(_complete_current_stage)
 	root.add_child(complete_btn)
+	_add_story_stage_debug(root)
 	var money := SpinBox.new()
 	money.min_value = 0
 	money.max_value = 999999

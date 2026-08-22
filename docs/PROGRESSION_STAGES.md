@@ -8,7 +8,7 @@
 
 > Что игрок изучает, получает и осваивает на каждом из Stage 1–4?
 
-Runtime, seed-контент и UI должны следовать этой модели. Точные объекты мест, тексты Local Moves и цены Apartment Objects задаёт [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
+Runtime, seed-контент и UI должны следовать этой модели. Точные объекты мест, тексты Local Moves и цены Apartment Objects задаёт [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md). Canonical Stage 1–4 roster, Rating gates `2 / 5 / 8 / 11` и mapping Story→City — [`STORY_STAGE_PROGRESSION.md`](STORY_STAGE_PROGRESSION.md).
 
 ---
 
@@ -44,7 +44,7 @@ Stage 3 = + Restaurant / Outfit Moves / synergy
 Stage 4 = mastery / 12-Tag Apartment
 ```
 
-Story Stage 1–6 и City Stage 1–3 остаются runtime-слоями кампании из [`DATE_SYSTEM_LAB.md`](DATE_SYSTEM_LAB.md). Этот документ задаёт **обучающий и системный** контракт Stage 1–4: какие Date systems, DateVenues, Outfit-слой и Apartment Local coverage открываются игроку.
+Story Stage 1–6 и City Stage 1–3 остаются runtime-слоями кампании из [`DATE_SYSTEM_LAB.md`](DATE_SYSTEM_LAB.md). Story Stage — gameplay progression; City Stage — физическое раскрытие города. Mapping `1→1, 2→2, 3→2, 4→3`. Этот документ задаёт **обучающий и системный** контракт Stage 1–4: какие Date systems, DateVenues, Outfit-слой и Apartment Local coverage открываются игроку.
 
 ---
 
