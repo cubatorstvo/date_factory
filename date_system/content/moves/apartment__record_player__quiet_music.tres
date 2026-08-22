@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"apartment__record_player__quiet_music"
+display_name = "Поставить спокойную музыку и позволить паузе просто существовать"
+description = "Поставить спокойную музыку и позволить паузе просто существовать"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"composure"
+fixed_option_text = "Поставить спокойную музыку и позволить паузе просто существовать"
+fixed_positive_result_text = "Ей нравится момент без необходимости постоянно заполнять тишину."
+fixed_negative_result_text = "Пауза кажется ей скорее неловкой, чем уютной."

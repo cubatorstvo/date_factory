@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"apartment__large_mirror__compliment_reflection"
+display_name = "Подвести её к зеркалу и красиво отметить, как она выглядит"
+description = "Подвести её к зеркалу и красиво отметить, как она выглядит"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"flattery"
+fixed_option_text = "Подвести её к зеркалу и красиво отметить, как она выглядит"
+fixed_positive_result_text = "Комплимент попадает точно в нужный момент."
+fixed_negative_result_text = "Она считает сцену слишком специально подготовленной для комплимента."

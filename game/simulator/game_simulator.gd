@@ -10,6 +10,7 @@ const SECTIONS: Array[Array] = [
 	["dates", "Свидания"],
 	["apartment", "Квартира"],
 	["clothing", "Одежда"],
+	["furniture_store", "Мебель"],
 	["progression", "Прокачка"],
 ]
 
@@ -70,7 +71,7 @@ func refresh() -> void:
 	_refreshing = true
 	if _section == "factory" and not _is_factory_unlocked():
 		_section = "home"
-	if _section == "city" or _section == "girls" or _section == "dates" or _section == "rivals" or _section == "progression" or _section == "apartment" or _section == "clothing" or _section == "factory":
+	if _section == "city" or _section == "girls" or _section == "dates" or _section == "rivals" or _section == "progression" or _section == "apartment" or _section == "clothing" or _section == "furniture_store" or _section == "factory":
 		_rebuild_section()
 	_refresh_hud()
 	_refresh_objective_panel()
@@ -564,6 +565,8 @@ func _rebuild_section() -> void:
 			_section_host.add_child(_build_apartment())
 		"clothing":
 			_section_host.add_child(_build_clothing())
+		"furniture_store":
+			_section_host.add_child(_build_furniture_store())
 		"progression":
 			_section_host.add_child(_build_progression())
 
@@ -718,6 +721,10 @@ func _build_city() -> Control:
 			interiors = catalog.get_interiors_for_zone(zone_id)
 		for interior in interiors:
 			box.add_child(_build_city_place_row(interior, world))
+	if location != null and location.id == &"furniture_store":
+		box.add_child(_build_furniture_store())
+	elif location != null and location.id == &"apartment":
+		box.add_child(_build_apartment())
 	box.add_child(_build_city_people())
 	box.add_child(_build_world_dev(world))
 	return box
@@ -1299,8 +1306,13 @@ func _build_apartment() -> Control:
 	elif not bool(apartment.is_prepared()):
 		var clean_action: GameAction = apartment.create_clean_action()
 		_add_action_button(box, clean_action, "Убраться в квартире — 30 мин", false, false)
+	var accent_name: String = _accent_object_display_name()
+	if not accent_name.is_empty():
+		var accent := Label.new()
+		accent.text = "Акцент интерьера: %s" % accent_name
+		box.add_child(accent)
 	var objects_heading := Label.new()
-	objects_heading.text = "Доступные Local Objects"
+	objects_heading.text = "Купленные предметы"
 	box.add_child(objects_heading)
 	var dating: Variant = _dating_service()
 	var catalog: DateContentCatalog = _date_catalog()
@@ -1309,20 +1321,18 @@ func _build_apartment() -> Control:
 		object_ids = dating.resolve_date_local_object_ids(&"apartment")
 	if object_ids.is_empty():
 		var empty := Label.new()
-		empty.text = "Нет доступных объектов."
+		empty.text = "Нет купленных объектов. Мебель покупается в магазине мебели."
 		empty.add_theme_color_override("font_color", LabUi.MUTED)
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		box.add_child(empty)
 	else:
 		for object_id in object_ids:
 			box.add_child(LabUi.bbcode_block(_local_object_toolkit_line(catalog, object_id)))
-	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
-	for upgrade in apartment_catalog.get_all_upgrades():
-		if upgrade == null or not bool(apartment.is_upgrade_visible(upgrade)):
-			continue
-		box.add_child(_build_apartment_upgrade_card(upgrade, apartment, catalog))
+	var store_btn: Button = LabUi.button("МАГАЗИН МЕБЕЛИ")
+	store_btn.pressed.connect(show_section.bind("furniture_store"))
+	box.add_child(store_btn)
 	_add_action_button(box, GameActionCatalog.make_skip_to_08_00(), GameActionLabels.for_id(GameActionCatalog.ID_SKIP_TO_08_00), false, true)
 	return box
-
 
 func _build_apartment_upgrade_card(upgrade: ApartmentUpgradeDefinition, apartment: Variant, catalog: DateContentCatalog) -> Control:
 	var box := VBoxContainer.new()
@@ -1349,6 +1359,159 @@ func _build_apartment_upgrade_card(upgrade: ApartmentUpgradeDefinition, apartmen
 		var action: GameAction = apartment.create_upgrade_action(upgrade.id)
 		_add_action_button(box, action, GameActionLabels.LABEL_BUY, false, false)
 	return box
+
+func _build_furniture_store() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	box.add_child(LabUi.heading("МАГАЗИН МЕБЕЛИ"))
+	var apartment: Variant = _apartment_service()
+	if apartment == null:
+		return box
+	var accent_name: String = _accent_object_display_name()
+	var accent_label := Label.new()
+	accent_label.text = "Акцент интерьера: %s" % (accent_name if not accent_name.is_empty() else "—")
+	box.add_child(accent_label)
+	var catalog: DateContentCatalog = _date_catalog()
+	var stages: Variant = _stage_service()
+	var story_stage: int = 1
+	if stages != null:
+		story_stage = int(stages.get_current_stage())
+	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
+	for upgrade in apartment_catalog.get_all_upgrades():
+		if upgrade == null:
+			continue
+		var required_stage: int = upgrade.min_story_stage if upgrade.min_story_stage > 0 else upgrade.level_granted
+		if required_stage > story_stage:
+			continue
+		box.add_child(_build_furniture_item_card(upgrade, apartment, catalog, story_stage))
+	if _has_interior_accent_reward():
+		box.add_child(_build_accent_assign_block(apartment, catalog))
+	return box
+
+func _build_furniture_item_card(upgrade: ApartmentUpgradeDefinition, apartment: Variant, catalog: DateContentCatalog, story_stage: int) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var object_id: StringName = _upgrade_object_id(upgrade)
+	var local_object: DateLocalObject = catalog.find_local_object(object_id) if catalog != null else null
+	var title := Label.new()
+	title.text = "%s — $%d" % [upgrade.display_name, upgrade.price]
+	box.add_child(title)
+	var required_stage: int = upgrade.min_story_stage if upgrade.min_story_stage > 0 else upgrade.level_granted
+	var stage_line := Label.new()
+	stage_line.text = "Требуется Story Stage %d" % required_stage
+	stage_line.add_theme_color_override("font_color", LabUi.MUTED)
+	box.add_child(stage_line)
+	var move: DateMove = null
+	if local_object != null and not local_object.move_ids.is_empty() and catalog != null:
+		move = catalog.find_move(local_object.move_ids[0])
+	var tag_name: String = ""
+	var move_text: String = ""
+	if move != null:
+		var tag: DateTag = catalog.find_tag(move.fixed_tag_id)
+		tag_name = tag.display_name if tag != null else String(move.fixed_tag_id)
+		move_text = move.fixed_option_text.strip_edges()
+		if move_text.is_empty():
+			move_text = move.display_name
+	if not tag_name.is_empty():
+		box.add_child(LabUi.bbcode_block("[%s]" % tag_name))
+	if not move_text.is_empty():
+		var move_line := Label.new()
+		move_line.text = move_text
+		move_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(move_line)
+	var owned: bool = bool(apartment.is_upgrade_purchased(upgrade.id))
+	if owned:
+		var done := Label.new()
+		done.text = "Куплено"
+		box.add_child(done)
+		if object_id == _accent_object_id():
+			var accent := Label.new()
+			accent.text = "Положительный локальный ход: +2"
+			box.add_child(accent)
+	else:
+		var action: GameAction = apartment.create_upgrade_action(upgrade.id)
+		_add_action_button(box, action, "Купить %s — $%d" % [upgrade.display_name, upgrade.price], false, false)
+	return box
+
+
+func _build_accent_assign_block(apartment: Variant, catalog: DateContentCatalog) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.add_child(LabUi.heading("АКЦЕНТ ИНТЕРЬЕРА"))
+	var current_name: String = _accent_object_display_name()
+	var current := Label.new()
+	current.text = "Акцент интерьера: %s" % (current_name if not current_name.is_empty() else "—")
+	box.add_child(current)
+	var first_assign: bool = true
+	var price: int = 0
+	if apartment.has_method("is_first_accent_assignment"):
+		first_assign = bool(apartment.is_first_accent_assignment())
+	if apartment.has_method("get_accent_reassignment_price"):
+		price = int(apartment.get_accent_reassignment_price())
+	var hint := Label.new()
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if first_assign:
+		hint.text = "Первое назначение бесплатно."
+	else:
+		hint.text = "Смена акцента: $%d" % price
+	box.add_child(hint)
+	var owned_ids: Array[StringName] = apartment.get_granted_local_object_ids()
+	if owned_ids.is_empty():
+		var empty := Label.new()
+		empty.text = "Сначала купите хотя бы один предмет."
+		empty.add_theme_color_override("font_color", LabUi.MUTED)
+		box.add_child(empty)
+		return box
+	for object_id in owned_ids:
+		if object_id == _accent_object_id():
+			continue
+		var local_object: DateLocalObject = catalog.find_local_object(object_id) if catalog != null else null
+		var object_name: String = local_object.display_name if local_object != null else String(object_id)
+		if apartment.has_method("create_assign_accent_action"):
+			var action: GameAction = apartment.create_assign_accent_action(object_id)
+			var label: String = "Назначить: %s" % object_name
+			if first_assign:
+				label += " — $0"
+			else:
+				label += " — $%d" % price
+			_add_action_button(box, action, label, false, false)
+	return box
+
+
+func _upgrade_object_id(upgrade: ApartmentUpgradeDefinition) -> StringName:
+	if upgrade == null:
+		return &""
+	if not upgrade.granted_local_object_ids.is_empty():
+		return upgrade.granted_local_object_ids[0]
+	return upgrade.id
+
+
+func _accent_object_id() -> StringName:
+	var apartment: Variant = _apartment_service()
+	if apartment != null and apartment.has_method("get_accent_object_id"):
+		return apartment.get_accent_object_id()
+	return &""
+
+
+func _accent_object_display_name() -> String:
+	var object_id: StringName = _accent_object_id()
+	if object_id == &"":
+		return ""
+	var catalog: DateContentCatalog = _date_catalog()
+	if catalog == null:
+		return String(object_id)
+	var local_object: DateLocalObject = catalog.find_local_object(object_id)
+	return local_object.display_name if local_object != null else String(object_id)
+
+
+func _has_interior_accent_reward() -> bool:
+	var apartment: Variant = _apartment_service()
+	if apartment != null and apartment.has_method("has_interior_accent_reward"):
+		return bool(apartment.has_interior_accent_reward())
+	var girls: Variant = _girls_service()
+	if girls == null:
+		return false
+	return bool(girls.has_filler_reward(FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR))
 
 
 func _build_active_date_dev(girls: Variant, dating: Variant) -> Control:
@@ -1444,17 +1607,22 @@ func _build_date_venue_picker(girls: Variant, dating: Variant) -> Control:
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
 	var progress: GirlProgress = _girl_date_progress(girls, _invite_girl_id)
-	var locations: Array = []
+	var catalog: DateContentCatalog = _date_catalog()
+	var locations: Array[DateVenue] = LabUi.canonical_date_venues(catalog)
+	var available_ids: Dictionary = {}
 	if dating != null:
-		locations = dating.get_available_date_venues(_invite_girl_id)
-	for item in locations:
-		var location: DateVenue = item as DateVenue
+		for item in dating.get_available_date_venues(_invite_girl_id):
+			var available_venue: DateVenue = item as DateVenue
+			if available_venue != null:
+				available_ids[available_venue.id] = true
+	for location in locations:
 		if location == null:
 			continue
-		var available: bool = bool(dating.is_date_venue_available(_invite_girl_id, location.id))
+		var available: bool = available_ids.has(location.id)
+		if dating != null:
+			available = bool(dating.is_date_venue_available(_invite_girl_id, location.id))
 		box.add_child(_build_date_venue_card(location, dating, available, progress))
 	return box
-
 
 func _build_date_venue_card(location: DateVenue, dating: Variant, available: bool, progress: GirlProgress) -> Control:
 	var panel := PanelContainer.new()
@@ -1483,11 +1651,27 @@ func _date_venue_details(location: DateVenue, dating: Variant, progress: GirlPro
 		object_ids = dating.resolve_date_local_object_ids(location.id)
 	elif location != null:
 		object_ids = location.local_object_ids.duplicate()
-	var lines := PackedStringArray()
-	for object_id in object_ids:
-		lines.append(_local_object_toolkit_line(catalog, object_id, progress))
-	return "\n".join(lines)
-
+	var girl: GirlProfile = catalog.find_girl(_invite_girl_id) if catalog != null else null
+	var apartment: Variant = _apartment_service()
+	var owned_count: int = -1
+	if apartment != null and (location.id == &"apartment" or location.uses_apartment_preparation):
+		owned_count = apartment.get_granted_local_object_ids().size()
+	var girls: Variant = _girls_service()
+	var sonya_bonus: bool = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE))
+	var source_uses: int = 2 if sonya_bonus and location.id == &"restaurant" else 1
+	return LabUi.venue_card_bbcode(
+		catalog,
+		location,
+		object_ids,
+		progress,
+		_date_player_snapshot(),
+		girl,
+		source_uses,
+		owned_count,
+		LabUi.APARTMENT_OBJECT_MAX,
+		_accent_object_id(),
+		sonya_bonus
+	)
 
 func _date_catalog() -> DateContentCatalog:
 	var dating: Variant = _dating_service()
@@ -1510,14 +1694,14 @@ func _girl_date_progress(girls: Variant, girl_id: StringName) -> GirlProgress:
 func _date_player_snapshot() -> DatePlayerSnapshot:
 	var player := DatePlayerSnapshot.new()
 	var characteristics: Variant = _characteristic_service()
+	var catalog: DateContentCatalog = _date_catalog()
+	var outfit: Outfit = catalog.find_outfit(_selected_outfit_id) if catalog != null else null
 	if characteristics != null:
-		player.muscle = int(characteristics.get_value(CharacteristicIds.MUSCLE))
-		player.appearance = int(characteristics.get_value(CharacteristicIds.APPEARANCE))
-		player.capital = int(characteristics.get_value(CharacteristicIds.CAPITAL))
-		player.aura = int(characteristics.get_value(CharacteristicIds.AURA))
+		for stat_id in DateTypes.CHARACTERISTIC_STAT_ORDER:
+			var base_value: int = int(characteristics.get_value(stat_id))
+			var extra: int = 1 if _express_styling and stat_id == CharacteristicIds.APPEARANCE else 0
+			player.set_stat(stat_id, DateTypes.effective_stat(base_value, outfit, stat_id, extra))
 	return player
-
-
 func _local_object_toolkit_line(catalog: DateContentCatalog, object_id: StringName, progress: GirlProgress = null) -> String:
 	return LabUi.local_object_toolkit_bbcode(catalog, object_id, progress, _date_player_snapshot())
 

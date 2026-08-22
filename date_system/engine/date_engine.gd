@@ -73,6 +73,7 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 	_session.outfit_swap_used = false
 	_session.express_styling_bonus = config.express_styling_bonus
 	_session.used_local_move_ids = []
+	_session.accent_local_object_id = config.accent_local_object_id
 	_forced_situation_id = config.forced_situation_id
 	_rng.seed = config.seed
 	_session.current_episode_index = 0
@@ -122,7 +123,19 @@ func choose_move(move_id: StringName) -> void:
 	var move: DateMove = _catalog.find_move(move_id)
 	var tag_id: StringName = move.resolved_tag_id()
 	var preference: int = _girl.prefers_tag(tag_id)
+	var object_id: StringName = option.local_object_id
+	if object_id == &"" and move.is_local():
+		var local_object: DateLocalObject = _catalog.find_local_object_for_move(move_id)
+		if local_object != null:
+			object_id = local_object.id
 	var score: int = _score_for_phase(_session.current_phase, preference)
+	if (
+		move.is_local()
+		and _session.accent_local_object_id != &""
+		and object_id == _session.accent_local_object_id
+		and preference > 0
+	):
+		score = 2
 	var soften_applied: bool = false
 	if preference <= 0 and _session.dasha_soften_available and not _session.dasha_soften_used:
 		score = 0
@@ -148,11 +161,6 @@ func choose_move(move_id: StringName) -> void:
 			_session.used_local_move_ids.append(move_id)
 		_session.venue_source_uses += 1
 		_session.venue_source_used = _session.venue_source_uses >= _session.venue_source_limit
-		var object_id: StringName = option.local_object_id
-		if object_id == &"":
-			var local_object: DateLocalObject = _catalog.find_local_object_for_move(move_id)
-			if local_object != null:
-				object_id = local_object.id
 		if object_id != &"" and not _session.used_local_object_ids.has(object_id):
 			_session.used_local_object_ids.append(object_id)
 

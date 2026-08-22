@@ -3,6 +3,7 @@ extends Node
 signal location_unlocked(location_id: StringName)
 signal location_changed(previous_location_id: StringName, current_location_id: StringName)
 signal city_stage_changed(previous_city_stage: int, current_city_stage: int)
+signal date_venue_unlocked(date_venue_id: StringName)
 
 var _catalog: LocationCatalog
 
@@ -42,6 +43,23 @@ func unlock_location(location_id: StringName) -> bool:
 	if not world.add_unlocked(location_id):
 		return false
 	location_unlocked.emit(location_id)
+	return true
+
+
+func has_unlocked_date_venue(date_venue_id: StringName) -> bool:
+	var world: WorldState = _world()
+	if world == null:
+		return false
+	return world.has_unlocked_date_venue(date_venue_id)
+
+
+func unlock_date_venue(date_venue_id: StringName) -> bool:
+	var world: WorldState = _world()
+	if world == null:
+		return false
+	if not world.unlock_date_venue(date_venue_id):
+		return false
+	date_venue_unlocked.emit(date_venue_id)
 	return true
 
 

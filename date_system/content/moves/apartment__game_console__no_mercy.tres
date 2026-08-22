@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"apartment__game_console__no_mercy"
+display_name = "Запустить соревнование и предупредить, что поддаваться не будешь"
+description = "Запустить соревнование и предупредить, что поддаваться не будешь"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"dominance"
+fixed_option_text = "Запустить соревнование и предупредить, что поддаваться не будешь"
+fixed_positive_result_text = "Ей нравится честное соревнование без скидок."
+fixed_negative_result_text = "Она считает, что ты слишком быстро превратил отдых в матч."

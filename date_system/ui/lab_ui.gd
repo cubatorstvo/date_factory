@@ -10,6 +10,9 @@ const MUTED := Color("a89880")
 const POSITIVE := Color("3dba6a")
 const NEGATIVE := Color("e05252")
 const LOCKED := Color("6a5a4a")
+const VENUE_SOURCE_LABEL := "ЛОКАЦИЯ"
+const CANONICAL_DATE_VENUE_IDS: Array[StringName] = [&"apartment", &"cafe", &"leisure_center", &"restaurant"]
+const APARTMENT_OBJECT_MAX := 12
 
 
 static func apply_theme(root: Control) -> void:
@@ -211,25 +214,147 @@ static func local_object_toolkit_bbcode(catalog: DateContentCatalog, object_id: 
 		var move: DateMove = catalog.find_move(move_id)
 		if move == null:
 			continue
-		var tag: DateTag = catalog.find_tag(move.fixed_tag_id)
-		var tag_name: String = tag.display_name if tag != null else String(move.fixed_tag_id)
-		var locked: bool = false
-		var lock_suffix: String = ""
-		if move.unlock_requirement != null and player != null:
-			var current_level: int = player.get_stat(move.unlock_requirement.stat_id)
-			var required_level: int = move.unlock_requirement.required_level
-			if current_level < required_level:
-				locked = true
-				var stat: CharacteristicDefinition = catalog.find_characteristic(move.unlock_requirement.stat_id)
-				var stat_name: String = stat.display_name if stat != null else String(move.unlock_requirement.stat_id)
-				lock_suffix = " 🔒 Требуется: %s %d (сейчас %d)" % [stat_name, required_level, current_level]
+		var tag_name: String = _move_tag_display_name(catalog, move)
 		var chip: String = "[%s]" % tag_name
-		if locked:
+		var lock_suffix: String = _move_lock_suffix(catalog, move, player)
+		if not lock_suffix.is_empty():
 			chip += lock_suffix
 		parts.append(chip)
 	var tags_text: String = " / ".join(parts) if not parts.is_empty() else "—"
 	return "%s — %s" % [local_object.display_name, tags_text]
 
+static func canonical_date_venues(catalog: DateContentCatalog) -> Array[DateVenue]:
+	var result: Array[DateVenue] = []
+	if catalog == null:
+		return result
+	var by_id: Dictionary = {}
+	for location in catalog.date_venues:
+		if location == null:
+			continue
+		by_id[location.id] = location
+	for venue_id in CANONICAL_DATE_VENUE_IDS:
+		if by_id.has(venue_id):
+			result.append(by_id[venue_id])
+	return result
+
+
+static func characteristic_requirement_text(stat_name: String, level: int) -> String:
+	return "требуется %s ур. %d" % [stat_name, level]
+
+
+static func characteristic_lock_suffix(stat_name: String, level: int) -> String:
+	return " 🔒 %s" % characteristic_requirement_text(stat_name, level)
+
+
+static func local_move_option_text(option: DateMoveOption) -> String:
+	if option == null:
+		return ""
+	var tag_name: String = option.tag_display_name.strip_edges()
+	var object_name: String = option.local_object_display_name.strip_edges()
+	var action_text: String = option.option_text.strip_edges()
+	if action_text.begins_with("[") and action_text.find("]") >= 0:
+		return action_text
+	if action_text.is_empty():
+		action_text = option.display_name.strip_edges()
+	if object_name.is_empty():
+		return "[%s] %s" % [tag_name, action_text]
+	return "[%s] %s: %s" % [tag_name, object_name, action_text]
+
+
+static func venue_card_bbcode(
+	catalog: DateContentCatalog,
+	location: DateVenue,
+	object_ids: Array[StringName],
+	progress: GirlProgress = null,
+	player: DatePlayerSnapshot = null,
+	girl: GirlProfile = null,
+	source_uses: int = 1,
+	owned_count: int = -1,
+	owned_max: int = APARTMENT_OBJECT_MAX,
+	accent_object_id: StringName = &"",
+	sonya_bonus: bool = false
+) -> String:
+	var lines := PackedStringArray()
+	if location == null:
+		return ""
+	lines.append("%s — $%d" % [location.display_name, location.price])
+	if sonya_bonus and location.id == &"restaurant":
+		lines.append("Локальный ход ×2 — постоянный столик Сони")
+	else:
+		lines.append("Локальный ход ×%d" % maxi(source_uses, 1))
+	var is_apartment: bool = location.id == &"apartment" or location.uses_apartment_preparation
+	if is_apartment and owned_count >= 0:
+		lines.append("Предметы: %d / %d" % [owned_count, owned_max])
+	var accent_name: String = ""
+	if accent_object_id != &"" and catalog != null:
+		var accent_object: DateLocalObject = catalog.find_local_object(accent_object_id)
+		if accent_object != null:
+			accent_name = accent_object.display_name
+	if is_apartment and not accent_name.is_empty():
+		lines.append("Акцент интерьера: %s" % accent_name)
+	var girl_trait: GirlTrait = null
+	if catalog != null and girl != null:
+		girl_trait = catalog.find_trait(girl.trait_id)
+	if girl_trait != null and girl_trait.kind == GirlTrait.Kind.VENUE and girl_trait.date_venue_id == location.id:
+		lines.append("Особенность девушки: +1 к результату свидания здесь")
+	lines.append("")
+	for object_id in object_ids:
+		var local_object: DateLocalObject = catalog.find_local_object(object_id) if catalog != null else null
+		if local_object == null:
+			continue
+		if is_apartment:
+			var move: DateMove = catalog.find_move(local_object.move_ids[0]) if not local_object.move_ids.is_empty() else null
+			var tag_name: String = _move_tag_display_name(catalog, move)
+			lines.append("[%s] %s" % [tag_name, local_object.display_name])
+		else:
+			for move_id in local_object.move_ids:
+				var move: DateMove = catalog.find_move(move_id)
+				if move == null:
+					continue
+				var tag_name: String = _move_tag_display_name(catalog, move)
+				var line: String = "[%s]" % tag_name
+				var requirement: String = _move_requirement_text(catalog, move)
+				if not requirement.is_empty():
+					line += " %s" % requirement
+				lines.append(line)
+	if is_apartment and not accent_name.is_empty():
+		lines.append("Положительный локальный ход: +2")
+	return "\n".join(lines)
+
+
+static func _move_tag_display_name(catalog: DateContentCatalog, move: DateMove) -> String:
+	if move == null:
+		return ""
+	if catalog != null:
+		var tag: DateTag = catalog.find_tag(move.fixed_tag_id)
+		if tag != null:
+			return tag.display_name
+	return String(move.fixed_tag_id)
+
+
+static func _move_requirement_text(catalog: DateContentCatalog, move: DateMove) -> String:
+	if move == null or move.unlock_requirement == null:
+		return ""
+	var stat_name: String = String(move.unlock_requirement.stat_id)
+	if catalog != null:
+		var stat: CharacteristicDefinition = catalog.find_characteristic(move.unlock_requirement.stat_id)
+		if stat != null:
+			stat_name = stat.display_name
+	return characteristic_requirement_text(stat_name, move.unlock_requirement.required_level)
+
+
+static func _move_lock_suffix(catalog: DateContentCatalog, move: DateMove, player: DatePlayerSnapshot) -> String:
+	if move == null or move.unlock_requirement == null:
+		return ""
+	var required_level: int = move.unlock_requirement.required_level
+	if player != null and player.get_stat(move.unlock_requirement.stat_id) >= required_level:
+		return ""
+	var stat_name: String = String(move.unlock_requirement.stat_id)
+	if catalog != null:
+		var stat: CharacteristicDefinition = catalog.find_characteristic(move.unlock_requirement.stat_id)
+		if stat != null:
+			stat_name = stat.display_name
+	return characteristic_lock_suffix(stat_name, required_level)
 
 static func signed(value: int) -> String:
 	return "0" if value == 0 else "%+d" % value

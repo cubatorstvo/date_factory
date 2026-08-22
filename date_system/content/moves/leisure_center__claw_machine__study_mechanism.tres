@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"leisure_center__claw_machine__study_mechanism"
+display_name = "Изучить механизм и выбрать лучший момент для захвата"
+description = "Изучить механизм и выбрать лучший момент для захвата"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"cunning"
+fixed_option_text = "Изучить механизм и выбрать лучший момент для захвата"
+fixed_positive_result_text = "Ей нравится, как быстро ты превращаешь автомат в решаемую задачу."
+fixed_negative_result_text = "Она хотела просто поиграть, а не наблюдать инженерный аудит автомата."

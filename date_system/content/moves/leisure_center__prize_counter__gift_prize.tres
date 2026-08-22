@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"leisure_center__prize_counter__gift_prize"
+display_name = "Потратить выигранные жетоны на приз для неё"
+description = "Потратить выигранные жетоны на приз для неё"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"generosity"
+fixed_option_text = "Потратить выигранные жетоны на приз для неё"
+fixed_positive_result_text = "Маленький подарок ей приятен."
+fixed_negative_result_text = "Она предпочла бы, чтобы ты выбрал что-нибудь себе."

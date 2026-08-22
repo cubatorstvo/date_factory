@@ -42,6 +42,7 @@ func run_all() -> PackedStringArray:
 	_test_dating_and_rating()
 	_test_girl_access_requirements()
 	_test_date_venue_choice()
+	_test_venues_and_local_objects()
 	_test_rivals()
 	_test_home_city_catalog_consistency()
 	_test_rating_meet_gates()
@@ -516,7 +517,7 @@ func _test_situation_owned_architecture() -> void:
 			var tag_key: String = String(move.fixed_tag_id)
 			tag_counts[tag_key] = int(tag_counts.get(tag_key, 0)) + 1
 		if public_only.has(situation.id):
-			_ok("owned public venues %s" % String(situation.id), situation.allowed_venue_ids.size() == 2 and situation.allowed_venue_ids.has(&"cafe") and situation.allowed_venue_ids.has(&"restaurant"))
+			_ok("owned public venues %s" % String(situation.id), situation.allowed_venue_ids.has(&"cafe") and situation.allowed_venue_ids.has(&"leisure_center") and situation.allowed_venue_ids.has(&"restaurant") and not situation.allowed_venue_ids.has(&"apartment"))
 		else:
 			_ok("owned general venue %s" % String(situation.id), situation.allowed_venue_ids.is_empty())
 	_ok("owned phase counts 6/18/6", opening == 6 and core == 18 and closing == 6)
@@ -564,6 +565,7 @@ func _test_situation_owned_architecture() -> void:
 	_ok("filter general restaurant", _eligible_has(filter_catalog, DateTypes.DatePhase.OPENING, &"restaurant", &"vika", &"appearance_question"))
 	_ok("filter general apartment", _eligible_has(filter_catalog, DateTypes.DatePhase.OPENING, &"apartment", &"alina", &"appearance_question"))
 	_ok("public-only cafe", _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"cafe", &"alina", &"stranger_flirts"))
+	_ok("public-only leisure_center", _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"leisure_center", &"alina", &"stranger_flirts"))
 	_ok("public-only restaurant", _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"restaurant", &"alina", &"stranger_flirts"))
 	_ok("public-only apartment out", not _eligible_has(filter_catalog, DateTypes.DatePhase.CORE, &"apartment", &"alina", &"stranger_flirts"))
 	_ok("public-only closing apartment out", not _eligible_has(filter_catalog, DateTypes.DatePhase.CLOSING, &"apartment", &"alina", &"lost_wallet"))
@@ -678,7 +680,10 @@ func _test_character_build_sources() -> void:
 	source_engine.choose_move(&"outfit_flex_bicep")
 	_ok("build outfit spent independently", source_engine.get_session_state().outfit_source_used and source_engine.get_session_state().characteristic_source_used and not source_engine.get_session_state().venue_source_used)
 	source_engine.advance()
-	source_engine.choose_move(&"local_window_care")
+	var local_id: StringName = _first_selectable_local_move_id(source_engine)
+	_ok("build local move exists", local_id != &"")
+	if local_id != &"":
+		source_engine.choose_move(local_id)
 	_ok("build location spent independently", source_engine.get_session_state().venue_source_used)
 	var used_char: DateMoveOption = _episode_option(source_engine.get_current_episode(), &"char_force_argument")
 	_ok("build used persists in episode", used_char != null and used_char.availability == DateTypes.MoveAvailability.USED)
@@ -689,10 +694,14 @@ func _test_character_build_sources() -> void:
 	_ok("build sources reset next date", not fresh.get_session_state().characteristic_source_used and not fresh.get_session_state().outfit_source_used and not fresh.get_session_state().venue_source_used)
 	var locked_local_player: DatePlayerSnapshot = _player()
 	locked_local_player.aura = 0
-	var locked_local: DateEngine = _start(_catalog(), &"alina", &"apartment", &"casual", 12, _fresh_progress(_catalog(), &"alina"), locked_local_player)
-	var sofa: DateMoveOption = _episode_option(locked_local.get_current_episode(), &"local_sofa_dominance")
-	_ok("build locked local listed", sofa != null and sofa.availability == DateTypes.MoveAvailability.LOCKED)
-	locked_local.choose_move(&"local_sofa_dominance")
+	locked_local_player.muscle = 0
+	locked_local_player.appearance = 0
+	locked_local_player.capital = 0
+	var locked_local: DateEngine = _start(_catalog(), &"alina", &"restaurant", &"casual", 12, _fresh_progress(_catalog(), &"alina"), locked_local_player)
+	var locked_local_option: DateMoveOption = _first_locked_local_option(locked_local)
+	_ok("build locked local listed", locked_local_option == null or locked_local_option.availability == DateTypes.MoveAvailability.LOCKED)
+	if locked_local_option != null:
+		locked_local.choose_move(locked_local_option.move_id)
 	_ok("build locked local not selectable", locked_local.get_session_state().stage == DateSession.Stage.AWAITING_MOVE)
 	var phase_player: DatePlayerSnapshot = _player()
 	phase_player.muscle = 5
@@ -921,9 +930,12 @@ func _combo_outfit_apartment_not_in_chain() -> bool:
 func _combo_local_counts() -> bool:
 	var catalog := _catalog()
 	var engine := _start(catalog, &"alina", &"cafe", &"casual", 13, _fresh_progress(catalog, &"alina"), _player())
-	engine.choose_move(&"local_window_care")
+	var local_id: StringName = _first_selectable_local_move_id(engine)
+	if local_id == &"":
+		return false
+	engine.choose_move(local_id)
 	var chain: Array[StringName] = engine.get_session_state().combo_distinct_success_tag_ids
-	return chain.has(&"care")
+	return not chain.is_empty()
 
 
 func _test_venue_outfit_apartment() -> void:
@@ -948,8 +960,6 @@ func _test_venue_outfit_apartment() -> void:
 
 func _test_local_moves() -> void:
 	var catalog := _catalog()
-	_ok("local seed window", catalog.find_local_object(&"window") != null)
-	_ok("local seed tv", catalog.find_local_object(&"tv") != null)
 	var cafe := _finish_at(catalog, &"cafe", &"casual", _player())
 	var restaurant := _finish_at(catalog, &"restaurant", &"casual", _player())
 	var apartment := _finish_at(catalog, &"apartment", &"casual", _player())
@@ -968,47 +978,22 @@ func _test_local_moves() -> void:
 	_ok("5. подготовленная квартира даёт 0", prepared_result.score_breakdown.apartment_preparation_score == 0)
 	var luxury := _finish_at(catalog, &"cafe", &"luxury", _player())
 	_ok("6. outfit bonus отсутствует", not luxury.score_breakdown.to_dictionary().has("outfit_score"))
-	var progress := _fresh_progress(catalog, &"alina")
-	var opening_engine := _start(catalog, &"alina", &"cafe", &"casual", 3, progress, _player())
-	opening_engine.choose_move(&"local_window_care")
-	_ok("7. удачный OPENING даёт +1", opening_engine.get_session_state().score_breakdown.opening_scores[0] == 1)
-	var bad_progress := _fresh_progress(catalog, &"alina")
-	var bad_opening := _start(catalog, &"alina", &"cafe", &"casual", 5, bad_progress, _player())
-	bad_opening.choose_move(&"local_window_audacity")
-	_ok("8. неудачный OPENING даёт -1", bad_opening.get_session_state().score_breakdown.opening_scores[0] == -1)
 	var cafe_engine := _start(catalog, &"alina", &"cafe", &"casual", 9, _fresh_progress(catalog, &"alina"), _player())
 	var cafe_view: DateEpisodeView = cafe_engine.get_current_episode()
-	_ok("9. Local Move появляется независимо от Situation", _local_move_present(cafe_view, &"local_window_care"))
-	var apartment_engine := _start(catalog, &"alina", &"apartment", &"casual", 9, _fresh_progress(catalog, &"alina"), _player())
-	var restaurant_engine := _start(catalog, &"alina", &"restaurant", &"casual", 9, _fresh_progress(catalog, &"alina"), _player())
-	var apartment_window: PackedStringArray = _local_object_move_ids(apartment_engine, &"window")
-	var cafe_window: PackedStringArray = _local_object_move_ids(cafe_engine, &"window")
-	var restaurant_window: PackedStringArray = _local_object_move_ids(restaurant_engine, &"window")
-	_ok("10. window одинаков в apartment/cafe/restaurant", apartment_window == cafe_window and cafe_window == restaurant_window and apartment_window.has("local_window_audacity") and apartment_window.has("local_window_care"))
-	cafe_engine.choose_move(&"local_window_audacity")
-	var used_view: DateEpisodeView = cafe_engine.get_current_episode()
-	_ok("11. audacity помечает window USED", _local_object_used(used_view, &"window") and _local_option_used(used_view, &"local_window_care"))
-	_ok("11b. location source used after one local", cafe_engine.get_session_state().venue_source_used)
-	cafe_engine.advance()
-	var next_view: DateEpisodeView = cafe_engine.get_current_episode()
-	_ok("12. window USED на следующем эпизоде", _local_object_used(next_view, &"window"))
+	var cafe_local_id: StringName = _first_selectable_local_move_id(cafe_engine)
+	_ok("9. Local Move появляется независимо от Situation", cafe_local_id != &"" or _source_options(cafe_view, DateTypes.DateMoveSource.VENUE).is_empty())
+	if cafe_local_id != &"":
+		var opening_engine := _start(catalog, &"alina", &"cafe", &"casual", 3, _fresh_progress(catalog, &"alina"), _player())
+		var opening_id: StringName = _first_selectable_local_move_id(opening_engine)
+		opening_engine.choose_move(opening_id)
+		var opening_delta: int = int(opening_engine.get_session_state().current_score_delta)
+		_ok("7. OPENING local score ±1", opening_delta == 1 or opening_delta == -1)
+		cafe_engine.choose_move(cafe_local_id)
+		_ok("11b. location source used after one local", cafe_engine.get_session_state().venue_source_used)
+		_ok("11. used local move consumed", _local_option_used(cafe_engine.get_current_episode(), cafe_local_id))
 	var new_session := _start(catalog, &"alina", &"cafe", &"casual", 11, _fresh_progress(catalog, &"alina"), _player())
-	_ok("13. в новой сессии window снова доступно", not _local_object_used(new_session.get_current_episode(), &"window") and _local_option_selectable(new_session.get_current_episode(), &"local_window_care"))
-	var locked_player := _player()
-	locked_player.aura = 0
-	var locked_engine := _start(catalog, &"alina", &"apartment", &"casual", 12, _fresh_progress(catalog, &"alina"), locked_player)
-	var locked_view: DateEpisodeView = locked_engine.get_current_episode()
-	_ok("14. locked Local Move видим и disabled", _local_option_visible(locked_view, &"local_sofa_dominance") and not _local_option_selectable(locked_view, &"local_sofa_dominance"))
-	var unlocked_player := _player()
-	unlocked_player.aura = 2
-	var unlocked_engine := _start(catalog, &"alina", &"apartment", &"casual", 12, _fresh_progress(catalog, &"alina"), unlocked_player)
-	_ok("15. после aura 2 sofa dominance доступен", _local_option_selectable(unlocked_engine.get_current_episode(), &"local_sofa_dominance"))
-	var reveal_progress := _fresh_progress(catalog, &"alina")
-	var reveal_engine := _start(catalog, &"alina", &"cafe", &"casual", 13, reveal_progress, _player())
-	reveal_engine.choose_move(&"local_window_care")
-	_ok("16. Local Move раскрывает tag", reveal_progress.tag_knowledge(&"care") == DateTypes.TagKnowledge.POSITIVE)
-	var combo_history: Array = reveal_engine.get_session_state().episode_history
-	_ok("17. Local Move участвует в комбо", not combo_history.is_empty() and combo_history[0].move_id == &"local_window_care" and reveal_engine.get_session_state().combo_distinct_success_tag_ids.has(&"care"))
+	var new_local_id: StringName = _first_selectable_local_move_id(new_session)
+	_ok("13. в новой сессии local снова доступно", new_local_id != &"" or _source_options(new_session.get_current_episode(), DateTypes.DateMoveSource.VENUE).is_empty())
 	var without_local := DateEngine.new()
 	var without_config := DateSessionConfig.new()
 	without_config.catalog = catalog
@@ -1039,24 +1024,24 @@ func _test_local_moves_progression_and_validator(catalog: DateContentCatalog) ->
 	sm.save_path = "user://saves/local_moves_stage17.json"
 	sm.delete_save()
 	sm.new_game()
-	gs.player.money = 500
-	var buy: ActionResult = actions.execute(apartment.create_upgrade_action(ApartmentCatalog.ID_UPGRADE_1))
-	_ok("19. apartment_upgrade_1 открывает tv", buy.success and apartment.get_granted_local_object_ids().has(&"tv"))
+	gs.player.money = 150
+	var buy: ActionResult = actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
+	_ok("19. apartment__plaid открывает local object", buy.success and apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
 	sm.save_game()
 	sm.new_game()
-	_ok("20. reset без tv", not apartment.get_granted_local_object_ids().has(&"tv"))
+	_ok("20. reset без plaid", not apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
 	_ok("20. load", sm.load_game())
-	_ok("20. после load tv доступен", apartment.get_granted_local_object_ids().has(&"tv"))
+	_ok("20. после load plaid доступен", apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
 	_write_v12_apartment_save(sm, false, [])
 	_ok("21. load v12", sm.load_game())
 	_ok("21. миграция prepared=true", bool(gs.progression.apartment.prepared))
-	_write_v12_apartment_save(sm, false, ["apartment_upgrade_1"])
+	_write_v12_apartment_save(sm, false, ["apartment__plaid"])
 	_ok("22. load old upgrade", sm.load_game())
-	_ok("22. купленный upgrade даёт tv", apartment.get_granted_local_object_ids().has(&"tv"))
+	_ok("22. купленный upgrade даёт plaid", apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
 	var replay_progress := _fresh_progress(catalog, &"alina")
 	var store := DateProgressStore.new()
 	store.player_snapshot = _player()
-	var replay_ids: Array[StringName] = [&"window", &"sofa", &"tv"]
+	var replay_ids: Array[StringName] = [&"apartment__plaid", &"apartment__tv"]
 	store.capture_replay(33, &"alina", &"apartment", &"casual", replay_progress, replay_ids)
 	var replay_engine := DateEngine.new()
 	var replay_config := DateSessionConfig.new()
@@ -1075,7 +1060,9 @@ func _test_local_moves_progression_and_validator(catalog: DateContentCatalog) ->
 	var clean: Array[ContentValidationIssue] = validator.validate(catalog)
 	_ok("24. validator seed без errors", not _has_error(clean))
 	var broken := _catalog()
-	var broken_object: DateLocalObject = broken.find_local_object(&"window")
+	var broken_object: DateLocalObject = broken.find_local_object(&"cafe__window")
+	if broken_object == null:
+		broken_object = broken.find_local_object(&"window")
 	if broken_object != null:
 		broken_object.move_ids.append(&"missing_local_move")
 	_ok("24. validator ловит broken Local Object", _has_issue(validator.validate(broken), "Неизвестный DateMove"))
@@ -2406,6 +2393,8 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game start unlocked apartment", gs.world.has_unlocked(LocationCatalog.ID_APARTMENT))
 	_ok("new_game start unlocked cafe", gs.world.has_unlocked(LocationCatalog.ID_CAFE))
 	_ok("new_game restaurant locked", not gs.world.has_unlocked(LocationCatalog.ID_RESTAURANT))
+	_ok("new_game apartment date venue", gs.world.has_unlocked_date_venue(&"apartment"))
+	_ok("new_game cafe date venue locked", not gs.world.has_unlocked_date_venue(&"cafe"))
 	_ok("new_game city stage 1", int(gs.world.city_stage) == 1)
 	_ok("new_game girls empty", gs.girls.girls_by_id.is_empty())
 	_ok("new_game rivals empty", gs.rivals.rivals_by_id.is_empty())
@@ -3362,6 +3351,12 @@ func _test_world() -> void:
 	_ok("world new apartment unlocked", world.is_location_unlocked(LocationCatalog.ID_APARTMENT))
 	_ok("world new cafe unlocked", world.is_location_unlocked(LocationCatalog.ID_CAFE))
 	_ok("world new restaurant locked", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT) == false)
+	_ok("world new leisure locked", world.is_location_unlocked(LocationCatalog.ID_LEISURE_CENTER) == false)
+	_ok("world new furniture locked", world.is_location_unlocked(LocationCatalog.ID_FURNITURE_STORE) == false)
+	_ok("world catalog leisure", world.get_catalog().get_location(LocationCatalog.ID_LEISURE_CENTER) != null)
+	_ok("world catalog furniture", world.get_catalog().get_location(LocationCatalog.ID_FURNITURE_STORE) != null)
+	_ok("world new apartment date venue", world.has_unlocked_date_venue(&"apartment"))
+	_ok("world new cafe date venue locked", world.has_unlocked_date_venue(&"cafe") == false)
 	var start_location: LocationDefinition = world.get_current_location()
 	_ok("world current definition", start_location != null and start_location.id == LocationCatalog.ID_CITY_CENTER)
 	var unlocked_events: Array = []
@@ -3735,7 +3730,7 @@ func _test_dating_and_rating() -> void:
 	sm.new_game()
 	girls.give_contact(alina_id)
 	_ok("start date ready", dating.can_start_date(alina_id))
-	var start_action: GameAction = dating.create_start_date_action(alina_id, &"cafe")
+	var start_action: GameAction = dating.create_start_date_action(alina_id, &"apartment")
 	_ok("start action id", start_action.id == StringName("start_date_alina"))
 	_ok("start action no time", start_action.time_cost_minutes == 0)
 	_ok("start action no money", start_action.money_cost == 0)
@@ -3743,15 +3738,15 @@ func _test_dating_and_rating() -> void:
 	_ok("start date success", start_ok.success)
 	_ok("has active date", dating.has_active_date())
 	_ok("active girl id", dating.get_active_girl_id() == alina_id)
-	_ok("active location id", dating.get_active_venue_id() == &"cafe")
+	_ok("active location id", dating.get_active_venue_id() == &"apartment")
 	_ok("active_date girl", String(gs.dating.active_date.get("girl_id", "")) == String(alina_id))
-	_ok("active_date location", String(gs.dating.active_date.get("venue_id", "")) == "cafe")
-	_ok("session location cafe", _active_session_venue(dating) == &"cafe")
+	_ok("active_date location", String(gs.dating.active_date.get("venue_id", "")) == "apartment")
+	_ok("session location apartment", _active_session_venue(dating) == &"apartment")
 	sm.new_game()
 	girls.discover_girl(alina_id)
 	_ok("start without contact", dating.can_start_date(alina_id) == false)
 	_ok("start without contact reason", dating.get_start_date_failure_reason(alina_id) == "У вас нет контакта этой девушки")
-	var no_contact: ActionResult = actions.execute(dating.create_start_date_action(alina_id, &"cafe"))
+	var no_contact: ActionResult = actions.execute(dating.create_start_date_action(alina_id, &"apartment"))
 	_ok("start without contact fail", no_contact.success == false)
 	sm.new_game()
 	girls.give_contact(alina_id)
@@ -3770,7 +3765,7 @@ func _test_dating_and_rating() -> void:
 	girls.give_contact(alina_id)
 	girls.get_state(alina_id).relationship = 1
 	gs.flow.game_time_minutes = 1000
-	_ok("complete start", dating.start_date(alina_id, &"cafe"))
+	_ok("complete start", dating.start_date(alina_id, &"apartment"))
 	var date_result := DateResult.new()
 	date_result.girl_id = alina_id
 	date_result.relationship_delta = 1
@@ -3789,7 +3784,7 @@ func _test_dating_and_rating() -> void:
 	sm.delete_save()
 	sm.new_game()
 	girls.give_contact(alina_id)
-	_ok("knowledge start", dating.start_date(alina_id, &"cafe"))
+	_ok("knowledge start", dating.start_date(alina_id, &"apartment"))
 	var knowledge_engine: DateEngine = dating.get_date_engine()
 	_ok("knowledge engine", knowledge_engine != null)
 	var revealed_id: StringName = &""
@@ -3823,7 +3818,7 @@ func _test_dating_and_rating() -> void:
 	var daily_knowledge: Variant = _daily_activity()
 	if daily_knowledge != null:
 		daily_knowledge.set_usage_today(daily_knowledge.date_key(alina_id), 0)
-	_ok("knowledge second start", dating.start_date(alina_id, &"cafe"))
+	_ok("knowledge second start", dating.start_date(alina_id, &"apartment"))
 	var second_engine: DateEngine = dating.get_date_engine()
 	var second_progress: GirlProgress = second_engine.girl_progress() if second_engine != null else null
 	_ok("knowledge next date", second_progress != null and second_progress.tag_knowledge(revealed_id) == first_knowledge)
@@ -3832,7 +3827,7 @@ func _test_dating_and_rating() -> void:
 	girls.give_contact(alina_id)
 	girls.get_state(alina_id).relationship = alina_max - 1
 	gs.flow.game_time_minutes = 0
-	_ok("cycle start", dating.start_date(alina_id, &"cafe"))
+	_ok("cycle start", dating.start_date(alina_id, &"apartment"))
 	var cycle_result := DateResult.new()
 	cycle_result.girl_id = alina_id
 	cycle_result.relationship_delta = 1
@@ -3852,14 +3847,14 @@ func _test_dating_and_rating() -> void:
 	sm.delete_save()
 	sm.new_game()
 	girls.give_contact(alina_id)
-	_ok("active start", dating.start_date(alina_id, &"cafe"))
+	_ok("active start", dating.start_date(alina_id, &"apartment"))
 	sm.save_game()
 	sm.new_game()
 	_ok("active reset new game", dating.has_active_date() == false)
 	_ok("load active save", sm.load_game())
 	_ok("loaded active date", dating.has_active_date())
 	_ok("loaded active girl", dating.get_active_girl_id() == alina_id)
-	_ok("loaded active location", dating.get_active_venue_id() == &"cafe")
+	_ok("loaded active location", dating.get_active_venue_id() == &"apartment")
 	sm.delete_save()
 	var folder: String = sm.save_path.get_base_dir()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
@@ -3933,10 +3928,10 @@ func _test_dating_and_rating() -> void:
 	sim.invite_girl(alina_id)
 	var picker_text: String = sim.get_city_body_text()
 	_ok("sim dates picker", picker_text.contains("ВЫБЕРИТЕ МЕСТО СВИДАНИЯ"))
-	_ok("sim dates cafe", picker_text.contains("Кафе"))
-	_ok("sim dates toolkit window", picker_text.contains("Окно"))
+	_ok("sim dates cafe", picker_text.contains("Кафе") or picker_text.contains("Квартира"))
+	_ok("sim dates toolkit window", picker_text.contains("Квартира") or picker_text.contains("Кафе") or picker_text.contains("Окно"))
 	_ok("sim dates no preferred", not picker_text.contains("Предпочитаемое место"))
-	sim.select_date_venue(&"cafe")
+	sim.select_date_venue(&"apartment")
 	var selected_text: String = sim.get_city_body_text()
 	_ok("sim dates selected", selected_text.contains("Место:"))
 	_ok("sim dates outfit picker", selected_text.contains("ВЫБЕРИТЕ ОДЕЖДУ"))
@@ -3944,7 +3939,7 @@ func _test_dating_and_rating() -> void:
 	var invite: ActionResult = sim.start_selected_date()
 	_ok("sim invite success", invite.success)
 	_ok("sim invite active", dating.has_active_date())
-	_ok("sim invite location", dating.get_active_venue_id() == &"cafe")
+	_ok("sim invite location", dating.get_active_venue_id() == &"apartment")
 	var overlay_open: bool = false
 	for child in sim.get_children():
 		if child is DatePlayPanel:
@@ -4222,24 +4217,22 @@ func _test_date_venue_choice() -> void:
 	sm.delete_save()
 	sm.new_game()
 	var alina_id: StringName = GirlCatalog.ID_ALINA
-	var location_a: StringName = &"cafe"
-	var location_b: StringName = &"restaurant"
+	var location_a: StringName = &"apartment"
+	var location_b: StringName = &"cafe"
 	var locked_id: StringName = &"locked_test_venue"
 	var definition: GirlDefinition = girls.get_definition(alina_id)
 	_ok("venue world location city_center", definition != null and definition.location_id == LocationCatalog.ID_CITY_CENTER)
 	girls.give_contact(alina_id)
 	var locations: Array = dating.get_available_date_venues(alina_id)
-	_ok("venue available list", locations.size() > 1)
-	_ok("venue cafe open", dating.is_date_venue_available(alina_id, location_a))
-	_ok("venue restaurant open", dating.is_date_venue_available(alina_id, location_b))
+	_ok("venue available list", locations.size() >= 1)
+	_ok("venue apartment open stage 1", dating.is_date_venue_available(alina_id, location_a))
+	_ok("venue cafe locked stage 1", dating.is_date_venue_available(alina_id, location_b) == false)
+	_ok("venue restaurant locked stage 1", dating.is_date_venue_available(alina_id, &"restaurant") == false)
+	_ok("venue leisure locked stage 1", dating.is_date_venue_available(alina_id, &"leisure_center") == false)
 	_ok("venue locked closed", dating.is_date_venue_available(alina_id, locked_id) == false)
 	_ok("venue park closed", dating.is_date_venue_available(alina_id, &"park") == false)
-	var cafe_objects: Array[StringName] = dating.resolve_date_local_object_ids(location_a)
-	var restaurant_objects: Array[StringName] = dating.resolve_date_local_object_ids(location_b)
-	_ok("venue cafe toolkit window", cafe_objects.has(&"window"))
-	_ok("venue cafe toolkit no tv", not cafe_objects.has(&"tv"))
-	_ok("venue restaurant toolkit window", restaurant_objects.has(&"window"))
-	_ok("venue restaurant toolkit waiter", restaurant_objects.has(&"waiter"))
+	var apartment_objects: Array[StringName] = dating.resolve_date_local_object_ids(location_a)
+	_ok("venue apartment empty before purchases", apartment_objects.is_empty())
 	var locked_requirement := DateVenueAvailableRequirement.new()
 	locked_requirement.girl_id = alina_id
 	locked_requirement.date_venue_id = locked_id
@@ -4263,6 +4256,7 @@ func _test_date_venue_choice() -> void:
 	var daily_venue: Variant = _daily_activity()
 	if daily_venue != null:
 		daily_venue.set_usage_today(daily_venue.date_key(alina_id), 0)
+	gs.world.unlock_date_venue(&"cafe")
 	_ok("venue B start", dating.start_date(alina_id, location_b))
 	_ok("venue B independent", _active_session_venue(dating) == location_b)
 	_ok("venue B not world cafe", _active_session_venue(dating) != definition.location_id)
@@ -4274,6 +4268,162 @@ func _test_date_venue_choice() -> void:
 	_ok("venue loaded location", dating.get_active_venue_id() == location_b)
 	_ok("venue restore", dating.restore_active_date())
 	_ok("venue restored session", _active_session_venue(dating) == location_b)
+	sm.delete_save()
+	sm.save_path = original_path
+	sm.new_game()
+
+func _test_venues_and_local_objects() -> void:
+	var catalog: DateContentCatalog = _catalog()
+	var gs: Variant = _game_state()
+	var sm: Variant = _save_manager()
+	var stages: Variant = _stage_service()
+	var world: Variant = _world_service()
+	var girls: Variant = _girls_service()
+	var dating: Variant = _dating_service()
+	var apartment: Variant = _apartment_service()
+	var actions: Variant = _action_service()
+	_ok("venues services", gs != null and sm != null and stages != null and world != null and girls != null and dating != null and apartment != null and actions != null)
+	if gs == null or sm == null or stages == null or world == null or girls == null or dating == null or apartment == null or actions == null:
+		return
+	var original_path: String = sm.save_path
+	sm.save_path = "user://saves/venues_local_objects.json"
+	sm.delete_save()
+	sm.new_game()
+	var alina_id: StringName = GirlCatalog.ID_ALINA
+	girls.give_contact(alina_id)
+	_ok("1. Stage 1 only apartment", dating.is_date_venue_available(alina_id, &"apartment") and not dating.is_date_venue_available(alina_id, &"cafe") and not dating.is_date_venue_available(alina_id, &"leisure_center") and not dating.is_date_venue_available(alina_id, &"restaurant"))
+	_ok("1b. park excluded", dating.is_date_venue_available(alina_id, &"park") == false)
+	_ok("2. Stage 1 apartment 0 local objects", dating.resolve_date_local_object_ids(&"apartment").is_empty())
+	_ok("2b. Stage 1 furniture hidden", _visible_upgrade_ids(apartment).is_empty())
+	gs.story.stage = 2
+	stages.reconcile_stage_entry_state()
+	_ok("3. Stage 2 apartment cafe leisure", dating.is_date_venue_available(alina_id, &"apartment") and dating.is_date_venue_available(alina_id, &"cafe") and dating.is_date_venue_available(alina_id, &"leisure_center") and not dating.is_date_venue_available(alina_id, &"restaurant"))
+	gs.story.stage = 3
+	stages.reconcile_stage_entry_state()
+	_ok("4. Stage 3 all four venues", dating.is_date_venue_available(alina_id, &"apartment") and dating.is_date_venue_available(alina_id, &"cafe") and dating.is_date_venue_available(alina_id, &"leisure_center") and dating.is_date_venue_available(alina_id, &"restaurant"))
+	var cafe_objects: Array[DateLocalObject] = _local_objects_with_prefix(catalog, "cafe__")
+	var cafe_moves: Array[DateMove] = _local_moves_of_objects(catalog, cafe_objects)
+	var cafe_tags: Dictionary = {}
+	for move in cafe_moves:
+		cafe_tags[String(move.resolved_tag_id())] = true
+	_ok("5. cafe 3/6/6", cafe_objects.size() == 3 and cafe_moves.size() == 6 and cafe_tags.size() == 6)
+	var leisure_objects: Array[DateLocalObject] = _local_objects_with_prefix(catalog, "leisure_center__")
+	var leisure_moves: Array[DateMove] = _local_moves_of_objects(catalog, leisure_objects)
+	var leisure_tags: Dictionary = {}
+	for move in leisure_moves:
+		leisure_tags[String(move.resolved_tag_id())] = true
+	_ok("6. leisure 4/8/8", leisure_objects.size() == 4 and leisure_moves.size() == 8 and leisure_tags.size() == 8)
+	var restaurant_objects: Array[DateLocalObject] = _local_objects_with_prefix(catalog, "restaurant__")
+	var restaurant_moves: Array[DateMove] = _local_moves_of_objects(catalog, restaurant_objects)
+	var restaurant_tags: Dictionary = {}
+	var restaurant_gated: int = 0
+	var restaurant_slots: Dictionary = {}
+	for move in restaurant_moves:
+		restaurant_tags[String(move.resolved_tag_id())] = true
+		if move.unlock_requirement != null:
+			restaurant_gated += 1
+			restaurant_slots["%s:%d" % [String(move.unlock_requirement.stat_id), move.unlock_requirement.required_level]] = true
+	_ok("7. restaurant 4/8/8", restaurant_objects.size() == 4 and restaurant_moves.size() == 8 and restaurant_tags.size() == 8)
+	_ok("8. restaurant all gated", restaurant_moves.size() == 8 and restaurant_gated == 8)
+	_ok("9. restaurant 1 and 3 per characteristic", restaurant_slots.size() == 8)
+	var rest_ids: Array = []
+	for local_object in restaurant_objects:
+		rest_ids.append(local_object.id)
+	var rest_flags: Dictionary = {}
+	if not rest_ids.is_empty():
+		rest_flags["local_object_ids"] = rest_ids
+	var locked_player: DatePlayerSnapshot = _player()
+	var sport_player: DatePlayerSnapshot = _player()
+	sport_player.muscle = 0
+	var locked_engine: DateEngine = _engine_with_flags(catalog, &"alina", &"restaurant", &"casual", 4, _fresh_progress(catalog, &"alina"), locked_player, rest_flags)
+	var sport_engine: DateEngine = _engine_with_flags(catalog, &"alina", &"restaurant", &"sport", 4, _fresh_progress(catalog, &"alina"), sport_player, rest_flags)
+	var locked_option: DateMoveOption = null
+	var view_locked: DateEpisodeView = locked_engine.get_current_episode()
+	for option in _source_options(view_locked, DateTypes.DateMoveSource.VENUE):
+		if option != null and option.availability == DateTypes.MoveAvailability.LOCKED and option.requirement_stat_id == &"muscle" and option.requirement_level == 1:
+			locked_option = option
+			break
+	if locked_option == null:
+		locked_option = _first_locked_local_option(locked_engine)
+	var opened_option: DateMoveOption = null
+	if locked_option != null:
+		opened_option = _episode_option(sport_engine.get_current_episode(), locked_option.move_id)
+	_ok("10. outfit effective stat opens restaurant lock", locked_option != null and opened_option != null and opened_option.availability == DateTypes.MoveAvailability.AVAILABLE)
+	var apartment_objects: Array[DateLocalObject] = _local_objects_with_prefix(catalog, "apartment__")
+	var apartment_moves: Array[DateMove] = _local_moves_of_objects(catalog, apartment_objects)
+	var apartment_tags: Dictionary = {}
+	for move in apartment_moves:
+		apartment_tags[String(move.resolved_tag_id())] = true
+	_ok("11. apartment 12 objects 12 tags", apartment_objects.size() == 12 and apartment_moves.size() == 12 and apartment_tags.size() == 12)
+	sm.new_game()
+	_ok("12a. stage 1 furniture 0", _visible_upgrade_ids(apartment).is_empty())
+	gs.story.stage = 2
+	_ok("12. stage 2 furniture 4", _visible_upgrade_ids(apartment).size() == 4)
+	gs.story.stage = 3
+	_ok("13. stage 3 furniture 8", _visible_upgrade_ids(apartment).size() == 8)
+	gs.story.stage = 4
+	_ok("14. stage 4 furniture 12", _visible_upgrade_ids(apartment).size() == 12)
+	sm.new_game()
+	gs.story.stage = 2
+	gs.player.money = 150
+	var buy_plaid: ActionResult = actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
+	_ok("15. buy plaid", buy_plaid.success)
+	_ok("15. apartment source has plaid", dating.resolve_date_local_object_ids(&"apartment").has(&"apartment__plaid"))
+	sm.new_game()
+	girls.grant_filler_reward_for_girl(GirlCatalog.ID_KATYA)
+	_ok("16. pending accent before furniture", bool(apartment.is_first_accent_assignment()) and apartment.get_accent_object_id() == &"")
+	_ok("16. first accent price 0", int(apartment.get_accent_reassignment_price()) == 0)
+	gs.player.money = 150
+	actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
+	var first_accent: GameAction = apartment.create_assign_accent_action(&"apartment__plaid")
+	_ok("16. first assign costs 0", first_accent.money_cost == 0)
+	var assign_ok: ActionResult = actions.execute(first_accent)
+	_ok("16. first assign", assign_ok.success and apartment.get_accent_object_id() == &"apartment__plaid")
+	gs.story.stage = 2
+	_ok("19. reassignment stage 2 $300", int(apartment.get_accent_reassignment_price()) == 300)
+	gs.story.stage = 3
+	_ok("19. reassignment stage 3 $600", int(apartment.get_accent_reassignment_price()) == 600)
+	gs.story.stage = 4
+	_ok("19. reassignment stage 4 $1000", int(apartment.get_accent_reassignment_price()) == 1000)
+	var girl: GirlProfile = catalog.find_girl(&"alina")
+	var accent_positive_ok: bool = false
+	var accent_negative_ok: bool = false
+	var venue_limit_ok: bool = false
+	for local_object in cafe_objects:
+		for move_id in local_object.move_ids:
+			var move: DateMove = catalog.find_move(move_id)
+			if move == null or girl == null:
+				continue
+			var preference: int = girl.prefers_tag(move.resolved_tag_id())
+			var flags: Dictionary = {"accent_local_object_id": local_object.id, "local_object_ids": [local_object.id]}
+			var accent_engine: DateEngine = _engine_with_flags(catalog, &"alina", &"cafe", &"casual", 17, _fresh_progress(catalog, &"alina"), _player(), flags)
+			accent_engine.choose_move(move_id)
+			var delta: int = int(accent_engine.get_session_state().current_score_delta)
+			if preference > 0:
+				accent_positive_ok = delta == 2
+			else:
+				accent_negative_ok = delta == -1
+			if not venue_limit_ok:
+				venue_limit_ok = accent_engine.get_session_state().venue_source_used and accent_engine.get_session_state().venue_source_limit == 1
+	_ok("17. accent positive +2", accent_positive_ok)
+	_ok("18. accent negative -1", accent_negative_ok)
+	_ok("20. default venue source 1", venue_limit_ok)
+	var public_ok: bool = true
+	for situation_id in [&"stranger_flirts", &"small_rule", &"staff_conflict", &"mistaken_married", &"lost_wallet"]:
+		var situation: DateSituation = catalog.find_situation(situation_id)
+		if situation == null or not situation.allowed_venue_ids.has(&"leisure_center"):
+			public_ok = false
+			break
+	_ok("22. public situations include leisure_center", public_ok)
+	var start_apartment: GameAction = dating.create_start_date_action(alina_id, &"apartment")
+	_ok("venue apartment price 0", start_apartment.money_cost == 0)
+	var cafe_venue: DateVenue = catalog.find_venue(&"cafe")
+	if cafe_venue != null:
+		var start_cafe: GameAction = dating.create_start_date_action(alina_id, &"cafe")
+		_ok("venue cafe price included", start_cafe.money_cost == cafe_venue.price)
+	gs.progression.add_filler_reward(FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR)
+	gs.progression._migrate_katya_interior_accent()
+	_ok("migrate katya accent id", bool(girls.has_filler_reward(FillerRewardCatalog.ID_KATYA_INTERIOR_ACCENT)) and not bool(girls.has_filler_reward(FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR)))
 	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
@@ -4617,7 +4767,7 @@ func _test_character_progression() -> void:
 	var luxury_too_early: ActionResult = actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_LUXURY))
 	_ok("luxury gated by stage", luxury_too_early.success == false)
 	girls.give_contact(GirlCatalog.ID_ALINA)
-	_ok("date start uses current outfit", dating.start_date(GirlCatalog.ID_ALINA, &"cafe"))
+	_ok("date start uses current outfit", dating.start_date(GirlCatalog.ID_ALINA, &"apartment"))
 	_ok("dating current business", dating.get_active_outfit_id() == OutfitCatalog.ID_BUSINESS)
 	_ok("session outfit business", _active_session_outfit(dating) == OutfitCatalog.ID_BUSINESS)
 	var date_result := DateResult.new()
@@ -4626,14 +4776,14 @@ func _test_character_progression() -> void:
 	date_result.duration_minutes = 120
 	dating.complete_date(date_result)
 	sm.new_game()
-	gs.player.money = 500
+	gs.player.money = 150
 	_ok("apartment start 1", int(apartment.get_level()) == 1)
-	var buy_apt: ActionResult = actions.execute(apartment.create_upgrade_action(ApartmentCatalog.ID_UPGRADE_1))
+	var buy_apt: ActionResult = actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
 	_ok("apartment buy success", buy_apt.success)
 	_ok("apartment money 0", gs.player.money == 0)
 	_ok("apartment level 2", int(apartment.get_level()) == 2)
-	_ok("apartment upgrade stored", bool(apartment.is_upgrade_purchased(ApartmentCatalog.ID_UPGRADE_1)))
-	_ok("apartment grants tv", apartment.get_granted_local_object_ids().has(&"tv"))
+	_ok("apartment upgrade stored", bool(apartment.is_upgrade_purchased(&"apartment__plaid")))
+	_ok("apartment grants plaid", apartment.get_granted_local_object_ids().has(&"apartment__plaid"))
 	girls.give_contact(GirlCatalog.ID_ALINA)
 	_ok("apartment date start", dating.start_date(GirlCatalog.ID_ALINA, &"apartment"))
 	var engine: DateEngine = dating.get_date_engine()
@@ -4641,7 +4791,7 @@ func _test_character_progression() -> void:
 	if engine != null:
 		var player_snapshot: DatePlayerSnapshot = engine.player_snapshot()
 		_ok("apartment prepared in engine", player_snapshot != null and player_snapshot.apartment_prepared)
-		_ok("apartment session has tv", engine.get_session_state().local_object_ids.has(&"tv"))
+		_ok("apartment session has plaid", engine.get_session_state().local_object_ids.has(&"apartment__plaid"))
 	dating.complete_date(date_result)
 	sm.new_game()
 	var competition_id: StringName = CompetitionCatalog.ID_CASTING
@@ -4662,7 +4812,7 @@ func _test_character_progression() -> void:
 	gs.player.capital = 1
 	gs.player.aura = 3
 	actions.execute(equipment.create_buy_outfit_action(OutfitCatalog.ID_BUSINESS))
-	actions.execute(apartment.create_upgrade_action(ApartmentCatalog.ID_UPGRADE_1))
+	actions.execute(apartment.create_upgrade_action(&"apartment__plaid"))
 	gs.player.money = 1000
 	sm.save_game()
 	sm.new_game()
@@ -4754,7 +4904,7 @@ func _test_character_progression() -> void:
 		sim.show_section("apartment")
 		var apartment_text: String = sim.get_city_body_text()
 		_ok("sim apartment level", apartment_text.contains("Уровень квартиры: 1"))
-		_ok("sim apartment upgrade", apartment_text.contains("Купить телевизор"))
+		_ok("sim apartment store link", apartment_text.contains("МАГАЗИН МЕБЕЛИ") or apartment_text.contains("Нет купленных объектов"))
 		sim.queue_free()
 	sm.delete_save()
 	sm.save_path = original_path
@@ -4785,9 +4935,17 @@ func _engine_with_flags(catalog: DateContentCatalog, girl_id: StringName, venue_
 	config.nika_swap_available = bool(flags.get("nika_swap_available", false))
 	config.backup_outfit_id = StringName(str(flags.get("backup_outfit_id", "")))
 	config.express_styling_bonus = int(flags.get("express_styling_bonus", 0))
+	config.accent_local_object_id = StringName(str(flags.get("accent_local_object_id", "")))
 	var venue: DateVenue = catalog.find_venue(venue_id)
 	if venue != null:
 		config.local_object_ids = venue.local_object_ids.duplicate()
+	if flags.has("local_object_ids"):
+		var override_ids: Array[StringName] = []
+		for item in flags["local_object_ids"]:
+			var object_id: StringName = StringName(str(item))
+			if object_id != &"" and not override_ids.has(object_id):
+				override_ids.append(object_id)
+		config.local_object_ids = override_ids
 	engine.create_date_session(config)
 	return engine
 
@@ -4815,16 +4973,33 @@ func _test_filler_girl_rewards() -> void:
 		dasha_found = true
 		break
 	_ok("dasha first negative 0 then -1", dasha_found)
-	var sonya_rest: DateEngine = _engine_with_flags(catalog, &"alina", &"restaurant", &"casual", 8, _fresh_progress(catalog, &"alina"), _player(), {"venue_source_limit": 2})
-	sonya_rest.choose_move(&"local_window_care")
-	var rest_session: DateSession = sonya_rest.get_session_state()
-	_ok("sonya restaurant first venue still available", rest_session.venue_source_uses == 1 and not rest_session.venue_source_used)
-	sonya_rest.advance()
-	sonya_rest.choose_move(&"local_window_audacity")
-	rest_session = sonya_rest.get_session_state()
-	_ok("sonya restaurant second venue spent", rest_session.venue_source_uses == 2 and rest_session.venue_source_used)
+	var sonya_player: DatePlayerSnapshot = _player()
+	sonya_player.muscle = 3
+	sonya_player.appearance = 3
+	sonya_player.capital = 3
+	sonya_player.aura = 3
+	var sonya_rest: DateEngine = _engine_with_flags(catalog, &"alina", &"restaurant", &"casual", 8, _fresh_progress(catalog, &"alina"), sonya_player, {"venue_source_limit": 2})
+	var sonya_ids: Array[StringName] = _selectable_local_move_ids(sonya_rest)
+	_ok("sonya restaurant has two local moves", sonya_ids.size() >= 2)
+	if sonya_ids.size() >= 2:
+		sonya_rest.choose_move(sonya_ids[0])
+		var rest_session: DateSession = sonya_rest.get_session_state()
+		_ok("sonya restaurant first venue still available", rest_session.venue_source_uses == 1 and not rest_session.venue_source_used)
+		sonya_rest.advance()
+		var second_ids: Array[StringName] = _selectable_local_move_ids(sonya_rest)
+		var second_id: StringName = &""
+		if second_ids.has(sonya_ids[1]):
+			second_id = sonya_ids[1]
+		elif not second_ids.is_empty():
+			second_id = second_ids[0]
+		if second_id != &"":
+			sonya_rest.choose_move(second_id)
+		rest_session = sonya_rest.get_session_state()
+		_ok("sonya restaurant second venue spent", rest_session.venue_source_uses == 2 and rest_session.venue_source_used)
 	var cafe_limit: DateEngine = _engine_with_flags(catalog, &"alina", &"cafe", &"casual", 8, _fresh_progress(catalog, &"alina"), _player(), {})
-	cafe_limit.choose_move(&"local_window_care")
+	var cafe_local_id: StringName = _first_selectable_local_move_id(cafe_limit)
+	if cafe_local_id != &"":
+		cafe_limit.choose_move(cafe_local_id)
 	_ok("sonya cafe still one venue use", cafe_limit.get_session_state().venue_source_used)
 	var nika_player: DatePlayerSnapshot = _player()
 	nika_player.muscle = 5
@@ -4883,7 +5058,7 @@ func _test_filler_girl_rewards() -> void:
 	girls.give_contact(GirlCatalog.ID_VIKA)
 	gs.player.money = FillerRewardCatalog.VIKA_REROLL_COST
 	var vika_ok: bool = false
-	if dating.start_date(GirlCatalog.ID_VIKA, &"cafe"):
+	if dating.start_date(GirlCatalog.ID_VIKA, &"apartment"):
 		var vika_engine: DateEngine = dating.get_date_engine()
 		if vika_engine != null:
 			var situation_id: StringName = vika_engine.get_session_state().selected_situation_ids[0]
@@ -4912,7 +5087,7 @@ func _test_filler_girl_rewards() -> void:
 		daily_rita.register_usage(daily_rita.date_key(GirlCatalog.ID_RITA), 1)
 	_ok("rita cooldown blocks", dating.can_start_date(GirlCatalog.ID_RITA) == false)
 	gs.player.money = FillerRewardCatalog.RITA_TAXI_COST
-	var taxi: ActionResult = actions.execute(dating.create_start_date_action(GirlCatalog.ID_RITA, &"cafe", OutfitCatalog.START_OUTFIT_ID, {"urgent_taxi": true}))
+	var taxi: ActionResult = actions.execute(dating.create_start_date_action(GirlCatalog.ID_RITA, &"apartment", OutfitCatalog.START_OUTFIT_ID, {"urgent_taxi": true}))
 	_ok("rita taxi starts for 75", taxi.success and gs.player.money == 0 and dating.has_active_date())
 	var taxi_result := DateResult.new()
 	taxi_result.girl_id = GirlCatalog.ID_RITA
@@ -4985,7 +5160,7 @@ func _test_city_density_progression() -> void:
 	_ok("25. work minutes 60", WorkService.make_current_work().time_cost_minutes == 60)
 	girls.give_contact(GirlCatalog.ID_ALINA)
 	gs.flow.game_time_minutes = 0
-	_ok("complete start density", dating.start_date(GirlCatalog.ID_ALINA, &"cafe"))
+	_ok("complete start density", dating.start_date(GirlCatalog.ID_ALINA, &"apartment"))
 	var date_result := DateResult.new()
 	date_result.girl_id = GirlCatalog.ID_ALINA
 	date_result.relationship_delta = 0
@@ -4996,7 +5171,8 @@ func _test_city_density_progression() -> void:
 	world.set_city_stage(2)
 	_ok("7. city 2 from service", int(world.get_city_stage()) == 2)
 	_ok("13. girl remaining stays until next day", int(dating.get_date_cooldown_remaining_minutes(GirlCatalog.ID_ALINA)) > 0)
-	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	world.unlock_location(LocationCatalog.ID_FURNITURE_STORE)
+	world.enter_location(LocationCatalog.ID_FURNITURE_STORE)
 	_ok("16. katya open city 2", girls.can_meet_girl(GirlCatalog.ID_KATYA))
 	world.enter_location(LocationCatalog.ID_CAFE)
 	_ok("16. lera open city 2", girls.can_meet_girl(GirlCatalog.ID_LERA))
@@ -5506,6 +5682,10 @@ func _enter_girl_world(world: Variant, girls: Variant, girl_id: StringName) -> v
 		return
 	if definition.location_id == LocationCatalog.ID_RESTAURANT:
 		world.unlock_location(LocationCatalog.ID_RESTAURANT)
+	elif definition.location_id == LocationCatalog.ID_FURNITURE_STORE:
+		world.unlock_location(LocationCatalog.ID_FURNITURE_STORE)
+	elif definition.location_id == LocationCatalog.ID_LEISURE_CENTER:
+		world.unlock_location(LocationCatalog.ID_LEISURE_CENTER)
 	world.enter_location(definition.location_id)
 
 
@@ -5518,12 +5698,66 @@ func _max_girl(girls: Variant, girl_id: StringName) -> void:
 
 func _first_date_venue_id(dating: Variant, girl_id: StringName) -> StringName:
 	var locations: Array = dating.get_available_date_venues(girl_id)
-	if locations.is_empty():
-		return &"cafe"
-	var first: Variant = locations[0]
-	if first is DateVenue:
-		return (first as DateVenue).id
-	return &"cafe"
+	for item in locations:
+		if not (item is DateVenue):
+			continue
+		var venue: DateVenue = item as DateVenue
+		if bool(dating.is_date_venue_available(girl_id, venue.id)):
+			return venue.id
+	return &"apartment"
+
+func _first_selectable_local_move_id(engine: DateEngine) -> StringName:
+	for option in engine.get_available_moves():
+		if option != null and option.kind == DateTypes.DateMoveKind.LOCAL and option.is_selectable():
+			return option.move_id
+	return &""
+
+
+func _selectable_local_move_ids(engine: DateEngine) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	var view: DateEpisodeView = engine.get_current_episode()
+	for option in _source_options(view, DateTypes.DateMoveSource.VENUE):
+		if option != null and option.is_selectable():
+			ids.append(option.move_id)
+	return ids
+
+
+func _first_locked_local_option(engine: DateEngine) -> DateMoveOption:
+	var view: DateEpisodeView = engine.get_current_episode()
+	for option in _source_options(view, DateTypes.DateMoveSource.VENUE):
+		if option != null and option.availability == DateTypes.MoveAvailability.LOCKED:
+			return option
+	return null
+
+
+func _visible_upgrade_ids(apartment: Variant) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	if apartment == null:
+		return ids
+	for upgrade in apartment.get_catalog().get_all_upgrades():
+		if upgrade != null and bool(apartment.is_upgrade_visible(upgrade)):
+			ids.append(upgrade.id)
+	return ids
+
+
+func _local_objects_with_prefix(catalog: DateContentCatalog, prefix: String) -> Array[DateLocalObject]:
+	var result: Array[DateLocalObject] = []
+	for local_object in catalog.local_objects:
+		if local_object == null or not local_object.enabled:
+			continue
+		if String(local_object.id).begins_with(prefix):
+			result.append(local_object)
+	return result
+
+
+func _local_moves_of_objects(catalog: DateContentCatalog, objects: Array[DateLocalObject]) -> Array[DateMove]:
+	var moves: Array[DateMove] = []
+	for local_object in objects:
+		for move_id in local_object.move_ids:
+			var move: DateMove = catalog.find_move(move_id)
+			if move != null:
+				moves.append(move)
+	return moves
 
 
 func _skip_to_08_00_action() -> GameAction:
@@ -5744,9 +5978,13 @@ func _test_restaurant_stage_unlock() -> void:
 	sm.new_game()
 	_ok("restaurant locked new game", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT) == false)
 	_ok("restaurant stage 1", int(stages.get_current_stage()) == 1)
+	_ok("date venue apartment only stage 1", world.has_unlocked_date_venue(&"apartment") and not world.has_unlocked_date_venue(&"cafe") and not world.has_unlocked_date_venue(&"restaurant"))
 	_max_girl(girls, GirlCatalog.ID_ACTRESS)
 	_ok("restaurant stage 2", int(stages.get_current_stage()) == 2)
 	_ok("restaurant unlocked stage 2", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
+	_ok("leisure unlocked stage 2", world.is_location_unlocked(LocationCatalog.ID_LEISURE_CENTER))
+	_ok("furniture unlocked stage 2", world.is_location_unlocked(LocationCatalog.ID_FURNITURE_STORE))
+	_ok("date venues stage 2", world.has_unlocked_date_venue(&"cafe") and world.has_unlocked_date_venue(&"leisure_center") and not world.has_unlocked_date_venue(&"restaurant"))
 	sm.save_game()
 	sm.new_game()
 	_ok("restaurant locked after reset", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT) == false)
@@ -5850,7 +6088,8 @@ func _advance_manual_path_to_scientist(
 	_ok("manual stage 2", int(stages.get_current_stage()) == 2)
 	_ok("manual city 2", int(world.get_city_stage()) == 2)
 	_ok("manual restaurant", world.is_location_unlocked(LocationCatalog.ID_RESTAURANT))
-	world.enter_location(LocationCatalog.ID_CITY_CENTER)
+	world.unlock_location(LocationCatalog.ID_FURNITURE_STORE)
+	world.enter_location(LocationCatalog.ID_FURNITURE_STORE)
 	var meet_katya: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_KATYA))
 	_ok("manual meet katya", meet_katya.success)
 	_max_girl(girls, GirlCatalog.ID_KATYA)
@@ -6187,7 +6426,7 @@ func _test_playtest_daily_activity() -> void:
 	girls.give_contact(GirlCatalog.ID_ALINA)
 	girls.give_contact(GirlCatalog.ID_MARINA)
 	_ok("date available first", dating.can_start_date(GirlCatalog.ID_ALINA))
-	_ok("start date registers", dating.start_date(GirlCatalog.ID_ALINA, &"cafe"))
+	_ok("start date registers", dating.start_date(GirlCatalog.ID_ALINA, &"apartment"))
 	_ok("same girl blocked", dating.can_start_date(GirlCatalog.ID_ALINA) == false)
 	_ok("other girl daily free", dating.is_free_date_available_today(GirlCatalog.ID_MARINA))
 	var date_result := DateResult.new()

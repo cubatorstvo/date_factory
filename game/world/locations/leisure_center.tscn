@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://dtefr27hm2qjr"]
+
+[ext_resource type="Script" uid="uid://csh1rcchbr5q1" path="res://game/world/location_spawn_point.gd" id="1_0pdvx"]
+[ext_resource type="Script" uid="uid://drtoa7bc76wvm" path="res://game/world/location_door.gd" id="2_sii2p"]
+[ext_resource type="PackedScene" uid="uid://cnvnfxjjrjt50" path="res://game/world/world_player.tscn" id="3_avioe"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0pdvx"]
+albedo_color = Color(0.22, 0.28, 0.38, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1vjhy"]
+size = Vector3(1.4, 2.4, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_n13js"]
+size = Vector3(1.2, 2.2, 0.2)
+
+[node name="LeisureCenter" type="Node3D" unique_id=1691366162]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=563610398]
+transform = Transform3D(0.9396926, -0.2198463, 0.26200262, 0, 0.76604444, 0.6427876, -0.34202012, -0.60402274, 0.7198463, 0, 0, 0)
+
+[node name="Floor" type="CSGBox3D" parent="." unique_id=1158664973]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+use_collision = true
+size = Vector3(12, 1, 12)
+material = SubResource("StandardMaterial3D_0pdvx")
+
+[node name="SpawnEntrance" type="Marker3D" parent="." unique_id=204817568]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4)
+script = ExtResource("1_0pdvx")
+spawn_id = &"entrance"
+
+[node name="ExitDoor" type="Area3D" parent="." unique_id=987136324]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 5.5)
+script = ExtResource("2_sii2p")
+target_location_id = &"city_center"
+target_spawn_id = &"leisure_center_door"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ExitDoor" unique_id=1937423726]
+shape = SubResource("BoxShape3D_1vjhy")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ExitDoor" unique_id=1033021231]
+mesh = SubResource("BoxMesh_n13js")
+
+[node name="WorldPlayer" parent="." unique_id=827761901 instance=ExtResource("3_avioe")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4)

@@ -6,6 +6,12 @@ signal date_completed(girl_id: StringName, relationship_delta: int, current_rela
 const START_ACTION_PREFIX: String = "start_date_"
 const DATE_DURATION_MINUTES: int = 120
 const DEFAULT_OUTFIT_ID: StringName = OutfitCatalog.START_OUTFIT_ID
+const PRODUCTION_DATE_VENUE_IDS: Array[StringName] = [
+	&"apartment",
+	&"cafe",
+	&"leisure_center",
+	&"restaurant",
+]
 const REASON_NOT_DISCOVERED: String = "Вы ещё не знакомы"
 const REASON_NO_CONTACT: String = "У вас нет контакта этой девушки"
 const REASON_COOLDOWN: String = "Сегодня уже встречались. Следующая встреча: завтра."
@@ -81,18 +87,25 @@ func get_available_date_venues(girl_id: StringName) -> Array:
 	if catalog.find_girl(girl_id) == null:
 		return result
 	for location in catalog.date_venues:
-		if location != null and location.enabled:
+		if location != null and location.enabled and PRODUCTION_DATE_VENUE_IDS.has(location.id):
 			result.append(location)
 	return result
 
 
 func is_date_venue_available(girl_id: StringName, date_venue_id: StringName) -> bool:
-	if date_venue_id == &"":
+	if date_venue_id == &"" or not PRODUCTION_DATE_VENUE_IDS.has(date_venue_id):
 		return false
+	var found: bool = false
 	for date_venue in get_available_date_venues(girl_id):
 		if date_venue != null and date_venue.id == date_venue_id:
-			return true
-	return false
+			found = true
+			break
+	if not found:
+		return false
+	var world: Variant = get_node_or_null("/root/WorldService")
+	if world == null:
+		return false
+	return bool(world.has_unlocked_date_venue(date_venue_id))
 
 
 func resolve_date_local_object_ids(date_venue_id: StringName) -> Array[StringName]:
@@ -103,15 +116,16 @@ func resolve_date_local_object_ids(date_venue_id: StringName) -> Array[StringNam
 	var location: DateVenue = catalog.find_venue(date_venue_id)
 	if location == null:
 		return result
-	for object_id in location.local_object_ids:
-		if object_id != &"" and not result.has(object_id):
-			result.append(object_id)
 	if location.uses_apartment_preparation:
 		var apartment: Variant = _apartment_service()
 		if apartment != null:
 			for object_id in apartment.get_granted_local_object_ids():
 				if object_id != &"" and not result.has(object_id):
 					result.append(object_id)
+		return result
+	for object_id in location.local_object_ids:
+		if object_id != &"" and not result.has(object_id):
+			result.append(object_id)
 	return result
 
 
@@ -129,6 +143,10 @@ func create_start_date_action(
 	action.id = StringName("%s%s" % [START_ACTION_PREFIX, String(girl_id)])
 	action.time_cost_minutes = 0
 	action.money_cost = 0
+	var catalog: DateContentCatalog = _catalog()
+	var venue: DateVenue = catalog.find_venue(date_venue_id) if catalog != null else null
+	if venue != null:
+		action.money_cost += venue.price
 	if express_styling:
 		action.money_cost += FillerRewardCatalog.KIRA_STYLING_COST
 	if urgent_taxi:
@@ -366,6 +384,9 @@ func _create_engine(girl_id: StringName, date_venue_id: StringName, outfit_id: S
 	config.catalog = catalog
 	config.girl_progress = progress
 	config.local_object_ids = resolve_date_local_object_ids(date_venue_id)
+	var apartment: Variant = _apartment_service()
+	if apartment != null:
+		config.accent_local_object_id = apartment.get_accent_object_id()
 	config.player_snapshot = _make_player_snapshot(catalog.find_venue(date_venue_id), express_styling)
 	if girls != null:
 		config.relationship_max = int(girls.get_relationship_max(girl_id))

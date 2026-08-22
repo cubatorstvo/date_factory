@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"muscle"
+required_level = 1
+
+[resource]
+script = ExtResource("1_move")
+id = &"restaurant__open_kitchen__ask_chef"
+display_name = "Спросить шефа напрямую, что он сам здесь заказал бы"
+description = "Спросить шефа напрямую, что он сам здесь заказал бы"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+fixed_tag_id = &"directness"
+fixed_option_text = "Спросить шефа напрямую, что он сам здесь заказал бы"
+fixed_positive_result_text = "Ей нравится получить простой ответ прямо от человека, который знает меню лучше всех."
+fixed_negative_result_text = "Она считает, что можно было выбрать самостоятельно."

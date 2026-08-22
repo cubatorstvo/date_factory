@@ -4,6 +4,7 @@ extends RefCounted
 var level: int = 1
 var prepared: bool = true
 var purchased_upgrade_ids: Array[StringName] = []
+var accent_local_object_id: StringName = &""
 
 
 func has(upgrade_id: StringName) -> bool:
@@ -24,6 +25,7 @@ func to_dict() -> Dictionary:
 		"level": level,
 		"prepared": prepared,
 		"purchased_upgrade_ids": ids,
+		"accent_local_object_id": String(accent_local_object_id),
 	}
 
 
@@ -31,6 +33,7 @@ func from_dict(data: Dictionary) -> void:
 	level = maxi(1, int(data.get("level", 1)))
 	prepared = bool(data.get("prepared", true))
 	purchased_upgrade_ids.clear()
+	accent_local_object_id = StringName(str(data.get("accent_local_object_id", "")))
 	var raw: Variant = data.get("purchased_upgrade_ids", [])
 	if not (raw is Array):
 		return

@@ -54,7 +54,7 @@ func _play_girl(catalog: DateContentCatalog, store: DateProgressStore, girl_id: 
 	var config := DateSessionConfig.new()
 	config.catalog = catalog
 	config.girl_id = girl_id
-	config.venue_id = &"park"
+	config.venue_id = &"apartment"
 	config.outfit_id = &"business"
 	config.seed = Time.get_ticks_msec()
 	config.girl_progress = progress

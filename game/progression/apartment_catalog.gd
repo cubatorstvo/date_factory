@@ -1,7 +1,7 @@
 class_name ApartmentCatalog
 extends Resource
 
-const ID_UPGRADE_1: StringName = &"apartment_upgrade_1"
+const ID_UPGRADE_1: StringName = &"apartment__tv"
 const ID_EMPEROR_CHAIR: StringName = &"apartment_emperor_chair"
 
 @export var upgrades: Array[ApartmentUpgradeDefinition] = []
@@ -26,10 +26,20 @@ func get_all_upgrades() -> Array[ApartmentUpgradeDefinition]:
 
 static func create_seed() -> ApartmentCatalog:
 	var catalog := ApartmentCatalog.new()
-	var tv_ids: Array[StringName] = [&"tv"]
-	catalog.upgrades.append(_make(ID_UPGRADE_1, "Купить телевизор", 500, 2, tv_ids))
-	var chair_ids: Array[StringName] = [FillerRewardCatalog.EMPEROR_CHAIR_OBJECT_ID]
-	catalog.upgrades.append(_make(ID_EMPEROR_CHAIR, "Массажное кресло «Император»", FillerRewardCatalog.EMPEROR_CHAIR_PRICE, 2, chair_ids, FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR))
+	catalog.upgrades = [
+		_make(&"apartment__plaid", "Плед", 150, 2),
+		_make(&"apartment__tv", "Телевизор", 200, 2),
+		_make(&"apartment__record_player", "Проигрыватель", 250, 2),
+		_make(&"apartment__no_filter_cards", "Карточки «Без фильтров»", 300, 2),
+		_make(&"apartment__tea_set", "Чайный сервиз", 400, 3),
+		_make(&"apartment__mini_fridge", "Мини-холодильник", 475, 3),
+		_make(&"apartment__large_mirror", "Большое зеркало", 550, 3),
+		_make(&"apartment__collection_display", "Витрина коллекции", 625, 3),
+		_make(&"apartment__karaoke", "Караоке", 750, 4),
+		_make(&"apartment__game_console", "Игровая консоль", 850, 4),
+		_make(&"apartment__darts", "Дартс", 950, 4),
+		_make(&"apartment__chess_table", "Шахматный столик", 1100, 4),
+	]
 	return catalog
 
 
@@ -37,16 +47,16 @@ static func _make(
 	id: StringName,
 	display_name: String,
 	price: int,
-	level_granted: int,
-	granted_local_object_ids: Array[StringName] = [],
-	required_filler_reward_id: StringName = &""
+	min_story_stage: int
 ) -> ApartmentUpgradeDefinition:
 	var upgrade := ApartmentUpgradeDefinition.new()
 	upgrade.id = id
 	upgrade.display_name = display_name
 	upgrade.description = display_name
 	upgrade.price = price
-	upgrade.level_granted = level_granted
-	upgrade.granted_local_object_ids = granted_local_object_ids
-	upgrade.required_filler_reward_id = required_filler_reward_id
+	upgrade.level_granted = min_story_stage
+	upgrade.min_story_stage = min_story_stage
+	var granted: Array[StringName] = [id]
+	upgrade.granted_local_object_ids = granted
+	upgrade.required_filler_reward_id = &""
 	return upgrade

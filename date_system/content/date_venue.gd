@@ -6,5 +6,6 @@ extends Resource
 @export var description: String = ""
 @export var enabled: bool = true
 @export var uses_apartment_preparation: bool = false
+@export var price: int = 0
 @export var local_object_ids: Array[StringName] = []
 @export var future_location_scene: PackedScene

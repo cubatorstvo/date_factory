@@ -56,6 +56,21 @@
 - Одежда — набор купленных Outfit, экипировка перед свиданием, максимум `+1` к одной характеристике; Outfit как build-layer — Stage 2, Outfit Move — Stage 3
 - Подарок Марины `marina_free_outfit_pending` делает следующую обычную покупку доступного Outfit в магазине `$0`; отдельного gift-списка нет; Марина — Stage 2 Casual exception
 - Катя даёт `Акцент интерьера`: выбранный Apartment Local Move positive `+2`
+
+## Venues & Local Objects
+
+- Production DateVenues: только `apartment`, `cafe`, `leisure_center`, `restaurant`. Seed leftovers (`park`, `cinema`, `arcade`, `museum`, `planetarium`) не входят в `DateContentCatalog.date_venues`
+- Local Object IDs уникальны per-venue (`cafe__window`, не общий `window`)
+- Apartment `local_object_ids` пустой: Local Source квартиры = только купленные Apartment Objects
+- `DateVenue.price`: Apartment `$0`, Café `$20`, Leisure Center `$40`, Restaurant `$60`. `DatingService.create_start_date_action` включает эту цену в `money_cost`
+- DateVenue unlock — persistent `WorldState.unlocked_date_venue_ids`, старт `[apartment]`. `UnlockDateVenueStageEffect` рядом с `UnlockLocationStageEffect`. Stage 2: `cafe` + `leisure_center`; Stage 3: `restaurant`. `DatingService.get_available_date_venues` фильтрует по этому списку
+- World `leisure_center` и `furniture_store` — `LocationDefinition` (не DateVenue). Stage 2 unlocks both world locations. Katya `location_id = furniture_store`
+- Furniture Store UI читает `ApartmentService`, не `PurchaseService`
+- Accent: `ApartmentState.accent_local_object_id`; награда `katya_interior_accent` (миграция с `katya_emperor_chair`). Первое назначение `$0`; смена по Story Stage `$300 / $600 / $1000`
+- Accent +2 идёт через текущий Date Engine score path (`DateSessionConfig.accent_local_object_id`), не отдельный scorer
+- Sonya `venue_source_limit = 2` остаётся в `DatingService._create_engine`. Два разных Local Move; sibling move того же объекта разрешён
+- Source label: `ЛОКАЦИЯ`. Option format: `[ТЕГ] Объект: действие` через `GameTermFormatter`
+- Developer Room venue playground вызывает production `DatingService` / `DateEngine`, не второй lab engine
 - Обычные девушки `0..10`; Actress / Mine Boss / Magazine Editor `0..10`; Scientist / President `0..15`
 - Stage 1 filler positives: Alina 8, Vika 7, Dasha 6; для 8 и 7 добавлены difficulty presets `wide` и `easy`
 - `GirlProfile.initial_known_tag_count` — базовый source of truth (filler 2, story 0); Ева добавляет `+1`

@@ -14,7 +14,7 @@ var _venue_id: StringName = &"cafe"
 var _outfit_id: StringName = &"casual"
 var _forced_situation_id: StringName = &""
 var _seed: int = 1
-var _grant_tv: bool = false
+
 
 var _scroll: ScrollContainer
 var _host: VBoxContainer
@@ -35,6 +35,15 @@ func setup(p_catalog: DateCatalogService, p_store: DateProgressStore) -> void:
 	progress_store = p_store
 	if is_node_ready():
 		rebuild()
+
+func configure_lab_launch(girl_id: StringName, venue_id: StringName, outfit_id: StringName) -> void:
+	_girl_id = girl_id
+	_venue_id = venue_id
+	_outfit_id = outfit_id
+
+
+func start_lab_date() -> void:
+	_start_new()
 
 func get_lab_outfit_id() -> StringName:
 	return _outfit_id
@@ -263,7 +272,7 @@ func _build_launch() -> void:
 	)
 	_host.add_child(LabUi.labeled_row("Девушка", girl_sel))
 	var loc_sel := OptionButton.new()
-	LabUi.fill_selector(loc_sel, _catalog().date_venues, _venue_id)
+	LabUi.fill_selector(loc_sel, LabUi.canonical_date_venues(_catalog()), _venue_id)
 	loc_sel.item_selected.connect(func(index: int) -> void:
 		_venue_id = loc_sel.get_item_metadata(index)
 		rebuild()
@@ -315,6 +324,7 @@ func _build_launch() -> void:
 	last_label.text = "last_date_situation_ids: %s" % (", ".join(last_ids) if not last_ids.is_empty() else "(пусто)")
 	_host.add_child(last_label)
 
+	_host.add_child(_lab_venue_preview())
 	var location: DateVenue = _catalog().find_venue(_venue_id)
 	if location != null and location.uses_apartment_preparation:
 		var prepared := CheckBox.new()
@@ -325,13 +335,7 @@ func _build_launch() -> void:
 			progress_store.save_store()
 		)
 		_host.add_child(LabUi.labeled_row("Подготовка квартиры", prepared))
-		var tv := CheckBox.new()
-		tv.text = "Телевизор"
-		tv.button_pressed = _grant_tv
-		tv.toggled.connect(func(pressed: bool) -> void:
-			_grant_tv = pressed
-		)
-		_host.add_child(LabUi.labeled_row("Локальный объект", tv))
+	_host.add_child(_lab_owned_object_controls())
 
 	for stat in _catalog().characteristics:
 		var spin := SpinBox.new()
@@ -507,23 +511,153 @@ func _begin_session(seed: int, is_replay: bool) -> void:
 	config.player_snapshot = progress_store.player_snapshot
 	config.relationship_max = GirlCatalog.seed_relationship_max(_girl_id)
 	config.forced_situation_id = _forced_situation_id
+	var girls: Variant = get_node_or_null("/root/GirlsService")
+	if girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE)) and session_venue == &"restaurant":
+		config.venue_source_limit = 2
+	var accent_id: StringName = _accent_object_id()
+	if accent_id != &"" and "accent_local_object_id" in config:
+		config.accent_local_object_id = accent_id
 	_engine = DateEngine.new()
 	_engine.create_date_session(config)
 	status_message.emit("Свидание запущено. Seed %d" % seed)
 	rebuild()
 
-
 func _lab_local_object_ids() -> Array[StringName]:
+	var dating: Variant = _dating_service()
+	if dating != null:
+		return dating.resolve_date_local_object_ids(_venue_id)
 	var result: Array[StringName] = []
 	var location: DateVenue = _catalog().find_venue(_venue_id)
 	if location != null:
 		for object_id in location.local_object_ids:
 			if object_id != &"" and not result.has(object_id):
 				result.append(object_id)
-	if location != null and location.uses_apartment_preparation and _grant_tv and not result.has(&"tv"):
-		result.append(&"tv")
 	return result
 
+func _lab_venue_preview() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	box.add_child(LabUi.heading("Venue preview"))
+	var catalog: DateContentCatalog = _catalog()
+	var location: DateVenue = catalog.find_venue(_venue_id) if catalog != null else null
+	if location == null:
+		var missing := Label.new()
+		missing.text = "Venue отсутствует в каталоге."
+		box.add_child(missing)
+		return box
+	var girl: GirlProfile = catalog.find_girl(_girl_id) if catalog != null else null
+	var progress: GirlProgress = progress_store.get_girl_progress(_girl_id, girl) if progress_store != null else null
+	var player: DatePlayerSnapshot = progress_store.player_snapshot if progress_store != null else null
+	var dating: Variant = _dating_service()
+	var object_ids: Array[StringName] = _lab_local_object_ids()
+	var apartment: Variant = _apartment_service()
+	var owned_count: int = -1
+	if apartment != null:
+		owned_count = apartment.get_granted_local_object_ids().size()
+	var girls: Variant = get_node_or_null("/root/GirlsService")
+	var sonya_bonus: bool = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE))
+	var source_uses: int = 2 if sonya_bonus and location.id == &"restaurant" else 1
+	var knowledge: Dictionary = LabUi.tag_knowledge_map(progress, girl)
+	box.add_child(LabUi.bbcode_block(LabUi.venue_card_bbcode(
+		catalog,
+		location,
+		object_ids,
+		progress,
+		player,
+		girl,
+		source_uses,
+		owned_count,
+		LabUi.APARTMENT_OBJECT_MAX,
+		_accent_object_id(),
+		sonya_bonus
+	), LabUi.MUTED, knowledge))
+	return box
+
+
+func _lab_owned_object_controls() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.add_child(LabUi.heading("Купленные Apartment Objects"))
+	var apartment: Variant = _apartment_service()
+	if apartment == null:
+		var missing := Label.new()
+		missing.text = "ApartmentService недоступен."
+		box.add_child(missing)
+		return box
+	var apartment_catalog: ApartmentCatalog = apartment.get_catalog()
+	for upgrade in apartment_catalog.get_all_upgrades():
+		if upgrade == null:
+			continue
+		var check := CheckBox.new()
+		check.text = "%s · Stage %d" % [upgrade.display_name, maxi(upgrade.min_story_stage, upgrade.level_granted)]
+		check.button_pressed = bool(apartment.is_upgrade_purchased(upgrade.id))
+		var upgrade_id: StringName = upgrade.id
+		var level_granted: int = upgrade.level_granted
+		check.toggled.connect(func(pressed: bool) -> void:
+			_set_lab_upgrade_owned(upgrade_id, level_granted, pressed)
+			rebuild()
+		)
+		box.add_child(check)
+	var accent_row := OptionButton.new()
+	accent_row.add_item("(нет)")
+	accent_row.set_item_metadata(0, &"")
+	var accent_index: int = 0
+	var current_accent: StringName = _accent_object_id()
+	for upgrade in apartment_catalog.get_all_upgrades():
+		if upgrade == null or not bool(apartment.is_upgrade_purchased(upgrade.id)):
+			continue
+		var object_id: StringName = _upgrade_object_id(upgrade)
+		accent_row.add_item(upgrade.display_name)
+		var item_index: int = accent_row.item_count - 1
+		accent_row.set_item_metadata(item_index, object_id)
+		if object_id == current_accent:
+			accent_index = item_index
+	accent_row.select(accent_index)
+	accent_row.item_selected.connect(func(index: int) -> void:
+		_set_lab_accent(accent_row.get_item_metadata(index))
+		rebuild()
+	)
+	box.add_child(LabUi.labeled_row("Акцент интерьера", accent_row))
+	return box
+
+
+func _upgrade_object_id(upgrade: ApartmentUpgradeDefinition) -> StringName:
+	if upgrade == null:
+		return &""
+	if not upgrade.granted_local_object_ids.is_empty():
+		return upgrade.granted_local_object_ids[0]
+	return upgrade.id
+
+
+func _set_lab_upgrade_owned(upgrade_id: StringName, level_granted: int, owned: bool) -> void:
+	var apartment: Variant = _apartment_service()
+	if apartment == null:
+		return
+	if owned:
+		apartment.apply_upgrade(upgrade_id, level_granted)
+		return
+	var gs: Variant = _game_state()
+	if gs == null or gs.progression == null or gs.progression.apartment == null:
+		return
+	gs.progression.apartment.purchased_upgrade_ids.erase(upgrade_id)
+
+
+func _set_lab_accent(object_id: StringName) -> void:
+	var apartment: Variant = _apartment_service()
+	if apartment == null:
+		return
+	if object_id == &"":
+		if apartment.has_method("create_assign_accent_action"):
+			pass
+		var gs: Variant = _game_state()
+		if gs != null and gs.progression != null and gs.progression.apartment != null and "accent_local_object_id" in gs.progression.apartment:
+			gs.progression.apartment.accent_local_object_id = &""
+		return
+	if apartment.has_method("create_assign_accent_action"):
+		var action: GameAction = apartment.create_assign_accent_action(object_id)
+		var actions: Variant = get_node_or_null("/root/ActionService")
+		if actions != null and action != null:
+			actions.execute(action)
 
 func _reset_girl() -> void:
 	progress_store.reset_girl(_catalog().find_girl(_girl_id))
@@ -654,7 +788,7 @@ func _build_source_buttons(view: DateEpisodeView) -> Control:
 	for source_view in view.source_views:
 		if not source_view.visible:
 			continue
-		var btn: Button = LabUi.button(source_view.display_name.to_upper())
+		var btn: Button = LabUi.button(_source_button_label(source_view))
 		btn.modulate = _source_state_color(source_view.state)
 		if source_view.used:
 			btn.disabled = true
@@ -670,19 +804,20 @@ func _build_source_buttons(view: DateEpisodeView) -> Control:
 		row.add_child(btn)
 	return row
 
-
 func _build_source_list(view: DateEpisodeView) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	var source_view: DateMoveSourceView = _find_open_source(view)
-	var title: String = source_view.display_name if source_view != null else "Источник"
-	box.add_child(LabUi.heading(title.to_upper()))
+	var title: String = _source_button_label(source_view) if source_view != null else "Источник"
+	box.add_child(LabUi.heading(title))
 	if source_view == null or source_view.options.is_empty():
 		var empty := Label.new()
 		empty.text = "Нет ходов в этом источнике."
 		box.add_child(empty)
 	elif source_view.source == DateTypes.DateMoveSource.CHARACTERISTIC:
 		_add_characteristic_groups(box, source_view)
+	elif source_view.source == DateTypes.DateMoveSource.VENUE:
+		_add_local_source_options(box, source_view)
 	else:
 		for option in source_view.options:
 			box.add_child(_move_button(option))
@@ -694,12 +829,55 @@ func _build_source_list(view: DateEpisodeView) -> Control:
 	box.add_child(back)
 	return box
 
-
 func _find_open_source(view: DateEpisodeView) -> DateMoveSourceView:
 	for source_view in view.source_views:
 		if int(source_view.source) == _open_source:
 			return source_view
 	return null
+
+func _source_button_label(source_view: DateMoveSourceView) -> String:
+	if source_view == null:
+		return "Источник"
+	if source_view.source == DateTypes.DateMoveSource.VENUE:
+		return LabUi.VENUE_SOURCE_LABEL
+	return source_view.display_name.to_upper()
+
+
+func _add_local_source_options(box: VBoxContainer, source_view: DateMoveSourceView) -> void:
+	var session: DateSession = _engine.get_session_state() if _engine != null else null
+	var compact: bool = session != null and (session.venue_id == &"apartment")
+	if compact:
+		for option in source_view.options:
+			box.add_child(_move_button(option))
+		return
+	for group in DateLocalObjectView.grouped_from_options(source_view.options):
+		if not group.display_name.is_empty():
+			box.add_child(LabUi.heading(group.display_name.to_upper()))
+		for option in group.options:
+			box.add_child(_move_button(option))
+
+
+func _is_accent_local_option(option: DateMoveOption) -> bool:
+	if option == null or option.local_object_id == &"":
+		return false
+	return option.local_object_id == _accent_object_id()
+
+
+func _accent_object_id() -> StringName:
+	var apartment: Variant = get_node_or_null("/root/ApartmentService")
+	if apartment != null and apartment.has_method("get_accent_object_id"):
+		return apartment.get_accent_object_id()
+	var session: DateSession = _engine.get_session_state() if _engine != null else null
+	if session != null and "accent_local_object_id" in session:
+		return session.accent_local_object_id
+	return &""
+
+
+func _apartment_service() -> Variant:
+	var node: Node = get_node_or_null("/root/ApartmentService")
+	if not is_instance_valid(node):
+		return null
+	return node
 
 
 func _source_state_color(state: DateTypes.DateMoveSourceState) -> Color:
@@ -826,22 +1004,37 @@ func _move_button(option: DateMoveOption) -> Button:
 	btn.clip_contents = true
 	var unavailable: bool = not option.is_selectable()
 	btn.disabled = unavailable
-	var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN if unavailable else option.tag_knowledge
+	var knowledge: DateTypes.TagKnowledge = DateTypes.TagKnowledge.UNKNOWN if unavailable and option.kind != DateTypes.DateMoveKind.LOCAL else option.tag_knowledge
+	if option.kind == DateTypes.DateMoveKind.LOCAL and option.availability == DateTypes.MoveAvailability.LOCKED:
+		knowledge = option.tag_knowledge
 	var header: String = "[%s] %s" % [option.tag_display_name, option.display_name]
+	var show_option_text: bool = true
 	if option.kind == DateTypes.DateMoveKind.CHARACTERISTIC:
 		if option.availability == DateTypes.MoveAvailability.LOCKED:
 			header = "🔒 [%s] %s · требуется ур. %d" % [option.tag_display_name, option.display_name, option.requirement_level]
 		else:
 			header = "[%s] %s · ур. %d" % [option.tag_display_name, option.display_name, option.requirement_level]
+	elif option.kind == DateTypes.DateMoveKind.LOCAL:
+		header = LabUi.local_move_option_text(option)
+		if option.availability == DateTypes.MoveAvailability.LOCKED:
+			var stat: CharacteristicDefinition = _catalog().find_characteristic(option.requirement_stat_id)
+			var stat_name: String = stat.display_name if stat != null else String(option.requirement_stat_id)
+			header += LabUi.characteristic_lock_suffix(stat_name, option.requirement_level)
+		show_option_text = false
 	if unavailable:
 		btn.modulate = _unavailable_modulate()
 	var lines := PackedStringArray([header])
-	lines.append(option.option_text)
-	if unavailable and option.kind != DateTypes.DateMoveKind.CHARACTERISTIC:
+	if show_option_text:
+		lines.append(option.option_text)
+	if option.kind == DateTypes.DateMoveKind.LOCAL and _is_accent_local_option(option):
+		lines.append("+2 при положительном результате")
+	if unavailable and option.kind != DateTypes.DateMoveKind.CHARACTERISTIC and option.kind != DateTypes.DateMoveKind.LOCAL:
 		if option.availability == DateTypes.MoveAvailability.LOCKED:
 			lines.append(_requirement_reason(option))
 		else:
 			lines.append("Использовано")
+	elif unavailable and option.kind == DateTypes.DateMoveKind.LOCAL and option.availability != DateTypes.MoveAvailability.LOCKED:
+		lines.append("Использовано")
 	var knowledge_map: Dictionary = {}
 	if option.tag_id != &"":
 		knowledge_map[option.tag_id] = knowledge
@@ -869,7 +1062,6 @@ func _move_button(option: DateMoveOption) -> Button:
 		choose.call()
 	)
 	return btn
-
 
 func _episode_result_block(session: DateSession) -> PanelContainer:
 	var panel := PanelContainer.new()

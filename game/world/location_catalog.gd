@@ -4,17 +4,23 @@ extends Resource
 const ID_CITY_CENTER: StringName = &"city_center"
 const ID_APARTMENT: StringName = &"apartment"
 const ID_CAFE: StringName = &"cafe"
+const ID_LEISURE_CENTER: StringName = &"leisure_center"
 const ID_RESTAURANT: StringName = &"restaurant"
+const ID_FURNITURE_STORE: StringName = &"furniture_store"
 const START_LOCATION_ID: StringName = ID_CITY_CENTER
 const SPAWN_DEFAULT: StringName = &"default"
 const SPAWN_ENTRANCE: StringName = &"entrance"
 const SPAWN_APARTMENT_DOOR: StringName = &"apartment_door"
 const SPAWN_CAFE_DOOR: StringName = &"cafe_door"
+const SPAWN_LEISURE_CENTER_DOOR: StringName = &"leisure_center_door"
 const SPAWN_RESTAURANT_DOOR: StringName = &"restaurant_door"
+const SPAWN_FURNITURE_STORE_DOOR: StringName = &"furniture_store_door"
 const SCENE_CITY_CENTER: String = "res://game/world/locations/city_center.tscn"
 const SCENE_APARTMENT: String = "res://game/world/locations/apartment.tscn"
 const SCENE_CAFE: String = "res://game/world/locations/cafe.tscn"
+const SCENE_LEISURE_CENTER: String = "res://game/world/locations/leisure_center.tscn"
 const SCENE_RESTAURANT: String = "res://game/world/locations/restaurant.tscn"
+const SCENE_FURNITURE_STORE: String = "res://game/world/locations/furniture_store.tscn"
 
 const START_UNLOCKED_LOCATION_IDS: Array[StringName] = [
 	ID_CITY_CENTER,
@@ -69,7 +75,9 @@ static func create_seed() -> LocationCatalog:
 	catalog.locations.append(_make_zone(ID_CITY_CENTER, "Центральная часть города", SCENE_CITY_CENTER, SPAWN_DEFAULT))
 	catalog.locations.append(_make_interior(ID_APARTMENT, "Квартира", SCENE_APARTMENT, ID_CITY_CENTER))
 	catalog.locations.append(_make_interior(ID_CAFE, "Кафе", SCENE_CAFE, ID_CITY_CENTER))
+	catalog.locations.append(_make_interior(ID_LEISURE_CENTER, "Центр досуга", SCENE_LEISURE_CENTER, ID_CITY_CENTER))
 	catalog.locations.append(_make_interior(ID_RESTAURANT, "Ресторан", SCENE_RESTAURANT, ID_CITY_CENTER))
+	catalog.locations.append(_make_interior(ID_FURNITURE_STORE, "Мебельный магазин", SCENE_FURNITURE_STORE, ID_CITY_CENTER))
 	return catalog
 
 

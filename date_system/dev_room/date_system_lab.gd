@@ -18,6 +18,7 @@ const SECTIONS: Array[Array] = [
 	["rules", "ПРАВИЛА СВИДАНИЯ"],
 	["balance", "БАЛАНС"],
 	["test_state", "ТЕСТОВОЕ СОСТОЯНИЕ"],
+	["venue_playground", "VENUE PLAYGROUND"],
 	["validation", "ВАЛИДАЦИЯ"],
 ]
 
@@ -42,6 +43,9 @@ var _game_time_label: Label
 var _campaign_label: Label
 var _action_result_label: Label
 var _action_status_label: Label
+var _playground_girl_id: StringName = &"alina"
+var _playground_venue_id: StringName = &"apartment"
+var _playground_outfit_id: StringName = &"casual"
 
 
 func _ready() -> void:
@@ -181,6 +185,8 @@ func _show_section(section: String) -> void:
 			_content_host.add_child(_build_balance())
 		"test_state":
 			_content_host.add_child(_build_test_state())
+		"venue_playground":
+			_content_host.add_child(_build_venue_playground())
 		_:
 			_content_host.add_child(_build_editor())
 
@@ -610,6 +616,295 @@ func _build_test_state() -> Control:
 	root.add_child(venue_used)
 	root.add_child(apply_sources)
 	return root
+
+func _build_venue_playground() -> Control:
+	var root := VBoxContainer.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_theme_constant_override("separation", 8)
+	root.add_child(LabUi.heading("Venue playground"))
+	var world: Variant = get_node_or_null("/root/WorldService")
+	var city_stage := SpinBox.new()
+	city_stage.min_value = 1
+	city_stage.max_value = 3
+	city_stage.value = int(world.get_city_stage()) if world != null else 1
+	city_stage.value_changed.connect(func(value: float) -> void:
+		_set_playground_city_stage(int(value))
+		_show_section("venue_playground")
+	)
+	root.add_child(LabUi.labeled_row("City Stage", city_stage))
+	var girl_sel := OptionButton.new()
+	LabUi.fill_selector(girl_sel, catalog_service.catalog.girls, _playground_girl_id)
+	girl_sel.item_selected.connect(func(index: int) -> void:
+		_playground_girl_id = girl_sel.get_item_metadata(index)
+		_show_section("venue_playground")
+	)
+	root.add_child(LabUi.labeled_row("Girl", girl_sel))
+	var venue_sel := OptionButton.new()
+	LabUi.fill_selector(venue_sel, LabUi.canonical_date_venues(catalog_service.catalog), _playground_venue_id)
+	venue_sel.item_selected.connect(func(index: int) -> void:
+		_playground_venue_id = venue_sel.get_item_metadata(index)
+		_show_section("venue_playground")
+	)
+	root.add_child(LabUi.labeled_row("Venue", venue_sel))
+	var outfit_sel := OptionButton.new()
+	LabUi.fill_selector(outfit_sel, catalog_service.catalog.outfits, _playground_outfit_id)
+	outfit_sel.item_selected.connect(func(index: int) -> void:
+		_playground_outfit_id = outfit_sel.get_item_metadata(index)
+		if _play_panel != null:
+			_play_panel.set_lab_outfit_id(_playground_outfit_id)
+		_show_section("venue_playground")
+	)
+	root.add_child(LabUi.labeled_row("Outfit", outfit_sel))
+	var player: DatePlayerSnapshot = progress_store.player_snapshot
+	for stat in catalog_service.catalog.characteristics:
+		var spin := SpinBox.new()
+		spin.min_value = stat.min_level
+		spin.max_value = stat.max_level
+		spin.value = player.get_stat(stat.id)
+		var stat_id: StringName = stat.id
+		spin.value_changed.connect(func(value: float) -> void:
+			player.set_stat(stat_id, int(value))
+			progress_store.save_store()
+			_sync_playground_player_stat(stat_id, int(value))
+			_show_section("venue_playground")
+		)
+		root.add_child(LabUi.labeled_row(stat.display_name, spin))
+	var girls: Variant = get_node_or_null("/root/GirlsService")
+	var katya := CheckBox.new()
+	katya.text = "Katya reward — Акцент интерьера"
+	katya.button_pressed = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_KATYA_EMPEROR_CHAIR))
+	katya.toggled.connect(func(pressed: bool) -> void:
+		_toggle_playground_reward(GirlCatalog.ID_KATYA, pressed)
+		_show_section("venue_playground")
+	)
+	root.add_child(katya)
+	var sonya := CheckBox.new()
+	sonya.text = "Sonya reward — Restaurant ×2"
+	sonya.button_pressed = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE))
+	sonya.toggled.connect(func(pressed: bool) -> void:
+		_toggle_playground_reward(GirlCatalog.ID_SONYA, pressed)
+		_show_section("venue_playground")
+	)
+	root.add_child(sonya)
+	root.add_child(LabUi.heading("Quick actions"))
+	var actions := HFlowContainer.new()
+	actions.add_theme_constant_override("h_separation", 8)
+	actions.add_theme_constant_override("v_separation", 6)
+	for pair in [[2, "Stage 2 objects"], [3, "Stage 3 objects"], [4, "Stage 4 objects"]]:
+		var stage: int = int(pair[0])
+		var btn: Button = LabUi.button(str(pair[1]))
+		btn.pressed.connect(func() -> void:
+			_own_playground_stage_objects(stage)
+			_show_section("venue_playground")
+		)
+		actions.add_child(btn)
+	var own_all: Button = LabUi.button("Own all 12")
+	own_all.pressed.connect(func() -> void:
+		_own_playground_stage_objects(4)
+		_show_section("venue_playground")
+	)
+	actions.add_child(own_all)
+	var clear_btn: Button = LabUi.button("Clear objects")
+	clear_btn.pressed.connect(func() -> void:
+		_clear_playground_objects()
+		_show_section("venue_playground")
+	)
+	actions.add_child(clear_btn)
+	var clear_accent: Button = LabUi.button("Clear accent")
+	clear_accent.pressed.connect(func() -> void:
+		_set_playground_accent(&"")
+		_show_section("venue_playground")
+	)
+	actions.add_child(clear_accent)
+	root.add_child(actions)
+	var apartment: Variant = get_node_or_null("/root/ApartmentService")
+	var accent_sel := OptionButton.new()
+	accent_sel.add_item("(нет)")
+	accent_sel.set_item_metadata(0, &"")
+	var accent_index: int = 0
+	var current_accent: StringName = &""
+	if apartment != null and apartment.has_method("get_accent_object_id"):
+		current_accent = apartment.get_accent_object_id()
+	if apartment != null:
+		for object_id in apartment.get_granted_local_object_ids():
+			var local_object: DateLocalObject = catalog_service.catalog.find_local_object(object_id)
+			var object_name: String = local_object.display_name if local_object != null else String(object_id)
+			accent_sel.add_item(object_name)
+			var item_index: int = accent_sel.item_count - 1
+			accent_sel.set_item_metadata(item_index, object_id)
+			if object_id == current_accent:
+				accent_index = item_index
+	accent_sel.select(accent_index)
+	accent_sel.item_selected.connect(func(index: int) -> void:
+		_set_playground_accent(accent_sel.get_item_metadata(index))
+		_show_section("venue_playground")
+	)
+	root.add_child(LabUi.labeled_row("Accent", accent_sel))
+	root.add_child(_build_venue_playground_preview())
+	var launch: Button = LabUi.button("ЗАПУСТИТЬ СВИДАНИЕ")
+	launch.pressed.connect(_launch_venue_playground)
+	root.add_child(launch)
+	return root
+
+
+func _build_venue_playground_preview() -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	box.add_child(LabUi.heading("Preview"))
+	var catalog: DateContentCatalog = catalog_service.catalog
+	var location: DateVenue = catalog.find_venue(_playground_venue_id)
+	var dating: Variant = get_node_or_null("/root/DatingService")
+	var available := Label.new()
+	var is_available: bool = dating != null and bool(dating.is_date_venue_available(_playground_girl_id, _playground_venue_id))
+	available.text = "Availability: %s" % ("доступно" if is_available else "закрыто")
+	box.add_child(available)
+	if location == null:
+		var missing := Label.new()
+		missing.text = "Venue отсутствует в production catalog."
+		box.add_child(missing)
+		return box
+	var object_ids: Array[StringName] = []
+	if dating != null:
+		object_ids = dating.resolve_date_local_object_ids(_playground_venue_id)
+	var girl: GirlProfile = catalog.find_girl(_playground_girl_id)
+	var progress: GirlProgress = progress_store.get_girl_progress(_playground_girl_id, girl)
+	var player: DatePlayerSnapshot = progress_store.player_snapshot
+	var apartment: Variant = get_node_or_null("/root/ApartmentService")
+	var owned_count: int = apartment.get_granted_local_object_ids().size() if apartment != null else 0
+	var girls: Variant = get_node_or_null("/root/GirlsService")
+	var sonya_bonus: bool = girls != null and bool(girls.has_filler_reward(FillerRewardCatalog.ID_SONYA_RESTAURANT_SECOND_VENUE))
+	var source_uses: int = 2 if sonya_bonus and location.id == &"restaurant" else 1
+	var accent_id: StringName = &""
+	if apartment != null and apartment.has_method("get_accent_object_id"):
+		accent_id = apartment.get_accent_object_id()
+	var knowledge: Dictionary = LabUi.tag_knowledge_map(progress, girl)
+	box.add_child(LabUi.bbcode_block(LabUi.venue_card_bbcode(
+		catalog,
+		location,
+		object_ids,
+		progress,
+		player,
+		girl,
+		source_uses,
+		owned_count,
+		LabUi.APARTMENT_OBJECT_MAX,
+		accent_id,
+		sonya_bonus
+	), LabUi.MUTED, knowledge))
+	var ids_line := Label.new()
+	ids_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var move_ids := PackedStringArray()
+	for object_id in object_ids:
+		var local_object: DateLocalObject = catalog.find_local_object(object_id)
+		if local_object == null:
+			continue
+		for move_id in local_object.move_ids:
+			move_ids.append(String(move_id))
+	ids_line.text = "Objects: %s\nMoves: %s" % [
+		", ".join(_ids_to_strings(object_ids)),
+		", ".join(move_ids) if not move_ids.is_empty() else "—",
+	]
+	box.add_child(ids_line)
+	var outfit: Outfit = catalog.find_outfit(_playground_outfit_id)
+	box.add_child(LabUi.heading("Effective Characteristics"))
+	for stat in catalog.characteristics:
+		if stat == null:
+			continue
+		var base_value: int = player.get_stat(stat.id)
+		var effective: int = DateTypes.effective_stat(base_value, outfit, stat.id)
+		var line := Label.new()
+		line.text = "%s: %d" % [stat.display_name, effective]
+		box.add_child(line)
+	return box
+
+
+func _ids_to_strings(ids: Array[StringName]) -> PackedStringArray:
+	var result := PackedStringArray()
+	for item in ids:
+		result.append(String(item))
+	return result
+
+
+func _set_playground_city_stage(target: int) -> void:
+	var world: Variant = get_node_or_null("/root/WorldService")
+	var gs: Variant = _game_state()
+	if gs != null and gs.world != null:
+		gs.world.city_stage = clampi(target, 1, 3)
+	if world != null:
+		world.set_city_stage(target)
+
+
+func _sync_playground_player_stat(stat_id: StringName, value: int) -> void:
+	var gs: Variant = _game_state()
+	if gs == null or gs.player == null:
+		return
+	match String(stat_id):
+		"muscle":
+			gs.player.muscle = value
+		"appearance":
+			gs.player.appearance = value
+		"capital":
+			gs.player.capital = value
+		"aura":
+			gs.player.aura = value
+
+
+func _toggle_playground_reward(girl_id: StringName, enabled: bool) -> void:
+	var girls: Variant = get_node_or_null("/root/GirlsService")
+	if girls == null:
+		return
+	if enabled:
+		girls.grant_filler_reward_for_girl(girl_id)
+	else:
+		girls.reset_filler_reward_for_dev(girl_id)
+
+
+func _own_playground_stage_objects(max_stage: int) -> void:
+	var apartment: Variant = get_node_or_null("/root/ApartmentService")
+	if apartment == null:
+		return
+	for upgrade in apartment.get_catalog().get_all_upgrades():
+		if upgrade == null:
+			continue
+		var required_stage: int = upgrade.min_story_stage if upgrade.min_story_stage > 0 else upgrade.level_granted
+		if required_stage <= max_stage:
+			apartment.apply_upgrade(upgrade.id, upgrade.level_granted)
+
+
+func _clear_playground_objects() -> void:
+	var gs: Variant = _game_state()
+	if gs == null or gs.progression == null or gs.progression.apartment == null:
+		return
+	gs.progression.apartment.purchased_upgrade_ids.clear()
+	gs.progression.apartment.level = 1
+	if "accent_local_object_id" in gs.progression.apartment:
+		gs.progression.apartment.accent_local_object_id = &""
+
+
+func _set_playground_accent(object_id: StringName) -> void:
+	var apartment: Variant = get_node_or_null("/root/ApartmentService")
+	var gs: Variant = _game_state()
+	if object_id == &"":
+		if gs != null and gs.progression != null and gs.progression.apartment != null and "accent_local_object_id" in gs.progression.apartment:
+			gs.progression.apartment.accent_local_object_id = &""
+		return
+	if apartment != null and apartment.has_method("create_assign_accent_action"):
+		var action: GameAction = apartment.create_assign_accent_action(object_id)
+		var actions: Variant = _action_service()
+		if actions != null and action != null:
+			actions.execute(action)
+	elif gs != null and gs.progression != null and gs.progression.apartment != null and "accent_local_object_id" in gs.progression.apartment:
+		gs.progression.apartment.accent_local_object_id = object_id
+
+
+func _launch_venue_playground() -> void:
+	if _play_panel != null:
+		_play_panel.set_lab_outfit_id(_playground_outfit_id)
+	_show_section("date")
+	if _play_panel == null:
+		return
+	_play_panel.configure_lab_launch(_playground_girl_id, _playground_venue_id, _playground_outfit_id)
+	_play_panel.start_lab_date()
 
 func _build_editor() -> Control:
 	_editor_root = VBoxContainer.new()

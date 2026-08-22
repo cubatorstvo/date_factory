@@ -9,4 +9,5 @@ display_name = "Ресторан"
 description = "Ресторан"
 enabled = true
 uses_apartment_preparation = false
-local_object_ids = Array[StringName]([&"window", &"waiter", &"piano"])
+price = 60
+local_object_ids = Array[StringName]([&"restaurant__waiter", &"restaurant__tasting_set", &"restaurant__live_music", &"restaurant__open_kitchen"])

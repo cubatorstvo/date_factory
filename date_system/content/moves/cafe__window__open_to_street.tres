@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"cafe__window__open_to_street"
+display_name = "Распахнуть окно и продолжить разговор будто теперь участвует вся улица"
+description = "Распахнуть окно и продолжить разговор будто теперь участвует вся улица"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"audacity"
+fixed_option_text = "Распахнуть окно и продолжить разговор будто теперь участвует вся улица"
+fixed_positive_result_text = "Её смешит неожиданно публичный поворот разговора."
+fixed_negative_result_text = "Она предпочла бы оставить ваше свидание внутри помещения."

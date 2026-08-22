@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DateLocalObject" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_local_object.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"restaurant__open_kitchen"
+display_name = "Открытая кухня"
+description = "Открытая кухня, где можно говорить с шефом."
+enabled = true
+move_ids = Array[StringName]([&"restaurant__open_kitchen__adjust_for_her", &"restaurant__open_kitchen__ask_chef"])

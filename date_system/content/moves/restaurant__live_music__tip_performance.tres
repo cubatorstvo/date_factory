@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"capital"
+required_level = 1
+
+[resource]
+script = ExtResource("1_move")
+id = &"restaurant__live_music__tip_performance"
+display_name = "Хорошо отблагодарить музыканта за отдельное исполнение"
+description = "Хорошо отблагодарить музыканта за отдельное исполнение"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+fixed_tag_id = &"generosity"
+fixed_option_text = "Хорошо отблагодарить музыканта за отдельное исполнение"
+fixed_positive_result_text = "Ей нравится щедро оценить чужую работу."
+fixed_negative_result_text = "Она считает, что ты слишком легко превращаешь впечатления в расходы."

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DateLocalObject" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_local_object.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"leisure_center__air_hockey"
+display_name = "Аэрохоккей"
+description = "Стол аэрохоккея для соревнования."
+enabled = true
+move_ids = Array[StringName]([&"leisure_center__air_hockey__play_seriously", &"leisure_center__air_hockey__world_final"])

@@ -9,4 +9,5 @@ display_name = "Кафе"
 description = "Кафе"
 enabled = true
 uses_apartment_preparation = false
-local_object_ids = Array[StringName]([&"window", &"jukebox", &"barista"])
+price = 20
+local_object_ids = Array[StringName]([&"cafe__barista", &"cafe__board_games", &"cafe__window"])

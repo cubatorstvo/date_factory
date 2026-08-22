@@ -2,13 +2,13 @@
 
 **Статус:** канон high-level progression первых четырёх Stages  
 **Текущий продукт:** Date System Lab  
-**Связанные документы:** [`DATE_SYSTEM_LAB.md`](DATE_SYSTEM_LAB.md), [`MASTER_GDD.md`](MASTER_GDD.md)
+**Связанные документы:** [`DATE_SYSTEM_LAB.md`](DATE_SYSTEM_LAB.md), [`MASTER_GDD.md`](MASTER_GDD.md), [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md)
 
 Этот файл — source of truth для вопроса:
 
 > Что игрок изучает, получает и осваивает на каждом из Stage 1–4?
 
-Runtime, seed-контент и UI должны следовать этой модели. Точные объекты мест, тексты Local Moves и цены Apartment Objects задаёт отдельный design block `Venues & Local Objects`; до его появления детали ниже помечены как отложенные.
+Runtime, seed-контент и UI должны следовать этой модели. Точные объекты мест, тексты Local Moves и цены Apartment Objects задаёт [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
 
 ---
 
@@ -262,7 +262,7 @@ Restaurant
 
 Restaurant имеет собственную interaction identity, связанную с formal / service / status context.
 
-Точный набор Restaurant Local Objects определяется в `Venues & Local Objects` block.
+Restaurant Local Objects, Tags и Characteristic requirements: [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
 
 ### Outfit
 
@@ -442,7 +442,7 @@ Identity:
 
 > более узкий matchup с возможностью сыграть два разных Local Moves.
 
-Точные Local Objects, Characteristic requirements, цены и authored Situations мест задаёт `Venues & Local Objects` block.
+Local Objects, Characteristic requirements, цены Venue/Apartment и authored Situations мест: [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
 
 ---
 
@@ -520,7 +520,7 @@ Tags остаются механически равноценными; цена 
 
 Подготовка квартиры остаётся отдельным правилом Date Engine: подготовленная квартира `0`, неподготовленная `-1`. Это не Local coverage.
 
-Точный список 12 объектов, их Tags, цены и тексты Local Moves определяется в отдельном `Venues & Local Objects` design block.
+12 объектов, Tags, цены и тексты Local Moves: [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
 
 ---
 
@@ -666,18 +666,4 @@ Narrative/gameplay transition:
 
 В этом документе зафиксированы high-level progression contracts.
 
-Следующие детали получают отдельную спецификацию в `Venues & Local Objects` block:
-
-```text
-точные 12 Apartment Objects
-точный Tag каждого Apartment Object
-точные Apartment Local Move texts
-точные Café Local Objects
-точные Leisure Center Local Objects
-точные Restaurant Local Objects
-Characteristic requirements конкретных Local Moves
-конкретные Venue prices
-конкретные Apartment object prices
-точная цена изменения Interior Accent
-Venue-specific authored Situations
-```
+Точные Venue/Local Object IDs, тексты, цены, Characteristic requirements и Apartment catalog — [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).

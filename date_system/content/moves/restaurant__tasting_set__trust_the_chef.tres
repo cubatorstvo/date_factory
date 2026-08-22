@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"aura"
+required_level = 3
+
+[resource]
+script = ExtResource("1_move")
+id = &"restaurant__tasting_set__trust_the_chef"
+display_name = "Довериться выбору шефа и спокойно ждать сюрприз"
+description = "Довериться выбору шефа и спокойно ждать сюрприз"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+fixed_tag_id = &"composure"
+fixed_option_text = "Довериться выбору шефа и спокойно ждать сюрприз"
+fixed_positive_result_text = "Ей нравится, что ты не пытаешься контролировать каждую деталь."
+fixed_negative_result_text = "Она предпочла бы заранее понимать, что именно принесут."

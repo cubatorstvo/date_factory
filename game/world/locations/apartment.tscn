@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://csh1rcchbr5q1" path="res://game/world/location_spawn_point.gd" id="1_3c604"]
 [ext_resource type="Script" uid="uid://drtoa7bc76wvm" path="res://game/world/location_door.gd" id="2_sghfg"]
 [ext_resource type="PackedScene" uid="uid://cnvnfxjjrjt50" path="res://game/world/world_player.tscn" id="3_4mjn7"]
-[ext_resource type="Script" uid="uid://dhkm4mk2wrtps" path="res://game/world/world_player.gd" id="4_b3ab7"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nbm61"]
 albedo_color = Color(0.55, 0.45, 0.35, 1)
@@ -42,6 +41,101 @@ shape = SubResource("BoxShape3D_wn2qm")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="ExitDoor" unique_id=2010326496]
 mesh = SubResource("BoxMesh_3xkfw")
 
-[node name="WorldPlayer" type="CharacterBody3D" parent="." unique_id=827761901 instance=ExtResource("3_4mjn7")]
+[node name="WorldPlayer" parent="." unique_id=827761901 instance=ExtResource("3_4mjn7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4)
-script = ExtResource("4_b3ab7")
+
+[node name="Placement_apartment_plaid" type="Marker3D" parent="." unique_id=106875257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.2, -3)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_plaid" unique_id=1988979532]
+pixel_size = 0.012
+billboard = 1
+text = "Плед"
+
+[node name="Placement_apartment_tv" type="Marker3D" parent="." unique_id=881611507]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.2, -3)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_tv" unique_id=1369242066]
+pixel_size = 0.012
+billboard = 1
+text = "Телевизор"
+
+[node name="Placement_apartment_record_player" type="Marker3D" parent="." unique_id=1844778376]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.2, -3)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_record_player" unique_id=909408755]
+pixel_size = 0.012
+billboard = 1
+text = "Проигрыватель"
+
+[node name="Placement_apartment_no_filter_cards" type="Marker3D" parent="." unique_id=2074412820]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.2, -3)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_no_filter_cards" unique_id=1593162063]
+pixel_size = 0.012
+billboard = 1
+text = "Карточки Без фильтров"
+
+[node name="Placement_apartment_tea_set" type="Marker3D" parent="." unique_id=1486620024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.2, -0.5)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_tea_set" unique_id=1855003053]
+pixel_size = 0.012
+billboard = 1
+text = "Чайный сервиз"
+
+[node name="Placement_apartment_mini_fridge" type="Marker3D" parent="." unique_id=114555627]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.2, -0.5)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_mini_fridge" unique_id=306819902]
+pixel_size = 0.012
+billboard = 1
+text = "Мини-холодильник"
+
+[node name="Placement_apartment_large_mirror" type="Marker3D" parent="." unique_id=403682687]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.2, -0.5)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_large_mirror" unique_id=1686448961]
+pixel_size = 0.012
+billboard = 1
+text = "Большое зеркало"
+
+[node name="Placement_apartment_collection_display" type="Marker3D" parent="." unique_id=1823478212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.2, -0.5)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_collection_display" unique_id=750139871]
+pixel_size = 0.012
+billboard = 1
+text = "Витрина коллекции"
+
+[node name="Placement_apartment_karaoke" type="Marker3D" parent="." unique_id=602001936]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.2, 2)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_karaoke" unique_id=1617222322]
+pixel_size = 0.012
+billboard = 1
+text = "Караоке"
+
+[node name="Placement_apartment_game_console" type="Marker3D" parent="." unique_id=1046215133]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.2, 2)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_game_console" unique_id=2107424398]
+pixel_size = 0.012
+billboard = 1
+text = "Игровая консоль"
+
+[node name="Placement_apartment_darts" type="Marker3D" parent="." unique_id=761859714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.2, 2)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_darts" unique_id=1677064262]
+pixel_size = 0.012
+billboard = 1
+text = "Дартс"
+
+[node name="Placement_apartment_chess_table" type="Marker3D" parent="." unique_id=844880787]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.2, 2)
+
+[node name="Label" type="Label3D" parent="Placement_apartment_chess_table" unique_id=1384831946]
+pixel_size = 0.012
+billboard = 1
+text = "Шахматный столик"

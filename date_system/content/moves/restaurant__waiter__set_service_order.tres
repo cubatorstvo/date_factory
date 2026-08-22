@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"muscle"
+required_level = 3
+
+[resource]
+script = ExtResource("1_move")
+id = &"restaurant__waiter__set_service_order"
+display_name = "Взять организацию заказа на себя и задать порядок подачи"
+description = "Взять организацию заказа на себя и задать порядок подачи"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+fixed_tag_id = &"dominance"
+fixed_option_text = "Взять организацию заказа на себя и задать порядок подачи"
+fixed_positive_result_text = "Ей нравится, как уверенно ты организовал ситуацию."
+fixed_negative_result_text = "Она не хотела, чтобы обычный заказ превращался в командование персоналом."

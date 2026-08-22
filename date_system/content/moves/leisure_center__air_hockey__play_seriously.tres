@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"leisure_center__air_hockey__play_seriously"
+display_name = "Играть всерьёз и вообще не поддаваться"
+description = "Играть всерьёз и вообще не поддаваться"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"dominance"
+fixed_option_text = "Играть всерьёз и вообще не поддаваться"
+fixed_positive_result_text = "Ей нравится настоящее соревнование без скидок."
+fixed_negative_result_text = "Она считает, что ты слишком серьёзно воспринял маленькую игру."

@@ -106,23 +106,38 @@ func _local_object(id: String, name: String, description: String, move_ids: Arra
 
 func _local_objects() -> Array[DateLocalObject]:
 	return [
-		_local_object("window", "Окно", "Окно, которое можно приоткрыть или распахнуть.", ["local_window_audacity", "local_window_care"]),
-		_local_object("sofa", "Диван", "Диван, на котором можно задать позу и темп разговора.", ["local_sofa_composure", "local_sofa_dominance"]),
-		_local_object("tv", "Телевизор", "Телевизор с передачами и роликами под руку.", ["local_tv_humor", "local_tv_cunning"]),
-		_local_object("jukebox", "Музыкальный автомат", "Музыкальный автомат с чужими и своими композициями.", ["local_jukebox_humor", "local_jukebox_audacity"]),
-		_local_object("barista", "Бариста", "Бариста, который может принести десерт или подыграть истории.", ["local_barista_generosity", "local_barista_cunning"]),
-		_local_object("waiter", "Официант", "Официант, через которого заказывают десерт и «то самое».", ["local_waiter_generosity", "local_waiter_status"]),
-		_local_object("piano", "Рояль", "Рояль в зале — сыграть самому или занять место музыканта.", ["local_piano_humor", "local_piano_dominance"]),
-		_local_object("emperor_chair", "Массажное кресло «Император»", "Закрытый каталог Кати: странное дорогое кресло с несколькими режимами.", ["local_emperor_care", "local_emperor_status", "local_emperor_humor"]),
+		_local_object("cafe__barista", "Бариста", "Бариста в кафе — заказ и выбор.", ["cafe__barista__lady_first", "cafe__barista__best_item"]),
+		_local_object("cafe__board_games", "Настольные игры", "Полка настольных игр в кафе.", ["cafe__board_games__set_trap", "cafe__board_games__ridiculous_game"]),
+		_local_object("cafe__window", "Окно", "Окно кафе, которое можно приоткрыть или распахнуть.", ["cafe__window__fresh_air", "cafe__window__open_to_street"]),
+		_local_object("leisure_center__claw_machine", "Автомат-хватайка", "Автомат-хватайка с игрушками.", ["leisure_center__claw_machine__get_toy", "leisure_center__claw_machine__study_mechanism"]),
+		_local_object("leisure_center__racing_arcade", "Гоночный автомат", "Гоночный автомат в центре досуга.", ["leisure_center__racing_arcade__max_difficulty", "leisure_center__racing_arcade__winner_wish"]),
+		_local_object("leisure_center__air_hockey", "Аэрохоккей", "Стол аэрохоккея для соревнования.", ["leisure_center__air_hockey__play_seriously", "leisure_center__air_hockey__world_final"]),
+		_local_object("leisure_center__prize_counter", "Стойка призов", "Стойка призов за жетоны.", ["leisure_center__prize_counter__gift_prize", "leisure_center__prize_counter__giant_trophy"]),
+		_local_object("restaurant__waiter", "Официант", "Официант ресторана.", ["restaurant__waiter__lady_first", "restaurant__waiter__set_service_order"]),
+		_local_object("restaurant__tasting_set", "Дегустационный сет", "Фирменный дегустационный сет.", ["restaurant__tasting_set__signature_set", "restaurant__tasting_set__trust_the_chef"]),
+		_local_object("restaurant__live_music", "Живая музыка", "Живая музыка в зале ресторана.", ["restaurant__live_music__dedication", "restaurant__live_music__tip_performance"]),
+		_local_object("restaurant__open_kitchen", "Открытая кухня", "Открытая кухня, где можно говорить с шефом.", ["restaurant__open_kitchen__adjust_for_her", "restaurant__open_kitchen__ask_chef"]),
+		_local_object("apartment__plaid", "Плед", "Плед для уюта в квартире.", ["apartment__plaid__get_comfortable"]),
+		_local_object("apartment__tv", "Телевизор", "Телевизор в квартире.", ["apartment__tv__ridiculous_show"]),
+		_local_object("apartment__record_player", "Проигрыватель", "Проигрыватель в квартире.", ["apartment__record_player__quiet_music"]),
+		_local_object("apartment__no_filter_cards", "Карточки «Без фильтров»", "Карточки с прямыми вопросами.", ["apartment__no_filter_cards__honest_question"]),
+		_local_object("apartment__tea_set", "Чайный сервиз", "Чайный сервиз для аккуратной сервировки.", ["apartment__tea_set__serve_tea"]),
+		_local_object("apartment__mini_fridge", "Мини-холодильник", "Мини-холодильник со запасом для гостя.", ["apartment__mini_fridge__best_stock"]),
+		_local_object("apartment__large_mirror", "Большое зеркало", "Большое зеркало в квартире.", ["apartment__large_mirror__compliment_reflection"]),
+		_local_object("apartment__collection_display", "Витрина коллекции", "Витрина с главным предметом коллекции.", ["apartment__collection_display__show_centerpiece"]),
+		_local_object("apartment__karaoke", "Караоке", "Караоке-система в квартире.", ["apartment__karaoke__sing_first"]),
+		_local_object("apartment__game_console", "Игровая консоль", "Игровая консоль для соревнования.", ["apartment__game_console__no_mercy"]),
+		_local_object("apartment__darts", "Дартс", "Дартс с небольшой ставкой.", ["apartment__darts__hard_throw"]),
+		_local_object("apartment__chess_table", "Шахматный столик", "Шахматный столик для короткой партии.", ["apartment__chess_table__prepared_trap"]),
 	]
-
 
 func _location(
 	id: String,
 	name: String,
 	enabled: bool,
 	apartment_prep: bool,
-	local_object_ids: Array
+	local_object_ids: Array,
+	price: int = 0
 ) -> DateVenue:
 	var location: DateVenue = DateVenue.new()
 	location.id = StringName(id)
@@ -130,25 +145,30 @@ func _location(
 	location.description = name
 	location.enabled = enabled
 	location.uses_apartment_preparation = apartment_prep
+	location.price = price
 	var typed: Array[StringName] = []
 	for item in local_object_ids:
 		typed.append(StringName(str(item)))
 	location.local_object_ids = typed
 	return location
 
-
 func _venues() -> Array[DateVenue]:
 	return [
-		_location("apartment", "Квартира", true, true, ["window", "sofa"]),
-		_location("cafe", "Кафе", true, false, ["window", "jukebox", "barista"]),
-		_location("restaurant", "Ресторан", true, false, ["window", "waiter", "piano"]),
-		_location("park", "Парк", false, false, []),
-		_location("cinema", "Кинотеатр", false, false, []),
-		_location("arcade", "Аркада", false, false, []),
-		_location("museum", "Музей", false, false, []),
-		_location("planetarium", "Планетарий", false, false, []),
+		_location("apartment", "Квартира", true, true, [], 0),
+		_location("cafe", "Кафе", true, false, ["cafe__barista", "cafe__board_games", "cafe__window"], 20),
+		_location("leisure_center", "Центр досуга", true, false, [
+			"leisure_center__claw_machine",
+			"leisure_center__racing_arcade",
+			"leisure_center__air_hockey",
+			"leisure_center__prize_counter",
+		], 40),
+		_location("restaurant", "Ресторан", true, false, [
+			"restaurant__waiter",
+			"restaurant__tasting_set",
+			"restaurant__live_music",
+			"restaurant__open_kitchen",
+		], 60),
 	]
-
 
 func _outfit(id: String, name: String, price: int, stat_id: String = "", min_story_stage: int = 1, outfit_move_id: String = "") -> Outfit:
 	var outfit := Outfit.new()
@@ -300,7 +320,7 @@ func _situations() -> Array[DateSituation]:
 			"stranger_flirts__rate_pickup",
 			"stranger_flirts__you_are_interrupting",
 			"stranger_flirts__if_she_wants",
-		], ["cafe", "restaurant"]),
+		], ["cafe", "leisure_center", "restaurant"]),
 		_situation("small_rule", "Маленькое нарушение", "Девушка замечает формальное ограничение и предлагает слегка его обойти ради удобства или интереса.", DateTypes.DatePhase.CORE, [
 			"small_rule__agree_immediately",
 			"small_rule__follow_rule",
@@ -308,7 +328,7 @@ func _situations() -> Array[DateSituation]:
 			"small_rule__charm_staff",
 			"small_rule__check_problem",
 			"small_rule__pay_normal_option",
-		], ["cafe", "restaurant"]),
+		], ["cafe", "leisure_center", "restaurant"]),
 		_situation("small_lie", "Маленькая ложь", "Девушка признаётся, что немного приукрасила один факт о себе при знакомстве.", DateTypes.DatePhase.CORE, [
 			"small_lie__why_lied",
 			"small_lie__great_betrayal",
@@ -332,7 +352,7 @@ func _situations() -> Array[DateSituation]:
 			"staff_conflict__what_would_satisfy",
 			"staff_conflict__call_manager",
 			"staff_conflict__cover_difference",
-		], ["cafe", "restaurant"]),
+		], ["cafe", "leisure_center", "restaurant"]),
 		_situation("compatibility_test", "Тест на совместимость", "Девушка вспоминает тест на совместимость, который недавно нашла: «Если мы застрянем в лифте на три часа, кто первым начнёт бесить другого?»", DateTypes.DatePhase.CORE, [
 			"compatibility_test__annoy_on_purpose",
 			"compatibility_test__you_annoy_me",
@@ -356,7 +376,7 @@ func _situations() -> Array[DateSituation]:
 			"mistaken_married__clarify_first_date",
 			"mistaken_married__what_gave_us_away",
 			"mistaken_married__under_control",
-		], ["cafe", "restaurant"]),
+		], ["cafe", "leisure_center", "restaurant"]),
 		_situation("take_photo", "Сфоткаемся?", "Девушка предлагает сделать совместную фотографию.", DateTypes.DatePhase.CORE, [
 			"take_photo__good_with_you",
 			"take_photo__confident_pose",
@@ -428,7 +448,7 @@ func _situations() -> Array[DateSituation]:
 			"lost_wallet__pay_delivery",
 			"lost_wallet__return_it",
 			"lost_wallet__i_will_handle",
-		], ["cafe", "restaurant"]),
+		], ["cafe", "leisure_center", "restaurant"]),
 		_situation("simple_goodbye", "Просто «пока»", "Встреча закончилась. Девушка совершенно обычно говорит: «Ладно. Пока.»", DateTypes.DatePhase.CLOSING, [
 			"simple_goodbye__good_evening",
 			"simple_goodbye__write_when_home",
@@ -568,7 +588,7 @@ func _local_move(
 	move.description = name
 	move.kind = DateTypes.DateMoveKind.LOCAL
 	move.enabled = true
-	move.max_uses_per_date = 0
+	move.max_uses_per_date = 1
 	move.fixed_tag_id = StringName(tag_id)
 	move.fixed_option_text = option_text
 	move.fixed_positive_result_text = positive_text
@@ -579,7 +599,6 @@ func _local_move(
 		requirement.required_level = level
 		move.unlock_requirement = requirement
 	return move
-
 
 func _moves() -> Array[DateMove]:
 	return [
@@ -783,23 +802,40 @@ func _moves() -> Array[DateMove]:
 		_outfit_move("outfit_beautiful_couple", "Объявить вас красивой парой", "flattery", "Вслух констатировать, насколько эффектно вы смотритесь вместе.", "Комплимент паре зашёл.", "Объявил вас красивой парой слишком презентационно — ей это льстит не к месту."),
 		_outfit_move("outfit_pay_extra", "Оплатить что-нибудь лишнее", "generosity", "Демонстративно потратить деньги на вещь, которую никто не просил покупать.", "Лишняя покупка сработала как щедрый жест.", "Оплатил то, что никто не просил — ей это покупка настроения."),
 		_outfit_move("outfit_silent_hold", "Молча выдержать ситуацию", "composure", "Сохранять абсолютное спокойствие до тех пор, пока неловко не станет всем остальным.", "Молчаливое спокойствие закрыло паузу — ей это по делу.", "Держал молчание, пока неловко не стало всем — ей это давление."),
-		_local_move("local_window_audacity", "Распахнуть окно", "audacity", "Распахнуть окно настежь и продолжить разговор с улицей.", "Окно настежь, улица в разговоре — ей это зашло.", "Распахнул окно настежь — ей слишком шумно и демонстративно."),
-		_local_move("local_window_care", "Приоткрыть окно", "care", "Слегка приоткрыть окно для свежего воздуха.", "Свежий воздух к месту — ей спокойнее.", "Приоткрыл окно «для воздуха» — ей это кажется лишней заботой не к месту."),
-		_local_move("local_sofa_composure", "Откинуться на диван", "composure", "Откинуться на диван и невозмутимо продолжить разговор.", "Откинулся и держишь тон — ей это спокойствие по делу.", "Откинулся на диван слишком расслабленно — ей это выглядит как равнодушие."),
-		_local_move("local_sofa_dominance", "Занять центр дивана", "dominance", "Пересесть в центр дивана и самому задать темп разговору.", "Занял центр дивана и темп разговора — ей это зашло.", "Пересел в центр и задал темп — ей это слишком навязано.", "aura", 2),
-		_local_move("local_tv_humor", "Неуместная передача", "humor", "Включить максимально неуместную передачу и сделать вид, что так и было задумано.", "Неуместная передача сработала как шутка — ей смешно.", "Включил неуместную передачу — ей это выглядит как сбой, а не юмор."),
-		_local_move("local_tv_cunning", "Подтверждающий ролик", "cunning", "Найти ролик, который неожиданно подтверждает твою версию.", "Ролик неожиданно подтвердил твою версию — ей это ловко.", "Подобрал ролик «в подтверждение» — ей это выглядит как подтасовка."),
-		_local_move("local_jukebox_humor", "Неуместная песня", "humor", "Поставить максимально неуместную песню.", "Неуместная песня попала в тон — ей смешно.", "Поставил максимально неуместную песню — ей это ломает вечер."),
-		_local_move("local_jukebox_audacity", "Переключить музыку", "audacity", "Переключить музыку на свой выбор посреди чужой композиции.", "Переключил чужую композицию на свою — ей это зашло как наглость к месту.", "Перебил чужую песню своим выбором — ей это грубо."),
-		_local_move("local_barista_generosity", "Фирменный десерт", "generosity", "Заказать девушке фирменный десерт.", "Фирменный десерт к месту — ей приятно.", "Заказал фирменный десерт — ей это кажется покупкой настроения."),
-		_local_move("local_barista_cunning", "Подыграть истории", "cunning", "Попросить бариста подыграть твоей истории.", "Бариста подыграл истории — ей это ловко.", "Попросил бариста подыграть — ей это выглядит как постановка.", "aura", 2),
-		_local_move("local_waiter_generosity", "Дорогой десерт", "generosity", "Заказать для неё самый дорогой десерт.", "Самый дорогой десерт к месту — ей приятно.", "Заказал самый дорогой десерт — ей это слишком демонстративно."),
-		_local_move("local_waiter_status", "То самое", "status", "Попросить принести «то самое», будто ты здесь постоянный гость.", "«То самое» принесли как постоянному гостю — ей это зашло.", "Попросил «то самое» как завсегдатай — ей это выглядит как игра в статус.", "capital", 2),
-		_local_move("local_piano_humor", "Пафосный марш", "humor", "Сыграть одним пальцем максимально пафосный марш.", "Пафосный марш одним пальцем сработал — ей смешно.", "Сыграл пафосный марш одним пальцем — ей это не смешно, а жалко."),
-		_local_move("local_piano_dominance", "Занять рояль", "dominance", "Попросить музыканта уступить тебе рояль и занять его место.", "Занял рояль вместо музыканта — ей это зашло как контроль сцены.", "Попросил уступить рояль — ей это слишком театрально и навязчиво.", "aura", 3),
-		_local_move("local_emperor_care", "Предложить массаж", "care", "Включить нормальный режим и предложить ей расслабиться.", "Нормальный режим и забота зашли — она расслабляется.", "Предложение массажа выглядит лишним — ей это не забота."),
-		_local_move("local_emperor_status", "Назвать цену кресла", "status", "Небрежно сообщить, сколько стоило это чудовище.", "Цена кресла сработала как статус — ей это впечатлило.", "Назвать цену кресла выглядит хвастовством — ей это лишнее."),
-		_local_move("local_emperor_humor", "Включить режим «Космонавт»", "humor", "Запустить максимальную программу и попытаться сохранить достоинство.", "Режим «Космонавт» сработал как шутка — ей смешно.", "Максимальная программа выглядит нелепо — ей это не юмор."),
+		_local_move("cafe__barista__lady_first", "Попросить сначала принять заказ девушки", "politeness", "Попросить сначала принять заказ девушки", "Ей нравится спокойная вежливость в обычной ситуации.", "Ей кажется, что ты слишком церемонишься из-за простой покупки кофе."),
+		_local_move("cafe__barista__best_item", "Спросить, что здесь реально самое вкусное", "directness", "Спросить, что здесь реально самое вкусное", "Ей нравится простой вопрос без изучения меню как документации.", "Ей кажется, что ты слишком легко отдаёшь выбор незнакомому человеку."),
+		_local_move("cafe__board_games__set_trap", "Выбрать игру и быстро заманить её в ловушку", "cunning", "Выбрать игру и быстро заманить её в ловушку", "Её веселит, что спокойная игра сразу превратилась в маленькую дуэль.", "Она замечает подвох и считает такой старт слишком расчётливым."),
+		_local_move("cafe__board_games__ridiculous_game", "Взять самую нелепую игру и начать до чтения правил", "humor", "Взять самую нелепую игру и начать до чтения правил", "Она включается в хаос и смеётся над происходящим.", "Ей хотелось хотя бы понять правила до начала катастрофы."),
+		_local_move("cafe__window__fresh_air", "Слегка приоткрыть окно, заметив, что ей душно", "care", "Слегка приоткрыть окно, заметив, что ей душно", "Она замечает, что ты обратил внимание на её комфорт.", "Ей кажется, что ты слишком внимательно контролируешь каждую мелочь."),
+		_local_move("cafe__window__open_to_street", "Распахнуть окно и продолжить разговор будто теперь участвует вся улица", "audacity", "Распахнуть окно и продолжить разговор будто теперь участвует вся улица", "Её смешит неожиданно публичный поворот разговора.", "Она предпочла бы оставить ваше свидание внутри помещения."),
+		_local_move("leisure_center__claw_machine__get_toy", "Попытаться достать игрушку, которая ей понравилась", "care", "Попытаться достать игрушку, которая ей понравилась", "Ей приятно, что ты сразу превратил её интерес в маленькую цель.", "Она считает, что игрушка не стоила такого количества усилий."),
+		_local_move("leisure_center__claw_machine__study_mechanism", "Изучить механизм и выбрать лучший момент для захвата", "cunning", "Изучить механизм и выбрать лучший момент для захвата", "Ей нравится, как быстро ты превращаешь автомат в решаемую задачу.", "Она хотела просто поиграть, а не наблюдать инженерный аудит автомата."),
+		_local_move("leisure_center__racing_arcade__max_difficulty", "Выбрать максимальную сложность и отключить помощь", "risk", "Выбрать максимальную сложность и отключить помощь", "Ей нравится сразу поднять ставки.", "Она считает, что сначала можно было хотя бы понять управление."),
+		_local_move("leisure_center__racing_arcade__winner_wish", "Предложить маленькое желание победителю", "audacity", "Предложить маленькое желание победителю", "Дерзкое условие делает гонку для неё интереснее.", "Ей не нравится добавлять обязательства к обычной игре."),
+		_local_move("leisure_center__air_hockey__play_seriously", "Играть всерьёз и вообще не поддаваться", "dominance", "Играть всерьёз и вообще не поддаваться", "Ей нравится настоящее соревнование без скидок.", "Она считает, что ты слишком серьёзно воспринял маленькую игру."),
+		_local_move("leisure_center__air_hockey__world_final", "Комментировать матч будто идёт финал чемпионата мира", "humor", "Комментировать матч будто идёт финал чемпионата мира", "Она смеётся и начинает подыгрывать комментатору.", "Ей хотелось слышать хотя бы звук самой игры."),
+		_local_move("leisure_center__prize_counter__gift_prize", "Потратить выигранные жетоны на приз для неё", "generosity", "Потратить выигранные жетоны на приз для неё", "Маленький подарок ей приятен.", "Она предпочла бы, чтобы ты выбрал что-нибудь себе."),
+		_local_move("leisure_center__prize_counter__giant_trophy", "Забрать самый огромный приз и нести его как трофей", "status", "Забрать самый огромный приз и нести его как трофей", "Её веселит, насколько серьёзно ты относишься к своему новому символу победы.", "Она считает гигантский трофей слишком заметным даже для тебя."),
+		_local_move("restaurant__waiter__lady_first", "Попросить сначала обслужить девушку", "politeness", "Попросить сначала обслужить девушку", "Ей нравится естественная вежливость без лишнего спектакля.", "Она считает такую церемонию лишней.", "appearance", 1),
+		_local_move("restaurant__waiter__set_service_order", "Взять организацию заказа на себя и задать порядок подачи", "dominance", "Взять организацию заказа на себя и задать порядок подачи", "Ей нравится, как уверенно ты организовал ситуацию.", "Она не хотела, чтобы обычный заказ превращался в командование персоналом.", "muscle", 3),
+		_local_move("restaurant__tasting_set__signature_set", "Заказать фирменный сет ресторана как очевидный выбор", "status", "Заказать фирменный сет ресторана как очевидный выбор", "Ей нравится уверенный выбор премиального варианта.", "Она считает, что впечатление от цены для тебя важнее самого вечера.", "capital", 3),
+		_local_move("restaurant__tasting_set__trust_the_chef", "Довериться выбору шефа и спокойно ждать сюрприз", "composure", "Довериться выбору шефа и спокойно ждать сюрприз", "Ей нравится, что ты не пытаешься контролировать каждую деталь.", "Она предпочла бы заранее понимать, что именно принесут.", "aura", 3),
+		_local_move("restaurant__live_music__dedication", "Попросить музыканта посвятить ей композицию", "flattery", "Попросить музыканта посвятить ей композицию", "Красивый публичный комплимент ей нравится.", "Она считает такое внимание слишком демонстративным.", "appearance", 3),
+		_local_move("restaurant__live_music__tip_performance", "Хорошо отблагодарить музыканта за отдельное исполнение", "generosity", "Хорошо отблагодарить музыканта за отдельное исполнение", "Ей нравится щедро оценить чужую работу.", "Она считает, что ты слишком легко превращаешь впечатления в расходы.", "capital", 1),
+		_local_move("restaurant__open_kitchen__adjust_for_her", "Попросить изменить блюдо с учётом её вкусов", "care", "Попросить изменить блюдо с учётом её вкусов", "Она замечает, что ты запомнил её предпочтения и подумал о комфорте.", "Она считает, что ради неё совсем не обязательно менять работу кухни.", "aura", 1),
+		_local_move("restaurant__open_kitchen__ask_chef", "Спросить шефа напрямую, что он сам здесь заказал бы", "directness", "Спросить шефа напрямую, что он сам здесь заказал бы", "Ей нравится получить простой ответ прямо от человека, который знает меню лучше всех.", "Она считает, что можно было выбрать самостоятельно.", "muscle", 1),
+		_local_move("apartment__plaid__get_comfortable", "Предложить ей плед и устроиться поудобнее", "care", "Предложить ей плед и устроиться поудобнее", "Ей приятно, что ты подумал о её комфорте.", "Она считает, что ей и так было нормально."),
+		_local_move("apartment__tv__ridiculous_show", "Включить что-нибудь настолько нелепое, что это уже интересно", "humor", "Включить что-нибудь настолько нелепое, что это уже интересно", "Она быстро включается в совместный просмотр абсурда.", "Она не понимает, почему из всего доступного ты выбрал именно это."),
+		_local_move("apartment__record_player__quiet_music", "Поставить спокойную музыку и позволить паузе просто существовать", "composure", "Поставить спокойную музыку и позволить паузе просто существовать", "Ей нравится момент без необходимости постоянно заполнять тишину.", "Пауза кажется ей скорее неловкой, чем уютной."),
+		_local_move("apartment__no_filter_cards__honest_question", "Вытянуть вопрос и ответить без ухода от темы", "directness", "Вытянуть вопрос и ответить без ухода от темы", "Ей нравится, что игра действительно приводит к честному разговору.", "Она считает вопрос слишком прямым для такого момента."),
+		_local_move("apartment__tea_set__serve_tea", "Нормально сервировать чай вместо случайной кружки", "politeness", "Нормально сервировать чай вместо случайной кружки", "Ей нравится аккуратное внимание к простой детали.", "Она считает, что обычный чай получил слишком много церемоний."),
+		_local_move("apartment__mini_fridge__best_stock", "Достать лучший запас специально для неё", "generosity", "Достать лучший запас специально для неё", "Ей нравится, что ты оставил хорошее именно для гостя.", "Она считает такой жест слишком демонстративным."),
+		_local_move("apartment__large_mirror__compliment_reflection", "Подвести её к зеркалу и красиво отметить, как она выглядит", "flattery", "Подвести её к зеркалу и красиво отметить, как она выглядит", "Комплимент попадает точно в нужный момент.", "Она считает сцену слишком специально подготовленной для комплимента."),
+		_local_move("apartment__collection_display__show_centerpiece", "Показать самый впечатляющий предмет своей коллекции", "status", "Показать самый впечатляющий предмет своей коллекции", "Ей нравится увидеть вещь, которой ты действительно гордишься.", "Она воспринимает экскурсию как демонстрацию достижений."),
+		_local_move("apartment__karaoke__sing_first", "Первым начать петь, не проверяя, насколько это хорошая идея", "audacity", "Первым начать петь, не проверяя, насколько это хорошая идея", "Ей нравится, что ты сразу снимаешь неловкость собственным примером.", "Она считает, что проверка идеи всё-таки не помешала бы."),
+		_local_move("apartment__game_console__no_mercy", "Запустить соревнование и предупредить, что поддаваться не будешь", "dominance", "Запустить соревнование и предупредить, что поддаваться не будешь", "Ей нравится честное соревнование без скидок.", "Она считает, что ты слишком быстро превратил отдых в матч."),
+		_local_move("apartment__darts__hard_throw", "Предложить усложнённый бросок с небольшой ставкой", "risk", "Предложить усложнённый бросок с небольшой ставкой", "Ей нравится добавить обычной игре немного риска.", "Она считает усложнение совершенно ненужным."),
+		_local_move("apartment__chess_table__prepared_trap", "Быстро устроить позицию с заранее подготовленной ловушкой", "cunning", "Быстро устроить позицию с заранее подготовленной ловушкой", "Ей нравится обнаружить, что короткая партия уже была маленькой схемой.", "Она считает подготовленную ловушку слишком нечестным стартом."),
 	]
 
 

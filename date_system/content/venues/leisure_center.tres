@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DateVenue" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://date_system/content/date_venue.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"leisure_center"
+display_name = "Центр досуга"
+description = "Центр досуга"
+enabled = true
+uses_apartment_preparation = false
+price = 40
+local_object_ids = Array[StringName]([&"leisure_center__claw_machine", &"leisure_center__racing_arcade", &"leisure_center__air_hockey", &"leisure_center__prize_counter"])

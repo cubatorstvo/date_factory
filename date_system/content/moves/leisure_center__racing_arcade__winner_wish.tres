@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"leisure_center__racing_arcade__winner_wish"
+display_name = "Предложить маленькое желание победителю"
+description = "Предложить маленькое желание победителю"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"audacity"
+fixed_option_text = "Предложить маленькое желание победителю"
+fixed_positive_result_text = "Дерзкое условие делает гонку для неё интереснее."
+fixed_negative_result_text = "Ей не нравится добавлять обязательства к обычной игре."

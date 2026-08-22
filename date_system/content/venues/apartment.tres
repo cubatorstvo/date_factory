@@ -9,4 +9,5 @@ display_name = "Квартира"
 description = "Квартира"
 enabled = true
 uses_apartment_preparation = true
-local_object_ids = Array[StringName]([&"window", &"sofa"])
+price = 0
+local_object_ids = Array[StringName]([])

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"cafe__board_games__set_trap"
+display_name = "Выбрать игру и быстро заманить её в ловушку"
+description = "Выбрать игру и быстро заманить её в ловушку"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"cunning"
+fixed_option_text = "Выбрать игру и быстро заманить её в ловушку"
+fixed_positive_result_text = "Её веселит, что спокойная игра сразу превратилась в маленькую дуэль."
+fixed_negative_result_text = "Она замечает подвох и считает такой старт слишком расчётливым."

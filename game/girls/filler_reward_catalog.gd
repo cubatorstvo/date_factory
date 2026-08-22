@@ -5,6 +5,7 @@ const ID_ALINA_IMPROVED_GYM: StringName = &"alina_improved_gym"
 const ID_MARINA_FREE_OUTFIT: StringName = &"marina_free_outfit"
 const ID_VIKA_BASE_REROLL: StringName = &"vika_base_reroll"
 const ID_DASHA_SOFTEN_NEGATIVE: StringName = &"dasha_soften_negative"
+const ID_KATYA_INTERIOR_ACCENT: StringName = &"katya_interior_accent"
 const ID_KATYA_EMPEROR_CHAIR: StringName = &"katya_emperor_chair"
 const ID_LERA_APARTMENT_CLEANING: StringName = &"lera_apartment_cleaning"
 const ID_KIRA_EXPRESS_STYLING: StringName = &"kira_express_styling"
@@ -86,11 +87,11 @@ static func create_seed() -> FillerRewardCatalog:
 		"Первый плохой ответ на каждом свидании даёт 0 вместо -1."
 	))
 	catalog.rewards.append(_make(
-		ID_KATYA_EMPEROR_CHAIR,
+		ID_KATYA_INTERIOR_ACCENT,
 		GirlCatalog.ID_KATYA,
-		"Закрытый мебельный каталог",
-		"Можно купить массажное кресло «Император» за $800.\nОно даёт три разных Local Move.",
-		"Можно купить массажное кресло «Император» за $800.\nОно даёт три разных Local Move."
+		"Акцент интерьера",
+		"Можно назначить один купленный предмет квартиры акцентным. Удачный локальный ход этого предмета даёт +2.",
+		"Можно назначить один купленный предмет квартиры акцентным. Первое назначение бесплатно. Удачный локальный ход акцента даёт +2."
 	))
 	catalog.rewards.append(_make(
 		ID_LERA_APARTMENT_CLEANING,

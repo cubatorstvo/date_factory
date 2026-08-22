@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"apartment__tv__ridiculous_show"
+display_name = "Включить что-нибудь настолько нелепое, что это уже интересно"
+description = "Включить что-нибудь настолько нелепое, что это уже интересно"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"humor"
+fixed_option_text = "Включить что-нибудь настолько нелепое, что это уже интересно"
+fixed_positive_result_text = "Она быстро включается в совместный просмотр абсурда."
+fixed_negative_result_text = "Она не понимает, почему из всего доступного ты выбрал именно это."

@@ -17,6 +17,7 @@ func validate(catalog: DateContentCatalog) -> Array[ContentValidationIssue]:
 	_check_base_usage(catalog, issues)
 	_check_situation_base_pool(catalog, issues)
 	_check_local_objects(catalog, issues)
+	_check_venue_local_catalog(catalog, issues)
 	_check_combo_rules(catalog, issues)
 	_check_phase_coverage(catalog, issues)
 	_check_girl_relationship_bounds(catalog, issues)
@@ -314,15 +315,19 @@ func _check_local_objects(catalog: DateContentCatalog, issues: Array[ContentVali
 				continue
 			if not move.is_local():
 				issues.append(_issue("DateLocalObject", String(local_object.id), "move_ids", "Ход %s должен иметь kind LOCAL." % String(move_id)))
+			elif move.max_uses_per_date != 1:
+				issues.append(_issue("DateMove", String(move.id), "max_uses_per_date", "Local Move должен иметь max_uses_per_date = 1."))
 	for location in catalog.date_venues:
 		if location == null:
 			continue
 		for object_id in location.local_object_ids:
 			if catalog.find_local_object(object_id) == null:
 				issues.append(_issue("DateVenue", String(location.id), "local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
-		if location.enabled and [&"apartment", &"cafe", &"restaurant"].has(location.id):
+		if location.enabled and [&"cafe", &"leisure_center", &"restaurant"].has(location.id):
 			if location.local_object_ids.is_empty():
 				issues.append(_issue("DateVenue", String(location.id), "local_object_ids", "Активное место должно иметь хотя бы один Local Object."))
+		if location.id == &"apartment" and not location.local_object_ids.is_empty():
+			issues.append(_issue("DateVenue", "apartment", "local_object_ids", "Квартира не должна содержать Local Objects в DateVenue; покрытие идёт только от купленных Apartment Objects."))
 	var apartment_catalog: ApartmentCatalog = ApartmentCatalog.create_seed()
 	for upgrade in apartment_catalog.get_all_upgrades():
 		if upgrade == null:
@@ -331,6 +336,193 @@ func _check_local_objects(catalog: DateContentCatalog, issues: Array[ContentVali
 			if catalog.find_local_object(object_id) == null:
 				issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "granted_local_object_ids", "Неизвестный Local Object: %s." % String(object_id)))
 
+func _check_venue_local_catalog(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var expected_venues: Array[StringName] = [&"apartment", &"cafe", &"leisure_center", &"restaurant"]
+	var venue_ids: Array[StringName] = []
+	for location in catalog.date_venues:
+		if location == null:
+			continue
+		venue_ids.append(location.id)
+		if not location.enabled:
+			issues.append(_issue("DateVenue", String(location.id), "enabled", "Production DateVenue должен быть enabled."))
+	if venue_ids.size() != 4:
+		issues.append(_issue("DateVenue", "", "date_venues", "Должно быть ровно 4 основных DateVenue."))
+	for expected_id in expected_venues:
+		if venue_ids.has(expected_id):
+			continue
+		issues.append(_issue("DateVenue", String(expected_id), "id", "Отсутствует production DateVenue: %s." % String(expected_id)))
+	for venue_id in venue_ids:
+		if expected_venues.has(venue_id):
+			continue
+		issues.append(_issue("DateVenue", String(venue_id), "id", "Лишний DateVenue не входит в production catalog: %s." % String(venue_id)))
+	_check_public_venue_local_set(
+		catalog,
+		issues,
+		&"cafe",
+		3,
+		6,
+		[&"politeness", &"directness", &"cunning", &"humor", &"care", &"audacity"],
+		false
+	)
+	_check_public_venue_local_set(
+		catalog,
+		issues,
+		&"leisure_center",
+		4,
+		8,
+		[&"care", &"cunning", &"risk", &"audacity", &"dominance", &"humor", &"generosity", &"status"],
+		false
+	)
+	_check_public_venue_local_set(
+		catalog,
+		issues,
+		&"restaurant",
+		4,
+		8,
+		[&"politeness", &"dominance", &"status", &"composure", &"flattery", &"generosity", &"care", &"directness"],
+		true
+	)
+	_check_restaurant_characteristic_gates(catalog, issues)
+	_check_apartment_local_catalog(catalog, issues)
+
+
+func _check_public_venue_local_set(
+	catalog: DateContentCatalog,
+	issues: Array[ContentValidationIssue],
+	venue_id: StringName,
+	object_count: int,
+	move_count: int,
+	expected_tags: Array[StringName],
+	require_characteristic: bool
+) -> void:
+	var venue: DateVenue = catalog.find_venue(venue_id)
+	if venue == null:
+		return
+	if venue.local_object_ids.size() != object_count:
+		issues.append(_issue("DateVenue", String(venue_id), "local_object_ids", "Ожидается %d Local Objects." % object_count))
+	var tags: Dictionary = {}
+	var moves_found: int = 0
+	for object_id in venue.local_object_ids:
+		var local_object: DateLocalObject = catalog.find_local_object(object_id)
+		if local_object == null:
+			continue
+		moves_found += local_object.move_ids.size()
+		for move_id in local_object.move_ids:
+			var move: DateMove = catalog.find_move(move_id)
+			if move == null:
+				continue
+			var tag_key: String = String(move.fixed_tag_id)
+			if tags.has(tag_key):
+				issues.append(_issue("DateVenue", String(venue_id), "fixed_tag_id", "Тег %s повторяется внутри Venue." % tag_key))
+			else:
+				tags[tag_key] = true
+			var has_req: bool = move.unlock_requirement != null and not String(move.unlock_requirement.stat_id).is_empty()
+			if require_characteristic and not has_req:
+				issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "Restaurant Local Move должен иметь Characteristic requirement."))
+			elif not require_characteristic and has_req:
+				issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "Local Move этого Venue не должен иметь Characteristic requirement."))
+	if moves_found != move_count:
+		issues.append(_issue("DateVenue", String(venue_id), "move_ids", "Ожидается %d Local Moves." % move_count))
+	if tags.size() != expected_tags.size():
+		issues.append(_issue("DateVenue", String(venue_id), "fixed_tag_id", "Ожидается %d уникальных Tags." % expected_tags.size()))
+	for expected_tag in expected_tags:
+		if tags.has(String(expected_tag)):
+			continue
+		issues.append(_issue("DateVenue", String(venue_id), "fixed_tag_id", "Отсутствует Tag %s." % String(expected_tag)))
+
+
+func _check_restaurant_characteristic_gates(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var venue: DateVenue = catalog.find_venue(&"restaurant")
+	if venue == null:
+		return
+	var slots: Dictionary = {}
+	var req_count: int = 0
+	var level1: int = 0
+	var level3: int = 0
+	for object_id in venue.local_object_ids:
+		var local_object: DateLocalObject = catalog.find_local_object(object_id)
+		if local_object == null:
+			continue
+		for move_id in local_object.move_ids:
+			var move: DateMove = catalog.find_move(move_id)
+			if move == null or move.unlock_requirement == null:
+				continue
+			var stat_id: String = String(move.unlock_requirement.stat_id)
+			var level: int = move.unlock_requirement.required_level
+			if stat_id.is_empty():
+				continue
+			req_count += 1
+			if level == 1:
+				level1 += 1
+			elif level == 3:
+				level3 += 1
+			var slot_key: String = "%s:%d" % [stat_id, level]
+			if slots.has(slot_key):
+				issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "Restaurant дублирует слот %s." % slot_key))
+			else:
+				slots[slot_key] = true
+	if req_count != 8:
+		issues.append(_issue("DateVenue", "restaurant", "unlock_requirement", "Restaurant должен иметь 8 Characteristic requirements."))
+	if level1 != 4 or level3 != 4:
+		issues.append(_issue("DateVenue", "restaurant", "unlock_requirement", "Restaurant должен иметь 4 хода ур. 1 и 4 хода ур. 3."))
+	for stat_id in DateTypes.CHARACTERISTIC_STAT_ORDER:
+		for level in [1, 3]:
+			var slot_key: String = "%s:%d" % [String(stat_id), level]
+			if slots.has(slot_key):
+				continue
+			issues.append(_issue("DateVenue", "restaurant", "unlock_requirement", "Нет Restaurant Local Move для %s ур. %d." % [String(stat_id), level]))
+
+
+func _check_apartment_local_catalog(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
+	var apartment_catalog: ApartmentCatalog = ApartmentCatalog.create_seed()
+	var upgrades: Array[ApartmentUpgradeDefinition] = apartment_catalog.get_all_upgrades()
+	if upgrades.size() != 12:
+		issues.append(_issue("ApartmentUpgradeDefinition", "", "upgrades", "Apartment catalog должен содержать 12 purchasable objects."))
+	var tags: Dictionary = {}
+	var object_ids: Dictionary = {}
+	var stage_counts: Dictionary = {2: 0, 3: 0, 4: 0}
+	for upgrade in upgrades:
+		if upgrade == null:
+			continue
+		if upgrade.granted_local_object_ids.size() != 1:
+			issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "granted_local_object_ids", "Каждый Apartment Object даёт ровно один Local Object."))
+			continue
+		var object_id: StringName = upgrade.granted_local_object_ids[0]
+		if object_ids.has(String(object_id)):
+			issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "granted_local_object_ids", "Local Object %s повторяется." % String(object_id)))
+		else:
+			object_ids[String(object_id)] = true
+		if upgrade.min_story_stage == 2 or upgrade.min_story_stage == 3 or upgrade.min_story_stage == 4:
+			stage_counts[upgrade.min_story_stage] = int(stage_counts[upgrade.min_story_stage]) + 1
+		else:
+			issues.append(_issue("ApartmentUpgradeDefinition", String(upgrade.id), "min_story_stage", "Apartment Object открывается на Stage 2, 3 или 4."))
+		var local_object: DateLocalObject = catalog.find_local_object(object_id)
+		if local_object == null:
+			continue
+		if local_object.move_ids.size() != 1:
+			issues.append(_issue("DateLocalObject", String(object_id), "move_ids", "Apartment Object должен иметь ровно один Local Move."))
+			continue
+		var move: DateMove = catalog.find_move(local_object.move_ids[0])
+		if move == null:
+			continue
+		var has_req: bool = move.unlock_requirement != null and not String(move.unlock_requirement.stat_id).is_empty()
+		if has_req:
+			issues.append(_issue("DateMove", String(move.id), "unlock_requirement", "Apartment Local Move не должен иметь Characteristic requirement."))
+		var tag_key: String = String(move.fixed_tag_id)
+		if tags.has(tag_key):
+			issues.append(_issue("DateLocalObject", String(object_id), "fixed_tag_id", "Apartment Tag %s повторяется." % tag_key))
+		else:
+			tags[tag_key] = true
+	if int(stage_counts[2]) != 4 or int(stage_counts[3]) != 4 or int(stage_counts[4]) != 4:
+		issues.append(_issue("ApartmentUpgradeDefinition", "", "min_story_stage", "Apartment Objects должны распределяться 4 / 4 / 4 по Stage 2 / 3 / 4."))
+	if tags.size() != 12:
+		issues.append(_issue("ApartmentUpgradeDefinition", "", "fixed_tag_id", "Apartment должен покрывать 12 уникальных Tags."))
+	for tag in catalog.enabled_tags():
+		if tag == null:
+			continue
+		if tags.has(String(tag.id)):
+			continue
+		issues.append(_issue("DateTag", String(tag.id), "apartment", "Канонический Tag не покрыт Apartment Object."))
 
 func _check_combo_rules(catalog: DateContentCatalog, issues: Array[ContentValidationIssue]) -> void:
 	var rules: DateRules = catalog.date_rules

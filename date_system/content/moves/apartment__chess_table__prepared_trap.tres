@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=2 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"apartment__chess_table__prepared_trap"
+display_name = "Быстро устроить позицию с заранее подготовленной ловушкой"
+description = "Быстро устроить позицию с заранее подготовленной ловушкой"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+fixed_tag_id = &"cunning"
+fixed_option_text = "Быстро устроить позицию с заранее подготовленной ловушкой"
+fixed_positive_result_text = "Ей нравится обнаружить, что короткая партия уже была маленькой схемой."
+fixed_negative_result_text = "Она считает подготовленную ловушку слишком нечестным стартом."

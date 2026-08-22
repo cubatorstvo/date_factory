@@ -72,7 +72,7 @@ static func create_seed() -> GirlCatalog:
 	catalog.girls.append(_make(ID_VIKA, "Вика", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_VIKA), _city_stage_meet_requirements(1)))
 	catalog.girls.append(_make(ID_DASHA, "Даша", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_DASHA), _city_stage_meet_requirements(1)))
 	catalog.girls.append(_make(ID_ACTRESS, "Актриса", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_ACTRESS), _stage_and_rating_meet_requirements(1, 2), _rival_defeated_date_requirements(RivalCatalog.ID_BORIS)))
-	catalog.girls.append(_make(ID_KATYA, "Катя", LocationCatalog.ID_CITY_CENTER, 0, 0, seed_relationship_max(ID_KATYA), _city_stage_meet_requirements(2)))
+	catalog.girls.append(_make(ID_KATYA, "Катя", LocationCatalog.ID_FURNITURE_STORE, 0, 0, seed_relationship_max(ID_KATYA), _city_stage_meet_requirements(2)))
 	catalog.girls.append(_make(ID_LERA, "Лера", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_LERA), _city_stage_meet_requirements(2)))
 	catalog.girls.append(_make(ID_KIRA, "Кира", LocationCatalog.ID_CAFE, 0, 0, seed_relationship_max(ID_KIRA), _city_stage_meet_requirements(2)))
 	catalog.girls.append(_make(ID_OLYA, "Оля", LocationCatalog.ID_RESTAURANT, 0, 0, seed_relationship_max(ID_OLYA), _city_stage_meet_requirements(2)))

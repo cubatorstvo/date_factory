@@ -662,11 +662,11 @@ Stage 4: up to 12 / 12
 id, display_name, description, price, level_granted, granted_local_object_ids, min_story_stage, required_filler_reward_id
 ```
 
-Точный список 12 объектов, Tags, цены и тексты Local Moves задаёт design block `Venues & Local Objects`. Текущий Date Lab seed (`tv`, `emperor_chair` и базовые `window` / `sofa` на квартире) не является финальным Apartment set.
+Точный список 12 объектов, Tags, цены и тексты Local Moves: [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md). `ApartmentUpgradeDefinition.id` = object id; `granted_local_object_ids` содержит тот же id; `required_filler_reward_id` пустой. Stage 2: `apartment__plaid` $150 CARE, `apartment__tv` $200 HUMOR, `apartment__record_player` $250 COMPOSURE, `apartment__no_filter_cards` $300 DIRECTNESS. Stage 3: `apartment__tea_set` $400 POLITENESS, `apartment__mini_fridge` $475 GENEROSITY, `apartment__large_mirror` $550 FLATTERY, `apartment__collection_display` $625 STATUS. Stage 4: `apartment__karaoke` $750 AUDACITY, `apartment__game_console` $850 DOMINANCE, `apartment__darts` $950 RISK, `apartment__chess_table` $1100 CUNNING.
 
 `ApartmentState.prepared` стартует `true`. После свидания в квартире квартира становится грязной (`prepared = false`). Уборка — игровое действие `$0 / 30 мин`. Награда Леры автоматически готовит квартиру перед каждым домашним свиданием.
 
-После MAX Кати открывается `Акцент интерьера`: игрок назначает один уже купленный Apartment Local Object. Accent Local Move: positive `+2`, negative `-1`. Обычный Apartment Local Move: `+1` / `-1`. Первое назначение входит в reward; последующая смена — через Катю / Furniture Store за заметную денежную стоимость (точную цену задаёт economy balancing).
+После MAX Кати открывается `Акцент интерьера`: игрок назначает один уже купленный Apartment Local Object. Accent Local Move: positive `+2`, negative `-1`. Обычный Apartment Local Move: `+1` / `-1`. Первое назначение `$0`; последующая смена через Катю / Furniture Store: Story Stage `2 / 3 / 4+` = `$300 / $600 / $1000`.
 
 Autoload `ApartmentService`:
 
@@ -1169,7 +1169,7 @@ Story Girl MAX расширяет игру и двигает крупный prog
 | Марина | `marina_free_outfit` | Один бесплатный уже доступный незакупленный Outfit через обычный Outfit Store: `$0 · Подарок Марины`. Право в `marina_free_outfit_pending` сохраняется, пока выбрать нечего. |
 | Вика | `vika_base_reroll` | Один раз за свидание за $25 заменить 3 текущих BASE; Situation и источники не меняются. |
 | Даша | `dasha_soften_negative` | Первая отрицательная реакция свидания: `-1 → 0`; тег всё равно раскрывается как отрицательный, combo сбрасывается. |
-| Катя | `katya_interior_accent` | Назначить один уже купленный Apartment Local Object акцентным. Accent Local Move: `+2` / `-1`. Первое назначение входит в reward; смена Accent — через Катю / Furniture Store за заметную денежную стоимость. |
+| Катя | `katya_interior_accent` | Назначить один уже купленный Apartment Local Object акцентным. Accent Local Move: `+2` / `-1`. Первое назначение `$0`; смена Accent по Story Stage `$300 / $600 / $1000` (Stage `2 / 3 / 4+`). |
 | Лера | `lera_apartment_cleaning` | После квартирного свидания `prepared = false`; уборка $0 / 30 мин; с наградой квартира автоматически готовится перед домашним свиданием. |
 | Кира | `kira_express_styling` | Чекбокс подготовки $40: временная Внешность +1 на это свидание, cap 5. Не расходует `characteristic_training`. |
 | Оля | `olya_overtime` | Daily limit `work` становится 2. Вторая смена 50% ставки / 60 мин; чекбокс на первой смене даёт суммарно $150 / 120 мин на seed-ставке $100. |
@@ -1507,7 +1507,7 @@ Stage 1–5 строят подцели из meet/date requirements сюжетн
 
 Раздел Одежда показывает текущий наряд и магазин по Story Stage: Stage 1 — только Casual; Stage 2 stat-only комплекты за 250; Stage 3 тематические Outfit Move за 700; Stage 4 за 1200. Secondary objective Stage 2 «Приоденься» указывает на этот магазин. Купленные наряды надеваются бесплатно через `EquipmentService.equip_outfit`. Покупка — `create_buy_outfit_action(outfit_id)`. Date System Lab даёт явный selector любого Outfit как dev-инструмент.
 
-Раздел Квартира показывает купленные Apartment Local Objects, Stage cap покрытия (`0 / 4 / 8 / 12`) и карточки доступных objects. Stage 1: пустой Local toolkit. После MAX Кати — выбор `Акцент интерьера`. Там же игровое действие `skip_to_08_00`: кнопка «Пропустить до 08:00» → `GameActionCatalog.make_skip_to_08_00()` → `ActionService.execute` (`time_cost_minutes` из `TimeService.minutes_until_next_morning`, 0 денег). Точный набор 12 objects — `Venues & Local Objects` block.
+Раздел Квартира показывает купленные Apartment Local Objects, Stage cap покрытия (`0 / 4 / 8 / 12`) и карточки доступных objects. Stage 1: пустой Local toolkit. После MAX Кати — выбор `Акцент интерьера`. Там же игровое действие `skip_to_08_00`: кнопка «Пропустить до 08:00» → `GameActionCatalog.make_skip_to_08_00()` → `ActionService.execute` (`time_cost_minutes` из `TimeService.minutes_until_next_morning`, 0 денег). 12 objects: [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
 
 Раздел Девушки показывает `GirlsService.get_discovered_girls()`: имя, «Отношения: N / MAX», «Контакт: Да / Нет». Если есть `date_requirements` — блок «Требования для свидания:» со статусами. При максимуме: «Отношения: 10 / 10 — МАКСИМУМ» для обычных и ранних сюжетных; «Отношения: 15 / 15 — МАКСИМУМ» для Учёной и Президента. Незнакомые девушки в этот список не входят — они появляются в мире через локацию.
 
@@ -1654,37 +1654,46 @@ Player-facing текст проходит через глобальный `GameT
 
 ## Seed Local Objects
 
-Один объект может входить в несколько мест. После выбора любого LOCAL-хода объект целиком USED до конца DateSession.
+Local Object IDs уникальны per-venue. Public Venue: 2 Local Moves / 2 unique Tags. Apartment: 1 Object = 1 Move = 1 Tag. Полные тексты: [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
 
-Каноническая Apartment-модель — 12 объектов × 1 unique Tag × 1 Local Move; покрытие `0 → 4 → 8 → 12`. Точный набор Apartment / Café / Leisure Center / Restaurant Objects задаёт `Venues & Local Objects` block. Таблица ниже — текущий Date Lab seed и не заменяет этот contract.
+| id | имя | venue | ходы | req |
+|---|---|---|---|---|
+| cafe__barista | Бариста | cafe | `lady_first` УЧТИВОСТЬ; `best_item` ПРЯМОТА | — |
+| cafe__board_games | Настольные игры | cafe | `set_trap` ХИТРОСТЬ; `ridiculous_game` ЮМОР | — |
+| cafe__window | Окно | cafe | `fresh_air` ЗАБОТА; `open_to_street` НАГЛОСТЬ | — |
+| leisure_center__claw_machine | Автомат-хватайка | leisure_center | `get_toy` ЗАБОТА; `study_mechanism` ХИТРОСТЬ | — |
+| leisure_center__racing_arcade | Гоночный автомат | leisure_center | `max_difficulty` РИСК; `winner_wish` НАГЛОСТЬ | — |
+| leisure_center__air_hockey | Аэрохоккей | leisure_center | `play_seriously` ДОМИНИРОВАНИЕ; `world_final` ЮМОР | — |
+| leisure_center__prize_counter | Стойка призов | leisure_center | `gift_prize` ЩЕДРОСТЬ; `giant_trophy` СТАТУС | — |
+| restaurant__waiter | Официант | restaurant | `lady_first` УЧТИВОСТЬ; `set_service_order` ДОМИНИРОВАНИЕ | appearance 1 / muscle 3 |
+| restaurant__tasting_set | Дегустационный сет | restaurant | `signature_set` СТАТУС; `trust_the_chef` СПОКОЙСТВИЕ | capital 3 / aura 3 |
+| restaurant__live_music | Живая музыка | restaurant | `dedication` ЛЕСТЬ; `tip_performance` ЩЕДРОСТЬ | appearance 3 / capital 1 |
+| restaurant__open_kitchen | Открытая кухня | restaurant | `adjust_for_her` ЗАБОТА; `ask_chef` ПРЯМОТА | aura 1 / muscle 1 |
+| apartment__plaid | Плед | apartment | `get_comfortable` ЗАБОТА | Stage 2, $150 |
+| apartment__tv | Телевизор | apartment | `ridiculous_show` ЮМОР | Stage 2, $200 |
+| apartment__record_player | Проигрыватель | apartment | `quiet_music` СПОКОЙСТВИЕ | Stage 2, $250 |
+| apartment__no_filter_cards | Карточки «Без фильтров» | apartment | `honest_question` ПРЯМОТА | Stage 2, $300 |
+| apartment__tea_set | Чайный сервиз | apartment | `serve_tea` УЧТИВОСТЬ | Stage 3, $400 |
+| apartment__mini_fridge | Мини-холодильник | apartment | `best_stock` ЩЕДРОСТЬ | Stage 3, $475 |
+| apartment__large_mirror | Большое зеркало | apartment | `compliment_reflection` ЛЕСТЬ | Stage 3, $550 |
+| apartment__collection_display | Витрина коллекции | apartment | `show_centerpiece` СТАТУС | Stage 3, $625 |
+| apartment__karaoke | Караоке | apartment | `sing_first` НАГЛОСТЬ | Stage 4, $750 |
+| apartment__game_console | Игровая консоль | apartment | `no_mercy` ДОМИНИРОВАНИЕ | Stage 4, $850 |
+| apartment__darts | Дартс | apartment | `hard_throw` РИСК | Stage 4, $950 |
+| apartment__chess_table | Шахматный столик | apartment | `prepared_trap` ХИТРОСТЬ | Stage 4, $1100 |
 
-| id | имя | ходы | req |
-|---|---|---|---|
-| window | Окно | `local_window_audacity` НАГЛОСТЬ; `local_window_care` ЗАБОТА | — |
-| sofa | Диван | `local_sofa_composure` САМООБЛАДАНИЕ; `local_sofa_dominance` ДОМИНИРОВАНИЕ | aura 2 на dominance |
-| tv | Телевизор | `local_tv_humor` ЮМОР; `local_tv_cunning` ХИТРОСТЬ | текущий seed upgrade; не финальный Apartment object |
-| jukebox | Музыкальный автомат | `local_jukebox_humor` ЮМОР; `local_jukebox_audacity` НАГЛОСТЬ | — |
-| barista | Бариста | `local_barista_generosity` ЩЕДРОСТЬ; `local_barista_cunning` ХИТРОСТЬ | aura 2 на cunning |
-| waiter | Официант | `local_waiter_generosity` ЩЕДРОСТЬ; `local_waiter_status` СТАТУС | capital 2 на status |
-| piano | Рояль | `local_piano_humor` ЮМОР; `local_piano_dominance` ДОМИНИРОВАНИЕ | aura 3 на dominance |
-
-`emperor_chair` больше не является reward Кати. Reward Кати — `Акцент интерьера` над уже купленным Apartment Object.
+Move ID = `<object_id>__<action_id>`. Apartment Venue `local_object_ids` пустой: покрытие только из купленных Apartment Objects. Reward Кати — `Акцент интерьера`, не предмет каталога.
 
 ## Seed Locations
 
-Venue — toolkit. Игровая ценность места = набор Local Objects. DateVenue availability по Stage: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md).
+Venue — toolkit. Игровая ценность места = набор Local Objects. DateVenue availability по Stage: [`PROGRESSION_STAGES.md`](PROGRESSION_STAGES.md). Production catalog содержит ровно четыре DateVenue.
 
-| id | имя | enabled | DateVenue Stage | объекты | квартира |
-|---|---|---|---|---|---|
-| apartment | Квартира | true | 1 | 0 на старте; растут купленными objects | preparation |
-| cafe | Кафе | true | 2 | фиксированный set; текущий seed window, jukebox, barista | нет |
-| leisure_center | Leisure Center | true | 2 | фиксированный set; точный набор — `Venues & Local Objects` | нет |
-| restaurant | Ресторан | true | 3 | фиксированный set; текущий seed window, waiter, piano | нет |
-| park | Парк | false | — | — | нет |
-| cinema | Кинотеатр | false | — | — | нет |
-| arcade | Аркада | false | — | — | нет |
-| museum | Музей | false | — | — | нет |
-| planetarium | Планетарий | false | — | — | нет |
+| id | имя | enabled | DateVenue Stage | цена | объекты | квартира |
+|---|---|---|---|---:|---|---|
+| apartment | Квартира | true | 1 | 0 | 0 на старте; 12 purchasable objects | preparation |
+| cafe | Кафе | true | 2 | 20 | barista, board_games, window (6 Tags) | нет |
+| leisure_center | Центр досуга | true | 2 | 40 | claw_machine, racing_arcade, air_hockey, prize_counter (8 Tags) | нет |
+| restaurant | Ресторан | true | 3 | 60 | waiter, tasting_set, live_music, open_kitchen (8 Tags, Characteristic gates) | нет |
 
 ## Seed Outfits
 
@@ -1891,24 +1900,44 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 
 ## Seed LOCAL Moves
 
-kind = 2. Option texts — канон объекта; result texts в том же тоне.
+kind = LOCAL, `max_uses_per_date = 1`. `fixed_option_text` хранит только действие; UI собирает `[ТЕГ] Объект: действие`. Полные positive/negative texts: [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
 
 | id | объект | tag | option | req |
 |---|---|---|---|---|
-| local_window_audacity | window | audacity | Распахнуть окно настежь и продолжить разговор с улицей. | — |
-| local_window_care | window | care | Слегка приоткрыть окно для свежего воздуха. | — |
-| local_sofa_composure | sofa | composure | Откинуться на диван и невозмутимо продолжить разговор. | — |
-| local_sofa_dominance | sofa | dominance | Пересесть в центр дивана и самому задать темп разговору. | aura 2 |
-| local_tv_humor | tv | humor | Включить максимально неуместную передачу и сделать вид, что так и было задумано. | — |
-| local_tv_cunning | tv | cunning | Найти ролик, который неожиданно подтверждает твою версию. | — |
-| local_jukebox_humor | jukebox | humor | Поставить максимально неуместную песню. | — |
-| local_jukebox_audacity | jukebox | audacity | Переключить музыку на свой выбор посреди чужой композиции. | — |
-| local_barista_generosity | barista | generosity | Заказать девушке фирменный десерт. | — |
-| local_barista_cunning | barista | cunning | Попросить бариста подыграть твоей истории. | aura 2 |
-| local_waiter_generosity | waiter | generosity | Заказать для неё самый дорогой десерт. | — |
-| local_waiter_status | waiter | status | Попросить принести «то самое», будто ты здесь постоянный гость. | capital 2 |
-| local_piano_humor | piano | humor | Сыграть одним пальцем максимально пафосный марш. | — |
-| local_piano_dominance | piano | dominance | Попросить музыканта уступить тебе рояль и занять его место. | aura 3 |
+| cafe__barista__lady_first | cafe__barista | politeness | Попросить сначала принять заказ девушки | — |
+| cafe__barista__best_item | cafe__barista | directness | Спросить, что здесь реально самое вкусное | — |
+| cafe__board_games__set_trap | cafe__board_games | cunning | Выбрать игру и быстро заманить её в ловушку | — |
+| cafe__board_games__ridiculous_game | cafe__board_games | humor | Взять самую нелепую игру и начать до чтения правил | — |
+| cafe__window__fresh_air | cafe__window | care | Слегка приоткрыть окно, заметив, что ей душно | — |
+| cafe__window__open_to_street | cafe__window | audacity | Распахнуть окно и продолжить разговор будто теперь участвует вся улица | — |
+| leisure_center__claw_machine__get_toy | leisure_center__claw_machine | care | Попытаться достать игрушку, которая ей понравилась | — |
+| leisure_center__claw_machine__study_mechanism | leisure_center__claw_machine | cunning | Изучить механизм и выбрать лучший момент для захвата | — |
+| leisure_center__racing_arcade__max_difficulty | leisure_center__racing_arcade | risk | Выбрать максимальную сложность и отключить помощь | — |
+| leisure_center__racing_arcade__winner_wish | leisure_center__racing_arcade | audacity | Предложить маленькое желание победителю | — |
+| leisure_center__air_hockey__play_seriously | leisure_center__air_hockey | dominance | Играть всерьёз и вообще не поддаваться | — |
+| leisure_center__air_hockey__world_final | leisure_center__air_hockey | humor | Комментировать матч будто идёт финал чемпионата мира | — |
+| leisure_center__prize_counter__gift_prize | leisure_center__prize_counter | generosity | Потратить выигранные жетоны на приз для неё | — |
+| leisure_center__prize_counter__giant_trophy | leisure_center__prize_counter | status | Забрать самый огромный приз и нести его как трофей | — |
+| restaurant__waiter__lady_first | restaurant__waiter | politeness | Попросить сначала обслужить девушку | appearance 1 |
+| restaurant__waiter__set_service_order | restaurant__waiter | dominance | Взять организацию заказа на себя и задать порядок подачи | muscle 3 |
+| restaurant__tasting_set__signature_set | restaurant__tasting_set | status | Заказать фирменный сет ресторана как очевидный выбор | capital 3 |
+| restaurant__tasting_set__trust_the_chef | restaurant__tasting_set | composure | Довериться выбору шефа и спокойно ждать сюрприз | aura 3 |
+| restaurant__live_music__dedication | restaurant__live_music | flattery | Попросить музыканта посвятить ей композицию | appearance 3 |
+| restaurant__live_music__tip_performance | restaurant__live_music | generosity | Хорошо отблагодарить музыканта за отдельное исполнение | capital 1 |
+| restaurant__open_kitchen__adjust_for_her | restaurant__open_kitchen | care | Попросить изменить блюдо с учётом её вкусов | aura 1 |
+| restaurant__open_kitchen__ask_chef | restaurant__open_kitchen | directness | Спросить шефа напрямую, что он сам здесь заказал бы | muscle 1 |
+| apartment__plaid__get_comfortable | apartment__plaid | care | Предложить ей плед и устроиться поудобнее | — |
+| apartment__tv__ridiculous_show | apartment__tv | humor | Включить что-нибудь настолько нелепое, что это уже интересно | — |
+| apartment__record_player__quiet_music | apartment__record_player | composure | Поставить спокойную музыку и позволить паузе просто существовать | — |
+| apartment__no_filter_cards__honest_question | apartment__no_filter_cards | directness | Вытянуть вопрос и ответить без ухода от темы | — |
+| apartment__tea_set__serve_tea | apartment__tea_set | politeness | Нормально сервировать чай вместо случайной кружки | — |
+| apartment__mini_fridge__best_stock | apartment__mini_fridge | generosity | Достать лучший запас специально для неё | — |
+| apartment__large_mirror__compliment_reflection | apartment__large_mirror | flattery | Подвести её к зеркалу и красиво отметить, как она выглядит | — |
+| apartment__collection_display__show_centerpiece | apartment__collection_display | status | Показать самый впечатляющий предмет своей коллекции | — |
+| apartment__karaoke__sing_first | apartment__karaoke | audacity | Первым начать петь, не проверяя, насколько это хорошая идея | — |
+| apartment__game_console__no_mercy | apartment__game_console | dominance | Запустить соревнование и предупредить, что поддаваться не будешь | — |
+| apartment__darts__hard_throw | apartment__darts | risk | Предложить усложнённый бросок с небольшой ставкой | — |
+| apartment__chess_table__prepared_trap | apartment__chess_table | cunning | Быстро устроить позицию с заранее подготовленной ловушкой | — |
 
 ## Developer Room
 
@@ -1924,7 +1953,7 @@ kind = 2. Option texts — канон объекта; result texts в том ж�
 
 «ДЕВУШКИ»: selector Сложность (enabled presets), Trait, число начально известных Tags, рядом `Положительных тегов требуется: N` / `Отрицательных тегов: enabled−N` и теоретическая доступность. Таблица `TAG | НРАВИТСЯ | НЕ НРАВИТСЯ`: редактируются только positive tags, столбец «не нравится» — вычисляемое дополнение. Счётчик `Положительные теги: current / required`. В списке девушек видно Trait. N ≠ required → ERROR валидации.
 
-«МЕСТА»: `local_object_ids` выбранной DateVenue. Canonical enabled DateVenues: apartment (Stage 1), cafe и leisure_center (Stage 2), restaurant (Stage 3). Остальные DateVenue `enabled = false`. Точные Local Objects — `Venues & Local Objects` block.
+«МЕСТА»: `local_object_ids` выбранной DateVenue. Production DateVenues: apartment (Stage 1), cafe и leisure_center (Stage 2), restaurant (Stage 3). Local Objects: [`VENUES_AND_LOCAL_OBJECTS.md`](VENUES_AND_LOCAL_OBJECTS.md).
 
 «СИТУАЦИИ»: ID, Display Name, Situation Text, Enabled, Allowed Phases, Allowed Venue IDs, Allowed Girl IDs, Weight, шесть BASE (Move ID, Tag, Option, Positive/Negative Result).
 

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DateMove" load_steps=3 format=3]
+[ext_resource type="Script" path="res://date_system/content/date_move.gd" id="1_move"]
+[ext_resource type="Script" path="res://date_system/content/unlock_requirement.gd" id="3_req"]
+
+[sub_resource type="Resource" id="req_1"]
+script = ExtResource("3_req")
+stat_id = &"aura"
+required_level = 1
+
+[resource]
+script = ExtResource("1_move")
+id = &"restaurant__open_kitchen__adjust_for_her"
+display_name = "Попросить изменить блюдо с учётом её вкусов"
+description = "Попросить изменить блюдо с учётом её вкусов"
+kind = 2
+enabled = true
+max_uses_per_date = 1
+unlock_requirement = SubResource("req_1")
+fixed_tag_id = &"care"
+fixed_option_text = "Попросить изменить блюдо с учётом её вкусов"
+fixed_positive_result_text = "Она замечает, что ты запомнил её предпочтения и подумал о комфорте."
+fixed_negative_result_text = "Она считает, что ради неё совсем не обязательно менять работу кухни."
