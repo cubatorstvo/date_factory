@@ -11,6 +11,7 @@ const MEET_TIME_MINUTES: int = 30
 
 var _catalog: GirlCatalog
 var _reward_catalog: FillerRewardCatalog
+var knowledge_rng: RandomNumberGenerator
 
 
 func _ready() -> void:
@@ -265,6 +266,8 @@ func reveal_random_unknown_tags(girl_id: StringName, count: int, rng: RandomNumb
 			continue
 		unknown.append(tag.id)
 	var generator: RandomNumberGenerator = rng
+	if generator == null:
+		generator = knowledge_rng
 	if generator == null:
 		generator = RandomNumberGenerator.new()
 		generator.randomize()

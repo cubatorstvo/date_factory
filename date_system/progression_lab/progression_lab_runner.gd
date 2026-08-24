@@ -2,6 +2,7 @@ class_name ProgressionLabRunner
 extends RefCounted
 
 signal batch_progress(completed: int, total: int, runs_per_second: float, elapsed_sec: float, remaining_sec: float)
+signal replay_progress(completed: int, total: int, seed: int, matched: int, mismatched: int)
 
 var config: ProgressionLabConfig
 var n: int = 1000
@@ -20,6 +21,8 @@ var _configured: bool = false
 var _seed_list: PackedInt32Array = PackedInt32Array()
 var _current_seed: int = 0
 var regression_mode: bool = false
+var verify_replays_on_finish: bool = false
+var _verify_index: int = 0
 
 
 func configure(p_config: ProgressionLabConfig, p_n: int, p_base_seed_start: int, p_end_story_stage: int, p_archetype_mode: StringName) -> void:
@@ -98,8 +101,6 @@ func get_result() -> ProgressionLabPopulationResult:
 func replay_seed(base_seed: int, detailed: bool) -> ProgressionLabRunRecord:
 	if config == null:
 		config = ProgressionLabConfig.new()
-	if _session == null:
-		_session = PlaythroughSession.new()
 	return _run_seed(base_seed, detailed)
 
 
@@ -164,13 +165,14 @@ func simulation_version() -> String:
 
 func _run_seed(base_seed: int, p_detailed: bool) -> ProgressionLabRunRecord:
 	var captured: Array = []
-	_session.run(func() -> void:
+	var session := PlaythroughSession.new()
+	var work: Callable = func() -> void:
 		var jitter: float = config.trait_jitter
-		if not _result.isolation.is_empty():
+		if _result != null and not _result.isolation.is_empty():
 			jitter = 0.0
 		var profile_rng: RandomNumberGenerator = ProgressionRng.make(base_seed, ProgressionRng.STREAM_PROFILE)
 		var mode: StringName = archetype_mode
-		if not _result.isolation.is_empty():
+		if _result != null and not _result.isolation.is_empty():
 			mode = ProgressionLabConfig.ARCHETYPE_TYPICAL
 		var profile: PlayerProfile = PlayerProfile.generate(config, profile_rng, mode, jitter)
 		var interest_rng: RandomNumberGenerator = ProgressionRng.make(base_seed, ProgressionRng.STREAM_CAMPAIGN_INTEREST)
@@ -180,33 +182,100 @@ func _run_seed(base_seed: int, p_detailed: bool) -> ProgressionLabRunRecord:
 		executor.profile = profile
 		executor.interests = interests
 		executor.detailed = p_detailed
-		if not _result.isolation.is_empty():
+		if _result != null and not _result.isolation.is_empty():
 			executor.isolation_mode = StringName(str(_result.isolation.get("mode", "")))
 			executor.isolation_characteristic_id = StringName(str(_result.isolation.get("characteristic_id", "")))
 			executor.isolation_milestone = int(_result.isolation.get("milestone", 0))
-		captured.append(executor.execute_run(base_seed, end_story_stage))
-	)
+		var record: ProgressionLabRunRecord = executor.execute_run(base_seed, end_story_stage)
+		record.rng_draw_counts[ProgressionRng.STREAM_PROFILE] = ProgressionRng.draw_count_of(profile_rng)
+		record.rng_draw_counts[ProgressionRng.STREAM_CAMPAIGN_INTEREST] = ProgressionRng.draw_count_of(interest_rng)
+		record.compute_execution_signature()
+		captured.append(record)
+	session.run(work, base_seed)
 	if captured.is_empty():
 		var empty := ProgressionLabRunRecord.new()
 		empty.base_seed = base_seed
 		empty.aborted = true
 		empty.hard_warnings.append("ISOLATION_FAILED")
+		empty.compute_execution_signature()
 		return empty
 	return captured[0]
+
+func verify_all_replays() -> Dictionary:
+	begin_replay_verification()
+	while not process_replay_batch():
+		pass
+	return {
+		"matched": _result.replay_matched if _result != null else 0,
+		"total": _result.replay_total if _result != null else 0,
+		"mismatches": _result.replay_mismatches if _result != null else [],
+	}
+func begin_replay_verification() -> void:
+	_verify_index = 0
+	if _result == null:
+		return
+	_result.replay_matched = 0
+	_result.replay_total = _result.records.size()
+	_result.replay_mismatches = []
+
+
+func process_replay_batch() -> bool:
+	if _result == null:
+		return true
+	if _result.replay_total <= 0 and _verify_index == 0:
+		begin_replay_verification()
+	var total: int = _result.records.size()
+	if total <= 0 or _verify_index >= total or _cancelled:
+		_result.replay_total = total
+		return true
+	var batch: int = 1
+	if config != null:
+		batch = mini(config.batch_size, total - _verify_index)
+	batch = maxi(batch, 1)
+	for _i in range(batch):
+		if _cancelled or _verify_index >= total:
+			break
+		var record: Variant = _result.records[_verify_index]
+		_verify_index += 1
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var summary: ProgressionLabRunRecord = record
+		_current_seed = summary.base_seed
+		var replay: ProgressionLabRunRecord = _run_seed(summary.base_seed, true)
+		if replay.execution_signature == summary.execution_signature:
+			_result.replay_matched += 1
+		else:
+			var diff: Dictionary = ProgressionLabRunRecord.first_difference(summary, replay)
+			diff["warning"] = "REPLAY_DETERMINISM_MISMATCH"
+			_result.replay_mismatches.append(diff)
+			summary.hard_warnings.append("REPLAY_DETERMINISM_MISMATCH")
+		replay_progress.emit(_verify_index, total, summary.base_seed, _result.replay_matched, _result.replay_mismatches.size())
+	_result.replay_total = total
+	return _verify_index >= total or _cancelled
+
 
 
 func _replay_export_seeds() -> Dictionary:
 	var detailed: Dictionary = {}
-	for row in _result.bad_seeds:
+	for row in _result.top_bad_seeds:
 		var seed: int = int(row.get("seed", 0))
+		detailed["expected_%d" % seed] = _pass1_record(seed)
 		detailed[seed] = replay_seed(seed, true)
 	for key in _result.representative_seeds.keys():
 		var row: Variant = _result.representative_seeds[key]
 		if row is Dictionary:
 			var seed: int = int(row.get("seed", 0))
 			if not detailed.has(seed):
+				detailed["expected_%d" % seed] = _pass1_record(seed)
 				detailed[seed] = replay_seed(seed, true)
 	return detailed
+
+
+func _pass1_record(seed: int) -> ProgressionLabRunRecord:
+	for record in _result.records:
+		if record is ProgressionLabRunRecord and record.base_seed == seed:
+			return record
+	return null
 
 
 func _finish_if_needed() -> void:

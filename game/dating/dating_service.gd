@@ -185,6 +185,7 @@ func create_start_date_action(
 	effect.backup_outfit_id = backup_outfit_id
 	effect.express_styling = express_styling
 	effect.urgent_taxi = urgent_taxi
+	effect.date_seed = int(options.get("date_seed", -1))
 	action.effects.append(effect)
 	return action
 

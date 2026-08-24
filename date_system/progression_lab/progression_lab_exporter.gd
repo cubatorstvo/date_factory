@@ -21,39 +21,46 @@ func export_full_statistics(result: ProgressionLabPopulationResult, directory: S
 	_write_text("%s/representative_seeds.csv" % folder, _representative_csv(result.representative_seeds))
 	_write_text("%s/share_bundle.md" % folder, share_bundle_markdown(result))
 	_write_text("%s/share_bundle.json" % folder, JSON.stringify(share_bundle_json(result), "\t"))
+	_write_text("%s/warning_prevalence.csv" % folder, _warning_prevalence_csv(result))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("%s/bad_seed_logs" % folder))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("%s/representative_seed_logs" % folder))
-	for row in result.bad_seeds:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("%s/replay_mismatches" % folder))
+	for row in result.top_bad_seeds:
 		var seed: int = int(row.get("seed", 0))
 		var record: ProgressionLabRunRecord = detailed_records.get(seed, null)
 		if record != null:
-			_write_seed_pair("%s/bad_seed_logs" % folder, record, result)
+			_write_verified_seed_pair("%s/bad_seed_logs" % folder, record, result, detailed_records.get("expected_%d" % seed, null))
 	for key in result.representative_seeds.keys():
 		var row: Variant = result.representative_seeds[key]
 		if row is Dictionary:
 			var seed: int = int(row.get("seed", 0))
 			var record: ProgressionLabRunRecord = detailed_records.get(seed, null)
 			if record != null:
-				_write_seed_pair("%s/representative_seed_logs" % folder, record, result)
+				_write_verified_seed_pair("%s/representative_seed_logs" % folder, record, result, detailed_records.get("expected_%d" % seed, null))
+	for mismatch in result.replay_mismatches:
+		if mismatch is Dictionary:
+			var seed: int = int(mismatch.get("seed", 0))
+			_write_text("%s/replay_mismatches/seed_%d_replay_mismatch.json" % [folder, seed], JSON.stringify(mismatch, "\t"))
+			_write_text("%s/replay_mismatches/seed_%d_replay_mismatch.md" % [folder, seed], _mismatch_markdown(mismatch))
 	return ProjectSettings.globalize_path(folder)
 
 
 func export_bad_seeds_only(result: ProgressionLabPopulationResult, directory: String = "", detailed_records: Dictionary = {}) -> String:
 	var folder: String = _prepare_folder(result, directory, "bad")
 	_write_text("%s/config.json" % folder, JSON.stringify(_config_payload(result), "\t"))
-	_write_text("%s/bad_seeds.csv" % folder, _bad_csv(result.bad_seeds))
+	_write_text("%s/bad_seeds.csv" % folder, _bad_csv(result.all_bad_seeds))
 	_write_text("%s/bad_seeds_summary.md" % folder, _bad_summary_md(result))
 	var jsonl: PackedStringArray = PackedStringArray()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("%s/logs" % folder))
-	for row in result.bad_seeds:
+	for row in result.all_bad_seeds:
 		jsonl.append(JSON.stringify(row))
+	_write_text("%s/bad_seeds.jsonl" % folder, "\n".join(jsonl))
+	for row in result.top_bad_seeds:
 		var seed: int = int(row.get("seed", 0))
 		var record: ProgressionLabRunRecord = detailed_records.get(seed, null)
 		if record != null:
-			_write_seed_pair("%s/logs" % folder, record, result)
-	_write_text("%s/bad_seeds.jsonl" % folder, "\n".join(jsonl))
+			_write_verified_seed_pair("%s/logs" % folder, record, result, detailed_records.get("expected_%d" % seed, null))
 	return ProjectSettings.globalize_path(folder)
-
 
 func export_specific_seed(record: ProgressionLabRunRecord, result: ProgressionLabPopulationResult, directory: String = "") -> String:
 	var folder: String = directory
@@ -108,14 +115,19 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 			var days: Dictionary = stage_stats["calendar_days"]
 			lines.append("calendar_days P50=%.2f" % float(days.get("P50", 0.0)))
 	lines.append("")
-	lines.append("## Bad seeds: %d / %d (%.1f%%)" % [result.bad_seeds.size(), maxi(result.n, 1), 100.0 * float(result.bad_seeds.size()) / float(maxi(result.n, 1))])
+	lines.append("## Bad seeds: %d / %d (%.1f%%)" % [result.bad_seed_count, maxi(result.n, 1), 100.0 * result.bad_seed_percentage])
+	lines.append("Top %d of %d bad seeds" % [result.top_bad_seeds.size(), result.bad_seed_count])
 	lines.append("")
 	lines.append("## Warnings")
 	for warning in result.analysis_warnings:
 		lines.append("- %s" % warning)
 	lines.append("")
+	lines.append("## Warning prevalence")
+	for row in result.warning_prevalence:
+		lines.append("- %s: %d (%.1f%%)" % [str(row.get("warning_id", "")), int(row.get("run_count", 0)), 100.0 * float(row.get("run_share", 0.0))])
+	lines.append("")
 	lines.append("## Top bad seeds")
-	for row in result.bad_seeds:
+	for row in result.top_bad_seeds:
 		lines.append("- seed %s [%s] badness=%s warning=%s days=%s stop=%s" % [
 			str(row.get("seed", 0)),
 			str(row.get("archetype", "")),
@@ -158,7 +170,13 @@ func share_bundle_json(result: ProgressionLabPopulationResult) -> Dictionary:
 		"n": result.n,
 		"config": result.config,
 		"statistics": result.statistics,
-		"bad_seeds": result.bad_seeds,
+		"bad_seed_count": result.bad_seed_count,
+		"bad_seed_percentage": result.bad_seed_percentage,
+		"top_bad_seeds": result.top_bad_seeds,
+		"all_bad_seeds": result.all_bad_seeds,
+		"warning_prevalence": result.warning_prevalence,
+		"replay_matched": result.replay_matched,
+		"replay_total": result.replay_total,
 		"analysis_warnings": Array(result.analysis_warnings),
 		"representative_seeds": result.representative_seeds,
 		"item_metrics": result.item_metrics,
@@ -173,6 +191,7 @@ func specific_seed_markdown(record: ProgressionLabRunRecord, result: Progression
 	lines.append("## Summary")
 	lines.append("Archetype: %s" % String(record.archetype))
 	lines.append("Badness: %d" % record.badness_score)
+	lines.append("execution_signature: %s" % record.execution_signature)
 	lines.append("Warnings: %s" % ", ".join(record.hard_warnings))
 	if not record.stop_reason.is_empty():
 		lines.append("Stop reason: %s" % record.stop_reason)
@@ -216,6 +235,8 @@ func specific_seed_json(record: ProgressionLabRunRecord, result: ProgressionLabP
 		"project_version": _project_version(),
 		"godot_version": Engine.get_version_info().get("string", ""),
 		"seed": record.base_seed,
+		"execution_signature": record.execution_signature,
+		"rng_draw_counts": record.rng_draw_counts,
 		"config": result.config if result != null else {},
 		"profile": record.profile,
 		"stage_plans": record.stage_plans,
@@ -234,6 +255,40 @@ func specific_seed_json(record: ProgressionLabRunRecord, result: ProgressionLabP
 func _write_seed_pair(folder: String, record: ProgressionLabRunRecord, result: ProgressionLabPopulationResult) -> void:
 	_write_text("%s/%d.md" % [folder, record.base_seed], specific_seed_markdown(record, result))
 	_write_text("%s/%d.json" % [folder, record.base_seed], JSON.stringify(specific_seed_json(record, result), "\t"))
+
+
+func _write_verified_seed_pair(folder: String, record: ProgressionLabRunRecord, result: ProgressionLabPopulationResult, expected: Variant) -> void:
+	if expected is ProgressionLabRunRecord:
+		var pass1: ProgressionLabRunRecord = expected
+		if pass1.execution_signature != record.execution_signature:
+			var mismatch: Dictionary = ProgressionLabRunRecord.first_difference(pass1, record)
+			_write_text("%s/seed_%d_replay_mismatch.json" % [folder, record.base_seed], JSON.stringify(mismatch, "\t"))
+			_write_text("%s/seed_%d_replay_mismatch.md" % [folder, record.base_seed], _mismatch_markdown(mismatch))
+			return
+	_write_seed_pair(folder, record, result)
+
+
+func _warning_prevalence_csv(result: ProgressionLabPopulationResult) -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("warning_id,run_count,run_share")
+	for row in result.warning_prevalence:
+		lines.append("%s,%s,%s" % [str(row.get("warning_id", "")), str(row.get("run_count", 0)), str(row.get("run_share", 0.0))])
+	return "\n".join(lines)
+
+
+func _mismatch_markdown(mismatch: Dictionary) -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("# Replay mismatch seed %s" % str(mismatch.get("seed", 0)))
+	lines.append("")
+	lines.append("expected: %s" % str(mismatch.get("expected_signature", "")))
+	lines.append("actual: %s" % str(mismatch.get("actual_signature", "")))
+	lines.append("first differing action index: %s" % str(mismatch.get("first_differing_action_index", -1)))
+	lines.append("summary action: %s" % str(mismatch.get("summary_action", "")))
+	lines.append("replay action: %s" % str(mismatch.get("replay_action", "")))
+	lines.append("summary stop: %s" % str(mismatch.get("summary_stop_reason", "")))
+	lines.append("replay stop: %s" % str(mismatch.get("replay_stop_reason", "")))
+	lines.append("summary days: %s replay days: %s" % [str(mismatch.get("summary_campaign_days", 0)), str(mismatch.get("replay_campaign_days", 0))])
+	return "\n".join(lines)
 
 
 func _prepare_folder(result: ProgressionLabPopulationResult, directory: String, suffix: String = "") -> String:
@@ -305,12 +360,12 @@ func _group_csv(groups: Dictionary) -> String:
 
 func _seed_csv(result: ProgressionLabPopulationResult) -> String:
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("seed,archetype,days,work,dates,economy,dead,friction,novelty,badness,warnings")
+	lines.append("seed,archetype,days,work,dates,economy,dead,friction,novelty,badness,warnings,signature,stop")
 	for record in result.records:
 		if not (record is ProgressionLabRunRecord):
 			continue
 		var metrics: Dictionary = record.campaign_metrics
-		lines.append("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s" % [
+		lines.append("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s" % [
 			record.base_seed,
 			String(record.archetype),
 			str(metrics.get("calendar_days", 0)),
@@ -322,6 +377,8 @@ func _seed_csv(result: ProgressionLabPopulationResult) -> String:
 			str(metrics.get("novelty_density", 0)),
 			record.badness_score,
 			"|".join(record.hard_warnings),
+			record.execution_signature,
+			record.stop_reason,
 		])
 	return "\n".join(lines)
 

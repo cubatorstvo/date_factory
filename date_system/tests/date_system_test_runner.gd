@@ -14,11 +14,14 @@ func _run_tests() -> void:
 		return
 	_started = true
 	print("DATE SYSTEM TESTS: start")
+	await process_frame
 	var tests := DateSystemTests.new()
 	var failures: PackedStringArray = tests.run_all()
 	print("DATE SYSTEM TESTS: %s" % tests.summary())
 	for failure in failures:
 		printerr("FAIL: %s" % failure)
+	await process_frame
+	print("TEST GROUP: progression lab")
 	var lab_tests: _ProgressionLabTests = _ProgressionLabTests.new()
 	var lab_failures: PackedStringArray = lab_tests.run_all()
 	print("PROGRESSION LAB TESTS: %s" % lab_tests.summary())

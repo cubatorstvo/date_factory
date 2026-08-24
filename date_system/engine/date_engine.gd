@@ -43,7 +43,7 @@ func create_date_session(config: DateSessionConfig) -> DateSession:
 
 	_session = DateSession.new()
 	_session.seed = config.seed
-	_session.session_id = "%d-%d" % [config.seed, Time.get_ticks_msec()]
+	_session.session_id = str(config.seed)
 	_session.girl_id = config.girl_id
 	_session.venue_id = config.venue_id
 	_session.outfit_id = config.outfit_id

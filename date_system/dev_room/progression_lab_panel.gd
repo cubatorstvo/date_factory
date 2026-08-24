@@ -59,7 +59,7 @@ const OVERVIEW_KEYS: PackedStringArray = [
 ]
 const STAGE_KEYS: PackedStringArray = ["stages", "stage_metrics", "stage_stats"]
 const ARCHETYPE_KEYS: PackedStringArray = ["archetypes", "archetype_metrics", "archetype_stats"]
-const BAD_SEED_KEYS: PackedStringArray = ["bad_seeds", "bad_seed_records", "bad_seed_summaries"]
+const BAD_SEED_KEYS: PackedStringArray = ["top_bad_seeds", "bad_seeds", "bad_seed_records", "bad_seed_summaries"]
 const REPRESENTATIVE_KEYS: PackedStringArray = ["representative_seeds", "representative_seed_records"]
 const ITEM_KEYS: PackedStringArray = ["items", "item_metrics", "item_utility"]
 
@@ -441,6 +441,8 @@ func _resolve_engine() -> void:
 			add_child(runner_node)
 	if _runner != null and _runner.has_signal("batch_progress") and not _runner.batch_progress.is_connected(_on_batch_progress):
 		_runner.batch_progress.connect(_on_batch_progress)
+	if _runner != null and _runner.has_signal("replay_progress") and not _runner.replay_progress.is_connected(_on_replay_progress):
+		_runner.replay_progress.connect(_on_replay_progress)
 	var missing: PackedStringArray = PackedStringArray()
 	if _config == null:
 		missing.append("ProgressionLabConfig")
@@ -588,13 +590,28 @@ func _pump_batches() -> void:
 		await get_tree().process_frame
 		if finished or not _running:
 			break
+	if _running and not _isolation_running and _runner != null and _runner.has_method("process_replay_batch"):
+		if _runner.has_method("begin_replay_verification"):
+			_runner.begin_replay_verification()
+		while _running:
+			var replay_finished: bool = bool(_runner.process_replay_batch())
+			await get_tree().process_frame
+			if replay_finished or not _running:
+				break
 	_running = false
 	_set_running_ui(false)
-
 
 func _on_batch_progress(completed: Variant, total: Variant, runs_per_second: Variant, elapsed_sec: Variant, remaining_sec: Variant) -> void:
 	_show_run_progress(int(completed), int(total), float(runs_per_second), float(elapsed_sec), float(remaining_sec))
 
+
+func _on_replay_progress(completed: Variant, total: Variant, seed: Variant, matched: Variant, mismatched: Variant) -> void:
+	var line: String = "Проверка replay %d / %d" % [int(completed), int(total)]
+	line += " · Seed: %d" % int(seed)
+	line += " · matched %d / mismatched %d" % [int(matched), int(mismatched)]
+	if _progress_label != null:
+		_progress_label.text = line
+	_emit_status(line)
 
 func _show_run_progress(completed: int, total: int, runs_per_second: float, elapsed_sec: float, remaining_sec: float) -> void:
 	_completed = completed
@@ -759,7 +776,11 @@ func _apply_result(result: Variant) -> void:
 	_stages_text.text = _format_stats_branch(result, "per_stage", "No stage metrics yet.")
 	_archetypes_text.text = _format_stats_branch(result, "per_archetype", "No archetype metrics yet.")
 	_items_text.text = _format_named_section(result, ITEM_KEYS, "No item metrics yet.")
-	_fill_record_list(_bad_list, _result_array(result, BAD_SEED_KEYS), true)
+	var top_bad: Array = _result_array(result, BAD_SEED_KEYS)
+	var all_count: int = int(_get_prop(result, "bad_seed_count") if _get_prop(result, "bad_seed_count") != null else top_bad.size())
+	if _bad_header != null:
+		_bad_header.text = "Top %d of %d bad seeds | %s" % [top_bad.size(), all_count, " | ".join(BAD_SEED_COLUMNS)]
+	_fill_record_list(_bad_list, top_bad, true)
 	_fill_record_list(_rep_list, _result_records(result, REPRESENTATIVE_KEYS), false)
 	if _selected_seed < 0:
 		_set_seed_actions_enabled(false)
@@ -793,12 +814,25 @@ func _format_overview(result: Variant) -> String:
 		lines.append("")
 		lines.append("analysis_warnings")
 		lines.append(_format_value(warnings, 0))
-	var bad_seeds: Variant = _get_prop(result, "bad_seeds")
 	var n_value: Variant = _get_prop(result, "n")
-	if bad_seeds is Array and n_value != null and int(n_value) > 0:
-		var pct: float = 100.0 * float((bad_seeds as Array).size()) / float(int(n_value))
+	var bad_count: Variant = _get_prop(result, "bad_seed_count")
+	if bad_count == null:
+		var bad_seeds: Variant = _get_prop(result, "all_bad_seeds")
+		if bad_seeds is Array:
+			bad_count = (bad_seeds as Array).size()
+	if bad_count != null and n_value != null and int(n_value) > 0:
+		var pct: float = 100.0 * float(int(bad_count)) / float(int(n_value))
+		var stored_pct: Variant = _get_prop(result, "bad_seed_percentage")
+		if stored_pct != null:
+			pct = 100.0 * float(stored_pct)
 		lines.append("")
-		lines.append("bad-seed percentage: %.1f%% (%d / %d)" % [pct, (bad_seeds as Array).size(), int(n_value)])
+		lines.append("Bad seeds: %d / %d (%.1f%%)" % [int(bad_count), int(n_value), pct])
+		var top_bad: Variant = _get_prop(result, "top_bad_seeds")
+		if top_bad is Array:
+			lines.append("Top %d of %d bad seeds" % [(top_bad as Array).size(), int(bad_count)])
+	var replay_total: Variant = _get_prop(result, "replay_total")
+	if replay_total != null and int(replay_total) > 0:
+		lines.append("Replay determinism: %d / %d matched" % [int(_get_prop(result, "replay_matched")), int(replay_total)])
 	return "\n".join(lines)
 
 

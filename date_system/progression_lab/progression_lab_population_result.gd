@@ -10,12 +10,20 @@ var end_story_stage: int = 4
 var archetype_mode: StringName = &"POPULATION"
 var records: Array = []
 var statistics: Dictionary = {}
+var all_bad_seeds: Array = []
+var top_bad_seeds: Array = []
 var bad_seeds: Array = []
+var bad_seed_count: int = 0
+var bad_seed_percentage: float = 0.0
 var representative_seeds: Dictionary = {}
 var analysis_warnings: PackedStringArray = PackedStringArray()
+var warning_prevalence: Array = []
 var item_metrics: Dictionary = {}
 var performance: Dictionary = {}
 var isolation: Dictionary = {}
+var replay_matched: int = 0
+var replay_total: int = 0
+var replay_mismatches: Array = []
 
 
 func to_dict() -> Dictionary:
@@ -35,10 +43,18 @@ func to_dict() -> Dictionary:
 		"archetype_mode": String(archetype_mode),
 		"records": compact_records,
 		"statistics": statistics.duplicate(true),
-		"bad_seeds": bad_seeds.duplicate(true),
+		"all_bad_seeds": all_bad_seeds.duplicate(true),
+		"top_bad_seeds": top_bad_seeds.duplicate(true),
+		"bad_seeds": all_bad_seeds.duplicate(true),
+		"bad_seed_count": bad_seed_count,
+		"bad_seed_percentage": bad_seed_percentage,
 		"representative_seeds": representative_seeds.duplicate(true),
 		"analysis_warnings": Array(analysis_warnings),
+		"warning_prevalence": warning_prevalence.duplicate(true),
 		"item_metrics": item_metrics.duplicate(true),
 		"performance": performance.duplicate(true),
 		"isolation": isolation.duplicate(true),
+		"replay_matched": replay_matched,
+		"replay_total": replay_total,
+		"replay_mismatches": replay_mismatches.duplicate(true),
 	}

@@ -7,6 +7,7 @@ extends ActionEffect
 @export var backup_outfit_id: StringName = &""
 @export var express_styling: bool = false
 @export var urgent_taxi: bool = false
+@export var date_seed: int = -1
 
 
 func apply() -> void:
@@ -17,6 +18,7 @@ func apply() -> void:
 		"backup_outfit_id": backup_outfit_id,
 		"express_styling": express_styling,
 		"urgent_taxi": urgent_taxi,
+		"date_seed": date_seed,
 	})
 
 

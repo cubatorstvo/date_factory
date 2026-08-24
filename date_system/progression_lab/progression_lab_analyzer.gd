@@ -69,9 +69,20 @@ func analyze(result: ProgressionLabPopulationResult, config: ProgressionLabConfi
 					filtered.append(record)
 			result.statistics["per_archetype_per_stage"]["%s:%d" % [String(archetype), stage]] = _stats_for(filtered, str(stage))
 	_apply_badness(summaries, config)
-	result.bad_seeds = _select_bad_seeds(summaries, config)
+	var all_bad: Array = _collect_all_bad_seeds(summaries, config)
+	var display_k: int = config.bad_seed_count_display if config.bad_seed_count_display > 0 else config.default_bad_seed_count
+	result.all_bad_seeds = []
+	for record in all_bad:
+		result.all_bad_seeds.append(_seed_row(record))
+	result.bad_seed_count = result.all_bad_seeds.size()
+	result.bad_seed_percentage = float(result.bad_seed_count) / float(maxi(result.n, 1))
+	result.top_bad_seeds = []
+	for i in range(mini(display_k, result.all_bad_seeds.size())):
+		result.top_bad_seeds.append(result.all_bad_seeds[i])
+	result.bad_seeds = result.all_bad_seeds.duplicate(true)
 	result.representative_seeds = _select_representative(summaries)
 	result.analysis_warnings = _aggregate_warnings(summaries, config)
+	result.warning_prevalence = _warning_prevalence(summaries, result.n)
 	result.item_metrics = _aggregate_items(summaries)
 
 
@@ -242,7 +253,7 @@ func _hard_warnings_for(record: ProgressionLabRunRecord, config: ProgressionLabC
 	return warnings
 
 
-func _select_bad_seeds(records: Array, config: ProgressionLabConfig) -> Array:
+func _collect_all_bad_seeds(records: Array, config: ProgressionLabConfig) -> Array:
 	var bad: Array = []
 	for record in records:
 		if record.badness_score >= 90 or record.hard_warnings.size() > 0:
@@ -254,10 +265,39 @@ func _select_bad_seeds(records: Array, config: ProgressionLabConfig) -> Array:
 			return a.badness_score > b.badness_score
 		return a.base_seed < b.base_seed
 	)
+	return bad
+
+
+func _select_bad_seeds(records: Array, config: ProgressionLabConfig) -> Array:
+	var all_bad: Array = _collect_all_bad_seeds(records, config)
+	var display_k: int = config.bad_seed_count_display if config.bad_seed_count_display > 0 else config.default_bad_seed_count
 	var limited: Array = []
-	for i in range(mini(config.default_bad_seed_count, bad.size())):
-		limited.append(_seed_row(bad[i]))
+	for i in range(mini(display_k, all_bad.size())):
+		limited.append(_seed_row(all_bad[i]))
 	return limited
+
+
+func _warning_prevalence(records: Array, n: int) -> Array:
+	var counts: Dictionary = {}
+	for record in records:
+		var seen: Dictionary = {}
+		for warning in record.hard_warnings:
+			var key: String = str(warning)
+			if seen.has(key):
+				continue
+			seen[key] = true
+			counts[key] = int(counts.get(key, 0)) + 1
+	var rows: Array = []
+	var keys: Array = counts.keys()
+	keys.sort()
+	for key in keys:
+		var run_count: int = int(counts[key])
+		rows.append({
+			"warning_id": str(key),
+			"run_count": run_count,
+			"run_share": float(run_count) / float(maxi(n, 1)),
+		})
+	return rows
 
 
 func _select_representative(records: Array) -> Dictionary:
@@ -304,6 +344,7 @@ func _seed_row(record: ProgressionLabRunRecord) -> Dictionary:
 		"stage_plan_summary": plan_line,
 		"primary_warning": String(record.hard_warnings[0]) if record.hard_warnings.size() > 0 else "",
 		"stop_reason": record.stop_reason,
+		"execution_signature": record.execution_signature,
 		"diagnostic_snapshot": record.diagnostic_snapshot.duplicate(true),
 	}
 

@@ -12,6 +12,7 @@ const STREAM_EXECUTION_2: String = "EXECUTION_2"
 const STREAM_EXECUTION_3: String = "EXECUTION_3"
 const STREAM_EXECUTION_4: String = "EXECUTION_4"
 const STREAM_DATE: String = "DATE"
+const STREAM_GIRL_KNOWLEDGE: String = "GIRL_KNOWLEDGE"
 
 
 static func stage_plan_stream(stage: int) -> String:
@@ -35,9 +36,16 @@ static func derive_seed(base_seed: int, stream_name: String) -> int:
 
 
 static func make(base_seed: int, stream_name: String) -> RandomNumberGenerator:
-	var rng := RandomNumberGenerator.new()
+	var rng := CountedRng.new()
+	rng.stream_name = stream_name
 	rng.seed = derive_seed(base_seed, stream_name)
 	return rng
+
+
+static func draw_count_of(rng: RandomNumberGenerator) -> int:
+	if rng is CountedRng:
+		return (rng as CountedRng).draw_count
+	return 0
 
 
 static func sha256_hex(payload: String) -> String:

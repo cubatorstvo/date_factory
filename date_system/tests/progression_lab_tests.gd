@@ -28,8 +28,15 @@ func run_all() -> PackedStringArray:
 	_test_story_barrier_and_stall()
 	_test_stage_money_consistency()
 	_test_failed_seed_regression_set()
+	_test_replay_signature_and_isolation()
+	_test_replay_regression_seeds()
+	_test_story_girl_date_cash_support()
+	_test_seed_23_cash_and_replay()
+	_test_completed_repeatable_rival()
+	_test_story_rival_goals_and_diagnostics()
+	_test_seed_94_story_rival()
+	_test_bad_seed_count_vs_top_k()
 	return _failures
-
 
 func summary() -> String:
 	return "passed=%d failed=%d" % [_passed, _failures.size()]
@@ -167,6 +174,8 @@ func _test_full_campaign_determinism() -> void:
 		var detailed_a: ProgressionLabRunRecord = runner_a.replay_seed(3, true)
 		var detailed_b: ProgressionLabRunRecord = runner_b.replay_seed(3, true)
 		_ok("detailed action sequence equal", "|".join(detailed_a.action_sequence) == "|".join(detailed_b.action_sequence), _seq_diff(detailed_a.action_sequence, detailed_b.action_sequence))
+		_ok("summary signature equals detailed", rec_a.execution_signature == detailed_a.execution_signature, "%s vs %s" % [rec_a.execution_signature, detailed_a.execution_signature])
+		_ok("summary rng counts equal detailed", JSON.stringify(rec_a.rng_draw_counts) == JSON.stringify(detailed_a.rng_draw_counts), "%s vs %s" % [JSON.stringify(rec_a.rng_draw_counts), JSON.stringify(detailed_a.rng_draw_counts)])
 		_ok("immutability hash survives campaign", _plans_keep_hash(rec_a))
 
 
@@ -441,7 +450,7 @@ func _test_stage_money_consistency() -> void:
 
 
 func _test_failed_seed_regression_set() -> void:
-	var seeds: PackedInt32Array = PackedInt32Array([7, 22, 24, 31, 47, 84, 90])
+	var seeds: PackedInt32Array = PackedInt32Array([7, 12, 22, 23, 24, 31, 47, 84, 90, 94])
 	var config := ProgressionLabConfig.new()
 	var runner := ProgressionLabRunner.new()
 	runner.configure_seed_list(config, seeds, 4, ProgressionLabConfig.MODE_POPULATION)
@@ -468,6 +477,273 @@ func _test_failed_seed_regression_set() -> void:
 		var dead: int = int(seed_22.campaign_metrics.get("max_consecutive_dead_progress_days", 0))
 		_ok("seed 22 avoids hundreds of consecutive dead days", dead < 80, str(dead))
 		_ok("seed 22 ran dates or aborted with snapshot", int(seed_22.campaign_metrics.get("dates", 0)) > 0 or not seed_22.diagnostic_snapshot.is_empty())
+
+func _test_replay_signature_and_isolation() -> void:
+	var config := ProgressionLabConfig.new()
+	config.max_calendar_days = 80
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, 5, 1, ProgressionLabConfig.ARCHETYPE_TYPICAL)
+	while not runner.process_batch():
+		pass
+	_ok("isolation campaign ran", runner.get_result().records.size() == 1)
+	if runner.get_result().records.is_empty():
+		return
+	var first: ProgressionLabRunRecord = runner.get_result().records[0]
+	var second: ProgressionLabRunRecord = runner.replay_seed(5, false)
+	var third: ProgressionLabRunRecord = runner.replay_seed(6, false)
+	var first_again: ProgressionLabRunRecord = runner.replay_seed(5, false)
+	var detailed: ProgressionLabRunRecord = runner.replay_seed(5, true)
+	_ok("sequential same seed signature", first.execution_signature == first_again.execution_signature, "%s vs %s" % [first.execution_signature, first_again.execution_signature])
+	_ok("summary vs detailed signature", first.execution_signature == detailed.execution_signature, "%s vs %s" % [first.execution_signature, detailed.execution_signature])
+	_ok("summary vs detailed rng counts", JSON.stringify(first.rng_draw_counts) == JSON.stringify(detailed.rng_draw_counts), "%s vs %s" % [JSON.stringify(first.rng_draw_counts), JSON.stringify(detailed.rng_draw_counts)])
+	_ok("different seed not identical", first.execution_signature != third.execution_signature)
+
+
+func _test_replay_regression_seeds() -> void:
+	var seeds: PackedInt32Array = PackedInt32Array([23, 41, 48, 51, 71, 99])
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure_seed_list(config, seeds, 4, ProgressionLabConfig.MODE_POPULATION)
+	while not runner.process_batch():
+		pass
+	var result: ProgressionLabPopulationResult = runner.get_result()
+	_ok("replay regression seed count", result.records.size() == seeds.size(), str(result.records.size()))
+	for record in result.records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var summary: ProgressionLabRunRecord = record
+		var detailed: ProgressionLabRunRecord = runner.replay_seed(summary.base_seed, true)
+		var diff: Dictionary = ProgressionLabRunRecord.first_difference(summary, detailed)
+		_ok("seed %d signature" % summary.base_seed, summary.execution_signature == detailed.execution_signature, "%s %s vs %s" % [str(diff.get("field", "")), str(diff.get("summary_action", "")), str(diff.get("replay_action", ""))])
+		_ok("seed %d rng counts" % summary.base_seed, JSON.stringify(summary.rng_draw_counts) == JSON.stringify(detailed.rng_draw_counts))
+		_ok("seed %d stop" % summary.base_seed, summary.stop_reason == detailed.stop_reason, "%s vs %s" % [summary.stop_reason, detailed.stop_reason])
+		_ok("seed %d days" % summary.base_seed, int(summary.campaign_metrics.get("calendar_days", -1)) == int(detailed.campaign_metrics.get("calendar_days", -2)))
+		_ok("seed %d money" % summary.base_seed, summary.final_money == detailed.final_money, "%d vs %d" % [summary.final_money, detailed.final_money])
+		_ok("seed %d stage" % summary.base_seed, summary.final_story_stage == detailed.final_story_stage)
+
+
+func _test_story_girl_date_cash_support() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		var girl_id: StringName = GirlCatalog.ID_ALINA
+		var world: Variant = _root("WorldService")
+		if world != null:
+			world.unlock_date_venue(&"apartment")
+			world.unlock_date_venue(&"cafe")
+		var girls: Variant = _root("GirlsService")
+		if girls != null:
+			girls.discover_girl(girl_id)
+			girls.give_contact(girl_id)
+		var apartment: Variant = _root("ApartmentService")
+		if apartment != null:
+			apartment.set_prepared(true)
+		var economy: Variant = _root("EconomyService")
+		if economy != null:
+			economy.add_money(400)
+		var executor: StageExecutor = _fresh_executor()
+		var plan := StagePlan.new()
+		plan.stage = 1
+		plan.story_girl_id = girl_id
+		executor._date_policy.plan = plan
+		var funded: Array = executor._collect_candidates(plan)
+		var funded_date: StageExecutor.Candidate = _find_candidate(funded, "date", girl_id)
+		payload["kinds"] = []
+		for raw in funded:
+			if raw != null:
+				payload["kinds"].append((raw as StageExecutor.Candidate).kind)
+		payload["funded_has_date"] = funded_date != null
+		var eval_outfit: StringName = funded_date.outfit_id if funded_date != null else OutfitCatalog.START_OUTFIT_ID
+		var eval_venue: StringName = funded_date.venue_id if funded_date != null else &"cafe"
+		var eligibility: Dictionary = executor.evaluate_date_candidate(girl_id, eval_outfit, eval_venue, false, false)
+		payload["eligible"] = bool(eligibility.get("eligible", false))
+		payload["reason"] = str(eligibility.get("reason", ""))
+		var required: int = funded_date.required_money if funded_date != null else int(eligibility.get("required_money", 20))
+		payload["required_money"] = required
+		if economy != null:
+			var current: int = int(economy.get_money())
+			if current > 0:
+				economy.spend_money(current)
+			if required > 1:
+				economy.add_money(maxi(required - 15, 1))
+			payload["money"] = int(economy.get_money())
+		var blocked: Array = executor._collect_candidates(plan)
+		payload["blocked_has_date"] = _find_candidate(blocked, "date", girl_id) != null
+		var work: StageExecutor.Candidate = _find_candidate(blocked, "work")
+		payload["has_work"] = work != null
+		payload["work_goal"] = work.goal_id if work != null else ""
+		payload["work_required"] = work.required_money if work != null else 0
+		payload["work_action"] = work.supporting_action_id if work != null else ""
+		var snapshot: Dictionary = executor.collect_blocking_snapshot(plan)
+		payload["cash_goals"] = []
+		for row in snapshot.get("cash_dependencies", []):
+			if row is Dictionary:
+				payload["cash_goals"].append(str(row.get("goal_id", "")))
+				if str(row.get("goal_id", "")) == executor._girl_goal(girl_id):
+					payload["cash_required"] = int(row.get("required_money", 0))
+		payload["story_goal"] = executor._girl_goal(girl_id)
+		payload["money_ids"] = Array(snapshot.get("money", PackedStringArray()))
+		return payload
+	))
+	_ok("funded story date exists", bool(captured.get("funded_has_date", false)), JSON.stringify(captured))
+	var story_goal: String = str(captured.get("story_goal", ""))
+	_ok("story girl in cash dependencies", (captured.get("cash_goals", []) as Array).has(story_goal), JSON.stringify(captured))
+	_ok("story girl in money snapshot", (captured.get("money_ids", []) as Array).has(story_goal), JSON.stringify(captured))
+	_ok("WORK supports story girl", bool(captured.get("has_work", false)) and str(captured.get("work_goal", "")) == story_goal, JSON.stringify(captured))
+	_ok("WORK uses concrete date cost", int(captured.get("work_required", 0)) == int(captured.get("required_money", -1)) or int(captured.get("cash_required", 0)) == int(captured.get("required_money", -1)), JSON.stringify(captured))
+
+func _test_seed_23_cash_and_replay() -> void:
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, 23, 4, ProgressionLabConfig.MODE_POPULATION)
+	while not runner.process_batch():
+		pass
+	_ok("seed 23 ran", runner.get_result().records.size() == 1)
+	if runner.get_result().records.is_empty():
+		return
+	var summary: ProgressionLabRunRecord = runner.get_result().records[0]
+	var money_fails: int = 0
+	for item in summary.failed_candidate_sequence:
+		if str(item).find("INSUFFICIENT_MONEY") >= 0 and str(item).begins_with("date"):
+			money_fails += 1
+	var work_actions: int = int(summary.campaign_metrics.get("work_actions", 0))
+	_ok("seed 23 no date money fail without WORK", money_fails == 0 or work_actions > 0, "fails=%d work=%d" % [money_fails, work_actions])
+	var detailed: ProgressionLabRunRecord = runner.replay_seed(23, true)
+	_ok("seed 23 summary equals detailed", summary.execution_signature == detailed.execution_signature, JSON.stringify(ProgressionLabRunRecord.first_difference(summary, detailed)))
+
+
+func _test_completed_repeatable_rival() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		var rival_id: StringName = RivalCatalog.ID_GLEB
+		var rivals: Variant = _root("RivalsService")
+		if rivals != null:
+			rivals.discover_rival(rival_id)
+			rivals.defeat_rival(rival_id)
+			payload["repeatable"] = bool(rivals.is_repeatable_rival(rival_id))
+			payload["defeated"] = bool(rivals.is_defeated(rival_id))
+		var executor: StageExecutor = _fresh_executor()
+		var plan := StagePlan.new()
+		plan.stage = 1
+		plan.target_ordinary_rival_ids.append(rival_id)
+		payload["complete"] = executor.is_rival_goal_complete(executor._rival_goal(rival_id), rival_id)
+		payload["barrier"] = executor._barrier_complete(plan)
+		var candidates: Array = executor._collect_candidates(plan)
+		payload["has_meet"] = _has_kind(candidates, "rival_meet")
+		payload["has_fight"] = _has_kind(candidates, "rival_fight")
+		return payload
+	))
+	_ok("ordinary rival is production-repeatable", bool(captured.get("repeatable", false)), JSON.stringify(captured))
+	_ok("defeated rival goal complete", bool(captured.get("complete", false)), JSON.stringify(captured))
+	_ok("no rival candidate after StagePlan completion", not bool(captured.get("has_meet", true)) and not bool(captured.get("has_fight", true)), JSON.stringify(captured))
+	_ok("barrier treats rival goal complete", bool(captured.get("barrier", false)), JSON.stringify(captured))
+
+
+func _test_story_rival_goals_and_diagnostics() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		var executor: StageExecutor = _fresh_executor()
+		var plan := StagePlan.new()
+		plan.stage = 1
+		plan.story_girl_id = GirlCatalog.ID_ACTRESS
+		plan.story_rival_id = RivalCatalog.ID_BORIS
+		var unmet: PackedStringArray = executor._unmet_goals(plan)
+		payload["unmet"] = Array(unmet)
+		payload["has_story_rival_goal"] = unmet.has(executor._story_rival_goal(RivalCatalog.ID_BORIS))
+		payload["barrier"] = executor._barrier_complete(plan)
+		var snapshot: Dictionary = executor._build_diagnostic_snapshot(plan)
+		var rivals_diag: Dictionary = snapshot.get("rival_availability", {})
+		payload["has_boris_diag"] = rivals_diag.has(String(RivalCatalog.ID_BORIS))
+		if rivals_diag.has(String(RivalCatalog.ID_BORIS)):
+			payload["boris"] = rivals_diag[String(RivalCatalog.ID_BORIS)]
+		var girls: Variant = _root("GirlsService")
+		if girls != null:
+			girls.discover_girl(GirlCatalog.ID_ACTRESS)
+			girls.give_contact(GirlCatalog.ID_ACTRESS)
+		var after_discover: Array = executor._collect_candidates(plan)
+		payload["meet_after_actress"] = _has_kind(_candidates_of_rival(after_discover, RivalCatalog.ID_BORIS), "rival_meet")
+		payload["state_after_actress"] = executor._rival_simulation_state(RivalCatalog.ID_BORIS)
+		return payload
+	))
+	_ok("story rival in unmet goals", bool(captured.get("has_story_rival_goal", false)), JSON.stringify(captured))
+	_ok("story rival in diagnostics", bool(captured.get("has_boris_diag", false)), JSON.stringify(captured))
+	_ok("barrier incomplete before story rival defeat", not bool(captured.get("barrier", true)), JSON.stringify(captured))
+	_ok("Boris meet uses production availability after Actress discovered", str(captured.get("state_after_actress", "")) == "AVAILABLE_TO_MEET" or bool(captured.get("meet_after_actress", false)), JSON.stringify(captured))
+
+
+func _test_seed_94_story_rival() -> void:
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, 94, 4, ProgressionLabConfig.MODE_POPULATION)
+	while not runner.process_batch():
+		pass
+	_ok("seed 94 ran", runner.get_result().records.size() == 1)
+	if runner.get_result().records.is_empty():
+		return
+	var record: ProgressionLabRunRecord = runner.get_result().records[0]
+	var unmet: Array = record.diagnostic_snapshot.get("unmet_goals", []) if record.aborted else []
+	var rivals_diag: Dictionary = record.diagnostic_snapshot.get("rival_availability", {}) if not record.diagnostic_snapshot.is_empty() else {}
+	var saw_boris: bool = false
+	for item in record.action_sequence:
+		if str(item).find("rival_boris") >= 0:
+			saw_boris = true
+			break
+	if rivals_diag.has("rival_boris"):
+		saw_boris = true
+	for goal in unmet:
+		if str(goal).find("rival_boris") >= 0:
+			saw_boris = true
+	_ok("seed 94 exposes Boris", saw_boris or not record.aborted, JSON.stringify({"stop": record.stop_reason, "unmet": unmet, "diag": rivals_diag}))
+	var detailed: ProgressionLabRunRecord = runner.replay_seed(94, true)
+	_ok("seed 94 replay", record.execution_signature == detailed.execution_signature, JSON.stringify(ProgressionLabRunRecord.first_difference(record, detailed)))
+
+
+func _test_bad_seed_count_vs_top_k() -> void:
+	var config := ProgressionLabConfig.new()
+	config.bad_seed_count_display = 25
+	var result := ProgressionLabPopulationResult.new()
+	result.n = 100
+	for i in range(100):
+		var record := ProgressionLabRunRecord.new()
+		record.base_seed = i + 1
+		record.campaign_metrics = {"money_blocked_decision_points": 5, "calendar_days": 20}
+		result.records.append(record)
+	var analyzer := ProgressionLabAnalyzer.new()
+	analyzer.analyze(result, config)
+	_ok("all bad count 100", result.bad_seed_count == 100, str(result.bad_seed_count))
+	_ok("all bad percentage 1", is_equal_approx(result.bad_seed_percentage, 1.0), str(result.bad_seed_percentage))
+	_ok("all_bad_seeds size 100", result.all_bad_seeds.size() == 100, str(result.all_bad_seeds.size()))
+	_ok("top_bad_seeds size 25", result.top_bad_seeds.size() == 25, str(result.top_bad_seeds.size()))
+	var exporter := ProgressionLabExporter.new()
+	var csv: String = exporter._bad_csv(result.all_bad_seeds)
+	var csv_lines: PackedStringArray = csv.split("\n")
+	_ok("bad_seeds.csv has all rows", csv_lines.size() >= 101, str(csv_lines.size()))
+
+
+func _find_candidate(candidates: Array, kind: String, girl_id: StringName = &"") -> StageExecutor.Candidate:
+	for raw in candidates:
+		if raw == null:
+			continue
+		var candidate: StageExecutor.Candidate = raw
+		if candidate.kind != kind:
+			continue
+		if girl_id != &"" and candidate.girl_id != girl_id:
+			continue
+		return candidate
+	return null
+
+
+func _candidates_of_rival(candidates: Array, rival_id: StringName) -> Array:
+	var filtered: Array = []
+	for raw in candidates:
+		if raw == null:
+			continue
+		var candidate: StageExecutor.Candidate = raw
+		if candidate.rival_id == rival_id:
+			filtered.append(candidate)
+	return filtered
 
 
 func _test_canonical_seed_fixtures() -> void:

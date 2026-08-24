@@ -155,6 +155,7 @@ EXECUTION_2
 EXECUTION_3
 EXECUTION_4
 DATE
+GIRL_KNOWLEDGE
 ```
 
 Реализуй stable seed derivation через SHA-256:
@@ -819,7 +820,7 @@ after deterministic noise has been applied.
 
 # 21. Cash dependency model
 
-For every unmet goal with a money requirement calculate current cash gap through production prices.
+For every unmet goal with a money requirement calculate current cash gap through production prices of the **concrete planned action**. See 23.5. Story Girl Date is included when the barrier allows it.
 
 Examples:
 
@@ -979,6 +980,96 @@ sum(stage.total_actions) == campaign.total_actions
 ```
 
 `money_blocked_days` and `max_consecutive_money_blocked_days` are extra diagnostics. The hard warning still uses `money_blocked_decision_points`.
+
+---
+
+# 23.4 Summary vs detailed replay
+
+`detailed` is telemetry-only. For the same production content, config, `base_seed`, archetype mode and `end_story_stage`:
+
+```text
+run_seed(seed, detailed = false)
+run_seed(seed, detailed = true)
+```
+
+produce one simulation outcome. Logging mode does not consume RNG, change candidates, Date/Venue/Outfit choice, production state, metrics, warnings or stop reason.
+
+Each Run stores `execution_signature`: SHA-256 of a canonical payload with stable key order:
+
+```text
+base_seed, archetype, profile, interests, StagePlans
+ordered executed actions
+ordered failed-candidate identities that affected retry
+Date decisions
+Story Stage transitions
+final progression snapshot (stage, money, relationships)
+campaign metrics, stage metrics
+stop reason, hard warnings
+RNG draw counts per stream
+```
+
+Excluded: timestamps, wall-clock, file paths, UI progress, Markdown formatting.
+
+Pass 2 detailed replay of a Pass 1 seed must match `execution_signature`. Mismatch is `REPLAY_DETERMINISM_MISMATCH` with a first-difference diagnostic. Detailed Markdown/JSON logs are written only after that check. After N=100, verification replays seeds `1..100` without Markdown export.
+
+RNG consumption is outside `if detailed` branches. Per-stream draw counts (`PROFILE`, `CAMPAIGN_INTEREST`, `STAGE_PLAN_1..4`, `EXECUTION_1..4`, `DATE`, `GIRL_KNOWLEDGE`) must match between summary and detailed replay. Each `_run_seed` uses a fresh isolated PlaythroughSession and a new StageExecutor. `GIRL_KNOWLEDGE` seeds production initial-tag reveals on contact so girl knowledge does not use `randomize()` during a lab run.
+
+---
+
+# 23.5 Cash dependency snapshot
+
+One `cash_dependencies[]` snapshot is the source of truth at each decision point. Each row:
+
+```text
+goal_id
+action_id
+action_type
+required_money
+current_money
+cash_gap
+priority
+```
+
+`required_money` is the production cost of the concrete planned action (Date uses the selected Outfit/Venue/taxi/express styling, not a cheapest-venue estimate). Story Girl Date is included when the StagePlan barrier allows it and the planned Date is production-eligible except for money.
+
+From this snapshot the executor derives cash-blocked goals, `money_blocked_decision_points`, Goal Friction money blocks, WORK support (`supporting_goal_id`, `supporting_action_id`, `cash_gap`) and diagnostic fields. WORK binds to the highest-priority cash-blocked row.
+
+---
+
+# 23.6 Rival StagePlan goals
+
+Ordinary Rival goals are one-shot StagePlan intents. `is_rival_goal_complete(goal_id, rival_id)` is true after a production victory. A completed ordinary Rival no longer generates a direct Rival candidate, even if production still allows a repeatable rematch.
+
+`story_rival_id` is a mandatory Stage goal `story_rival:<rival_id>:defeat` until defeated. It appears in unmet goals, barrier, Goal Friction, diagnostics and exports.
+
+Story Rival candidates follow production state:
+
+```text
+LOCKED → no candidate
+AVAILABLE_TO_MEET → MEET
+DISCOVERED + AVAILABLE_TO_CHALLENGE → CHALLENGE
+DAILY_GATED → no direct candidate
+DEFEATED → goal complete
+```
+
+Meet/challenge exist only when production availability confirms them (including linked Story Girl and Story Stage). If Story Girl Date is blocked by an undefeated Story Rival, the executor follows Story Rival meet/challenge rather than leaving an invisible prerequisite.
+
+Diagnostic rival rows include ordinary targets and the Story Rival: `rival_id`, `goal_type`, `discovered`, `defeated`, meet/challenge availability, daily gate, `linked_girl_id`, `blocking_reason`.
+
+---
+
+# 23.7 Bad seeds vs Top K
+
+`all_bad_seeds` is every Run with `badness_score >= threshold` or `hard_warnings.size() > 0`.
+
+`top_bad_seeds` is the first `bad_seed_count_display` (default 25) after sorting by hard-warning count desc, badness desc, `base_seed` asc.
+
+```text
+bad_seed_count = all_bad_seeds.size()
+bad_seed_percentage = bad_seed_count / N
+```
+
+`bad_seeds.csv` exports **all** bad seeds. Detailed bad-seed logs replay only `top_bad_seeds`. Overview and `share_bundle` show the full count/percentage and then the Top K list. Warning prevalence (`warning_id`, `run_count`, `run_share`) is exported after each population run. MONEY_BLOCKED / GOAL_FRICTION / DEAD_PROGRESS_STREAK thresholds stay unchanged in this pass.
 
 ---
 
@@ -2038,9 +2129,9 @@ archetype weights
 N
 aggregate P10/P50/P90/P95 tables
 Stage tables
-bad-seed percentage
-Top 25 bad seeds
-hard-warning counts
+bad-seed count and percentage (all_bad_seeds / N)
+Top K bad seeds
+warning prevalence
 highest-friction goals
 item utility summary
 representative seed summaries

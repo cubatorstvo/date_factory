@@ -13,6 +13,7 @@ const ISOLATION_FULL: StringName = &"FULL_STAGE_CONTENT"
 @export var schema_version: int = SCHEMA_VERSION
 @export var default_n: int = 1000
 @export var default_bad_seed_count: int = 25
+@export var bad_seed_count_display: int = 25
 @export var default_end_story_stage: int = 4
 @export var default_base_seed_start: int = 1
 @export var batch_size: int = 100
@@ -175,6 +176,7 @@ func to_dict() -> Dictionary:
 		"schema_version": schema_version,
 		"default_n": default_n,
 		"default_bad_seed_count": default_bad_seed_count,
+		"bad_seed_count_display": bad_seed_count_display,
 		"default_end_story_stage": default_end_story_stage,
 		"default_base_seed_start": default_base_seed_start,
 		"batch_size": batch_size,

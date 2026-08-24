@@ -10,9 +10,10 @@ var _previous_real_time: bool = false
 var _active: bool = false
 var isolated_save_path: String = ""
 var _stage_auto_complete_disconnected: bool = false
+var _knowledge_rng: RandomNumberGenerator
 
 
-func begin(save_name: String = DEFAULT_SAVE_NAME) -> void:
+func begin(save_name: String = DEFAULT_SAVE_NAME, base_seed: int = -1) -> void:
 	if _active:
 		end()
 	var gs: Variant = _game_state()
@@ -30,6 +31,7 @@ func begin(save_name: String = DEFAULT_SAVE_NAME) -> void:
 	if isolated_save_path == "user://saves/game.json":
 		isolated_save_path = "%s/isolated_run.json" % ISOLATED_DIR
 	sm.save_path = isolated_save_path
+	_bind_knowledge_rng(base_seed)
 	sm.new_game()
 	var stages: Variant = _stage_service()
 	if stages != null:
@@ -37,7 +39,6 @@ func begin(save_name: String = DEFAULT_SAVE_NAME) -> void:
 	_reset_service_runtime()
 	_set_stage_relationship_auto_complete(false)
 	_active = true
-
 
 func end() -> void:
 	if not _active:
@@ -56,18 +57,17 @@ func end() -> void:
 	if stages != null:
 		stages.reconcile_stage_entry_state()
 	_reset_service_runtime()
+	_bind_knowledge_rng(-1)
 	_snapshot = {}
 	_previous_save_path = ""
 	_active = false
 	_stage_auto_complete_disconnected = false
 
-
-func run(work: Callable) -> Variant:
-	begin()
+func run(work: Callable, base_seed: int = -1) -> Variant:
+	begin(DEFAULT_SAVE_NAME, base_seed)
 	var result: Variant = work.call()
 	end()
 	return result
-
 
 func is_active() -> bool:
 	return _active
@@ -123,3 +123,15 @@ func _toggle_auto_complete_callback(source: Variant, signal_name: StringName, ta
 			source.connect(signal_name, callback)
 	elif connected:
 		source.disconnect(signal_name, callback)
+
+func _bind_knowledge_rng(base_seed: int) -> void:
+	var girls: Variant = _root_node("GirlsService")
+	if girls == null:
+		_knowledge_rng = null
+		return
+	if base_seed >= 0:
+		_knowledge_rng = ProgressionRng.make(base_seed, ProgressionRng.STREAM_GIRL_KNOWLEDGE)
+		girls.knowledge_rng = _knowledge_rng
+	else:
+		girls.knowledge_rng = null
+		_knowledge_rng = null
