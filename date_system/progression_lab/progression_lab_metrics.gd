@@ -43,6 +43,24 @@ var rival_action_money_failures: int = 0
 var resolved_rival_money_failures: int = 0
 var unresolved_rival_money_failures: int = 0
 var novelty_events: int = 0
+var stage_start_calendar_day: int = 0
+var stage_end_calendar_day: int = 0
+var last_date_day_index: int = -1
+var days_after_last_date_before_stage_completion: int = 0
+var actions_after_last_date_before_stage_completion: int = 0
+var work_actions_after_last_date_before_stage_completion: int = 0
+var purchases_after_last_date_before_stage_completion: int = 0
+var stale_planned_goal_count: int = 0
+var stale_planned_goal_ids: PackedStringArray = PackedStringArray()
+var money_forced_work_days: int = 0
+var max_consecutive_money_forced_work_days: int = 0
+var work_actions_for_characteristics: int = 0
+var work_actions_for_outfits: int = 0
+var work_actions_for_apartment: int = 0
+var work_actions_for_dates: int = 0
+var work_actions_for_rivals: int = 0
+var work_actions_for_other: int = 0
+var build_acquisitions: Array = []
 var goal_friction: Dictionary = {}
 var production_flags: Dictionary = {}
 
@@ -57,6 +75,11 @@ var _last_primary: String = ""
 var _day_categories: Dictionary = {}
 var _day_beats: Dictionary = {}
 var _money_blocked_days: Dictionary = {}
+var _money_forced_work_days: Dictionary = {}
+var _start_day_index: int = 0
+var _actions_at_last_date: int = 0
+var _work_at_last_date: int = 0
+var _purchases_at_last_date: int = 0
 
 
 func ensure_goal(goal_id: String) -> Dictionary:
@@ -190,18 +213,30 @@ func record_primary(category: String, day_index: int, beat_count: int) -> void:
 	_day_categories[day_key] = categories
 	_day_beats[day_key] = int(_day_beats.get(day_key, 0)) + beat_count
 	progress_beats += beat_count
+	if category == "DATE":
+		note_last_date(day_index)
 
-
-func finalize_days(last_day_index: int, money: int, rating: int) -> void:
-	calendar_days = last_day_index + 1
+func finalize_days(last_day_index: int, money: int, rating: int, start_day_index: int = 0) -> void:
+	_start_day_index = maxi(start_day_index, 0)
+	var end_day: int = maxi(last_day_index, _start_day_index)
+	stage_start_calendar_day = _start_day_index + 1
+	stage_end_calendar_day = end_day + 1
+	calendar_days = end_day - _start_day_index + 1
 	money_end = money
 	rating_end = rating
 	_consecutive_dead = 0
 	_consecutive_work_only = 0
 	var consecutive_money_blocked: int = 0
+	var consecutive_forced_work: int = 0
 	money_blocked_days = 0
 	max_consecutive_money_blocked_days = 0
-	for day_index in range(calendar_days):
+	money_forced_work_days = 0
+	max_consecutive_money_forced_work_days = 0
+	dead_progress_days = 0
+	max_consecutive_dead_progress_days = 0
+	work_only_days = 0
+	max_consecutive_work_only_days = 0
+	for day_index in range(_start_day_index, end_day + 1):
 		var day_key: String = str(day_index)
 		var beats: int = int(_day_beats.get(day_key, 0))
 		if beats <= 0:
@@ -216,6 +251,12 @@ func finalize_days(last_day_index: int, money: int, rating: int) -> void:
 			max_consecutive_money_blocked_days = maxi(max_consecutive_money_blocked_days, consecutive_money_blocked)
 		else:
 			consecutive_money_blocked = 0
+		if _money_forced_work_days.has(day_key):
+			money_forced_work_days += 1
+			consecutive_forced_work += 1
+			max_consecutive_money_forced_work_days = maxi(max_consecutive_money_forced_work_days, consecutive_forced_work)
+		else:
+			consecutive_forced_work = 0
 		var categories: PackedStringArray = PackedStringArray()
 		if _day_categories.has(day_key):
 			categories = _day_categories[day_key]
@@ -232,7 +273,112 @@ func finalize_days(last_day_index: int, money: int, rating: int) -> void:
 			max_consecutive_work_only_days = maxi(max_consecutive_work_only_days, _consecutive_work_only)
 		else:
 			_consecutive_work_only = 0
+	_finalize_post_date_tail(end_day)
+	_finalize_build_timing(end_day)
 
+func note_last_date(day_index: int) -> void:
+	last_date_day_index = day_index
+	_actions_at_last_date = total_actions
+	_work_at_last_date = work_actions
+	_purchases_at_last_date = purchases
+
+func begin_stage_window(start_day_index: int) -> void:
+	_start_day_index = maxi(start_day_index, 0)
+	stage_start_calendar_day = _start_day_index + 1
+
+
+func record_money_forced_work(day_index: int) -> void:
+	if day_index < 0:
+		return
+	_money_forced_work_days[str(day_index)] = true
+
+
+func record_work_support(goal_id: String) -> void:
+	var kind: String = work_goal_kind(goal_id)
+	match kind:
+		"characteristics":
+			work_actions_for_characteristics += 1
+		"outfits":
+			work_actions_for_outfits += 1
+		"apartment":
+			work_actions_for_apartment += 1
+		"dates":
+			work_actions_for_dates += 1
+		"rivals":
+			work_actions_for_rivals += 1
+		_:
+			work_actions_for_other += 1
+
+
+static func work_goal_kind(goal_id: String) -> String:
+	if goal_id.begins_with("characteristic:"):
+		return "characteristics"
+	if goal_id.begins_with("outfit:"):
+		return "outfits"
+	if goal_id.begins_with("apartment:"):
+		return "apartment"
+	if goal_id.begins_with("filler:max:") or goal_id.begins_with("story:"):
+		return "dates"
+	if goal_id.begins_with("rival:") or goal_id.begins_with("story_rival:"):
+		return "rivals"
+	return "other"
+
+
+func record_stale_goal(goal_id: String) -> void:
+	if goal_id.is_empty() or stale_planned_goal_ids.has(goal_id):
+		return
+	stale_planned_goal_ids.append(goal_id)
+	stale_planned_goal_count = stale_planned_goal_ids.size()
+
+
+func record_build_acquisition(goal_id: String, campaign_day_index: int, remaining_dates: int, future_use: int, urgency_bonus: float) -> void:
+	build_acquisitions.append({
+		"goal_id": goal_id,
+		"campaign_day": campaign_day_index + 1,
+		"stage_day_acquired": maxi(campaign_day_index - _start_day_index + 1, 1),
+		"remaining_stage_dates_at_acquisition": remaining_dates,
+		"remaining_stage_days_after_acquisition": 0,
+		"future_use_opportunities": future_use,
+		"build_urgency_bonus": urgency_bonus,
+	})
+
+
+func _finalize_post_date_tail(end_day: int) -> void:
+	if last_date_day_index < 0:
+		days_after_last_date_before_stage_completion = 0
+		actions_after_last_date_before_stage_completion = 0
+		work_actions_after_last_date_before_stage_completion = 0
+		purchases_after_last_date_before_stage_completion = 0
+		return
+	days_after_last_date_before_stage_completion = maxi(0, end_day - last_date_day_index)
+	actions_after_last_date_before_stage_completion = maxi(0, total_actions - _actions_at_last_date)
+	work_actions_after_last_date_before_stage_completion = maxi(0, work_actions - _work_at_last_date)
+	purchases_after_last_date_before_stage_completion = maxi(0, purchases - _purchases_at_last_date)
+
+
+func _finalize_build_timing(end_day: int) -> void:
+	for i in range(build_acquisitions.size()):
+		var row: Dictionary = build_acquisitions[i]
+		var acquired_day: int = int(row.get("campaign_day", 1)) - 1
+		row["remaining_stage_days_after_acquisition"] = maxi(0, end_day - acquired_day)
+		build_acquisitions[i] = row
+
+
+func work_share(kind: String) -> float:
+	var total: int = maxi(work_actions, 1)
+	match kind:
+		"characteristics":
+			return float(work_actions_for_characteristics) / float(total)
+		"outfits":
+			return float(work_actions_for_outfits) / float(total)
+		"apartment":
+			return float(work_actions_for_apartment) / float(total)
+		"dates":
+			return float(work_actions_for_dates) / float(total)
+		"rivals":
+			return float(work_actions_for_rivals) / float(total)
+		_:
+			return float(work_actions_for_other) / float(total)
 
 func economy_support_share() -> float:
 	return float(work_actions) / float(maxi(total_actions, 1))
@@ -277,6 +423,16 @@ func to_dict() -> Dictionary:
 	var friction: Dictionary = friction_summary()
 	return {
 		"calendar_days": calendar_days,
+		"stage_start_calendar_day": stage_start_calendar_day,
+		"stage_end_calendar_day": stage_end_calendar_day,
+		"last_date_day": last_date_day_index + 1 if last_date_day_index >= 0 else 0,
+		"days_after_last_date_before_stage_completion": days_after_last_date_before_stage_completion,
+		"actions_after_last_date_before_stage_completion": actions_after_last_date_before_stage_completion,
+		"work_actions_after_last_date_before_stage_completion": work_actions_after_last_date_before_stage_completion,
+		"purchases_after_last_date_before_stage_completion": purchases_after_last_date_before_stage_completion,
+		"stale_planned_goal_count": stale_planned_goal_count,
+		"stale_planned_goal_ids": Array(stale_planned_goal_ids),
+		"build_acquisitions": build_acquisitions.duplicate(true),
 		"total_actions": total_actions,
 		"work_actions": work_actions,
 		"training_actions": training_actions,
@@ -300,6 +456,19 @@ func to_dict() -> Dictionary:
 		"daily_gate_blocked_decision_points": daily_gate_blocked_decision_points,
 		"money_blocked_days": money_blocked_days,
 		"max_consecutive_money_blocked_days": max_consecutive_money_blocked_days,
+		"money_forced_work_days": money_forced_work_days,
+		"max_consecutive_money_forced_work_days": max_consecutive_money_forced_work_days,
+		"work_actions_for_characteristics": work_actions_for_characteristics,
+		"work_actions_for_outfits": work_actions_for_outfits,
+		"work_actions_for_apartment": work_actions_for_apartment,
+		"work_actions_for_dates": work_actions_for_dates,
+		"work_actions_for_rivals": work_actions_for_rivals,
+		"work_actions_for_other": work_actions_for_other,
+		"work_share_characteristics": work_share("characteristics"),
+		"work_share_outfits": work_share("outfits"),
+		"work_share_apartment": work_share("apartment"),
+		"work_share_dates": work_share("dates"),
+		"work_share_rivals": work_share("rivals"),
 		"progress_beats": progress_beats,
 		"dead_progress_days": dead_progress_days,
 		"max_consecutive_dead_progress_days": max_consecutive_dead_progress_days,
@@ -332,6 +501,28 @@ func to_dict() -> Dictionary:
 static func from_dict(data: Dictionary) -> ProgressionLabMetrics:
 	var metrics := ProgressionLabMetrics.new()
 	metrics.calendar_days = int(data.get("calendar_days", 0))
+	metrics.stage_start_calendar_day = int(data.get("stage_start_calendar_day", 0))
+	metrics.stage_end_calendar_day = int(data.get("stage_end_calendar_day", 0))
+	metrics.days_after_last_date_before_stage_completion = int(data.get("days_after_last_date_before_stage_completion", 0))
+	metrics.actions_after_last_date_before_stage_completion = int(data.get("actions_after_last_date_before_stage_completion", 0))
+	metrics.work_actions_after_last_date_before_stage_completion = int(data.get("work_actions_after_last_date_before_stage_completion", 0))
+	metrics.purchases_after_last_date_before_stage_completion = int(data.get("purchases_after_last_date_before_stage_completion", 0))
+	metrics.stale_planned_goal_count = int(data.get("stale_planned_goal_count", 0))
+	metrics.money_forced_work_days = int(data.get("money_forced_work_days", 0))
+	metrics.max_consecutive_money_forced_work_days = int(data.get("max_consecutive_money_forced_work_days", 0))
+	metrics.work_actions_for_characteristics = int(data.get("work_actions_for_characteristics", 0))
+	metrics.work_actions_for_outfits = int(data.get("work_actions_for_outfits", 0))
+	metrics.work_actions_for_apartment = int(data.get("work_actions_for_apartment", 0))
+	metrics.work_actions_for_dates = int(data.get("work_actions_for_dates", 0))
+	metrics.work_actions_for_rivals = int(data.get("work_actions_for_rivals", 0))
+	metrics.work_actions_for_other = int(data.get("work_actions_for_other", 0))
+	var stale_raw: Variant = data.get("stale_planned_goal_ids", [])
+	if stale_raw is Array:
+		for item in stale_raw:
+			metrics.stale_planned_goal_ids.append(str(item))
+	var build_raw: Variant = data.get("build_acquisitions", [])
+	if build_raw is Array:
+		metrics.build_acquisitions = build_raw.duplicate(true)
 	metrics.total_actions = int(data.get("total_actions", 0))
 	metrics.work_actions = int(data.get("work_actions", 0))
 	metrics.training_actions = int(data.get("training_actions", 0))

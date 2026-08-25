@@ -910,7 +910,7 @@ The next Stage generates a fresh immutable StagePlan using that Stage's dedicate
 
 Campaign-level profile/interests remain unchanged.
 
-Story Girl relationship is gated by the immutable StagePlan barrier. While the barrier is incomplete, Story Girl Date candidates stop at `production_MAX - 1`. After the barrier is complete, the next Story Girl Date may reach MAX and production Stage transition runs.
+Story Girl relationship is gated by the immutable StagePlan barrier. While the barrier is incomplete, a Story Girl Date candidate exists only when `current_relationship + max_possible_relationship_gain < relationship_max` for the exact planned Date. After the barrier is complete, Story Girl Date priority is `100` and the next Date may reach MAX through production rules.
 
 Isolated runs set `StageService.auto_complete_enabled = false` and disconnect production Stage auto-complete (`girl_relationship_changed` and `expansion_changed`). `get_catalog()` can resubscribe those signals, so the flag is the isolation that actually holds. A Stage then advances only when the executor calls `try_complete_current_stage()` after the StagePlan barrier is complete and Story Girl is at MAX. The transition assertion uses barrier/MAX status captured immediately after the successful action, before that production complete call.
 
@@ -1102,6 +1102,102 @@ worktree_fingerprint = SHA-256 of `git diff --binary HEAD` when dirty, else ""
 ```
 
 These fields appear in `config.json`, `share_bundle.json` / `.md`, seed JSON, bad-seed JSON, representative JSON and `aggregate_summary.md`.
+
+---
+
+# 23.10 Predictive Story Girl barrier
+
+`max_possible_relationship_gain` is the conservative production upper bound of the exact planned Date (girl, Venue, Outfit, available Characteristic / Outfit / Venue sources, girl-specific effects, current modifiers). Candidate evaluation and tests share one helper:
+
+```text
+get_max_possible_relationship_gain(planned_date_context)
+```
+
+The bound uses Date Engine scoring: episode count × `positive_move_score`, plus combo and Trait bonuses when those can fire, plus the apartment unprepared penalty when it applies. It is not a global `+5` constant.
+
+While `StagePlan` barrier is incomplete, a Story Girl Date candidate is created only if:
+
+```text
+current_relationship + max_possible_relationship_gain < relationship_max
+```
+
+Otherwise the candidate is held. After each Story Girl Date that started with an incomplete barrier: relationship stays `< MAX` and Story Stage does not change. After barrier completion the hold is removed.
+
+Detailed replay records a `Story Girl barrier hold` with current relationship, MAX, max possible next-Date gain, and barrier complete.
+
+---
+
+# 23.11 Build relevance and urgency
+
+Planned Characteristic / Outfit / Apartment Object goals receive `build_use_urgency_bonus` while they still have `future_use_opportunities` inside the current Stage (remaining targeted Dates, Story Girl progression, Rival actions, Venue/local-move uses).
+
+```text
+remaining_date_goals =
+    targeted girls in this Stage not yet at MAX
+    + Story Girl remaining progression availability
+
+build_use_urgency_bonus =
+    clamp(30 - 5 * max(remaining_date_goals - 1, 0), 0, 30)
+```
+
+When `remaining_date_goals <= 2` and the build goal is still relevant, final candidate priority is at least `95` for Characteristic and planned Outfit, `90` for planned Apartment Object.
+
+A planned build goal with `future_use_opportunities = 0` is `STALE_PLANNED_GOAL`. It stays on the immutable StagePlan. Metrics track `stale_planned_goal_count` and exact goal IDs. Population target: `P95 stale_planned_goal_count = 0`.
+
+---
+
+# 23.12 Post-date tail and build timing
+
+Each Stage records `last_date_day`. If the Stage completes on that same calendar day, `days_after_last_date_before_stage_completion = 0`. Also track actions / WORK / purchases after the last Date.
+
+Each acquired Outfit / Apartment Object / completed Characteristic target records `stage_day_acquired`, `remaining_stage_dates_at_acquisition`, and `remaining_stage_days_after_acquisition`.
+
+Acceptance for completed normal Stages: post-date tail `P50 <= 2` days and `P90 <= 5` days.
+
+---
+
+# 23.13 Apartment Object utility attribution
+
+Outfit and Apartment Object reports use the same fields: `times_considered`, `times_selected`, `times_produced_positive_score`, `times_unlocked_requirement`, plus derived `use_per_acquisition` / `positive_effect_per_acquisition` / `unlock_per_acquisition`.
+
+For every selected Date Move, `move_id` maps to the source Apartment Object ID (or Outfit ID). That object gets `times_selected += 1`. If the production episode score is positive, `times_produced_positive_score += 1`. If the move unlocks a requirement or production opportunity, `times_unlocked_requirement += 1`.
+
+`times_considered` counts once per production-valid decision opportunity when the Venue is Apartment, the object source is available, the source is not already consumed, and the move is production-valid. Café (or any non-Apartment Venue) does not consider Apartment Objects.
+
+---
+
+# 23.14 Per-Stage calendar and dead-progress
+
+Stage `calendar_days` is duration, not the campaign day index:
+
+```text
+stage_calendar_days =
+    stage_end_calendar_day - stage_start_calendar_day + 1
+```
+
+`stage_day_index = campaign_day_index - stage_start_calendar_day + 1`. Stage daily maps use campaign-day keys but dead-progress and consecutive-dead counts iterate only `[stage_start_calendar_day, stage_end_calendar_day]`.
+
+If Story Stage transitions during a calendar day, actions belong to the Stage that was active when they occurred. That transition day may sit in both Stage duration windows. Campaign calendar days stay unique and are never the sum of Stage `calendar_days`.
+
+After a Run: `campaign.calendar_days >= max(stage.calendar_days)`. Action, economy, and Progress Beat totals must satisfy `sum(stage.*) == campaign.*` for `total_actions`, `work_actions`, `training_actions`, `dates`, `rival_attempts`, `purchases`, `money_earned`, `money_spent`, `progress_beats`.
+
+Campaign `dead_progress_days` remains “calendar day with zero Progress Beats anywhere in the Campaign”. Do not derive it by summing Stages.
+
+---
+
+# 23.15 Money-forced-work and work attribution
+
+`money_blocked_days` still means at least one planned goal was cash-blocked at some decision point that day.
+
+`money_forced_work_days` means the calendar day contains WORK and at least one WORK action was executed as support for a cash-blocked goal. Also track `max_consecutive_money_forced_work_days`.
+
+WORK support is counted by goal type: `work_actions_for_characteristics` / `outfits` / `apartment` / `dates` / `rivals` / `other`, with derived `work_share_*`.
+
+---
+
+# 23.16 Goal friction by type
+
+Population Goal Friction is aggregated by Characteristic, Outfit, Apartment Object, Filler Girl, Story Girl, Ordinary Rival, Story Rival, Venue exploration, and mandatory acquisition. Each type reports `goal_count`, mean direct/support actions, mean / P50 / P90 friction ratio, and mean completion days.
 
 ---
 
@@ -1408,6 +1504,8 @@ For each Stage and total Campaign collect:
 
 ```text
 calendar_days
+stage_start_calendar_day
+stage_end_calendar_day
 total_actions
 
 work_actions
@@ -1435,6 +1533,19 @@ rating_end
 
 money_blocked_decision_points
 daily_gate_blocked_decision_points
+money_forced_work_days
+max_consecutive_money_forced_work_days
+days_after_last_date_before_stage_completion
+actions_after_last_date_before_stage_completion
+work_actions_after_last_date_before_stage_completion
+purchases_after_last_date_before_stage_completion
+stale_planned_goal_count
+work_actions_for_characteristics
+work_actions_for_outfits
+work_actions_for_apartment
+work_actions_for_dates
+work_actions_for_rivals
+work_actions_for_other
 
 These campaign/stage metrics count **decision points**, not blocked goals.
 
@@ -1447,6 +1558,8 @@ At one decision point:
 ```
 
 If at least one unmet planned goal is money-blocked, `money_blocked_decision_points += 1`. If at least one is daily-gate-blocked, `daily_gate_blocked_decision_points += 1`. Each type is counted at most once per decision point.
+
+`money_forced_work_days` counts a calendar day only when a WORK support action actually ran for a cash-blocked goal.
 
 Detailed seed logs include the blocked goal lists for that decision point:
 
@@ -1591,6 +1704,8 @@ times_selected
 times_produced_positive_score
 times_unlocked_requirement
 ```
+
+Apartment Object `times_selected` comes from production Date Moves whose `move_id` maps to that object. Non-Apartment Venues do not increment Apartment `times_considered`.
 
 Aggregate by item ID:
 
