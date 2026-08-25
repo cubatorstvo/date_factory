@@ -1,7 +1,7 @@
 class_name ProgressionLabConfig
 extends Resource
 
-const SCHEMA_VERSION: int = 1
+const SCHEMA_VERSION: int = 2
 const ARCHETYPE_EFFICIENT: StringName = &"EFFICIENT"
 const ARCHETYPE_TYPICAL: StringName = &"TYPICAL"
 const ARCHETYPE_EXPLORER: StringName = &"EXPLORER"

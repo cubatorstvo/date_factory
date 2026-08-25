@@ -88,6 +88,18 @@ func _run_population() -> void:
 		"git_dirty": result.git_dirty,
 		"worktree_fingerprint": result.worktree_fingerprint,
 		"rival_cash_dependency": result.rival_cash_dependency,
+		"post_date_tail": result.post_date_tail,
+		"build_timing": result.build_timing,
+		"work_attribution": result.work_attribution,
+		"goal_friction_by_type": result.goal_friction_by_type,
+		"stale_planned_goals_count": result.stale_planned_goals.get("count", {}),
+		"stage_calendar_days": {
+			"1": result.statistics.get("per_stage", {}).get("1", {}).get("calendar_days", {}),
+			"2": result.statistics.get("per_stage", {}).get("2", {}).get("calendar_days", {}),
+			"3": result.statistics.get("per_stage", {}).get("3", {}).get("calendar_days", {}),
+			"4": result.statistics.get("per_stage", {}).get("4", {}).get("calendar_days", {}),
+		},
+		"apartment_item_telemetry": _apartment_item_telemetry(result.item_metrics),
 	}
 	var text: String = JSON.stringify(payload, "\t")
 	print(text)
@@ -104,6 +116,33 @@ func _run_population() -> void:
 		report.close()
 	var mismatch_count: int = (audit.get("mismatches", []) as Array).size() if audit.get("mismatches", []) is Array else 0
 	quit(1 if mismatch_count > 0 else 0)
+
+
+func _apartment_item_telemetry(item_metrics: Dictionary) -> Dictionary:
+	var acquired: int = 0
+	var selected: int = 0
+	var zero_use: int = 0
+	var total_selected: int = 0
+	for item_id in item_metrics.keys():
+		if not str(item_id).begins_with("apartment__"):
+			continue
+		var entry: Dictionary = item_metrics[item_id] if item_metrics[item_id] is Dictionary else {}
+		var acquired_runs: int = int(entry.get("acquired_runs", 0))
+		if acquired_runs <= 0:
+			continue
+		acquired += 1
+		var uses: int = int(entry.get("used_after_purchase", 0))
+		total_selected += uses
+		if uses > 0:
+			selected += 1
+		else:
+			zero_use += 1
+	return {
+		"acquired_objects": acquired,
+		"objects_with_selected_use": selected,
+		"objects_with_zero_use": zero_use,
+		"total_selected_apartment_moves": total_selected,
+	}
 
 
 func _comparison_markdown(previous: Dictionary, current: Dictionary) -> String:

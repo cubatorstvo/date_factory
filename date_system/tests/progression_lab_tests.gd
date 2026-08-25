@@ -3,50 +3,106 @@ extends RefCounted
 
 var _failures: PackedStringArray = PackedStringArray()
 var _passed: int = 0
+var _current_group: String = ""
+var _current_test: String = ""
+var _tests_done: int = 0
+var _tests_total: int = 0
 
 
 func run_all() -> PackedStringArray:
 	_failures.clear()
 	_passed = 0
-	_test_seed_derivation()
-	_test_profile_and_plan_determinism()
-	_test_stage_plan_immutability()
-	_test_population_weights()
-	_test_fixed_goal_generation()
-	_test_canonical_seed_fixtures()
-	_test_full_campaign_determinism()
-	_test_execution_rng_coverage()
-	_test_repetition_penalty()
-	_test_blocking_metrics()
-	_test_badness_warnings()
-	_test_integration_helper()
-	_test_production_integration()
-	_test_goal_isolation()
-	_test_exports()
-	_test_date_loadout_before_eligibility()
-	_test_date_missing_dressed_outfit()
-	_test_story_barrier_and_stall()
-	_test_stage_money_consistency()
-	_test_failed_seed_regression_set()
-	_test_replay_signature_and_isolation()
-	_test_replay_regression_seeds()
-	_test_story_girl_date_cash_support()
-	_test_seed_23_cash_and_replay()
-	_test_completed_repeatable_rival()
-	_test_story_rival_goals_and_diagnostics()
-	_test_seed_94_story_rival()
-	_test_story_rival_challenge_money_creates_cash_dependency()
-	_test_columnist_money_dependency_resolves()
-	_test_ordinary_rival_money_dependency_resolves()
-	_test_rival_required_money_from_production()
-	_test_rival_insufficient_money_not_empty_candidates()
-	_test_rival_cash_regression_seeds()
-	_test_build_identity_clean_state()
-	_test_build_identity_dirty_state()
-	_test_build_identity_export_schema()
-	_test_bad_seed_count_vs_top_k()
+	_tests_done = 0
+	var catalog: Array = test_catalog()
+	_tests_total = catalog.size()
+	for item in catalog:
+		_current_group = str(item.get("group", ""))
+		_current_test = str(item.get("name", ""))
+		var callback: Callable = item["fn"]
+		callback.call()
+		_tests_done += 1
 	return _failures
 
+func test_catalog() -> Array:
+	return [
+		{"group": "core", "name": "seed derivation", "fn": _test_seed_derivation},
+		{"group": "core", "name": "profile and plan determinism", "fn": _test_profile_and_plan_determinism},
+		{"group": "core", "name": "stage plan immutability", "fn": _test_stage_plan_immutability},
+		{"group": "core", "name": "population weights", "fn": _test_population_weights},
+		{"group": "core", "name": "fixed goal generation", "fn": _test_fixed_goal_generation},
+		{"group": "core", "name": "canonical seed fixtures", "fn": _test_canonical_seed_fixtures},
+		{"group": "core", "name": "full campaign determinism", "fn": _test_full_campaign_determinism},
+		{"group": "core", "name": "execution rng coverage", "fn": _test_execution_rng_coverage},
+		{"group": "scoring", "name": "repetition penalty", "fn": _test_repetition_penalty},
+		{"group": "scoring", "name": "build urgency priority", "fn": _test_build_urgency_priority},
+		{"group": "metrics", "name": "blocking metrics", "fn": _test_blocking_metrics},
+		{"group": "metrics", "name": "badness warnings", "fn": _test_badness_warnings},
+		{"group": "metrics", "name": "stage calendar duration", "fn": _test_stage_calendar_duration},
+		{"group": "metrics", "name": "stage dead progress", "fn": _test_stage_dead_progress},
+		{"group": "metrics", "name": "metric consistency", "fn": _test_metric_consistency},
+		{"group": "metrics", "name": "work attribution helper", "fn": _test_work_attribution_helper},
+		{"group": "metrics", "name": "goal friction by type", "fn": _test_goal_friction_by_type},
+		{"group": "integration", "name": "integration helper", "fn": _test_integration_helper},
+		{"group": "integration", "name": "production integration", "fn": _test_production_integration},
+		{"group": "integration", "name": "goal isolation", "fn": _test_goal_isolation},
+		{"group": "exports", "name": "exports", "fn": _test_exports},
+		{"group": "exports", "name": "share bundle pacing fields", "fn": _test_share_bundle_pacing_fields},
+		{"group": "exports", "name": "item metrics csv apartment", "fn": _test_item_metrics_csv_apartment},
+		{"group": "dates", "name": "date loadout before eligibility", "fn": _test_date_loadout_before_eligibility},
+		{"group": "dates", "name": "date missing dressed outfit", "fn": _test_date_missing_dressed_outfit},
+		{"group": "dates", "name": "story barrier and stall", "fn": _test_story_barrier_and_stall},
+		{"group": "dates", "name": "predictive story barrier", "fn": _test_predictive_story_barrier},
+		{"group": "dates", "name": "apartment source mapping", "fn": _test_apartment_source_mapping},
+		{"group": "economy", "name": "stage money consistency", "fn": _test_stage_money_consistency},
+		{"group": "regression", "name": "failed seed regression set", "fn": _test_failed_seed_regression_set},
+		{"group": "regression", "name": "replay signature and isolation", "fn": _test_replay_signature_and_isolation},
+		{"group": "regression", "name": "replay regression seeds", "fn": _test_replay_regression_seeds},
+		{"group": "regression", "name": "story girl date cash support", "fn": _test_story_girl_date_cash_support},
+		{"group": "regression", "name": "seed 23 cash and replay", "fn": _test_seed_23_cash_and_replay},
+		{"group": "rivals", "name": "completed repeatable rival", "fn": _test_completed_repeatable_rival},
+		{"group": "rivals", "name": "story rival goals and diagnostics", "fn": _test_story_rival_goals_and_diagnostics},
+		{"group": "rivals", "name": "seed 94 story rival", "fn": _test_seed_94_story_rival},
+		{"group": "rivals", "name": "story rival challenge money", "fn": _test_story_rival_challenge_money_creates_cash_dependency},
+		{"group": "rivals", "name": "columnist money dependency", "fn": _test_columnist_money_dependency_resolves},
+		{"group": "rivals", "name": "ordinary rival money dependency", "fn": _test_ordinary_rival_money_dependency_resolves},
+		{"group": "rivals", "name": "rival required money from production", "fn": _test_rival_required_money_from_production},
+		{"group": "rivals", "name": "rival insufficient money not empty", "fn": _test_rival_insufficient_money_not_empty_candidates},
+		{"group": "rivals", "name": "rival cash regression seeds", "fn": _test_rival_cash_regression_seeds},
+		{"group": "identity", "name": "build identity clean state", "fn": _test_build_identity_clean_state},
+		{"group": "identity", "name": "build identity dirty state", "fn": _test_build_identity_dirty_state},
+		{"group": "identity", "name": "build identity export schema", "fn": _test_build_identity_export_schema},
+		{"group": "identity", "name": "bad seed count vs top k", "fn": _test_bad_seed_count_vs_top_k},
+		{"group": "regression", "name": "seed 98 barrier pacing", "fn": _test_seed_98_barrier_pacing},
+		{"group": "regression", "name": "seed 32 characteristic build", "fn": _test_seed_32_characteristic_build},
+	]
+
+
+func progress_line() -> String:
+	return "%s · %s · %d / %d" % [_current_group, _current_test, _tests_done, _tests_total]
+
+func run_all_async(host: Node) -> PackedStringArray:
+	_failures.clear()
+	_passed = 0
+	_tests_done = 0
+	var catalog: Array = test_catalog()
+	_tests_total = catalog.size()
+	var last_group: String = ""
+	for item in catalog:
+		_current_group = str(item.get("group", ""))
+		_current_test = str(item.get("name", ""))
+		if host != null and host.has_method("_show_test_progress"):
+			host._show_test_progress(_current_group, _current_test, _tests_done, _tests_total)
+		if host != null and host.get_tree() != null:
+			if last_group != "" and last_group != _current_group:
+				await host.get_tree().process_frame
+			await host.get_tree().process_frame
+		var callback: Callable = item["fn"]
+		callback.call()
+		_tests_done += 1
+		last_group = _current_group
+	if host != null and host.has_method("_show_test_progress"):
+		host._show_test_progress(_current_group, "done", _tests_done, _tests_total)
+	return _failures
 func summary() -> String:
 	return "passed=%d failed=%d" % [_passed, _failures.size()]
 
@@ -306,7 +362,7 @@ func _test_exports() -> void:
 		_ok("specific json parses", parsed is Dictionary)
 		if parsed is Dictionary:
 			var data: Dictionary = parsed
-			_ok("schema_version", int(data.get("schema_version", 0)) == 1)
+			_ok("schema_version", int(data.get("schema_version", 0)) == ProgressionLabConfig.SCHEMA_VERSION)
 			_ok("seed field", int(data.get("seed", 0)) == 9)
 			_ok("config present", data.get("config", {}) is Dictionary)
 			_ok("stage plans present", data.get("stage_plans", []) is Array)
@@ -588,9 +644,9 @@ func _test_story_girl_date_cash_support() -> void:
 		for row in snapshot.get("cash_dependencies", []):
 			if row is Dictionary:
 				payload["cash_goals"].append(str(row.get("goal_id", "")))
-				if str(row.get("goal_id", "")) == executor._girl_goal(girl_id):
+				if str(row.get("goal_id", "")) == executor._girl_goal(girl_id, true):
 					payload["cash_required"] = int(row.get("required_money", 0))
-		payload["story_goal"] = executor._girl_goal(girl_id)
+		payload["story_goal"] = executor._girl_goal(girl_id, true)
 		payload["money_ids"] = Array(snapshot.get("money", PackedStringArray()))
 		return payload
 	))
@@ -854,6 +910,298 @@ func _test_bad_seed_count_vs_top_k() -> void:
 	var csv: String = exporter._bad_csv(result.all_bad_seeds)
 	var csv_lines: PackedStringArray = csv.split("\n")
 	_ok("bad_seeds.csv has all rows", csv_lines.size() >= 101, str(csv_lines.size()))
+
+func _test_build_urgency_priority() -> void:
+	var captured: Dictionary = _as_dict(PlaythroughSession.new().run(func() -> Dictionary:
+		var executor := StageExecutor.new()
+		executor.config = ProgressionLabConfig.new()
+		var plan := StagePlan.new()
+		plan.stage = 1
+		plan.target_filler_girl_ids = [GirlCatalog.ID_ALINA, GirlCatalog.ID_OLYA] as Array[StringName]
+		var goal_id: String = executor._char_goal(CharacteristicIds.APPEARANCE, 3)
+		var payload: Dictionary = {}
+		payload["base"] = executor._apply_build_priority(75.0, plan, goal_id, 95.0)
+		plan.target_filler_girl_ids = [GirlCatalog.ID_ALINA] as Array[StringName]
+		payload["char"] = executor._apply_build_priority(75.0, plan, goal_id, 95.0)
+		payload["outfit"] = executor._apply_build_priority(70.0, plan, executor._outfit_goal(&"sport"), 95.0)
+		payload["apt"] = executor._apply_build_priority(65.0, plan, executor._apartment_goal(&"apartment__plaid"), 90.0)
+		var train := StageExecutor.Candidate.new()
+		train.category = "TRAINING"
+		train.score = float(payload["char"])
+		executor.apply_execution_scores([train], "DATE", 1, null, 1.0)
+		payload["after_noise"] = train.score
+		return payload
+	))
+	_ok("build priority at least base", float(captured.get("base", 0.0)) >= 75.0, str(captured.get("base", 0.0)))
+	_ok("urgent characteristic floor 95", float(captured.get("char", 0.0)) >= 95.0, str(captured.get("char", 0.0)))
+	_ok("urgent outfit floor 95", float(captured.get("outfit", 0.0)) >= 95.0, str(captured.get("outfit", 0.0)))
+	_ok("urgent apartment floor 90", float(captured.get("apt", 0.0)) >= 90.0, str(captured.get("apt", 0.0)))
+	_ok("build priority applied before noise", is_equal_approx(float(captured.get("after_noise", 0.0)), float(captured.get("char", -1.0))), str(captured.get("after_noise", 0.0)))
+
+func _test_stage_calendar_duration() -> void:
+	var stage1 := ProgressionLabMetrics.new()
+	stage1.begin_stage_window(0)
+	stage1.finalize_days(6, 0, 0, 0)
+	_ok("stage 1 start day 1", stage1.stage_start_calendar_day == 1, str(stage1.stage_start_calendar_day))
+	_ok("stage 1 end day 7", stage1.stage_end_calendar_day == 7, str(stage1.stage_end_calendar_day))
+	_ok("stage 1 calendar_days 7", stage1.calendar_days == 7, str(stage1.calendar_days))
+	var stage2 := ProgressionLabMetrics.new()
+	stage2.begin_stage_window(6)
+	stage2.finalize_days(19, 0, 0, 6)
+	_ok("stage 2 start day 7", stage2.stage_start_calendar_day == 7, str(stage2.stage_start_calendar_day))
+	_ok("stage 2 end day 20", stage2.stage_end_calendar_day == 20, str(stage2.stage_end_calendar_day))
+	_ok("stage 2 calendar_days 14", stage2.calendar_days == 14, str(stage2.calendar_days))
+	var campaign := ProgressionLabMetrics.new()
+	campaign.finalize_days(19, 0, 0, 0)
+	_ok("campaign calendar_days 20", campaign.calendar_days == 20, str(campaign.calendar_days))
+
+
+func _test_stage_dead_progress() -> void:
+	var metrics := ProgressionLabMetrics.new()
+	metrics.begin_stage_window(9)
+	metrics.record_primary("DATE", 9, 1)
+	metrics.record_primary("DATE", 12, 1)
+	metrics.finalize_days(13, 0, 0, 9)
+	_ok("dead-progress calendar_days 5", metrics.calendar_days == 5, str(metrics.calendar_days))
+	_ok("dead-progress days 3", metrics.dead_progress_days == 3, str(metrics.dead_progress_days))
+	_ok("max consecutive dead 2", metrics.max_consecutive_dead_progress_days == 2, str(metrics.max_consecutive_dead_progress_days))
+	var before := ProgressionLabMetrics.new()
+	before.begin_stage_window(9)
+	before.record_primary("WORK", 8, 1)
+	before.finalize_days(13, 0, 0, 9)
+	_ok("days before stage start ignored", before.dead_progress_days == 5, str(before.dead_progress_days))
+
+
+func _test_metric_consistency() -> void:
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, 1, 2, ProgressionLabConfig.MODE_POPULATION)
+	while not runner.process_batch():
+		pass
+	_ok("consistency run present", runner.get_result().records.size() == 1)
+	if runner.get_result().records.is_empty():
+		return
+	var record: ProgressionLabRunRecord = runner.get_result().records[0]
+	var campaign: Dictionary = record.campaign_metrics
+	var sums: Dictionary = {
+		"total_actions": 0,
+		"work_actions": 0,
+		"training_actions": 0,
+		"dates": 0,
+		"rival_attempts": 0,
+		"purchases": 0,
+		"money_earned": 0,
+		"money_spent": 0,
+		"progress_beats": 0,
+	}
+	for stage_key in record.stage_metrics.keys():
+		var stage: Dictionary = record.stage_metrics[stage_key]
+		for key in sums.keys():
+			sums[key] = int(sums[key]) + int(stage.get(key, 0))
+	for key in sums.keys():
+		_ok("sum stage %s == campaign" % key, int(sums[key]) == int(campaign.get(key, -1)), "%s vs %s" % [str(sums[key]), str(campaign.get(key, -1))])
+
+
+func _test_work_attribution_helper() -> void:
+	_ok("classify characteristic", ProgressionLabMetrics.classify_supporting_goal("characteristic:appearance:3") == "CHARACTERISTIC")
+	_ok("classify outfit", ProgressionLabMetrics.classify_supporting_goal("outfit:acquire:sport") == "OUTFIT")
+	_ok("classify apartment", ProgressionLabMetrics.classify_supporting_goal("apartment:acquire:apartment__plaid") == "APARTMENT")
+	_ok("classify date", ProgressionLabMetrics.classify_supporting_goal("filler:max:alina") == "DATE")
+	_ok("classify story date", ProgressionLabMetrics.classify_supporting_goal("story:max:vika") == "DATE")
+	_ok("classify rival", ProgressionLabMetrics.classify_supporting_goal("rival:columnist") == "RIVAL")
+	_ok("classify other", ProgressionLabMetrics.classify_supporting_goal("venue:visit:cafe") == "OTHER")
+	var metrics := ProgressionLabMetrics.new()
+	metrics.record_work_support("characteristic:appearance:3")
+	metrics.record_work_support("outfit:acquire:sport")
+	metrics.record_work_support("apartment:acquire:apartment__plaid")
+	metrics.record_work_support("filler:max:alina")
+	metrics.record_work_support("rival:columnist")
+	metrics.record_work_support("venue:visit:cafe")
+	_ok("work char 1", metrics.work_actions_for_characteristics == 1)
+	_ok("work outfit 1", metrics.work_actions_for_outfits == 1)
+	_ok("work apt 1", metrics.work_actions_for_apartment == 1)
+	_ok("work dates 1", metrics.work_actions_for_dates == 1)
+	_ok("work rivals 1", metrics.work_actions_for_rivals == 1)
+	_ok("work other 1", metrics.work_actions_for_other == 1)
+
+
+func _test_goal_friction_by_type() -> void:
+	var record := ProgressionLabRunRecord.new()
+	record.campaign_metrics = {
+		"goal_friction": {
+			"characteristic:appearance:3": {"direct_actions": 2, "support_actions": 4, "calendar_days_from_first_attempt_to_completion": 3},
+			"outfit:acquire:sport": {"direct_actions": 1, "support_actions": 1, "calendar_days_from_first_attempt_to_completion": 2},
+			"filler:max:alina": {"direct_actions": 3, "support_actions": 0, "calendar_days_from_first_attempt_to_completion": 4},
+		},
+	}
+	var analyzer := ProgressionLabAnalyzer.new()
+	var by_type: Dictionary = analyzer._goal_friction_by_type([record])
+	_ok("friction has characteristic", by_type.has("Characteristic"))
+	_ok("characteristic goal count", int(by_type["Characteristic"].get("goal_count", 0)) == 1)
+	_ok("characteristic mean ratio 2", is_equal_approx(float(by_type["Characteristic"].get("mean_friction_ratio", 0.0)), 2.0))
+
+
+func _test_share_bundle_pacing_fields() -> void:
+	var result := ProgressionLabPopulationResult.new()
+	result.schema_version = ProgressionLabConfig.SCHEMA_VERSION
+	result.post_date_tail = {"days": {"P50": 1.0}}
+	result.build_timing = {"outfit_remaining_dates": {"P50": 2.0}}
+	result.work_attribution = {"characteristics": {"mean": 3.0}}
+	result.goal_friction_by_type = {"Characteristic": {"goal_count": 1}}
+	result.stale_planned_goals = {"count": {"max": 0.0}}
+	var exporter := ProgressionLabExporter.new()
+	var json: Dictionary = exporter.share_bundle_json(result)
+	for key in ["post_date_tail", "build_timing", "work_attribution", "goal_friction_by_type", "stale_planned_goals"]:
+		_ok("share json has %s" % key, json.has(key))
+	var markdown: String = exporter.share_bundle_markdown(result)
+	_ok("markdown post-date tail", markdown.find("## Post-Date Tail") >= 0)
+	_ok("markdown build timing", markdown.find("## Build Timing") >= 0)
+	_ok("markdown work attribution", markdown.find("## Work Attribution") >= 0)
+	_ok("markdown friction by type", markdown.find("## Goal Friction by Type") >= 0)
+	_ok("markdown apartment item utility", markdown.find("## Apartment Item Utility") >= 0)
+
+
+func _test_item_metrics_csv_apartment() -> void:
+	var result := ProgressionLabPopulationResult.new()
+	result.item_metrics = {
+		"apartment__plaid": {
+			"eligible_runs": 1,
+			"acquired_runs": 1,
+			"acquisition_rate": 1.0,
+			"considered_after_purchase": 2,
+			"used_after_purchase": 3,
+			"positive_effect_count": 2,
+			"requirement_unlock_count": 1,
+			"use_per_acquisition": 3.0,
+			"positive_effect_per_acquisition": 2.0,
+			"unlock_per_acquisition": 1.0,
+		},
+	}
+	var csv: String = ProgressionLabExporter.new()._item_csv(result.item_metrics)
+	_ok("item csv has times_selected", csv.find("times_selected") >= 0)
+	_ok("item csv apartment row", csv.find("apartment__plaid") >= 0)
+	var lines: PackedStringArray = csv.split("\n")
+	var header: PackedStringArray = lines[0].split(",")
+	var selected_idx: int = -1
+	for i in range(header.size()):
+		if header[i] == "times_selected":
+			selected_idx = i
+	_ok("times_selected column", selected_idx >= 0)
+	if lines.size() > 1 and selected_idx >= 0:
+		var cols: PackedStringArray = lines[1].split(",")
+		_ok("apartment selected non-zero", int(cols[selected_idx]) > 0, lines[1])
+
+
+func _test_predictive_story_barrier() -> void:
+	var executor := StageExecutor.new()
+	_ok("9+5 allowed", not executor.is_predictive_story_barrier_blocked(9, 15, 5, false))
+	_ok("10+5 blocked", executor.is_predictive_story_barrier_blocked(10, 15, 5, false))
+	_ok("10+5 allowed after barrier", not executor.is_predictive_story_barrier_blocked(10, 15, 5, true))
+	var captured: Dictionary = _as_dict(PlaythroughSession.new().run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		_advance_to_stage(2)
+		var local: StageExecutor = _fresh_executor()
+		local.test_max_possible_relationship_gain = 5
+		var plan := StagePlan.new()
+		plan.stage = 2
+		plan.story_girl_id = GirlCatalog.ID_VIKA
+		var girls: Variant = _root("GirlsService")
+		if girls != null:
+			girls.discover_girl(plan.story_girl_id)
+			girls.give_contact(plan.story_girl_id)
+			var rel_max: int = int(girls.get_relationship_max(plan.story_girl_id))
+			var target: int = maxi(rel_max - 5, 0)
+			girls.change_relationship(plan.story_girl_id, target - int(girls.get_relationship(plan.story_girl_id)))
+			payload["rel"] = int(girls.get_relationship(plan.story_girl_id))
+			payload["rel_max"] = rel_max
+		payload["blocked"] = local._story_date_blocked_by_barrier(plan, plan.story_girl_id, "STORY", &"casual", &"cafe")
+		payload["gain"] = local.get_max_possible_relationship_gain({"girl_id": plan.story_girl_id, "outfit_id": &"casual", "venue_id": &"cafe"})
+		return payload
+	))
+	_ok("forced gain is 5", int(captured.get("gain", 0)) == 5, str(captured.get("gain", 0)))
+	_ok("story date blocked by predictive helper", bool(captured.get("blocked", false)), JSON.stringify(captured))
+
+func _test_apartment_source_mapping() -> void:
+	var captured: Dictionary = _as_dict(PlaythroughSession.new().run(func() -> Dictionary:
+		var payload: Dictionary = {"error_text": "", "count": 0}
+		var executor: StageExecutor = _fresh_executor()
+		var dating: Variant = _root("DatingService")
+		if dating == null:
+			payload["error_text"] = "DatingService missing"
+			return payload
+		var catalog: DateContentCatalog = dating.get_catalog_service().catalog
+		var errors: PackedStringArray = PackedStringArray()
+		for item in catalog.local_objects:
+			if item == null or not String(item.id).begins_with("apartment__"):
+				continue
+			var object_id: StringName = item.id
+			var local_object: DateLocalObject = catalog.find_local_object(object_id)
+			if local_object == null:
+				errors.append("missing object %s" % String(object_id))
+				continue
+			for move_id in local_object.move_ids:
+				payload["count"] = int(payload["count"]) + 1
+				var source: Dictionary = executor.resolve_item_source_from_move(move_id)
+				var error: String = str(source.get("error", ""))
+				if not error.is_empty():
+					errors.append("%s %s" % [String(move_id), error])
+				elif str(source.get("source_type", "")) != "APARTMENT_OBJECT":
+					errors.append("%s type %s" % [String(move_id), str(source.get("source_type", ""))])
+				elif str(source.get("source_id", "")) != String(object_id):
+					errors.append("%s wrong object %s" % [String(move_id), str(source.get("source_id", ""))])
+		payload["error_text"] = "\n".join(errors)
+		return payload
+	))
+	_ok("apartment moves mapped", int(captured.get("count", 0)) > 0, JSON.stringify(captured))
+	_ok("apartment mapping clean", str(captured.get("error_text", "x")).is_empty(), str(captured.get("error_text", "")))
+
+
+func _test_seed_98_barrier_pacing() -> void:
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, 98, 4, ProgressionLabConfig.MODE_POPULATION)
+	while not runner.process_batch():
+		pass
+	_ok("seed 98 ran", runner.get_result().records.size() == 1)
+	if runner.get_result().records.is_empty():
+		return
+	var summary: ProgressionLabRunRecord = runner.get_result().records[0]
+	_ok("seed 98 no premature stage", summary.hard_warnings.find("STAGE_TRANSITION_INVARIANT") < 0, ",".join(summary.hard_warnings))
+	var tail_days: int = int(summary.campaign_metrics.get("days_after_last_date_before_stage_completion", 99))
+	_ok("seed 98 no long post-date tail", tail_days <= 8, str(tail_days))
+	var stale: int = int(summary.campaign_metrics.get("stale_planned_goal_count", 99))
+	_ok("seed 98 stale exported", summary.campaign_metrics.has("stale_planned_goal_count"), str(stale))
+	var acquisitions: Variant = summary.campaign_metrics.get("build_acquisitions", [])
+	var useful: bool = false
+	if acquisitions is Array:
+		for row in acquisitions:
+			if row is Dictionary and int(row.get("remaining_stage_dates_at_acquisition", 0)) > 0:
+				useful = true
+	_ok("seed 98 build while dates remain or none", useful or (acquisitions is Array and (acquisitions as Array).is_empty()), JSON.stringify(acquisitions))
+
+
+func _test_seed_32_characteristic_build() -> void:
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, 32, 4, ProgressionLabConfig.MODE_POPULATION)
+	while not runner.process_batch():
+		pass
+	_ok("seed 32 ran", runner.get_result().records.size() == 1)
+	if runner.get_result().records.is_empty():
+		return
+	var summary: ProgressionLabRunRecord = runner.get_result().records[0]
+	var metrics: Dictionary = summary.campaign_metrics
+	for key in ["work_actions_for_characteristics", "work_actions_for_outfits", "work_actions_for_apartment", "work_actions_for_dates", "work_actions_for_rivals"]:
+		_ok("seed 32 has %s" % key, metrics.has(key))
+	var attributed: int = int(metrics.get("work_actions_for_characteristics", 0))
+	attributed += int(metrics.get("work_actions_for_outfits", 0))
+	attributed += int(metrics.get("work_actions_for_apartment", 0))
+	attributed += int(metrics.get("work_actions_for_dates", 0))
+	attributed += int(metrics.get("work_actions_for_rivals", 0))
+	attributed += int(metrics.get("work_actions_for_other", 0))
+	_ok("seed 32 work fully attributed", attributed == int(metrics.get("work_actions", -1)), "%d vs %d" % [attributed, int(metrics.get("work_actions", -1))])
+	_ok("seed 32 build acquisitions present", metrics.get("build_acquisitions", []) is Array)
+	_ok("seed 32 post-date tail present", metrics.has("days_after_last_date_before_stage_completion"))
 
 
 func _find_candidate(candidates: Array, kind: String, girl_id: StringName = &"") -> StageExecutor.Candidate:

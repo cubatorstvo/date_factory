@@ -38,6 +38,19 @@ const METRIC_KEYS: PackedStringArray = [
 	"novelty_density",
 	"max_goal_friction_ratio",
 	"mean_goal_friction_ratio",
+	"days_after_last_date_before_stage_completion",
+	"actions_after_last_date_before_stage_completion",
+	"work_actions_after_last_date_before_stage_completion",
+	"purchases_after_last_date_before_stage_completion",
+	"money_forced_work_days",
+	"max_consecutive_money_forced_work_days",
+	"stale_planned_goal_count",
+	"work_actions_for_characteristics",
+	"work_actions_for_outfits",
+	"work_actions_for_apartment",
+	"work_actions_for_dates",
+	"work_actions_for_rivals",
+	"work_actions_for_other",
 ]
 
 
@@ -85,6 +98,11 @@ func analyze(result: ProgressionLabPopulationResult, config: ProgressionLabConfi
 	result.warning_prevalence = _warning_prevalence(summaries, result.n)
 	result.item_metrics = _aggregate_items(summaries)
 	result.rival_cash_dependency = _rival_cash_aggregate(summaries)
+	result.post_date_tail = _post_date_tail_aggregate(summaries)
+	result.build_timing = _build_timing_aggregate(summaries)
+	result.work_attribution = _work_attribution_aggregate(summaries)
+	result.goal_friction_by_type = _goal_friction_by_type(summaries)
+	result.stale_planned_goals = _stale_planned_aggregate(summaries)
 
 
 func _stats_for(records: Array, stage_key: String) -> Dictionary:
@@ -464,3 +482,150 @@ func _rival_cash_aggregate(records: Array) -> Dictionary:
 		"resolved_rival_money_failures": resolved,
 		"unresolved_rival_money_failures": unresolved,
 	}
+
+func _post_date_tail_aggregate(records: Array) -> Dictionary:
+	return {
+		"days": _metric_describe(records, "days_after_last_date_before_stage_completion"),
+		"actions": _metric_describe(records, "actions_after_last_date_before_stage_completion"),
+		"work": _metric_describe(records, "work_actions_after_last_date_before_stage_completion"),
+		"purchases": _metric_describe(records, "purchases_after_last_date_before_stage_completion"),
+	}
+
+
+func _work_attribution_aggregate(records: Array) -> Dictionary:
+	return {
+		"characteristics": _metric_describe(records, "work_actions_for_characteristics"),
+		"outfits": _metric_describe(records, "work_actions_for_outfits"),
+		"apartment": _metric_describe(records, "work_actions_for_apartment"),
+		"dates": _metric_describe(records, "work_actions_for_dates"),
+		"rivals": _metric_describe(records, "work_actions_for_rivals"),
+		"other": _metric_describe(records, "work_actions_for_other"),
+	}
+
+
+func _stale_planned_aggregate(records: Array) -> Dictionary:
+	var details: Array = []
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var rows: Variant = record.campaign_metrics.get("stale_planned_goals", [])
+		if rows is Array:
+			for row in rows:
+				if row is Dictionary:
+					var copy: Dictionary = row.duplicate(true)
+					copy["seed"] = record.base_seed
+					details.append(copy)
+	return {
+		"count": _metric_describe(records, "stale_planned_goal_count"),
+		"details": details,
+	}
+
+
+func _build_timing_aggregate(records: Array) -> Dictionary:
+	var remaining: Dictionary = {
+		"outfit": PackedFloat64Array(),
+		"apartment": PackedFloat64Array(),
+		"characteristic": PackedFloat64Array(),
+	}
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var rows: Variant = record.campaign_metrics.get("build_acquisitions", [])
+		if not (rows is Array):
+			continue
+		for row in rows:
+			if not (row is Dictionary):
+				continue
+			var goal_id: String = str(row.get("goal_id", ""))
+			var kind: String = ""
+			if goal_id.begins_with("characteristic:"):
+				kind = "characteristic"
+			elif goal_id.begins_with("outfit:"):
+				kind = "outfit"
+			elif goal_id.begins_with("apartment:"):
+				kind = "apartment"
+			if kind.is_empty():
+				continue
+			var values: PackedFloat64Array = remaining[kind]
+			values.append(float(row.get("remaining_stage_dates_at_acquisition", 0)))
+			remaining[kind] = values
+	return {
+		"outfit_remaining_dates": describe(remaining["outfit"]),
+		"apartment_remaining_dates": describe(remaining["apartment"]),
+		"characteristic_remaining_dates": describe(remaining["characteristic"]),
+		"stale_planned_goal_count": _metric_describe(records, "stale_planned_goal_count"),
+	}
+
+
+func _goal_friction_by_type(records: Array) -> Dictionary:
+	var buckets: Dictionary = {}
+	for type_name in [
+		"Characteristic",
+		"Outfit",
+		"Apartment Object",
+		"Filler Girl",
+		"Story Girl",
+		"Ordinary Rival",
+		"Story Rival",
+		"Venue exploration",
+		"Mandatory acquisition",
+	]:
+		buckets[type_name] = {
+			"goal_count": 0,
+			"direct": PackedFloat64Array(),
+			"support": PackedFloat64Array(),
+			"ratios": PackedFloat64Array(),
+			"days": PackedFloat64Array(),
+		}
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var friction: Variant = record.campaign_metrics.get("goal_friction", {})
+		if not (friction is Dictionary):
+			continue
+		for goal_id in friction.keys():
+			var type_name: String = ProgressionLabMetrics.classify_goal_friction_type(str(goal_id))
+			if not buckets.has(type_name):
+				continue
+			var entry: Dictionary = friction[goal_id]
+			var bucket: Dictionary = buckets[type_name]
+			bucket["goal_count"] = int(bucket["goal_count"]) + 1
+			var direct_actions: int = int(entry.get("direct_actions", 0))
+			var support_actions: int = int(entry.get("support_actions", 0))
+			var ratio: float = float(support_actions) / float(maxi(direct_actions, 1))
+			var direct_values: PackedFloat64Array = bucket["direct"]
+			direct_values.append(float(direct_actions))
+			bucket["direct"] = direct_values
+			var support_values: PackedFloat64Array = bucket["support"]
+			support_values.append(float(support_actions))
+			bucket["support"] = support_values
+			var ratio_values: PackedFloat64Array = bucket["ratios"]
+			ratio_values.append(ratio)
+			bucket["ratios"] = ratio_values
+			var days: int = int(entry.get("calendar_days_from_first_attempt_to_completion", 0))
+			var day_values: PackedFloat64Array = bucket["days"]
+			day_values.append(float(days))
+			bucket["days"] = day_values
+	var result: Dictionary = {}
+	for type_name in buckets.keys():
+		var bucket: Dictionary = buckets[type_name]
+		var ratio_stats: Dictionary = describe(bucket["ratios"])
+		result[type_name] = {
+			"goal_count": int(bucket["goal_count"]),
+			"mean_direct_actions": float(describe(bucket["direct"]).get("mean", 0.0)),
+			"mean_support_actions": float(describe(bucket["support"]).get("mean", 0.0)),
+			"mean_friction_ratio": float(ratio_stats.get("mean", 0.0)),
+			"P50_friction_ratio": float(ratio_stats.get("P50", 0.0)),
+			"P90_friction_ratio": float(ratio_stats.get("P90", 0.0)),
+			"mean_completion_days": float(describe(bucket["days"]).get("mean", 0.0)),
+		}
+	return result
+
+
+func _metric_describe(records: Array, key: String) -> Dictionary:
+	var values: PackedFloat64Array = PackedFloat64Array()
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		values.append(float(record.campaign_metrics.get(key, 0.0)))
+	return describe(values)

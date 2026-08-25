@@ -157,6 +157,79 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 	lines.append("## Representative seeds")
 	lines.append(JSON.stringify(result.representative_seeds, "\t"))
 	lines.append("")
+	lines.append("## Post-Date Tail")
+	var tail: Dictionary = result.post_date_tail
+	for key in ["days", "work", "purchases"]:
+		var stats: Dictionary = tail.get(key, {})
+		if stats is Dictionary:
+			lines.append("- %s after last Date: P50=%.3f P90=%.3f P95=%.3f max=%.3f" % [
+				key,
+				float(stats.get("P50", 0.0)),
+				float(stats.get("P90", 0.0)),
+				float(stats.get("P95", 0.0)),
+				float(stats.get("max", 0.0)),
+			])
+	lines.append("")
+	lines.append("## Build Timing")
+	var timing: Dictionary = result.build_timing
+	for key in ["outfit_remaining_dates", "apartment_remaining_dates", "characteristic_remaining_dates"]:
+		var stats: Dictionary = timing.get(key, {})
+		if stats is Dictionary:
+			lines.append("- %s: P10=%.3f P50=%.3f P90=%.3f" % [
+				key,
+				float(stats.get("P10", 0.0)),
+				float(stats.get("P50", 0.0)),
+				float(stats.get("P90", 0.0)),
+			])
+	var stale_stats: Dictionary = timing.get("stale_planned_goal_count", {})
+	if stale_stats is Dictionary:
+		lines.append("- stale planned goals: P50=%.3f P90=%.3f P95=%.3f max=%.3f" % [
+			float(stale_stats.get("P50", 0.0)),
+			float(stale_stats.get("P90", 0.0)),
+			float(stale_stats.get("P95", 0.0)),
+			float(stale_stats.get("max", 0.0)),
+		])
+	lines.append("")
+	lines.append("## Work Attribution")
+	var work_attr: Dictionary = result.work_attribution
+	for key in ["characteristics", "outfits", "apartment", "dates", "rivals", "other"]:
+		var stats: Dictionary = work_attr.get(key, {})
+		if stats is Dictionary:
+			lines.append("- %s: mean=%.3f P50=%.3f P90=%.3f" % [
+				key,
+				float(stats.get("mean", 0.0)),
+				float(stats.get("P50", 0.0)),
+				float(stats.get("P90", 0.0)),
+			])
+	lines.append("")
+	lines.append("## Goal Friction by Type")
+	for type_name in result.goal_friction_by_type.keys():
+		var row: Dictionary = result.goal_friction_by_type[type_name]
+		lines.append("- %s: goals=%d mean_direct=%.2f mean_support=%.2f mean_ratio=%.3f P50=%.3f P90=%.3f mean_days=%.2f" % [
+			str(type_name),
+			int(row.get("goal_count", 0)),
+			float(row.get("mean_direct_actions", 0.0)),
+			float(row.get("mean_support_actions", 0.0)),
+			float(row.get("mean_friction_ratio", 0.0)),
+			float(row.get("P50_friction_ratio", 0.0)),
+			float(row.get("P90_friction_ratio", 0.0)),
+			float(row.get("mean_completion_days", 0.0)),
+		])
+	lines.append("")
+	lines.append("## Apartment Item Utility")
+	for item_id in result.item_metrics.keys():
+		if not str(item_id).begins_with("apartment"):
+			continue
+		var entry: Dictionary = result.item_metrics[item_id]
+		lines.append("- %s considered=%s selected=%s positive=%s unlock=%s use/acq=%.3f" % [
+			str(item_id),
+			str(entry.get("considered_after_purchase", 0)),
+			str(entry.get("used_after_purchase", 0)),
+			str(entry.get("positive_effect_count", 0)),
+			str(entry.get("requirement_unlock_count", 0)),
+			float(entry.get("use_per_acquisition", 0.0)),
+		])
+	lines.append("")
 	lines.append("## Item utility (lowest use_per_acquisition first)")
 	var item_rows: Array = []
 	for item_id in result.item_metrics.keys():
@@ -194,6 +267,11 @@ func share_bundle_json(result: ProgressionLabPopulationResult) -> Dictionary:
 		"representative_seeds": result.representative_seeds,
 		"item_metrics": result.item_metrics,
 		"performance": result.performance,
+		"post_date_tail": result.post_date_tail,
+		"build_timing": result.build_timing,
+		"work_attribution": result.work_attribution,
+		"goal_friction_by_type": result.goal_friction_by_type,
+		"stale_planned_goals": result.stale_planned_goals,
 	}
 
 
@@ -377,12 +455,12 @@ func _group_csv(groups: Dictionary) -> String:
 
 func _seed_csv(result: ProgressionLabPopulationResult) -> String:
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("seed,archetype,days,work,dates,economy,dead,friction,novelty,badness,warnings,signature,stop")
+	lines.append("seed,archetype,days,work,dates,economy,dead,friction,novelty,badness,warnings,signature,stop,days_after_last_date_before_stage_completion,actions_after_last_date_before_stage_completion,work_actions_after_last_date_before_stage_completion,purchases_after_last_date_before_stage_completion,money_forced_work_days,max_consecutive_money_forced_work_days,stale_planned_goal_count,work_actions_for_characteristics,work_actions_for_outfits,work_actions_for_apartment,work_actions_for_dates,work_actions_for_rivals,work_actions_for_other")
 	for record in result.records:
 		if not (record is ProgressionLabRunRecord):
 			continue
 		var metrics: Dictionary = record.campaign_metrics
-		lines.append("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s" % [
+		lines.append("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 			record.base_seed,
 			String(record.archetype),
 			str(metrics.get("calendar_days", 0)),
@@ -396,9 +474,21 @@ func _seed_csv(result: ProgressionLabPopulationResult) -> String:
 			"|".join(record.hard_warnings),
 			record.execution_signature,
 			record.stop_reason,
+			str(metrics.get("days_after_last_date_before_stage_completion", 0)),
+			str(metrics.get("actions_after_last_date_before_stage_completion", 0)),
+			str(metrics.get("work_actions_after_last_date_before_stage_completion", 0)),
+			str(metrics.get("purchases_after_last_date_before_stage_completion", 0)),
+			str(metrics.get("money_forced_work_days", 0)),
+			str(metrics.get("max_consecutive_money_forced_work_days", 0)),
+			str(metrics.get("stale_planned_goal_count", 0)),
+			str(metrics.get("work_actions_for_characteristics", 0)),
+			str(metrics.get("work_actions_for_outfits", 0)),
+			str(metrics.get("work_actions_for_apartment", 0)),
+			str(metrics.get("work_actions_for_dates", 0)),
+			str(metrics.get("work_actions_for_rivals", 0)),
+			str(metrics.get("work_actions_for_other", 0)),
 		])
 	return "\n".join(lines)
-
 
 func _bad_csv(rows: Array) -> String:
 	var lines: PackedStringArray = PackedStringArray()
@@ -423,20 +513,23 @@ func _bad_csv(rows: Array) -> String:
 
 func _item_csv(items: Dictionary) -> String:
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("item_id,eligible,acquired,acquisition_rate,use_per_acquisition,positive_per_acquisition,unlock_per_acquisition")
+	lines.append("item_id,eligible,acquired,acquisition_rate,times_considered,times_selected,times_produced_positive_score,times_unlocked_requirement,use_per_acquisition,positive_effect_per_acquisition,unlock_per_acquisition")
 	for item_id in items.keys():
 		var entry: Dictionary = items[item_id]
-		lines.append("%s,%s,%s,%s,%s,%s,%s" % [
+		lines.append("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 			str(item_id),
 			str(entry.get("eligible_runs", 0)),
 			str(entry.get("acquired_runs", 0)),
 			str(entry.get("acquisition_rate", 0)),
+			str(entry.get("considered_after_purchase", 0)),
+			str(entry.get("used_after_purchase", 0)),
+			str(entry.get("positive_effect_count", 0)),
+			str(entry.get("requirement_unlock_count", 0)),
 			str(entry.get("use_per_acquisition", 0)),
 			str(entry.get("positive_effect_per_acquisition", 0)),
 			str(entry.get("unlock_per_acquisition", 0)),
 		])
 	return "\n".join(lines)
-
 
 func _representative_csv(rows: Dictionary) -> String:
 	var lines: PackedStringArray = PackedStringArray()

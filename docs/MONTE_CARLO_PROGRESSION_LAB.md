@@ -1191,7 +1191,7 @@ Campaign `dead_progress_days` remains “calendar day with zero Progress Beats a
 
 `money_forced_work_days` means the calendar day contains WORK and at least one WORK action was executed as support for a cash-blocked goal. Also track `max_consecutive_money_forced_work_days`.
 
-WORK support is counted by goal type: `work_actions_for_characteristics` / `outfits` / `apartment` / `dates` / `rivals` / `other`, with derived `work_share_*`.
+WORK support is counted by goal type: `work_actions_for_characteristics` / `outfits` / `apartment` / `dates` / `rivals` / `other`, with derived `work_share_*`. Classification uses `classify_supporting_goal(goal_id)` from StagePlan prefixes (`characteristic:`, `outfit:`, `apartment:`, `filler:max:` / `story:`, `rival:` / `story_rival:`), never display names. Every successful WORK belongs to exactly one category.
 
 ---
 
@@ -2025,15 +2025,32 @@ Buttons:
 Run N simulations
 Cancel
 Replay selected seed
+Run lab tests
 ```
 
 Progress:
 
 ```text
-completed / N
+Прогон X / N
+percentage
 runs per second
 elapsed time
 estimated remaining time
+```
+
+Replay verification:
+
+```text
+Проверка replay X / N
+matched / mismatched
+```
+
+Lab tests yield the main loop between tests and test groups and show:
+
+```text
+Test group
+Current test name
+X / total
 ```
 
 Simulation executes in batches:
@@ -2179,7 +2196,7 @@ share_bundle.md
 share_bundle.json
 ```
 
-`seed_summaries.csv` contains one row per simulation Run.
+`seed_summaries.csv` contains one row per simulation Run, including post-date tail, money-forced-work, stale planned goals, and work attribution counts. `aggregate_metrics.csv` and `stage_metrics.csv` include the same numeric pacing fields. `item_metrics.csv` includes `times_considered`, `times_selected`, `times_produced_positive_score`, `times_unlocked_requirement`, and the derived per-acquisition rates.
 
 Detailed logs are included for:
 
@@ -2282,6 +2299,11 @@ warning prevalence
 highest-friction goals
 item utility summary
 representative seed summaries
+Post-Date Tail
+Build Timing
+Work Attribution
+Goal Friction by Type
+Apartment Item Utility
 ```
 
 Для каждого Top bad seed:
@@ -2301,9 +2323,13 @@ key metrics
 Add:
 
 ```text
-schema_version = 1
+schema_version = 2
 simulation_version = current git commit short hash when available
 ```
+
+`schema_version` increments when new aggregate fields are added. Version 2 adds `post_date_tail`, `build_timing`, `work_attribution`, `goal_friction_by_type`, and `stale_planned_goals` to `share_bundle.json`.
+
+Also keep:
 
 to:
 

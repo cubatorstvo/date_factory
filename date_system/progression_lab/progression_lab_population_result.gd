@@ -1,7 +1,7 @@
 class_name ProgressionLabPopulationResult
 extends RefCounted
 
-var schema_version: int = 1
+var schema_version: int = 2
 var simulation_version: String = ""
 var config: Dictionary = {}
 var n: int = 0
@@ -27,6 +27,11 @@ var replay_mismatches: Array = []
 var git_dirty: bool = false
 var worktree_fingerprint: String = ""
 var rival_cash_dependency: Dictionary = {}
+var post_date_tail: Dictionary = {}
+var build_timing: Dictionary = {}
+var work_attribution: Dictionary = {}
+var goal_friction_by_type: Dictionary = {}
+var stale_planned_goals: Dictionary = {}
 
 
 func to_dict() -> Dictionary:
@@ -63,4 +68,9 @@ func to_dict() -> Dictionary:
 		"git_dirty": git_dirty,
 		"worktree_fingerprint": worktree_fingerprint,
 		"rival_cash_dependency": rival_cash_dependency.duplicate(true),
+		"post_date_tail": post_date_tail.duplicate(true),
+		"build_timing": build_timing.duplicate(true),
+		"work_attribution": work_attribution.duplicate(true),
+		"goal_friction_by_type": goal_friction_by_type.duplicate(true),
+		"stale_planned_goals": stale_planned_goals.duplicate(true),
 	}

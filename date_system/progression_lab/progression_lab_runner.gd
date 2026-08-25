@@ -149,7 +149,7 @@ func export_specific_seed(base_seed: int, directory: String = "") -> String:
 	var record: ProgressionLabRunRecord = replay_seed(base_seed, true)
 	if _result == null:
 		_result = ProgressionLabPopulationResult.new()
-		_result.schema_version = 1
+		_result.schema_version = ProgressionLabConfig.SCHEMA_VERSION
 		_apply_build_identity(_result)
 		_result.config = config.to_dict() if config != null else {}
 	return _exporter.export_specific_seed(record, _result, directory)

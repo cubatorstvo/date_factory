@@ -88,6 +88,7 @@ var _bad_seed_spin: SpinBox
 var _run_btn: Button
 var _cancel_btn: Button
 var _replay_btn: Button
+var _tests_btn: Button
 var _progress_label: Label
 var _isolation_target: OptionButton
 var _isolation_mode: OptionButton
@@ -219,6 +220,9 @@ func _build_run_row() -> HBoxContainer:
 	_replay_btn = LabUi.button("Replay selected seed")
 	_replay_btn.pressed.connect(_on_replay_selected_pressed)
 	row.add_child(_replay_btn)
+	_tests_btn = LabUi.button("Run lab tests")
+	_tests_btn.pressed.connect(_on_tests_pressed)
+	row.add_child(_tests_btn)
 	return row
 
 
@@ -566,6 +570,45 @@ func _on_run_pressed() -> void:
 	_apply_result(_result)
 	_emit_status("Monte Carlo run finished" if _result != null else "Monte Carlo run ended without a result")
 
+func _on_tests_pressed() -> void:
+	if _running:
+		return
+	_running = true
+	_set_running_ui(true)
+	var script: Script = load("res://date_system/tests/progression_lab_tests.gd") as Script
+	if script == null:
+		_emit_status("ProgressionLabTests is not available")
+		_running = false
+		_set_running_ui(false)
+		return
+	var tests: Object = script.new()
+	_show_test_progress("lab", "starting", 0, 1)
+	var failures: PackedStringArray = PackedStringArray()
+	if tests.has_method("run_all_async"):
+		failures = await tests.run_all_async(self)
+	elif tests.has_method("run_all"):
+		failures = tests.run_all()
+	var summary: String = str(tests.summary()) if tests.has_method("summary") else ""
+	if failures.is_empty():
+		_emit_status("Lab tests passed · %s" % summary)
+	else:
+		_emit_status("Lab tests failed · %s" % summary)
+		if _overview_text != null:
+			_overview_text.text = "FAIL:\n" + "\n".join(failures)
+	_running = false
+	_set_running_ui(false)
+
+
+func _show_test_progress(group: String, test_name: String, done: int, total: int) -> void:
+	var line: String = "Test group: %s" % group
+	line += " · Current test: %s" % test_name
+	line += " · %d / %d" % [done, total]
+	if total > 0:
+		line += " · %.1f%%" % (100.0 * float(done) / float(total))
+	if _progress_label != null:
+		_progress_label.text = line
+	_emit_status(line)
+
 
 func _on_cancel_pressed() -> void:
 	_cancel_run()
@@ -652,6 +695,8 @@ func _set_running_ui(is_running: bool) -> void:
 		_cancel_btn.disabled = not is_running
 	if _isolation_btn != null:
 		_isolation_btn.disabled = is_running
+	if _tests_btn != null:
+		_tests_btn.disabled = is_running
 
 
 func _on_replay_selected_pressed() -> void:
