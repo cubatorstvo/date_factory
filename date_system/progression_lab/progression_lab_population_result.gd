@@ -24,6 +24,9 @@ var isolation: Dictionary = {}
 var replay_matched: int = 0
 var replay_total: int = 0
 var replay_mismatches: Array = []
+var git_dirty: bool = false
+var worktree_fingerprint: String = ""
+var rival_cash_dependency: Dictionary = {}
 
 
 func to_dict() -> Dictionary:
@@ -57,4 +60,7 @@ func to_dict() -> Dictionary:
 		"replay_matched": replay_matched,
 		"replay_total": replay_total,
 		"replay_mismatches": replay_mismatches.duplicate(true),
+		"git_dirty": git_dirty,
+		"worktree_fingerprint": worktree_fingerprint,
+		"rival_cash_dependency": rival_cash_dependency.duplicate(true),
 	}

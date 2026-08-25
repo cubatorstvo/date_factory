@@ -39,7 +39,7 @@ func configure(p_config: ProgressionLabConfig, p_n: int, p_base_seed_start: int,
 	regression_mode = false
 	_result = ProgressionLabPopulationResult.new()
 	_result.schema_version = config.schema_version
-	_result.simulation_version = simulation_version()
+	_apply_build_identity(_result)
 	_result.config = config.to_dict()
 	_result.n = n
 	_result.base_seed_start = base_seed_start
@@ -150,7 +150,7 @@ func export_specific_seed(base_seed: int, directory: String = "") -> String:
 	if _result == null:
 		_result = ProgressionLabPopulationResult.new()
 		_result.schema_version = 1
-		_result.simulation_version = simulation_version()
+		_apply_build_identity(_result)
 		_result.config = config.to_dict() if config != null else {}
 	return _exporter.export_specific_seed(record, _result, directory)
 
@@ -161,6 +161,44 @@ func simulation_version() -> String:
 	if code != 0 or output.is_empty():
 		return ""
 	return str(output[0]).strip_edges()
+
+func git_dirty() -> bool:
+	var output: Array = []
+	var code: int = OS.execute("git", PackedStringArray(["status", "--porcelain"]), output, true, false)
+	if code != 0:
+		return false
+	return not _git_output_text(output).strip_edges().is_empty()
+
+
+func worktree_fingerprint() -> String:
+	var output: Array = []
+	OS.execute("git", PackedStringArray(["diff", "--binary", "HEAD"]), output, true, false)
+	return ProgressionRng.sha256_hex(_git_output_text(output))
+
+
+func capture_build_identity() -> Dictionary:
+	var dirty: bool = git_dirty()
+	return {
+		"simulation_version": simulation_version(),
+		"git_dirty": dirty,
+		"worktree_fingerprint": worktree_fingerprint() if dirty else "",
+	}
+
+
+func _apply_build_identity(result: ProgressionLabPopulationResult) -> void:
+	if result == null:
+		return
+	var identity: Dictionary = capture_build_identity()
+	result.simulation_version = str(identity.get("simulation_version", ""))
+	result.git_dirty = bool(identity.get("git_dirty", false))
+	result.worktree_fingerprint = str(identity.get("worktree_fingerprint", ""))
+
+
+func _git_output_text(output: Array) -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	for item in output:
+		lines.append(str(item))
+	return "\n".join(lines)
 
 
 func _run_seed(base_seed: int, p_detailed: bool) -> ProgressionLabRunRecord:

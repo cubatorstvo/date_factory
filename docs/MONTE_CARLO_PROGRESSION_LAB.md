@@ -1073,6 +1073,38 @@ bad_seed_percentage = bad_seed_count / N
 
 ---
 
+# 23.8 Rival cash dependency
+
+Each active ordinary or Story Rival goal gets a concrete production action intent **before** cash analysis:
+
+```text
+RIVAL_MEET when production state is AVAILABLE_TO_MEET
+RIVAL_CHALLENGE when production state is AVAILABLE_TO_CHALLENGE
+```
+
+`required_money` is the production action cost (`create_meet_rival_action` / `create_competition_action`). `cash_gap = max(required_money - current_money, 0)`. Candidate generation, cash analysis, diagnostics and execution share that intent.
+
+If `production_available` and `cash_gap > 0`, the Rival goal is a `cash_dependencies[]` row and WORK support binds to it (`supporting_goal_id`, `supporting_action_id`). Direct Rival candidates are created only when `cash_gap = 0`. A recoverable `AVAILABLE_TO_CHALLENGE` money gap cannot produce `NO_USEFUL_ACTIONS` from an empty candidate set.
+
+Failure codes: `INSUFFICIENT_MONEY`, `DAILY_GATE`, `RIVAL_LOCKED`, `RIVAL_ALREADY_COMPLETE`, `PRODUCTION_ACTION_REJECTED`.
+
+Population exports include a Rival Cash Dependency aggregate (`runs_with_rival_cash_dependency`, story/ordinary counts, WORK supporting Rival, money failures resolved/unresolved). `unresolved_rival_money_failures` is 0 when WORK/challenge can still progress.
+
+---
+
+# 23.9 Simulation build identity
+
+`simulation_version` is the current Git commit short hash. Exports also store:
+
+```text
+git_dirty = working tree differs from HEAD
+worktree_fingerprint = SHA-256 of `git diff --binary HEAD` when dirty, else ""
+```
+
+These fields appear in `config.json`, `share_bundle.json` / `.md`, seed JSON, bad-seed JSON, representative JSON and `aggregate_summary.md`.
+
+---
+
 # 24. Date simulation
 
 Every Date uses the production Date Engine:

@@ -82,7 +82,7 @@ const ISOLATION_FULL: StringName = &"FULL_STAGE_CONTENT"
 
 @export var priority_dress_up: float = 100.0
 @export var priority_filler_date: float = 90.0
-@export var priority_story_rival: float = 90.0
+@export var priority_story_rival: float = 95.0
 @export var priority_characteristic: float = 75.0
 @export var priority_outfit: float = 70.0
 @export var priority_apartment: float = 65.0

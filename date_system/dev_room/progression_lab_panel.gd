@@ -624,7 +624,7 @@ func _show_run_progress(completed: int, total: int, runs_per_second: float, elap
 		var seed_value: int = 0
 		if _runner.has_method("current_seed"):
 			seed_value = int(_runner.current_seed())
-		line = "Regression seed %d · %d / %d" % [seed_value, completed, total]
+		line = "Rival regression seed %d · %d / %d" % [seed_value, completed, total]
 	if total > 0:
 		line += " · %.1f%%" % (100.0 * float(completed) / float(total))
 	if completed > 0:
@@ -833,6 +833,16 @@ func _format_overview(result: Variant) -> String:
 	var replay_total: Variant = _get_prop(result, "replay_total")
 	if replay_total != null and int(replay_total) > 0:
 		lines.append("Replay determinism: %d / %d matched" % [int(_get_prop(result, "replay_matched")), int(replay_total)])
+	var version: Variant = _get_prop(result, "simulation_version")
+	if version != null:
+		lines.append("Simulation version: %s" % str(version))
+		lines.append("Git dirty: %s" % str(_get_prop(result, "git_dirty")))
+		lines.append("Worktree fingerprint: %s" % str(_get_prop(result, "worktree_fingerprint")))
+	var rival_cash: Variant = _get_prop(result, "rival_cash_dependency")
+	if rival_cash is Dictionary and not (rival_cash as Dictionary).is_empty():
+		lines.append("")
+		lines.append("Rival Cash Dependency")
+		lines.append(_format_value(rival_cash, 0))
 	return "\n".join(lines)
 
 

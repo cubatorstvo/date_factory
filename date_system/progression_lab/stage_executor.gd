@@ -81,6 +81,8 @@ var _failed_candidate_sequence: PackedStringArray = PackedStringArray()
 var _stage_transitions: PackedStringArray = PackedStringArray()
 var _rng_draw_counts: Dictionary = {}
 var _cash_dependencies: Array = []
+var _rival_money_failed_goals: Dictionary = {}
+var _resolved_rival_money_goals: Dictionary = {}
 
 
 func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecord:
@@ -116,6 +118,8 @@ func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecor
 	_stage_transitions.clear()
 	_rng_draw_counts.clear()
 	_cash_dependencies.clear()
+	_rival_money_failed_goals.clear()
+	_resolved_rival_money_goals.clear()
 	seed(ProgressionRng.derive_seed(base_seed, "GLOBAL"))
 	var competitions_reset: Variant = _competition_service()
 	if competitions_reset != null:
@@ -145,6 +149,7 @@ func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecor
 	var clock: Variant = _time_service()
 	var last_day: int = int(clock.get_calendar_day_index()) if clock != null else 0
 	_campaign.finalize_days(last_day, int(economy.get_money()) if economy != null else 0, int(rating.get_rating()) if rating != null else 0)
+	_finalize_rival_money_metrics(_active_plan)
 	record.stage_plans = _stage_plans.duplicate(true)
 	record.campaign_metrics = _campaign.to_dict()
 	record.stage_metrics = {}
@@ -309,10 +314,12 @@ func collect_blocking_snapshot(plan: StagePlan) -> Dictionary:
 	for rival_id in rival_ids:
 		if rivals == null:
 			continue
-		if is_rival_goal_complete(_rival_goal_id(rival_id, rival_id == plan.story_rival_id), rival_id):
+		var is_story_rival: bool = rival_id == plan.story_rival_id
+		if is_rival_goal_complete(_rival_goal_id(rival_id, is_story_rival), rival_id):
 			continue
-		if bool(rivals.is_discovered(rival_id)) and not bool(rivals.can_challenge_now(rival_id)):
-			daily_ids.append(_rival_goal_id(rival_id, rival_id == plan.story_rival_id))
+		var intent: Dictionary = evaluate_rival_intent(rival_id, is_story_rival)
+		if str(intent.get("failure_code", "")) == "DAILY_GATE":
+			daily_ids.append(_rival_goal_id(rival_id, is_story_rival))
 	for characteristic_id in plan.characteristic_targets.keys():
 		var upgrade: CharacteristicUpgradeDefinition = _upgrade_for(StringName(str(characteristic_id)))
 		if upgrade == null:
@@ -440,64 +447,52 @@ func _meet_only_blocked_by_location(girl_id: StringName, definition: GirlDefinit
 
 
 func _add_rival_candidates(candidates: Array, plan: StagePlan, rival_id: StringName, priority: float, is_story: bool) -> void:
+	var intent: Dictionary = evaluate_rival_intent(rival_id, is_story)
+	if str(intent.get("failure_code", "")) == "RIVAL_ALREADY_COMPLETE":
+		return
+	if not bool(intent.get("production_available", false)):
+		return
+	if int(intent.get("cash_gap", 0)) > 0:
+		return
+	var definition: RivalDefinition = null
 	var rivals: Variant = _rivals_service()
-	var competitions: Variant = _competition_service()
-	if rivals == null or competitions == null:
-		return
-	var goal_id: String = _rival_goal_id(rival_id, is_story)
-	if is_rival_goal_complete(goal_id, rival_id):
-		return
-	var definition: RivalDefinition = rivals.get_definition(rival_id)
-	if definition == null:
-		return
-	var state: String = _rival_simulation_state(rival_id)
-	if state == "LOCKED" or state == "DAILY_GATED" or state == "DEFEATED":
-		return
-	if state == "AVAILABLE_TO_MEET":
+	if rivals != null:
+		definition = rivals.get_definition(rival_id)
+	var action_type: String = str(intent.get("action_type", ""))
+	if action_type == "RIVAL_MEET":
 		var meet := Candidate.new()
 		meet.category = "RIVAL" if not is_story else "STORY"
 		meet.kind = "rival_meet"
 		meet.rival_id = rival_id
-		meet.location_id = definition.location_id
-		meet.goal_id = goal_id
-		meet.action_id = "rival_meet:%s" % String(rival_id)
-		meet.content_id = "rival_meet:%s" % String(rival_id)
+		meet.location_id = definition.location_id if definition != null else &""
+		meet.goal_id = str(intent.get("goal_id", ""))
+		meet.action_id = str(intent.get("production_action_id", ""))
+		meet.required_money = int(intent.get("required_money", 0))
+		meet.cash_before = int(intent.get("current_money", 0))
+		meet.cash_gap = 0
+		meet.content_id = meet.action_id
 		meet.is_novel = not _seen.has("rival:%s" % String(rival_id))
 		meet.score = _score(priority, false, true, meet.is_novel, meet.content_id)
 		candidates.append(meet)
 		return
-	if state != "AVAILABLE_TO_CHALLENGE":
+	if action_type != "RIVAL_CHALLENGE":
 		return
-	var list: Array = competitions.get_competitions_for_rival(rival_id)
-	if list.is_empty():
-		return
-	var competition: CompetitionDefinition = list[0]
-	var action: GameAction = competitions.create_competition_action(competition.id)
-	var actions: Variant = _action_service()
-	if actions == null:
-		return
-	if not bool(actions.can_execute(action)):
-		var reason: String = str(actions.get_failure_reason(action))
-		if reason.find("денег") >= 0:
-			return
-		if reason.find("локац") >= 0:
-			pass
-		else:
-			return
 	var fight := Candidate.new()
 	fight.category = "RIVAL" if not is_story else "STORY"
 	fight.kind = "rival_fight"
 	fight.rival_id = rival_id
-	fight.competition_id = competition.id
-	fight.location_id = definition.location_id
-	fight.goal_id = goal_id
-	fight.action_id = "rival:%s" % String(rival_id)
-	fight.content_id = "rival:%s" % String(rival_id)
+	fight.competition_id = StringName(str(intent.get("competition_id", "")))
+	fight.location_id = definition.location_id if definition != null else &""
+	fight.goal_id = str(intent.get("goal_id", ""))
+	fight.action_id = str(intent.get("production_action_id", ""))
+	fight.required_money = int(intent.get("required_money", 0))
+	fight.cash_before = int(intent.get("current_money", 0))
+	fight.cash_gap = 0
+	fight.content_id = fight.action_id
 	fight.uses_daily_gate = true
 	fight.is_novel = not _seen.has("rival:%s" % String(rival_id))
 	fight.score = _score(priority, true, false, fight.is_novel, fight.content_id)
 	candidates.append(fight)
-
 func _add_characteristic_candidates(candidates: Array, plan: StagePlan) -> void:
 	var characteristics: Variant = _characteristic_service()
 	if characteristics == null:
@@ -707,6 +702,10 @@ func _build_cash_dependencies(plan: StagePlan) -> Array:
 		var item: ApartmentObjectDefinition = apartment.get_catalog().get_object(object_id)
 		if item != null and item.price > money:
 			blocked.append(_cash_row(_apartment_goal(object_id), "buy_apartment:%s" % String(object_id), "buy_apartment", item.price, money, config.priority_apartment))
+	for rival_id in plan.target_ordinary_rival_ids:
+		_append_rival_cash_dependency(blocked, rival_id, false, money)
+	if plan.story_rival_id != &"":
+		_append_rival_cash_dependency(blocked, plan.story_rival_id, true, money)
 	return blocked
 
 func _append_date_cash_dependency(blocked: Array, plan: StagePlan, girl_id: StringName, priority: float, money: int) -> void:
@@ -739,6 +738,21 @@ func _append_date_cash_dependency(blocked: Array, plan: StagePlan, girl_id: Stri
 	if not bool(eligibility.get("eligible", false)) and failure_code != "INSUFFICIENT_MONEY":
 		return
 	blocked.append(_cash_row(_girl_goal(girl_id), str(eligibility.get("action_id", "")), "date", required_money, money, priority))
+
+func _append_rival_cash_dependency(blocked: Array, rival_id: StringName, is_story: bool, money: int) -> void:
+	var intent: Dictionary = evaluate_rival_intent(rival_id, is_story)
+	if not bool(intent.get("production_available", false)):
+		return
+	var cash_gap: int = int(intent.get("cash_gap", 0))
+	if cash_gap <= 0:
+		return
+	var goal_id: String = str(intent.get("goal_id", ""))
+	var action_id: String = str(intent.get("production_action_id", ""))
+	var action_type: String = str(intent.get("action_type", "RIVAL_CHALLENGE"))
+	var required_money: int = int(intent.get("required_money", 0))
+	var priority: float = config.priority_story_rival if is_story else config.priority_ordinary_rival
+	blocked.append(_cash_row(goal_id, action_id, action_type, required_money, money, priority))
+	_note_rival_money_failure(goal_id, is_story)
 
 
 func _cash_row(goal_id: String, action_id: String, action_type: String, required_money: int, current_money: int, priority: float) -> Dictionary:
@@ -1127,7 +1141,6 @@ func _exec_rival_fight(candidate: Candidate) -> bool:
 	if competitions == null or actions == null:
 		return false
 	var fight_rng: RandomNumberGenerator = ProgressionRng.make(_run_base_seed, "%s:fight:%s:%d" % [ProgressionRng.execution_stream(_run_stage), String(candidate.competition_id), _campaign.rival_attempts])
-	competitions.set_forced_won(null)
 	competitions.set_rng(fight_rng)
 	var action: GameAction = competitions.create_competition_action(candidate.competition_id)
 	var result: ActionResult = actions.execute(action)
@@ -1144,6 +1157,8 @@ func _exec_rival_fight(candidate: Candidate) -> bool:
 	if won:
 		_campaign.rival_wins += 1
 		_current_stage_metrics.rival_wins += 1
+		if _rival_money_failed_goals.has(candidate.goal_id):
+			_resolved_rival_money_goals[candidate.goal_id] = true
 	_campaign.set_flag("used_production_rival")
 	_seen["rival:%s" % String(candidate.rival_id)] = true
 	_log_line("### RIVAL %s %s" % [String(candidate.rival_id), "win" if won else "loss"])
@@ -1168,6 +1183,9 @@ func _exec_work(candidate: Candidate) -> bool:
 	var money_after: int = int(_economy_service().get_money())
 	_campaign.work_actions += 1
 	_current_stage_metrics.work_actions += 1
+	if str(candidate.supporting_action_id).begins_with("rival_"):
+		_campaign.work_actions_supporting_rival += 1
+		_current_stage_metrics.work_actions_supporting_rival += 1
 	_campaign.set_flag("used_production_work")
 	_log_line("### WORK")
 	_log_line("Goal support: %s" % candidate.goal_id)
@@ -1235,6 +1253,128 @@ func evaluate_date_candidate(girl_id: StringName, selected_outfit_id: StringName
 	result["reason"] = reason
 	result["failure_code"] = _failure_code_from_reason(reason)
 	return result
+
+func evaluate_rival_intent(rival_id: StringName, is_story: bool) -> Dictionary:
+	var economy: Variant = _economy_service()
+	var current_money: int = int(economy.get_money()) if economy != null else 0
+	var goal_id: String = _rival_goal_id(rival_id, is_story)
+	var intent: Dictionary = {
+		"goal_id": goal_id,
+		"rival_id": String(rival_id),
+		"rival_goal_type": "story" if is_story else "ordinary",
+		"action_type": "",
+		"production_action_id": "",
+		"production_available": false,
+		"production_failure_reason": "",
+		"failure_code": "",
+		"required_money": 0,
+		"current_money": current_money,
+		"cash_gap": 0,
+		"primary_activity": "RIVAL",
+		"competition_id": "",
+		"location_id": "",
+		"production_state": _rival_simulation_state(rival_id),
+	}
+	if is_rival_goal_complete(goal_id, rival_id):
+		intent["failure_code"] = "RIVAL_ALREADY_COMPLETE"
+		intent["production_state"] = "DEFEATED"
+		return intent
+	var state: String = str(intent.get("production_state", ""))
+	if state == "LOCKED":
+		intent["failure_code"] = "RIVAL_LOCKED"
+		return intent
+	if state == "DAILY_GATED":
+		intent["failure_code"] = "DAILY_GATE"
+		return intent
+	if state == "DEFEATED":
+		intent["failure_code"] = "RIVAL_ALREADY_COMPLETE"
+		return intent
+	var rivals: Variant = _rivals_service()
+	var definition: RivalDefinition = rivals.get_definition(rival_id) if rivals != null else null
+	if definition != null:
+		intent["location_id"] = String(definition.location_id)
+	var actions: Variant = _action_service()
+	if state == "AVAILABLE_TO_MEET":
+		intent["action_type"] = "RIVAL_MEET"
+		intent["production_action_id"] = "rival_meet:%s" % String(rival_id)
+		intent["production_available"] = true
+		if rivals == null:
+			intent["production_available"] = false
+			intent["failure_code"] = "PRODUCTION_ACTION_REJECTED"
+			return intent
+		var meet_action: GameAction = rivals.create_meet_rival_action(rival_id)
+		intent["required_money"] = int(meet_action.money_cost)
+		intent["cash_gap"] = maxi(int(intent["required_money"]) - current_money, 0)
+		if actions != null and not bool(actions.can_execute(meet_action)):
+			intent["production_failure_reason"] = str(actions.get_failure_reason(meet_action))
+			intent["failure_code"] = _failure_code_from_reason(str(intent["production_failure_reason"]))
+		if int(intent["cash_gap"]) > 0:
+			intent["failure_code"] = "INSUFFICIENT_MONEY"
+			if str(intent["production_failure_reason"]).is_empty():
+				intent["production_failure_reason"] = "INSUFFICIENT_MONEY"
+		return intent
+	if state != "AVAILABLE_TO_CHALLENGE":
+		intent["failure_code"] = "PRODUCTION_ACTION_REJECTED"
+		return intent
+	intent["action_type"] = "RIVAL_CHALLENGE"
+	intent["production_action_id"] = "rival_challenge:%s" % String(rival_id)
+	intent["production_available"] = true
+	var competitions: Variant = _competition_service()
+	if competitions == null:
+		intent["production_available"] = false
+		intent["failure_code"] = "PRODUCTION_ACTION_REJECTED"
+		return intent
+	var list: Array = competitions.get_competitions_for_rival(rival_id)
+	if list.is_empty():
+		intent["production_available"] = false
+		intent["failure_code"] = "PRODUCTION_ACTION_REJECTED"
+		return intent
+	var competition: CompetitionDefinition = list[0]
+	intent["competition_id"] = String(competition.id)
+	var action: GameAction = competitions.create_competition_action(competition.id)
+	intent["required_money"] = int(action.money_cost)
+	intent["cash_gap"] = maxi(int(intent["required_money"]) - current_money, 0)
+	if actions != null and not bool(actions.can_execute(action)):
+		intent["production_failure_reason"] = str(actions.get_failure_reason(action))
+		intent["failure_code"] = _failure_code_from_reason(str(intent["production_failure_reason"]))
+	if int(intent["cash_gap"]) > 0:
+		intent["failure_code"] = "INSUFFICIENT_MONEY"
+		if str(intent["production_failure_reason"]).is_empty():
+			intent["production_failure_reason"] = "INSUFFICIENT_MONEY"
+	return intent
+
+func _note_rival_money_failure(goal_id: String, is_story: bool) -> void:
+	if goal_id.is_empty() or _campaign == null:
+		return
+	_campaign.total_rival_cash_dependencies += 1
+	if is_story:
+		_campaign.story_rival_cash_dependencies += 1
+	else:
+		_campaign.ordinary_rival_cash_dependencies += 1
+	if _current_stage_metrics != null:
+		_current_stage_metrics.total_rival_cash_dependencies += 1
+		if is_story:
+			_current_stage_metrics.story_rival_cash_dependencies += 1
+		else:
+			_current_stage_metrics.ordinary_rival_cash_dependencies += 1
+	if _rival_money_failed_goals.has(goal_id):
+		return
+	_rival_money_failed_goals[goal_id] = true
+	_campaign.rival_action_money_failures += 1
+	if _current_stage_metrics != null:
+		_current_stage_metrics.rival_action_money_failures += 1
+
+func _finalize_rival_money_metrics(plan: StagePlan) -> void:
+	if _campaign == null:
+		return
+	for goal_id in _resolved_rival_money_goals.keys():
+		_campaign.resolved_rival_money_failures += 1
+	for goal_id in _rival_money_failed_goals.keys():
+		if _resolved_rival_money_goals.has(goal_id):
+			continue
+		var still_unmet: bool = plan != null and Array(_unmet_goals(plan)).has(str(goal_id))
+		if still_unmet:
+			_campaign.unresolved_rival_money_failures += 1
 
 func _collect_scored_candidates(plan: StagePlan, excluded: Dictionary) -> Array:
 	_date_policy.consume_rng = false
@@ -1409,6 +1549,10 @@ func _failure_code_from_reason(reason: String) -> String:
 		return "VENUE_UNAVAILABLE"
 	if text.find("денег") >= 0 or text.find("money") >= 0:
 		return "INSUFFICIENT_MONEY"
+	if text.find("побежд") >= 0 or text.find("defeated") >= 0 or text.find("already") >= 0:
+		return "RIVAL_ALREADY_COMPLETE"
+	if text.find("заблок") >= 0 or text.find("locked") >= 0:
+		return "RIVAL_LOCKED"
 	if text.find("сегодня") >= 0 or text.find("daily") >= 0:
 		return "DAILY_GATE"
 	if text.find("apart") >= 0 or text.find("квартир") >= 0 or text.find("clean") >= 0:
@@ -1564,6 +1708,8 @@ func _build_diagnostic_snapshot(plan: StagePlan) -> Dictionary:
 		"consecutive_stalled_days": _consecutive_stalled_days,
 		"barrier_complete": _barrier_complete(plan) if plan != null else false,
 		"has_dating_service": dating != null,
+		"last_rival_goal": _last_rival_goal_from_diagnostics(rival_availability),
+		"last_rival_action_failure": _last_rival_failure_from_diagnostics(rival_availability),
 	}
 
 func _barrier_complete(plan: StagePlan) -> bool:
@@ -1955,35 +2101,61 @@ func _rival_story_stage_available(definition: RivalDefinition) -> bool:
 func _rival_diagnostic_row(rival_id: StringName, is_story: bool) -> Dictionary:
 	var rivals: Variant = _rivals_service()
 	var definition: RivalDefinition = rivals.get_definition(rival_id) if rivals != null else null
-	var state: String = _rival_simulation_state(rival_id)
-	var blocking_reason: String = ""
-	match state:
-		"LOCKED":
-			blocking_reason = "locked_by_production"
-		"DAILY_GATED":
-			blocking_reason = "daily_gate"
-		"DEFEATED":
-			blocking_reason = ""
-		"AVAILABLE_TO_MEET":
-			blocking_reason = ""
-		"AVAILABLE_TO_CHALLENGE":
-			blocking_reason = ""
-		_:
-			blocking_reason = state
+	var intent: Dictionary = evaluate_rival_intent(rival_id, is_story)
+	var state: String = str(intent.get("production_state", _rival_simulation_state(rival_id)))
+	var blocking_reason: String = str(intent.get("failure_code", ""))
 	return {
 		"rival_id": String(rival_id),
+		"goal_id": str(intent.get("goal_id", _rival_goal_id(rival_id, is_story))),
 		"goal_type": "story" if is_story else "ordinary",
-		"goal_id": _rival_goal_id(rival_id, is_story),
-		"state": state,
 		"discovered": rivals != null and bool(rivals.is_discovered(rival_id)),
 		"defeated": rivals != null and bool(rivals.is_defeated(rival_id)),
+		"production_state": state,
+		"state": state,
 		"production_available_to_meet": _production_available_to_meet(rival_id),
 		"production_available_to_challenge": rivals != null and bool(rivals.can_challenge_now(rival_id)),
+		"planned_action_type": str(intent.get("action_type", "")),
+		"planned_action_id": str(intent.get("production_action_id", "")),
+		"action_can_execute": bool(intent.get("production_available", false)) and int(intent.get("cash_gap", 0)) <= 0 and str(intent.get("failure_code", "")) == "",
+		"action_failure_code": str(intent.get("failure_code", "")),
+		"action_failure_reason": str(intent.get("production_failure_reason", "")),
+		"required_money": int(intent.get("required_money", 0)),
+		"current_money": int(intent.get("current_money", 0)),
+		"cash_gap": int(intent.get("cash_gap", 0)),
 		"daily_gate_used": state == "DAILY_GATED",
 		"linked_girl_id": String(definition.linked_girl_id) if definition != null else "",
 		"blocking_reason": blocking_reason,
 	}
 
+func _last_rival_goal_from_diagnostics(rival_availability: Dictionary) -> String:
+	var last_goal: String = ""
+	for rival_id in rival_availability.keys():
+		var row: Variant = rival_availability[rival_id]
+		if not (row is Dictionary):
+			continue
+		var data: Dictionary = row
+		if bool(data.get("defeated", false)):
+			continue
+		last_goal = str(data.get("goal_id", ""))
+		if str(data.get("action_failure_code", "")) == "INSUFFICIENT_MONEY":
+			return last_goal
+	return last_goal
+
+
+func _last_rival_failure_from_diagnostics(rival_availability: Dictionary) -> String:
+	var last_failure: String = ""
+	for rival_id in rival_availability.keys():
+		var row: Variant = rival_availability[rival_id]
+		if not (row is Dictionary):
+			continue
+		var data: Dictionary = row
+		var code: String = str(data.get("action_failure_code", ""))
+		if code.is_empty():
+			continue
+		last_failure = code
+		if code == "INSUFFICIENT_MONEY":
+			return last_failure
+	return last_failure
 
 func _char_goal(characteristic_id: StringName, target: int) -> String:
 	return "characteristic:%s:%d" % [String(characteristic_id), target]

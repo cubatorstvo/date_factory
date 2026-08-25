@@ -35,6 +35,15 @@ func run_all() -> PackedStringArray:
 	_test_completed_repeatable_rival()
 	_test_story_rival_goals_and_diagnostics()
 	_test_seed_94_story_rival()
+	_test_story_rival_challenge_money_creates_cash_dependency()
+	_test_columnist_money_dependency_resolves()
+	_test_ordinary_rival_money_dependency_resolves()
+	_test_rival_required_money_from_production()
+	_test_rival_insufficient_money_not_empty_candidates()
+	_test_rival_cash_regression_seeds()
+	_test_build_identity_clean_state()
+	_test_build_identity_dirty_state()
+	_test_build_identity_export_schema()
 	_test_bad_seed_count_vs_top_k()
 	return _failures
 
@@ -470,6 +479,7 @@ func _test_failed_seed_regression_set() -> void:
 		_ok("seed %d no stage invariant break" % run.base_seed, warnings.find("STAGE_TRANSITION_INVARIANT") < 0, ",".join(warnings))
 		if run.stop_reason.begins_with("NO_USEFUL_ACTIONS_STAGE_"):
 			_ok("seed %d NO_USEFUL snapshot" % run.base_seed, not run.diagnostic_snapshot.is_empty())
+			_ok("seed %d NO_USEFUL not rival money" % run.base_seed, not _nouseful_from_rival_money(run), JSON.stringify(run.diagnostic_snapshot.get("cash_dependencies", [])))
 		if run.base_seed == 22:
 			seed_22 = run
 	_ok("seed 22 present", seed_22 != null)
@@ -527,17 +537,16 @@ func _test_story_girl_date_cash_support() -> void:
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
 		var payload: Dictionary = {}
 		var girl_id: StringName = GirlCatalog.ID_ALINA
+		var gs: Variant = _root("GameState")
+		if gs != null and gs.world != null:
+			gs.world.unlocked_date_venue_ids.clear()
 		var world: Variant = _root("WorldService")
 		if world != null:
-			world.unlock_date_venue(&"apartment")
 			world.unlock_date_venue(&"cafe")
 		var girls: Variant = _root("GirlsService")
 		if girls != null:
 			girls.discover_girl(girl_id)
 			girls.give_contact(girl_id)
-		var apartment: Variant = _root("ApartmentService")
-		if apartment != null:
-			apartment.set_prepared(true)
 		var economy: Variant = _root("EconomyService")
 		if economy != null:
 			economy.add_money(400)
@@ -699,6 +708,131 @@ func _test_seed_94_story_rival() -> void:
 	var detailed: ProgressionLabRunRecord = runner.replay_seed(94, true)
 	_ok("seed 94 replay", record.execution_signature == detailed.execution_signature, JSON.stringify(ProgressionLabRunRecord.first_difference(record, detailed)))
 
+func _test_story_rival_challenge_money_creates_cash_dependency() -> void:
+	var captured: Dictionary = _run_rival_cash_probe(RivalCatalog.ID_BORIS, GirlCatalog.ID_ACTRESS, true, 1)
+	_ok("Story Rival remains unmet", bool(captured.get("unmet", false)), JSON.stringify(captured))
+	_ok("Story Rival challenge money creates cash dependency", bool(captured.get("has_cash", false)), JSON.stringify(captured))
+	_ok("Story Rival challenge money creates WORK support", bool(captured.get("has_work", false)), JSON.stringify(captured))
+	_ok("WORK supporting_goal_id references Boris", str(captured.get("work_goal", "")).find("rival_boris") >= 0, JSON.stringify(captured))
+	_ok("WORK supporting_action_id references Boris challenge", str(captured.get("work_action", "")).find("rival_challenge:rival_boris") >= 0, JSON.stringify(captured))
+	_ok("Rival cash dependency uses canonical dependency snapshot", bool(captured.get("cash_matches_intent", false)), JSON.stringify(captured))
+	_ok("Rival challenge succeeds after sufficient WORK", bool(captured.get("fight_ok", false)), JSON.stringify(captured))
+	_ok("completed Rival goal creates no additional direct candidate", bool(captured.get("no_after", false)), JSON.stringify(captured))
+
+
+func _test_columnist_money_dependency_resolves() -> void:
+	var captured: Dictionary = _run_rival_cash_probe(RivalCatalog.ID_COLUMNIST, GirlCatalog.ID_MAGAZINE_EDITOR, true, 3)
+	_ok("Columnist money dependency resolves", bool(captured.get("has_cash", false)) and bool(captured.get("has_work", false)) and bool(captured.get("fight_ok", false)), JSON.stringify(captured))
+	_ok("Columnist goal complete", bool(captured.get("complete_after", false)), JSON.stringify(captured))
+
+
+func _test_ordinary_rival_money_dependency_resolves() -> void:
+	var captured: Dictionary = _run_rival_cash_probe(RivalCatalog.ID_MAX, &"", false, 1)
+	_ok("ordinary Rival money dependency resolves", bool(captured.get("has_cash", false)) and bool(captured.get("has_work", false)) and bool(captured.get("fight_ok", false)), JSON.stringify(captured))
+	_ok("ordinary Rival goal complete", bool(captured.get("complete_after", false)), JSON.stringify(captured))
+	_ok("no additional ordinary Rival candidate after planned completion", bool(captured.get("no_after", false)), JSON.stringify(captured))
+
+
+func _test_rival_required_money_from_production() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		_discover_rival_for_challenge(RivalCatalog.ID_BORIS, GirlCatalog.ID_ACTRESS, 1)
+		var executor: StageExecutor = _fresh_executor()
+		var intent: Dictionary = executor.evaluate_rival_intent(RivalCatalog.ID_BORIS, true)
+		payload["intent_cost"] = int(intent.get("required_money", -1))
+		var competitions: Variant = _root("CompetitionService")
+		if competitions != null:
+			var list: Array = competitions.get_competitions_for_rival(RivalCatalog.ID_BORIS)
+			if not list.is_empty():
+				var action: GameAction = competitions.create_competition_action(list[0].id)
+				payload["production_cost"] = int(action.money_cost)
+		return payload
+	, 1))
+	_ok("Rival required_money comes from production action", int(captured.get("intent_cost", -1)) == int(captured.get("production_cost", -2)) and int(captured.get("production_cost", 0)) > 0, JSON.stringify(captured))
+
+
+func _test_rival_insufficient_money_not_empty_candidates() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		_discover_rival_for_challenge(RivalCatalog.ID_BORIS, GirlCatalog.ID_ACTRESS, 1)
+		_set_money(0)
+		var executor: StageExecutor = _fresh_executor()
+		var plan := StagePlan.new()
+		plan.stage = 1
+		plan.story_girl_id = GirlCatalog.ID_ACTRESS
+		plan.story_rival_id = RivalCatalog.ID_BORIS
+		var candidates: Array = executor._collect_candidates(plan)
+		payload["count"] = candidates.size()
+		payload["has_work"] = _has_kind(candidates, "work")
+		payload["has_fight"] = _has_kind(candidates, "rival_fight")
+		payload["state"] = executor._rival_simulation_state(RivalCatalog.ID_BORIS)
+		return payload
+	, 1))
+	_ok("Rival insufficient-money state cannot produce empty candidate set", int(captured.get("count", 0)) > 0 and bool(captured.get("has_work", false)), JSON.stringify(captured))
+	_ok("no direct challenge while cash_gap", not bool(captured.get("has_fight", true)), JSON.stringify(captured))
+
+
+func _test_rival_cash_regression_seeds() -> void:
+	var seeds: PackedInt32Array = PackedInt32Array([12, 15, 23, 80, 86, 94])
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure_seed_list(config, seeds, 4, ProgressionLabConfig.MODE_POPULATION)
+	while not runner.process_batch():
+		pass
+	var result: ProgressionLabPopulationResult = runner.get_result()
+	_ok("rival cash regression seed count", result.records.size() == seeds.size(), str(result.records.size()))
+	for record in result.records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var run: ProgressionLabRunRecord = record
+		_ok("seed %d no rival-money NO_USEFUL" % run.base_seed, not _nouseful_from_rival_money(run), "%s unmet=%s failure=%s" % [run.stop_reason, str(run.diagnostic_snapshot.get("unmet_goals", [])), str(run.diagnostic_snapshot.get("last_rival_action_failure", ""))])
+
+
+func _test_build_identity_clean_state() -> void:
+	var result := ProgressionLabPopulationResult.new()
+	result.simulation_version = "abc1234"
+	result.git_dirty = false
+	result.worktree_fingerprint = ""
+	var exporter := ProgressionLabExporter.new()
+	var payload: Dictionary = exporter.share_bundle_json(result)
+	_ok("build identity clean git_dirty", bool(payload.get("git_dirty", true)) == false)
+	_ok("build identity clean fingerprint", str(payload.get("worktree_fingerprint", "x")) == "")
+
+
+func _test_build_identity_dirty_state() -> void:
+	var result := ProgressionLabPopulationResult.new()
+	result.simulation_version = "abc1234"
+	result.git_dirty = true
+	result.worktree_fingerprint = ProgressionRng.sha256_hex("dirty-source")
+	var exporter := ProgressionLabExporter.new()
+	var payload: Dictionary = exporter.share_bundle_json(result)
+	_ok("build identity dirty git_dirty", bool(payload.get("git_dirty", false)) == true)
+	var fingerprint: String = str(payload.get("worktree_fingerprint", ""))
+	_ok("build identity dirty fingerprint sha256", fingerprint.length() == 64 and fingerprint.find(" ") < 0, fingerprint)
+
+
+func _test_build_identity_export_schema() -> void:
+	var result := ProgressionLabPopulationResult.new()
+	result.simulation_version = "deadbee"
+	result.git_dirty = true
+	result.worktree_fingerprint = ProgressionRng.sha256_hex("schema")
+	result.config = {}
+	var record := ProgressionLabRunRecord.new()
+	record.base_seed = 1
+	var exporter := ProgressionLabExporter.new()
+	var share: Dictionary = exporter.share_bundle_json(result)
+	var config_payload: Dictionary = exporter._config_payload(result)
+	var seed_payload: Dictionary = exporter.specific_seed_json(record, result)
+	for payload in [share, config_payload, seed_payload]:
+		_ok("identity schema simulation_version", payload.has("simulation_version"))
+		_ok("identity schema git_dirty", payload.has("git_dirty"))
+		_ok("identity schema worktree_fingerprint", payload.has("worktree_fingerprint"))
+	var markdown: String = exporter.share_bundle_markdown(result)
+	_ok("identity markdown simulation version", markdown.find("Simulation version:") >= 0)
+	_ok("identity markdown git dirty", markdown.find("Git dirty:") >= 0)
+
 
 func _test_bad_seed_count_vs_top_k() -> void:
 	var config := ProgressionLabConfig.new()
@@ -733,6 +867,114 @@ func _find_candidate(candidates: Array, kind: String, girl_id: StringName = &"")
 			continue
 		return candidate
 	return null
+
+func _run_rival_cash_probe(rival_id: StringName, linked_girl_id: StringName, is_story: bool, stage: int) -> Dictionary:
+	var session := PlaythroughSession.new()
+	return _as_dict(session.run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		_discover_rival_for_challenge(rival_id, linked_girl_id, stage)
+		var executor: StageExecutor = _fresh_executor()
+		var plan := StagePlan.new()
+		plan.stage = stage
+		if is_story:
+			plan.story_girl_id = linked_girl_id
+			plan.story_rival_id = rival_id
+		else:
+			plan.target_ordinary_rival_ids.append(rival_id)
+		var intent: Dictionary = executor.evaluate_rival_intent(rival_id, is_story)
+		payload["intent"] = intent
+		payload["unmet"] = executor._unmet_goals(plan).has(str(intent.get("goal_id", "")))
+		var required: int = int(intent.get("required_money", 100))
+		_set_money(maxi(required - 40, 0))
+		var blocked: Array = executor._collect_candidates(plan)
+		var snapshot: Dictionary = executor.collect_blocking_snapshot(plan)
+		var work: StageExecutor.Candidate = _find_candidate(blocked, "work")
+		payload["has_work"] = work != null
+		payload["work_goal"] = work.goal_id if work != null else ""
+		payload["work_action"] = work.supporting_action_id if work != null else ""
+		payload["has_fight_blocked"] = _has_kind(blocked, "rival_fight")
+		payload["has_cash"] = false
+		payload["cash_matches_intent"] = false
+		for row in snapshot.get("cash_dependencies", []):
+			if not (row is Dictionary):
+				continue
+			if str(row.get("goal_id", "")) != str(intent.get("goal_id", "")):
+				continue
+			payload["has_cash"] = true
+			payload["cash_matches_intent"] = int(row.get("required_money", -1)) == required and str(row.get("action_id", "")) == str(intent.get("production_action_id", ""))
+		_set_money(required)
+		var funded: Array = executor._collect_candidates(plan)
+		var fight: StageExecutor.Candidate = null
+		for raw in funded:
+			if raw == null:
+				continue
+			var candidate: StageExecutor.Candidate = raw
+			if candidate.kind == "rival_fight" and candidate.rival_id == rival_id:
+				fight = candidate
+				break
+		payload["has_fight"] = fight != null
+		var competitions: Variant = _root("CompetitionService")
+		if competitions != null:
+			competitions.set_forced_won(true)
+		var fight_ok: bool = false
+		if fight != null:
+			var executed: StageExecutor.ExecutionResult = executor._execute_candidate(fight, plan)
+			fight_ok = executed != null and executed.success
+		payload["fight_ok"] = fight_ok
+		payload["complete_after"] = executor.is_rival_goal_complete(str(intent.get("goal_id", "")), rival_id)
+		var after: Array = executor._collect_candidates(plan)
+		var has_direct: bool = false
+		for raw_after in after:
+			if raw_after == null:
+				continue
+			var later: StageExecutor.Candidate = raw_after
+			if later.rival_id == rival_id and (later.kind == "rival_fight" or later.kind == "rival_meet"):
+				has_direct = true
+		payload["no_after"] = not has_direct
+		return payload
+	, 1))
+
+
+func _discover_rival_for_challenge(rival_id: StringName, linked_girl_id: StringName, stage: int) -> void:
+	_advance_to_stage(stage)
+	var girls: Variant = _root("GirlsService")
+	if girls != null and linked_girl_id != &"":
+		girls.discover_girl(linked_girl_id)
+		girls.give_contact(linked_girl_id)
+	var rivals: Variant = _root("RivalsService")
+	if rivals != null:
+		rivals.discover_rival(rival_id)
+	var world: Variant = _root("WorldService")
+	var definition: RivalDefinition = rivals.get_definition(rival_id) if rivals != null else null
+	if world != null and definition != null:
+		world.enter_location(definition.location_id)
+	if stage >= 2:
+		var equipment: Variant = _root("EquipmentService")
+		if equipment != null:
+			equipment.add_owned_outfit(OutfitCatalog.ID_BUSINESS)
+
+
+func _set_money(amount: int) -> void:
+	var economy: Variant = _root("EconomyService")
+	if economy == null:
+		return
+	var current: int = int(economy.get_money())
+	if current > amount:
+		economy.spend_money(current - amount)
+	elif current < amount:
+		economy.add_money(amount - current)
+
+
+func _nouseful_from_rival_money(record: ProgressionLabRunRecord) -> bool:
+	if record == null or not record.stop_reason.begins_with("NO_USEFUL_ACTIONS_STAGE_"):
+		return false
+	for row in record.diagnostic_snapshot.get("cash_dependencies", []):
+		if not (row is Dictionary):
+			continue
+		var action_type: String = str(row.get("action_type", ""))
+		if action_type == "RIVAL_CHALLENGE" or action_type == "RIVAL_MEET":
+			return int(row.get("cash_gap", 0)) > 0
+	return str(record.diagnostic_snapshot.get("last_rival_action_failure", "")) == "INSUFFICIENT_MONEY"
 
 
 func _candidates_of_rival(candidates: Array, rival_id: StringName) -> Array:

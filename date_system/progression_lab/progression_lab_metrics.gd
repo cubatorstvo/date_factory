@@ -35,6 +35,13 @@ var max_consecutive_same_primary_action: int = 0
 var max_consecutive_work_actions: int = 0
 var max_consecutive_work_only_days: int = 0
 var work_only_days: int = 0
+var total_rival_cash_dependencies: int = 0
+var story_rival_cash_dependencies: int = 0
+var ordinary_rival_cash_dependencies: int = 0
+var work_actions_supporting_rival: int = 0
+var rival_action_money_failures: int = 0
+var resolved_rival_money_failures: int = 0
+var unresolved_rival_money_failures: int = 0
 var novelty_events: int = 0
 var goal_friction: Dictionary = {}
 var production_flags: Dictionary = {}
@@ -303,6 +310,13 @@ func to_dict() -> Dictionary:
 		"max_consecutive_work_actions": max_consecutive_work_actions,
 		"max_consecutive_work_only_days": max_consecutive_work_only_days,
 		"work_only_days": work_only_days,
+		"total_rival_cash_dependencies": total_rival_cash_dependencies,
+		"story_rival_cash_dependencies": story_rival_cash_dependencies,
+		"ordinary_rival_cash_dependencies": ordinary_rival_cash_dependencies,
+		"work_actions_supporting_rival": work_actions_supporting_rival,
+		"rival_action_money_failures": rival_action_money_failures,
+		"resolved_rival_money_failures": resolved_rival_money_failures,
+		"unresolved_rival_money_failures": unresolved_rival_money_failures,
 		"economy_support_share": economy_support_share(),
 		"maintenance_share": maintenance_share(),
 		"novelty_density": novelty_density(),

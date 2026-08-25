@@ -84,6 +84,7 @@ func analyze(result: ProgressionLabPopulationResult, config: ProgressionLabConfi
 	result.analysis_warnings = _aggregate_warnings(summaries, config)
 	result.warning_prevalence = _warning_prevalence(summaries, result.n)
 	result.item_metrics = _aggregate_items(summaries)
+	result.rival_cash_dependency = _rival_cash_aggregate(summaries)
 
 
 func _stats_for(records: Array, stage_key: String) -> Dictionary:
@@ -427,3 +428,39 @@ func _aggregate_items(records: Array) -> Dictionary:
 		entry["positive_effect_per_acquisition"] = float(entry["positive_effect_count"]) / float(acquired)
 		entry["unlock_per_acquisition"] = float(entry["requirement_unlock_count"]) / float(acquired)
 	return items
+
+func _rival_cash_aggregate(records: Array) -> Dictionary:
+	var runs_with: int = 0
+	var total: int = 0
+	var story: int = 0
+	var ordinary: int = 0
+	var work_support: int = 0
+	var money_failures: int = 0
+	var resolved: int = 0
+	var unresolved: int = 0
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var metrics: Dictionary = record.campaign_metrics
+		var row_total: int = int(metrics.get("total_rival_cash_dependencies", 0))
+		if row_total > 0 or int(metrics.get("rival_action_money_failures", 0)) > 0:
+			runs_with += 1
+		total += row_total
+		story += int(metrics.get("story_rival_cash_dependencies", 0))
+		ordinary += int(metrics.get("ordinary_rival_cash_dependencies", 0))
+		work_support += int(metrics.get("work_actions_supporting_rival", 0))
+		money_failures += int(metrics.get("rival_action_money_failures", 0))
+		resolved += int(metrics.get("resolved_rival_money_failures", 0))
+		unresolved += int(metrics.get("unresolved_rival_money_failures", 0))
+	var mean_work: float = float(work_support) / float(maxi(money_failures, 1))
+	return {
+		"runs_with_rival_cash_dependency": runs_with,
+		"total_rival_cash_dependencies": total,
+		"story_rival_cash_dependencies": story,
+		"ordinary_rival_cash_dependencies": ordinary,
+		"work_actions_supporting_rival": work_support,
+		"mean_work_actions_per_rival_goal": mean_work,
+		"rival_action_money_failures": money_failures,
+		"resolved_rival_money_failures": resolved,
+		"unresolved_rival_money_failures": unresolved,
+	}

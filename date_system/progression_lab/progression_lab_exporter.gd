@@ -82,6 +82,11 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 	lines.append("")
 	lines.append("schema_version: %d" % result.schema_version)
 	lines.append("simulation_version: %s" % result.simulation_version)
+	lines.append("git_dirty: %s" % str(result.git_dirty).to_lower())
+	lines.append("worktree_fingerprint: %s" % result.worktree_fingerprint)
+	lines.append("Simulation version: %s" % result.simulation_version)
+	lines.append("Git dirty: %s" % str(result.git_dirty))
+	lines.append("Worktree fingerprint: %s" % result.worktree_fingerprint)
 	lines.append("N: %d" % result.n)
 	lines.append("end_story_stage: %d" % result.end_story_stage)
 	lines.append("archetype_mode: %s" % String(result.archetype_mode))
@@ -126,6 +131,11 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 	for row in result.warning_prevalence:
 		lines.append("- %s: %d (%.1f%%)" % [str(row.get("warning_id", "")), int(row.get("run_count", 0)), 100.0 * float(row.get("run_share", 0.0))])
 	lines.append("")
+	lines.append("## Rival Cash Dependency")
+	var rival_cash: Dictionary = result.rival_cash_dependency
+	for key in ["runs_with_rival_cash_dependency", "total_rival_cash_dependencies", "story_rival_cash_dependencies", "ordinary_rival_cash_dependencies", "work_actions_supporting_rival", "mean_work_actions_per_rival_goal", "rival_action_money_failures", "resolved_rival_money_failures", "unresolved_rival_money_failures"]:
+		lines.append("- %s: %s" % [key, str(rival_cash.get(key, 0))])
+	lines.append("")
 	lines.append("## Top bad seeds")
 	for row in result.top_bad_seeds:
 		lines.append("- seed %s [%s] badness=%s warning=%s days=%s stop=%s" % [
@@ -164,6 +174,8 @@ func share_bundle_json(result: ProgressionLabPopulationResult) -> Dictionary:
 	return {
 		"schema_version": result.schema_version,
 		"simulation_version": result.simulation_version,
+		"git_dirty": result.git_dirty,
+		"worktree_fingerprint": result.worktree_fingerprint,
 		"timestamp": Time.get_datetime_string_from_system(true, true),
 		"project_version": _project_version(),
 		"godot_version": Engine.get_version_info().get("string", ""),
@@ -177,6 +189,7 @@ func share_bundle_json(result: ProgressionLabPopulationResult) -> Dictionary:
 		"warning_prevalence": result.warning_prevalence,
 		"replay_matched": result.replay_matched,
 		"replay_total": result.replay_total,
+		"rival_cash_dependency": result.rival_cash_dependency,
 		"analysis_warnings": Array(result.analysis_warnings),
 		"representative_seeds": result.representative_seeds,
 		"item_metrics": result.item_metrics,
@@ -231,6 +244,8 @@ func specific_seed_json(record: ProgressionLabRunRecord, result: ProgressionLabP
 	return {
 		"schema_version": result.schema_version if result != null else 1,
 		"simulation_version": result.simulation_version if result != null else "",
+		"git_dirty": result.git_dirty if result != null else false,
+		"worktree_fingerprint": result.worktree_fingerprint if result != null else "",
 		"timestamp": Time.get_datetime_string_from_system(true, true),
 		"project_version": _project_version(),
 		"godot_version": Engine.get_version_info().get("string", ""),
@@ -310,6 +325,8 @@ func _config_payload(result: ProgressionLabPopulationResult) -> Dictionary:
 	return {
 		"schema_version": result.schema_version,
 		"simulation_version": result.simulation_version,
+		"git_dirty": result.git_dirty,
+		"worktree_fingerprint": result.worktree_fingerprint,
 		"timestamp": Time.get_datetime_string_from_system(true, true),
 		"project_version": _project_version(),
 		"godot_version": Engine.get_version_info().get("string", ""),
