@@ -4,6 +4,7 @@ extends RefCounted
 const ID_WORK_BASIC: StringName = &"work_basic"
 const ID_CAREER_ADVANCEMENT: StringName = &"career_advancement"
 const MAX_CAREER_RANK: int = 3
+const RANK_1_MIN_STORY_STAGE: int = 2
 const BASE_SHIFT_INCOME: int = 100
 const TIER_1_INCOME: int = BASE_SHIFT_INCOME
 const TIER_2_INCOME: int = 200
@@ -53,6 +54,30 @@ static func next_rank_requires_connections(game_state: Variant = null) -> bool:
 	var rank: int = get_career_rank(game_state)
 	return rank >= 1 and rank < MAX_CAREER_RANK
 
+
+static func get_story_stage(game_state: Variant = null) -> int:
+	var gs: Variant = _resolve_game_state(game_state)
+	if gs == null or gs.story == null:
+		return 1
+	return int(gs.story.stage)
+
+
+static func next_rank_requires_min_story_stage(game_state: Variant = null) -> int:
+	if get_career_rank(game_state) == 0:
+		return RANK_1_MIN_STORY_STAGE
+	return 0
+
+
+static func is_next_career_rank_unlocked(game_state: Variant = null) -> bool:
+	var rank: int = get_career_rank(game_state)
+	if rank < 0 or rank >= MAX_CAREER_RANK:
+		return false
+	if rank == 0 and get_story_stage(game_state) < RANK_1_MIN_STORY_STAGE:
+		return false
+	if next_rank_requires_connections(game_state) and not has_career_connections(game_state):
+		return false
+	return true
+
 static func get_next_career_rank(game_state: Variant = null) -> int:
 	var rank: int = get_career_rank(game_state)
 	if rank >= MAX_CAREER_RANK:
@@ -72,15 +97,12 @@ static func get_next_career_capital_requirement(game_state: Variant = null) -> i
 
 
 static func can_advance_career(game_state: Variant = null) -> bool:
-	var rank: int = get_career_rank(game_state)
-	if rank < 0 or rank >= MAX_CAREER_RANK:
+	if not is_next_career_rank_unlocked(game_state):
 		return false
 	var player: PlayerState = _player(game_state)
 	if player == null:
 		return false
 	if player.capital < get_next_career_capital_requirement(game_state):
-		return false
-	if next_rank_requires_connections(game_state) and not has_career_connections(game_state):
 		return false
 	if not is_work_available_today():
 		return false
@@ -109,6 +131,10 @@ static func create_career_advancement_action() -> GameAction:
 	action.money_cost = 0
 	var availability := WorkAvailableTodayRequirement.new()
 	action.requirements.append(availability)
+	if get_career_rank() == 0:
+		var stage_req := MinStoryStageRequirement.new()
+		stage_req.min_stage = RANK_1_MIN_STORY_STAGE
+		action.requirements.append(stage_req)
 	if next_rank_requires_connections():
 		var unlocked_script := load("res://game/actions/career_connections_unlocked_requirement.gd") as GDScript
 		var unlocked: ActionRequirement = unlocked_script.new() as ActionRequirement

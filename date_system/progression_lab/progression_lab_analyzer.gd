@@ -70,6 +70,17 @@ const METRIC_KEYS: PackedStringArray = [
 	"work_actions_at_rank_3",
 	"career_investment_capital_training_actions",
 	"work_actions_supporting_career",
+	"career_negative_or_zero_roi_investments",
+	"career_positive_roi_investments",
+	"career_reservation_started_count",
+	"career_reservation_completed_count",
+	"career_reservation_override_count",
+	"career_reserved_money_peak",
+	"career_support_work_before_target_rank",
+	"career_support_work_wasted",
+	"career_support_work_before_rank_1",
+	"career_support_work_before_rank_2",
+	"career_support_work_before_rank_3",
 ]
 
 
@@ -567,6 +578,17 @@ func _career_progression_aggregate(records: Array) -> Dictionary:
 		"promotion_actions": _metric_describe(records, "career_advancement_actions"),
 		"capital_training_for_career": _metric_describe(records, "career_investment_capital_training_actions"),
 		"work_supporting_career": _metric_describe(records, "work_actions_supporting_career"),
+		"career_support_work_before_rank_1": _metric_describe(records, "career_support_work_before_rank_1"),
+		"career_support_work_before_rank_2": _metric_describe(records, "career_support_work_before_rank_2"),
+		"career_support_work_before_rank_3": _metric_describe(records, "career_support_work_before_rank_3"),
+		"career_support_work_wasted": _metric_describe(records, "career_support_work_wasted"),
+		"career_negative_or_zero_roi_investments": _metric_describe(records, "career_negative_or_zero_roi_investments"),
+		"career_positive_roi_investments": _metric_describe(records, "career_positive_roi_investments"),
+		"career_reservation_started": _metric_describe(records, "career_reservation_started_count"),
+		"career_reservation_completed": _metric_describe(records, "career_reservation_completed_count"),
+		"career_reservation_overrides": _metric_describe(records, "career_reservation_override_count"),
+		"career_reserved_money_peak": _metric_describe(records, "career_reserved_money_peak"),
+		"rank_1_stage_day": _career_stage_day_describe(records, 1),
 	}
 
 func _career_day_describe(records: Array, key: String) -> Dictionary:
@@ -577,6 +599,23 @@ func _career_day_describe(records: Array, key: String) -> Dictionary:
 		var day: int = int(record.campaign_metrics.get(key, -1))
 		if day >= 0:
 			values.append(float(day))
+	return describe(values)
+
+
+func _career_stage_day_describe(records: Array, rank: int) -> Dictionary:
+	var values: PackedFloat64Array = PackedFloat64Array()
+	var day_key: String = "career_rank_%d_day" % rank
+	var stage_key: String = "career_rank_%d_stage" % rank
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var day: int = int(record.campaign_metrics.get(day_key, -1))
+		var stage: int = int(record.campaign_metrics.get(stage_key, -1))
+		if day < 0 or stage < 1:
+			continue
+		var stage_metrics: Dictionary = record.stage_metrics.get(str(stage), {})
+		var start: int = int(stage_metrics.get("stage_start_calendar_day", 0))
+		values.append(float(maxi(day - start, 0)))
 	return describe(values)
 
 func _career_stage_distribution(records: Array, key: String) -> Dictionary:

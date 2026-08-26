@@ -83,6 +83,17 @@ var work_actions_at_rank_2: int = 0
 var work_actions_at_rank_3: int = 0
 var career_investment_capital_training_actions: int = 0
 var work_actions_supporting_career: int = 0
+var career_negative_or_zero_roi_investments: int = 0
+var career_positive_roi_investments: int = 0
+var career_reservation_started_count: int = 0
+var career_reservation_completed_count: int = 0
+var career_reservation_override_count: int = 0
+var career_reserved_money_peak: int = 0
+var career_support_work_before_target_rank: int = 0
+var career_support_work_wasted: int = 0
+var career_support_work_before_rank_1: int = 0
+var career_support_work_before_rank_2: int = 0
+var career_support_work_before_rank_3: int = 0
 var build_acquisitions: Array = []
 var goal_friction: Dictionary = {}
 var production_flags: Dictionary = {}
@@ -610,6 +621,17 @@ func to_dict() -> Dictionary:
 		"work_actions_at_rank_3": work_actions_at_rank_3,
 		"career_investment_capital_training_actions": career_investment_capital_training_actions,
 		"work_actions_supporting_career": work_actions_supporting_career,
+		"career_negative_or_zero_roi_investments": career_negative_or_zero_roi_investments,
+		"career_positive_roi_investments": career_positive_roi_investments,
+		"career_reservation_started_count": career_reservation_started_count,
+		"career_reservation_completed_count": career_reservation_completed_count,
+		"career_reservation_override_count": career_reservation_override_count,
+		"career_reserved_money_peak": career_reserved_money_peak,
+		"career_support_work_before_target_rank": career_support_work_before_target_rank,
+		"career_support_work_wasted": career_support_work_wasted,
+		"career_support_work_before_rank_1": career_support_work_before_rank_1,
+		"career_support_work_before_rank_2": career_support_work_before_rank_2,
+		"career_support_work_before_rank_3": career_support_work_before_rank_3,
 		"work_share_characteristics": work_share("characteristics"),
 		"work_share_outfits": work_share("outfits"),
 		"work_share_apartment": work_share("apartment"),
@@ -686,6 +708,17 @@ static func from_dict(data: Dictionary) -> ProgressionLabMetrics:
 	metrics.work_actions_at_rank_3 = int(data.get("work_actions_at_rank_3", 0))
 	metrics.career_investment_capital_training_actions = int(data.get("career_investment_capital_training_actions", 0))
 	metrics.work_actions_supporting_career = int(data.get("work_actions_supporting_career", 0))
+	metrics.career_negative_or_zero_roi_investments = int(data.get("career_negative_or_zero_roi_investments", 0))
+	metrics.career_positive_roi_investments = int(data.get("career_positive_roi_investments", 0))
+	metrics.career_reservation_started_count = int(data.get("career_reservation_started_count", 0))
+	metrics.career_reservation_completed_count = int(data.get("career_reservation_completed_count", 0))
+	metrics.career_reservation_override_count = int(data.get("career_reservation_override_count", 0))
+	metrics.career_reserved_money_peak = int(data.get("career_reserved_money_peak", 0))
+	metrics.career_support_work_before_target_rank = int(data.get("career_support_work_before_target_rank", 0))
+	metrics.career_support_work_wasted = int(data.get("career_support_work_wasted", 0))
+	metrics.career_support_work_before_rank_1 = int(data.get("career_support_work_before_rank_1", 0))
+	metrics.career_support_work_before_rank_2 = int(data.get("career_support_work_before_rank_2", 0))
+	metrics.career_support_work_before_rank_3 = int(data.get("career_support_work_before_rank_3", 0))
 	var stale_raw: Variant = data.get("stale_planned_goal_ids", [])
 	if stale_raw is Array:
 		for item in stale_raw:

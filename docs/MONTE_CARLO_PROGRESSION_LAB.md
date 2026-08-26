@@ -816,41 +816,85 @@ lowest stable content ID lexical order
 
 after deterministic noise has been applied.
 
-Career Advancement is an economic investment, not a StagePlan goal. StagePlan stays immutable. Rank 1 ROI is evaluated even when Career Connections are locked. Rank 2–3 ROI paths wait for production Career Connections (`career_connections_unlocked`, Mine Boss MAX reward `career_connections`). Each day, if the next rank is production-available (Rank 1: Capital path; Rank 2–3: Connections + Capital) and no execution-level `target_career_rank` commitment is active, the executor compares two paths on the current StagePlan + mandatory story cash need:
+Career Advancement is an economic investment, not a StagePlan goal. StagePlan stays immutable. Rank 1 ROI is evaluated even when Career Connections are locked, but only when production Story Stage >= 2. Rank 2–3 ROI paths wait for production Career Connections (`career_connections_unlocked`, Mine Boss MAX reward `career_connections`). Monte Carlo does not add its own Rank 1 override: the Rank 1 advancement candidate appears only if production `WorkService.can_advance_career()` allows the action. Each day, if the next rank is production-unlocked (`WorkService.is_next_career_rank_unlocked()`: Rank 1 needs Stage >= 2; Rank 2–3 need Connections) and no execution-level `target_career_rank` commitment is active, the executor compares two paths on the current StagePlan + mandatory story cash need.
+
+Career investment has two economic phases: (A) earn the prerequisite Capital at the **current** Career Rank / current salary; (B) after Career Advancement, earn remaining Stage cash at the **new** salary.
 
 ```text
-remaining_cash_need =
+remaining_stage_cash_need =
     sum of required_money for unique unmet cash-dependencies
     from _build_cash_dependencies / collect_blocking_snapshot
 
-work_without =
-    ceil(max(remaining_cash_need - current_money, 0) / current_shift_income)
+capital_training_actions =
+    production training actions still required for prerequisite Capital
+    (Capital 0→1: 1; 1→3: 2; 3→5: 2)
 
-capital_actions = max(0, required_capital - current_capital)
-capital_cost = capital_actions * actual Capital upgrade price
-work_with =
-    ceil(max(remaining_cash_need + capital_cost - current_money, 0) / new_shift_income)
-economic_with = capital_actions + 1 + work_with
-saved = work_without - economic_with
+capital_money_needed =
+    actual production money cost of those missing Capital upgrades
+
+available_money_for_capital =
+    max(current_money - higher_priority_reserved_money, 0)
+
+For this pass Career reservation has the highest economic commitment priority,
+so available_money_for_capital = current_money.
+
+capital_work_actions =
+    ceil(max(capital_money_needed - available_money_for_capital, 0) / current_shift_income)
+
+money_after_capital =
+    current_money
+    + capital_work_actions * current_shift_income
+    - capital_money_needed
+
+remaining_cash_need_after_capital =
+    max(remaining_stage_cash_need - money_after_capital, 0)
+
+post_promotion_work_actions =
+    ceil(remaining_cash_need_after_capital / new_shift_income)
+
+work_actions_without_upgrade =
+    ceil(max(remaining_stage_cash_need - current_money, 0) / current_shift_income)
+
+economic_support_actions_with_upgrade =
+    capital_training_actions
+    + capital_work_actions
+    + 1 Career Advancement
+    + post_promotion_work_actions
+
+saved_support_actions =
+    work_actions_without_upgrade
+    - economic_support_actions_with_upgrade
 
 perceived_saved_support_actions =
-    saved + execution_rng.randf_range(
+    saved_support_actions + execution_rng.randf_range(
         -2.0 * (1.0 - planning_skill),
         +2.0 * (1.0 - planning_skill)
     )
 ```
 
-`current_shift_income` / next income come from production `WorkService` (career rank). Rational if `perceived_saved_support_actions > 0` → `INVEST` and set `target_career_rank`; otherwise `SKIP_FOR_NOW` and recalculate next day. Commitment lives on StageExecutor, not StagePlan; it clears when the rank is reached, the Stage ends, or the upgrade is unavailable.
+Exact integer action counts. `current_shift_income` / next income come from production `WorkService` (career rank). Rational if `perceived_saved_support_actions > 0` → `INVEST` and set `target_career_rank`; otherwise `SKIP_FOR_NOW` and recalculate next day. If `saved_support_actions <= 0`, only bounded planning-skill noise can still INVEST; telemetry `career_negative_or_zero_roi_investments` counts those cases. Commitment lives on StageExecutor, not StagePlan; it clears when the rank is reached, the Stage ends, or the upgrade is unavailable.
 
-If `saved > 0` after INVEST, Career Advancement / its Capital prerequisite score:
+After INVEST, commitment is a concrete economic reservation, not only a higher score:
 
 ```text
-highest_priority_cash_blocked_goal + 10 + 5 * min(saved_support_actions, 4)
+career_reserved_money =
+    clamp(capital_money_needed_remaining, 0, current_money)
+
+free_money = current_money - career_reserved_money
+```
+
+Reservation exists only in the Monte Carlo decision layer. Production GameState money is unchanged. Optional StagePlan cash-spending (optional Outfit, Apartment Object, optional Characteristic, optional filler Date, optional Venue, convenience) checks affordability through `free_money`. Career prerequisite Capital training uses full `current_money`, including StagePlan Capital training while a Career commitment is active. Mandatory Story Girl / Story Rival / mandatory Stage continuation (Stage 2 dress-up gate) may spend reserved cash only through an explicit override logged as `CAREER_RESERVATION_OVERRIDE`.
+
+If committed, Capital prerequisite / Career-support WORK / Career Advancement use:
+
+```text
+career_commitment_priority =
+    max(highest current optional economic priority + 20, 110)
 ```
 
 then normal `_score` modifiers (daily gate, unblock, novelty, repetition, decision noise). Candidate `category = CAREER`, `kind = career_advancement`. Rank 3 has no next ROI. Advancement consumes `KEY_WORK`, so that day has no ordinary WORK and no second advancement.
 
-If committed, the executor builds a support chain even when Capital is absent from StagePlan: Capital training if current < required, then Career Advancement when `can_advance_career`. WORK that finances this career-created Capital uses `supporting_goal = career:rank_<N>` and classifies `CAREER`. Capital already selected by immutable StagePlan stays `CHARACTERISTIC`.
+If committed, the executor builds a support chain even when Capital is absent from StagePlan: WORK while prerequisite cash is missing (`supporting_goal = career:rank_<N>`, `supporting_action = characteristic:capital:<required>`), Capital training when cash is sufficient, then Career Advancement when `can_advance_career`. After enough cash, the WORK candidate disappears and Capital training becomes dominant. WORK that finances this career-created Capital classifies `CAREER`. Capital already selected by immutable StagePlan stays `CHARACTERISTIC`. Reservation recalculates after successful Capital training; when Capital is met, `career_reserved_money = 0` and Advancement is next. After Advancement or Stage completion: `target_career_rank = 0`, `career_reserved_money = 0`. Career Rank persists across Stage.
 
 ---
 
@@ -2812,7 +2856,7 @@ The Monte Carlo Lab serves as the quantitative filter before later human 3D play
 
 Work income in simulation is production `WorkService` current career-rank payout (`get_current_shift_income` / `get_current_hourly_pay`). Do not duplicate a parallel lab wage. Tune Career Rank income only through WorkService; this pass does not change Outfit, Apartment, Characteristic, Date, or Rival prices.
 
-`share_bundle.md` / `share_bundle.json` include a **Career Progression** population section: rank reached (0 only / 1+ / 2+ / 3), Rank 1 before Connections share, Connections unlock P10/P50/P90, Rank 2 delay after Connections P10/P50/P90, advancement day P10/P50/P90 for ranks 1–3, rank Stage distribution, work by rank 0–3, Stage 1–4 WORK P50/P90/P95, and career support (promotion actions, Capital training for career, work supporting career). `seed_summaries.csv`, `stage_metrics.csv`, and `aggregate_metrics.csv` include the career metric fields. Detailed seed / bad / representative logs include ROI rows, Connections lock diagnostics, and starting/ending Career Connections, Rank, Current income, Next requirement, Next income.
+`share_bundle.md` / `share_bundle.json` include a **Career Progression** population section: rank reached (0 only / 1+ / 2+ / 3), Rank 1 before Connections share, Connections unlock P10/P50/P90, Rank 2 delay after Connections P10/P50/P90, advancement day P10/P50/P90 for ranks 1–3, Rank 1 Stage-day P10/P50/P90, rank Stage distribution, work by rank 0–3, Stage 1–4 WORK P50/P90/P95, career support (promotion actions, Capital training for career, work supporting career, support WORK before ranks 1–3, wasted support WORK), ROI investments (negative/zero vs positive), and reservation telemetry (started/completed/overrides/peak reserved money). `seed_summaries.csv`, `stage_metrics.csv`, and `aggregate_metrics.csv` include the career metric fields. Detailed seed / bad / representative logs include ROI rows (phase-correct Capital WORK at current income and post-promotion WORK at new income), Connections lock diagnostics, CAREER_RESERVATION_OVERRIDE, and starting/ending Career Connections, Rank, Current income, Next requirement, Next income.
 
 ---
 

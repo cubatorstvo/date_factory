@@ -637,6 +637,10 @@ func _build_work() -> Control:
 		next_line.text = "Следующее повышение: $%d" % next_income
 		box.add_child(next_line)
 		var required_capital: int = WorkService.get_next_career_capital_requirement()
+		if rank == 0 and WorkService.get_story_stage() < WorkService.RANK_1_MIN_STORY_STAGE:
+			var later := Label.new()
+			later.text = "Откроется на следующем этапе"
+			box.add_child(later)
 		var req_line := Label.new()
 		req_line.text = "Требование: Capital %d" % required_capital
 		box.add_child(req_line)

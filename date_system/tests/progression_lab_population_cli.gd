@@ -2,6 +2,8 @@ extends SceneTree
 
 
 func _init() -> void:
+	quit_on_go_back = false
+	set_auto_accept_quit(false)
 	call_deferred("_run_population")
 
 
@@ -102,6 +104,9 @@ func _run_population() -> void:
 			"3": result.statistics.get("per_stage", {}).get("3", {}).get("calendar_days", {}),
 			"4": result.statistics.get("per_stage", {}).get("4", {}).get("calendar_days", {}),
 		},
+		"stage_2_work": result.statistics.get("per_stage", {}).get("2", {}).get("work_actions", {}),
+		"stage_2_money_forced_work_days": result.statistics.get("per_stage", {}).get("2", {}).get("money_forced_work_days", {}),
+		"stage_2_economy_support_share": result.statistics.get("per_stage", {}).get("2", {}).get("economy_support_share", {}),
 		"apartment_item_telemetry": _apartment_item_telemetry(result.item_metrics),
 	}
 	var text: String = JSON.stringify(payload, "\t")

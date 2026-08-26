@@ -6,6 +6,8 @@ var _started: bool = false
 
 
 func _init() -> void:
+	quit_on_go_back = false
+	set_auto_accept_quit(false)
 	call_deferred("_run_tests")
 
 

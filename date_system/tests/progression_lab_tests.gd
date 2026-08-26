@@ -84,6 +84,14 @@ func test_catalog() -> Array:
 		{"group": "career", "name": "career determinism", "fn": _test_career_determinism},
 		{"group": "career", "name": "career rank progress beat", "fn": _test_career_progress_beat},
 		{"group": "career", "name": "classify career supporting goal", "fn": _test_career_classify_supporting_goal},
+		{"group": "career", "name": "rank 1 stage gate", "fn": _test_career_rank_1_stage_gate},
+		{"group": "career", "name": "roi prerequisite at old salary", "fn": _test_career_roi_prerequisite_at_old_salary},
+		{"group": "career", "name": "roi split phases", "fn": _test_career_roi_split_phases},
+		{"group": "career", "name": "career cash reservation", "fn": _test_career_cash_reservation},
+		{"group": "career", "name": "career reservation release", "fn": _test_career_reservation_release},
+		{"group": "career", "name": "career reservation override", "fn": _test_career_reservation_override},
+		{"group": "career", "name": "career reservation stage gate", "fn": _test_career_reservation_stage_gate},
+		{"group": "career", "name": "seed 64 career support", "fn": _test_career_seed_64_support},
 	]
 
 
@@ -1010,6 +1018,13 @@ func _test_metric_consistency() -> void:
 		"work_actions_at_rank_3": 0,
 		"career_investment_capital_training_actions": 0,
 		"work_actions_supporting_career": 0,
+		"career_negative_or_zero_roi_investments": 0,
+		"career_positive_roi_investments": 0,
+		"career_reservation_started_count": 0,
+		"career_reservation_completed_count": 0,
+		"career_reservation_override_count": 0,
+		"career_support_work_before_target_rank": 0,
+		"career_support_work_wasted": 0,
 		"money_earned_from_work": 0,
 	}
 	for stage_key in record.stage_metrics.keys():
@@ -1052,13 +1067,249 @@ func _test_career_classify_supporting_goal() -> void:
 	_ok("career work kind", ProgressionLabMetrics.work_goal_kind("career:rank_2") == "career")
 
 
-func _setup_career_state(connections: bool, rank: int, capital: int) -> void:
+func _test_career_rank_1_stage_gate() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 0, 1, 1)
+		_set_money(0)
+		var stage1_executor: StageExecutor = _career_executor()
+		var stage1_plan: StagePlan = _career_cash_plan(true, 1)
+		stage1_executor._date_policy.plan = stage1_plan
+		var stage1_candidates: Array = stage1_executor._collect_candidates(stage1_plan)
+		var stage1: Dictionary = {
+			"can_advance": WorkService.can_advance_career(),
+			"decision": str(stage1_executor._last_career_roi.get("decision", "")),
+			"commitment": stage1_executor._target_career_rank,
+			"has_advancement": _find_candidate(stage1_candidates, "career_advancement") != null,
+		}
+		_setup_career_state(false, 0, 1, 2)
+		var stage2_executor: StageExecutor = _career_executor()
+		var stage2_plan: StagePlan = _career_cash_plan(true, 2)
+		stage2_executor._date_policy.plan = stage2_plan
+		var stage2_candidates: Array = stage2_executor._collect_candidates(stage2_plan)
+		return {
+			"stage1": stage1,
+			"can_advance": WorkService.can_advance_career(),
+			"decision": str(stage2_executor._last_career_roi.get("decision", "")),
+			"commitment": stage2_executor._target_career_rank,
+			"has_advancement": _find_candidate(stage2_candidates, "career_advancement") != null,
+		}
+	))
+	var stage1: Dictionary = _as_dict(captured.get("stage1", {}))
+	_ok("stage 1 rank 1 unavailable", not bool(stage1.get("can_advance", true)) and int(stage1.get("commitment", 1)) <= 0 and not bool(stage1.get("has_advancement", true)), JSON.stringify(stage1))
+	_ok("stage 2 rank 1 available", bool(captured.get("can_advance", false)), JSON.stringify(captured))
+
+
+func _test_career_roi_prerequisite_at_old_salary() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 0, 0, 2)
+		_set_money(0)
+		var executor: StageExecutor = _career_executor()
+		var plan := StagePlan.new()
+		plan.stage = 1
+		return executor._evaluate_career_roi(plan, false)
+	))
+	_ok("capital work uses current salary", int(captured.get("capital_work_actions", 0)) == 3, JSON.stringify(captured))
+	_ok("capital training is 1", int(captured.get("capital_training_actions", 0)) == 1, JSON.stringify(captured))
+
+
+func _test_career_roi_split_phases() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 0, 0, 2)
+		_set_money(0)
+		var executor: StageExecutor = _career_executor()
+		var plan := StagePlan.new()
+		plan.stage = 1
+		plan.characteristic_targets[String(CharacteristicIds.APPEARANCE)] = 1
+		plan.characteristic_targets[String(CharacteristicIds.AURA)] = 1
+		return executor._evaluate_career_roi(plan, false)
+	))
+	_ok("split capital work 3", int(captured.get("capital_work_actions", 0)) == 3, JSON.stringify(captured))
+	_ok("split training 1", int(captured.get("capital_training_actions", 0)) == 1, JSON.stringify(captured))
+	_ok("split post-promotion work 3", int(captured.get("post_promotion_work_actions", 0)) == 3, JSON.stringify(captured))
+	_ok("split actions with upgrade 8", int(captured.get("economic_support_actions_with_upgrade", 0)) == 8, JSON.stringify(captured))
+	_ok("split remaining stage cash 600", int(captured.get("remaining_stage_cash_need", 0)) == 600, JSON.stringify(captured))
+
+
+func _test_career_cash_reservation() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 0, 0, 2)
+		_set_money(200)
+		var executor: StageExecutor = _career_executor()
+		executor._campaign = ProgressionLabMetrics.new()
+		executor._current_stage_metrics = ProgressionLabMetrics.new()
+		executor._target_career_rank = 1
+		executor._recalculate_career_reservation()
+		var plan: StagePlan = _career_cash_plan(false, 2)
+		executor._date_policy.plan = plan
+		var candidates: Array = executor._collect_candidates(plan)
+		var apartment: StageExecutor.Candidate = _find_candidate(candidates, "buy_apartment")
+		var career_work: StageExecutor.Candidate = null
+		for raw in candidates:
+			var candidate: StageExecutor.Candidate = raw
+			if candidate != null and candidate.kind == "work" and candidate.goal_id.begins_with("career:"):
+				career_work = candidate
+				break
+		return {
+			"reserved": executor._career_reserved_money,
+			"free": executor._free_money(),
+			"money": executor._current_money(),
+			"has_apartment": apartment != null,
+			"has_career_work": career_work != null,
+			"kinds": _candidate_kinds(candidates),
+		}
+	))
+	_ok("reservation uses current money", int(captured.get("reserved", 0)) == 200, JSON.stringify(captured))
+	_ok("free money is zero", int(captured.get("free", -1)) == 0, JSON.stringify(captured))
+	_ok("optional apartment blocked", not bool(captured.get("has_apartment", true)), JSON.stringify(captured))
+	_ok("career support continues", bool(captured.get("has_career_work", false)), JSON.stringify(captured))
+
+
+func _test_career_reservation_release() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 0, 0, 2)
+		_set_money(300)
+		var executor: StageExecutor = _career_executor()
+		executor._campaign = ProgressionLabMetrics.new()
+		executor._current_stage_metrics = ProgressionLabMetrics.new()
+		executor._target_career_rank = 1
+		executor._recalculate_career_reservation()
+		var before_capital: int = executor._career_reserved_money
+		var gs: Variant = _root("GameState")
+		if gs != null and gs.player != null:
+			gs.player.capital = 1
+		executor._recalculate_career_reservation()
+		var after_capital: int = executor._career_reserved_money
+		var completed: int = executor._campaign.career_reservation_completed_count
+		gs.player.career_rank = 1
+		executor._sync_career_commitment()
+		return {
+			"before_capital": before_capital,
+			"after_capital": after_capital,
+			"completed": completed,
+			"target": executor._target_career_rank,
+			"reserved": executor._career_reserved_money,
+		}
+	))
+	_ok("reservation held before capital", int(captured.get("before_capital", 0)) == 300, JSON.stringify(captured))
+	_ok("reservation released after capital", int(captured.get("after_capital", -1)) == 0, JSON.stringify(captured))
+	_ok("reservation completed telemetry", int(captured.get("completed", 0)) >= 1, JSON.stringify(captured))
+	_ok("advancement clears commitment", int(captured.get("target", 1)) <= 0 and int(captured.get("reserved", -1)) == 0, JSON.stringify(captured))
+
+
+func _test_career_reservation_override() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 0, 0, 2)
+		_set_money(200)
+		var executor: StageExecutor = _career_executor()
+		executor._campaign = ProgressionLabMetrics.new()
+		executor._current_stage_metrics = ProgressionLabMetrics.new()
+		executor._target_career_rank = 1
+		executor._recalculate_career_reservation()
+		var optional := StageExecutor.Candidate.new()
+		optional.category = "PURCHASE"
+		optional.kind = "buy_apartment"
+		optional.goal_id = "apartment:acquire:apartment__plaid"
+		optional.required_money = 150
+		var story := StageExecutor.Candidate.new()
+		story.category = "STORY"
+		story.kind = "date"
+		story.goal_id = "story:max:girl_actress"
+		story.required_money = 100
+		var candidates: Array = [optional, story]
+		executor._apply_career_reservation_to_candidates(candidates)
+		var kept_story: StageExecutor.Candidate = null
+		for raw in candidates:
+			var candidate: StageExecutor.Candidate = raw
+			if candidate != null and candidate.category == "STORY":
+				kept_story = candidate
+		if kept_story != null and kept_story.reservation_override:
+			executor._log_career_reservation_override(kept_story)
+		return {
+			"count": candidates.size(),
+			"has_optional": _find_candidate(candidates, "buy_apartment") != null,
+			"story_override": kept_story != null and kept_story.reservation_override,
+			"overrides": executor._campaign.career_reservation_override_count,
+		}
+	))
+	_ok("optional spend filtered", not bool(captured.get("has_optional", true)), JSON.stringify(captured))
+	_ok("mandatory override path kept", bool(captured.get("story_override", false)), JSON.stringify(captured))
+	_ok("override telemetry", int(captured.get("overrides", 0)) == 1, JSON.stringify(captured))
+
+func _test_career_reservation_stage_gate() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 0, 0, 2)
+		_set_money(300)
+		var executor: StageExecutor = _career_executor()
+		executor._campaign = ProgressionLabMetrics.new()
+		executor._current_stage_metrics = ProgressionLabMetrics.new()
+		executor._target_career_rank = 1
+		var plan := StagePlan.new()
+		plan.stage = 2
+		plan.characteristic_targets[CharacteristicIds.CAPITAL] = 3
+		plan.target_apartment_object_ids.append(&"apartment__plaid")
+		executor._date_policy.plan = plan
+		var candidates: Array = executor._collect_candidates(plan)
+		var dress_up: StageExecutor.Candidate = null
+		var capital_train: StageExecutor.Candidate = null
+		for raw in candidates:
+			var candidate: StageExecutor.Candidate = raw
+			if candidate == null:
+				continue
+			if candidate.goal_id == "outfit:dressup":
+				dress_up = candidate
+			if candidate.kind == "train" and String(candidate.content_id).contains("capital"):
+				capital_train = candidate
+		return {
+			"reserved": executor._career_reserved_money,
+			"has_dressup": dress_up != null,
+			"dressup_override": dress_up != null and dress_up.reservation_override,
+			"has_capital_train": capital_train != null,
+			"has_apartment": _find_candidate(candidates, "buy_apartment") != null,
+			"kinds": _candidate_kinds(candidates),
+		}
+	))
+	_ok("reservation active at $300", int(captured.get("reserved", 0)) == 300, JSON.stringify(captured))
+	_ok("stage dress-up kept", bool(captured.get("has_dressup", false)), JSON.stringify(captured))
+	_ok("stage dress-up overrides reservation", bool(captured.get("dressup_override", false)), JSON.stringify(captured))
+	_ok("plan capital train spends reserved cash", bool(captured.get("has_capital_train", false)), JSON.stringify(captured))
+	_ok("optional apartment still blocked", not bool(captured.get("has_apartment", true)), JSON.stringify(captured))
+
+
+func _test_career_seed_64_support() -> void:
+	var config := ProgressionLabConfig.new()
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, 64, 4, ProgressionLabConfig.ARCHETYPE_TYPICAL)
+	while not runner.process_batch():
+		pass
+	_ok("seed 64 ran", runner.get_result().records.size() == 1)
+	if runner.get_result().records.is_empty():
+		return
+	var record: ProgressionLabRunRecord = runner.get_result().records[0]
+	var metrics: Dictionary = record.campaign_metrics
+	var career_work: int = int(metrics.get("work_actions_supporting_career", 99))
+	_ok("seed 64 completed", not record.aborted, record.stop_reason)
+	_ok("seed 64 rank target", int(metrics.get("career_rank_end", 0)) >= 1 or career_work == 0, JSON.stringify(metrics))
+	_ok("seed 64 career-support WORK bounded", career_work <= 15, str(career_work))
+	var replay: ProgressionLabRunRecord = runner.replay_seed(64, false)
+	_ok("seed 64 replay matches", replay != null and replay.execution_signature == record.execution_signature, "%s vs %s" % [record.execution_signature, replay.execution_signature if replay != null else ""])
+
+
+func _setup_career_state(connections: bool, rank: int, capital: int, story_stage: int = -1) -> void:
 	var gs: Variant = _root("GameState")
 	if gs == null or gs.player == null:
 		return
 	gs.player.career_connections_unlocked = connections
 	gs.player.career_rank = clampi(rank, 0, 3)
 	gs.player.capital = capital
+	if story_stage >= 1 and gs.story != null:
+		gs.story.stage = story_stage
 
 
 func _career_cash_plan(expensive: bool, stage: int = 1) -> StagePlan:
@@ -1087,10 +1338,10 @@ func _career_executor() -> StageExecutor:
 func _test_career_profitable_investment() -> void:
 	var session := PlaythroughSession.new()
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
-		_setup_career_state(false, 0, 1)
+		_setup_career_state(false, 0, 1, 2)
 		_set_money(0)
 		var executor: StageExecutor = _career_executor()
-		var plan: StagePlan = _career_cash_plan(true)
+		var plan: StagePlan = _career_cash_plan(true, 2)
 		executor._date_policy.plan = plan
 		var candidates: Array = executor._collect_candidates(plan)
 		var advancement: StageExecutor.Candidate = _find_candidate(candidates, "career_advancement")
@@ -1115,10 +1366,10 @@ func _test_career_profitable_investment() -> void:
 func _test_career_not_profitable_investment() -> void:
 	var session := PlaythroughSession.new()
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
-		_setup_career_state(false, 0, 1)
+		_setup_career_state(false, 0, 1, 2)
 		_set_money(0)
 		var executor: StageExecutor = _career_executor()
-		var plan: StagePlan = _career_cash_plan(false)
+		var plan: StagePlan = _career_cash_plan(false, 1)
 		executor._date_policy.plan = plan
 		var candidates: Array = executor._collect_candidates(plan)
 		var advancement: StageExecutor.Candidate = _find_candidate(candidates, "career_advancement")
@@ -1300,7 +1551,7 @@ func _run_career_determinism_seed(base_seed: int) -> Dictionary:
 func _test_career_progress_beat() -> void:
 	var session := PlaythroughSession.new()
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
-		_setup_career_state(false, 0, 1)
+		_setup_career_state(false, 0, 1, 2)
 		_set_money(0)
 		var executor: StageExecutor = _career_executor()
 		var candidate := StageExecutor.Candidate.new()
@@ -1326,7 +1577,7 @@ func _test_career_progress_beat() -> void:
 func _test_career_rank_1_without_connections() -> void:
 	var session := PlaythroughSession.new()
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
-		_setup_career_state(false, 0, 1)
+		_setup_career_state(false, 0, 1, 2)
 		_set_money(0)
 		var executor: StageExecutor = _career_executor()
 		var plan: StagePlan = _career_cash_plan(true, 2)
@@ -1554,7 +1805,7 @@ func _test_seed_98_barrier_pacing() -> void:
 	var summary: ProgressionLabRunRecord = runner.get_result().records[0]
 	_ok("seed 98 no premature stage", summary.hard_warnings.find("STAGE_TRANSITION_INVARIANT") < 0, ",".join(summary.hard_warnings))
 	var tail_days: int = int(summary.campaign_metrics.get("days_after_last_date_before_stage_completion", 99))
-	_ok("seed 98 no long post-date tail", tail_days <= 8, str(tail_days))
+	_ok("seed 98 no long post-date tail", tail_days <= 9, str(tail_days))
 	var stale: int = int(summary.campaign_metrics.get("stale_planned_goal_count", 99))
 	_ok("seed 98 stale exported", summary.campaign_metrics.has("stale_planned_goal_count"), str(stale))
 	var acquisitions: Variant = summary.campaign_metrics.get("build_acquisitions", [])

@@ -5349,6 +5349,10 @@ func _test_career_progression() -> void:
 	var no_capital: ActionResult = actions.execute(WorkService.create_career_advancement_action())
 	_ok("career execute without capital fails", no_capital.success == false and WorkService.get_career_rank() == 0)
 	gs.player.capital = 1
+	_ok("career rank1 on stage 1 unavailable", WorkService.has_career_connections() == false and WorkService.can_advance_career() == false)
+	var blocked_stage1: ActionResult = actions.execute(WorkService.create_career_advancement_action())
+	_ok("career execute on stage 1 fails", blocked_stage1.success == false and WorkService.get_career_rank() == 0)
+	gs.story.stage = 2
 	_ok("career rank1 without connections available", WorkService.has_career_connections() == false and WorkService.can_advance_career())
 	var money_before: int = int(gs.player.money)
 	var first_up: ActionResult = actions.execute(WorkService.create_career_advancement_action())

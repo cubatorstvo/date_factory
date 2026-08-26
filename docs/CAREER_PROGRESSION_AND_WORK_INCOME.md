@@ -43,7 +43,7 @@ Capital 5
 
 MAX Начальницы шахты открывает `Career Connections`, то есть высокие карьерные уровни Rank 2–3.
 
-Rank 1 доступен самостоятельно с начала игры.
+Rank 1 доступен самостоятельно с Story Stage 2. На Stage 1 игрок остаётся на Rank 0 / $100.
 
 Текущие цены production economy в этом pass не меняются. Меняется только Career gating/timing.
 
@@ -117,15 +117,16 @@ true, если player flag **или** filler reward `career_connections` (legacy
 
 # 3. Rank requirements
 
-| Upgrade | Capital | Career Connections | New income |
-|---|---:|---|---:|
-| Rank 0 → 1 | 1 | — | $200 |
-| Rank 1 → 2 | 3 | required | $400 |
-| Rank 2 → 3 | 5 | required | $800 |
+| Upgrade | Story Stage | Capital | Career Connections | New income |
+|---|---:|---:|---|---:|
+| Rank 0 → 1 | >= 2 | 1 | — | $200 |
+| Rank 1 → 2 | — | 3 | required | $400 |
+| Rank 2 → 3 | — | 5 | required | $800 |
 
 ```text
 Rank 0 → 1:
 career_rank == 0
+story_stage >= 2
 Capital >= 1
 
 Rank 1 → 2:
@@ -143,24 +144,25 @@ Ranks повышаются последовательно: `0 → 1 → 2 → 3`
 
 `WorkService.can_advance_career()`:
 
-- Rank 0 → 1: Capital + daily Work slot
+- Rank 0 → 1: Story Stage >= 2 + Capital + daily Work slot
 - Rank 1 → 2 и 2 → 3: Capital + Connections + daily Work slot
 
 ---
 
 # 4. Rank 1 availability
 
-С начала игры Career system знает о Rank 1.
+С начала игры Career system знает о Rank 1, но повышение недоступно до Story Stage 2.
 
 Rank 1 Career Advancement production-valid при:
 
 ```text
 career_rank == 0
+story_stage >= 2
 Capital >= 1
 daily Work slot free
 ```
 
-Mine Boss reward для Rank 1 не требуется. Это основной ранний economic progression Stage 2.
+Mine Boss reward для Rank 1 не требуется. Это основной ранний economic progression Stage 2. Stage 1 всегда использует Rank 0 / $100.
 
 ---
 
@@ -218,9 +220,10 @@ Work income после action сразу использует новый rank.
 Requirements в порядке:
 
 1. `WorkAvailableTodayRequirement`
-2. `CareerConnectionsUnlockedRequirement` — **только если** `career_rank >= 1`
-3. `CareerRankBelowMaxRequirement`
-4. `CareerCapitalRequirement`
+2. `MinStoryStageRequirement` (`min_stage = 2`) — **только если** `career_rank == 0`
+3. `CareerConnectionsUnlockedRequirement` — **только если** `career_rank >= 1`
+4. `CareerRankBelowMaxRequirement`
+5. `CareerCapitalRequirement`
 
 Fail copy для Connections: «Нужны карьерные связи.»
 
@@ -242,6 +245,18 @@ Work UI **всегда** показывает карьеру с New Game. Не �
 
 ## Rank 0
 
+На Stage 1 Rank 1 показывается как future opportunity:
+
+```text
+Карьера: 0 / 3
+Доход: $100
+Следующее повышение: $200
+Откроется на следующем этапе
+Требование: Capital 1
+```
+
+После перехода на Stage 2:
+
 ```text
 Карьера: 0 / 3
 Доход за смену: $100
@@ -249,7 +264,7 @@ Work UI **всегда** показывает карьеру с New Game. Не �
 Требование: Capital 1
 ```
 
-Когда Capital 1 достигнут и слот Work свободен:
+Когда Capital 1 достигнут, Stage >= 2 и слот Work свободен:
 
 ```text
 [Добиться повышения]
@@ -324,6 +339,9 @@ get_next_career_rank()
 get_next_career_income()
 get_next_career_capital_requirement()
 next_rank_requires_connections()
+get_story_stage()
+next_rank_requires_min_story_stage()
+is_next_career_rank_unlocked()
 can_advance_career()
 advance_career()
 ```
@@ -348,7 +366,7 @@ Career system использует production permanent value `Capital`. Trainin
 
 Monte Carlo Executor получает production-valid `CAREER_ADVANCEMENT` candidate. Career — economic investment, не StagePlan goal. StagePlan остаётся immutable.
 
-Rank 1 ROI считается даже при `career_connections_unlocked == false`, как только production Capital 1 достижим.
+Rank 1 ROI считается даже при `career_connections_unlocked == false`, как только production Story Stage >= 2 и Capital 1 достижим. До Stage 2 Rank 1 ROI не создаёт commitment.
 
 Rank 2–3 ROI paths включаются только после production Career Connections unlock.
 
@@ -380,13 +398,13 @@ Rank 2
 
 Это diagnostic dependency. StagePlan structure не меняется.
 
-ROI math, scoring, planning_skill noise, commitment `target_career_rank`, support attribution `career:rank_<N>` — без изменений относительно предыдущего Career pass.
+ROI math финансирует prerequisite Capital по текущей зарплате, а остаток Stage cash — по новой. Active Career commitment резервирует prerequisite cash; optional spending использует `free_money`. StagePlan Capital training during commitment spends reserved cash. Mandatory Stage continuation (Stage 2 dress-up) may override reservation. Commitment `target_career_rank`, support attribution `career:rank_<N>` и planning_skill noise сохраняются.
 
 Rank 1 commitment:
 
 ```text
 target_career_rank = 1
-Capital 1 → required Work support → Career Advancement → Rank 1
+Capital 1 → required Work support at Rank 0 income → Career Advancement → Rank 1
 ```
 
 ---
@@ -467,10 +485,21 @@ Monte Carlo detailed replay starting/ending state включает те же п�
 
 # 17. Production tests
 
+## Rank 1 Stage gate
+
+```text
+Stage 1, Capital 1, Rank 0
+→ Rank 1 unavailable
+
+Stage 2, Capital 1, Rank 0
+→ Rank 1 available
+```
+
 ## Rank 1 without Connections
 
 ```text
 career_rank = 0
+story_stage >= 2
 Capital = 1
 career_connections_unlocked = false
 ```
@@ -586,7 +615,7 @@ Current production prices and higher Career salaries remain unchanged. This pass
 Task complete when:
 
 - Rank 1 is available without Mine Boss reward;
-- Rank 1 requires Capital 1;
+- Rank 1 requires Story Stage >= 2 and Capital 1;
 - Rank 1 pays $200 after Career Advancement;
 - Mine Boss MAX grants Career Connections;
 - Rank 2 requires Capital 3 + Career Connections;

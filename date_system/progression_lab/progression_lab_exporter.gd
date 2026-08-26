@@ -255,14 +255,26 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 				float(work_stats.get("P95", 0.0)),
 			])
 	lines.append("Career support:")
-	for support_key in ["promotion_actions", "capital_training_for_career", "work_supporting_career"]:
+	for support_key in ["promotion_actions", "capital_training_for_career", "work_supporting_career", "career_support_work_before_rank_1", "career_support_work_before_rank_2", "career_support_work_before_rank_3", "career_support_work_wasted"]:
 		var support_stats: Dictionary = career.get(support_key, {})
 		if support_stats is Dictionary:
-			lines.append("- %s: mean=%.3f P50=%.3f P90=%.3f" % [
+			lines.append("- %s: mean=%.3f P50=%.3f P90=%.3f P95=%.3f max=%.3f" % [
 				support_key,
 				float(support_stats.get("mean", 0.0)),
 				float(support_stats.get("P50", 0.0)),
 				float(support_stats.get("P90", 0.0)),
+				float(support_stats.get("P95", 0.0)),
+				float(support_stats.get("max", 0.0)),
+			])
+	for extra_key in ["career_negative_or_zero_roi_investments", "career_positive_roi_investments", "career_reservation_started", "career_reservation_completed", "career_reservation_overrides", "career_reserved_money_peak", "rank_1_stage_day"]:
+		var extra_stats: Dictionary = career.get(extra_key, {})
+		if extra_stats is Dictionary:
+			lines.append("- %s: P50=%.3f P90=%.3f P95=%.3f max=%.3f" % [
+				extra_key,
+				float(extra_stats.get("P50", 0.0)),
+				float(extra_stats.get("P90", 0.0)),
+				float(extra_stats.get("P95", 0.0)),
+				float(extra_stats.get("max", 0.0)),
 			])
 	var per_stage: Dictionary = result.statistics.get("per_stage", {})
 	lines.append("Stage WORK:")
@@ -547,12 +559,12 @@ func _group_csv(groups: Dictionary) -> String:
 
 func _seed_csv(result: ProgressionLabPopulationResult) -> String:
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("seed,archetype,days,work,dates,economy,dead,friction,novelty,badness,warnings,signature,stop,days_after_last_date_before_stage_completion,actions_after_last_date_before_stage_completion,work_actions_after_last_date_before_stage_completion,purchases_after_last_date_before_stage_completion,money_forced_work_days,max_consecutive_money_forced_work_days,stale_planned_goal_count,work_actions_for_characteristics,work_actions_for_outfits,work_actions_for_apartment,work_actions_for_dates,work_actions_for_rivals,work_actions_for_other,work_actions_for_career,career_rank_start,career_rank_end,career_advancement_actions,career_rank_1_day,career_rank_2_day,career_rank_3_day,career_rank_1_stage,career_rank_2_stage,career_rank_3_stage,career_connections_unlock_day,career_connections_unlock_stage,rank_1_before_connections,work_income_start,work_income_end,money_earned_from_work,work_actions_at_rank_0,work_actions_at_rank_1,work_actions_at_rank_2,work_actions_at_rank_3,career_investment_capital_training_actions,work_actions_supporting_career")
+	lines.append("seed,archetype,days,work,dates,economy,dead,friction,novelty,badness,warnings,signature,stop,days_after_last_date_before_stage_completion,actions_after_last_date_before_stage_completion,work_actions_after_last_date_before_stage_completion,purchases_after_last_date_before_stage_completion,money_forced_work_days,max_consecutive_money_forced_work_days,stale_planned_goal_count,work_actions_for_characteristics,work_actions_for_outfits,work_actions_for_apartment,work_actions_for_dates,work_actions_for_rivals,work_actions_for_other,work_actions_for_career,career_rank_start,career_rank_end,career_advancement_actions,career_rank_1_day,career_rank_2_day,career_rank_3_day,career_rank_1_stage,career_rank_2_stage,career_rank_3_stage,career_connections_unlock_day,career_connections_unlock_stage,rank_1_before_connections,work_income_start,work_income_end,money_earned_from_work,work_actions_at_rank_0,work_actions_at_rank_1,work_actions_at_rank_2,work_actions_at_rank_3,career_investment_capital_training_actions,work_actions_supporting_career,career_negative_or_zero_roi_investments,career_reservation_started_count,career_reservation_completed_count,career_reservation_override_count,career_reserved_money_peak,career_support_work_before_target_rank,career_support_work_wasted")
 	for record in result.records:
 		if not (record is ProgressionLabRunRecord):
 			continue
 		var metrics: Dictionary = record.campaign_metrics
-		lines.append("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+		lines.append("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 			record.base_seed,
 			String(record.archetype),
 			str(metrics.get("calendar_days", 0)),
@@ -601,6 +613,13 @@ func _seed_csv(result: ProgressionLabPopulationResult) -> String:
 			str(metrics.get("work_actions_at_rank_3", 0)),
 			str(metrics.get("career_investment_capital_training_actions", 0)),
 			str(metrics.get("work_actions_supporting_career", 0)),
+			str(metrics.get("career_negative_or_zero_roi_investments", 0)),
+			str(metrics.get("career_reservation_started_count", 0)),
+			str(metrics.get("career_reservation_completed_count", 0)),
+			str(metrics.get("career_reservation_override_count", 0)),
+			str(metrics.get("career_reserved_money_peak", 0)),
+			str(metrics.get("career_support_work_before_target_rank", 0)),
+			str(metrics.get("career_support_work_wasted", 0)),
 		])
 	return "\n".join(lines)
 

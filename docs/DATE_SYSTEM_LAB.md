@@ -403,13 +403,13 @@ time_cost_minutes: int
 
 `WorkService.create_work_action(work)` собирает `GameAction`: `id` и `time_cost_minutes` из definition, `money_cost = 0`, эффект `MoneyEffect(+income)`.
 
-Seed: `work_basic` — «Работать», 60 минут. Source of truth оплаты — `WorkService.get_current_shift_income()` (`get_current_hourly_pay()` — alias): `100 * 2^career_rank` для рангов 0..3 → $100 / $200 / $400 / $800. Story Stage больше не повышает ставку. New Game: `career_connections_unlocked = false`, `career_rank = 0`, смена $100. Rank 1 доступен самостоятельно при Capital 1. Rank 2–3 требуют Career Connections.
+Seed: `work_basic` — «Работать», 60 минут. Source of truth оплаты — `WorkService.get_current_shift_income()` (`get_current_hourly_pay()` — alias): `100 * 2^career_rank` для рангов 0..3 → $100 / $200 / $400 / $800. Story Stage больше не повышает ставку. New Game: `career_connections_unlocked = false`, `career_rank = 0`, смена $100. Rank 1 доступен с Story Stage 2 при Capital 1. Rank 2–3 требуют Career Connections.
 
 После MAX Начальницы шахты (`girl_mine_boss`) pipeline выдаёт `career_connections` («Карьерные связи»): `player.career_connections_unlocked = true`. Текущий Rank и ставка смены не меняются; открываются Rank 2 и Rank 3 при достаточном Capital.
 
-`WorkService.create_career_advancement_action()` — «Добиться повышения»: `time_cost_minutes = WORK_MINUTES` (60), `money_cost = 0`, без денежного эффекта. Requirements: work available today + Capital следующего ранга + rank < 3; Connections только для Rank 2–3. Effects: `RecordWorkDayEffect` (тот же daily key `work`) + повышение `career_rank` на 1. Ранги 1 / 2 / 3 требуют Capital 1 / 3 / 5. Карьера опциональна: можно продолжать работать на текущем ранге.
+`WorkService.create_career_advancement_action()` — «Добиться повышения»: `time_cost_minutes = WORK_MINUTES` (60), `money_cost = 0`, без денежного эффекта. Requirements: work available today + Capital следующего ранга + rank < 3; Rank 1 дополнительно требует Story Stage >= 2; Connections только для Rank 2–3. Effects: `RecordWorkDayEffect` (тот же daily key `work`) + повышение `career_rank` на 1. Ранги 1 / 2 / 3 требуют Capital 1 / 3 / 5. Карьера опциональна: можно продолжать работать на текущем ранге.
 
-GameSimulator всегда: `Доход за смену: $<current>` и `Карьера: <rank> / 3`. Rank 0: следующее повышение $200, Capital 1. Rank 1 без Connections: следующее $400, Capital 3 и «Карьерные связи», hint про Начальницу шахты. Rank 2: $800 / Capital 5. Rank 3 — доход $800 и `Карьера: 3 / 3`. Кнопка `Добиться повышения — 1 ч — $<cur> → $<next>` если Capital (и Connections для Rank 2–3) и work-слот свободен.
+GameSimulator всегда: `Доход за смену: $<current>` и `Карьера: <rank> / 3`. Rank 0 на Stage 1: следующее повышение $200, «Откроется на следующем этапе», Capital 1. Rank 0 на Stage 2+: следующее повышение $200, Capital 1. Rank 1 без Connections: следующее $400, Capital 3 и «Карьерные связи», hint про Начальницу шахты. Rank 2: $800 / Capital 5. Rank 3 — доход $800 и `Карьера: 3 / 3`. Кнопка `Добиться повышения — 1 ч — $<cur> → $<next>` если production `can_advance_career()` (Stage + Capital, и Connections для Rank 2–3) и work-слот свободен.
 
 Работа идёт через `DailyActivityService` с `activity_key = work`. Базовый daily limit = 1. Обычная смена и Career Advancement делят этот слот. После MAX Оли `olya_overtime` эффективный limit = 2.
 
@@ -1193,7 +1193,7 @@ Story Girl MAX расширяет игру и двигает крупный prog
 | Рита | `rita_urgent_taxi` | $75 за каждую дополнительную same-day встречу с девушкой, чей бесплатный `date:<girl_id>` уже использован. |
 | Ева | `eva_read_people` | `effective_initial_known_tag_count = GirlProfile.initial_known_tag_count + 1`; ретро +1 неизвестный Tag уже знакомым незавершённым девушкам, затем общая нормализация знания. |
 
-MAX Начальницы шахты (сюжетная, не filler) идёт через тот же `grant_filler_reward_for_girl`: `career_connections` / «Карьерные связи». Игрок получает доступ к Rank 2–3; ставка смены и текущий Rank сразу не меняются. Rank 1 доступен без этой награды.
+MAX Начальницы шахты (сюжетная, не filler) идёт через тот же `grant_filler_reward_for_girl`: `career_connections` / «Карьерные связи». Игрок получает доступ к Rank 2–3; ставка смены и текущий Rank сразу не меняются. Rank 1 доступен с Stage 2 без этой награды.
 
 Player-facing роли и описания девушек — в Seed Girls. Game Simulator показывает награду на карточке, результат MAX и DEV-панель: MAX/сброс каждой награды, деньги, четыре характеристики, дневной слот свидания, `Apartment.prepared`.
 
@@ -1816,7 +1816,7 @@ Authored-набор Date Lab совпадает с `GirlCatalog`: 17 профи�
 
 Актриса `girl_actress`: `city_center`, Stage 1 + Rating 2, соперник `rival_boris`. Trait Ценит внешность. `relationship_max = 10`. Начально известных Tags нет. City Stage 2 после MAX.
 
-Начальница шахты `girl_mine_boss`: `restaurant`, Stage 2 + Rating 5, соперник `rival_foreman`. Trait Любит рестораны. `relationship_max = 10`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. Мировая локация ресторана открыта с Stage 2; DateVenue Restaurant — с Stage 3. После MAX — награда `career_connections` («Карьерные связи»): открываются Rank 2–3; текущий Rank и ставка смены не меняются. Rank 1 доступен раньше, без MAX.
+Начальница шахты `girl_mine_boss`: `restaurant`, Stage 2 + Rating 5, соперник `rival_foreman`. Trait Любит рестораны. `relationship_max = 10`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. Мировая локация ресторана открыта с Stage 2; DateVenue Restaurant — с Stage 3. После MAX — награда `career_connections` («Карьерные связи»): открываются Rank 2–3; текущий Rank и ставка смены не меняются. Rank 1 доступен с Stage 2, без MAX.
 
 Редактор журнала `girl_magazine_editor`: `cafe`, Stage 3 + Rating 8 + 2 of 3 Stage 3 filler, соперник `rival_columnist`. Trait Чувствует ауру. `relationship_max = 10`. Начально известных Tags нет. Date eligibility: Outfit выше Casual. City Stage остаётся 2 до MAX; City Stage 3 после входа в Stage 4.
 
