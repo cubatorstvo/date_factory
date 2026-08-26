@@ -32,6 +32,7 @@ var build_timing: Dictionary = {}
 var work_attribution: Dictionary = {}
 var goal_friction_by_type: Dictionary = {}
 var stale_planned_goals: Dictionary = {}
+var career_progression: Dictionary = {}
 
 
 func to_dict() -> Dictionary:
@@ -73,4 +74,5 @@ func to_dict() -> Dictionary:
 		"work_attribution": work_attribution.duplicate(true),
 		"goal_friction_by_type": goal_friction_by_type.duplicate(true),
 		"stale_planned_goals": stale_planned_goals.duplicate(true),
+		"career_progression": career_progression.duplicate(true),
 	}

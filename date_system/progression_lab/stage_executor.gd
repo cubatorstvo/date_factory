@@ -85,6 +85,9 @@ var _rival_money_failed_goals: Dictionary = {}
 var _resolved_rival_money_goals: Dictionary = {}
 var _recorded_build_goals: Dictionary = {}
 var test_max_possible_relationship_gain: int = -1
+var _target_career_rank: int = -1
+var _career_roi_day: int = -1
+var _last_career_roi: Dictionary = {}
 
 
 func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecord:
@@ -123,6 +126,9 @@ func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecor
 	_rival_money_failed_goals.clear()
 	_resolved_rival_money_goals.clear()
 	_recorded_build_goals.clear()
+	_target_career_rank = -1
+	_career_roi_day = -1
+	_last_career_roi = {}
 	seed(ProgressionRng.derive_seed(base_seed, "GLOBAL"))
 	var competitions_reset: Variant = _competition_service()
 	if competitions_reset != null:
@@ -140,6 +146,9 @@ func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecor
 	var economy: Variant = _economy_service()
 	_campaign.rating_start = int(rating.get_rating()) if rating != null else 0
 	_campaign.minimum_money = int(economy.get_money()) if economy != null else 0
+	_snapshot_career_start(_campaign)
+	if detailed:
+		_timeline.append(_format_career_state("## Starting Career State"))
 	var target_stage: int = clampi(end_story_stage, 1, 4)
 	while _current_story_stage() <= target_stage and not _aborted:
 		var stage: int = _current_story_stage()
@@ -152,6 +161,9 @@ func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecor
 	var clock: Variant = _time_service()
 	var last_day: int = int(clock.get_calendar_day_index()) if clock != null else 0
 	_campaign.finalize_days(last_day, int(economy.get_money()) if economy != null else 0, int(rating.get_rating()) if rating != null else 0)
+	_snapshot_career_end(_campaign)
+	if detailed:
+		_timeline.append(_format_career_state("## Ending Career State"))
 	_finalize_rival_money_metrics(_active_plan)
 	record.stage_plans = _stage_plans.duplicate(true)
 	record.campaign_metrics = _campaign.to_dict()
@@ -202,12 +214,15 @@ func _execute_stage(stage: int, base_seed: int, target_stage: int) -> void:
 	var start_clock: Variant = _time_service()
 	var stage_start_day: int = int(start_clock.get_calendar_day_index()) if start_clock != null else 0
 	_current_stage_metrics.begin_stage_window(stage_start_day)
+	_clear_career_commitment()
+	_snapshot_career_start(_current_stage_metrics)
 	var rating: Variant = _rating_service()
 	var economy_start: Variant = _economy_service()
 	_current_stage_metrics.rating_start = int(rating.get_rating()) if rating != null else 0
 	_current_stage_metrics.minimum_money = int(economy_start.get_money()) if economy_start != null else 0
 	if detailed:
 		_timeline.append(_format_stage_plan(plan))
+		_timeline.append(_format_career_state("## Stage %d Career State" % stage))
 	while _current_story_stage() == stage and not _aborted:
 		var clock: Variant = _time_service()
 		var day_index: int = int(clock.get_calendar_day_index()) if clock != null else 0
@@ -263,6 +278,8 @@ func _execute_stage(stage: int, base_seed: int, target_stage: int) -> void:
 		int(rating.get_rating()) if rating != null else 0,
 		stage_start_day
 	)
+	_snapshot_career_end(_current_stage_metrics)
+	_clear_career_commitment()
 	if target_stage >= 0:
 		pass
 
@@ -292,6 +309,7 @@ func _collect_candidates(plan: StagePlan) -> Array:
 		var story_priority: float = config.priority_story_girl_after_barrier if barrier_done else config.priority_story_girl_before_barrier
 		_add_girl_candidates(candidates, plan, plan.story_girl_id, story_priority, "STORY")
 	_add_work_candidates(candidates, plan, candidates)
+	_add_career_candidates(candidates, plan)
 	if _date_policy != null:
 		_date_policy.consume_rng = previous_consume
 	return candidates
@@ -883,6 +901,8 @@ func _execute_candidate(candidate: Candidate, plan: StagePlan) -> ExecutionResul
 			ok = _exec_rival_fight(candidate)
 		"work":
 			ok = _exec_work(candidate)
+		"career_advancement":
+			ok = _exec_career_advancement(candidate)
 		_:
 			ok = false
 	if not ok:
@@ -1053,6 +1073,9 @@ func _exec_train(candidate: Candidate) -> bool:
 	_current_stage_metrics.training_actions += 1
 	_campaign.characteristic_upgrades += 1
 	_current_stage_metrics.characteristic_upgrades += 1
+	if candidate.goal_id.begins_with("career:"):
+		_campaign.career_investment_capital_training_actions += 1
+		_current_stage_metrics.career_investment_capital_training_actions += 1
 	_log_line("### TRAINING %s" % String(candidate.upgrade_id))
 	return true
 
@@ -1180,6 +1203,7 @@ func _exec_work(candidate: Candidate) -> bool:
 	var actions: Variant = _action_service()
 	if actions == null:
 		return false
+	var rank_before: int = WorkService.get_career_rank()
 	var action: GameAction
 	if WorkService.is_work_available_today() and WorkService.has_olya_overtime():
 		action = WorkService.create_work_with_overtime_action()
@@ -1192,8 +1216,13 @@ func _exec_work(candidate: Candidate) -> bool:
 	if result == null or not result.success:
 		return false
 	var money_after: int = int(_economy_service().get_money())
+	var earned: int = maxi(0, money_after - money_before)
 	_campaign.work_actions += 1
 	_current_stage_metrics.work_actions += 1
+	_campaign.money_earned_from_work += earned
+	_current_stage_metrics.money_earned_from_work += earned
+	_campaign.record_work_at_rank(rank_before)
+	_current_stage_metrics.record_work_at_rank(rank_before)
 	if str(candidate.supporting_action_id).begins_with("rival_"):
 		_campaign.work_actions_supporting_rival += 1
 		_current_stage_metrics.work_actions_supporting_rival += 1
@@ -1570,6 +1599,8 @@ func _log_selected_candidate(candidate: Candidate, plan: StagePlan) -> void:
 		_log_line("Goal support: %s" % candidate.goal_id)
 		_log_line("Action support: %s" % candidate.supporting_action_id)
 		_log_line("Required for action: $%d" % candidate.required_money)
+	if candidate.kind == "career_advancement" or candidate.goal_id.begins_with("career:"):
+		_log_career_roi(_last_career_roi)
 
 func _log_stall_day(plan: StagePlan, initial_count: int) -> void:
 	if not detailed:
@@ -1910,6 +1941,8 @@ func _capture_world() -> Dictionary:
 		"money": int(economy.get_money()) if economy != null else 0,
 		"stage": int(stages.get_current_stage()) if stages != null else 1,
 		"rewards": _reward_ids(),
+		"career_rank": WorkService.get_career_rank(),
+		"career_unlocked": WorkService.is_career_progression_unlocked(),
 	}
 
 
@@ -1953,6 +1986,18 @@ func _apply_world_diff(before: Dictionary, candidate: Candidate) -> int:
 			beats += 1
 	if (after["rewards"] as PackedStringArray).size() > (before["rewards"] as PackedStringArray).size():
 		beats += 1
+	if bool(after.get("career_unlocked", false)) and not bool(before.get("career_unlocked", false)):
+		_mark_career_novelty("career:unlocked")
+	var rank_before: int = int(before.get("career_rank", 0))
+	var rank_after: int = int(after.get("career_rank", 0))
+	if rank_after > rank_before:
+		beats += 1
+		var calendar_day: int = _day_index() + 1
+		_campaign.record_career_rank_reached(rank_after, calendar_day)
+		_current_stage_metrics.record_career_rank_reached(rank_after, calendar_day)
+		_mark_career_novelty("career:rank_%d" % rank_after)
+		if rank_after >= _target_career_rank and _target_career_rank > 0:
+			_target_career_rank = -1
 	if candidate != null:
 		pass
 	return beats
@@ -2651,3 +2696,286 @@ func _root_node(node_name: String) -> Variant:
 	if tree == null or tree.root == null:
 		return null
 	return tree.root.get_node_or_null(node_name)
+
+
+func remaining_cash_need(plan: StagePlan) -> int:
+	var rows: Array = _build_cash_dependencies(plan) if plan != null else []
+	var seen: Dictionary = {}
+	var total: int = 0
+	for row in rows:
+		if not (row is Dictionary):
+			continue
+		var goal_id: String = str(row.get("goal_id", ""))
+		if goal_id.is_empty() or seen.has(goal_id):
+			continue
+		seen[goal_id] = true
+		total += int(row.get("required_money", 0))
+	return total
+
+
+func evaluate_career_roi(plan: StagePlan) -> Dictionary:
+	return _evaluate_career_roi(plan)
+
+
+func _clear_career_commitment() -> void:
+	_target_career_rank = -1
+	_career_roi_day = -1
+	_last_career_roi = {}
+
+
+func _snapshot_career_start(metrics: ProgressionLabMetrics) -> void:
+	if metrics == null:
+		return
+	metrics.career_rank_start = WorkService.get_career_rank()
+	metrics.work_income_start = WorkService.get_current_shift_income()
+
+
+func _snapshot_career_end(metrics: ProgressionLabMetrics) -> void:
+	if metrics == null:
+		return
+	metrics.career_rank_end = WorkService.get_career_rank()
+	metrics.work_income_end = WorkService.get_current_shift_income()
+
+
+func _format_career_state(heading: String) -> String:
+	var gs: Variant = _game_state()
+	var unlocked: bool = WorkService.is_career_progression_unlocked(gs)
+	var rank: int = WorkService.get_career_rank(gs)
+	var income: int = WorkService.get_current_shift_income(gs)
+	var next_rank: int = WorkService.get_next_career_rank(gs)
+	var next_requirement: String = str(WorkService.get_next_career_capital_requirement(gs)) if next_rank >= 0 else "-"
+	var next_income: String = ("$%d" % WorkService.get_next_career_income(gs)) if next_rank >= 0 else "-"
+	return "%s\nCareer unlocked: %s\nCareer Rank: %d\nCurrent Work income: $%d\nNext Career requirement: %s\nNext Career income: %s" % [
+		heading,
+		str(unlocked),
+		rank,
+		income,
+		next_requirement,
+		next_income,
+	]
+
+
+func _career_goal_id(rank: int) -> String:
+	return "career:rank_%d" % rank
+
+
+func _plan_capital_target(plan: StagePlan) -> int:
+	if plan == null:
+		return 0
+	var best: int = 0
+	for key in plan.characteristic_targets.keys():
+		if String(key) == String(CharacteristicIds.CAPITAL):
+			best = maxi(best, int(plan.characteristic_targets[key]))
+	return best
+
+
+func _capital_training_price() -> int:
+	var characteristics: Variant = _characteristic_service()
+	if characteristics != null:
+		return int(characteristics.get_cost_per_level(CharacteristicIds.CAPITAL))
+	return CharacteristicCatalog.SEED_PRICE
+
+
+func _ceil_div(numerator: int, denominator: int) -> int:
+	if numerator <= 0:
+		return 0
+	if denominator <= 0:
+		return 0
+	return int(ceili(float(numerator) / float(denominator)))
+
+
+func _highest_cash_blocked_priority() -> float:
+	var highest: float = 0.0
+	for row in _cash_dependencies:
+		if row is Dictionary:
+			highest = maxf(highest, float(row.get("priority", 0.0)))
+	return highest
+
+
+func _career_score_base(saved_support_actions: int) -> float:
+	return _highest_cash_blocked_priority() + 10.0 + 5.0 * float(mini(maxi(saved_support_actions, 0), 4))
+
+
+func _evaluate_career_roi(plan: StagePlan) -> Dictionary:
+	var gs: Variant = _game_state()
+	var rank_before: int = WorkService.get_career_rank(gs)
+	var rank_after: int = WorkService.get_next_career_rank(gs)
+	var current_income: int = WorkService.get_current_shift_income(gs)
+	var new_income: int = WorkService.get_next_career_income(gs)
+	var remaining: int = remaining_cash_need(plan)
+	var economy: Variant = _economy_service()
+	var current_money: int = int(economy.get_money()) if economy != null else 0
+	var required_capital: int = WorkService.get_next_career_capital_requirement(gs)
+	var characteristics: Variant = _characteristic_service()
+	var current_capital: int = int(characteristics.get_value(CharacteristicIds.CAPITAL)) if characteristics != null else 0
+	var capital_actions: int = maxi(0, required_capital - current_capital)
+	var capital_cost: int = capital_actions * _capital_training_price()
+	var work_without: int = _ceil_div(maxi(remaining - current_money, 0), current_income)
+	var work_with: int = _ceil_div(maxi(remaining + capital_cost - current_money, 0), new_income)
+	var economic_with: int = capital_actions + 1 + work_with
+	var saved: int = work_without - economic_with
+	var planning_skill: float = profile.planning_skill if profile != null else 1.0
+	var amplitude: float = 2.0 * (1.0 - planning_skill)
+	var perceived: float = float(saved)
+	if _execution_rng != null:
+		perceived += _execution_rng.randf_range(-amplitude, amplitude)
+	var decision: String = "INVEST" if perceived > 0.0 else "SKIP_FOR_NOW"
+	return {
+		"career_rank_before": rank_before,
+		"career_rank_after": rank_after,
+		"current_income": current_income,
+		"new_income": new_income,
+		"remaining_cash_need": remaining,
+		"work_actions_without_upgrade": work_without,
+		"economic_support_actions_with_upgrade": economic_with,
+		"saved_support_actions": saved,
+		"perceived_saved_support_actions": perceived,
+		"decision": decision,
+	}
+
+
+func _log_career_roi(roi: Dictionary) -> void:
+	if not detailed or roi.is_empty():
+		return
+	_log_line("### CAREER ROI")
+	_log_line("career_rank_before: %s" % str(roi.get("career_rank_before", 0)))
+	_log_line("career_rank_after: %s" % str(roi.get("career_rank_after", 0)))
+	_log_line("current_income: %s" % str(roi.get("current_income", 0)))
+	_log_line("new_income: %s" % str(roi.get("new_income", 0)))
+	_log_line("remaining_cash_need: %s" % str(roi.get("remaining_cash_need", 0)))
+	_log_line("work_actions_without_upgrade: %s" % str(roi.get("work_actions_without_upgrade", 0)))
+	_log_line("economic_support_actions_with_upgrade: %s" % str(roi.get("economic_support_actions_with_upgrade", 0)))
+	_log_line("saved_support_actions: %s" % str(roi.get("saved_support_actions", 0)))
+	_log_line("perceived_saved_support_actions: %s" % str(roi.get("perceived_saved_support_actions", 0.0)))
+	_log_line("decision: %s" % str(roi.get("decision", "")))
+
+
+func _sync_career_commitment() -> void:
+	if _target_career_rank < 0:
+		return
+	if not WorkService.is_career_progression_unlocked() or WorkService.get_next_career_rank() < 0:
+		_target_career_rank = -1
+		return
+	if WorkService.get_career_rank() >= _target_career_rank:
+		_target_career_rank = -1
+
+
+func _refresh_career_decision(plan: StagePlan) -> void:
+	_sync_career_commitment()
+	if _target_career_rank > 0:
+		return
+	var day_index: int = _day_index()
+	if day_index == _career_roi_day:
+		return
+	_career_roi_day = day_index
+	if not WorkService.is_career_progression_unlocked() or WorkService.get_next_career_rank() < 0:
+		_last_career_roi = {}
+		return
+	_last_career_roi = _evaluate_career_roi(plan)
+	_log_career_roi(_last_career_roi)
+	if str(_last_career_roi.get("decision", "")) == "INVEST":
+		_target_career_rank = int(_last_career_roi.get("career_rank_after", 0))
+
+
+func _add_career_candidates(candidates: Array, plan: StagePlan) -> void:
+	_refresh_career_decision(plan)
+	if _target_career_rank <= 0:
+		return
+	var gs: Variant = _game_state()
+	var rank: int = WorkService.get_career_rank(gs)
+	if rank >= _target_career_rank:
+		_target_career_rank = -1
+		return
+	var required_capital: int = WorkService.get_next_career_capital_requirement(gs)
+	var characteristics: Variant = _characteristic_service()
+	var current_capital: int = int(characteristics.get_value(CharacteristicIds.CAPITAL)) if characteristics != null else 0
+	var saved: int = int(_last_career_roi.get("saved_support_actions", 0))
+	var base: float = _career_score_base(saved)
+	var goal_id: String = _career_goal_id(_target_career_rank)
+	var novel: bool = not _seen.has("career:rank_%d" % _target_career_rank)
+	var plan_covers_capital: bool = _plan_capital_target(plan) >= required_capital
+	if WorkService.can_advance_career(gs):
+		var advance := Candidate.new()
+		advance.category = "CAREER"
+		advance.kind = "career_advancement"
+		advance.goal_id = goal_id
+		advance.content_id = "career_advancement:%d" % _target_career_rank
+		advance.uses_daily_gate = true
+		advance.unblocks_higher = true
+		advance.is_novel = novel
+		advance.score = _score(base, true, true, novel, advance.content_id)
+		candidates.append(advance)
+		return
+	if current_capital >= required_capital:
+		return
+	if plan_covers_capital:
+		return
+	var upgrade: CharacteristicUpgradeDefinition = _upgrade_for(CharacteristicIds.CAPITAL)
+	if upgrade == null or characteristics == null:
+		return
+	var train_action: GameAction = characteristics.create_upgrade_action(upgrade.id)
+	var actions: Variant = _action_service()
+	if actions != null and bool(actions.can_execute(train_action)):
+		var train := Candidate.new()
+		train.category = "TRAINING"
+		train.kind = "train"
+		train.is_support = true
+		train.upgrade_id = upgrade.id
+		train.goal_id = goal_id
+		train.content_id = "career_train:capital"
+		train.uses_daily_gate = true
+		train.unblocks_higher = true
+		train.is_novel = novel
+		train.score = _score(base, true, true, novel, train.content_id)
+		candidates.append(train)
+		return
+	var economy: Variant = _economy_service()
+	var money: int = int(economy.get_money()) if economy != null else 0
+	if money >= upgrade.price:
+		return
+	if not WorkService.is_work_available_today() and not WorkService.is_overtime_available_today():
+		return
+	var work := Candidate.new()
+	work.category = "WORK"
+	work.kind = "work"
+	work.is_support = true
+	work.goal_id = goal_id
+	work.action_id = "work"
+	work.supporting_action_id = "characteristic:capital:%d" % required_capital
+	work.required_money = upgrade.price
+	work.cash_before = money
+	work.cash_gap = maxi(upgrade.price - money, 0)
+	work.cash_needed = work.cash_gap
+	work.content_id = "work:career:%d" % _target_career_rank
+	work.uses_daily_gate = true
+	work.unblocks_higher = true
+	var work_offset: float = config.work_priority_offset if config != null else 5.0
+	work.score = _score(base - work_offset, true, true, false, work.content_id)
+	candidates.append(work)
+
+
+func _exec_career_advancement(candidate: Candidate) -> bool:
+	var actions: Variant = _action_service()
+	if actions == null:
+		return false
+	var action: GameAction = WorkService.create_career_advancement_action()
+	var result: ActionResult = actions.execute(action)
+	if result == null or not result.success:
+		return false
+	_campaign.career_advancement_actions += 1
+	_current_stage_metrics.career_advancement_actions += 1
+	_log_line("### CAREER ADVANCEMENT")
+	_log_line("Goal: %s" % candidate.goal_id)
+	_log_line("Career Rank: %d" % WorkService.get_career_rank())
+	_log_line("Current Work income: $%d" % WorkService.get_current_shift_income())
+	return true
+
+
+func _mark_career_novelty(key: String) -> void:
+	if key.is_empty() or _seen.has(key):
+		return
+	_seen[key] = true
+	if _campaign != null:
+		_campaign.novelty_events += 1
+	if _current_stage_metrics != null:
+		_current_stage_metrics.novelty_events += 1

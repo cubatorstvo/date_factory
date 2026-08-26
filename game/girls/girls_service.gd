@@ -196,6 +196,10 @@ func grant_filler_reward_for_girl(girl_id: StringName) -> bool:
 		progression.marina_free_outfit_pending = true
 	elif reward.id == FillerRewardCatalog.ID_EVA_READ_PEOPLE:
 		apply_eva_retro_reveal()
+	elif reward.id == FillerRewardCatalog.ID_CAREER_PROGRESSION_UNLOCK:
+		var gs: Variant = _game_state()
+		if gs != null and gs.player != null:
+			gs.player.career_progression_unlocked = true
 	return true
 
 
@@ -308,6 +312,10 @@ func reset_filler_reward_for_dev(girl_id: StringName) -> bool:
 	progression.remove_filler_reward(reward.id)
 	if reward.id == FillerRewardCatalog.ID_MARINA_FREE_OUTFIT:
 		progression.marina_free_outfit_pending = false
+	elif reward.id == FillerRewardCatalog.ID_CAREER_PROGRESSION_UNLOCK:
+		var gs: Variant = _game_state()
+		if gs != null and gs.player != null:
+			gs.player.career_progression_unlocked = false
 	var state: GirlState = get_state(girl_id)
 	if state != null:
 		state.relationship = maxi(0, get_relationship_max(girl_id) - 1)

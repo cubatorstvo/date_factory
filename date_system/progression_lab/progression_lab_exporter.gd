@@ -192,7 +192,7 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 	lines.append("")
 	lines.append("## Work Attribution")
 	var work_attr: Dictionary = result.work_attribution
-	for key in ["characteristics", "outfits", "apartment", "dates", "rivals", "other"]:
+	for key in ["characteristics", "outfits", "apartment", "dates", "rivals", "career", "other"]:
 		var stats: Dictionary = work_attr.get(key, {})
 		if stats is Dictionary:
 			lines.append("- %s: mean=%.3f P50=%.3f P90=%.3f" % [
@@ -200,6 +200,43 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 				float(stats.get("mean", 0.0)),
 				float(stats.get("P50", 0.0)),
 				float(stats.get("P90", 0.0)),
+			])
+	lines.append("")
+	lines.append("## Career Progression")
+	var career: Dictionary = result.career_progression
+	lines.append("Rank reached:")
+	lines.append("- Rank 0 only: %s" % str(career.get("rank_0_only", 0)))
+	lines.append("- Rank 1+: %s" % str(career.get("rank_1_plus", 0)))
+	lines.append("- Rank 2+: %s" % str(career.get("rank_2_plus", 0)))
+	lines.append("- Rank 3: %s" % str(career.get("rank_3", 0)))
+	for rank_key in ["rank_1_day", "rank_2_day", "rank_3_day"]:
+		var day_stats: Dictionary = career.get(rank_key, {})
+		if day_stats is Dictionary:
+			lines.append("- %s: P10=%.3f P50=%.3f P90=%.3f" % [
+				rank_key,
+				float(day_stats.get("P10", 0.0)),
+				float(day_stats.get("P50", 0.0)),
+				float(day_stats.get("P90", 0.0)),
+			])
+	lines.append("Work by rank:")
+	for rank_key in ["work_at_rank_0", "work_at_rank_1", "work_at_rank_2", "work_at_rank_3"]:
+		var work_stats: Dictionary = career.get(rank_key, {})
+		if work_stats is Dictionary:
+			lines.append("- %s: mean=%.3f P50=%.3f P90=%.3f" % [
+				rank_key,
+				float(work_stats.get("mean", 0.0)),
+				float(work_stats.get("P50", 0.0)),
+				float(work_stats.get("P90", 0.0)),
+			])
+	lines.append("Career support:")
+	for support_key in ["promotion_actions", "capital_training_for_career", "work_supporting_career"]:
+		var support_stats: Dictionary = career.get(support_key, {})
+		if support_stats is Dictionary:
+			lines.append("- %s: mean=%.3f P50=%.3f P90=%.3f" % [
+				support_key,
+				float(support_stats.get("mean", 0.0)),
+				float(support_stats.get("P50", 0.0)),
+				float(support_stats.get("P90", 0.0)),
 			])
 	lines.append("")
 	lines.append("## Goal Friction by Type")
@@ -272,6 +309,7 @@ func share_bundle_json(result: ProgressionLabPopulationResult) -> Dictionary:
 		"work_attribution": result.work_attribution,
 		"goal_friction_by_type": result.goal_friction_by_type,
 		"stale_planned_goals": result.stale_planned_goals,
+		"career_progression": result.career_progression,
 	}
 
 
@@ -455,12 +493,12 @@ func _group_csv(groups: Dictionary) -> String:
 
 func _seed_csv(result: ProgressionLabPopulationResult) -> String:
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("seed,archetype,days,work,dates,economy,dead,friction,novelty,badness,warnings,signature,stop,days_after_last_date_before_stage_completion,actions_after_last_date_before_stage_completion,work_actions_after_last_date_before_stage_completion,purchases_after_last_date_before_stage_completion,money_forced_work_days,max_consecutive_money_forced_work_days,stale_planned_goal_count,work_actions_for_characteristics,work_actions_for_outfits,work_actions_for_apartment,work_actions_for_dates,work_actions_for_rivals,work_actions_for_other")
+	lines.append("seed,archetype,days,work,dates,economy,dead,friction,novelty,badness,warnings,signature,stop,days_after_last_date_before_stage_completion,actions_after_last_date_before_stage_completion,work_actions_after_last_date_before_stage_completion,purchases_after_last_date_before_stage_completion,money_forced_work_days,max_consecutive_money_forced_work_days,stale_planned_goal_count,work_actions_for_characteristics,work_actions_for_outfits,work_actions_for_apartment,work_actions_for_dates,work_actions_for_rivals,work_actions_for_other,work_actions_for_career,career_rank_start,career_rank_end,career_advancement_actions,career_rank_1_day,career_rank_2_day,career_rank_3_day,work_income_start,work_income_end,money_earned_from_work,work_actions_at_rank_0,work_actions_at_rank_1,work_actions_at_rank_2,work_actions_at_rank_3,career_investment_capital_training_actions,work_actions_supporting_career")
 	for record in result.records:
 		if not (record is ProgressionLabRunRecord):
 			continue
 		var metrics: Dictionary = record.campaign_metrics
-		lines.append("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+		lines.append("%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 			record.base_seed,
 			String(record.archetype),
 			str(metrics.get("calendar_days", 0)),
@@ -487,6 +525,22 @@ func _seed_csv(result: ProgressionLabPopulationResult) -> String:
 			str(metrics.get("work_actions_for_dates", 0)),
 			str(metrics.get("work_actions_for_rivals", 0)),
 			str(metrics.get("work_actions_for_other", 0)),
+			str(metrics.get("work_actions_for_career", 0)),
+			str(metrics.get("career_rank_start", 0)),
+			str(metrics.get("career_rank_end", 0)),
+			str(metrics.get("career_advancement_actions", 0)),
+			str(metrics.get("career_rank_1_day", -1)),
+			str(metrics.get("career_rank_2_day", -1)),
+			str(metrics.get("career_rank_3_day", -1)),
+			str(metrics.get("work_income_start", 0)),
+			str(metrics.get("work_income_end", 0)),
+			str(metrics.get("money_earned_from_work", 0)),
+			str(metrics.get("work_actions_at_rank_0", 0)),
+			str(metrics.get("work_actions_at_rank_1", 0)),
+			str(metrics.get("work_actions_at_rank_2", 0)),
+			str(metrics.get("work_actions_at_rank_3", 0)),
+			str(metrics.get("career_investment_capital_training_actions", 0)),
+			str(metrics.get("work_actions_supporting_career", 0)),
 		])
 	return "\n".join(lines)
 

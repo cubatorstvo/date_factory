@@ -61,6 +61,22 @@ var work_actions_for_apartment: int = 0
 var work_actions_for_dates: int = 0
 var work_actions_for_rivals: int = 0
 var work_actions_for_other: int = 0
+var work_actions_for_career: int = 0
+var career_rank_start: int = 0
+var career_rank_end: int = 0
+var career_advancement_actions: int = 0
+var career_rank_1_day: int = -1
+var career_rank_2_day: int = -1
+var career_rank_3_day: int = -1
+var work_income_start: int = 0
+var work_income_end: int = 0
+var money_earned_from_work: int = 0
+var work_actions_at_rank_0: int = 0
+var work_actions_at_rank_1: int = 0
+var work_actions_at_rank_2: int = 0
+var work_actions_at_rank_3: int = 0
+var career_investment_capital_training_actions: int = 0
+var work_actions_supporting_career: int = 0
 var build_acquisitions: Array = []
 var goal_friction: Dictionary = {}
 var production_flags: Dictionary = {}
@@ -265,7 +281,7 @@ func finalize_days(last_day_index: int, money: int, rating: int, start_day_index
 		for category in categories:
 			if category == "WORK":
 				work_count += 1
-			elif category == "DATE" or category == "RIVAL" or category == "TRAINING" or category == "PURCHASE" or category == "STORY":
+			elif category == "DATE" or category == "RIVAL" or category == "TRAINING" or category == "PURCHASE" or category == "STORY" or category == "CAREER":
 				other_progress = true
 		if work_count > 0 and not other_progress:
 			work_only_days += 1
@@ -306,8 +322,38 @@ func record_work_support(goal_id: String) -> void:
 			work_actions_for_dates += 1
 		"rivals":
 			work_actions_for_rivals += 1
+		"career":
+			work_actions_for_career += 1
+			work_actions_supporting_career += 1
 		_:
 			work_actions_for_other += 1
+
+
+func record_career_rank_reached(rank: int, calendar_day: int) -> void:
+	if calendar_day < 1:
+		return
+	match rank:
+		1:
+			if career_rank_1_day < 0:
+				career_rank_1_day = calendar_day
+		2:
+			if career_rank_2_day < 0:
+				career_rank_2_day = calendar_day
+		3:
+			if career_rank_3_day < 0:
+				career_rank_3_day = calendar_day
+
+
+func record_work_at_rank(rank: int) -> void:
+	match clampi(rank, 0, 3):
+		0:
+			work_actions_at_rank_0 += 1
+		1:
+			work_actions_at_rank_1 += 1
+		2:
+			work_actions_at_rank_2 += 1
+		3:
+			work_actions_at_rank_3 += 1
 
 static func work_goal_kind(goal_id: String) -> String:
 	match classify_supporting_goal(goal_id):
@@ -321,6 +367,8 @@ static func work_goal_kind(goal_id: String) -> String:
 			return "dates"
 		"RIVAL":
 			return "rivals"
+		"CAREER":
+			return "career"
 		_:
 			return "other"
 
@@ -335,6 +383,8 @@ static func classify_supporting_goal(goal_id: String) -> String:
 		return "DATE"
 	if goal_id.begins_with("rival:") or goal_id.begins_with("story_rival:"):
 		return "RIVAL"
+	if goal_id.begins_with("career:"):
+		return "CAREER"
 	return "OTHER"
 
 
@@ -424,6 +474,8 @@ func work_share(kind: String) -> float:
 			return float(work_actions_for_dates) / float(total)
 		"rivals":
 			return float(work_actions_for_rivals) / float(total)
+		"career":
+			return float(work_actions_for_career) / float(total)
 		_:
 			return float(work_actions_for_other) / float(total)
 
@@ -512,11 +564,28 @@ func to_dict() -> Dictionary:
 		"work_actions_for_dates": work_actions_for_dates,
 		"work_actions_for_rivals": work_actions_for_rivals,
 		"work_actions_for_other": work_actions_for_other,
+		"work_actions_for_career": work_actions_for_career,
+		"career_rank_start": career_rank_start,
+		"career_rank_end": career_rank_end,
+		"career_advancement_actions": career_advancement_actions,
+		"career_rank_1_day": career_rank_1_day,
+		"career_rank_2_day": career_rank_2_day,
+		"career_rank_3_day": career_rank_3_day,
+		"work_income_start": work_income_start,
+		"work_income_end": work_income_end,
+		"money_earned_from_work": money_earned_from_work,
+		"work_actions_at_rank_0": work_actions_at_rank_0,
+		"work_actions_at_rank_1": work_actions_at_rank_1,
+		"work_actions_at_rank_2": work_actions_at_rank_2,
+		"work_actions_at_rank_3": work_actions_at_rank_3,
+		"career_investment_capital_training_actions": career_investment_capital_training_actions,
+		"work_actions_supporting_career": work_actions_supporting_career,
 		"work_share_characteristics": work_share("characteristics"),
 		"work_share_outfits": work_share("outfits"),
 		"work_share_apartment": work_share("apartment"),
 		"work_share_dates": work_share("dates"),
 		"work_share_rivals": work_share("rivals"),
+		"work_share_career": work_share("career"),
 		"progress_beats": progress_beats,
 		"dead_progress_days": dead_progress_days,
 		"max_consecutive_dead_progress_days": max_consecutive_dead_progress_days,
@@ -564,6 +633,22 @@ static func from_dict(data: Dictionary) -> ProgressionLabMetrics:
 	metrics.work_actions_for_dates = int(data.get("work_actions_for_dates", 0))
 	metrics.work_actions_for_rivals = int(data.get("work_actions_for_rivals", 0))
 	metrics.work_actions_for_other = int(data.get("work_actions_for_other", 0))
+	metrics.work_actions_for_career = int(data.get("work_actions_for_career", 0))
+	metrics.career_rank_start = int(data.get("career_rank_start", 0))
+	metrics.career_rank_end = int(data.get("career_rank_end", 0))
+	metrics.career_advancement_actions = int(data.get("career_advancement_actions", 0))
+	metrics.career_rank_1_day = int(data.get("career_rank_1_day", -1))
+	metrics.career_rank_2_day = int(data.get("career_rank_2_day", -1))
+	metrics.career_rank_3_day = int(data.get("career_rank_3_day", -1))
+	metrics.work_income_start = int(data.get("work_income_start", 0))
+	metrics.work_income_end = int(data.get("work_income_end", 0))
+	metrics.money_earned_from_work = int(data.get("money_earned_from_work", 0))
+	metrics.work_actions_at_rank_0 = int(data.get("work_actions_at_rank_0", 0))
+	metrics.work_actions_at_rank_1 = int(data.get("work_actions_at_rank_1", 0))
+	metrics.work_actions_at_rank_2 = int(data.get("work_actions_at_rank_2", 0))
+	metrics.work_actions_at_rank_3 = int(data.get("work_actions_at_rank_3", 0))
+	metrics.career_investment_capital_training_actions = int(data.get("career_investment_capital_training_actions", 0))
+	metrics.work_actions_supporting_career = int(data.get("work_actions_supporting_career", 0))
 	var stale_raw: Variant = data.get("stale_planned_goal_ids", [])
 	if stale_raw is Array:
 		for item in stale_raw:

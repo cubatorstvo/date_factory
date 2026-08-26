@@ -283,11 +283,22 @@ func _refresh_run_label() -> void:
 			clock.get_game_time_minutes(),
 		]
 	if _action_status_label != null and clock != null and gs != null:
-		_action_status_label.text = "Money: %d\nTime: Day %d %02d:%02d" % [
+		var next_rank: int = WorkService.get_next_career_rank()
+		var next_req_text: String = "—"
+		var next_income_text: String = "—"
+		if next_rank >= 0:
+			next_req_text = "Capital %d" % WorkService.get_next_career_capital_requirement()
+			next_income_text = "$%d" % WorkService.get_next_career_income()
+		_action_status_label.text = "Money: %d\nTime: Day %d %02d:%02d\nCareer unlocked: %s\nCareer Rank: %d\nCurrent Work income: $%d\nNext Career requirement: %s\nNext Career income: %s" % [
 			gs.player.money,
 			clock.get_day(),
 			clock.get_hour(),
 			clock.get_minute(),
+			str(WorkService.is_career_progression_unlocked()),
+			WorkService.get_career_rank(),
+			WorkService.get_current_shift_income(),
+			next_req_text,
+			next_income_text,
 		]
 	if _campaign_label != null and stages != null:
 		_campaign_label.text = "CAMPAIGN\nStage: %d\nFinale: %s" % [
@@ -300,7 +311,6 @@ func _refresh_run_label() -> void:
 	if stages != null:
 		stage = int(stages.get_current_stage())
 	_run_label.text = "Stage %d · Деньги %d" % [stage, gs.player.money]
-
 
 func _on_time_advanced(_delta_minutes: int, _previous_game_time: int, _current_game_time: int) -> void:
 	_refresh_run_label()

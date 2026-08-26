@@ -6,6 +6,7 @@ func _init() -> void:
 
 
 func _run_population() -> void:
+	print("POPULATION: start N=100 seeds 1..4")
 	var runner := ProgressionLabRunner.new()
 	var config := ProgressionLabConfig.new()
 	runner.configure(config, 100, 1, 4, ProgressionLabConfig.MODE_POPULATION)
@@ -75,6 +76,7 @@ func _run_population() -> void:
 		"regression_seeds": regression,
 		"calendar_days": overall.get("calendar_days", {}),
 		"work_actions": overall.get("work_actions", {}),
+		"money_forced_work_days": overall.get("money_forced_work_days", {}),
 		"dates": overall.get("dates", {}),
 		"economy_support_share": overall.get("economy_support_share", {}),
 		"max_consecutive_money_blocked_days": overall.get("max_consecutive_money_blocked_days", {}),
@@ -91,6 +93,7 @@ func _run_population() -> void:
 		"post_date_tail": result.post_date_tail,
 		"build_timing": result.build_timing,
 		"work_attribution": result.work_attribution,
+		"career_progression": result.career_progression,
 		"goal_friction_by_type": result.goal_friction_by_type,
 		"stale_planned_goals_count": result.stale_planned_goals.get("count", {}),
 		"stage_calendar_days": {

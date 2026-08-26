@@ -51,6 +51,22 @@ const METRIC_KEYS: PackedStringArray = [
 	"work_actions_for_dates",
 	"work_actions_for_rivals",
 	"work_actions_for_other",
+	"work_actions_for_career",
+	"career_rank_start",
+	"career_rank_end",
+	"career_advancement_actions",
+	"career_rank_1_day",
+	"career_rank_2_day",
+	"career_rank_3_day",
+	"work_income_start",
+	"work_income_end",
+	"money_earned_from_work",
+	"work_actions_at_rank_0",
+	"work_actions_at_rank_1",
+	"work_actions_at_rank_2",
+	"work_actions_at_rank_3",
+	"career_investment_capital_training_actions",
+	"work_actions_supporting_career",
 ]
 
 
@@ -101,6 +117,7 @@ func analyze(result: ProgressionLabPopulationResult, config: ProgressionLabConfi
 	result.post_date_tail = _post_date_tail_aggregate(summaries)
 	result.build_timing = _build_timing_aggregate(summaries)
 	result.work_attribution = _work_attribution_aggregate(summaries)
+	result.career_progression = _career_progression_aggregate(summaries)
 	result.goal_friction_by_type = _goal_friction_by_type(summaries)
 	result.stale_planned_goals = _stale_planned_aggregate(summaries)
 
@@ -500,7 +517,54 @@ func _work_attribution_aggregate(records: Array) -> Dictionary:
 		"dates": _metric_describe(records, "work_actions_for_dates"),
 		"rivals": _metric_describe(records, "work_actions_for_rivals"),
 		"other": _metric_describe(records, "work_actions_for_other"),
+		"career": _metric_describe(records, "work_actions_for_career"),
 	}
+
+
+func _career_progression_aggregate(records: Array) -> Dictionary:
+	var rank_0_only: int = 0
+	var rank_1_plus: int = 0
+	var rank_2_plus: int = 0
+	var rank_3: int = 0
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var end_rank: int = int(record.campaign_metrics.get("career_rank_end", 0))
+		if end_rank <= 0:
+			rank_0_only += 1
+		if end_rank >= 1:
+			rank_1_plus += 1
+		if end_rank >= 2:
+			rank_2_plus += 1
+		if end_rank >= 3:
+			rank_3 += 1
+	return {
+		"rank_0_only": rank_0_only,
+		"rank_1_plus": rank_1_plus,
+		"rank_2_plus": rank_2_plus,
+		"rank_3": rank_3,
+		"rank_1_day": _career_day_describe(records, "career_rank_1_day"),
+		"rank_2_day": _career_day_describe(records, "career_rank_2_day"),
+		"rank_3_day": _career_day_describe(records, "career_rank_3_day"),
+		"work_at_rank_0": _metric_describe(records, "work_actions_at_rank_0"),
+		"work_at_rank_1": _metric_describe(records, "work_actions_at_rank_1"),
+		"work_at_rank_2": _metric_describe(records, "work_actions_at_rank_2"),
+		"work_at_rank_3": _metric_describe(records, "work_actions_at_rank_3"),
+		"promotion_actions": _metric_describe(records, "career_advancement_actions"),
+		"capital_training_for_career": _metric_describe(records, "career_investment_capital_training_actions"),
+		"work_supporting_career": _metric_describe(records, "work_actions_supporting_career"),
+	}
+
+
+func _career_day_describe(records: Array, key: String) -> Dictionary:
+	var values: PackedFloat64Array = PackedFloat64Array()
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var day: int = int(record.campaign_metrics.get(key, -1))
+		if day >= 0:
+			values.append(float(day))
+	return describe(values)
 
 
 func _stale_planned_aggregate(records: Array) -> Dictionary:

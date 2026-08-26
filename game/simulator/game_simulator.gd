@@ -623,6 +623,32 @@ func _build_work() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	box.add_child(LabUi.heading("РАБОТА"))
+	var current_income: int = WorkService.get_current_shift_income()
+	var income_line := Label.new()
+	income_line.text = "Доход за смену: $%d" % current_income
+	box.add_child(income_line)
+	if WorkService.is_career_progression_unlocked():
+		var rank: int = WorkService.get_career_rank()
+		var rank_line := Label.new()
+		rank_line.text = "Карьера: %d / %d" % [rank, WorkService.MAX_CAREER_RANK]
+		box.add_child(rank_line)
+		if rank < WorkService.MAX_CAREER_RANK:
+			var next_income: int = WorkService.get_next_career_income()
+			var next_line := Label.new()
+			next_line.text = "Следующий доход: $%d" % next_income
+			box.add_child(next_line)
+			var required_capital: int = WorkService.get_next_career_capital_requirement()
+			var req_line := Label.new()
+			req_line.text = "Требование: Capital %d" % required_capital
+			box.add_child(req_line)
+			var gs: Variant = _game_state()
+			var capital: int = 0
+			if gs != null and gs.player != null:
+				capital = int(gs.player.capital)
+			if capital >= required_capital and WorkService.is_work_available_today():
+				var advance: GameAction = WorkService.create_career_advancement_action()
+				var hours: int = maxi(1, int(advance.time_cost_minutes / 60))
+				_add_action_button(box, advance, "Добиться повышения — %d ч — $%d → $%d" % [hours, current_income, next_income], false, false)
 	var work: WorkDefinition = WorkService.make_current_work()
 	if WorkService.is_work_available_today():
 		if WorkService.has_olya_overtime():
@@ -635,12 +661,12 @@ func _build_work() -> Control:
 			)
 			box.add_child(overtime)
 		var action: GameAction = WorkService.create_work_with_overtime_action() if _work_include_overtime and WorkService.has_olya_overtime() else WorkService.create_work_action(work)
-		var hours: int = maxi(1, int(action.time_cost_minutes / 60))
+		var work_hours: int = maxi(1, int(action.time_cost_minutes / 60))
 		var pay: int = 0
 		for effect in action.effects:
 			if effect is MoneyEffect:
 				pay += int((effect as MoneyEffect).amount)
-		_add_action_button(box, action, "Работать — %d ч — +%d" % [hours, pay], false, false)
+		_add_action_button(box, action, "Работать — %d ч — +%d" % [work_hours, pay], false, false)
 	elif WorkService.is_overtime_available_today():
 		var done := Label.new()
 		done.text = "Обычная смена выполнена"
@@ -656,7 +682,6 @@ func _build_work() -> Control:
 		again.text = "Следующая смена: завтра."
 		box.add_child(again)
 	return box
-
 
 func _build_factory() -> Control:
 	var box := VBoxContainer.new()

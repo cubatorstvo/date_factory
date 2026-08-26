@@ -816,6 +816,42 @@ lowest stable content ID lexical order
 
 after deterministic noise has been applied.
 
+Career Advancement is an economic investment, not a StagePlan goal. StagePlan stays immutable. Each day, if Career Progression is unlocked and the next rank exists and no execution-level `target_career_rank` commitment is active, the executor compares two paths on the current StagePlan + mandatory story cash need:
+
+```text
+remaining_cash_need =
+    sum of required_money for unique unmet cash-dependencies
+    from _build_cash_dependencies / collect_blocking_snapshot
+
+work_without =
+    ceil(max(remaining_cash_need - current_money, 0) / current_shift_income)
+
+capital_actions = max(0, required_capital - current_capital)
+capital_cost = capital_actions * actual Capital upgrade price
+work_with =
+    ceil(max(remaining_cash_need + capital_cost - current_money, 0) / new_shift_income)
+economic_with = capital_actions + 1 + work_with
+saved = work_without - economic_with
+
+perceived_saved_support_actions =
+    saved + execution_rng.randf_range(
+        -2.0 * (1.0 - planning_skill),
+        +2.0 * (1.0 - planning_skill)
+    )
+```
+
+`current_shift_income` / next income come from production `WorkService` (career rank). Rational if `perceived_saved_support_actions > 0` → `INVEST` and set `target_career_rank`; otherwise `SKIP_FOR_NOW` and recalculate next day. Commitment lives on StageExecutor, not StagePlan; it clears when the rank is reached, the Stage ends, or the upgrade is unavailable.
+
+If `saved > 0` after INVEST, Career Advancement / its Capital prerequisite score:
+
+```text
+highest_priority_cash_blocked_goal + 10 + 5 * min(saved_support_actions, 4)
+```
+
+then normal `_score` modifiers (daily gate, unblock, novelty, repetition, decision noise). Candidate `category = CAREER`, `kind = career_advancement`. Rank 3 has no next ROI. Advancement consumes `KEY_WORK`, so that day has no ordinary WORK and no second advancement.
+
+If committed, the executor builds a support chain even when Capital is absent from StagePlan: Capital training if current < required, then Career Advancement when `can_advance_career`. WORK that finances this career-created Capital uses `supporting_goal = career:rank_<N>` and classifies `CAREER`. Capital already selected by immutable StagePlan stays `CHARACTERISTIC`.
+
 ---
 
 # 21. Cash dependency model
@@ -1179,7 +1215,7 @@ stage_calendar_days =
 
 If Story Stage transitions during a calendar day, actions belong to the Stage that was active when they occurred. That transition day may sit in both Stage duration windows. Campaign calendar days stay unique and are never the sum of Stage `calendar_days`.
 
-After a Run: `campaign.calendar_days >= max(stage.calendar_days)`. Action, economy, and Progress Beat totals must satisfy `sum(stage.*) == campaign.*` for `total_actions`, `work_actions`, `training_actions`, `dates`, `rival_attempts`, `purchases`, `money_earned`, `money_spent`, `progress_beats`.
+After a Run: `campaign.calendar_days >= max(stage.calendar_days)`. Action, economy, and Progress Beat totals must satisfy `sum(stage.*) == campaign.*` for `total_actions`, `work_actions`, `training_actions`, `dates`, `rival_attempts`, `purchases`, `money_earned`, `money_spent`, `progress_beats`, `career_advancement_actions`, `work_actions_at_rank_0..3`, `career_investment_capital_training_actions`, `work_actions_supporting_career`, `money_earned_from_work`. `career_rank_*_day` is campaign-level first calendar day (−1 if never) and is not summed across stages.
 
 Campaign `dead_progress_days` remains “calendar day with zero Progress Beats anywhere in the Campaign”. Do not derive it by summing Stages.
 
@@ -1191,7 +1227,7 @@ Campaign `dead_progress_days` remains “calendar day with zero Progress Beats a
 
 `money_forced_work_days` means the calendar day contains WORK and at least one WORK action was executed as support for a cash-blocked goal. Also track `max_consecutive_money_forced_work_days`.
 
-WORK support is counted by goal type: `work_actions_for_characteristics` / `outfits` / `apartment` / `dates` / `rivals` / `other`, with derived `work_share_*`. Classification uses `classify_supporting_goal(goal_id)` from StagePlan prefixes (`characteristic:`, `outfit:`, `apartment:`, `filler:max:` / `story:`, `rival:` / `story_rival:`), never display names. Every successful WORK belongs to exactly one category.
+WORK support is counted by goal type: `work_actions_for_characteristics` / `outfits` / `apartment` / `dates` / `rivals` / `career` / `other`, with derived `work_share_*`. Classification uses `classify_supporting_goal(goal_id)` from prefixes (`characteristic:`, `outfit:`, `apartment:`, `filler:max:` / `story:`, `rival:` / `story_rival:`, `career:`), never display names. Every successful WORK belongs to exactly one category. Career-created Capital training work is `CAREER`; StagePlan Capital work remains `CHARACTERISTIC`. Overtime WORK stays category `WORK` with career-adjusted income from `WorkService`.
 
 ---
 
@@ -1457,6 +1493,7 @@ RIVAL
 PURCHASE
 APARTMENT_PREPARATION
 STORY
+CAREER
 OTHER
 ```
 
@@ -1481,6 +1518,7 @@ new Apartment content available
 Story Girl discovered
 Story Rival unlocked
 Story Stage advanced
+Career Rank increased
 ```
 
 A calendar day with zero Progress Beats is:
@@ -1546,6 +1584,23 @@ work_actions_for_apartment
 work_actions_for_dates
 work_actions_for_rivals
 work_actions_for_other
+work_actions_for_career
+
+career_rank_start
+career_rank_end
+career_advancement_actions
+career_rank_1_day
+career_rank_2_day
+career_rank_3_day
+work_income_start
+work_income_end
+money_earned_from_work
+work_actions_at_rank_0
+work_actions_at_rank_1
+work_actions_at_rank_2
+work_actions_at_rank_3
+career_investment_capital_training_actions
+work_actions_supporting_career
 
 These campaign/stage metrics count **decision points**, not blocked goals.
 
@@ -1682,6 +1737,10 @@ first Situation
 first Move ID
 first reward
 Story unlock
+career:unlocked
+career:rank_1
+career:rank_2
+career:rank_3
 ```
 
 Metric:
@@ -2747,6 +2806,10 @@ Canonical tuning loop:
 ```
 
 The Monte Carlo Lab serves as the quantitative filter before later human 3D playtesting.
+
+Work income in simulation is production `WorkService` current career-rank payout (`get_current_shift_income` / `get_current_hourly_pay`). Do not duplicate a parallel lab wage. Tune Career Rank income only through WorkService; this pass does not change Outfit, Apartment, Characteristic, Date, or Rival prices.
+
+`share_bundle.md` / `share_bundle.json` include a **Career Progression** population section: rank reached (0 only / 1+ / 2+ / 3), advancement day P10/P50/P90 for ranks 1–3, work by rank 0–3, and career support (promotion actions, Capital training for career, work supporting career). `seed_summaries.csv`, `stage_metrics.csv`, and `aggregate_metrics.csv` include the career metric fields. Detailed seed / bad / representative logs include ROI rows and starting/ending Career unlocked, Rank, Current income, Next requirement, Next income.
 
 ---
 

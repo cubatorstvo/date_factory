@@ -74,6 +74,14 @@ func test_catalog() -> Array:
 		{"group": "identity", "name": "bad seed count vs top k", "fn": _test_bad_seed_count_vs_top_k},
 		{"group": "regression", "name": "seed 98 barrier pacing", "fn": _test_seed_98_barrier_pacing},
 		{"group": "regression", "name": "seed 32 characteristic build", "fn": _test_seed_32_characteristic_build},
+		{"group": "career", "name": "profitable career investment", "fn": _test_career_profitable_investment},
+		{"group": "career", "name": "not profitable career investment", "fn": _test_career_not_profitable_investment},
+		{"group": "career", "name": "career capital dependency", "fn": _test_career_capital_dependency},
+		{"group": "career", "name": "career rank persists across stage", "fn": _test_career_persistence_across_stage},
+		{"group": "career", "name": "career work attribution", "fn": _test_career_work_attribution},
+		{"group": "career", "name": "career determinism", "fn": _test_career_determinism},
+		{"group": "career", "name": "career rank progress beat", "fn": _test_career_progress_beat},
+		{"group": "career", "name": "classify career supporting goal", "fn": _test_career_classify_supporting_goal},
 	]
 
 
@@ -993,6 +1001,14 @@ func _test_metric_consistency() -> void:
 		"money_earned": 0,
 		"money_spent": 0,
 		"progress_beats": 0,
+		"career_advancement_actions": 0,
+		"work_actions_at_rank_0": 0,
+		"work_actions_at_rank_1": 0,
+		"work_actions_at_rank_2": 0,
+		"work_actions_at_rank_3": 0,
+		"career_investment_capital_training_actions": 0,
+		"work_actions_supporting_career": 0,
+		"money_earned_from_work": 0,
 	}
 	for stage_key in record.stage_metrics.keys():
 		var stage: Dictionary = record.stage_metrics[stage_key]
@@ -1010,6 +1026,7 @@ func _test_work_attribution_helper() -> void:
 	_ok("classify story date", ProgressionLabMetrics.classify_supporting_goal("story:max:vika") == "DATE")
 	_ok("classify rival", ProgressionLabMetrics.classify_supporting_goal("rival:columnist") == "RIVAL")
 	_ok("classify other", ProgressionLabMetrics.classify_supporting_goal("venue:visit:cafe") == "OTHER")
+	_ok("classify career", ProgressionLabMetrics.classify_supporting_goal("career:rank_2") == "CAREER")
 	var metrics := ProgressionLabMetrics.new()
 	metrics.record_work_support("characteristic:appearance:3")
 	metrics.record_work_support("outfit:acquire:sport")
@@ -1017,12 +1034,308 @@ func _test_work_attribution_helper() -> void:
 	metrics.record_work_support("filler:max:alina")
 	metrics.record_work_support("rival:columnist")
 	metrics.record_work_support("venue:visit:cafe")
+	metrics.record_work_support("career:rank_2")
 	_ok("work char 1", metrics.work_actions_for_characteristics == 1)
 	_ok("work outfit 1", metrics.work_actions_for_outfits == 1)
 	_ok("work apt 1", metrics.work_actions_for_apartment == 1)
 	_ok("work dates 1", metrics.work_actions_for_dates == 1)
 	_ok("work rivals 1", metrics.work_actions_for_rivals == 1)
 	_ok("work other 1", metrics.work_actions_for_other == 1)
+	_ok("work career 1", metrics.work_actions_for_career == 1)
+	_ok("work supporting career 1", metrics.work_actions_supporting_career == 1)
+
+
+func _test_career_classify_supporting_goal() -> void:
+	_ok("classify career rank 2", ProgressionLabMetrics.classify_supporting_goal("career:rank_2") == "CAREER")
+	_ok("career work kind", ProgressionLabMetrics.work_goal_kind("career:rank_2") == "career")
+
+
+func _setup_career_state(unlocked: bool, rank: int, capital: int) -> void:
+	var gs: Variant = _root("GameState")
+	if gs == null or gs.player == null:
+		return
+	gs.player.career_progression_unlocked = unlocked
+	gs.player.career_rank = clampi(rank, 0, 3)
+	gs.player.capital = capital
+
+
+func _career_cash_plan(expensive: bool) -> StagePlan:
+	var plan := StagePlan.new()
+	plan.stage = 1
+	if expensive:
+		plan.target_apartment_object_ids.append(&"apartment__chess_table")
+		plan.target_apartment_object_ids.append(&"apartment__darts")
+		plan.target_apartment_object_ids.append(&"apartment__game_console")
+		plan.target_apartment_object_ids.append(&"apartment__karaoke")
+		plan.target_apartment_object_ids.append(&"apartment__collection_display")
+		plan.target_apartment_object_ids.append(&"apartment__large_mirror")
+		plan.target_apartment_object_ids.append(&"apartment__mini_fridge")
+		plan.target_apartment_object_ids.append(&"apartment__tea_set")
+	else:
+		plan.target_apartment_object_ids.append(&"apartment__plaid")
+	return plan
+
+
+func _career_executor() -> StageExecutor:
+	var executor: StageExecutor = _fresh_executor()
+	executor.profile.planning_skill = 1.0
+	return executor
+
+
+func _test_career_profitable_investment() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(true, 0, 1)
+		_set_money(0)
+		var executor: StageExecutor = _career_executor()
+		var plan: StagePlan = _career_cash_plan(true)
+		executor._date_policy.plan = plan
+		var candidates: Array = executor._collect_candidates(plan)
+		var advancement: StageExecutor.Candidate = _find_candidate(candidates, "career_advancement")
+		var roi: Dictionary = executor._last_career_roi
+		return {
+			"unlocked": WorkService.is_career_progression_unlocked(),
+			"rank": WorkService.get_career_rank(),
+			"capital": int(_root("GameState").player.capital) if _root("GameState") != null else -1,
+			"has_advancement": advancement != null,
+			"commitment": executor._target_career_rank,
+			"saved": int(roi.get("saved_support_actions", 0)),
+			"decision": str(roi.get("decision", "")),
+			"remaining": int(roi.get("remaining_cash_need", 0)),
+			"kinds": _candidate_kinds(candidates),
+		}
+	))
+	_ok("career unlocked for profitable ROI", bool(captured.get("unlocked", false)), JSON.stringify(captured))
+	_ok("career advancement candidate exists", bool(captured.get("has_advancement", false)), JSON.stringify(captured))
+	_ok("career ROI saves support actions", int(captured.get("saved", 0)) > 0, JSON.stringify(captured))
+	_ok("career decision INVEST", str(captured.get("decision", "")) == "INVEST", JSON.stringify(captured))
+
+
+func _test_career_not_profitable_investment() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(true, 0, 1)
+		_set_money(0)
+		var executor: StageExecutor = _career_executor()
+		var plan: StagePlan = _career_cash_plan(false)
+		executor._date_policy.plan = plan
+		var candidates: Array = executor._collect_candidates(plan)
+		var advancement: StageExecutor.Candidate = _find_candidate(candidates, "career_advancement")
+		var roi: Dictionary = executor._last_career_roi
+		return {
+			"has_advancement": advancement != null,
+			"commitment": executor._target_career_rank,
+			"saved": int(roi.get("saved_support_actions", 0)),
+			"decision": str(roi.get("decision", "")),
+			"has_work": _find_candidate(candidates, "work") != null,
+			"kinds": _candidate_kinds(candidates),
+		}
+	))
+	_ok("unprofitable career path absent", not bool(captured.get("has_advancement", true)) and int(captured.get("commitment", 1)) <= 0, JSON.stringify(captured))
+	_ok("unprofitable decision SKIP_FOR_NOW", str(captured.get("decision", "")) == "SKIP_FOR_NOW", JSON.stringify(captured))
+	_ok("stage plan still has work", bool(captured.get("has_work", false)), JSON.stringify(captured))
+
+
+func _test_career_capital_dependency() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(true, 1, 1)
+		_set_money(600)
+		var executor: StageExecutor = _career_executor()
+		var plan: StagePlan = _career_cash_plan(true)
+		executor._date_policy.plan = plan
+		var saw_train: bool = false
+		var saw_advance: bool = false
+		var commitment: int = 0
+		for step in range(24):
+			if WorkService.get_career_rank() >= 2:
+				break
+			var candidates: Array = executor._collect_candidates(plan)
+			commitment = executor._target_career_rank
+			var chosen: StageExecutor.Candidate = _find_candidate(candidates, "career_advancement")
+			if chosen == null:
+				chosen = _find_career_train(candidates)
+			if chosen == null:
+				var work: StageExecutor.Candidate = _find_candidate(candidates, "work")
+				if work != null and work.goal_id.begins_with("career:"):
+					chosen = work
+			if chosen == null:
+				executor._skip_day()
+				executor._career_roi_day = -1
+				continue
+			if chosen.kind == "train":
+				saw_train = true
+			elif chosen.kind == "career_advancement":
+				saw_advance = true
+			var executed: StageExecutor.ExecutionResult = executor._execute_candidate(chosen, plan)
+			if not executed.success:
+				executor._skip_day()
+				executor._career_roi_day = -1
+		return {
+			"rank": WorkService.get_career_rank(),
+			"capital": int(_root("GameState").player.capital) if _root("GameState") != null else -1,
+			"saw_train": saw_train,
+			"saw_advance": saw_advance,
+			"commitment": commitment,
+			"advancement_actions": executor._campaign.career_advancement_actions,
+			"career_training": executor._campaign.career_investment_capital_training_actions,
+		}
+	))
+	_ok("career commitment rank 2", int(captured.get("commitment", 0)) == 2 or int(captured.get("rank", 0)) >= 2, JSON.stringify(captured))
+	_ok("career capital training happened", bool(captured.get("saw_train", false)), JSON.stringify(captured))
+	_ok("career reached rank 2", int(captured.get("rank", 0)) >= 2, JSON.stringify(captured))
+	_ok("career advancement executed", bool(captured.get("saw_advance", false)) and int(captured.get("advancement_actions", 0)) >= 1, JSON.stringify(captured))
+
+
+func _test_career_persistence_across_stage() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(true, 1, 1)
+		var executor: StageExecutor = _career_executor()
+		var record: ProgressionLabRunRecord = executor.execute_run(7, 2)
+		var stage_1: Dictionary = record.stage_metrics.get("1", {})
+		var stage_2: Dictionary = record.stage_metrics.get("2", {})
+		return {
+			"start_1": int(stage_1.get("career_rank_start", -1)),
+			"end_1": int(stage_1.get("career_rank_end", -1)),
+			"start_2": int(stage_2.get("career_rank_start", -1)),
+			"end_rank": WorkService.get_career_rank(),
+			"campaign_end": int(record.campaign_metrics.get("career_rank_end", -1)),
+			"has_stage_2": not stage_2.is_empty(),
+		}
+	))
+	_ok("stage 1 starts at rank 1", int(captured.get("start_1", -1)) == 1, JSON.stringify(captured))
+	if bool(captured.get("has_stage_2", false)):
+		_ok("stage 2 keeps previous rank", int(captured.get("start_2", -1)) == int(captured.get("end_1", -2)), JSON.stringify(captured))
+	else:
+		_ok("rank survives campaign without reset", int(captured.get("end_rank", -1)) >= 1, JSON.stringify(captured))
+	_ok("campaign end rank matches live state", int(captured.get("campaign_end", -1)) == int(captured.get("end_rank", -2)), JSON.stringify(captured))
+
+
+func _test_career_work_attribution() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		var payload: Dictionary = {}
+		_setup_career_state(true, 1, 1)
+		_set_money(0)
+		var executor: StageExecutor = _career_executor()
+		var career_plan: StagePlan = _career_cash_plan(true)
+		executor._date_policy.plan = career_plan
+		var career_candidates: Array = executor._collect_candidates(career_plan)
+		var career_work: StageExecutor.Candidate = null
+		for raw in career_candidates:
+			var candidate: StageExecutor.Candidate = raw
+			if candidate != null and candidate.kind == "work" and candidate.goal_id.begins_with("career:"):
+				career_work = candidate
+				break
+		payload["career_work_goal"] = career_work.goal_id if career_work != null else ""
+		payload["career_class"] = ProgressionLabMetrics.classify_supporting_goal(payload["career_work_goal"])
+		_setup_career_state(false, 0, 0)
+		_set_money(0)
+		var plan_exec: StageExecutor = _career_executor()
+		var char_plan := StagePlan.new()
+		char_plan.stage = 1
+		char_plan.characteristic_targets[String(CharacteristicIds.CAPITAL)] = 3
+		plan_exec._date_policy.plan = char_plan
+		var char_candidates: Array = plan_exec._collect_candidates(char_plan)
+		var char_work: StageExecutor.Candidate = _find_candidate(char_candidates, "work")
+		payload["plan_work_goal"] = char_work.goal_id if char_work != null else ""
+		payload["plan_class"] = ProgressionLabMetrics.classify_supporting_goal(payload["plan_work_goal"])
+		return payload
+	))
+	_ok("career-created capital work is CAREER", str(captured.get("career_class", "")) == "CAREER", JSON.stringify(captured))
+	_ok("stageplan capital work is CHARACTERISTIC", str(captured.get("plan_class", "")) == "CHARACTERISTIC", JSON.stringify(captured))
+
+
+func _test_career_determinism() -> void:
+	var first: Dictionary = _run_career_determinism_seed(11)
+	var second: Dictionary = _run_career_determinism_seed(11)
+	_ok("career determinism completed", bool(first.get("ok", false)) and bool(second.get("ok", false)), JSON.stringify(first))
+	_ok("career decisions match", str(first.get("sequence", "")) == str(second.get("sequence", "")), _seq_diff(first.get("sequence_arr", PackedStringArray()), second.get("sequence_arr", PackedStringArray())))
+	_ok("career rank timeline matches", str(first.get("career", "")) == str(second.get("career", "")), "%s vs %s" % [str(first.get("career", "")), str(second.get("career", ""))])
+	_ok("career metrics match", str(first.get("metrics", "")) == str(second.get("metrics", "")), "%s vs %s" % [str(first.get("metrics", "")), str(second.get("metrics", ""))])
+	_ok("career signature matches", str(first.get("signature", "")) == str(second.get("signature", "")), "%s vs %s" % [str(first.get("signature", "")), str(second.get("signature", ""))])
+	_ok("detailed replay matches summary", str(first.get("signature", "")) == str(first.get("detailed_signature", "x")), "%s vs %s" % [str(first.get("signature", "")), str(first.get("detailed_signature", ""))])
+
+
+func _run_career_determinism_seed(base_seed: int) -> Dictionary:
+	var config := ProgressionLabConfig.new()
+	config.max_calendar_days = 50
+	var runner := ProgressionLabRunner.new()
+	runner.configure(config, 1, base_seed, 1, ProgressionLabConfig.ARCHETYPE_TYPICAL)
+	while not runner.process_batch():
+		pass
+	if runner.get_result().records.is_empty():
+		return {"ok": false}
+	var record: ProgressionLabRunRecord = runner.get_result().records[0]
+	var detailed: ProgressionLabRunRecord = runner.replay_seed(base_seed, true)
+	var metrics: Dictionary = record.campaign_metrics
+	var career: Dictionary = {
+		"rank_start": metrics.get("career_rank_start", 0),
+		"rank_end": metrics.get("career_rank_end", 0),
+		"advancement": metrics.get("career_advancement_actions", 0),
+		"rank_1_day": metrics.get("career_rank_1_day", -1),
+		"rank_2_day": metrics.get("career_rank_2_day", -1),
+		"rank_3_day": metrics.get("career_rank_3_day", -1),
+	}
+	return {
+		"ok": true,
+		"sequence": "|".join(record.action_sequence),
+		"sequence_arr": record.action_sequence,
+		"career": JSON.stringify(career),
+		"metrics": JSON.stringify({
+			"advancement": metrics.get("career_advancement_actions", 0),
+			"work_at_0": metrics.get("work_actions_at_rank_0", 0),
+			"money_work": metrics.get("money_earned_from_work", 0),
+		}),
+		"signature": record.execution_signature,
+		"detailed_signature": detailed.execution_signature if detailed != null else "",
+	}
+
+
+func _test_career_progress_beat() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(true, 0, 1)
+		_set_money(0)
+		var executor: StageExecutor = _career_executor()
+		var candidate := StageExecutor.Candidate.new()
+		candidate.category = "CAREER"
+		candidate.kind = "career_advancement"
+		candidate.goal_id = "career:rank_1"
+		candidate.content_id = "career_advancement:1"
+		var before: Dictionary = executor._capture_world()
+		var ok: bool = executor._exec_career_advancement(candidate)
+		var beats: int = executor._apply_world_diff(before, candidate)
+		return {
+			"ok": ok,
+			"beats": beats,
+			"rank_before": int(before.get("career_rank", -1)),
+			"rank_after": WorkService.get_career_rank(),
+			"can_advance": WorkService.can_advance_career(),
+		}
+	))
+	_ok("career advancement executed for beat", bool(captured.get("ok", false)), JSON.stringify(captured))
+	_ok("career rank increased", int(captured.get("rank_after", 0)) == int(captured.get("rank_before", 0)) + 1, JSON.stringify(captured))
+	_ok("career rank increase is a progress beat", int(captured.get("beats", 0)) >= 1, JSON.stringify(captured))
+
+
+func _candidate_kinds(candidates: Array) -> PackedStringArray:
+	var kinds: PackedStringArray = PackedStringArray()
+	for raw in candidates:
+		if raw != null:
+			kinds.append((raw as StageExecutor.Candidate).kind)
+	return kinds
+
+
+func _find_career_train(candidates: Array) -> StageExecutor.Candidate:
+	for raw in candidates:
+		if raw == null:
+			continue
+		var candidate: StageExecutor.Candidate = raw
+		if candidate.kind == "train" and candidate.goal_id.begins_with("career:"):
+			return candidate
+	return null
 
 
 func _test_goal_friction_by_type() -> void:
@@ -1051,12 +1364,13 @@ func _test_share_bundle_pacing_fields() -> void:
 	result.stale_planned_goals = {"count": {"max": 0.0}}
 	var exporter := ProgressionLabExporter.new()
 	var json: Dictionary = exporter.share_bundle_json(result)
-	for key in ["post_date_tail", "build_timing", "work_attribution", "goal_friction_by_type", "stale_planned_goals"]:
+	for key in ["post_date_tail", "build_timing", "work_attribution", "goal_friction_by_type", "stale_planned_goals", "career_progression"]:
 		_ok("share json has %s" % key, json.has(key))
 	var markdown: String = exporter.share_bundle_markdown(result)
 	_ok("markdown post-date tail", markdown.find("## Post-Date Tail") >= 0)
 	_ok("markdown build timing", markdown.find("## Build Timing") >= 0)
 	_ok("markdown work attribution", markdown.find("## Work Attribution") >= 0)
+	_ok("markdown career progression", markdown.find("## Career Progression") >= 0)
 	_ok("markdown friction by type", markdown.find("## Goal Friction by Type") >= 0)
 	_ok("markdown apartment item utility", markdown.find("## Apartment Item Utility") >= 0)
 
