@@ -68,6 +68,12 @@ var career_advancement_actions: int = 0
 var career_rank_1_day: int = -1
 var career_rank_2_day: int = -1
 var career_rank_3_day: int = -1
+var career_rank_1_stage: int = -1
+var career_rank_2_stage: int = -1
+var career_rank_3_stage: int = -1
+var career_connections_unlock_day: int = -1
+var career_connections_unlock_stage: int = -1
+var rank_1_before_connections: bool = false
 var work_income_start: int = 0
 var work_income_end: int = 0
 var money_earned_from_work: int = 0
@@ -329,19 +335,37 @@ func record_work_support(goal_id: String) -> void:
 			work_actions_for_other += 1
 
 
-func record_career_rank_reached(rank: int, calendar_day: int) -> void:
+func record_career_rank_reached(rank: int, calendar_day: int, stage: int = -1) -> void:
 	if calendar_day < 1:
 		return
 	match rank:
 		1:
 			if career_rank_1_day < 0:
 				career_rank_1_day = calendar_day
+				career_rank_1_stage = stage
 		2:
 			if career_rank_2_day < 0:
 				career_rank_2_day = calendar_day
+				career_rank_2_stage = stage
 		3:
 			if career_rank_3_day < 0:
 				career_rank_3_day = calendar_day
+				career_rank_3_stage = stage
+	_refresh_rank_1_before_connections()
+
+
+func record_career_connections_unlocked(calendar_day: int, stage: int) -> void:
+	if career_connections_unlock_day >= 0:
+		return
+	if calendar_day < 1:
+		return
+	career_connections_unlock_day = calendar_day
+	career_connections_unlock_stage = stage
+	_refresh_rank_1_before_connections()
+
+
+func _refresh_rank_1_before_connections() -> void:
+	rank_1_before_connections = career_rank_1_day >= 0 and (career_connections_unlock_day < 0 or career_rank_1_day < career_connections_unlock_day)
 
 
 func record_work_at_rank(rank: int) -> void:
@@ -571,6 +595,12 @@ func to_dict() -> Dictionary:
 		"career_rank_1_day": career_rank_1_day,
 		"career_rank_2_day": career_rank_2_day,
 		"career_rank_3_day": career_rank_3_day,
+		"career_rank_1_stage": career_rank_1_stage,
+		"career_rank_2_stage": career_rank_2_stage,
+		"career_rank_3_stage": career_rank_3_stage,
+		"career_connections_unlock_day": career_connections_unlock_day,
+		"career_connections_unlock_stage": career_connections_unlock_stage,
+		"rank_1_before_connections": rank_1_before_connections,
 		"work_income_start": work_income_start,
 		"work_income_end": work_income_end,
 		"money_earned_from_work": money_earned_from_work,
@@ -640,6 +670,13 @@ static func from_dict(data: Dictionary) -> ProgressionLabMetrics:
 	metrics.career_rank_1_day = int(data.get("career_rank_1_day", -1))
 	metrics.career_rank_2_day = int(data.get("career_rank_2_day", -1))
 	metrics.career_rank_3_day = int(data.get("career_rank_3_day", -1))
+	metrics.career_rank_1_stage = int(data.get("career_rank_1_stage", -1))
+	metrics.career_rank_2_stage = int(data.get("career_rank_2_stage", -1))
+	metrics.career_rank_3_stage = int(data.get("career_rank_3_stage", -1))
+	metrics.career_connections_unlock_day = int(data.get("career_connections_unlock_day", -1))
+	metrics.career_connections_unlock_stage = int(data.get("career_connections_unlock_stage", -1))
+	metrics.rank_1_before_connections = bool(data.get("rank_1_before_connections", false))
+	metrics._refresh_rank_1_before_connections()
 	metrics.work_income_start = int(data.get("work_income_start", 0))
 	metrics.work_income_end = int(data.get("work_income_end", 0))
 	metrics.money_earned_from_work = int(data.get("money_earned_from_work", 0))

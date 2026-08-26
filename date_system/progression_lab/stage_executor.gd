@@ -88,6 +88,7 @@ var test_max_possible_relationship_gain: int = -1
 var _target_career_rank: int = -1
 var _career_roi_day: int = -1
 var _last_career_roi: Dictionary = {}
+var _last_career_lock_diagnostics: Dictionary = {}
 
 
 func execute_run(base_seed: int, end_story_stage: int) -> ProgressionLabRunRecord:
@@ -1800,6 +1801,9 @@ func _build_diagnostic_snapshot(plan: StagePlan) -> Dictionary:
 		"has_dating_service": dating != null,
 		"last_rival_goal": _last_rival_goal_from_diagnostics(rival_availability),
 		"last_rival_action_failure": _last_rival_failure_from_diagnostics(rival_availability),
+		"career_connections": WorkService.has_career_connections(_game_state()),
+		"career_rank": WorkService.get_career_rank(_game_state()),
+		"career_lock": _last_career_lock_diagnostics.duplicate(true),
 	}
 
 func _barrier_complete(plan: StagePlan) -> bool:
@@ -1942,7 +1946,7 @@ func _capture_world() -> Dictionary:
 		"stage": int(stages.get_current_stage()) if stages != null else 1,
 		"rewards": _reward_ids(),
 		"career_rank": WorkService.get_career_rank(),
-		"career_unlocked": WorkService.is_career_progression_unlocked(),
+		"career_connections": WorkService.has_career_connections(),
 	}
 
 
@@ -1986,15 +1990,24 @@ func _apply_world_diff(before: Dictionary, candidate: Candidate) -> int:
 			beats += 1
 	if (after["rewards"] as PackedStringArray).size() > (before["rewards"] as PackedStringArray).size():
 		beats += 1
-	if bool(after.get("career_unlocked", false)) and not bool(before.get("career_unlocked", false)):
-		_mark_career_novelty("career:unlocked")
+	if bool(after.get("career_connections", false)) and not bool(before.get("career_connections", false)):
+		_mark_career_novelty("career:connections")
+		var connections_day: int = _day_index() + 1
+		var connections_stage: int = _current_story_stage()
+		if _campaign != null:
+			_campaign.record_career_connections_unlocked(connections_day, connections_stage)
+		if _current_stage_metrics != null:
+			_current_stage_metrics.record_career_connections_unlocked(connections_day, connections_stage)
 	var rank_before: int = int(before.get("career_rank", 0))
 	var rank_after: int = int(after.get("career_rank", 0))
 	if rank_after > rank_before:
 		beats += 1
 		var calendar_day: int = _day_index() + 1
-		_campaign.record_career_rank_reached(rank_after, calendar_day)
-		_current_stage_metrics.record_career_rank_reached(rank_after, calendar_day)
+		var rank_stage: int = _current_story_stage()
+		if _campaign != null:
+			_campaign.record_career_rank_reached(rank_after, calendar_day, rank_stage)
+		if _current_stage_metrics != null:
+			_current_stage_metrics.record_career_rank_reached(rank_after, calendar_day, rank_stage)
 		_mark_career_novelty("career:rank_%d" % rank_after)
 		if rank_after >= _target_career_rank and _target_career_rank > 0:
 			_target_career_rank = -1
@@ -2739,15 +2752,15 @@ func _snapshot_career_end(metrics: ProgressionLabMetrics) -> void:
 
 func _format_career_state(heading: String) -> String:
 	var gs: Variant = _game_state()
-	var unlocked: bool = WorkService.is_career_progression_unlocked(gs)
+	var connections: bool = WorkService.has_career_connections(gs)
 	var rank: int = WorkService.get_career_rank(gs)
 	var income: int = WorkService.get_current_shift_income(gs)
 	var next_rank: int = WorkService.get_next_career_rank(gs)
 	var next_requirement: String = str(WorkService.get_next_career_capital_requirement(gs)) if next_rank >= 0 else "-"
 	var next_income: String = ("$%d" % WorkService.get_next_career_income(gs)) if next_rank >= 0 else "-"
-	return "%s\nCareer unlocked: %s\nCareer Rank: %d\nCurrent Work income: $%d\nNext Career requirement: %s\nNext Career income: %s" % [
+	return "%s\nCareer Connections: %s\nCareer Rank: %d\nCurrent Work income: $%d\nNext Career requirement: %s\nNext Career income: %s" % [
 		heading,
-		str(unlocked),
+		str(connections),
 		rank,
 		income,
 		next_requirement,
@@ -2796,7 +2809,7 @@ func _career_score_base(saved_support_actions: int) -> float:
 	return _highest_cash_blocked_priority() + 10.0 + 5.0 * float(mini(maxi(saved_support_actions, 0), 4))
 
 
-func _evaluate_career_roi(plan: StagePlan) -> Dictionary:
+func _evaluate_career_roi(plan: StagePlan, apply_noise: bool = true) -> Dictionary:
 	var gs: Variant = _game_state()
 	var rank_before: int = WorkService.get_career_rank(gs)
 	var rank_after: int = WorkService.get_next_career_rank(gs)
@@ -2817,7 +2830,7 @@ func _evaluate_career_roi(plan: StagePlan) -> Dictionary:
 	var planning_skill: float = profile.planning_skill if profile != null else 1.0
 	var amplitude: float = 2.0 * (1.0 - planning_skill)
 	var perceived: float = float(saved)
-	if _execution_rng != null:
+	if apply_noise and _execution_rng != null:
 		perceived += _execution_rng.randf_range(-amplitude, amplitude)
 	var decision: String = "INVEST" if perceived > 0.0 else "SKIP_FOR_NOW"
 	return {
@@ -2853,10 +2866,15 @@ func _log_career_roi(roi: Dictionary) -> void:
 func _sync_career_commitment() -> void:
 	if _target_career_rank < 0:
 		return
-	if not WorkService.is_career_progression_unlocked() or WorkService.get_next_career_rank() < 0:
+	var gs: Variant = _game_state()
+	if WorkService.get_career_rank(gs) >= _target_career_rank:
 		_target_career_rank = -1
 		return
-	if WorkService.get_career_rank() >= _target_career_rank:
+	var next_rank: int = WorkService.get_next_career_rank(gs)
+	if next_rank < 0:
+		_target_career_rank = -1
+		return
+	if WorkService.next_rank_requires_connections(gs) and not WorkService.has_career_connections(gs):
 		_target_career_rank = -1
 
 
@@ -2868,13 +2886,58 @@ func _refresh_career_decision(plan: StagePlan) -> void:
 	if day_index == _career_roi_day:
 		return
 	_career_roi_day = day_index
-	if not WorkService.is_career_progression_unlocked() or WorkService.get_next_career_rank() < 0:
+	_last_career_lock_diagnostics = {}
+	var gs: Variant = _game_state()
+	var next_rank: int = WorkService.get_next_career_rank(gs)
+	if next_rank < 0:
 		_last_career_roi = {}
+		return
+	if WorkService.next_rank_requires_connections(gs) and not WorkService.has_career_connections(gs):
+		_last_career_roi = {}
+		_note_career_connections_lock(plan, gs, next_rank)
 		return
 	_last_career_roi = _evaluate_career_roi(plan)
 	_log_career_roi(_last_career_roi)
 	if str(_last_career_roi.get("decision", "")) == "INVEST":
 		_target_career_rank = int(_last_career_roi.get("career_rank_after", 0))
+
+func _note_career_connections_lock(plan: StagePlan, gs: Variant, next_rank: int) -> void:
+	var required_capital: int = WorkService.get_next_career_capital_requirement(gs)
+	var mine_boss_id: StringName = &"girl_mine_boss"
+	var mine_boss_name: String = _girl_name(mine_boss_id)
+	var reward_id: String = String(FillerRewardCatalog.ID_CAREER_CONNECTIONS)
+	var source: String = "%s / %s / %s" % [String(mine_boss_id), mine_boss_name, reward_id]
+	var diagnostics: Dictionary = {
+		"target_rank": next_rank,
+		"capital_requirement": required_capital,
+		"connections_requirement": true,
+		"mine_boss_reward_source": source,
+		"decision": "LOCKED_CONNECTIONS",
+	}
+	var dependency: String = ""
+	if next_rank == 2 and _plan_has_mine_boss(plan) and _career_upgrade_saved_actions(plan) > 0:
+		dependency = "Career dependency:\nRank 2\n→ Career Connections\n→ Mine Boss relationship reward"
+		diagnostics["career_dependency"] = dependency
+	_last_career_lock_diagnostics = diagnostics
+	if not detailed:
+		return
+	_log_line("### CAREER CONNECTIONS LOCK")
+	_log_line("target rank: %d" % next_rank)
+	_log_line("Capital requirement: %s" % str(required_capital))
+	_log_line("Connections requirement: true")
+	_log_line("Mine Boss reward source: %s" % source)
+	if not dependency.is_empty():
+		_log_line(dependency)
+
+
+func _plan_has_mine_boss(plan: StagePlan) -> bool:
+	if plan == null:
+		return false
+	return plan.target_filler_girl_ids.has(&"girl_mine_boss")
+
+
+func _career_upgrade_saved_actions(plan: StagePlan) -> int:
+	return int(_evaluate_career_roi(plan, false).get("saved_support_actions", 0))
 
 
 func _add_career_candidates(candidates: Array, plan: StagePlan) -> void:
@@ -2882,6 +2945,8 @@ func _add_career_candidates(candidates: Array, plan: StagePlan) -> void:
 	if _target_career_rank <= 0:
 		return
 	var gs: Variant = _game_state()
+	if WorkService.next_rank_requires_connections(gs) and not WorkService.has_career_connections(gs):
+		return
 	var rank: int = WorkService.get_career_rank(gs)
 	if rank >= _target_career_rank:
 		_target_career_rank = -1

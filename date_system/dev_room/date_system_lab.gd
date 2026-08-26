@@ -289,12 +289,12 @@ func _refresh_run_label() -> void:
 		if next_rank >= 0:
 			next_req_text = "Capital %d" % WorkService.get_next_career_capital_requirement()
 			next_income_text = "$%d" % WorkService.get_next_career_income()
-		_action_status_label.text = "Money: %d\nTime: Day %d %02d:%02d\nCareer unlocked: %s\nCareer Rank: %d\nCurrent Work income: $%d\nNext Career requirement: %s\nNext Career income: %s" % [
+		_action_status_label.text = "Money: %d\nTime: Day %d %02d:%02d\nCareer Connections: %s\nCareer Rank: %d\nCurrent Work income: $%d\nNext Career requirement: %s\nNext Career income: %s" % [
 			gs.player.money,
 			clock.get_day(),
 			clock.get_hour(),
 			clock.get_minute(),
-			str(WorkService.is_career_progression_unlocked()),
+			str(WorkService.has_career_connections()),
 			WorkService.get_career_rank(),
 			WorkService.get_current_shift_income(),
 			next_req_text,

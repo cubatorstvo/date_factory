@@ -627,28 +627,31 @@ func _build_work() -> Control:
 	var income_line := Label.new()
 	income_line.text = "Доход за смену: $%d" % current_income
 	box.add_child(income_line)
-	if WorkService.is_career_progression_unlocked():
-		var rank: int = WorkService.get_career_rank()
-		var rank_line := Label.new()
-		rank_line.text = "Карьера: %d / %d" % [rank, WorkService.MAX_CAREER_RANK]
-		box.add_child(rank_line)
-		if rank < WorkService.MAX_CAREER_RANK:
-			var next_income: int = WorkService.get_next_career_income()
-			var next_line := Label.new()
-			next_line.text = "Следующий доход: $%d" % next_income
-			box.add_child(next_line)
-			var required_capital: int = WorkService.get_next_career_capital_requirement()
-			var req_line := Label.new()
-			req_line.text = "Требование: Capital %d" % required_capital
-			box.add_child(req_line)
-			var gs: Variant = _game_state()
-			var capital: int = 0
-			if gs != null and gs.player != null:
-				capital = int(gs.player.capital)
-			if capital >= required_capital and WorkService.is_work_available_today():
-				var advance: GameAction = WorkService.create_career_advancement_action()
-				var hours: int = maxi(1, int(advance.time_cost_minutes / 60))
-				_add_action_button(box, advance, "Добиться повышения — %d ч — $%d → $%d" % [hours, current_income, next_income], false, false)
+	var rank: int = WorkService.get_career_rank()
+	var rank_line := Label.new()
+	rank_line.text = "Карьера: %d / %d" % [rank, WorkService.MAX_CAREER_RANK]
+	box.add_child(rank_line)
+	if rank < WorkService.MAX_CAREER_RANK:
+		var next_income: int = WorkService.get_next_career_income()
+		var next_line := Label.new()
+		next_line.text = "Следующее повышение: $%d" % next_income
+		box.add_child(next_line)
+		var required_capital: int = WorkService.get_next_career_capital_requirement()
+		var req_line := Label.new()
+		req_line.text = "Требование: Capital %d" % required_capital
+		box.add_child(req_line)
+		if WorkService.next_rank_requires_connections() and not WorkService.has_career_connections():
+			var connections_line := Label.new()
+			connections_line.text = "Требование: Карьерные связи"
+			box.add_child(connections_line)
+		if rank == 1 and not WorkService.has_career_connections():
+			var hint := Label.new()
+			hint.text = "Дальше одним старанием уже не пробиться.\nГоворят, всем здесь заправляет Начальница шахты."
+			box.add_child(hint)
+		if WorkService.can_advance_career():
+			var advance: GameAction = WorkService.create_career_advancement_action()
+			var hours: int = maxi(1, int(advance.time_cost_minutes / 60))
+			_add_action_button(box, advance, "Добиться повышения — %d ч — $%d → $%d" % [hours, current_income, next_income], false, false)
 	var work: WorkDefinition = WorkService.make_current_work()
 	if WorkService.is_work_available_today():
 		if WorkService.has_olya_overtime():

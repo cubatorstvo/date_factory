@@ -1,40 +1,57 @@
-# Work & Career Progression — Economy Vertical Growth
+# Work & Career Progression — Early Rank 1 and Mine Boss Connections
 
 ## Цель
 
-Добавить в production game полноценную вертикальную прогрессию заработка и подключить её к Monte Carlo Progression Lab.
+Скорректировать Career Progression так, чтобы ранняя экономика Stage 2 не оставалась на зарплате `$100` почти до конца этапа.
 
-Текущая экономика уже показывает достаточную денежную ёмкость: simulated player способен потратить несколько тысяч долларов за прохождение, но базовая работа остаётся примерно на стартовом уровне дохода на протяжении всей кампании.
-
-Новая модель:
+Текущие payouts сохраняются:
 
 ```text
-Stage 1–2:
-ручная стартовая работа
-
-После MAX Начальницы шахты:
-открывается Career Progression
-
-Career Rank:
-0 → $100
-1 → $200
-2 → $400
-3 → $800
+Rank 0 = $100
+Rank 1 = $200
+Rank 2 = $400
+Rank 3 = $800
 ```
 
-Рост дохода достигается действиями игрока и связан с Characteristic `Capital`.
+Новая progression:
 
-Текущие цены Outfit, Apartment Objects, Characteristic training, Dates, Rivals и прочих production expenses сохрани без балансировочных изменений в этом pass.
+```text
+Stage 1:
+Rank 0
+$100
 
-После реализации повторно прогоняется Monte Carlo `seeds 1..100`, чтобы измерить чистый эффект прогрессии дохода.
+Stage 2 early:
+Rank 1
+Capital 1
++ Career Advancement
+→ $200
+
+Stage 2 late / Stage 3:
+Rank 2
+Capital 3
++ Career Connections
++ Career Advancement
+→ $400
+
+Stage 3–4:
+Rank 3
+Capital 5
++ Career Connections
++ Career Advancement
+→ $800
+```
+
+MAX Начальницы шахты открывает `Career Connections`, то есть высокие карьерные уровни Rank 2–3.
+
+Rank 1 доступен самостоятельно с начала игры.
+
+Текущие цены production economy в этом pass не меняются. Меняется только Career gating/timing.
 
 ---
 
 # 1. Canonical Work income
 
-Production Work Service является единственным source of truth для базовой оплаты смены.
-
-Canonical Career Rank payouts:
+Production Work Service — единственный source of truth для базовой оплаты смены.
 
 | Career Rank | Income per normal shift |
 |---|---:|
@@ -43,34 +60,29 @@ Canonical Career Rank payouts:
 | 2 | $400 |
 | 3 | $800 |
 
-Formula:
-
 ```text
-normal_shift_income =
-    100 * pow(2, career_rank)
+normal_shift_income = 100 * pow(2, career_rank)
 ```
 
-для `career_rank = 0..3`.
+для `career_rank = 0..3`. Реализация: `100 * (1 << career_rank)`.
 
-Current production Work action получает payout через Work Service.
-
-Monte Carlo также получает payout только через production Work action.
+Current production Work action и Monte Carlo получают payout только через Work Service.
 
 ---
 
 # 2. Career state
 
-Добавь persistent career state в canonical GameState:
+Persistent career state в `PlayerState`:
 
 ```text
-career_progression_unlocked: bool
+career_connections_unlocked: bool
 career_rank: int
 ```
 
 Defaults:
 
 ```text
-career_progression_unlocked = false
+career_connections_unlocked = false
 career_rank = 0
 ```
 
@@ -80,1012 +92,518 @@ Range:
 career_rank = 0..3
 ```
 
-Career state входит в new game state, save/load, isolated simulation GameState и Developer Room inspection.
+Meaning:
+
+```text
+false:
+Rank 1 доступен
+Rank 2–3 требуют Connections и поэтому недоступны
+
+true:
+Rank 2–3 могут открываться при выполнении Capital requirements
+```
+
+Поле заменяет прежнее `career_progression_unlocked`. Career state входит в new game, save/load, isolated simulation GameState и Developer Room inspection.
+
+Production helper:
+
+```text
+WorkService.has_career_connections(game_state)
+```
+
+true, если player flag **или** filler reward `career_connections` (legacy id `career_progression_unlock` тоже считается до миграции).
 
 ---
 
-# 3. Mine Boss reward
+# 3. Rank requirements
 
-MAX relationship с Начальницей шахты открывает Career Progression.
+| Upgrade | Capital | Career Connections | New income |
+|---|---:|---|---:|
+| Rank 0 → 1 | 1 | — | $200 |
+| Rank 1 → 2 | 3 | required | $400 |
+| Rank 2 → 3 | 5 | required | $800 |
+
+```text
+Rank 0 → 1:
+career_rank == 0
+Capital >= 1
+
+Rank 1 → 2:
+career_rank == 1
+Capital >= 3
+career_connections_unlocked == true
+
+Rank 2 → 3:
+career_rank == 2
+Capital >= 5
+career_connections_unlocked == true
+```
+
+Ranks повышаются последовательно: `0 → 1 → 2 → 3`.
+
+`WorkService.can_advance_career()`:
+
+- Rank 0 → 1: Capital + daily Work slot
+- Rank 1 → 2 и 2 → 3: Capital + Connections + daily Work slot
+
+---
+
+# 4. Rank 1 availability
+
+С начала игры Career system знает о Rank 1.
+
+Rank 1 Career Advancement production-valid при:
+
+```text
+career_rank == 0
+Capital >= 1
+daily Work slot free
+```
+
+Mine Boss reward для Rank 1 не требуется. Это основной ранний economic progression Stage 2.
+
+---
+
+# 5. Mine Boss reward
+
+MAX Начальницы шахты (`girl_mine_boss`, player-facing «Начальница шахты») открывает Career Connections.
 
 Canonical reward:
 
 ```text
-reward_id = career_progression_unlock
-```
-
-Player-facing meaning:
-
-```text
-Карьерные связи
+reward_id = career_connections
+legacy reward_id = career_progression_unlock
+display_name = Карьерные связи
 ```
 
 Effect:
 
 ```text
-career_progression_unlocked = true
+career_connections_unlocked = true
 ```
 
-Reward применяется через существующий production reward pipeline.
+Reward открывает возможность Career Rank 2 и Rank 3. Текущий Career Rank при reward сохраняется. Ставка смены сразу не растёт.
 
-После unlock текущий доход остаётся `$100 / shift`; игрок получает возможность самостоятельно повысить Career Rank.
+Preview:
+
+```text
+Откроются карьерные связи. Rank 2 и Rank 3 станут доступны при достаточном Capital.
+```
+
+Granted:
+
+```text
+Открыты карьерные связи. Rank 2 и Rank 3 можно взять при достаточном Capital.
+```
+
+Применяется через существующий `grant_filler_reward_for_girl`. Stage skip через DEV **не** выдаёт Connections.
+
+Constant: `FillerRewardCatalog.ID_CAREER_CONNECTIONS = &"career_connections"`. Legacy `ID_CAREER_PROGRESSION_UNLOCK = &"career_progression_unlock"` остаётся только для миграции/fallback.
 
 ---
 
-# 4. Career Rank requirements
+# 6. Career Advancement action
 
-Career Rank связан с `Capital`.
-
-Canonical requirements:
-
-| Upgrade | Capital requirement | New income |
-|---|---:|---:|
-| Rank 0 → 1 | Capital 1 | $200 |
-| Rank 1 → 2 | Capital 3 | $400 |
-| Rank 2 → 3 | Capital 5 | $800 |
-
-Career upgrade availability:
+Production action `career_advancement` — «Добиться повышения».
 
 ```text
-career_progression_unlocked
-+
-current Capital >= required Capital
-+
-career_rank == previous rank
-```
-
-Ranks повышаются последовательно:
-
-```text
-0 → 1 → 2 → 3
-```
-
----
-
-# 5. Career Advancement action
-
-Добавь production action:
-
-```text
-CAREER_ADVANCEMENT
-```
-
-Player-facing action:
-
-```text
-Добиться повышения
-```
-
-Effect:
-
-```text
+duration = one normal Work shift (WORK_MINUTES = 60)
+money reward = 0
+uses Work daily gate (RecordWorkDayEffect, key work)
 career_rank += 1
 ```
 
-Career Advancement:
+Work income после action сразу использует новый rank.
 
-```text
-duration = duration of one normal Work shift
-money reward = 0
-```
+Requirements в порядке:
 
-Action занимает ту же daily Work opportunity, что и обычная смена.
+1. `WorkAvailableTodayRequirement`
+2. `CareerConnectionsUnlockedRequirement` — **только если** `career_rank >= 1`
+3. `CareerRankBelowMaxRequirement`
+4. `CareerCapitalRequirement`
 
-Это создаёт инвестицию времени: сегодня игрок отказывается от зарплаты, повышает Career Rank и получает более высокий доход со всех следующих смен.
+Fail copy для Connections: «Нужны карьерные связи.»
+
+Career Advancement — отдельная primary activity `CAREER` для telemetry и Monte Carlo.
 
 ---
 
-# 6. Daily Work gate
+# 7. Daily Work gate
 
 Обычная работа и Career Advancement используют один production daily Work gate.
 
-В один calendar day через этот gate выполняется одно из:
-
-```text
-normal Work
-Career Advancement
-existing Work variant sharing this gate
-```
-
-Сохрани текущую production semantics дополнительных Work modifiers/rewards.
-
-Career Advancement считается отдельной primary activity:
-
-```text
-CAREER
-```
-
-для telemetry и Monte Carlo.
+В один calendar day через этот gate выполняется одно из: normal Work / Career Advancement / existing Work variant sharing this gate.
 
 ---
 
-# 7. Current salary display
+# 8. Player-facing Career UI
 
-Work UI показывает:
+Work UI **всегда** показывает карьеру с New Game. Не прятать Rank 1 до Mine Boss.
 
-```text
-Доход за смену: $<current_income>
-```
-
-После Career Progression unlock также показывает:
+## Rank 0
 
 ```text
-Карьера: <career_rank> / 3
+Карьера: 0 / 3
+Доход за смену: $100
+Следующее повышение: $200
+Требование: Capital 1
 ```
 
-и next rank:
-
-```text
-Следующий доход: $<next_income>
-Требование: Capital <required>
-```
-
-Когда requirement выполнен:
+Когда Capital 1 достигнут и слот Work свободен:
 
 ```text
 [Добиться повышения]
 ```
 
-Action UI показывает duration, current income и new income.
-
-Пример:
+## Rank 1 before Connections
 
 ```text
-Добиться повышения
-8 часов
+Карьера: 1 / 3
+Доход за смену: $200
 
-$200 → $400 за смену
+Следующее повышение: $400
 Требование: Capital 3
+Требование: Карьерные связи
 ```
 
-Используй фактическую production duration обычной Work смены вместо отдельного hardcoded UI duration.
-
----
-
-# 8. Before Career unlock
-
-До получения reward Начальницы шахты Work UI работает как стартовая работа:
+Short hint, когда одновременно `career_rank == 1` и `career_connections_unlocked == false`:
 
 ```text
-career_rank = 0
-income = $100
+Дальше одним старанием уже не пробиться.
+Говорят, всем здесь заправляет Начальница шахты.
 ```
 
-Career Progression controls появляются после production reward unlock.
+При Capital < 3 UI всё равно показывает оба requirements: Capital 3 и Карьерные связи.
 
----
-
-# 9. Rank 3 state
-
-При `career_rank = 3` UI показывает:
+## Rank 2 after Connections
 
 ```text
-Доход за смену: $800
+Карьера: 2 / 3
+Доход за смену: $400
+Следующее повышение: $800
+Требование: Capital 5
+```
+
+Connections requirement на Rank 2→3 не повторяется, если Connections уже получены.
+
+## Rank 3
+
+```text
 Карьера: 3 / 3
+Доход за смену: $800
 ```
 
-Current playable Stage 1–4 использует максимум `$800 / normal shift`.
+Action button copy сохраняет фактическую duration обычной Work смены:
 
-Future country/world automation может позже развивать экономику отдельной системой поверх Career Rank 3.
+```text
+Добиться повышения — 1 ч — $<current> → $<next>
+```
 
 ---
 
-# 10. Overtime / extended Work scaling
+# 9. Overtime
 
-Существующие Work variants, которые рассчитывают награду как modifier базовой смены, используют Career-adjusted income.
-
-Если текущая production механика даёт:
+Существующие Work variants используют Career-adjusted income. Production modifier `+50%`:
 
 ```text
-+50% money
-for ×2 Work time
+Rank 0: $100 / extended $150
+Rank 1: $200 / extended $300
+Rank 2: $400 / extended $600
+Rank 3: $800 / extended $1200
 ```
-
-то:
-
-```text
-Rank 0:
-normal = $100
-extended = $150
-
-Rank 1:
-normal = $200
-extended = $300
-
-Rank 2:
-normal = $400
-extended = $600
-
-Rank 3:
-normal = $800
-extended = $1200
-```
-
-Formula:
-
-```text
-extended_income =
-    current_normal_shift_income
-    * existing production multiplier
-```
-
-Existing duration rules также используют текущую production Work semantics.
 
 ---
 
-# 11. Work rewards use current Career Rank
-
-Любой production mechanic, который означает оплату Work shift, получает базовую оплату через:
-
-```text
-WorkService.get_current_shift_income(game_state)
-```
-
-или эквивалентный canonical production method.
-
-Так Monte Carlo, UI и gameplay всегда видят одну зарплату.
-
----
-
-# 12. Career helper API
-
-В существующий Work/Career service layer добавь компактный API:
+# 10. Career helper API
 
 ```text
 get_career_rank()
 get_current_shift_income()
-is_career_progression_unlocked()
+has_career_connections()
 get_next_career_rank()
 get_next_career_income()
 get_next_career_capital_requirement()
+next_rank_requires_connections()
 can_advance_career()
 advance_career()
 ```
 
-Следуй текущей архитектуре service/state проекта.
-
-Career logic живёт рядом с Work production logic.
+`is_career_progression_unlocked()` не сохраняется как public alias с прежним смыслом «любое повышение». Connections — отдельный helper.
 
 ---
 
-# 13. Capital remains normal Characteristic
+# 11. Capital remains normal Characteristic
 
-Career system использует production permanent value `Capital`.
-
-Career requirements `Capital 1 / 3 / 5` читаются из canonical Characteristic state.
-
-Training `Capital` продолжает работать через существующую Characteristic training систему.
-
-Career system добавляет Capital дополнительную экономическую ценность.
+Career system использует production permanent value `Capital`. Training Capital продолжает работать через Characteristic training. Career добавляет Capital экономическую ценность.
 
 ---
 
-# 14. Career progression is optional gameplay
+# 12. Career progression is optional
 
-Career Advancement является available opportunity.
-
-Player может продолжать работать на текущем Career Rank.
-
-Example:
-
-```text
-Capital = 3
-Career Rank = 1
-
-available:
-WORK → $200
-CAREER_ADVANCEMENT → Rank 2, future WORK = $400
-```
-
-Gameplay сохраняет выбор игрока.
+Игрок может продолжать работать на текущем Career Rank. Rank 1 доступен без Mine Boss; Rank 2–3 — нет.
 
 ---
 
-# 15. Monte Carlo — Career investment action
+# 13. Monte Carlo — Career investment
 
-Monte Carlo Executor получает production-valid `CAREER_ADVANCEMENT` candidate.
+Monte Carlo Executor получает production-valid `CAREER_ADVANCEMENT` candidate. Career — economic investment, не StagePlan goal. StagePlan остаётся immutable.
 
-Career Advancement является economic investment/support action, а не случайной StagePlan long-term goal.
+Rank 1 ROI считается даже при `career_connections_unlocked == false`, как только production Capital 1 достижим.
 
-StagePlan остаётся immutable и содержит существующие gameplay intentions.
+Rank 2–3 ROI paths включаются только после production Career Connections unlock.
 
-Career investment появляется динамически, когда он помогает выполнить выбранный StagePlan эффективнее.
-
----
-
-# 16. Monte Carlo — concrete economic comparison
-
-Для каждого доступного next Career Rank рассчитай стоимость двух путей.
-
-## Path A — current career
+Когда Rank 2 или Rank 3 потенциально выгоден, но Connections отсутствуют:
 
 ```text
-remaining_cash_need =
-    cash required for current unmet StagePlan goals
-    and mandatory Story progression
+career advancement remains future locked opportunity
 ```
 
+Detailed diagnostics:
+
 ```text
-work_actions_without_upgrade =
-    ceil(
-        max(remaining_cash_need - current_money, 0)
-        /
-        current_shift_income
-    )
+target rank
+Capital requirement
+Connections requirement
+Mine Boss reward source
 ```
 
-## Path B — career upgrade
+Monte Carlo продолжает обычный StagePlan execution до production unlock Connections.
 
-Включи:
+Если текущий StagePlan содержит Mine Boss и Rank 2 потенциально экономически выгоден, diagnostic/replay добавляет:
 
 ```text
-Capital prerequisite training still required
-money cost of required Capital training
-number of Capital training actions
-1 Career Advancement action
-future Work at new shift income
+Career dependency:
+Rank 2
+→ Career Connections
+→ Mine Boss relationship reward
 ```
 
-Calculate:
+Это diagnostic dependency. StagePlan structure не меняется.
+
+ROI math, scoring, planning_skill noise, commitment `target_career_rank`, support attribution `career:rank_<N>` — без изменений относительно предыдущего Career pass.
+
+Rank 1 commitment:
 
 ```text
-economic_support_actions_with_upgrade =
-    required Capital training actions
-    + 1 Career Advancement action
-    + expected Work actions at new income
-```
-
-Compare against:
-
-```text
-economic_support_actions_without_upgrade
-```
-
-Career path считается rational investment, когда:
-
-```text
-economic_support_actions_with_upgrade
-<
-economic_support_actions_without_upgrade
+target_career_rank = 1
+Capital 1 → required Work support → Career Advancement → Rank 1
 ```
 
 ---
 
-# 17. Career may create Capital support dependency
+# 14. Career metrics
 
-Если Career upgrade экономически выгоден, но следующий rank требует большего Capital:
-
-```text
-Career Rank 1 → 2
-Capital current = 1
-Capital required = 3
-```
-
-Executor создаёт economic investment dependency:
+Сохрани существующие Career metrics. Добавь:
 
 ```text
-Career Rank 2
-→ Capital 3
-→ required training / cash support
-→ Career Advancement
-→ higher Work income
+career_connections_unlock_day
+career_connections_unlock_stage
+rank_1_before_connections: bool
 ```
 
-Эта economic support chain существует даже когда Capital 3 отсутствует среди random Characteristic targets StagePlan.
+Population aggregate:
+
+```text
+Rank 1 before Connections share
+Career Connections unlock P10/P50/P90
+Rank 2 delay after Connections P10/P50/P90
+```
+
+Stage-specific Work:
+
+```text
+Stage 1–4 WORK P50/P90/P95
+Stage 2 money_forced_work_days P50/P90/P95
+Stage 2 economy_support_share P50/P90/P95
+```
+
+Rank timing:
+
+```text
+Rank 1/2/3 day P10/P50/P90
+Rank 1/2/3 Stage distribution
+```
+
+Target observation: Rank 1 should usually occur during early/mid Stage 2. Этот pass измеряет результат, а не hardcodes конкретный day.
+
+Work by rank: `work_actions_at_rank_0..3` population P50/P90/P95. Особенно сравнить Rank 0 WORK before Rank 1 с предыдущим прогоном (P50 ≈ 32.5).
+
+Novelty: first Career Connections unlock и first achievement of each Career Rank.
+
+Progress Beat: Career Rank increased — без изменений.
 
 ---
 
-# 18. Career investment scope
+# 15. Production UI / Developer Room
 
-ROI analysis использует текущий immutable StagePlan и mandatory progression текущего Stage.
-
-Simulated player принимает решение на основе уже выбранных намерений текущего Stage.
-
-После перехода на следующий Story Stage новый StagePlan создаёт новый ROI calculation.
-
-Career Rank сохраняется campaign-wide.
-
----
-
-# 19. Career candidate scoring
-
-Если Career investment уменьшает ожидаемое число economic support actions:
+Developer Room:
 
 ```text
-saved_support_actions =
-    economic_support_actions_without_upgrade
-    - economic_support_actions_with_upgrade
-```
-
-Career Advancement / its Capital prerequisite получает base priority:
-
-```text
-highest_priority_cash_blocked_goal
-+ 10
-+ 5 * min(saved_support_actions, 4)
-```
-
-Затем применяй normal executor modifiers:
-
-```text
-daily gate
-unblock bonus
-repetition penalty
-decision noise
-```
-
----
-
-# 20. Planning skill
-
-`planning_skill` влияет на perceived ROI.
-
-Canonical:
-
-```text
-perceived_saved_support_actions =
-    saved_support_actions
-    + execution_rng.randf_range(
-        -2.0 * (1.0 - planning_skill),
-        +2.0 * (1.0 - planning_skill)
-    )
-```
-
-Career path выбирается как rational investment при:
-
-```text
-perceived_saved_support_actions > 0
-```
-
-Высокий planning skill почти точно оценивает повышение; низкий planning skill создаёт небольшую вариативность момента инвестиции.
-
----
-
-# 21. Career investment commitment
-
-После того как executor выбрал Career investment path, сохраняй temporary economic commitment:
-
-```text
-target_career_rank
-```
-
-до одного из:
-
-```text
-Career Rank достигнут
-Stage завершён
-production state делает upgrade недоступным
-```
-
-Этот commitment позволяет последовательно пройти:
-
-```text
-нужный Capital
-→ деньги на Capital training
-→ Career Advancement
-```
-
-Он является execution-level commitment и не изменяет immutable StagePlan.
-
----
-
-# 22. Career support attribution
-
-Career investment получает собственный support attribution.
-
-Работа для финансирования Capital training:
-
-```text
-supporting_goal = career:rank_<N>
-supporting_action = characteristic:capital:<required>
-```
-
-Работа на обычные StagePlan purchases продолжает использовать существующую attribution.
-
-В этом pass отдельную глобальную cash-reservation систему для Outfit/Apartment не добавляй.
-
----
-
-# 23. Monte Carlo metrics
-
-Добавь campaign и per-Stage:
-
-```text
-career_rank_start
-career_rank_end
-
-career_advancement_actions
-
-career_rank_1_day
-career_rank_2_day
-career_rank_3_day
-
-work_income_start
-work_income_end
-
-money_earned_from_work
-
-work_actions_at_rank_0
-work_actions_at_rank_1
-work_actions_at_rank_2
-work_actions_at_rank_3
-
-career_investment_capital_training_actions
-work_actions_supporting_career
-```
-
----
-
-# 24. Career ROI telemetry
-
-Для каждой Career Advancement decision сохраняй:
-
-```text
-career_rank_before
-career_rank_after
-
-current_income
-new_income
-
-remaining_cash_need
-
-work_actions_without_upgrade
-economic_support_actions_with_upgrade
-saved_support_actions
-perceived_saved_support_actions
-
-decision
-```
-
-Decision:
-
-```text
-INVEST
-SKIP_FOR_NOW
-```
-
-Detailed seed log показывает эти значения.
-
----
-
-# 25. Population Career report
-
-Добавь aggregate section:
-
-```text
-Career Progression
-```
-
-Report:
-
-```text
-Career Rank reached:
-- Rank 0 only
-- Rank 1+
-- Rank 2+
-- Rank 3
-
-Career advancement day:
-- Rank 1 P10/P50/P90
-- Rank 2 P10/P50/P90
-- Rank 3 P10/P50/P90
-
-Work by rank:
-- Rank 0
-- Rank 1
-- Rank 2
-- Rank 3
-
-Career support:
-- promotion actions
-- Capital training actions for career
-- Work actions supporting career
-```
-
----
-
-# 26. Economy comparison metrics
-
-Preserve current baseline metrics and compare after implementation:
-
-```text
-Campaign days
-WORK actions
-money_forced_work_days
-economy_support_share
-dead_progress_days
-money earned
-money spent
-money end
-
-work attribution:
-Characteristics
-Outfits
-Apartment
-Dates
-Rivals
-Career
-```
-
----
-
-# 27. Career Work attribution
-
-Extend existing Work attribution categories:
-
-```text
-CHARACTERISTIC
-OUTFIT
-APARTMENT
-DATE
-RIVAL
-CAREER
-OTHER
-```
-
-A Work action used to finance Capital training created specifically by career investment is classified `CAREER`.
-
-A Capital target originally selected by immutable StagePlan remains `CHARACTERISTIC`.
-
----
-
-# 28. Progress Beat
-
-Career Advancement is a Progress Beat.
-
-Add:
-
-```text
-Career Rank increased
-```
-
-to Progress Beat definition.
-
----
-
-# 29. Novelty
-
-First Career Progression unlock and first achievement of each Career Rank count as novelty events:
-
-```text
-career system unlocked
-Career Rank 1
-Career Rank 2
-Career Rank 3
-```
-
----
-
-# 30. Production UI / Developer Room
-
-Developer Room state display adds:
-
-```text
-Career unlocked
+Career Connections: true/false
 Career Rank
 Current Work income
 Next Career requirement
 Next Career income
 ```
 
-Monte Carlo detailed replay starting/ending state includes the same fields.
+Monte Carlo detailed replay starting/ending state включает те же поля, плюс Connections.
 
 ---
 
-# 31. Production tests
+# 16. Save/load migration
 
-Add tests for:
+`SAVE_VERSION = 20`.
 
-```text
-Rank 0 → $100
-Rank 1 → $200
-Rank 2 → $400
-Rank 3 → $800
-```
+`_migrate_v19_career_connections` when `from_version < 20`:
 
-Mine Boss unlock:
+- `career_connections_unlocked` ← existing `career_progression_unlocked` if new key absent
+- drop or stop writing `career_progression_unlocked`
+- `career_rank` без изменения semantics
+- в `unlocked_filler_reward_ids` заменить `career_progression_unlock` на `career_connections`
 
-```text
-before reward:
-career_progression_unlocked = false
-
-after canonical Mine Boss MAX reward:
-career_progression_unlocked = true
-```
-
-Capital requirements:
-
-```text
-Rank 0 → 1 requires Capital 1
-Rank 1 → 2 requires Capital 3
-Rank 2 → 3 requires Capital 5
-```
-
-Also test:
-
-```text
-sequential 0 → 1 → 2 → 3
-Career Advancement consumes Work daily gate
-save/load preserves unlock and rank
-```
+`PlayerState.from_dict` читает `career_connections_unlocked`, с fallback на `career_progression_unlocked`.
 
 ---
 
-# 32. Overtime tests
+# 17. Production tests
 
-For every existing Work payout modifier verify that Career-adjusted base income is used.
-
-Canonical +50% examples:
+## Rank 1 without Connections
 
 ```text
-Rank 0 → $150
-Rank 1 → $300
-Rank 2 → $600
-Rank 3 → $1200
+career_rank = 0
+Capital = 1
+career_connections_unlocked = false
 ```
 
-Use actual existing production multiplier.
+Expected: `can_advance_career() = true`, next rank = 1, income after advancement = $200.
+
+## Rank 2 requires Connections
+
+```text
+career_rank = 1
+Capital = 3
+career_connections_unlocked = false
+```
+
+Expected: Rank 2 unavailable.
+
+After `career_connections_unlocked = true`: Rank 2 available.
+
+## Rank 3
+
+```text
+career_rank = 2
+Capital = 5
+career_connections_unlocked = true
+```
+
+Expected: Rank 3 available.
+
+## Mine Boss reward
+
+Before MAX: `career_connections_unlocked = false`. After production reward: `true`. Career Rank unchanged.
+
+## Save migration
+
+Old `career_progression_unlocked` + current rank → after migration both `career_connections_unlocked` and `career_rank` correct. `save_version == 20`.
+
+Preserve: sequential 0→1→2→3, daily Work gate, overtime $150/$300/$600/$1200, Stage skip does not grant Connections.
 
 ---
 
-# 33. Monte Carlo tests
+# 18. Monte Carlo tests
 
-Add deterministic controlled tests.
+## Rank 1
 
-## Career investment is profitable
+Controlled: Stage 2, Rank 0, Capital 1, Connections false, large remaining cash need.
 
-State:
+Expected: Rank 1 ROI evaluated; Career Advancement candidate can be chosen.
 
-```text
-career unlocked
-Career Rank 0
-Capital 1
-current income = $100
-remaining StagePlan cash need large enough
-```
+## Rank 2 lock
 
-Expected:
+Controlled: Rank 1, Capital 3, Connections false.
 
-```text
-Career Rank 1 investment saves support actions
-Career Advancement candidate exists
-```
+Expected: Rank 2 production action unavailable; diagnostics identify Career Connections requirement.
 
-## Career investment is not profitable
+After Connections: Rank 2 ROI/action becomes available.
 
-State:
+Preserve existing profitable / not profitable / Capital dependency / persistence / attribution / determinism tests, retargeted onto Connections semantics. Rank 1 tests must not require Connections.
 
-```text
-career unlocked
-Career Rank 0
-Capital 1
-remaining StagePlan cash need small
-```
-
-Expected:
-
-```text
-Career Advancement investment path absent
-normal StagePlan execution continues
-```
-
-## Capital dependency
-
-State:
-
-```text
-Career Rank 1
-Capital 1
-Rank 2 profitable
-Rank 2 requires Capital 3
-```
-
-Expected chain:
-
-```text
-career commitment Rank 2
-→ Capital training support
-→ Career Advancement
-→ Rank 2
-```
-
-## Persistence across Stage
-
-Career Rank achieved in one Stage remains in next Stage.
+Same content/config/seed → identical Rank timeline, Connections timing, WORK timeline, execution signature. Replay exact.
 
 ---
 
-# 34. Determinism
+# 19. Population rerun
 
-Career ROI rolls use existing execution RNG.
-
-Same content/config/base_seed produces identical:
-
-```text
-Career decisions
-Career Rank timeline
-Work income timeline
-Run metrics
-execution signature
-```
-
-Detailed replay continues to match summary.
-
----
-
-# 35. Monte Carlo export
-
-Add Career fields to:
-
-```text
-seed_summaries.csv
-stage_metrics.csv
-aggregate_metrics.csv
-share_bundle.md
-share_bundle.json
-specific seed logs
-bad seed logs
-representative seed logs
-```
-
-`share_bundle.md` adds:
-
-```text
-## Career Progression
-```
-
-with population summary.
-
----
-
-# 36. Existing prices
-
-This pass evaluates income progression against the current production economy.
-
-Preserve current production values for:
-
-```text
-Outfit prices
-Apartment Object prices
-Characteristic training prices
-Date costs
-Rival costs
-taxi/convenience costs
-other current money sinks
-```
-
-The next economy-tuning decision will be based on the resulting Monte Carlo comparison.
-
----
-
-# 37. Population rerun
-
-After tests run:
+После tests:
 
 ```text
 N = 100
 base_seed_start = 1
 end_story_stage = 4
 archetype = POPULATION
+Replay verification seeds 1..100
 ```
 
-Then:
+Invariants: 100/100 completed, Replay 100/100 matched, NO_USEFUL = 0, SAFETY_CAP = 0.
+
+Сравни с предыдущим Career Progression run (export `2026-08-26 15-28-40__N_100__seed_1`):
 
 ```text
-Replay verification = seeds 1..100
+Campaign P50 ≈ 48.5 days
+WORK P50 ≈ 46
+money_forced_work_days P50 ≈ 45
+Dates P50 ≈ 46
+Stage 1 WORK P50 ≈ 8
+Stage 2 WORK P50 ≈ 20
+Stage 3 WORK P50 ≈ 9
+Stage 4 WORK P50 ≈ 6
+Rank 0 WORK P50 ≈ 32.5
+Rank 1 WORK P50 ≈ 3
+Rank 2 WORK P50 ≈ 3
+Rank 3 WORK P50 ≈ 8
+Rank 1 day P50 ≈ 34
 ```
 
-Expected technical invariants:
+Главный вопрос:
 
 ```text
-100 / 100 runs completed
-Replay 100 / 100 matched
-NO_USEFUL = 0
-SAFETY_CAP = 0
+Does early Rank 1 reduce Stage 2 WORK from ~20 toward ~10–14 without breaking later economy?
 ```
 
-N=1000 remains outside this pass.
+Report: Stage 2 WORK/days P50/P90/P95, Rank 1 timing, Rank 0 WORK before Rank 1, campaign WORK/days, money earned/spent/end.
 
 ---
 
-# 38. Before / after comparison
+# 20. Preserve current economy
 
-Compare against the current baseline approximately represented by the previous Monte Carlo result:
-
-```text
-Campaign days P50 ≈ 66.5
-WORK P50 ≈ 66
-money_forced_work_days P50 ≈ 65.5
-Dates P50 ≈ 46.5
-```
-
-Use exact previous export if available.
-
-Report new:
-
-```text
-Campaign days P50/P90/P95
-WORK P50/P90/P95
-money_forced_work_days P50/P90/P95
-economy_support_share P50/P90/P95
-dead_progress_days P50/P90/P95
-
-money earned P50/P90
-money spent P50/P90
-
-Career Rank reached distribution
-Career advancement timing
-Work actions by Career Rank
-```
+Current production prices and higher Career salaries remain unchanged. This pass changes only Career gating/timing.
 
 ---
 
-# 39. Expected analysis outcome
-
-This pass measures whether exponential income progression naturally reduces grind while preserving the existing spending capacity.
-
-Report the measured WORK count rather than forcing a target value in code.
-
-The next tuning pass will decide whether the healthy range is closer to `20–30`, `30–40` or another measured range based on actual Stage pacing and spending behavior.
-
----
-
-# 40. Documentation
-
-Update relevant production and Monte Carlo documentation.
-
-Document:
-
-```text
-Career Progression unlock
-Career Rank incomes
-Capital requirements
-Career Advancement action
-daily Work gate
-overtime scaling
-Monte Carlo ROI policy
-Career metrics
-developer tuning workflow
-```
-
----
-
-# 41. Acceptance criteria
+# 21. Acceptance criteria
 
 Task complete when:
 
-- production Work income uses Career Rank;
-- Rank incomes are `$100 / $200 / $400 / $800`;
-- Mine Boss MAX unlocks Career Progression through production reward flow;
+- Rank 1 is available without Mine Boss reward;
 - Rank 1 requires Capital 1;
-- Rank 2 requires Capital 3;
-- Rank 3 requires Capital 5;
-- Career Advancement consumes one normal Work-shift duration and daily Work opportunity;
-- Career Advancement pays `$0` and increases Career Rank by one;
-- normal Work immediately uses the new income;
-- existing Work payout modifiers scale from Career-adjusted base income;
-- career state persists through save/load;
-- Work UI displays current income and next Career upgrade;
-- Monte Carlo uses production Career actions;
-- Monte Carlo evaluates Career advancement through concrete economic ROI;
-- profitable Career path can create a Capital prerequisite support chain;
-- Career commitment persists until target rank is reached or Stage ends;
-- Career actions and supporting Work are attributed in metrics;
-- Career Advancement creates a Progress Beat;
-- Career population report is exported;
-- existing production prices remain unchanged;
+- Rank 1 pays $200 after Career Advancement;
+- Mine Boss MAX grants Career Connections;
+- Rank 2 requires Capital 3 + Career Connections;
+- Rank 3 requires Capital 5 + Career Connections;
+- Career Advancement retains current Work-gate/duration semantics;
+- production UI clearly shows Rank 1 requirement;
+- Rank 1 UI exposes future Rank 2 and Career Connections requirement;
+- player-facing hint identifies Mine Boss as the source of Career Connections;
+- save/load preserves Career Rank and Connections;
+- old Career unlock state migrates correctly;
+- Monte Carlo evaluates Rank 1 before Connections;
+- Monte Carlo respects Connections for Rank 2–3;
+- Career metrics include Connections timing;
+- Stage-specific WORK metrics are exported;
 - deterministic tests pass;
-- population run `1..100` completes;
-- replay verification gives `100 / 100 matched`;
+- population `1..100` completes;
+- replay verification = `100 / 100`;
 - NO_USEFUL = 0;
 - SAFETY_CAP = 0;
-- N=1000 is not run;
-- final report compares economy before and after Career Progression.
-
-After completion make a separate commit:
-
-```text
-Economy: add Career Progression and scaling Work income
-```
-
-and push the current working branch.
+- final report compares Stage 2 WORK before/after.

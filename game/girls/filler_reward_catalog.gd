@@ -13,6 +13,7 @@ const ID_SONYA_RESTAURANT_SECOND_VENUE: StringName = &"sonya_restaurant_second_v
 const ID_NIKA_BACKUP_OUTFIT: StringName = &"nika_backup_outfit"
 const ID_RITA_URGENT_TAXI: StringName = &"rita_urgent_taxi"
 const ID_EVA_READ_PEOPLE: StringName = &"eva_read_people"
+const ID_CAREER_CONNECTIONS: StringName = &"career_connections"
 const ID_CAREER_PROGRESSION_UNLOCK: StringName = &"career_progression_unlock"
 
 const EVA_INITIAL_KNOWN_TAG_BONUS: int = 1
@@ -141,11 +142,11 @@ static func create_seed() -> FillerRewardCatalog:
 		"При знакомстве сразу открывается на один Tag больше.\nУ уже знакомых незавершённых девушек сейчас откроется ещё один неизвестный Tag."
 	))
 	catalog.rewards.append(_make(
-		ID_CAREER_PROGRESSION_UNLOCK,
+		ID_CAREER_CONNECTIONS,
 		GirlCatalog.ID_MINE_BOSS,
 		"Карьерные связи",
-		"Откроется карьерный рост. Доход за смену сразу не вырастет.",
-		"Открыт карьерный рост. Доход за смену сразу не вырос: повышение нужно взять отдельно."
+		"Откроются карьерные связи. Rank 2 и Rank 3 станут доступны при достаточном Capital.",
+		"Открыты карьерные связи. Rank 2 и Rank 3 можно взять при достаточном Capital."
 	))
 	return catalog
 

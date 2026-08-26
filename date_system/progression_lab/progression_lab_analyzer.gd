@@ -58,6 +58,9 @@ const METRIC_KEYS: PackedStringArray = [
 	"career_rank_1_day",
 	"career_rank_2_day",
 	"career_rank_3_day",
+	"career_connections_unlock_day",
+	"career_connections_unlock_stage",
+	"rank_1_before_connections",
 	"work_income_start",
 	"work_income_end",
 	"money_earned_from_work",
@@ -526,6 +529,7 @@ func _career_progression_aggregate(records: Array) -> Dictionary:
 	var rank_1_plus: int = 0
 	var rank_2_plus: int = 0
 	var rank_3: int = 0
+	var rank_1_before: int = 0
 	for record in records:
 		if not (record is ProgressionLabRunRecord):
 			continue
@@ -538,14 +542,24 @@ func _career_progression_aggregate(records: Array) -> Dictionary:
 			rank_2_plus += 1
 		if end_rank >= 3:
 			rank_3 += 1
+		if bool(record.campaign_metrics.get("rank_1_before_connections", false)):
+			rank_1_before += 1
+	var n: int = maxi(records.size(), 1)
 	return {
 		"rank_0_only": rank_0_only,
 		"rank_1_plus": rank_1_plus,
 		"rank_2_plus": rank_2_plus,
 		"rank_3": rank_3,
+		"rank_1_before_connections_count": rank_1_before,
+		"rank_1_before_connections_share": float(rank_1_before) / float(n),
+		"connections_unlock_day": _career_day_describe(records, "career_connections_unlock_day"),
+		"rank_2_delay_after_connections": _career_rank_2_delay_describe(records),
 		"rank_1_day": _career_day_describe(records, "career_rank_1_day"),
 		"rank_2_day": _career_day_describe(records, "career_rank_2_day"),
 		"rank_3_day": _career_day_describe(records, "career_rank_3_day"),
+		"rank_1_stage_distribution": _career_stage_distribution(records, "career_rank_1_stage"),
+		"rank_2_stage_distribution": _career_stage_distribution(records, "career_rank_2_stage"),
+		"rank_3_stage_distribution": _career_stage_distribution(records, "career_rank_3_stage"),
 		"work_at_rank_0": _metric_describe(records, "work_actions_at_rank_0"),
 		"work_at_rank_1": _metric_describe(records, "work_actions_at_rank_1"),
 		"work_at_rank_2": _metric_describe(records, "work_actions_at_rank_2"),
@@ -555,7 +569,6 @@ func _career_progression_aggregate(records: Array) -> Dictionary:
 		"work_supporting_career": _metric_describe(records, "work_actions_supporting_career"),
 	}
 
-
 func _career_day_describe(records: Array, key: String) -> Dictionary:
 	var values: PackedFloat64Array = PackedFloat64Array()
 	for record in records:
@@ -564,6 +577,28 @@ func _career_day_describe(records: Array, key: String) -> Dictionary:
 		var day: int = int(record.campaign_metrics.get(key, -1))
 		if day >= 0:
 			values.append(float(day))
+	return describe(values)
+
+func _career_stage_distribution(records: Array, key: String) -> Dictionary:
+	var counts: Dictionary = {"1": 0, "2": 0, "3": 0, "4": 0}
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var stage_key: String = str(int(record.campaign_metrics.get(key, -1)))
+		if counts.has(stage_key):
+			counts[stage_key] = int(counts[stage_key]) + 1
+	return counts
+
+
+func _career_rank_2_delay_describe(records: Array) -> Dictionary:
+	var values: PackedFloat64Array = PackedFloat64Array()
+	for record in records:
+		if not (record is ProgressionLabRunRecord):
+			continue
+		var rank_2_day: int = int(record.campaign_metrics.get("career_rank_2_day", -1))
+		var connections_day: int = int(record.campaign_metrics.get("career_connections_unlock_day", -1))
+		if rank_2_day >= 0 and connections_day >= 0:
+			values.append(float(rank_2_day - connections_day))
 	return describe(values)
 
 

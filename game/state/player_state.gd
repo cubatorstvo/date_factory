@@ -9,7 +9,7 @@ var capital: int = 0
 var aura: int = 0
 var last_work_day_index: int = -1
 var last_overtime_day_index: int = -1
-var career_progression_unlocked: bool = false
+var career_connections_unlocked: bool = false
 var career_rank: int = 0
 
 
@@ -23,7 +23,7 @@ func to_dict() -> Dictionary:
 		"aura": aura,
 		"last_work_day_index": last_work_day_index,
 		"last_overtime_day_index": last_overtime_day_index,
-		"career_progression_unlocked": career_progression_unlocked,
+		"career_connections_unlocked": career_connections_unlocked,
 		"career_rank": career_rank,
 	}
 
@@ -37,5 +37,5 @@ func from_dict(data: Dictionary) -> void:
 	aura = int(data.get("aura", 0))
 	last_work_day_index = int(data.get("last_work_day_index", -1))
 	last_overtime_day_index = int(data.get("last_overtime_day_index", -1))
-	career_progression_unlocked = bool(data.get("career_progression_unlocked", false))
+	career_connections_unlocked = bool(data.get("career_connections_unlocked", data.get("career_progression_unlocked", false)))
 	career_rank = clampi(int(data.get("career_rank", 0)), 0, 3)

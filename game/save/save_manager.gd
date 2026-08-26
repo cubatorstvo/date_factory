@@ -1,6 +1,6 @@
 extends Node
 
-const SAVE_VERSION: int = 19
+const SAVE_VERSION: int = 20
 const DEFAULT_SAVE_PATH: String = "user://saves/game.json"
 const MINUTES_PER_DAY: int = 1440
 
@@ -137,6 +137,8 @@ func _migrate_game_state(state_data: Dictionary, from_version: int) -> Dictionar
 		migrated = _migrate_v17_daily_activity(migrated)
 	if from_version < 19:
 		migrated = _migrate_v18_career(migrated)
+	if from_version < 20:
+		migrated = _migrate_v19_career_connections(migrated)
 	return migrated
 
 
@@ -529,4 +531,35 @@ func _migrate_v18_career(state_data: Dictionary) -> Dictionary:
 		player["career_rank"] = 0
 	player["career_rank"] = clampi(int(player.get("career_rank", 0)), 0, 3)
 	migrated["player"] = player
+	return migrated
+
+func _migrate_v19_career_connections(state_data: Dictionary) -> Dictionary:
+	var migrated: Dictionary = state_data
+	var player_value: Variant = migrated.get("player", {})
+	var player: Dictionary = {}
+	if player_value is Dictionary:
+		player = player_value
+	if not player.has("career_connections_unlocked"):
+		player["career_connections_unlocked"] = bool(player.get("career_progression_unlocked", false))
+	if player.has("career_progression_unlocked"):
+		player.erase("career_progression_unlocked")
+	if not player.has("career_rank"):
+		player["career_rank"] = 0
+	player["career_rank"] = clampi(int(player.get("career_rank", 0)), 0, 3)
+	migrated["player"] = player
+	var progression_value: Variant = migrated.get("progression", {})
+	var progression: Dictionary = {}
+	if progression_value is Dictionary:
+		progression = progression_value
+	var ids_value: Variant = progression.get("unlocked_filler_reward_ids", [])
+	var rewritten: Array = []
+	if ids_value is Array:
+		for item in ids_value:
+			var id_text: String = str(item)
+			if id_text == "career_progression_unlock":
+				id_text = "career_connections"
+			if not rewritten.has(id_text):
+				rewritten.append(id_text)
+		progression["unlocked_filler_reward_ids"] = rewritten
+	migrated["progression"] = progression
 	return migrated

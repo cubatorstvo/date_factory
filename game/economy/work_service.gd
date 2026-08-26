@@ -36,17 +36,22 @@ static func get_current_tier(game_state: Variant = null) -> WorkTierDefinition:
 	return _make_tier(1, get_current_shift_income(game_state), WORK_MINUTES)
 
 
-static func is_career_progression_unlocked(game_state: Variant = null) -> bool:
+static func has_career_connections(game_state: Variant = null) -> bool:
 	var gs: Variant = _resolve_game_state(game_state)
 	if gs == null:
 		return false
 	var player: PlayerState = gs.player as PlayerState
-	if player != null and player.career_progression_unlocked:
+	if player != null and player.career_connections_unlocked:
 		return true
 	if gs.progression != null and gs.progression.has_method("has_filler_reward"):
+		if bool(gs.progression.has_filler_reward(FillerRewardCatalog.ID_CAREER_CONNECTIONS)):
+			return true
 		return bool(gs.progression.has_filler_reward(FillerRewardCatalog.ID_CAREER_PROGRESSION_UNLOCK))
 	return false
 
+static func next_rank_requires_connections(game_state: Variant = null) -> bool:
+	var rank: int = get_career_rank(game_state)
+	return rank >= 1 and rank < MAX_CAREER_RANK
 
 static func get_next_career_rank(game_state: Variant = null) -> int:
 	var rank: int = get_career_rank(game_state)
@@ -67,8 +72,6 @@ static func get_next_career_capital_requirement(game_state: Variant = null) -> i
 
 
 static func can_advance_career(game_state: Variant = null) -> bool:
-	if not is_career_progression_unlocked(game_state):
-		return false
 	var rank: int = get_career_rank(game_state)
 	if rank < 0 or rank >= MAX_CAREER_RANK:
 		return false
@@ -77,10 +80,11 @@ static func can_advance_career(game_state: Variant = null) -> bool:
 		return false
 	if player.capital < get_next_career_capital_requirement(game_state):
 		return false
+	if next_rank_requires_connections(game_state) and not has_career_connections(game_state):
+		return false
 	if not is_work_available_today():
 		return false
 	return true
-
 
 static func advance_career(game_state: Variant = null) -> bool:
 	if not can_advance_career(game_state):
@@ -105,9 +109,10 @@ static func create_career_advancement_action() -> GameAction:
 	action.money_cost = 0
 	var availability := WorkAvailableTodayRequirement.new()
 	action.requirements.append(availability)
-	var unlocked_script := load("res://game/actions/career_progression_unlocked_requirement.gd") as GDScript
-	var unlocked: ActionRequirement = unlocked_script.new() as ActionRequirement
-	action.requirements.append(unlocked)
+	if next_rank_requires_connections():
+		var unlocked_script := load("res://game/actions/career_connections_unlocked_requirement.gd") as GDScript
+		var unlocked: ActionRequirement = unlocked_script.new() as ActionRequirement
+		action.requirements.append(unlocked)
 	var rank_script := load("res://game/actions/career_rank_below_max_requirement.gd") as GDScript
 	var rank_req: ActionRequirement = rank_script.new() as ActionRequirement
 	action.requirements.append(rank_req)
@@ -120,7 +125,6 @@ static func create_career_advancement_action() -> GameAction:
 	var promote: ActionEffect = promote_script.new() as ActionEffect
 	action.effects.append(promote)
 	return action
-
 
 static func make_work_basic() -> WorkDefinition:
 	return make_current_work()

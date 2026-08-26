@@ -816,7 +816,7 @@ lowest stable content ID lexical order
 
 after deterministic noise has been applied.
 
-Career Advancement is an economic investment, not a StagePlan goal. StagePlan stays immutable. Each day, if Career Progression is unlocked and the next rank exists and no execution-level `target_career_rank` commitment is active, the executor compares two paths on the current StagePlan + mandatory story cash need:
+Career Advancement is an economic investment, not a StagePlan goal. StagePlan stays immutable. Rank 1 ROI is evaluated even when Career Connections are locked. Rank 2–3 ROI paths wait for production Career Connections (`career_connections_unlocked`, Mine Boss MAX reward `career_connections`). Each day, if the next rank is production-available (Rank 1: Capital path; Rank 2–3: Connections + Capital) and no execution-level `target_career_rank` commitment is active, the executor compares two paths on the current StagePlan + mandatory story cash need:
 
 ```text
 remaining_cash_need =
@@ -1592,6 +1592,9 @@ career_advancement_actions
 career_rank_1_day
 career_rank_2_day
 career_rank_3_day
+career_connections_unlock_day
+career_connections_unlock_stage
+rank_1_before_connections
 work_income_start
 work_income_end
 money_earned_from_work
@@ -2809,7 +2812,7 @@ The Monte Carlo Lab serves as the quantitative filter before later human 3D play
 
 Work income in simulation is production `WorkService` current career-rank payout (`get_current_shift_income` / `get_current_hourly_pay`). Do not duplicate a parallel lab wage. Tune Career Rank income only through WorkService; this pass does not change Outfit, Apartment, Characteristic, Date, or Rival prices.
 
-`share_bundle.md` / `share_bundle.json` include a **Career Progression** population section: rank reached (0 only / 1+ / 2+ / 3), advancement day P10/P50/P90 for ranks 1–3, work by rank 0–3, and career support (promotion actions, Capital training for career, work supporting career). `seed_summaries.csv`, `stage_metrics.csv`, and `aggregate_metrics.csv` include the career metric fields. Detailed seed / bad / representative logs include ROI rows and starting/ending Career unlocked, Rank, Current income, Next requirement, Next income.
+`share_bundle.md` / `share_bundle.json` include a **Career Progression** population section: rank reached (0 only / 1+ / 2+ / 3), Rank 1 before Connections share, Connections unlock P10/P50/P90, Rank 2 delay after Connections P10/P50/P90, advancement day P10/P50/P90 for ranks 1–3, rank Stage distribution, work by rank 0–3, Stage 1–4 WORK P50/P90/P95, and career support (promotion actions, Capital training for career, work supporting career). `seed_summaries.csv`, `stage_metrics.csv`, and `aggregate_metrics.csv` include the career metric fields. Detailed seed / bad / representative logs include ROI rows, Connections lock diagnostics, and starting/ending Career Connections, Rank, Current income, Next requirement, Next income.
 
 ---
 

@@ -2410,7 +2410,7 @@ func _test_game_state_round_trip() -> void:
 	_ok("new_game start outfit owned", gs.progression.owns_outfit(OutfitCatalog.START_OUTFIT_ID))
 	_ok("new_game start outfit current", gs.progression.current_outfit_id == OutfitCatalog.START_OUTFIT_ID)
 	_ok("new_game last_work_day_index -1", int(gs.player.last_work_day_index) == -1)
-	_ok("new_game career locked", gs.player.career_progression_unlocked == false)
+	_ok("new_game career locked", gs.player.career_connections_unlocked == false)
 	_ok("new_game career rank 0", int(gs.player.career_rank) == 0)
 	_ok("new_game career income 100", WorkService.get_current_shift_income() == 100)
 	_ok("new_game apartment owned empty", gs.progression.apartment.owned_local_object_ids.is_empty())
@@ -2439,8 +2439,8 @@ func _test_game_state_round_trip() -> void:
 		parsed = JSON.parse_string(file.get_as_text())
 		file.close()
 	var root: Dictionary = parsed if parsed is Dictionary else {}
-	_ok("save_version == 19", int(root.get("save_version", 0)) == 19)
-	_ok("SAVE_VERSION constant 19", int(sm.SAVE_VERSION) == 19)
+	_ok("save_version == 20", int(root.get("save_version", 0)) == 20)
+	_ok("SAVE_VERSION constant 20", int(sm.SAVE_VERSION) == 20)
 	var snapshot: Variant = root.get("game_state", {})
 	var state_dict: Dictionary = snapshot if snapshot is Dictionary else {}
 	var progression_value: Variant = state_dict.get("progression", {})
@@ -5148,7 +5148,7 @@ func _test_filler_girl_rewards() -> void:
 	var catalog: DateContentCatalog = _catalog()
 	var rewards: FillerRewardCatalog = FillerRewardCatalog.create_seed()
 	_ok("filler catalog 13 rewards", rewards.get_all_rewards().size() == 13)
-	_ok("mine boss career reward", rewards.get_reward_for_girl(GirlCatalog.ID_MINE_BOSS) != null and rewards.get_reward_for_girl(GirlCatalog.ID_MINE_BOSS).id == FillerRewardCatalog.ID_CAREER_PROGRESSION_UNLOCK)
+	_ok("mine boss career reward", rewards.get_reward_for_girl(GirlCatalog.ID_MINE_BOSS) != null and rewards.get_reward_for_girl(GirlCatalog.ID_MINE_BOSS).id == FillerRewardCatalog.ID_CAREER_CONNECTIONS)
 	var dasha_found: bool = false
 	for seed in range(1, 400):
 		var engine: DateEngine = _engine_with_flags(catalog, &"alina", &"cafe", &"casual", seed, _fresh_progress(catalog, &"alina"), _player(), {"dasha_soften_available": true})
@@ -5315,21 +5315,28 @@ func _test_career_progression() -> void:
 	sm.delete_save()
 	clock.real_time_progression_enabled = false
 	sm.new_game()
-	_ok("career isolated start locked", WorkService.is_career_progression_unlocked() == false)
+	_ok("career isolated start locked", WorkService.has_career_connections() == false)
 	_ok("career isolated start rank 0", WorkService.get_career_rank() == 0)
 	_ok("career isolated start income 100", WorkService.get_current_shift_income() == 100)
+	_ok("career isolated start no connections req", WorkService.next_rank_requires_connections() == false)
 	var clamped := PlayerState.new()
 	clamped.from_dict({"career_rank": 99})
 	_ok("career rank clamps 0..3", clamped.career_rank == 3)
+	var fallback := PlayerState.new()
+	fallback.from_dict({"career_progression_unlocked": true, "career_rank": 1})
+	_ok("career from_dict fallback connections", fallback.career_connections_unlocked and fallback.career_rank == 1)
 	gs.player.career_rank = 0
 	_ok("career rank0 income 100", WorkService.get_current_shift_income() == 100)
 	gs.player.career_rank = 1
 	_ok("career rank1 income 200", WorkService.get_current_shift_income() == 200)
+	_ok("career rank1 requires connections", WorkService.next_rank_requires_connections())
 	gs.player.career_rank = 2
 	_ok("career rank2 income 400", WorkService.get_current_shift_income() == 400)
+	_ok("career rank2 requires connections", WorkService.next_rank_requires_connections())
 	gs.player.career_rank = 3
 	_ok("career rank3 income 800", WorkService.get_current_shift_income() == 800)
 	_ok("career rank3 next -1", WorkService.get_next_career_rank() == -1)
+	_ok("career rank3 no connections req", WorkService.next_rank_requires_connections() == false)
 	gs.player.career_rank = 0
 	_ok("career capital req 1", WorkService.get_next_career_capital_requirement() == 1)
 	gs.player.career_rank = 1
@@ -5337,30 +5344,17 @@ func _test_career_progression() -> void:
 	gs.player.career_rank = 2
 	_ok("career capital req 5", WorkService.get_next_career_capital_requirement() == 5)
 	sm.new_game()
-	_ok("career before reward locked", WorkService.is_career_progression_unlocked() == false)
-	_ok("career grant mine boss", girls.grant_filler_reward_for_girl(GirlCatalog.ID_MINE_BOSS))
-	_ok("career after grant unlocked", WorkService.is_career_progression_unlocked())
-	_ok("career after grant flag", gs.player.career_progression_unlocked)
-	_ok("career after grant income 100", WorkService.get_current_shift_income() == 100)
-	_ok("career has reward", girls.has_filler_reward(FillerRewardCatalog.ID_CAREER_PROGRESSION_UNLOCK))
-	sm.new_game()
-	girls.give_contact(GirlCatalog.ID_MINE_BOSS)
-	_max_girl(girls, GirlCatalog.ID_MINE_BOSS)
-	_ok("career after max unlocked", WorkService.is_career_progression_unlocked())
-	_ok("career after max income 100", WorkService.get_current_shift_income() == 100)
-	sm.new_game()
-	gs.player.capital = 1
-	var before_unlock: ActionResult = actions.execute(WorkService.create_career_advancement_action())
-	_ok("career cannot advance before unlock", before_unlock.success == false and WorkService.get_career_rank() == 0)
-	gs.player.career_progression_unlocked = true
 	gs.player.capital = 0
+	_ok("career cannot advance without capital", WorkService.can_advance_career() == false)
 	var no_capital: ActionResult = actions.execute(WorkService.create_career_advancement_action())
-	_ok("career cannot advance without capital", no_capital.success == false and WorkService.get_career_rank() == 0)
-	gs.player.capital = 5
+	_ok("career execute without capital fails", no_capital.success == false and WorkService.get_career_rank() == 0)
+	gs.player.capital = 1
+	_ok("career rank1 without connections available", WorkService.has_career_connections() == false and WorkService.can_advance_career())
 	var money_before: int = int(gs.player.money)
 	var first_up: ActionResult = actions.execute(WorkService.create_career_advancement_action())
 	_ok("career 0 to 1", first_up.success and WorkService.get_career_rank() == 1)
-	_ok("career cannot skip ranks", WorkService.get_career_rank() == 1 and WorkService.get_current_shift_income() == 200)
+	_ok("career rank1 income 200 after", WorkService.get_current_shift_income() == 200)
+	_ok("career rank1 connections still false", WorkService.has_career_connections() == false and gs.player.career_connections_unlocked == false)
 	_ok("career advancement pays 0", gs.player.money == money_before)
 	_ok("career consumes work gate", int(daily.usage_today(daily.KEY_WORK)) == 1)
 	_ok("career work unavailable after advance", WorkService.is_work_available_today() == false)
@@ -5372,15 +5366,37 @@ func _test_career_progression() -> void:
 	var paid_work: ActionResult = actions.execute(WorkService.create_work_action(WorkService.make_current_work()))
 	_ok("career next work uses new income", paid_work.success and gs.player.money == money_before + 200)
 	clock.advance_time(1440)
+	gs.player.capital = 3
+	_ok("career rank2 without connections unavailable", WorkService.has_career_connections() == false and WorkService.can_advance_career() == false)
+	var blocked_rank2: ActionResult = actions.execute(WorkService.create_career_advancement_action())
+	_ok("career rank2 execute without connections fails", blocked_rank2.success == false and WorkService.get_career_rank() == 1)
+	var rank_before_grant: int = WorkService.get_career_rank()
+	_ok("career grant mine boss", girls.grant_filler_reward_for_girl(GirlCatalog.ID_MINE_BOSS))
+	_ok("career after grant connections", WorkService.has_career_connections())
+	_ok("career after grant flag", gs.player.career_connections_unlocked)
+	_ok("career after grant rank unchanged", WorkService.get_career_rank() == rank_before_grant)
+	_ok("career after grant income 200", WorkService.get_current_shift_income() == 200)
+	_ok("career has connections reward", girls.has_filler_reward(FillerRewardCatalog.ID_CAREER_CONNECTIONS))
+	_ok("career rank2 after connections available", WorkService.can_advance_career())
 	var to_rank2: ActionResult = actions.execute(WorkService.create_career_advancement_action())
 	_ok("career 1 to 2", to_rank2.success and WorkService.get_career_rank() == 2 and WorkService.get_current_shift_income() == 400)
 	clock.advance_time(1440)
+	_ok("career rank3 needs capital 5", gs.player.capital == 3 and WorkService.can_advance_career() == false)
+	gs.player.capital = 5
+	_ok("career rank3 with connections available", WorkService.has_career_connections() and WorkService.can_advance_career())
 	var to_rank3: ActionResult = actions.execute(WorkService.create_career_advancement_action())
 	_ok("career 2 to 3", to_rank3.success and WorkService.get_career_rank() == 3 and WorkService.get_current_shift_income() == 800)
 	clock.advance_time(1440)
 	var at_max: ActionResult = actions.execute(WorkService.create_career_advancement_action())
 	_ok("career rank 3 no advancement", at_max.success == false and WorkService.get_career_rank() == 3)
 	_ok("career rank 3 income 800", WorkService.get_current_shift_income() == 800)
+	sm.new_game()
+	_ok("career before reward locked", WorkService.has_career_connections() == false)
+	girls.give_contact(GirlCatalog.ID_MINE_BOSS)
+	_max_girl(girls, GirlCatalog.ID_MINE_BOSS)
+	_ok("career after max connections", WorkService.has_career_connections())
+	_ok("career after max rank 0", WorkService.get_career_rank() == 0)
+	_ok("career after max income 100", WorkService.get_current_shift_income() == 100)
 	sm.new_game()
 	girls.grant_filler_reward_for_girl(GirlCatalog.ID_OLYA)
 	var overtime0: ActionResult = actions.execute(WorkService.create_work_with_overtime_action())
@@ -5401,19 +5417,50 @@ func _test_career_progression() -> void:
 	var overtime3: ActionResult = actions.execute(WorkService.create_work_with_overtime_action())
 	_ok("career overtime rank3 combined 1200", overtime3.success and gs.player.money == 1200)
 	sm.new_game()
-	gs.player.career_progression_unlocked = true
+	gs.player.career_connections_unlocked = true
 	gs.player.career_rank = 2
 	sm.save_game()
 	sm.new_game()
-	_ok("career reset after new_game", WorkService.is_career_progression_unlocked() == false and WorkService.get_career_rank() == 0)
+	_ok("career reset after new_game", WorkService.has_career_connections() == false and WorkService.get_career_rank() == 0)
 	_ok("career load", sm.load_game())
-	_ok("career save/load unlock", WorkService.is_career_progression_unlocked())
+	_ok("career save/load connections", WorkService.has_career_connections())
+	_ok("career save/load flag", gs.player.career_connections_unlocked)
 	_ok("career save/load rank", WorkService.get_career_rank() == 2)
 	_ok("career save/load income", WorkService.get_current_shift_income() == 400)
 	sm.delete_save()
+	var folder: String = sm.save_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var v19_file: FileAccess = FileAccess.open(sm.save_path, FileAccess.WRITE)
+	_ok("wrote v19 career save", v19_file != null)
+	if v19_file != null:
+		var v19: Dictionary = {
+			"save_version": 19,
+			"game_state": {
+				"flow": {"game_time_minutes": 0},
+				"story": {"stage": 1, "finale_reached": false},
+				"player": {
+					"money": 0,
+					"rating": 0,
+					"career_progression_unlocked": true,
+					"career_rank": 1,
+				},
+				"progression": {
+					"purchased_ids": [],
+					"unlocked_filler_reward_ids": ["career_progression_unlock"],
+				},
+			},
+		}
+		v19_file.store_string(JSON.stringify(v19, "\t"))
+		v19_file.close()
+	_ok("load v19 career save", sm.load_game())
+	_ok("v19 migrated connections flag", gs.player.career_connections_unlocked)
+	_ok("v19 migrated connections helper", WorkService.has_career_connections())
+	_ok("v19 migrated rank", WorkService.get_career_rank() == 1)
+	_ok("v19 migrated reward id", girls.has_filler_reward(FillerRewardCatalog.ID_CAREER_CONNECTIONS))
+	_ok("v19 dropped legacy reward id", girls.has_filler_reward(FillerRewardCatalog.ID_CAREER_PROGRESSION_UNLOCK) == false)
+	sm.delete_save()
 	sm.save_path = original_path
 	sm.new_game()
-
 
 func _test_city_density_progression() -> void:
 	var gs: Variant = _game_state()
@@ -5508,7 +5555,7 @@ func _test_city_density_progression() -> void:
 	_ok("7. after actress city 2", int(world.get_city_stage()) == 2)
 	_ok("advance mine work", stages.force_complete_current_stage_for_dev())
 	_ok("24. work 100 after mine stage", WorkService.get_current_hourly_pay() == 100)
-	_ok("24. career still locked after stage", WorkService.is_career_progression_unlocked() == false)
+	_ok("24. career still locked after stage", WorkService.has_career_connections() == false)
 	_ok("25. work minutes still 60", WorkService.make_current_work().time_cost_minutes == 60)
 	_ok("advance editor city 3", stages.force_complete_current_stage_for_dev())
 	_ok("8. after editor city 3", int(world.get_city_stage()) == 3)
@@ -6530,12 +6577,22 @@ func _test_rating_baseline_route() -> void:
 	_max_girl(girls, GirlCatalog.ID_ACTRESS)
 	_ok("baseline rating 3", int(rating.get_rating()) == 3)
 	_ok("baseline stage 2", int(stages.get_current_stage()) == 2)
+	var actions: Variant = _action_service()
+	gs.player.capital = 1
+	_ok("baseline connections before mine", WorkService.has_career_connections() == false)
+	_ok("baseline rank 1 before mine available", WorkService.can_advance_career())
+	if actions != null:
+		var rank1: ActionResult = actions.execute(WorkService.create_career_advancement_action())
+		_ok("baseline rank 1 before mine", rank1.success and WorkService.get_career_rank() == 1)
+		_ok("baseline connections still false after rank 1", WorkService.has_career_connections() == false)
 	_max_stage_fillers(girls, 2, 2)
 	_ok("baseline rating 5", int(rating.get_rating()) == 5)
 	rivals.defeat_rival(RivalCatalog.ID_FOREMAN)
 	_max_girl(girls, GirlCatalog.ID_MINE_BOSS)
 	_ok("baseline rating 6", int(rating.get_rating()) == 6)
 	_ok("baseline stage 3", int(stages.get_current_stage()) == 3)
+	_ok("baseline connections after mine", WorkService.has_career_connections())
+	_ok("baseline rank unchanged after mine", WorkService.get_career_rank() == 1)
 	_max_stage_fillers(girls, 3, 2)
 	_ok("baseline rating 8", int(rating.get_rating()) == 8)
 	rivals.defeat_rival(RivalCatalog.ID_COLUMNIST)
@@ -6765,19 +6822,22 @@ func _advance_manual_path_to_scientist(
 	_ok("manual meet lera", meet_lera.success)
 	_max_girl(girls, GirlCatalog.ID_LERA)
 	_ok("manual rating 5", int(rating.get_rating()) == 5)
+	_gs.player.capital = 1
+	_ok("manual connections before mine", WorkService.has_career_connections() == false)
+	_ok("manual rank 1 before mine available", WorkService.can_advance_career())
+	var career_up: ActionResult = actions.execute(WorkService.create_career_advancement_action())
+	_ok("manual career rank 1 before mine", career_up.success and WorkService.get_career_rank() == 1)
+	_ok("manual work 200 before mine", WorkService.get_current_hourly_pay() == 200)
+	_ok("manual connections still false after rank 1", WorkService.has_career_connections() == false)
 	world.enter_location(LocationCatalog.ID_RESTAURANT)
 	var meet_mine: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_MINE_BOSS))
 	_ok("manual meet mine boss", meet_mine.success)
 	_ok("manual defeat foreman", rivals.defeat_rival(RivalCatalog.ID_FOREMAN))
 	_max_girl(girls, GirlCatalog.ID_MINE_BOSS)
 	_ok("manual stage 3", int(stages.get_current_stage()) == 3)
-	_ok("manual career unlocked", WorkService.is_career_progression_unlocked())
-	_ok("manual work 100 after mine max", WorkService.get_current_hourly_pay() == 100)
-	_gs.player.capital = 1
-	var career_up: ActionResult = actions.execute(WorkService.create_career_advancement_action())
-	_ok("manual career advance", career_up.success)
-	_ok("manual work 200", WorkService.get_current_hourly_pay() == 200)
-	_ok("manual career rank 1", WorkService.get_career_rank() == 1)
+	_ok("manual career connections", WorkService.has_career_connections())
+	_ok("manual rank unchanged after mine", WorkService.get_career_rank() == 1)
+	_ok("manual work 200 after mine max", WorkService.get_current_hourly_pay() == 200)
 	world.enter_location(LocationCatalog.ID_CAFE)
 	var meet_kira: ActionResult = actions.execute(girls.create_meet_girl_action(GirlCatalog.ID_KIRA))
 	_ok("manual meet kira", meet_kira.success)

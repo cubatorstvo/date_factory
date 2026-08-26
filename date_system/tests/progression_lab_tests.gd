@@ -76,6 +76,8 @@ func test_catalog() -> Array:
 		{"group": "regression", "name": "seed 32 characteristic build", "fn": _test_seed_32_characteristic_build},
 		{"group": "career", "name": "profitable career investment", "fn": _test_career_profitable_investment},
 		{"group": "career", "name": "not profitable career investment", "fn": _test_career_not_profitable_investment},
+		{"group": "career", "name": "rank 1 without connections", "fn": _test_career_rank_1_without_connections},
+		{"group": "career", "name": "rank 2 connections lock", "fn": _test_career_rank_2_connections_lock},
 		{"group": "career", "name": "career capital dependency", "fn": _test_career_capital_dependency},
 		{"group": "career", "name": "career rank persists across stage", "fn": _test_career_persistence_across_stage},
 		{"group": "career", "name": "career work attribution", "fn": _test_career_work_attribution},
@@ -1050,18 +1052,18 @@ func _test_career_classify_supporting_goal() -> void:
 	_ok("career work kind", ProgressionLabMetrics.work_goal_kind("career:rank_2") == "career")
 
 
-func _setup_career_state(unlocked: bool, rank: int, capital: int) -> void:
+func _setup_career_state(connections: bool, rank: int, capital: int) -> void:
 	var gs: Variant = _root("GameState")
 	if gs == null or gs.player == null:
 		return
-	gs.player.career_progression_unlocked = unlocked
+	gs.player.career_connections_unlocked = connections
 	gs.player.career_rank = clampi(rank, 0, 3)
 	gs.player.capital = capital
 
 
-func _career_cash_plan(expensive: bool) -> StagePlan:
+func _career_cash_plan(expensive: bool, stage: int = 1) -> StagePlan:
 	var plan := StagePlan.new()
-	plan.stage = 1
+	plan.stage = stage
 	if expensive:
 		plan.target_apartment_object_ids.append(&"apartment__chess_table")
 		plan.target_apartment_object_ids.append(&"apartment__darts")
@@ -1085,7 +1087,7 @@ func _career_executor() -> StageExecutor:
 func _test_career_profitable_investment() -> void:
 	var session := PlaythroughSession.new()
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
-		_setup_career_state(true, 0, 1)
+		_setup_career_state(false, 0, 1)
 		_set_money(0)
 		var executor: StageExecutor = _career_executor()
 		var plan: StagePlan = _career_cash_plan(true)
@@ -1094,7 +1096,7 @@ func _test_career_profitable_investment() -> void:
 		var advancement: StageExecutor.Candidate = _find_candidate(candidates, "career_advancement")
 		var roi: Dictionary = executor._last_career_roi
 		return {
-			"unlocked": WorkService.is_career_progression_unlocked(),
+			"connections": WorkService.has_career_connections(),
 			"rank": WorkService.get_career_rank(),
 			"capital": int(_root("GameState").player.capital) if _root("GameState") != null else -1,
 			"has_advancement": advancement != null,
@@ -1105,16 +1107,15 @@ func _test_career_profitable_investment() -> void:
 			"kinds": _candidate_kinds(candidates),
 		}
 	))
-	_ok("career unlocked for profitable ROI", bool(captured.get("unlocked", false)), JSON.stringify(captured))
+	_ok("rank 1 ROI does not require connections", not bool(captured.get("connections", true)), JSON.stringify(captured))
 	_ok("career advancement candidate exists", bool(captured.get("has_advancement", false)), JSON.stringify(captured))
 	_ok("career ROI saves support actions", int(captured.get("saved", 0)) > 0, JSON.stringify(captured))
 	_ok("career decision INVEST", str(captured.get("decision", "")) == "INVEST", JSON.stringify(captured))
 
-
 func _test_career_not_profitable_investment() -> void:
 	var session := PlaythroughSession.new()
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
-		_setup_career_state(true, 0, 1)
+		_setup_career_state(false, 0, 1)
 		_set_money(0)
 		var executor: StageExecutor = _career_executor()
 		var plan: StagePlan = _career_cash_plan(false)
@@ -1190,7 +1191,7 @@ func _test_career_capital_dependency() -> void:
 func _test_career_persistence_across_stage() -> void:
 	var session := PlaythroughSession.new()
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
-		_setup_career_state(true, 1, 1)
+		_setup_career_state(false, 1, 1)
 		var executor: StageExecutor = _career_executor()
 		var record: ProgressionLabRunRecord = executor.execute_run(7, 2)
 		var stage_1: Dictionary = record.stage_metrics.get("1", {})
@@ -1277,6 +1278,9 @@ func _run_career_determinism_seed(base_seed: int) -> Dictionary:
 		"rank_1_day": metrics.get("career_rank_1_day", -1),
 		"rank_2_day": metrics.get("career_rank_2_day", -1),
 		"rank_3_day": metrics.get("career_rank_3_day", -1),
+		"connections_day": metrics.get("career_connections_unlock_day", -1),
+		"connections_stage": metrics.get("career_connections_unlock_stage", -1),
+		"rank_1_before_connections": metrics.get("rank_1_before_connections", false),
 	}
 	return {
 		"ok": true,
@@ -1296,7 +1300,7 @@ func _run_career_determinism_seed(base_seed: int) -> Dictionary:
 func _test_career_progress_beat() -> void:
 	var session := PlaythroughSession.new()
 	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
-		_setup_career_state(true, 0, 1)
+		_setup_career_state(false, 0, 1)
 		_set_money(0)
 		var executor: StageExecutor = _career_executor()
 		var candidate := StageExecutor.Candidate.new()
@@ -1318,6 +1322,74 @@ func _test_career_progress_beat() -> void:
 	_ok("career advancement executed for beat", bool(captured.get("ok", false)), JSON.stringify(captured))
 	_ok("career rank increased", int(captured.get("rank_after", 0)) == int(captured.get("rank_before", 0)) + 1, JSON.stringify(captured))
 	_ok("career rank increase is a progress beat", int(captured.get("beats", 0)) >= 1, JSON.stringify(captured))
+
+func _test_career_rank_1_without_connections() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 0, 1)
+		_set_money(0)
+		var executor: StageExecutor = _career_executor()
+		var plan: StagePlan = _career_cash_plan(true, 2)
+		executor._date_policy.plan = plan
+		var candidates: Array = executor._collect_candidates(plan)
+		var advancement: StageExecutor.Candidate = _find_candidate(candidates, "career_advancement")
+		var roi: Dictionary = executor._last_career_roi
+		return {
+			"connections": WorkService.has_career_connections(),
+			"has_advancement": advancement != null,
+			"commitment": executor._target_career_rank,
+			"decision": str(roi.get("decision", "")),
+			"saved": int(roi.get("saved_support_actions", 0)),
+			"remaining": int(roi.get("remaining_cash_need", 0)),
+			"plan_stage": plan.stage,
+			"can_advance": WorkService.can_advance_career(),
+		}
+	))
+	_ok("stage 2 rank 1 connections false", not bool(captured.get("connections", true)), JSON.stringify(captured))
+	_ok("stage 2 rank 1 ROI evaluated", str(captured.get("decision", "")) != "", JSON.stringify(captured))
+	_ok("stage 2 rank 1 INVEST or choosable", str(captured.get("decision", "")) == "INVEST" and bool(captured.get("has_advancement", false)), JSON.stringify(captured))
+	_ok("stage 2 rank 1 can_advance without connections", bool(captured.get("can_advance", false)), JSON.stringify(captured))
+
+
+func _test_career_rank_2_connections_lock() -> void:
+	var session := PlaythroughSession.new()
+	var captured: Dictionary = _as_dict(session.run(func() -> Dictionary:
+		_setup_career_state(false, 1, 3)
+		_set_money(0)
+		var executor: StageExecutor = _career_executor()
+		executor.detailed = true
+		var plan: StagePlan = _career_cash_plan(true, 2)
+		plan.target_filler_girl_ids.append(&"girl_mine_boss")
+		executor._date_policy.plan = plan
+		var locked_candidates: Array = executor._collect_candidates(plan)
+		var locked_advance: StageExecutor.Candidate = _find_candidate(locked_candidates, "career_advancement")
+		var locked_commitment: int = executor._target_career_rank
+		var locked_can_advance: bool = WorkService.can_advance_career()
+		var snapshot: Dictionary = executor._build_diagnostic_snapshot(plan)
+		var lock: Dictionary = executor._last_career_lock_diagnostics
+		var lock_blob: String = "%s\n%s\n%s" % [JSON.stringify(lock), JSON.stringify(snapshot), "\n".join(executor._timeline)]
+		var gs: Variant = _root("GameState")
+		if gs != null and gs.player != null:
+			gs.player.career_connections_unlocked = true
+		executor._career_roi_day = -1
+		var open_candidates: Array = executor._collect_candidates(plan)
+		var open_advance: StageExecutor.Candidate = _find_candidate(open_candidates, "career_advancement")
+		return {
+			"locked_advance": locked_advance != null,
+			"locked_commitment": locked_commitment,
+			"locked_can_advance": locked_can_advance,
+			"lock_target": int(lock.get("target_rank", -1)),
+			"lock_mentions_connections": lock_blob.find("Connections") >= 0 or bool(lock.get("connections_requirement", false)),
+			"open_advance": open_advance != null,
+			"open_decision": str(executor._last_career_roi.get("decision", "")),
+			"open_commitment": executor._target_career_rank,
+			"open_can_advance": WorkService.can_advance_career(),
+		}
+	))
+	_ok("rank 2 advancement unavailable without connections", not bool(captured.get("locked_advance", true)) and int(captured.get("locked_commitment", 1)) <= 0, JSON.stringify(captured))
+	_ok("rank 2 production locked without connections", not bool(captured.get("locked_can_advance", true)), JSON.stringify(captured))
+	_ok("rank 2 diagnostics mention Connections", bool(captured.get("lock_mentions_connections", false)) and int(captured.get("lock_target", -1)) == 2, JSON.stringify(captured))
+	_ok("rank 2 available after connections", bool(captured.get("open_can_advance", false)) and (bool(captured.get("open_advance", false)) or str(captured.get("open_decision", "")) == "INVEST"), JSON.stringify(captured))
 
 
 func _candidate_kinds(candidates: Array) -> PackedStringArray:
