@@ -1,6 +1,19 @@
 class_name ProgressionLabAnalyzer
 extends RefCounted
 
+const WARNING_CLASS_RUNTIME: String = "RUNTIME_FAILURE"
+const WARNING_CLASS_PACING: String = "PACING_WARNING"
+const DIAGNOSTIC_METRIC_KEYS: PackedStringArray = [
+	"money_blocked_decision_points",
+	"money_blocked_days",
+	"money_forced_work_days",
+	"dead_progress_days",
+	"max_consecutive_dead_progress_days",
+	"max_goal_friction_ratio",
+	"max_consecutive_work_only_days",
+	"economy_support_share",
+]
+
 const METRIC_KEYS: PackedStringArray = [
 	"calendar_days",
 	"total_actions",
@@ -112,20 +125,23 @@ func analyze(result: ProgressionLabPopulationResult, config: ProgressionLabConfi
 					filtered.append(record)
 			result.statistics["per_archetype_per_stage"]["%s:%d" % [String(archetype), stage]] = _stats_for(filtered, str(stage))
 	_apply_badness(summaries, config)
-	var all_bad: Array = _collect_all_bad_seeds(summaries, config)
 	var display_k: int = config.bad_seed_count_display if config.bad_seed_count_display > 0 else config.default_bad_seed_count
-	result.all_bad_seeds = []
-	for record in all_bad:
-		result.all_bad_seeds.append(_seed_row(record))
-	result.bad_seed_count = result.all_bad_seeds.size()
+	var hard_bad: Array = _collect_hard_bad_seeds(summaries)
+	result.hard_bad_seeds = []
+	for record in hard_bad:
+		result.hard_bad_seeds.append(_seed_row(record))
+	result.all_bad_seeds = result.hard_bad_seeds.duplicate(true)
+	result.bad_seeds = result.hard_bad_seeds.duplicate(true)
+	result.bad_seed_count = result.hard_bad_seeds.size()
 	result.bad_seed_percentage = float(result.bad_seed_count) / float(maxi(result.n, 1))
-	result.top_bad_seeds = []
-	for i in range(mini(display_k, result.all_bad_seeds.size())):
-		result.top_bad_seeds.append(result.all_bad_seeds[i])
-	result.bad_seeds = result.all_bad_seeds.duplicate(true)
+	result.top_badness_seeds = []
+	for record in _collect_top_badness_seeds(summaries, display_k):
+		result.top_badness_seeds.append(_seed_row(record))
+	result.top_bad_seeds = result.top_badness_seeds.duplicate(true)
 	result.representative_seeds = _select_representative(summaries)
 	result.analysis_warnings = _aggregate_warnings(summaries, config)
 	result.warning_prevalence = _warning_prevalence(summaries, result.n)
+	result.diagnostic_metrics = _diagnostic_metrics(summaries)
 	result.item_metrics = _aggregate_items(summaries)
 	result.rival_cash_dependency = _rival_cash_aggregate(summaries)
 	result.post_date_tail = _post_date_tail_aggregate(summaries)
@@ -231,7 +247,7 @@ func _apply_badness(records: Array, config: ProgressionLabConfig) -> void:
 		_append_series(series, "dead_progress_days", float(metrics.get("dead_progress_days", 0)))
 		_append_series(series, "calendar_days", float(metrics.get("calendar_days", 0)))
 		_append_series(series, "max_goal_friction_ratio", float(metrics.get("max_goal_friction_ratio", 0.0)))
-		_append_series(series, "one_minus_novelty", 1.0 - float(metrics.get("novelty_density", 0.0)))
+		_append_series(series, "one_minus_novelty", one_minus_novelty(float(metrics.get("novelty_density", 0.0))))
 	for key in series.keys():
 		var values: PackedFloat64Array = series[key]
 		values.sort()
@@ -248,7 +264,7 @@ func _apply_badness(records: Array, config: ProgressionLabConfig) -> void:
 			+ config.badness_dead_days_weight * _rank(series["dead_progress_days"], float(metrics.get("dead_progress_days", 0)))
 			+ config.badness_calendar_weight * _rank(series["calendar_days"], float(metrics.get("calendar_days", 0)))
 			+ config.badness_friction_weight * _rank(series["max_goal_friction_ratio"], float(metrics.get("max_goal_friction_ratio", 0.0)))
-			+ config.badness_novelty_weight * _rank(series["one_minus_novelty"], 1.0 - float(metrics.get("novelty_density", 0.0)))
+			+ config.badness_novelty_weight * _rank(series["one_minus_novelty"], one_minus_novelty(float(metrics.get("novelty_density", 0.0))))
 		)
 		record.badness_score = int(round(badness * 100.0))
 
@@ -277,36 +293,89 @@ func hard_warnings_for(record: ProgressionLabRunRecord, config: ProgressionLabCo
 	return _hard_warnings_for(record, config)
 
 
+func warning_severity(warning_id: String) -> String:
+	if warning_id.begins_with("NO_USEFUL_ACTIONS_STAGE_"):
+		return WARNING_CLASS_RUNTIME
+	if warning_id.begins_with("STAGE_PLAN_MUTATED_"):
+		return WARNING_CLASS_RUNTIME
+	if warning_id == "SAFETY_CAP_DAYS" or warning_id == "SAFETY_CAP_ACTIONS":
+		return WARNING_CLASS_RUNTIME
+	if warning_id == "REPLAY_MISMATCH" or warning_id == "REPLAY_DETERMINISM_MISMATCH":
+		return WARNING_CLASS_RUNTIME
+	if warning_id == "UNRESOLVED_RIVAL_MONEY_FAILURE":
+		return WARNING_CLASS_RUNTIME
+	if warning_id == "ISOLATION_FAILED" or warning_id == "STAGE_TRANSITION_INVARIANT" or warning_id == "ABORTED":
+		return WARNING_CLASS_RUNTIME
+	if warning_id == "WORK_ONLY_STREAK" or warning_id == "DEAD_PROGRESS_STREAK":
+		return WARNING_CLASS_PACING
+	if warning_id == "GOAL_FRICTION" or warning_id == "ECONOMY_SUPPORT_HIGH":
+		return WARNING_CLASS_PACING
+	return ""
+
+
+func is_hard_bad_seed(record: ProgressionLabRunRecord) -> bool:
+	if record == null:
+		return false
+	for warning in record.hard_warnings:
+		var severity: String = warning_severity(str(warning))
+		if severity == WARNING_CLASS_RUNTIME or severity == WARNING_CLASS_PACING:
+			return true
+	return false
+
+
+func normalized_novelty_density(novelty_density: float) -> float:
+	return clampf(novelty_density, 0.0, 1.0)
+
+
+func one_minus_novelty(novelty_density: float) -> float:
+	return 1.0 - normalized_novelty_density(novelty_density)
+
+
 func _hard_warnings_for(record: ProgressionLabRunRecord, config: ProgressionLabConfig) -> PackedStringArray:
-	var warnings: PackedStringArray = record.hard_warnings.duplicate()
+	var warnings: PackedStringArray = PackedStringArray()
+	for existing in record.hard_warnings:
+		var warning_id: String = str(existing)
+		if warning_id == "MONEY_BLOCKED" or warning_id == "ECONOMY_SUPPORT":
+			continue
+		if warning_severity(warning_id) == WARNING_CLASS_PACING:
+			continue
+		if warnings.find(warning_id) >= 0:
+			continue
+		warnings.append(warning_id)
 	var metrics: Dictionary = record.campaign_metrics
+	if int(metrics.get("unresolved_rival_money_failures", 0)) > 0 and warnings.find("UNRESOLVED_RIVAL_MONEY_FAILURE") < 0:
+		warnings.append("UNRESOLVED_RIVAL_MONEY_FAILURE")
 	if int(metrics.get("max_consecutive_work_only_days", 0)) >= config.hard_work_only_days:
 		warnings.append("WORK_ONLY_STREAK")
 	if int(metrics.get("max_consecutive_dead_progress_days", 0)) >= config.hard_dead_progress_days:
 		warnings.append("DEAD_PROGRESS_STREAK")
-	if int(metrics.get("money_blocked_decision_points", 0)) >= config.hard_money_blocked:
-		warnings.append("MONEY_BLOCKED")
 	var friction: float = float(metrics.get("max_goal_friction_ratio", 0.0))
-	var highest_id: String = str(metrics.get("highest_friction_goal_id", ""))
-	var support_actions: int = 0
-	var friction_map: Variant = metrics.get("goal_friction", {})
-	if friction_map is Dictionary and friction_map.has(highest_id):
-		var entry: Variant = friction_map[highest_id]
-		if entry is Dictionary:
-			support_actions = int(entry.get("support_actions", 0))
+	var support_actions: int = _highest_friction_support_actions(metrics)
 	if friction >= config.hard_friction_ratio and support_actions >= config.hard_friction_support_actions:
 		warnings.append("GOAL_FRICTION")
 	if float(metrics.get("economy_support_share", 0.0)) >= config.hard_economy_share and int(metrics.get("total_actions", 0)) >= config.hard_economy_min_actions:
-		warnings.append("ECONOMY_SUPPORT")
-	if record.aborted:
+		warnings.append("ECONOMY_SUPPORT_HIGH")
+	if record.aborted and warnings.find("ABORTED") < 0:
 		warnings.append("ABORTED")
 	return warnings
 
 
-func _collect_all_bad_seeds(records: Array, config: ProgressionLabConfig) -> Array:
+func _highest_friction_support_actions(metrics: Dictionary) -> int:
+	if metrics.has("highest_friction_support_actions"):
+		return int(metrics.get("highest_friction_support_actions", 0))
+	var highest_id: String = str(metrics.get("highest_friction_goal_id", ""))
+	var friction_map: Variant = metrics.get("goal_friction", {})
+	if friction_map is Dictionary and friction_map.has(highest_id):
+		var entry: Variant = friction_map[highest_id]
+		if entry is Dictionary:
+			return int(entry.get("support_actions", 0))
+	return 0
+
+
+func _collect_hard_bad_seeds(records: Array) -> Array:
 	var bad: Array = []
 	for record in records:
-		if record.badness_score >= 90 or record.hard_warnings.size() > 0:
+		if is_hard_bad_seed(record):
 			bad.append(record)
 	bad.sort_custom(func(a: ProgressionLabRunRecord, b: ProgressionLabRunRecord) -> bool:
 		if a.hard_warnings.size() != b.hard_warnings.size():
@@ -318,8 +387,28 @@ func _collect_all_bad_seeds(records: Array, config: ProgressionLabConfig) -> Arr
 	return bad
 
 
+func _collect_top_badness_seeds(records: Array, display_k: int) -> Array:
+	var ranked: Array = []
+	for record in records:
+		if record is ProgressionLabRunRecord:
+			ranked.append(record)
+	ranked.sort_custom(func(a: ProgressionLabRunRecord, b: ProgressionLabRunRecord) -> bool:
+		if a.badness_score != b.badness_score:
+			return a.badness_score > b.badness_score
+		return a.base_seed < b.base_seed
+	)
+	var limited: Array = []
+	for i in range(mini(display_k, ranked.size())):
+		limited.append(ranked[i])
+	return limited
+
+
+func _collect_all_bad_seeds(records: Array, _config: ProgressionLabConfig) -> Array:
+	return _collect_hard_bad_seeds(records)
+
+
 func _select_bad_seeds(records: Array, config: ProgressionLabConfig) -> Array:
-	var all_bad: Array = _collect_all_bad_seeds(records, config)
+	var all_bad: Array = _collect_hard_bad_seeds(records)
 	var display_k: int = config.bad_seed_count_display if config.bad_seed_count_display > 0 else config.default_bad_seed_count
 	var limited: Array = []
 	for i in range(mini(display_k, all_bad.size())):
@@ -333,21 +422,37 @@ func _warning_prevalence(records: Array, n: int) -> Array:
 		var seen: Dictionary = {}
 		for warning in record.hard_warnings:
 			var key: String = str(warning)
+			var warning_class: String = warning_severity(key)
+			if warning_class.is_empty():
+				continue
 			if seen.has(key):
 				continue
 			seen[key] = true
-			counts[key] = int(counts.get(key, 0)) + 1
+			if not counts.has(key):
+				counts[key] = {"warning_class": warning_class, "run_count": 0}
+			var entry: Dictionary = counts[key]
+			entry["run_count"] = int(entry.get("run_count", 0)) + 1
+			counts[key] = entry
 	var rows: Array = []
 	var keys: Array = counts.keys()
 	keys.sort()
 	for key in keys:
-		var run_count: int = int(counts[key])
+		var entry: Dictionary = counts[key]
+		var run_count: int = int(entry.get("run_count", 0))
 		rows.append({
 			"warning_id": str(key),
+			"warning_class": str(entry.get("warning_class", "")),
 			"run_count": run_count,
 			"run_share": float(run_count) / float(maxi(n, 1)),
 		})
 	return rows
+
+
+func _diagnostic_metrics(records: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for key in DIAGNOSTIC_METRIC_KEYS:
+		result[key] = _metric_describe(records, key)
+	return result
 
 
 func _select_representative(records: Array) -> Dictionary:
@@ -401,10 +506,8 @@ func _seed_row(record: ProgressionLabRunRecord) -> Dictionary:
 
 func _aggregate_warnings(records: Array, config: ProgressionLabConfig) -> PackedStringArray:
 	var warnings: PackedStringArray = PackedStringArray()
-	var days: PackedFloat64Array = PackedFloat64Array()
 	var economy: PackedFloat64Array = PackedFloat64Array()
-	var money_block: PackedFloat64Array = PackedFloat64Array()
-	var dead: PackedFloat64Array = PackedFloat64Array()
+	var dead_streak: PackedFloat64Array = PackedFloat64Array()
 	var friction: PackedFloat64Array = PackedFloat64Array()
 	var novelty: PackedFloat64Array = PackedFloat64Array()
 	var work_streak: PackedFloat64Array = PackedFloat64Array()
@@ -412,22 +515,18 @@ func _aggregate_warnings(records: Array, config: ProgressionLabConfig) -> Packed
 		var metrics: Dictionary = record.campaign_metrics
 		work_streak.append(float(metrics.get("max_consecutive_work_only_days", 0)))
 		economy.append(float(metrics.get("economy_support_share", 0.0)))
-		money_block.append(float(metrics.get("money_blocked_decision_points", 0)))
-		dead.append(float(metrics.get("dead_progress_days", 0)))
+		dead_streak.append(float(metrics.get("max_consecutive_dead_progress_days", 0)))
 		friction.append(float(metrics.get("max_goal_friction_ratio", 0.0)))
 		novelty.append(float(metrics.get("novelty_density", 0.0)))
-		days.append(float(metrics.get("calendar_days", 0)))
 	work_streak.sort()
 	economy.sort()
-	money_block.sort()
-	dead.sort()
+	dead_streak.sort()
 	friction.sort()
 	novelty.sort()
 	var work_p90: float = percentile(work_streak, 0.90)
 	var economy_p50: float = percentile(economy, 0.50)
 	var economy_p90: float = percentile(economy, 0.90)
-	var money_p90: float = percentile(money_block, 0.90)
-	var dead_p90: float = percentile(dead, 0.90)
+	var dead_p90: float = percentile(dead_streak, 0.90)
 	var friction_p90: float = percentile(friction, 0.90)
 	var novelty_p10: float = percentile(novelty, 0.10)
 	if work_p90 >= config.warning_work_streak_p90:
@@ -436,10 +535,8 @@ func _aggregate_warnings(records: Array, config: ProgressionLabConfig) -> Packed
 		warnings.append("ECONOMY_SUPPORT_HIGH_MEDIAN=%.3f" % economy_p50)
 	if economy_p90 >= config.warning_economy_p90:
 		warnings.append("ECONOMY_SUPPORT_HIGH_TAIL=%.3f" % economy_p90)
-	if money_p90 >= config.warning_money_block_p90:
-		warnings.append("MONEY_BLOCKING_HIGH_TAIL=%.2f" % money_p90)
-	if dead_p90 >= config.warning_dead_days_p90:
-		warnings.append("DEAD_PROGRESS_HIGH_TAIL=%.2f" % dead_p90)
+	if dead_p90 >= config.warning_dead_streak_p90:
+		warnings.append("DEAD_PROGRESS_STREAK_HIGH_TAIL=%.2f" % dead_p90)
 	if friction_p90 >= config.warning_friction_p90:
 		warnings.append("GOAL_FRICTION_HIGH_TAIL=%.2f" % friction_p90)
 	if novelty_p10 <= config.warning_novelty_p10:

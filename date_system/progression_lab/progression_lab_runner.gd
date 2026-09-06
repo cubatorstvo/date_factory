@@ -295,7 +295,7 @@ func process_replay_batch() -> bool:
 
 func _replay_export_seeds() -> Dictionary:
 	var detailed: Dictionary = {}
-	for row in _result.top_bad_seeds:
+	for row in _export_detail_rows():
 		var seed: int = int(row.get("seed", 0))
 		detailed["expected_%d" % seed] = _pass1_record(seed)
 		detailed[seed] = replay_seed(seed, true)
@@ -307,6 +307,23 @@ func _replay_export_seeds() -> Dictionary:
 				detailed["expected_%d" % seed] = _pass1_record(seed)
 				detailed[seed] = replay_seed(seed, true)
 	return detailed
+
+
+func _export_detail_rows() -> Array:
+	var rows: Array = []
+	var seen: Dictionary = {}
+	if _result == null:
+		return rows
+	for source in [_result.hard_bad_seeds, _result.top_badness_seeds]:
+		for row in source:
+			if not (row is Dictionary):
+				continue
+			var seed: int = int(row.get("seed", 0))
+			if seen.has(seed):
+				continue
+			seen[seed] = true
+			rows.append(row)
+	return rows
 
 
 func _pass1_record(seed: int) -> ProgressionLabRunRecord:

@@ -59,7 +59,7 @@ const OVERVIEW_KEYS: PackedStringArray = [
 ]
 const STAGE_KEYS: PackedStringArray = ["stages", "stage_metrics", "stage_stats"]
 const ARCHETYPE_KEYS: PackedStringArray = ["archetypes", "archetype_metrics", "archetype_stats"]
-const BAD_SEED_KEYS: PackedStringArray = ["top_bad_seeds", "bad_seeds", "bad_seed_records", "bad_seed_summaries"]
+const BAD_SEED_KEYS: PackedStringArray = ["top_badness_seeds", "top_bad_seeds", "hard_bad_seeds", "bad_seeds", "bad_seed_records", "bad_seed_summaries"]
 const REPRESENTATIVE_KEYS: PackedStringArray = ["representative_seeds", "representative_seed_records"]
 const ITEM_KEYS: PackedStringArray = ["items", "item_metrics", "item_utility"]
 
@@ -822,9 +822,9 @@ func _apply_result(result: Variant) -> void:
 	_archetypes_text.text = _format_stats_branch(result, "per_archetype", "No archetype metrics yet.")
 	_items_text.text = _format_named_section(result, ITEM_KEYS, "No item metrics yet.")
 	var top_bad: Array = _result_array(result, BAD_SEED_KEYS)
-	var all_count: int = int(_get_prop(result, "bad_seed_count") if _get_prop(result, "bad_seed_count") != null else top_bad.size())
+	var all_count: int = int(_get_prop(result, "bad_seed_count") if _get_prop(result, "bad_seed_count") != null else 0)
 	if _bad_header != null:
-		_bad_header.text = "Top %d of %d bad seeds | %s" % [top_bad.size(), all_count, " | ".join(BAD_SEED_COLUMNS)]
+		_bad_header.text = "Hard bad seeds: %d / %s | Top %d by badness score | %s" % [all_count, str(_get_prop(result, "n")), top_bad.size(), " | ".join(BAD_SEED_COLUMNS)]
 	_fill_record_list(_bad_list, top_bad, true)
 	_fill_record_list(_rep_list, _result_records(result, REPRESENTATIVE_KEYS), false)
 	if _selected_seed < 0:
@@ -871,10 +871,12 @@ func _format_overview(result: Variant) -> String:
 		if stored_pct != null:
 			pct = 100.0 * float(stored_pct)
 		lines.append("")
-		lines.append("Bad seeds: %d / %d (%.1f%%)" % [int(bad_count), int(n_value), pct])
-		var top_bad: Variant = _get_prop(result, "top_bad_seeds")
-		if top_bad is Array:
-			lines.append("Top %d of %d bad seeds" % [(top_bad as Array).size(), int(bad_count)])
+		lines.append("Hard bad seeds: %d / %d (%.1f%%)" % [int(bad_count), int(n_value), pct])
+		var top_badness: Variant = _get_prop(result, "top_badness_seeds")
+		if top_badness == null:
+			top_badness = _get_prop(result, "top_bad_seeds")
+		if top_badness is Array:
+			lines.append("Top %d by badness score: %d" % [(top_badness as Array).size(), (top_badness as Array).size()])
 	var replay_total: Variant = _get_prop(result, "replay_total")
 	if replay_total != null and int(replay_total) > 0:
 		lines.append("Replay determinism: %d / %d matched" % [int(_get_prop(result, "replay_matched")), int(replay_total)])

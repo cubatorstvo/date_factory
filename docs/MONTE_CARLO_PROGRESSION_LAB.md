@@ -1138,18 +1138,67 @@ Diagnostic rival rows include ordinary targets and the Story Rival: `rival_id`, 
 
 ---
 
-# 23.7 Bad seeds vs Top K
+# 23.7 Hard warnings vs badness ranking
 
-`all_bad_seeds` is every Run with `badness_score >= threshold` or `hard_warnings.size() > 0`.
-
-`top_bad_seeds` is the first `bad_seed_count_display` (default 25) after sorting by hard-warning count desc, badness desc, `base_seed` asc.
+The analyzer keeps three separate concepts:
 
 ```text
-bad_seed_count = all_bad_seeds.size()
+RUNTIME FAILURE
+PACING WARNING
+BADNESS RANKING
+```
+
+Runtime failures remain unconditional simulator/progression failures:
+
+```text
+NO_USEFUL_ACTIONS_STAGE_*
+SAFETY_CAP_DAYS
+SAFETY_CAP_ACTIONS
+STAGE_PLAN_MUTATED_*
+REPLAY_MISMATCH
+UNRESOLVED_RIVAL_MONEY_FAILURE
+```
+
+Pacing warnings mark unusually poor but valid trajectories. Canonical per-run thresholds:
+
+```text
+max_consecutive_work_only_days >= 4
+→ WORK_ONLY_STREAK
+
+max_consecutive_dead_progress_days >= 4
+→ DEAD_PROGRESS_STREAK
+
+max_goal_friction_ratio >= 8.0
+and highest_friction_support_actions >= 6
+→ GOAL_FRICTION
+
+economy_support_share >= 0.30
+and total_actions >= 12
+→ ECONOMY_SUPPORT_HIGH
+```
+
+`MONEY_BLOCKED` is not a hard warning. `money_blocked_decision_points` and `money_blocked_days` stay as diagnostics and badness-ranking inputs.
+
+`hard_bad_seed` is any completed run with at least one Runtime Failure or Pacing Warning.
+
+```text
+bad_seed_count = hard_bad_seeds.size()
 bad_seed_percentage = bad_seed_count / N
 ```
 
-`bad_seeds.csv` exports **all** bad seeds. Detailed bad-seed logs replay only `top_bad_seeds`. Overview and `share_bundle` show the full count/percentage and then the Top K list. Warning prevalence (`warning_id`, `run_count`, `run_share`) is exported after each population run. MONEY_BLOCKED / GOAL_FRICTION / DEAD_PROGRESS_STREAK thresholds stay unchanged in this pass.
+`top_badness_seeds` is the first `bad_seed_count_display` (default 25) completed runs sorted by `badness_score` desc, `base_seed` asc. This list is independent from `hard_bad_seeds`.
+
+Exports:
+
+```text
+hard_bad_seeds.csv
+top_badness_seeds.csv
+bad_seeds.csv          # compatibility alias of hard_bad_seeds
+warning_prevalence.csv # warning_id, warning_class, run_count, run_share
+diagnostic_metrics.csv
+```
+
+`share_bundle` reports Hard Warnings, Top Badness Seeds, and Diagnostic Pressure Metrics (including Money Pressure). Warning prevalence includes only classified warnings.
 
 ---
 
@@ -1798,6 +1847,15 @@ novelty_density =
     / max(total_actions, 1)
 ```
 
+Raw `novelty_density` can exceed `1.0` because one action may create multiple novelty events. Badness ranking uses:
+
+```text
+normalized_novelty_density = clamp(novelty_density, 0.0, 1.0)
+one_minus_novelty = 1.0 - normalized_novelty_density
+```
+
+Raw `novelty_density` remains exported unchanged.
+
 ---
 
 # 38. Purchase utility
@@ -1865,7 +1923,7 @@ daily_gate_blocked_decision_points
 dead_progress_days
 calendar_days
 max_goal_friction_ratio
-1 - novelty_density
+1 - clamp(novelty_density, 0.0, 1.0)
 ```
 
 Per Run:
@@ -1879,7 +1937,7 @@ badness =
     + 0.10 * percentile(dead_progress_days)
     + 0.10 * percentile(calendar_days)
     + 0.10 * percentile(max_goal_friction_ratio)
-    + 0.10 * percentile(1 - novelty_density)
+    + 0.10 * percentile(1 - clamp(novelty_density, 0.0, 1.0))
 ```
 
 Convert:
@@ -1897,38 +1955,37 @@ A Run receives a hard warning when any condition is true:
 ```text
 max_consecutive_work_only_days >= 4
 
-max_consecutive_dead_progress_days >= 2
+max_consecutive_dead_progress_days >= 4
 
-money_blocked_decision_points >= 5
+max_goal_friction_ratio >= 8.0
+and highest friction goal has support_actions >= 6
 
-max_goal_friction_ratio >= 3.0
-and highest friction goal has support_actions >= 4
-
-economy_support_share >= 0.45
+economy_support_share >= 0.30
 and total_actions >= 12
 ```
+
+or when the executor records a Runtime Failure.
 
 Bad seed set:
 
 ```text
-badness_score >= 90
+at least one Runtime Failure
 OR
-at least one hard warning
+at least one Pacing Warning
 ```
+
+`badness_score` ranks the population but does not by itself mark a seed hard-bad.
 
 Default UI displays:
 
 ```text
-Top 25 bad seeds
+Hard bad seeds: X / N
+Top K by badness score
 ```
 
-sorted:
+`hard_bad_seeds` sort by hard-warning count descending, badness descending, `base_seed` ascending.
 
-```text
-hard warning count descending
-badness_score descending
-base_seed ascending
-```
+`top_badness_seeds` sort by badness descending, `base_seed` ascending.
 
 ---
 
@@ -2295,11 +2352,15 @@ aggregate_metrics.csv
 stage_metrics.csv
 archetype_metrics.csv
 seed_summaries.csv
+hard_bad_seeds.csv
+top_badness_seeds.csv
 bad_seeds.csv
 item_metrics.csv
 representative_seeds.csv
 share_bundle.md
 share_bundle.json
+warning_prevalence.csv
+diagnostic_metrics.csv
 ```
 
 `seed_summaries.csv` contains one row per simulation Run, including post-date tail, money-forced-work, stale planned goals, and work attribution counts. `aggregate_metrics.csv` and `stage_metrics.csv` include the same numeric pacing fields. `item_metrics.csv` includes `times_considered`, `times_selected`, `times_produced_positive_score`, `times_unlocked_requirement`, and the derived per-acquisition rates.
@@ -2307,7 +2368,8 @@ share_bundle.json
 Detailed logs are included for:
 
 ```text
-Top K bad seeds
+hard bad seeds
+top K badness seeds
 representative seeds
 ```
 
@@ -2562,37 +2624,39 @@ ECONOMY_SUPPORT_HIGH_MEDIAN
 ## Tail economy support
 
 ```text
-P90 economy_support_share >= 0.45
+P90 economy_support_share >= 0.35
 ```
 
 ```text
 ECONOMY_SUPPORT_HIGH_TAIL
 ```
 
-## Money blocking
+## Money Pressure
+
+Money blockage stays a diagnostic, not an aggregate hard warning.
 
 ```text
-P90 money_blocked_decision_points >= 5
-```
-
-```text
-MONEY_BLOCKING_HIGH_TAIL
+money_blocked_decision_points P10/P50/P90/P95
+money_blocked_days P10/P50/P90/P95
+money_forced_work_days P10/P50/P90/P95
 ```
 
 ## Dead progression
 
 ```text
-P90 dead_progress_days >= 2
+P90 max_consecutive_dead_progress_days >= 4
 ```
 
 ```text
-DEAD_PROGRESS_HIGH_TAIL
+DEAD_PROGRESS_STREAK_HIGH_TAIL
 ```
+
+Total `dead_progress_days` remains an aggregate diagnostic.
 
 ## Goal friction
 
 ```text
-P90 max_goal_friction_ratio >= 3.0
+P90 max_goal_friction_ratio >= 8.0
 ```
 
 ```text

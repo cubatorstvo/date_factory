@@ -37,6 +37,12 @@ func test_catalog() -> Array:
 		{"group": "scoring", "name": "build urgency priority", "fn": _test_build_urgency_priority},
 		{"group": "metrics", "name": "blocking metrics", "fn": _test_blocking_metrics},
 		{"group": "metrics", "name": "badness warnings", "fn": _test_badness_warnings},
+		{"group": "metrics", "name": "dead progress warning", "fn": _test_dead_progress_warning},
+		{"group": "metrics", "name": "goal friction warning", "fn": _test_goal_friction_warning},
+		{"group": "metrics", "name": "economy support warning", "fn": _test_economy_support_warning},
+		{"group": "metrics", "name": "work only warning", "fn": _test_work_only_warning},
+		{"group": "metrics", "name": "runtime warning class", "fn": _test_runtime_warning_class},
+		{"group": "metrics", "name": "novelty badness clamp", "fn": _test_novelty_badness_clamp},
 		{"group": "metrics", "name": "stage calendar duration", "fn": _test_stage_calendar_duration},
 		{"group": "metrics", "name": "stage dead progress", "fn": _test_stage_dead_progress},
 		{"group": "metrics", "name": "metric consistency", "fn": _test_metric_consistency},
@@ -396,6 +402,14 @@ func _test_exports() -> void:
 		_ok("markdown Summary", md_text.find("Summary") >= 0)
 	var share_candidates: PackedStringArray = _find_files(export_dir, "share_bundle.json")
 	_ok("share_bundle json written", share_candidates.size() > 0)
+	_ok("hard_bad_seeds.csv written", _find_files(export_dir, "hard_bad_seeds.csv").size() > 0)
+	_ok("top_badness_seeds.csv written", _find_files(export_dir, "top_badness_seeds.csv").size() > 0)
+	_ok("diagnostic_metrics.csv written", _find_files(export_dir, "diagnostic_metrics.csv").size() > 0)
+	var prevalence_files: PackedStringArray = _find_files(export_dir, "warning_prevalence.csv")
+	if prevalence_files.size() > 0:
+		var prevalence_file: FileAccess = FileAccess.open(prevalence_files[0], FileAccess.READ)
+		var prevalence_text: String = prevalence_file.get_as_text() if prevalence_file != null else ""
+		_ok("warning_prevalence has warning_class", prevalence_text.find("warning_class") >= 0)
 	var executor := StageExecutor.new()
 	executor.detailed = true
 	executor._campaign = ProgressionLabMetrics.new()
@@ -910,24 +924,57 @@ func _test_build_identity_export_schema() -> void:
 
 func _test_bad_seed_count_vs_top_k() -> void:
 	var config := ProgressionLabConfig.new()
-	config.bad_seed_count_display = 25
+	config.bad_seed_count_display = 3
 	var result := ProgressionLabPopulationResult.new()
-	result.n = 100
-	for i in range(100):
-		var record := ProgressionLabRunRecord.new()
-		record.base_seed = i + 1
-		record.campaign_metrics = {"money_blocked_decision_points": 5, "calendar_days": 20}
-		result.records.append(record)
+	result.n = 3
+	var seed_a := ProgressionLabRunRecord.new()
+	seed_a.base_seed = 1
+	seed_a.campaign_metrics = _healthy_warning_metrics()
+	seed_a.campaign_metrics["calendar_days"] = 400
+	seed_a.campaign_metrics["money_blocked_decision_points"] = 400
+	seed_a.campaign_metrics["dead_progress_days"] = 30
+	seed_a.campaign_metrics["economy_support_share"] = 0.29
+	seed_a.campaign_metrics["max_consecutive_work_only_days"] = 3
+	var seed_b := ProgressionLabRunRecord.new()
+	seed_b.base_seed = 2
+	seed_b.campaign_metrics = _healthy_warning_metrics()
+	seed_b.campaign_metrics["max_goal_friction_ratio"] = 8.0
+	seed_b.campaign_metrics["highest_friction_support_actions"] = 6
+	seed_b.campaign_metrics["calendar_days"] = 10
+	seed_b.campaign_metrics["money_blocked_decision_points"] = 10
+	seed_b.campaign_metrics["dead_progress_days"] = 0
+	seed_b.campaign_metrics["economy_support_share"] = 0.05
+	seed_b.campaign_metrics["max_consecutive_work_only_days"] = 0
+	var seed_c := ProgressionLabRunRecord.new()
+	seed_c.base_seed = 3
+	seed_c.campaign_metrics = _healthy_warning_metrics()
+	seed_c.campaign_metrics["calendar_days"] = 200
+	seed_c.campaign_metrics["money_blocked_decision_points"] = 200
+	seed_c.campaign_metrics["dead_progress_days"] = 15
+	seed_c.campaign_metrics["economy_support_share"] = 0.18
+	seed_c.campaign_metrics["max_consecutive_work_only_days"] = 2
+	result.records.append(seed_a)
+	result.records.append(seed_b)
+	result.records.append(seed_c)
 	var analyzer := ProgressionLabAnalyzer.new()
 	analyzer.analyze(result, config)
-	_ok("all bad count 100", result.bad_seed_count == 100, str(result.bad_seed_count))
-	_ok("all bad percentage 1", is_equal_approx(result.bad_seed_percentage, 1.0), str(result.bad_seed_percentage))
-	_ok("all_bad_seeds size 100", result.all_bad_seeds.size() == 100, str(result.all_bad_seeds.size()))
-	_ok("top_bad_seeds size 25", result.top_bad_seeds.size() == 25, str(result.top_bad_seeds.size()))
+	_ok("hard bad count 1", result.bad_seed_count == 1, str(result.bad_seed_count))
+	_ok("hard_bad_seeds size 1", result.hard_bad_seeds.size() == 1, str(result.hard_bad_seeds.size()))
+	_ok("hard bad is seed B", int(result.hard_bad_seeds[0].get("seed", 0)) == 2, str(result.hard_bad_seeds[0].get("seed", 0)))
+	_ok("top badness size 3", result.top_badness_seeds.size() == 3, str(result.top_badness_seeds.size()))
+	_ok("top badness first A", int(result.top_badness_seeds[0].get("seed", 0)) == 1, str(result.top_badness_seeds[0].get("seed", 0)))
+	_ok("top badness second C", int(result.top_badness_seeds[1].get("seed", 0)) == 3, str(result.top_badness_seeds[1].get("seed", 0)))
+	_ok("top badness third B", int(result.top_badness_seeds[2].get("seed", 0)) == 2, str(result.top_badness_seeds[2].get("seed", 0)))
 	var exporter := ProgressionLabExporter.new()
-	var csv: String = exporter._bad_csv(result.all_bad_seeds)
+	var csv: String = exporter._bad_csv(result.hard_bad_seeds)
 	var csv_lines: PackedStringArray = csv.split("\n")
-	_ok("bad_seeds.csv has all rows", csv_lines.size() >= 101, str(csv_lines.size()))
+	_ok("hard_bad_seeds.csv has warning rows", csv_lines.size() >= 2, str(csv_lines.size()))
+	var share: String = exporter.share_bundle_markdown(result)
+	_ok("share has hard warnings section", share.find("## Hard Warnings") >= 0)
+	_ok("share has top badness section", share.find("## Top Badness Seeds") >= 0)
+	_ok("share has diagnostic pressure", share.find("## Diagnostic Pressure Metrics") >= 0)
+	_ok("share has money pressure", share.find("Money Pressure") >= 0)
+	_ok("share has no MONEY_BLOCKED hard warning", share.find("MONEY_BLOCKED") < 0)
 
 func _test_build_urgency_priority() -> void:
 	var captured: Dictionary = _as_dict(PlaythroughSession.new().run(func() -> Dictionary:
@@ -1696,6 +1743,12 @@ func _test_share_bundle_pacing_fields() -> void:
 	_ok("markdown career progression", markdown.find("## Career Progression") >= 0)
 	_ok("markdown friction by type", markdown.find("## Goal Friction by Type") >= 0)
 	_ok("markdown apartment item utility", markdown.find("## Apartment Item Utility") >= 0)
+	_ok("markdown hard warnings", markdown.find("## Hard Warnings") >= 0)
+	_ok("markdown top badness", markdown.find("## Top Badness Seeds") >= 0)
+	_ok("markdown diagnostic pressure", markdown.find("## Diagnostic Pressure Metrics") >= 0)
+	_ok("share json has hard_bad_seeds", json.has("hard_bad_seeds"))
+	_ok("share json has top_badness_seeds", json.has("top_badness_seeds"))
+	_ok("share json has diagnostic_metrics", json.has("diagnostic_metrics"))
 
 
 func _test_item_metrics_csv_apartment() -> void:
@@ -2118,13 +2171,126 @@ func _test_badness_warnings() -> void:
 	var analyzer := ProgressionLabAnalyzer.new()
 	var config := ProgressionLabConfig.new()
 	var record := ProgressionLabRunRecord.new()
-	record.campaign_metrics = {"money_blocked_decision_points": 4}
+	record.campaign_metrics = _healthy_warning_metrics()
+	record.campaign_metrics["money_blocked_decision_points"] = 200
+	record.campaign_metrics["money_blocked_days"] = 40
 	var warnings: PackedStringArray = analyzer.hard_warnings_for(record, config)
-	_ok("money 4 no hard warning", warnings.find("MONEY_BLOCKED") < 0, ",".join(warnings))
-	record.campaign_metrics["money_blocked_decision_points"] = 5
+	_ok("normal money blockage no MONEY_BLOCKED", warnings.find("MONEY_BLOCKED") < 0, ",".join(warnings))
+	_ok("normal money blockage no hard warnings", warnings.is_empty(), ",".join(warnings))
+	_ok("canonical dead threshold 4", config.hard_dead_progress_days == 4)
+	_ok("canonical friction ratio 8", is_equal_approx(config.hard_friction_ratio, 8.0), str(config.hard_friction_ratio))
+	_ok("canonical friction support 6", config.hard_friction_support_actions == 6)
+	_ok("canonical economy share 0.30", is_equal_approx(config.hard_economy_share, 0.30), str(config.hard_economy_share))
+	_ok("canonical work-only threshold 4", config.hard_work_only_days == 4)
+
+
+func _test_dead_progress_warning() -> void:
+	var analyzer := ProgressionLabAnalyzer.new()
+	var config := ProgressionLabConfig.new()
+	var record := ProgressionLabRunRecord.new()
+	record.campaign_metrics = _healthy_warning_metrics()
+	record.campaign_metrics["max_consecutive_dead_progress_days"] = 3
+	var warnings: PackedStringArray = analyzer.hard_warnings_for(record, config)
+	_ok("dead streak 3 no warning", warnings.find("DEAD_PROGRESS_STREAK") < 0, ",".join(warnings))
+	record.campaign_metrics["max_consecutive_dead_progress_days"] = 4
 	warnings = analyzer.hard_warnings_for(record, config)
-	_ok("money 5 hard warning", warnings.find("MONEY_BLOCKED") >= 0, ",".join(warnings))
-	_ok("canonical money threshold 5", config.hard_money_blocked == 5)
+	_ok("dead streak 4 warning", warnings.find("DEAD_PROGRESS_STREAK") >= 0, ",".join(warnings))
+	_ok("dead streak is pacing", analyzer.warning_severity("DEAD_PROGRESS_STREAK") == ProgressionLabAnalyzer.WARNING_CLASS_PACING)
+
+
+func _test_goal_friction_warning() -> void:
+	var analyzer := ProgressionLabAnalyzer.new()
+	var config := ProgressionLabConfig.new()
+	var record := ProgressionLabRunRecord.new()
+	record.campaign_metrics = _healthy_warning_metrics()
+	record.campaign_metrics["max_goal_friction_ratio"] = 7.0
+	record.campaign_metrics["highest_friction_support_actions"] = 7
+	var warnings: PackedStringArray = analyzer.hard_warnings_for(record, config)
+	_ok("friction 7/7 no warning", warnings.find("GOAL_FRICTION") < 0, ",".join(warnings))
+	record.campaign_metrics["max_goal_friction_ratio"] = 8.0
+	record.campaign_metrics["highest_friction_support_actions"] = 6
+	warnings = analyzer.hard_warnings_for(record, config)
+	_ok("friction 8/6 warning", warnings.find("GOAL_FRICTION") >= 0, ",".join(warnings))
+	_ok("friction is pacing", analyzer.warning_severity("GOAL_FRICTION") == ProgressionLabAnalyzer.WARNING_CLASS_PACING)
+
+
+func _test_economy_support_warning() -> void:
+	var analyzer := ProgressionLabAnalyzer.new()
+	var config := ProgressionLabConfig.new()
+	var record := ProgressionLabRunRecord.new()
+	record.campaign_metrics = _healthy_warning_metrics()
+	record.campaign_metrics["economy_support_share"] = 0.29
+	record.campaign_metrics["total_actions"] = 100
+	var warnings: PackedStringArray = analyzer.hard_warnings_for(record, config)
+	_ok("economy 0.29 no warning", warnings.find("ECONOMY_SUPPORT_HIGH") < 0, ",".join(warnings))
+	record.campaign_metrics["economy_support_share"] = 0.31
+	warnings = analyzer.hard_warnings_for(record, config)
+	_ok("economy 0.31 warning", warnings.find("ECONOMY_SUPPORT_HIGH") >= 0, ",".join(warnings))
+	_ok("economy is pacing", analyzer.warning_severity("ECONOMY_SUPPORT_HIGH") == ProgressionLabAnalyzer.WARNING_CLASS_PACING)
+
+
+func _test_work_only_warning() -> void:
+	var analyzer := ProgressionLabAnalyzer.new()
+	var config := ProgressionLabConfig.new()
+	var record := ProgressionLabRunRecord.new()
+	record.campaign_metrics = _healthy_warning_metrics()
+	record.campaign_metrics["max_consecutive_work_only_days"] = 3
+	var warnings: PackedStringArray = analyzer.hard_warnings_for(record, config)
+	_ok("work-only 3 no warning", warnings.find("WORK_ONLY_STREAK") < 0, ",".join(warnings))
+	record.campaign_metrics["max_consecutive_work_only_days"] = 4
+	warnings = analyzer.hard_warnings_for(record, config)
+	_ok("work-only 4 warning", warnings.find("WORK_ONLY_STREAK") >= 0, ",".join(warnings))
+	_ok("work-only is pacing", analyzer.warning_severity("WORK_ONLY_STREAK") == ProgressionLabAnalyzer.WARNING_CLASS_PACING)
+
+
+func _test_runtime_warning_class() -> void:
+	var analyzer := ProgressionLabAnalyzer.new()
+	_ok("NO_USEFUL stage 2 runtime", analyzer.warning_severity("NO_USEFUL_ACTIONS_STAGE_2") == ProgressionLabAnalyzer.WARNING_CLASS_RUNTIME)
+	_ok("SAFETY_CAP_DAYS runtime", analyzer.warning_severity("SAFETY_CAP_DAYS") == ProgressionLabAnalyzer.WARNING_CLASS_RUNTIME)
+	_ok("STAGE_PLAN_MUTATED_3 runtime", analyzer.warning_severity("STAGE_PLAN_MUTATED_3") == ProgressionLabAnalyzer.WARNING_CLASS_RUNTIME)
+	_ok("REPLAY_MISMATCH runtime", analyzer.warning_severity("REPLAY_MISMATCH") == ProgressionLabAnalyzer.WARNING_CLASS_RUNTIME)
+	_ok("UNRESOLVED_RIVAL_MONEY_FAILURE runtime", analyzer.warning_severity("UNRESOLVED_RIVAL_MONEY_FAILURE") == ProgressionLabAnalyzer.WARNING_CLASS_RUNTIME)
+	var record := ProgressionLabRunRecord.new()
+	record.campaign_metrics = _healthy_warning_metrics()
+	record.hard_warnings = PackedStringArray(["NO_USEFUL_ACTIONS_STAGE_2"])
+	var warnings: PackedStringArray = analyzer.hard_warnings_for(record, ProgressionLabConfig.new())
+	_ok("keeps runtime NO_USEFUL", warnings.find("NO_USEFUL_ACTIONS_STAGE_2") >= 0, ",".join(warnings))
+	record.hard_warnings = warnings
+	_ok("runtime seed is hard bad", analyzer.is_hard_bad_seed(record))
+
+
+func _test_novelty_badness_clamp() -> void:
+	var analyzer := ProgressionLabAnalyzer.new()
+	_ok("novelty 1.25 clamps to 1", is_equal_approx(analyzer.normalized_novelty_density(1.25), 1.0))
+	_ok("one_minus novelty 1.25 is 0", is_equal_approx(analyzer.one_minus_novelty(1.25), 0.0))
+	var config := ProgressionLabConfig.new()
+	var result := ProgressionLabPopulationResult.new()
+	result.n = 1
+	var record := ProgressionLabRunRecord.new()
+	record.base_seed = 1
+	record.campaign_metrics = _healthy_warning_metrics()
+	record.campaign_metrics["novelty_density"] = 1.25
+	result.records.append(record)
+	analyzer.analyze(result, config)
+	_ok("raw novelty stays 1.25", is_equal_approx(float(record.campaign_metrics.get("novelty_density", 0.0)), 1.25), str(record.campaign_metrics.get("novelty_density", 0.0)))
+
+
+func _healthy_warning_metrics() -> Dictionary:
+	return {
+		"calendar_days": 30,
+		"total_actions": 100,
+		"money_blocked_decision_points": 200,
+		"money_blocked_days": 40,
+		"money_forced_work_days": 2,
+		"dead_progress_days": 2,
+		"max_consecutive_dead_progress_days": 2,
+		"max_goal_friction_ratio": 4.0,
+		"highest_friction_support_actions": 3,
+		"max_consecutive_work_only_days": 2,
+		"economy_support_share": 0.22,
+		"novelty_density": 0.4,
+		"daily_gate_blocked_decision_points": 0,
+	}
 
 
 func _require_integration_flag(label: String, flags: Dictionary, key: String, content_exists: bool) -> void:

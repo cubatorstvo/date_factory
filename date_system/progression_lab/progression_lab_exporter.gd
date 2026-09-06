@@ -16,16 +16,19 @@ func export_full_statistics(result: ProgressionLabPopulationResult, directory: S
 	_write_text("%s/stage_metrics.csv" % folder, _group_csv(result.statistics.get("per_stage", {})))
 	_write_text("%s/archetype_metrics.csv" % folder, _group_csv(result.statistics.get("per_archetype", {})))
 	_write_text("%s/seed_summaries.csv" % folder, _seed_csv(result))
-	_write_text("%s/bad_seeds.csv" % folder, _bad_csv(result.bad_seeds))
+	_write_text("%s/hard_bad_seeds.csv" % folder, _bad_csv(result.hard_bad_seeds))
+	_write_text("%s/top_badness_seeds.csv" % folder, _bad_csv(result.top_badness_seeds))
+	_write_text("%s/bad_seeds.csv" % folder, _bad_csv(result.hard_bad_seeds))
 	_write_text("%s/item_metrics.csv" % folder, _item_csv(result.item_metrics))
 	_write_text("%s/representative_seeds.csv" % folder, _representative_csv(result.representative_seeds))
 	_write_text("%s/share_bundle.md" % folder, share_bundle_markdown(result))
 	_write_text("%s/share_bundle.json" % folder, JSON.stringify(share_bundle_json(result), "\t"))
 	_write_text("%s/warning_prevalence.csv" % folder, _warning_prevalence_csv(result))
+	_write_text("%s/diagnostic_metrics.csv" % folder, _metrics_csv(result.diagnostic_metrics))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("%s/bad_seed_logs" % folder))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("%s/representative_seed_logs" % folder))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("%s/replay_mismatches" % folder))
-	for row in result.top_bad_seeds:
+	for row in _export_seed_rows(result):
 		var seed: int = int(row.get("seed", 0))
 		var record: ProgressionLabRunRecord = detailed_records.get(seed, null)
 		if record != null:
@@ -48,14 +51,16 @@ func export_full_statistics(result: ProgressionLabPopulationResult, directory: S
 func export_bad_seeds_only(result: ProgressionLabPopulationResult, directory: String = "", detailed_records: Dictionary = {}) -> String:
 	var folder: String = _prepare_folder(result, directory, "bad")
 	_write_text("%s/config.json" % folder, JSON.stringify(_config_payload(result), "\t"))
-	_write_text("%s/bad_seeds.csv" % folder, _bad_csv(result.all_bad_seeds))
+	_write_text("%s/hard_bad_seeds.csv" % folder, _bad_csv(result.hard_bad_seeds))
+	_write_text("%s/top_badness_seeds.csv" % folder, _bad_csv(result.top_badness_seeds))
+	_write_text("%s/bad_seeds.csv" % folder, _bad_csv(result.hard_bad_seeds))
 	_write_text("%s/bad_seeds_summary.md" % folder, _bad_summary_md(result))
 	var jsonl: PackedStringArray = PackedStringArray()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("%s/logs" % folder))
-	for row in result.all_bad_seeds:
+	for row in result.hard_bad_seeds:
 		jsonl.append(JSON.stringify(row))
 	_write_text("%s/bad_seeds.jsonl" % folder, "\n".join(jsonl))
-	for row in result.top_bad_seeds:
+	for row in _export_seed_rows(result):
 		var seed: int = int(row.get("seed", 0))
 		var record: ProgressionLabRunRecord = detailed_records.get(seed, null)
 		if record != null:
@@ -120,24 +125,28 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 			var days: Dictionary = stage_stats["calendar_days"]
 			lines.append("calendar_days P50=%.2f" % float(days.get("P50", 0.0)))
 	lines.append("")
-	lines.append("## Bad seeds: %d / %d (%.1f%%)" % [result.bad_seed_count, maxi(result.n, 1), 100.0 * result.bad_seed_percentage])
-	lines.append("Top %d of %d bad seeds" % [result.top_bad_seeds.size(), result.bad_seed_count])
+	lines.append("## Hard Warnings")
+	lines.append("Hard bad seeds: %d / %d (%.1f%%)" % [result.bad_seed_count, maxi(result.n, 1), 100.0 * result.bad_seed_percentage])
 	lines.append("")
-	lines.append("## Warnings")
-	for warning in result.analysis_warnings:
-		lines.append("- %s" % warning)
+	lines.append("Runtime failures")
+	var runtime_lines: PackedStringArray = _prevalence_lines(result, "RUNTIME_FAILURE")
+	if runtime_lines.is_empty():
+		lines.append("- none")
+	else:
+		for line in runtime_lines:
+			lines.append(line)
 	lines.append("")
-	lines.append("## Warning prevalence")
-	for row in result.warning_prevalence:
-		lines.append("- %s: %d (%.1f%%)" % [str(row.get("warning_id", "")), int(row.get("run_count", 0)), 100.0 * float(row.get("run_share", 0.0))])
+	lines.append("Pacing warnings")
+	var pacing_lines: PackedStringArray = _prevalence_lines(result, "PACING_WARNING")
+	if pacing_lines.is_empty():
+		lines.append("- none")
+	else:
+		for line in pacing_lines:
+			lines.append(line)
 	lines.append("")
-	lines.append("## Rival Cash Dependency")
-	var rival_cash: Dictionary = result.rival_cash_dependency
-	for key in ["runs_with_rival_cash_dependency", "total_rival_cash_dependencies", "story_rival_cash_dependencies", "ordinary_rival_cash_dependencies", "work_actions_supporting_rival", "mean_work_actions_per_rival_goal", "rival_action_money_failures", "resolved_rival_money_failures", "unresolved_rival_money_failures"]:
-		lines.append("- %s: %s" % [key, str(rival_cash.get(key, 0))])
-	lines.append("")
-	lines.append("## Top bad seeds")
-	for row in result.top_bad_seeds:
+	lines.append("## Top Badness Seeds")
+	lines.append("Top %d by badness score: %d" % [result.top_badness_seeds.size(), result.top_badness_seeds.size()])
+	for row in result.top_badness_seeds:
 		lines.append("- seed %s [%s] badness=%s warning=%s days=%s stop=%s" % [
 			str(row.get("seed", 0)),
 			str(row.get("archetype", "")),
@@ -153,6 +162,46 @@ func share_bundle_markdown(result: ProgressionLabPopulationResult) -> String:
 				str(snapshot.get("money", 0)),
 				str(snapshot.get("equipped_outfit", "")),
 			])
+	lines.append("")
+	lines.append("## Diagnostic Pressure Metrics")
+	var diagnostics: Dictionary = result.diagnostic_metrics
+	if diagnostics.is_empty():
+		diagnostics = result.statistics.get("overall", {})
+	lines.append("Money Pressure")
+	for pressure_key in ["money_blocked_decision_points", "money_blocked_days", "money_forced_work_days", "dead_progress_days"]:
+		var pressure_stats: Dictionary = diagnostics.get(pressure_key, {})
+		if pressure_stats is Dictionary:
+			lines.append("- %s: P10=%.3f P50=%.3f P90=%.3f P95=%.3f" % [
+				pressure_key,
+				float(pressure_stats.get("P10", 0.0)),
+				float(pressure_stats.get("P50", 0.0)),
+				float(pressure_stats.get("P90", 0.0)),
+				float(pressure_stats.get("P95", 0.0)),
+			])
+	lines.append("")
+	lines.append("## Aggregate warnings")
+	if result.analysis_warnings.is_empty():
+		lines.append("- none")
+	else:
+		for warning in result.analysis_warnings:
+			lines.append("- %s" % warning)
+	lines.append("")
+	lines.append("## Warning prevalence")
+	if result.warning_prevalence.is_empty():
+		lines.append("- none")
+	else:
+		for row in result.warning_prevalence:
+			lines.append("- %s [%s]: %d (%.1f%%)" % [
+				str(row.get("warning_id", "")),
+				str(row.get("warning_class", "")),
+				int(row.get("run_count", 0)),
+				100.0 * float(row.get("run_share", 0.0)),
+			])
+	lines.append("")
+	lines.append("## Rival Cash Dependency")
+	var rival_cash: Dictionary = result.rival_cash_dependency
+	for key in ["runs_with_rival_cash_dependency", "total_rival_cash_dependencies", "story_rival_cash_dependencies", "ordinary_rival_cash_dependencies", "work_actions_supporting_rival", "mean_work_actions_per_rival_goal", "rival_action_money_failures", "resolved_rival_money_failures", "unresolved_rival_money_failures"]:
+		lines.append("- %s: %s" % [key, str(rival_cash.get(key, 0))])
 	lines.append("")
 	lines.append("## Representative seeds")
 	lines.append(JSON.stringify(result.representative_seeds, "\t"))
@@ -360,9 +409,12 @@ func share_bundle_json(result: ProgressionLabPopulationResult) -> Dictionary:
 		"statistics": result.statistics,
 		"bad_seed_count": result.bad_seed_count,
 		"bad_seed_percentage": result.bad_seed_percentage,
-		"top_bad_seeds": result.top_bad_seeds,
-		"all_bad_seeds": result.all_bad_seeds,
+		"hard_bad_seeds": result.hard_bad_seeds,
+		"top_bad_seeds": result.top_badness_seeds,
+		"top_badness_seeds": result.top_badness_seeds,
+		"all_bad_seeds": result.hard_bad_seeds,
 		"warning_prevalence": result.warning_prevalence,
+		"diagnostic_metrics": result.diagnostic_metrics,
 		"replay_matched": result.replay_matched,
 		"replay_total": result.replay_total,
 		"rival_cash_dependency": result.rival_cash_dependency,
@@ -467,10 +519,43 @@ func _write_verified_seed_pair(folder: String, record: ProgressionLabRunRecord, 
 
 func _warning_prevalence_csv(result: ProgressionLabPopulationResult) -> String:
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("warning_id,run_count,run_share")
+	lines.append("warning_id,warning_class,run_count,run_share")
 	for row in result.warning_prevalence:
-		lines.append("%s,%s,%s" % [str(row.get("warning_id", "")), str(row.get("run_count", 0)), str(row.get("run_share", 0.0))])
+		lines.append("%s,%s,%s,%s" % [
+			str(row.get("warning_id", "")),
+			str(row.get("warning_class", "")),
+			str(row.get("run_count", 0)),
+			str(row.get("run_share", 0.0)),
+		])
 	return "\n".join(lines)
+
+
+func _prevalence_lines(result: ProgressionLabPopulationResult, warning_class: String) -> PackedStringArray:
+	var lines: PackedStringArray = PackedStringArray()
+	for row in result.warning_prevalence:
+		if str(row.get("warning_class", "")) != warning_class:
+			continue
+		lines.append("- %s: %d (%.1f%%)" % [
+			str(row.get("warning_id", "")),
+			int(row.get("run_count", 0)),
+			100.0 * float(row.get("run_share", 0.0)),
+		])
+	return lines
+
+
+func _export_seed_rows(result: ProgressionLabPopulationResult) -> Array:
+	var rows: Array = []
+	var seen: Dictionary = {}
+	for source in [result.hard_bad_seeds, result.top_badness_seeds]:
+		for row in source:
+			if not (row is Dictionary):
+				continue
+			var seed: int = int(row.get("seed", 0))
+			if seen.has(seed):
+				continue
+			seen[seed] = true
+			rows.append(row)
+	return rows
 
 
 func _mismatch_markdown(mismatch: Dictionary) -> String:
@@ -682,8 +767,11 @@ func _representative_csv(rows: Dictionary) -> String:
 
 func _bad_summary_md(result: ProgressionLabPopulationResult) -> String:
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("# Bad Seeds")
-	for row in result.bad_seeds:
+	lines.append("# Hard Bad Seeds")
+	lines.append("Hard bad seeds: %d / %d" % [result.bad_seed_count, maxi(result.n, 1)])
+	lines.append("Top %d by badness score: %d" % [result.top_badness_seeds.size(), result.top_badness_seeds.size()])
+	lines.append("")
+	for row in result.hard_bad_seeds:
 		lines.append("- seed %s warning=%s badness=%s" % [str(row.get("seed", 0)), str(row.get("primary_warning", "")), str(row.get("badness_score", 0))])
 	return "\n".join(lines)
 

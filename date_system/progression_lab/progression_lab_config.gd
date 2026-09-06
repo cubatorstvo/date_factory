@@ -127,18 +127,16 @@ const ISOLATION_FULL: StringName = &"FULL_STAGE_CONTENT"
 @export var badness_friction_weight: float = 0.10
 @export var badness_novelty_weight: float = 0.10
 @export var hard_work_only_days: int = 4
-@export var hard_dead_progress_days: int = 2
-@export var hard_money_blocked: int = 5
-@export var hard_friction_ratio: float = 3.0
-@export var hard_friction_support_actions: int = 4
-@export var hard_economy_share: float = 0.45
+@export var hard_dead_progress_days: int = 4
+@export var hard_friction_ratio: float = 8.0
+@export var hard_friction_support_actions: int = 6
+@export var hard_economy_share: float = 0.30
 @export var hard_economy_min_actions: int = 12
 @export var warning_work_streak_p90: float = 4.0
+@export var warning_dead_streak_p90: float = 4.0
 @export var warning_economy_p50: float = 0.30
-@export var warning_economy_p90: float = 0.45
-@export var warning_money_block_p90: float = 5.0
-@export var warning_dead_days_p90: float = 2.0
-@export var warning_friction_p90: float = 3.0
+@export var warning_economy_p90: float = 0.35
+@export var warning_friction_p90: float = 8.0
 @export var warning_novelty_p10: float = 0.15
 
 
@@ -253,11 +251,18 @@ func to_dict() -> Dictionary:
 		"hard_warning_thresholds": {
 			"max_consecutive_work_only_days": hard_work_only_days,
 			"max_consecutive_dead_progress_days": hard_dead_progress_days,
-			"money_blocked_decision_points": hard_money_blocked,
 			"max_goal_friction_ratio": hard_friction_ratio,
 			"highest_friction_support_actions": hard_friction_support_actions,
 			"economy_support_share": hard_economy_share,
 			"economy_min_actions": hard_economy_min_actions,
+		},
+		"aggregate_warning_thresholds": {
+			"warning_work_streak_p90": warning_work_streak_p90,
+			"warning_dead_streak_p90": warning_dead_streak_p90,
+			"warning_friction_p90": warning_friction_p90,
+			"warning_economy_p50": warning_economy_p50,
+			"warning_economy_p90": warning_economy_p90,
+			"warning_novelty_p10": warning_novelty_p10,
 		},
 	}
 
